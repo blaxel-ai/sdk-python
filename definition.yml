@@ -1,0 +1,3193 @@
+components:
+  schemas:
+    ACL:
+      type: object
+      description: ACL
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - properties:
+          id:
+            type: string
+            description: ACL id
+          resource_id:
+            type: string
+            description: Resource ID
+          resource_type:
+            type: string
+            description: Resource type
+          role:
+            type: string
+            description: Role
+          subject_id:
+            type: string
+            description: Subject ID
+          subject_type:
+            type: string
+            description: Subject type
+          workspace:
+            type: string
+            description: Workspace name
+    Agent:
+      type: object
+      description: Agent
+      properties:
+        events:
+          $ref: '#/components/schemas/CoreEvents'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/AgentSpec'
+        status:
+          type: string
+          description: Agent status
+    AgentChain:
+      type: object
+      description: Agent chain configuration
+      properties:
+        description:
+          type: string
+          description: Description of the agent in case you want to override the default
+            one
+        enabled:
+          type: boolean
+          description: Whether the agent chain is enabled
+        name:
+          type: string
+          description: The name of the agent to chain to
+        prompt:
+          type: string
+          description: Prompt of the agent in case you want to override the default
+            one
+    AgentChains:
+      type: array
+      description: Agent chain
+      items:
+        $ref: '#/components/schemas/AgentChain'
+    AgentSpec:
+      type: object
+      description: Agent specification
+      allOf:
+      - $ref: '#/components/schemas/CoreSpec'
+      - properties:
+          agentChain:
+            $ref: '#/components/schemas/AgentChains'
+          description:
+            type: string
+            description: Description, small description computed from the prompt
+          functions:
+            $ref: '#/components/schemas/FunctionsList'
+          knowledgebase:
+            type: string
+            description: Knowledgebase Name
+          model:
+            type: string
+            description: Model name
+          prompt:
+            type: string
+            description: Prompt, describe what your agent does
+          repository:
+            $ref: '#/components/schemas/Repository'
+          storeId:
+            type: string
+            description: Store id
+    ApiKey:
+      type: object
+      description: Long-lived API key for accessing Blaxel
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - $ref: '#/components/schemas/OwnerFields'
+      - properties:
+          apiKey:
+            type: string
+            description: Api key
+          expires_in:
+            type: string
+            description: Duration until expiration (in seconds)
+          id:
+            type: string
+            description: Api key id, to retrieve it from the API
+          name:
+            type: string
+            description: Name for the API key
+          sub:
+            type: string
+            description: User subject identifier
+          sub_type:
+            type: string
+            description: Subject type
+    ArrayMetric:
+      type: array
+      description: Array of metrics
+      items:
+        $ref: '#/components/schemas/Metric'
+    Configuration:
+      type: object
+      description: Configuration
+      properties:
+        continents:
+          type: array
+          description: Continents
+          items: {}
+        countries:
+          type: array
+          description: Countries
+          items: {}
+        privateLocations:
+          type: array
+          description: Private locations managed with blaxel operator
+          items: {}
+    Continent:
+      type: object
+      description: Continent
+      properties:
+        displayName:
+          type: string
+          description: Continent display name
+        name:
+          type: string
+          description: Continent code
+    CoreEvent:
+      type: object
+      description: Core event
+      properties:
+        message:
+          type: string
+          description: Event message
+        revision:
+          type: string
+          description: RevisionID link to the event
+        status:
+          type: string
+          description: Event status
+        time:
+          type: string
+          description: Event time
+        type:
+          type: string
+          description: Event type
+    CoreEvents:
+      type: array
+      description: Core events
+      items:
+        $ref: '#/components/schemas/CoreEvent'
+    CoreSpec:
+      type: object
+      description: Core specification
+      properties:
+        configurations:
+          type: object
+          description: Optional configurations for the object
+          properties:
+            key:
+              $ref: '#/components/schemas/SpecConfiguration'
+        enabled:
+          type: boolean
+          description: Enable or disable the agent
+        flavors:
+          $ref: '#/components/schemas/Flavors'
+        integrationConnections:
+          $ref: '#/components/schemas/IntegrationConnectionsList'
+        podTemplate:
+          $ref: '#/components/schemas/PodTemplateSpec'
+        policies:
+          $ref: '#/components/schemas/PoliciesList'
+        privateClusters:
+          $ref: '#/components/schemas/ModelPrivateCluster'
+          description: The private clusters where the model deployment is deployed
+        revision:
+          $ref: '#/components/schemas/RevisionConfiguration'
+        runtime:
+          $ref: '#/components/schemas/Runtime'
+        sandbox:
+          type: boolean
+          description: Sandbox mode
+        serverlessConfig:
+          $ref: '#/components/schemas/ServerlessConfig'
+    Country:
+      type: object
+      description: Configuration
+      properties:
+        displayName:
+          type: string
+          description: Country display name
+        name:
+          type: string
+          description: Country code
+    Entrypoint:
+      type: object
+      description: Entrypoint of the artifact
+      properties:
+        args:
+          type: array
+          description: Args of the entrypoint
+          items: {}
+        command:
+          type: string
+          description: Command of the entrypoint
+        env:
+          type: object
+          description: Env of the entrypoint
+    Flavor:
+      type: object
+      description: A type of hardware available for deployments
+      properties:
+        name:
+          type: string
+          description: Flavor name (e.g. t4)
+        type:
+          type: string
+          description: Flavor type (e.g. cpu, gpu)
+    Flavors:
+      type: array
+      description: Types of hardware available for deployments
+      items:
+        $ref: '#/components/schemas/Flavor'
+    Form:
+      type: object
+      description: Form of the artifact
+      properties:
+        config:
+          type: object
+          description: Config of the artifact
+        oauth:
+          type: object
+          description: OAuth of the artifact
+        secrets:
+          type: object
+          description: Secrets of the artifact
+    Function:
+      type: object
+      description: Function
+      properties:
+        events:
+          $ref: '#/components/schemas/CoreEvents'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/FunctionSpec'
+        status:
+          type: string
+          description: Function status
+    FunctionKit:
+      type: object
+      description: Function kit
+      properties:
+        description:
+          type: string
+          description: Description of the function kit, very important for the agent
+            to work with your kit
+        name:
+          type: string
+          description: The kit name, very important for the agent to work with your
+            kit
+        schema:
+          $ref: '#/components/schemas/FunctionSchema'
+    FunctionSchema:
+      type: object
+      description: Function schema
+      properties:
+        allOf:
+          type: array
+          description: List of schemas that this schema extends
+          items: {}
+        anyOf:
+          type: array
+          description: List of possible schemas, any of which this schema could be
+          items: {}
+        description:
+          type: string
+          description: Description of the schema
+        enum:
+          type: array
+          description: Enum values
+          items:
+            type: string
+        format:
+          type: string
+          description: Format of the schema
+        items:
+          $ref: '#/components/schemas/FunctionSchema'
+        maxLength:
+          type: number
+          description: Maximum length for string types
+        maximum:
+          type: number
+          description: Maximum value for number types
+        minLength:
+          type: number
+          description: Minimum length for string types
+        minimum:
+          type: number
+          description: Minimum value for number types
+        not:
+          type: object
+          description: Schema that this schema must not be
+        oneOf:
+          type: array
+          description: List of schemas, one of which this schema must be
+          items: {}
+        pattern:
+          type: string
+          description: Pattern for string types
+        properties:
+          type: object
+          description: Properties of the schema
+          additionalProperties:
+            $ref: '#/components/schemas/FunctionSchema'
+        required:
+          type: array
+          description: Required properties of the schema
+          items:
+            type: string
+        title:
+          type: string
+          description: Title of the schema
+        type:
+          type: string
+          description: Type of the schema
+    FunctionSchemaOrBool:
+      type: object
+      description: Helper type for AdditionalProperties which can be either a boolean
+        or a schema
+    FunctionSpec:
+      type: object
+      description: Function specification
+      allOf:
+      - $ref: '#/components/schemas/CoreSpec'
+      - properties:
+          description:
+            type: string
+            description: Function description, very important for the agent function
+              to work with an LLM
+          kit:
+            type: array
+            description: Function kits
+            items:
+              $ref: '#/components/schemas/FunctionKit'
+          schema:
+            $ref: '#/components/schemas/FunctionSchema'
+    FunctionsList:
+      type: array
+      items:
+        type: string
+        description: Function name
+    HistogramBucket:
+      type: object
+      description: Histogram bucket
+      properties:
+        count:
+          type: integer
+          description: Count
+        end:
+          type: number
+          description: End
+        start:
+          type: number
+          description: Start
+    HistogramStats:
+      type: object
+      description: Histogram stats
+      properties:
+        average:
+          type: number
+          description: Average request duration
+        p50:
+          type: number
+          description: P50 request duration
+        p90:
+          type: number
+          description: P90 request duration
+        p99:
+          type: number
+          description: P99 request duration
+    IntegrationConnection:
+      type: object
+      description: Integration Connection
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/IntegrationConnectionSpec'
+    IntegrationConnectionSpec:
+      type: object
+      description: Integration connection specification
+      properties:
+        config:
+          type: object
+          description: Additional configuration for the integration
+          additionalProperties:
+            type: string
+        integration:
+          type: string
+          description: Integration type
+        sandbox:
+          type: boolean
+          description: Sandbox mode
+        secret:
+          type: object
+          description: Integration secret
+          additionalProperties:
+            type: string
+    IntegrationConnectionsList:
+      type: array
+      items:
+        type: string
+        description: Deployment integration connection name
+    IntegrationModel:
+      type: object
+      description: Model obtained from an external authentication provider, such as
+        HuggingFace, OpenAI, etc...
+      properties:
+        author:
+          type: string
+          description: Provider model author
+        created_at:
+          type: string
+          description: Provider model created at
+        downloads:
+          type: integer
+          description: Provider model downloads
+        endpoint:
+          type: string
+          description: Model endpoint URL
+        id:
+          type: string
+          description: Provider model ID
+        library_name:
+          type: string
+          description: Provider model library name
+        likes:
+          type: integer
+          description: Provider model likes
+        model_private:
+          type: string
+          description: Is the model private
+        name:
+          type: string
+          description: Provider model name
+        pipeline_tag:
+          type: string
+          description: Provider model pipeline tag
+        tags:
+          type: array
+          description: Provider model tags
+          items:
+            type: string
+        trending_score:
+          type: integer
+          description: Provider model trending score
+    IntegrationRepository:
+      type: object
+      description: Integration repository
+      properties:
+        id:
+          type: string
+          description: Repository ID
+        isBl:
+          type: boolean
+          description: Whether the repository has Blaxel imports
+        name:
+          type: string
+          description: Repository name
+        organization:
+          type: string
+          description: Repository owner
+        url:
+          type: string
+          description: Repository URL
+    Knowledgebase:
+      type: object
+      description: Knowledgebase
+      properties:
+        events:
+          $ref: '#/components/schemas/CoreEvents'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/KnowledgebaseSpec'
+        status:
+          type: string
+          description: Knowledgebase status
+    KnowledgebaseSpec:
+      type: object
+      description: Knowledgebase specification
+      properties:
+        collectionName:
+          type: string
+          description: Collection name
+        embeddingModel:
+          type: string
+          description: Embedding model
+        embeddingModelType:
+          type: string
+          description: Embedding model type
+        enabled:
+          type: boolean
+          description: Enable or disable the agent
+        integrationConnections:
+          $ref: '#/components/schemas/IntegrationConnectionsList'
+        options:
+          type: object
+          description: Options specific to the knowledge base
+          additionalProperties:
+            type: string
+        policies:
+          $ref: '#/components/schemas/PoliciesList'
+        revision:
+          $ref: '#/components/schemas/RevisionConfiguration'
+        sandbox:
+          type: boolean
+          description: Sandbox mode
+    KnowledgebasesList:
+      type: array
+      items:
+        type: string
+        description: Knowledgebase name
+    LastNRequestsMetric:
+      type: object
+      description: Last N requests
+      properties:
+        date:
+          type: string
+          description: Timestamp
+        workloadType:
+          type: string
+          description: Workload type
+        workspace:
+          type: string
+          description: Workspace
+    LatencyMetric:
+      type: object
+      description: Latency metrics
+      properties:
+        globalHistogram:
+          $ref: '#/components/schemas/HistogramBucket'
+          description: Global histogram
+        globalStats:
+          $ref: '#/components/schemas/HistogramStats'
+          description: Global stats
+        histogramPerCode:
+          $ref: '#/components/schemas/HistogramBucket'
+          description: Histogram per code
+        statsPerCode:
+          $ref: '#/components/schemas/HistogramStats'
+          description: Stats per code
+    LocationResponse:
+      type: object
+      description: Location availability for policies
+      properties:
+        continent:
+          type: string
+          description: Continent of the location
+        country:
+          type: string
+          description: Country of the location
+        flavors:
+          type: array
+          description: Hardware flavors available in the location
+          items:
+            $ref: '#/components/schemas/Flavor'
+        location:
+          type: string
+          description: Name of the location
+        status:
+          type: string
+          description: Status of the location
+    MCPDefinition:
+      type: object
+      description: Definition of an MCP from the MCP Hub
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - properties:
+          categories:
+            type: array
+            description: Categories of the artifact
+            items: {}
+          coming_soon:
+            type: boolean
+            description: If the artifact is coming soon
+          description:
+            type: string
+            description: Description of the artifact
+          displayName:
+            type: string
+            description: Display name of the artifact
+          enterprise:
+            type: boolean
+            description: If the artifact is enterprise
+          entrypoint:
+            type: object
+            description: Entrypoint of the artifact
+          form:
+            type: object
+            description: Form of the artifact
+          hiddenSecrets:
+            type: array
+            description: Hidden secrets of the artifact
+            items:
+              type: string
+          icon:
+            type: string
+            description: Icon of the artifact
+          image:
+            type: string
+            description: Image of the artifact
+          integration:
+            type: string
+            description: Integration of the artifact
+          longDescription:
+            type: string
+            description: Long description of the artifact
+          name:
+            type: string
+            description: Name of the artifact
+          url:
+            type: string
+            description: URL of the artifact
+    MemoryAllocationMetric:
+      type: object
+      description: Metrics for memory allocation
+      properties:
+        totalAllocation:
+          type: number
+          description: Total memory allocation in GB-seconds
+    Metadata:
+      type: object
+      description: Metadata
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - $ref: '#/components/schemas/OwnerFields'
+      - properties:
+          displayName:
+            type: string
+            description: Model display name
+          labels:
+            $ref: '#/components/schemas/MetadataLabels'
+          name:
+            type: string
+            description: Model name
+          workspace:
+            type: string
+            description: Workspace name
+    MetadataLabels:
+      type: object
+      description: Labels
+      additionalProperties:
+        type: string
+    Metric:
+      type: object
+      description: Metric
+      properties:
+        rate:
+          type: integer
+          description: Metric value
+        requestTotal:
+          type: integer
+          description: Metric value
+        timestamp:
+          type: string
+          description: Metric timestamp
+    Metrics:
+      type: object
+      description: Metrics for resources
+      properties:
+        agents:
+          description: Metrics for agents
+        functions:
+          description: Metrics for functions
+        inferenceGlobal:
+          type: array
+          description: Historical requests for all resources globally
+          items: {}
+        models:
+          type: object
+          description: Metrics for models
+        requestTotal:
+          type: number
+          description: Number of requests for all resources globally
+        requestTotalPerCode:
+          type: object
+          description: Number of requests for all resources globally per code
+        rps:
+          type: number
+          description: Number of requests per second for all resources globally
+        rpsPerCode:
+          type: object
+          description: Number of requests per second for all resources globally per
+            code
+    Model:
+      type: object
+      description: Logical object representing a model
+      properties:
+        events:
+          $ref: '#/components/schemas/CoreEvents'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/ModelSpec'
+        status:
+          type: string
+          description: Model status
+    ModelPrivateCluster:
+      type: object
+      description: Private cluster where the model deployment is deployed
+      properties:
+        baseUrl:
+          type: string
+          description: The base url of the model in the private cluster
+        enabled:
+          type: boolean
+          description: If true, the private cluster is available
+        name:
+          type: string
+          description: The name of the private cluster
+    ModelSpec:
+      type: object
+      description: Model specification
+      allOf:
+      - $ref: '#/components/schemas/CoreSpec'
+      - {}
+    OAuth:
+      type: object
+      description: OAuth of the artifact
+      properties:
+        scope:
+          type: array
+          description: Scope of the OAuth
+          items: {}
+        type:
+          type: string
+          description: Type of the OAuth
+    OwnerFields:
+      type: object
+      description: Owner fields for Persistance
+      properties:
+        createdBy:
+          type: string
+          description: The user or service account who created the resource
+        updatedBy:
+          type: string
+          description: The user or service account who updated the resource
+    PendingInvitation:
+      type: object
+      description: Pending invitation in workspace
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - $ref: '#/components/schemas/OwnerFields'
+      - properties:
+          email:
+            type: string
+            description: User email
+          invitedBy:
+            type: string
+            description: User sub
+          role:
+            type: string
+            description: ACL role
+          workspace:
+            type: string
+            description: Workspace name
+    PendingInvitationAccept:
+      type: object
+      description: Pending invitation accept
+      properties:
+        email:
+          type: string
+          description: User email
+        workspace:
+          $ref: '#/components/schemas/Workspace'
+    PendingInvitationRender:
+      type: object
+      description: Pending invitation in workspace
+      properties:
+        email:
+          type: string
+          description: User email
+        invitedAt:
+          type: string
+          description: Invitation date
+        invitedBy:
+          $ref: '#/components/schemas/PendingInvitationRenderInvitedBy'
+        role:
+          type: string
+          description: ACL role
+        workspace:
+          $ref: '#/components/schemas/PendingInvitationRenderWorkspace'
+        workspaceDetails:
+          $ref: '#/components/schemas/PendingInvitationWorkspaceDetails'
+    PendingInvitationRenderInvitedBy:
+      type: object
+      description: Invited by
+      properties:
+        email:
+          type: string
+          description: User email
+        family_name:
+          type: string
+          description: User family name
+        given_name:
+          type: string
+          description: User given name
+        sub:
+          type: string
+          description: User sub
+    PendingInvitationRenderWorkspace:
+      type: object
+      description: Workspace
+      properties:
+        displayName:
+          type: string
+          description: Workspace display name
+        name:
+          type: string
+          description: Workspace name
+    PendingInvitationWorkspaceDetails:
+      type: object
+      description: Workspace details
+      properties:
+        emails:
+          type: array
+          description: List of user emails in the workspace
+          items: {}
+        user_number:
+          type: number
+          description: Number of users in the workspace
+    PodTemplateSpec:
+      type: object
+      description: Pod template specification
+    PoliciesList:
+      type: array
+      items:
+        type: string
+        description: Policy name
+    Policy:
+      type: object
+      description: Rule that controls how a deployment is made and served (e.g. location
+        restrictions)
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/PolicySpec'
+    PolicyLocation:
+      type: object
+      description: Policy location
+      properties:
+        name:
+          type: string
+          description: Policy location name
+        type:
+          type: string
+          description: Policy location type
+    PolicyLocations:
+      type: array
+      description: PolicyLocations is a local type that wraps a slice of Location
+      items:
+        $ref: '#/components/schemas/PolicyLocation'
+    PolicyMaxTokens:
+      type: object
+      description: PolicyMaxTokens is a local type that wraps a slice of PolicyMaxTokens
+      properties:
+        granularity:
+          type: string
+          description: Granularity
+        input:
+          type: integer
+          description: Input
+        output:
+          type: integer
+          description: Output
+        ratioInputOverOutput:
+          type: integer
+          description: RatioInputOverOutput
+        step:
+          type: integer
+          description: Step
+        total:
+          type: integer
+          description: Total
+    PolicyResourceType:
+      type: string
+      description: PolicyResourceType is a type of resource, e.g. model, function,
+        etc.
+    PolicyResourceTypes:
+      type: array
+      description: PolicyResourceTypes is a local type that wraps a slice of PolicyResourceType
+      items:
+        $ref: '#/components/schemas/PolicyResourceType'
+    PolicySpec:
+      type: object
+      description: Policy specification
+      properties:
+        flavors:
+          $ref: '#/components/schemas/Flavors'
+          description: Flavors allowed by the policy. If not set, all flavors are
+            allowed.
+        locations:
+          $ref: '#/components/schemas/PolicyLocations'
+          description: Locations allowed by the policy. If not set, all locations
+            are allowed.
+        maxTokens:
+          $ref: '#/components/schemas/PolicyMaxTokens'
+          description: Max token allowed by the policy. If not set, no max token is
+            allowed.
+        resourceTypes:
+          $ref: '#/components/schemas/PolicyResourceTypes'
+          description: ResourceTypes where the policy is applied. If not set, the
+            policy is applied to all resource types.
+        sandbox:
+          type: boolean
+          description: Sandbox mode
+        type:
+          type: string
+          description: Policy type, can be location or flavor
+    PrivateCluster:
+      type: object
+      description: A private cluster where models can be located on.
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - $ref: '#/components/schemas/OwnerFields'
+      - properties:
+          continent:
+            type: string
+            description: The private cluster's continent, used to determine the closest
+              private cluster to serve inference requests based on the user's location
+          country:
+            type: string
+            description: The country where the private cluster is located, used to
+              determine the closest private cluster to serve inference requests based
+              on the user's location
+          displayName:
+            type: string
+            description: The private cluster's display Name
+          healthy:
+            type: boolean
+            description: Whether the private cluster is healthy or not, used to determine
+              if the private cluster is ready to run inference
+          lastHealthCheckTime:
+            type: string
+            description: The private cluster's unique name
+          latitude:
+            type: string
+            description: The private cluster's latitude, used to determine the closest
+              private cluster to serve inference requests based on the user's location
+          longitude:
+            type: string
+            description: The private cluster's longitude, used to determine the closest
+              private cluster to serve inference requests based on the user's location
+          name:
+            type: string
+            description: The name of the private cluster, it must be unique
+          ownedBy:
+            type: string
+            description: The service account (operator) that owns the cluster
+          workspace:
+            type: string
+            description: The workspace the private cluster belongs to
+    PrivateLocation:
+      type: object
+      description: Private location available for policies
+      properties:
+        name:
+          type: string
+          description: Location name
+    Repository:
+      type: object
+      description: Repository
+      properties:
+        type:
+          type: string
+          description: Repository type
+        url:
+          type: string
+          description: Repository URL
+    RequestDurationOverTimeMetric:
+      type: object
+      description: Request duration over time metric
+      properties:
+        average:
+          type: number
+          description: Average request duration
+        p50:
+          type: number
+          description: P50 request duration
+        p90:
+          type: number
+          description: P90 request duration
+        p99:
+          type: number
+          description: P99 request duration
+        timestamp:
+          type: string
+          description: Timestamp
+    RequestDurationOverTimeMetrics:
+      type: object
+      description: Request duration over time metrics
+      properties:
+        requestDurationOverTime:
+          $ref: '#/components/schemas/RequestDurationOverTimeMetric'
+    RequestTotalByOriginMetric:
+      type: object
+      description: Request total by origin metric
+      properties:
+        requestTotalByOrigin:
+          type: object
+          description: Request total by origin
+        requestTotalByOriginAndCode:
+          type: object
+          description: Request total by origin and code
+    RequestTotalMetric:
+      type: object
+      description: Metrics for request total
+      properties:
+        requestTotal:
+          type: number
+          description: Number of requests for all resources globally
+        requestTotalPerCode:
+          type: object
+          description: Number of requests for all resources globally per code
+        rps:
+          type: number
+          description: Number of requests per second for all resources globally
+        rpsPerCode:
+          type: object
+          description: Number of requests for all resources globally
+    ResourceLog:
+      type: object
+      description: Log for a resource deployment (eg. model deployment, function deployment)
+      properties:
+        message:
+          type: string
+          description: Content of the log
+        severity:
+          type: integer
+          description: Severity of the log
+        timestamp:
+          type: string
+          description: The timestamp of the log
+    ResourceMetrics:
+      type: object
+      description: Metrics for a single resource deployment (eg. model deployment,
+        function deployment)
+      properties:
+        inferenceGlobal:
+          $ref: '#/components/schemas/ArrayMetric'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+        lastNRequests:
+          $ref: '#/components/schemas/ArrayMetric'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+        latency:
+          $ref: '#/components/schemas/LatencyMetric'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+        memoryAllocation:
+          $ref: '#/components/schemas/MemoryAllocationMetric'
+          description: Memory allocation metrics for the resource
+        modelTtft:
+          $ref: '#/components/schemas/LatencyMetric'
+          description: Time to first token metrics for model deployments
+        modelTtftOverTime:
+          $ref: '#/components/schemas/TimeToFirstTokenOverTimeMetrics'
+          description: Time to first token metrics over time for model deployments
+        requestDurationOverTime:
+          $ref: '#/components/schemas/RequestDurationOverTimeMetrics'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+        requestTotal:
+          type: number
+          description: Number of requests for the resource globally
+        requestTotalByOrigin:
+          $ref: '#/components/schemas/RequestTotalByOriginMetric'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+        requestTotalPerCode:
+          type: object
+          description: Number of requests for the resource globally per code
+        rps:
+          type: number
+          description: Number of requests per second for the resource globally
+        rpsPerCode:
+          type: object
+          description: Number of requests per second for the resource globally per
+            code
+        tokenRate:
+          $ref: '#/components/schemas/TokenRateMetrics'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+        tokenTotal:
+          $ref: '#/components/schemas/TokenTotalMetric'
+          description: Historical requests (in last 24 hours) for the model deployment
+            globally
+    RevisionConfiguration:
+      type: object
+      description: Revision configuration
+      properties:
+        active:
+          type: string
+          description: Active revision id
+        canary:
+          type: string
+          description: Canary revision id
+        canaryPercent:
+          type: integer
+          description: Canary revision percent
+        traffic:
+          type: integer
+          description: Traffic percentage
+    RevisionMetadata:
+      type: object
+      description: Revision metadata
+      properties:
+        active:
+          type: boolean
+          description: Is the revision active
+        canary:
+          type: boolean
+          description: Is the revision canary
+        createdAt:
+          type: string
+          description: Revision created at
+        createdBy:
+          type: string
+          description: Revision created by
+        id:
+          type: string
+          description: Revision ID
+        previousActive:
+          type: boolean
+          description: Is the revision previous active
+        status:
+          type: string
+          description: Status of the revision
+        trafficPercent:
+          type: integer
+          description: Percent of traffic to the revision
+    Runtime:
+      type: object
+      description: Set of configurations for a deployment
+      properties:
+        args:
+          type: array
+          description: The arguments to pass to the deployment runtime
+          items: {}
+        command:
+          type: array
+          description: The command to run the deployment
+          items: {}
+        cpu:
+          type: integer
+          description: The CPU for the deployment in cores, only available for private
+            cluster
+        endpointName:
+          type: string
+          description: Endpoint Name of the model. In case of hf_private_endpoint,
+            it is the endpoint name. In case of hf_public_endpoint, it is not used.
+        envs:
+          type: array
+          description: The env variables to set in the deployment. Should be a list
+            of Kubernetes EnvVar types
+          items: {}
+        image:
+          type: string
+          description: The Docker image for the deployment
+        memory:
+          type: integer
+          description: The memory for the deployment in MB
+        metricPort:
+          type: integer
+          description: The port to serve the metrics on
+        model:
+          type: string
+          description: The slug name of the origin model at HuggingFace.
+        organization:
+          type: string
+          description: The organization of the model
+        servingPort:
+          type: integer
+          description: The port to serve the model on
+        startupProbe:
+          type: object
+          description: The readiness probe. Should be a Kubernetes Probe type
+        type:
+          type: string
+          description: The type of origin for the deployment (hf_private_endpoint,
+            hf_public_endpoint)
+    ServerlessConfig:
+      type: object
+      description: Configuration for a serverless deployment
+      properties:
+        maxScale:
+          type: integer
+          description: The minimum number of replicas for the deployment. Can be 0
+            or 1 (in which case the deployment is always running in at least one location).
+        minScale:
+          type: integer
+          description: The maximum number of replicas for the deployment.
+        timeout:
+          type: integer
+          description: The timeout for the deployment in seconds
+    SpecConfiguration:
+      type: object
+      description: Configuration, this is a key value storage. In your object you
+        can retrieve the value with config[key]
+      properties:
+        secret:
+          type: boolean
+          description: ACconfiguration secret
+        value:
+          type: string
+          description: Configuration value
+    StoreAgent:
+      type: object
+      description: Store agent
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - $ref: '#/components/schemas/OwnerFields'
+      - properties:
+          configuration:
+            type: array
+            description: Store agent configuration
+            items:
+              $ref: '#/components/schemas/StoreConfiguration'
+          description:
+            type: string
+            description: Store agent description
+          displayName:
+            type: string
+            description: Store agent display name
+          image:
+            type: string
+            description: Store agent image
+          labels:
+            type: object
+            description: Store agent labels
+          name:
+            type: string
+            description: Store agent name
+          prompt:
+            type: string
+            description: Store agent prompt, this is to define what the agent does
+    StoreConfiguration:
+      type: object
+      description: 'Store configuration for resources (eg: agent, function, etc)'
+      properties:
+        availableModels:
+          type: array
+          description: Available models for the configuration
+          items:
+            type: string
+        description:
+          type: string
+          description: Store configuration description
+        displayName:
+          type: string
+          description: Store configuration display name
+        if:
+          type: string
+          description: 'Conditional rendering for the configuration, example: provider
+            === ''openai'''
+        name:
+          type: string
+          description: Store configuration name
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreConfigurationOption'
+        required:
+          type: boolean
+          description: Store configuration required
+        secret:
+          type: boolean
+          description: Store configuration secret
+        type:
+          type: string
+          description: Store configuration type
+    StoreConfigurationOption:
+      type: object
+      description: Store configuration options for a select type configuration
+      properties:
+        if:
+          type: string
+          description: 'Conditional rendering for the configuration option, example:
+            provider === ''openai'''
+        label:
+          type: string
+          description: Store configuration option label
+        value:
+          type: string
+          description: Store configuration option value
+    Template:
+      type: object
+      description: Blaxel template
+      properties:
+        defaultBranch:
+          type: string
+          description: Default branch of the template
+        description:
+          type: string
+          description: Description of the template
+        downloadCount:
+          type: integer
+          description: Number of downloads/clones of the repository
+        forksCount:
+          type: integer
+          description: Number of forks the repository has
+        icon:
+          type: string
+          description: URL to the template's icon
+        iconDark:
+          type: string
+          description: URL to the template's icon in dark mode
+        name:
+          type: string
+          description: Name of the template
+        sha:
+          type: string
+          description: SHA of the variable
+        starCount:
+          type: integer
+          description: Number of stars the repository has
+        topics:
+          type: array
+          description: Topic of the template
+          items:
+            type: string
+        url:
+          type: string
+          description: URL of the template
+        variables:
+          type: array
+          description: Variables of the template
+          items:
+            $ref: '#/components/schemas/TemplateVariable'
+    TemplateVariable:
+      type: object
+      description: Blaxel template variable
+      properties:
+        description:
+          type: string
+          description: Description of the variable
+        integration:
+          type: string
+          description: Integration of the variable
+        name:
+          type: string
+          description: Name of the variable
+        path:
+          type: string
+          description: Path of the variable
+        secret:
+          type: boolean
+          description: Whether the variable is secret
+    TimeFields:
+      type: object
+      description: Time fields for Persistance
+      properties:
+        createdAt:
+          type: string
+          description: The date and time when the resource was created
+        updatedAt:
+          type: string
+          description: The date and time when the resource was updated
+    TimeToFirstTokenOverTimeMetrics:
+      type: object
+      description: Time to first token over time metrics
+      properties:
+        timeToFirstTokenOverTime:
+          $ref: '#/components/schemas/RequestDurationOverTimeMetric'
+    TokenRateMetric:
+      type: object
+      description: Token rate metric
+      properties:
+        model:
+          type: string
+          description: Model ID
+        provider:
+          type: string
+          description: Provider name
+        providerName:
+          type: string
+          description: Provider integration name
+        timestamp:
+          type: string
+          description: Timestamp
+        tokenTotal:
+          type: number
+          description: Total tokens
+        trend:
+          type: number
+          description: Trend
+    TokenRateMetrics:
+      type: object
+      description: Token rate metrics
+      properties:
+        tokenRate:
+          $ref: '#/components/schemas/TokenRateMetric'
+          description: Token rate
+        tokenRateInput:
+          $ref: '#/components/schemas/TokenRateMetric'
+          description: Token rate input
+        tokenRateOutput:
+          $ref: '#/components/schemas/TokenRateMetric'
+          description: Token rate output
+    TokenTotalMetric:
+      type: object
+      description: Token total metric
+      properties:
+        averageTokenInputPerRequest:
+          type: number
+          description: Average input token per request
+        averageTokenOutputPerRequest:
+          type: number
+          description: Average output token per request
+        averageTokenPerRequest:
+          type: number
+          description: Average token per request
+        tokenInput:
+          type: number
+          description: Total input tokens
+        tokenOutput:
+          type: number
+          description: Total output tokens
+        tokenTotal:
+          type: number
+          description: Total tokens
+    TraceIdsResponse:
+      type: object
+      description: Trace IDs response
+    WebsocketChannel:
+      type: object
+      description: WebSocket connection details
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - properties:
+          connection_id:
+            type: string
+            description: Unique connection ID
+          workspace:
+            type: string
+            description: Workspace the connection belongs to
+    Workspace:
+      type: object
+      description: Workspace
+      allOf:
+      - $ref: '#/components/schemas/TimeFields'
+      - $ref: '#/components/schemas/OwnerFields'
+      - properties:
+          accountId:
+            type: string
+            description: Workspace account id
+          displayName:
+            type: string
+            description: Workspace display name
+          labels:
+            type: object
+            description: Workspace labels
+          name:
+            type: string
+            description: Workspace name
+          region:
+            type: string
+            description: Workspace write region
+    WorkspaceUser:
+      type: object
+      description: Workspace user
+      properties:
+        accepted:
+          type: boolean
+          description: Whether the user has accepted the workspace invitation
+        email:
+          type: string
+          description: Workspace user email
+        email_verified:
+          type: boolean
+          description: Whether the user's email has been verified
+        family_name:
+          type: string
+          description: Workspace user family name
+        given_name:
+          type: string
+          description: Workspace user given name
+        role:
+          type: string
+          description: Workspace user role
+        sub:
+          type: string
+          description: Workspace user identifier
+  securitySchemes:
+    BearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+info:
+  title: Blaxel Control Plane
+  version: 0.0.1
+openapi: 3.0.3
+paths:
+  /agents:
+    get:
+      operationId: ListAgents
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Agent'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - agents:list
+      summary: List all agents
+      tags:
+      - agents
+    post:
+      operationId: CreateAgent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Agent'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - agents:create
+      summary: Create agent by name
+      tags:
+      - agents
+  /agents/{agentName}:
+    delete:
+      operationId: DeleteAgent
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - agents:delete
+      summary: Delete agent by name
+      tags:
+      - agents
+    get:
+      operationId: GetAgent
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - agents:get
+      summary: Get agent by name
+      tags:
+      - agents
+    parameters:
+    - description: Name of the agent
+      in: path
+      name: agentName
+      required: true
+      schema:
+        type: string
+    put:
+      operationId: UpdateAgent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Agent'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - agents:update
+      summary: Update agent by name
+      tags:
+      - agents
+  /agents/{agentName}/revisions:
+    get:
+      operationId: ListAgentRevisions
+      parameters:
+      - description: Name of the agent
+        in: path
+        name: agentName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RevisionMetadata'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - agents:list
+      summary: List all agent revisions
+      tags:
+      - agents
+  /configuration:
+    get:
+      operationId: GetConfiguration
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+          description: Configuration of the control plane
+      security:
+      - BearerAuth:
+        - configurations:list
+      summary: List all configurations
+      tags:
+      - configurations
+  /functions:
+    get:
+      operationId: ListFunctions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Function'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - functions:list
+      summary: List all functions
+      tags:
+      - functions
+    post:
+      operationId: CreateFunction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Function'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - functions:create
+      summary: Create function
+      tags:
+      - functions
+  /functions/{functionName}:
+    delete:
+      operationId: DeleteFunction
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - functions:delete
+      summary: Delete function by name
+      tags:
+      - functions
+    get:
+      operationId: GetFunction
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - functions:get
+      summary: Get function by name
+      tags:
+      - functions
+    parameters:
+    - description: Name of the function
+      in: path
+      name: functionName
+      required: true
+      schema:
+        type: string
+    put:
+      operationId: UpdateFunction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Function'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - functions:update
+      summary: Update function by name
+      tags:
+      - functions
+  /functions/{functionName}/revisions:
+    get:
+      description: Returns revisions for a function by name.
+      operationId: ListFunctionRevisions
+      parameters:
+      - description: Name of the function
+        in: path
+        name: functionName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionMetadata'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:list
+      summary: List function revisions
+      tags:
+      - functions
+  /integrations/{integrationName}:
+    get:
+      description: Returns integration information by name.
+      operationId: GetIntegration
+      parameters:
+      - description: Name of the integration
+        in: path
+        name: integrationName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+      security:
+      - BearerAuth:
+        - integrations:list
+      summary: List integrations connections
+      tags:
+      - integrations
+  /integrations/connections:
+    get:
+      description: Returns a list of all connections integrations in the workspace.
+      operationId: ListIntegrationConnections
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/IntegrationConnection'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - integrations:list
+      summary: List integrations connections
+      tags:
+      - integrations
+    post:
+      description: Create a connection for an integration.
+      operationId: CreateIntegrationConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationConnection'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationConnection'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - integrations:create
+      summary: Create integration
+      tags:
+      - integrations
+  /integrations/connections/{connectionName}:
+    delete:
+      description: Deletes an integration connection by integration name and connection
+        name.
+      operationId: DeleteIntegrationConnection
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationConnection'
+          description: successful operation
+      summary: Delete integration
+      tags:
+      - integrations
+    get:
+      description: Returns an integration connection by integration name and connection
+        name.
+      operationId: GetIntegrationConnection
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationConnection'
+          description: successful operation
+      summary: Get integration
+      tags:
+      - integrations
+    parameters:
+    - description: Name of the integrationconnection
+      in: path
+      name: connectionName
+      required: true
+      schema:
+        type: string
+    put:
+      description: Update an integration connection by integration name and connection
+        name.
+      operationId: UpdateIntegrationConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationConnection'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationConnection'
+          description: successful operation
+      summary: Update integration connection
+      tags:
+      - integrations
+  /integrations/connections/{connectionName}/endpointConfigurations:
+    get:
+      description: Returns a list of all endpoint configurations for a model.
+      operationId: GetIntegrationConnectionModelEndpointConfigurations
+      parameters:
+      - description: Name of the connection
+        in: path
+        name: connectionName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+      security:
+      - BearerAuth:
+        - integrations:list
+      summary: Get integration connection model endpoint configurations
+      tags:
+      - integrations
+  /integrations/connections/{connectionName}/models:
+    get:
+      description: Returns a list of all models for an integration connection.
+      operationId: ListIntegrationConnectionModels
+      parameters:
+      - description: Name of the connection
+        in: path
+        name: connectionName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+      security:
+      - BearerAuth:
+        - integrations:list
+      summary: List integration connection models
+      tags:
+      - integrations
+  /integrations/connections/{connectionName}/models/{modelId}:
+    get:
+      description: Returns a model for an integration connection by ID.
+      operationId: GetIntegrationConnectionModel
+      parameters:
+      - description: Name of the connection
+        in: path
+        name: connectionName
+        required: true
+        schema:
+          type: string
+      - description: Model ID
+        in: path
+        name: modelId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+      security:
+      - BearerAuth:
+        - integrations:list
+      summary: Get integration model endpoint configurations
+      tags:
+      - integrations
+  /knowledgebases:
+    get:
+      description: Returns a list of all knowledgebases in the workspace.
+      operationId: ListKnowledgebases
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Knowledgebase'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - knowledgebases:list
+      summary: List knowledgebases
+      tags:
+      - knowledgebases
+    post:
+      description: Creates an knowledgebase.
+      operationId: CreateKnowledgebase
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Knowledgebase'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Knowledgebase'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - knowledgebases:create
+      summary: Create knowledgebase
+      tags:
+      - knowledgebases
+  /knowledgebases/{knowledgebaseName}:
+    delete:
+      description: Deletes an knowledgebase by Name.
+      operationId: DeleteKnowledgebase
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Knowledgebase'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - knowledgebases:delete
+      summary: Delete knowledgebase
+      tags:
+      - knowledgebases
+    get:
+      description: Returns an knowledgebase by Name.
+      operationId: GetKnowledgebase
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Knowledgebase'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - knowledgebases:get
+      summary: Get knowledgebase
+      tags:
+      - knowledgebases
+    parameters:
+    - description: Name of the knowledgebase
+      in: path
+      name: knowledgebaseName
+      required: true
+      schema:
+        type: string
+    put:
+      description: Updates an knowledgebase.
+      operationId: UpdateKnowledgebase
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Knowledgebase'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Knowledgebase'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - knowledgebases:update
+      summary: Update knowledgebase
+      tags:
+      - knowledgebases
+  /knowledgebases/{knowledgebaseName}/revisions:
+    get:
+      description: Returns revisions for a knowledgebase by name.
+      operationId: ListKnowledgebaseRevisions
+      parameters:
+      - description: Name of the knowledgebase
+        in: path
+        name: knowledgebaseName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionMetadata'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:list
+      summary: List knowledgebase revisions
+      tags:
+      - knowledgebases
+  /locations:
+    get:
+      description: Returns a list of all locations available with status.
+      operationId: ListLocations
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LocationResponse'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - locations:list
+      summary: List locations
+      tags:
+      - locations
+  /mcp/hub:
+    get:
+      operationId: ListMCPHubDefinitions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MCPDefinition'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - mcphub:list
+  /models:
+    get:
+      description: Returns a list of all models in the workspace.
+      operationId: ListModels
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Model'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:list
+      summary: List models
+      tags:
+      - models
+    post:
+      description: Creates a model.
+      operationId: CreateModel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Model'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:create
+      summary: Create model
+      tags:
+      - models
+  /models/{modelName}:
+    delete:
+      description: Deletes a model by name.
+      operationId: DeleteModel
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:delete
+      summary: Delete model
+      tags:
+      - models
+    get:
+      description: Returns a model by name.
+      operationId: GetModel
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:get
+      summary: Get model
+      tags:
+      - models
+    parameters:
+    - description: Name of the model
+      in: path
+      name: modelName
+      required: true
+      schema:
+        type: string
+    put:
+      description: Update a model by name.
+      operationId: UpdateModel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Model'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:update
+      summary: Create or update model
+      tags:
+      - models
+  /models/{modelName}/revisions:
+    get:
+      description: Returns revisions for a model by name.
+      operationId: ListModelRevisions
+      parameters:
+      - description: Name of the model
+        in: path
+        name: modelName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionMetadata'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - models:list
+      summary: List model revisions
+      tags:
+      - models
+  /policies:
+    get:
+      description: Returns a list of all policies in the workspace.
+      operationId: ListPolicies
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Policy'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - policies:list
+      summary: List policies
+      tags:
+      - policies
+    post:
+      description: Creates a policy.
+      operationId: CreatePolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - policies:create
+      summary: Create policy
+      tags:
+      - policies
+  /policies/{policyName}:
+    delete:
+      description: Deletes a policy by name.
+      operationId: DeletePolicy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - policies:delete
+      summary: Delete policy
+      tags:
+      - policies
+    get:
+      description: Returns a policy by name.
+      operationId: GetPolicy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - policies:get
+      summary: Get policy
+      tags:
+      - policies
+    parameters:
+    - description: Name of the policy
+      in: path
+      name: policyName
+      required: true
+      schema:
+        type: string
+    put:
+      description: Updates a policy.
+      operationId: UpdatePolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - policies:update
+      summary: Update policy
+      tags:
+      - policies
+  /privateclusters:
+    get:
+      operationId: ListPrivateClusters
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PrivateCluster'
+                type: array
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: workspace not found
+      security:
+      - BearerAuth:
+        - privateclusters:list
+      summary: List all private clusters
+      tags:
+      - privateclusters
+    post:
+      operationId: CreatePrivateCluster
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateCluster'
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+      security:
+      - BearerAuth:
+        - privateclusters:create
+      summary: Create private cluster
+      tags:
+      - privateclusters
+  /privateclusters/{privateClusterName}:
+    delete:
+      operationId: DeletePrivateCluster
+      parameters:
+      - description: Name of the private cluster
+        in: path
+        name: privateClusterName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateCluster'
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+      security:
+      - BearerAuth:
+        - privateclusters:delete
+      summary: Delete private cluster
+      tags:
+      - privateclusters
+    get:
+      operationId: GetPrivateCluster
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateCluster'
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: private cluster not found
+      security:
+      - BearerAuth:
+        - privateclusters:get
+      summary: Get private cluster by name
+      tags:
+      - privateclusters
+    parameters:
+    - description: Name of the private cluster
+      in: path
+      name: privateClusterName
+      required: true
+      schema:
+        type: string
+    put:
+      operationId: UpdatePrivateCluster
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateCluster'
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+      security:
+      - BearerAuth:
+        - privateclusters:update
+      summary: Update private cluster
+      tags:
+      - privateclusters
+  /privateclusters/{privateClusterName}/health:
+    get:
+      operationId: GetPrivateClusterHealth
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+      summary: Get private cluster health
+      tags:
+      - privateclusters
+    parameters:
+    - description: Name of the private cluster
+      in: path
+      name: privateClusterName
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: UpdatePrivateClusterHealth
+      parameters:
+      - description: Name of the private cluster
+        in: path
+        name: privateClusterName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: Forbidden
+      summary: Update private cluster health
+      tags:
+      - privateclusters
+  /profile/invitations:
+    get:
+      description: Returns a list of all pending invitations in the workspace.
+      operationId: ListAllPendingInvitations
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PendingInvitationRender'
+                type: array
+          description: successful operation
+        "404":
+          description: no pending invitations
+      security:
+      - BearerAuth:
+        - invitations:list
+      summary: List pending invitations
+      tags:
+      - invitations
+  /service_accounts:
+    get:
+      description: Returns a list of all service accounts in the workspace.
+      operationId: GetWorkspaceServiceAccounts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  properties:
+                    client_id:
+                      description: Service account client ID
+                      type: string
+                    created_at:
+                      description: Creation timestamp
+                      type: string
+                    description:
+                      description: Service account description
+                      type: string
+                    name:
+                      description: Service account name
+                      type: string
+                    updated_at:
+                      description: Last update timestamp
+                      type: string
+                  type: object
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:get
+      summary: Get workspace service accounts
+      tags:
+      - service_accounts
+    post:
+      description: Creates a service account in the workspace.
+      operationId: CreateWorkspaceServiceAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                description:
+                  description: Service account description
+                  type: string
+                name:
+                  description: Service account name
+                  type: string
+              required:
+              - name
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  client_id:
+                    description: Service account client ID
+                    type: string
+                  client_secret:
+                    description: Service account client secret (only returned on creation)
+                    type: string
+                  created_at:
+                    description: Creation timestamp
+                    type: string
+                  description:
+                    description: Service account description
+                    type: string
+                  name:
+                    description: Service account name
+                    type: string
+                  updated_at:
+                    description: Last update timestamp
+                    type: string
+                type: object
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:update
+      summary: Create workspace service account
+      tags:
+      - service_accounts
+  /service_accounts/{clientId}:
+    delete:
+      description: Deletes a service account.
+      operationId: DeleteWorkspaceServiceAccount
+      parameters:
+      - description: Client ID
+        in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  client_id:
+                    description: Service account client ID
+                    type: string
+                  created_at:
+                    description: Creation timestamp
+                    type: string
+                  description:
+                    description: Service account description
+                    type: string
+                  name:
+                    description: Service account name
+                    type: string
+                  updated_at:
+                    description: Last update timestamp
+                    type: string
+                type: object
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:update
+      summary: Delete workspace service account
+      tags:
+      - service_accounts
+    put:
+      description: Updates a service account.
+      operationId: UpdateWorkspaceServiceAccount
+      parameters:
+      - description: Client ID
+        in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                description:
+                  description: Service account description
+                  type: string
+                name:
+                  description: Service account name
+                  type: string
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  client_id:
+                    description: Service account client ID
+                    type: string
+                  created_at:
+                    description: Creation timestamp
+                    type: string
+                  description:
+                    description: Service account description
+                    type: string
+                  name:
+                    description: Service account name
+                    type: string
+                  updated_at:
+                    description: Last update timestamp
+                    type: string
+                type: object
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:update
+      summary: Update workspace service account
+      tags:
+      - service_accounts
+  /service_accounts/{clientId}/api_keys:
+    get:
+      description: Returns a list of all API keys for a service account.
+      operationId: ListApiKeysForServiceAccount
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - apiKey:list
+      summary: List API keys for service account
+      tags:
+      - service_accounts
+    parameters:
+    - description: Client ID
+      in: path
+      name: clientId
+      required: true
+      schema:
+        type: string
+    post:
+      description: Creates an API key for a service account.
+      operationId: CreateApiKeyForServiceAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                expires_in:
+                  description: Expiration period for the API key
+                  type: string
+                name:
+                  description: Name for the API key
+                  type: string
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - apiKey:write
+      summary: Create API key for service account
+      tags:
+      - service_accounts
+  /service_accounts/{clientId}/api_keys/{apiKeyId}:
+    delete:
+      description: Deletes an API key for a service account.
+      operationId: DeleteApiKeyForServiceAccount
+      responses:
+        "200":
+          description: successful operation
+      security:
+      - BearerAuth:
+        - apiKey:write
+      summary: Delete API key for service account
+      tags:
+      - service_accounts
+    parameters:
+    - description: Client ID
+      in: path
+      name: clientId
+      required: true
+      schema:
+        type: string
+    - description: Api key id
+      in: path
+      name: apiKeyId
+      required: true
+      schema:
+        type: string
+  /templates:
+    get:
+      description: Returns a list of all templates.
+      operationId: ListTemplates
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - templates:list
+      summary: List templates
+      tags:
+      - templates
+  /templates/{templateName}:
+    get:
+      description: Returns a template by name.
+      operationId: GetTemplate
+      parameters:
+      - description: Name of the template
+        in: path
+        name: templateName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - templates:get
+      summary: Get template
+  /templates/{templateName}/contents:
+    get:
+      operationId: GetTemplateContents
+      parameters:
+      - in: path
+        name: templateName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+          description: List of files in the template
+  /templates/{templateName}/contents/{fileName}:
+    get:
+      operationId: GetTemplateFileContents
+      parameters:
+      - in: path
+        name: templateName
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: fileName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Content of the file
+  /users:
+    get:
+      description: Returns a list of all users in the workspace.
+      operationId: ListWorkspaceUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/WorkspaceUser'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:list
+      summary: List users in workspace
+      tags:
+      - workspaces
+    post:
+      description: Invites a user to the workspace by email.
+      operationId: InviteWorkspaceUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  format: email
+                  type: string
+              type: object
+        description: Email of the user to invite
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingInvitation'
+          description: successful operation
+        "400":
+          description: invalid email format
+        "404":
+          description: workspace not found
+      security:
+      - BearerAuth:
+        - workspaces:invite
+      summary: Invite user to workspace
+      tags:
+      - workspaces
+  /users/{subOrEmail}:
+    delete:
+      description: Removes a user from the workspace (or revokes an invitation if
+        the user has not accepted the invitation yet).
+      operationId: RemoveWorkspaceUser
+      parameters:
+      - description: Sub or email of the user
+        in: path
+        name: subOrEmail
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: User successfully removed or invitation revoked
+        "404":
+          description: Workspace or user not found
+      security:
+      - BearerAuth:
+        - workspaces:remove
+      summary: Remove user from workspace or revoke invitation
+      tags:
+      - workspaces
+    put:
+      description: Updates the role of a user in the workspace.
+      operationId: UpdateWorkspaceUserRole
+      parameters:
+      - description: Sub or email of the user
+        in: path
+        name: subOrEmail
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                role:
+                  description: The new role to assign to the user
+                  type: string
+              required:
+              - role
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceUser'
+          description: User role updated successfully
+        "400":
+          description: Invalid role provided
+        "404":
+          description: Workspace or user not found
+      security:
+      - BearerAuth:
+        - workspaces:update
+      summary: Update user role in workspace
+      tags:
+      - workspaces
+  /workspaces:
+    get:
+      description: Returns a list of all workspaces.
+      operationId: ListWorkspaces
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Workspace'
+                type: array
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:list
+      summary: List workspaces
+      tags:
+      - workspaces
+    post:
+      description: Creates a workspace.
+      operationId: CreateWorspace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:create
+      summary: Create worspace
+      tags:
+      - workspaces
+  /workspaces/{workspaceName}:
+    delete:
+      description: Deletes a workspace by name.
+      operationId: DeleteWorkspace
+      parameters:
+      - description: Name of the workspace
+        in: path
+        name: workspaceName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:delete
+      summary: Delete workspace
+      tags:
+      - workspaces
+    get:
+      description: Returns a workspace by name.
+      operationId: GetWorkspace
+      parameters:
+      - description: Name of the workspace
+        in: path
+        name: workspaceName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:get
+      summary: Get workspace
+      tags:
+      - workspaces
+    put:
+      description: Updates a workspace by name.
+      operationId: UpdateWorkspace
+      parameters:
+      - description: name of the workspace
+        in: path
+        name: workspaceName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: successful operation
+      security:
+      - BearerAuth:
+        - workspaces:update
+      summary: Update workspace
+      tags:
+      - workspaces
+  /workspaces/{workspaceName}/decline:
+    post:
+      description: Declines an invitation to a workspace.
+      operationId: DeclineWorkspaceInvitation
+      parameters:
+      - description: Name of the workspace
+        in: path
+        name: workspaceName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingInvitation'
+          description: Invitation successfully declined
+      security:
+      - BearerAuth:
+        - workspaces:decline
+      summary: Decline invitation to workspace
+      tags:
+      - workspaces
+  /workspaces/{workspaceName}/join:
+    post:
+      description: Accepts an invitation to a workspace.
+      operationId: AcceptWorkspaceInvitation
+      parameters:
+      - description: Name of the workspace
+        in: path
+        name: workspaceName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingInvitationAccept'
+          description: Invitation successfully accepted
+        "404":
+          description: Workspace or invitation not found
+      security:
+      - BearerAuth:
+        - workspaces:accept
+      summary: Accept invitation to workspace
+      tags:
+      - workspaces
+  /workspaces/{workspaceName}/leave:
+    delete:
+      description: Leaves a workspace.
+      operationId: LeaveWorkspace
+      parameters:
+      - description: Name of the workspace
+        in: path
+        name: workspaceName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: Workspace successfully left
+        "404":
+          description: Workspace not found
+      security:
+      - BearerAuth:
+        - workspaces:leave
+      summary: Leave workspace
+      tags:
+      - workspaces
+security:
+- BearerAuth:
+  - admin
+servers:
+- description: Blaxel Control Plane
+  url: https://api.blaxel.ai/v0
+- description: Blaxel Inference
+  url: https://run.blaxel.ai

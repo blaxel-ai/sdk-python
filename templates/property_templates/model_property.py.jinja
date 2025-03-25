@@ -1,0 +1,53 @@
+{% macro construct_function(property, source) %}
+{{ property.class_info.name }}.from_dict({{ source }})
+{% endmacro %}
+
+{% from "property_templates/property_macros.py.jinja" import construct_template %}
+
+{% macro construct(property, source) %}
+{{ construct_template(construct_function, property, source) }}
+{% endmacro %}
+
+{% macro check_type_for_construct(property, source) %}isinstance({{ source }}, dict){% endmacro %}
+
+{% macro transform(property, source, destination, declare_type=True) %}
+{% set transformed_to_dict = source + ".to_dict()" %}
+{% set transformed_dict = source %}
+{% set type_string = property.get_type_string(json=True) %}
+{% if property.required %}
+if type({{source}}) == dict:
+    {{ destination }} = {{ transformed_dict }}
+else:
+    {{ destination }} = {{ transformed_to_dict }}
+{%- else %}
+{{ destination }}{% if declare_type %}: {{ type_string }}{% endif %} = UNSET
+if {{source}} and not isinstance({{ source }}, Unset) and not isinstance({{source}}, dict):
+    {{ destination }} = {{ transformed_to_dict }}
+elif {{source}} and isinstance({{source}}, dict):
+    {{destination}} = {{source}}
+{%- endif %}
+{% endmacro %}
+
+{% macro transform_multipart_body(property, source, destination) %}
+{% set transformed = source + ".to_multipart()" %}
+{% set type_string = property.get_type_string(multipart=True) %}
+{% if property.required %}
+{{ destination }} = {{ transformed }}
+{%- else %}
+{{ destination }}: {{ type_string }} = UNSET
+if not isinstance({{ source }}, Unset):
+    {{ destination }} = {{ transformed }}
+{%- endif %}
+{% endmacro %}
+
+{% macro transform_multipart(property, source, destination) %}
+{% set transformed = "(None, json.dumps(" + source + ".to_dict()" + ").encode(), 'application/json')" %}
+{% set type_string = property.get_type_string(multipart=True) %}
+{% if property.required %}
+{{ destination }} = {{ transformed }}
+{%- else %}
+{{ destination }}: {{ type_string }} = UNSET
+if not isinstance({{ source }}, Unset):
+    {{ destination }} = {{ transformed }}
+{%- endif %}
+{% endmacro %}
