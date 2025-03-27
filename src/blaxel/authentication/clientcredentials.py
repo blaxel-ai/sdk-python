@@ -26,20 +26,7 @@ class ClientCredentials(BlaxelAuth):
     """
     ClientCredentials auth that authenticates requests using client credentials.
     """
-
-    def __init__(self, credentials: CredentialsType, workspace_name: str, base_url: str):
-        """
-        Initializes the ClientCredentials auth with the given credentials, workspace name, and base URL.
-
-        Parameters:
-            credentials: Credentials containing access and refresh tokens.
-            workspace_name (str): The name of the workspace.
-            base_url (str): The base URL for authentication.
-        """
-        self.credentials = credentials
-        self.expires_at = None
-        self.workspace_name = workspace_name
-        self.base_url = base_url
+    expires_at: Optional[datetime] = None
 
     def get_headers(self):
         """
@@ -100,3 +87,7 @@ class ClientCredentials(BlaxelAuth):
         request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.access_token}"
         request.headers["X-Blaxel-Workspace"] = self.workspace_name
         yield request
+
+    @property
+    def token(self):
+        return self.credentials.access_token

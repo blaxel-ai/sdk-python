@@ -1,4 +1,5 @@
 import os
+from logging import getLogger
 from pathlib import Path
 from typing import Optional
 
@@ -10,6 +11,7 @@ from .clientcredentials import ClientCredentials
 from .devicemode import DeviceMode
 from .types import BlaxelAuth, CredentialsType
 
+logger = getLogger(__name__)
 
 def get_credentials() -> Optional[CredentialsType]:
     """
@@ -58,7 +60,7 @@ def get_credentials() -> Optional[CredentialsType]:
         return None
 
 
-def auth(env: str, base_url: str) -> Auth:
+def auth(env: str, base_url: str) -> BlaxelAuth:
     """
     Create and return the appropriate credentials object based on available credentials.
 
@@ -71,14 +73,17 @@ def auth(env: str, base_url: str) -> Auth:
         return None
 
     if credentials.api_key:
+        logger.debug(f"Using API key for authentication")
         return ApiKey(credentials, credentials.workspace, base_url)
 
     if credentials.client_credentials:
+        logger.debug(f"Using client credentials for authentication")
         return ClientCredentials(credentials, credentials.workspace, base_url)
 
     if credentials.device_code:
+        logger.debug(f"Using device code for authentication")
         return DeviceMode(credentials, credentials.workspace, base_url)
 
-    return None
+    return BlaxelAuth(credentials, credentials.workspace, base_url)
 
 __all__ = ["BlaxelAuth", "CredentialsType"]

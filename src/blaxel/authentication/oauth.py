@@ -38,7 +38,6 @@ async def oauth_token(
     Returns:
         The OAuth token response or error
     """
-    print(options.body, options.headers)
     response = await (client or default_client).get_async_httpx_client().post(
         url="/oauth/token",
         json=options.body or {},

@@ -2,12 +2,14 @@ import os
 from typing import Dict
 
 from ..authentication import BlaxelAuth, auth
+from .logger import init_logger
 
 
 class Settings:
     auth: BlaxelAuth
 
     def __init__(self):
+        init_logger(self.log_level)
         self.auth = auth(self.env, self.base_url)
         self._headers = None
 
@@ -15,6 +17,11 @@ class Settings:
     def env(self) -> str:
         """Get the environment."""
         return os.environ.get("BL_ENV", "prod")
+
+    @property
+    def log_level(self) -> str:
+        """Get the log level."""
+        return os.environ.get("LOG_LEVEL", "INFO")
 
     @property
     def base_url(self) -> str:

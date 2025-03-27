@@ -78,20 +78,6 @@ class DeviceMode(BlaxelAuth):
     """
     DeviceMode auth that authenticates requests using a device code.
     """
-
-    def __init__(self, credentials: CredentialsType, workspace_name: str, base_url: str):
-        """
-        Initializes the DeviceMode auth with the given credentials, workspace name, and base URL.
-
-        Parameters:
-            credentials: Credentials containing the Bearer token and refresh token.
-            workspace_name (str): The name of the workspace.
-            base_url (str): The base URL for authentication.
-        """
-        self.credentials = credentials
-        self.workspace_name = workspace_name
-        self.base_url = base_url
-
     def get_headers(self) -> Dict[str, str]:
         """
         Retrieves the authentication headers containing the Bearer token and workspace information.
@@ -154,7 +140,6 @@ class DeviceMode(BlaxelAuth):
 
         request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.access_token}"
         request.headers["X-Blaxel-Workspace"] = self.workspace_name
-        print("AUTH FLOW",request.headers)
         yield request
 
     def do_refresh(self) -> Optional[Exception]:
@@ -195,3 +180,7 @@ class DeviceMode(BlaxelAuth):
 
         except Exception as e:
             return Exception(f"Failed to refresh token: {str(e)}")
+
+    @property
+    def token(self):
+        return self.credentials.access_token

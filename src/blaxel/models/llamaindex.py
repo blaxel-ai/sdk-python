@@ -1,0 +1,59 @@
+from google.genai.types import HttpOptions
+from llama_index.llms.anthropic import Anthropic
+from llama_index.llms.deepseek import DeepSeek
+from llama_index.llms.google_genai import GoogleGenAI
+from llama_index.llms.groq import Groq
+from llama_index.llms.openai import OpenAI
+
+from ..common.settings import settings
+from .custom.llamaindex.cohere import Cohere
+
+
+async def get_llamaindex_model(url: str, type: str, model: str, **kwargs):
+    if type == 'anthropic':
+        return Anthropic(
+            model=model,
+            api_key=settings.auth.token,
+            base_url=url,
+            default_headers=settings.auth.get_headers(),
+            **kwargs
+        )
+    elif type == 'xai':
+        return Groq(
+            model=model,
+            api_key=settings.auth.token,
+            api_base=f"{url}/v1",
+            **kwargs
+        )
+    elif type == 'gemini':
+        return GoogleGenAI(
+            api_key=settings.auth.token,
+            model=model,
+            api_base=f"{url}/v1",
+            http_options=HttpOptions(
+                base_url=url,
+                headers=settings.auth.get_headers(),
+            ),
+            **kwargs
+        )
+    elif type == 'cohere':
+        return Cohere(
+            model=model,
+            api_key=settings.auth.token,
+            api_base=url,
+            **kwargs
+        )
+    elif type == 'deepseek':
+        return DeepSeek(
+            model=model,
+            api_key=settings.auth.token,
+            api_base=f"{url}/v1",
+            **kwargs
+        )
+    else:
+        return OpenAI(
+            model=model,
+            api_key=settings.auth.token,
+            api_base=f"{url}/v1",
+            **kwargs
+        )

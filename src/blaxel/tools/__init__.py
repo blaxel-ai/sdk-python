@@ -1,0 +1,190 @@
+import os
+from contextlib import AsyncExitStack
+from logging import getLogger
+from types import TracebackType
+from typing import Any, cast
+
+from langchain_core.tools import StructuredTool
+from llama_index.core.tools import FunctionTool
+from mcp import ClientSession
+from mcp.types import (CallToolResult, EmbeddedResource, ImageContent,
+                       TextContent)
+from mcp.types import Tool as MCPTool
+
+from ..cache import find_from_cache
+from ..client import client
+from ..client.api.functions import get_function
+from ..client.models.function import Function
+from ..common.settings import settings
+from ..mcp.client import websocket_client
+from .langchain import get_langchain_tools
+from .llamaindex import get_llamaindex_tools
+from .types import Tool, ToolException
+
+NonTextContent = ImageContent | EmbeddedResource
+
+
+logger = getLogger(__name__)
+
+def _convert_call_tool_result(
+    call_tool_result: CallToolResult,
+) -> tuple[str | list[str], list[NonTextContent] | None]:
+    text_contents: list[TextContent] = []
+    non_text_contents = []
+    for content in call_tool_result.content:
+        if isinstance(content, TextContent):
+            text_contents.append(content)
+        else:
+            non_text_contents.append(content)
+
+    tool_content: str | list[str] = [content.text for content in text_contents]
+    if len(text_contents) == 1:
+        tool_content = tool_content[0]
+
+    if call_tool_result.isError:
+        raise ToolException(tool_content)
+
+    return tool_content, non_text_contents or None
+
+
+def convert_mcp_tool_to_blaxel_tool(
+    session: ClientSession,
+    tool: MCPTool,
+) -> Tool:
+    """Convert an MCP tool to a LangChain tool.
+
+    NOTE: this tool can be executed only in a context of an active MCP client session.
+
+    Args:
+        session: MCP client session
+        tool: MCP tool to convert
+
+    Returns:
+        a LangChain tool
+    """
+
+    async def call_tool(
+        **arguments: dict[str, Any],
+    ) -> tuple[str | list[str], list[NonTextContent] | None]:
+        call_tool_result = await session.call_tool(tool.name, arguments)
+        return _convert_call_tool_result(call_tool_result)
+
+    return Tool(
+        name=tool.name,
+        description=tool.description or "",
+        input_schema=tool.inputSchema,
+        coroutine=call_tool,
+        response_format="content_and_artifact",
+    )
+
+
+async def load_mcp_tools(session: ClientSession) -> list[Tool]:
+    """Load all available MCP tools and convert them to LangChain tools."""
+    tools = await session.list_tools()
+    return [convert_mcp_tool_to_blaxel_tool(session, tool) for tool in tools.tools]
+
+class BlaxelTools:
+    def __init__(self, functions: list[str]):
+        self.exit_stack = AsyncExitStack()
+        self.sessions: dict[str, ClientSession] = {}
+        self.server_name_to_tools: dict[str, list[Tool]] = {}
+        self.functions = functions
+
+    def _external_url(self, name: str) -> str:
+        return f"{settings.run_url}/{settings.auth.workspace_name}/functions/{name}"
+
+    def _url(self, name: str) -> str:
+        env_var = name.replace("-", "_").upper()
+        if os.getenv(f"BL_FUNCTION_{env_var}_SERVICE_NAME"):
+            return f"https://{os.getenv(f'BL_FUNCTION_{env_var}_SERVICE_NAME')}.{settings.run_internal_hostname}"
+        return self._external_url(name)
+
+    def _fallback_url(self, name: str) -> str | None:
+        if self._external_url(name) != self._url(name):
+            return self._external_url(name)
+        return None
+
+    def get_tools(self) -> list[Tool]:
+        """Get a list of all tools from all connected servers."""
+        all_tools: list[Tool] = []
+        for server_tools in self.server_name_to_tools.values():
+            all_tools.extend(server_tools)
+        return all_tools
+
+    def to_langchain(self) -> list[StructuredTool]:
+        return get_langchain_tools(self.get_tools())
+
+    def to_llamaindex(self) -> list[FunctionTool]:
+        return get_llamaindex_tools(self.get_tools())
+
+    async def connect_to_server_via_websocket(self, function: Function):
+        # Create and store the connection
+        try:
+            url = self._url(function.metadata.name)
+            headers = settings.auth.get_headers()
+            read, write = await self.exit_stack.enter_async_context(websocket_client(url, headers, timeout=30))
+            session = cast(
+                ClientSession,
+                await self.exit_stack.enter_async_context(ClientSession(read, write)),
+            )
+            await self._initialize_session_and_load_tools(function.metadata.name, session)
+        except Exception as e:
+            if not self._fallback_url(function.metadata.name):
+                raise e
+            url = self._fallback_url(function.metadata.name)
+            headers = settings.auth.get_headers()
+            read, write = await self.exit_stack.enter_async_context(websocket_client(url, headers))
+            session = cast(
+                ClientSession,
+                await self.exit_stack.enter_async_context(ClientSession(read, write)),
+            )
+            await self._initialize_session_and_load_tools(function.metadata.name, session)
+
+    async def _initialize_session_and_load_tools(
+        self, name: str, session: ClientSession
+    ) -> None:
+        """Initialize a session and load tools from it.
+
+        Args:
+            server_name: Name to identify this server connection
+            session: The ClientSession to initialize
+        """
+        # Initialize the session
+        await session.initialize()
+        self.sessions[name] = session
+
+        # Load tools from this server
+        server_tools = await load_mcp_tools(session)
+        self.server_name_to_tools[name] = server_tools
+
+    async def _get_function(self, tool) -> Function | None:
+        cache_data = await find_from_cache('Function', tool)
+        if cache_data:
+            return Function(**cache_data)
+        try:
+            return await get_function.asyncio(client=client, function_name=tool)
+        except Exception as e:
+            return None
+
+    async def __aenter__(self) -> "BlaxelTools":
+        try:
+            functions = []
+            for name in self.functions:
+                function = await self._get_function(name)
+                if function:
+                    functions.append(function)
+                else:
+                    logger.warning(f"Function {name} not loaded, skipping")
+                await self.connect_to_server_via_websocket(function)
+            return self
+        except Exception:
+            await self.exit_stack.aclose()
+            raise
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        await self.exit_stack.aclose()

@@ -38,7 +38,7 @@ def load_env() -> EnvConfig:
                 line = line.strip()
                 if line and not line.startswith('#'):
                     key, value = line.split('=', 1)
-                    env_config.secret_env[key] = value
+                    env_config.secret_env[key] = value.replace('"', '')
     except Exception:
         pass
 
