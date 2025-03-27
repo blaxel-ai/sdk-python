@@ -1,28 +1,26 @@
 import asyncio
-import os
 
 from dotenv import load_dotenv
 
 load_dotenv()
-os.environ["LOG_LEVEL"] = "DEBUG"
 
 from logging import getLogger
 
-from blaxel.tools import BlaxelTools
+from blaxel.tools import BlTools
 
 logger = getLogger(__name__)
 
 async def test_mcp_tools_langchain():
-    async with BlaxelTools(["blaxel-search"]) as blaxel_tools:
-        tools = blaxel_tools.to_langchain()
+    async with BlTools(["blaxel-search"]) as bl_tools:
+        tools = bl_tools.to_langchain()
         if len(tools) == 0:
             raise Exception("No tools found")
         result = await tools[0].ainvoke({ "query": "What is the capital of France?"})
         logger.info(result)
 
 async def test_mcp_tools_llamaindex():
-    async with BlaxelTools(["blaxel-search"]) as blaxel_tools:
-        tools = blaxel_tools.to_llamaindex()
+    async with BlTools(["blaxel-search"]) as bl_tools:
+        tools = bl_tools.to_llamaindex()
         if len(tools) == 0:
             raise Exception("No tools found")
         result = await tools[0].acall(query="What is the capital of France?")

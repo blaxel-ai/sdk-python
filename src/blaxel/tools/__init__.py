@@ -7,8 +7,7 @@ from typing import Any, cast
 from langchain_core.tools import StructuredTool
 from llama_index.core.tools import FunctionTool
 from mcp import ClientSession
-from mcp.types import (CallToolResult, EmbeddedResource, ImageContent,
-                       TextContent)
+from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
 from ..cache import find_from_cache
@@ -19,32 +18,9 @@ from ..common.settings import settings
 from ..mcp.client import websocket_client
 from .langchain import get_langchain_tools
 from .llamaindex import get_llamaindex_tools
-from .types import Tool, ToolException
-
-NonTextContent = ImageContent | EmbeddedResource
-
+from .types import Tool
 
 logger = getLogger(__name__)
-
-def _convert_call_tool_result(
-    call_tool_result: CallToolResult,
-) -> tuple[str | list[str], list[NonTextContent] | None]:
-    text_contents: list[TextContent] = []
-    non_text_contents = []
-    for content in call_tool_result.content:
-        if isinstance(content, TextContent):
-            text_contents.append(content)
-        else:
-            non_text_contents.append(content)
-
-    tool_content: str | list[str] = [content.text for content in text_contents]
-    if len(text_contents) == 1:
-        tool_content = tool_content[0]
-
-    if call_tool_result.isError:
-        raise ToolException(tool_content)
-
-    return tool_content, non_text_contents or None
 
 
 def convert_mcp_tool_to_blaxel_tool(
@@ -65,9 +41,11 @@ def convert_mcp_tool_to_blaxel_tool(
 
     async def call_tool(
         **arguments: dict[str, Any],
-    ) -> tuple[str | list[str], list[NonTextContent] | None]:
+    ) -> CallToolResult:
+        logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
         call_tool_result = await session.call_tool(tool.name, arguments)
-        return _convert_call_tool_result(call_tool_result)
+        logger.debug(f"Tool {tool.name} returned {call_tool_result}")
+        return call_tool_result
 
     return Tool(
         name=tool.name,
@@ -83,7 +61,7 @@ async def load_mcp_tools(session: ClientSession) -> list[Tool]:
     tools = await session.list_tools()
     return [convert_mcp_tool_to_blaxel_tool(session, tool) for tool in tools.tools]
 
-class BlaxelTools:
+class BlTools:
     def __init__(self, functions: list[str]):
         self.exit_stack = AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
@@ -166,7 +144,7 @@ class BlaxelTools:
         except Exception as e:
             return None
 
-    async def __aenter__(self) -> "BlaxelTools":
+    async def __aenter__(self) -> "BlTools":
         try:
             functions = []
             for name in self.functions:

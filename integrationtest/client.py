@@ -8,8 +8,6 @@ load_dotenv()
 
 logger = getLogger(__name__)
 
-os.environ["LOG_LEVEL"] = "DEBUG"
-
 async def test_blaxel_config():
     from blaxel.client import client
     from blaxel.client.api.models import list_models

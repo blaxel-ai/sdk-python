@@ -710,7 +710,6 @@ class GeminiRestClient:
             payload["systemInstruction"] = self._convert_to_dict(system_instruction)
         if cached_content:
             payload["cachedContent"] = cached_content
-        print(payload)
         return payload
 
     def generate_content(
@@ -763,7 +762,6 @@ class GeminiRestClient:
             system_instruction=system_instruction,
             cached_content=cached_content,
         )
-
         client = await self._get_async_client()
         response = await client.post(
             f"v1beta/{model}:generateContent",
@@ -1393,7 +1391,17 @@ def convert_to_genai_function_declarations(
     function_declarations = []
     for tool in tools:
         if isinstance(tool, dict):
-            function_declarations.append(tool)
+            fn = tool.get("function", {})
+            fn_parameters = fn.get("parameters", {})
+            function_declarations.append({
+                "name": fn.get("name", ""),
+                "description": fn.get("description", ""),
+                "parameters": {
+                    "type": "object",
+                    "properties": fn_parameters.get("properties", {}),
+                    "required": fn_parameters.get("required", []),
+                },
+            })
         elif isinstance(tool, type) and issubclass(tool, BaseModel):
             schema = tool.model_json_schema()
             function_declarations.append({
@@ -1432,7 +1440,7 @@ def convert_to_genai_function_declarations(
                     "required": [],
                 },
             })
-    return {"function_declarations": function_declarations}
+    return {"functionDeclarations": function_declarations}
 
 def is_basemodel_subclass_safe(cls: Type[Any]) -> bool:
     """Check if a class is a safe subclass of BaseModel."""

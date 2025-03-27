@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from google.genai.types import HttpOptions
 from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.deepseek import DeepSeek
@@ -7,7 +9,9 @@ from llama_index.llms.openai import OpenAI
 
 from ..common.settings import settings
 from .custom.llamaindex.cohere import Cohere
+from .custom.llamaindex.mistralai import MistralAI
 
+logger = getLogger(__name__)
 
 async def get_llamaindex_model(url: str, type: str, model: str, **kwargs):
     if type == 'anthropic':
@@ -50,7 +54,17 @@ async def get_llamaindex_model(url: str, type: str, model: str, **kwargs):
             api_base=f"{url}/v1",
             **kwargs
         )
+    elif type == 'mistral':
+        return MistralAI(
+            model=model,
+            api_key=settings.auth.token,
+            endpoint=url,
+            **kwargs
+        )
     else:
+        if type != "openai":
+            logger.warning(f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI")
+
         return OpenAI(
             model=model,
             api_key=settings.auth.token,

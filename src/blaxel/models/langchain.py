@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from langchain_anthropic import ChatAnthropic
 from langchain_cohere import ChatCohere
 from langchain_deepseek import ChatDeepSeek
@@ -7,6 +9,7 @@ from langchain_xai import ChatXAI
 from ..common.settings import settings
 from .custom.langchain.gemini import ChatGoogleGenerativeAI
 
+logger = getLogger(__name__)
 
 async def get_langchain_model(url: str,type: str, model: str, **kwargs):
     if type == 'mistral':
@@ -54,6 +57,8 @@ async def get_langchain_model(url: str,type: str, model: str, **kwargs):
             **kwargs
         )
     else:
+        if type != "openai":
+            logger.warning(f"Model {model} is not supported by Langchain, defaulting to OpenAI")
         return ChatOpenAI(
             api_key=settings.auth.token,
             model=model,

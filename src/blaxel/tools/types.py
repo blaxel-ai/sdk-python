@@ -2,8 +2,6 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 from pydantic import BaseModel
 
-from ..client.models.function_schema import FunctionSchema
-
 
 class ToolException(Exception):  # noqa: N818
     """Optional exception that tool throws when execution error occurs.
