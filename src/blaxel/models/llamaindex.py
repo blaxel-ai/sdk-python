@@ -5,11 +5,11 @@ from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.llms.groq import Groq
+from llama_index.llms.mistralai import MistralAI
 from llama_index.llms.openai import OpenAI
 
 from ..common.settings import settings
 from .custom.llamaindex.cohere import Cohere
-from .custom.llamaindex.mistralai import MistralAI
 
 logger = getLogger(__name__)
 

@@ -348,13 +348,13 @@ def _convert_tool_message_to_part(
             response = json.loads(message.content)
         except json.JSONDecodeError:
             response = message.content  # leave as str representation
+    if not isinstance(response, dict):
+        response = {"output": response}
     part = Part(
         function_response=FunctionResponse(
             name=name,
-            response=(
-                {"output": response} if not isinstance(response, dict) else response
-            ),
-        )
+            response=response,
+        ).model_dump()
     )
     return part
 
@@ -412,12 +412,10 @@ def _parse_chat_history(
                 ai_message_parts = []
                 for tool_call in message.tool_calls:
                     function_call = FunctionCall(
-                        {
-                            "name": tool_call["name"],
-                            "args": tool_call["args"],
-                        }
+                        name=tool_call["name"],
+                        args=tool_call["args"],
                     )
-                    ai_message_parts.append(Part(function_call=function_call))
+                    ai_message_parts.append(Part(function_call=function_call.model_dump()))
                 tool_messages_parts = _get_ai_message_tool_messages_parts(
                     tool_messages=tool_messages, ai_message=message
                 )
@@ -426,12 +424,10 @@ def _parse_chat_history(
                 continue
             elif raw_function_call := message.additional_kwargs.get("function_call"):
                 function_call = FunctionCall(
-                    {
-                        "name": raw_function_call["name"],
-                        "args": json.loads(raw_function_call["arguments"]),
-                    }
+                    name=raw_function_call["name"],
+                    args=json.loads(raw_function_call["arguments"]),
                 )
-                parts = [Part(function_call=function_call)]
+                parts = [Part(function_call=function_call.model_dump())]
             else:
                 parts = _convert_to_parts(message.content)
         elif isinstance(message, HumanMessage):

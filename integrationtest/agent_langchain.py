@@ -18,7 +18,7 @@ MODEL = "gpt-4o-mini"
 # MODEL = "claude-3-5-sonnet"
 # MODEL = "xai-grok-beta"
 # MODEL = "cohere-command-r-plus" # x -> tool call not supported
-# MODEL = "gemini-2-0-flash" # x -> tool call not supported
+# MODEL = "gemini-2-0-flash"
 # MODEL = "deepseek-chat"
 # MODEL = "mistral-large-latest"
 
@@ -29,7 +29,8 @@ async def main():
         model = await bl_model(MODEL, temperature=0).to_langchain()
 
         agent = create_react_agent(model=model, tools=tools, prompt="You are a helpful assistant. Maximum number of tool call is 1")
-        input = "What is the current weather in San Francisco ?"
+        input = "Search online for the current weather in San Francisco ?"
+        # input = "What are the tools in your arsenal ?"
         # input = "Hello world"
         messages = {"messages": [("user", input)]}
         responses = []
