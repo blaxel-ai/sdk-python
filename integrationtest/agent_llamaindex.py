@@ -15,7 +15,6 @@ from blaxel.tools import BlTools
 
 logger = getLogger(__name__)
 
-
 MODEL = "gpt-4o-mini"
 # MODEL = "xai-grok-beta"
 # MODEL = "deepseek-chat"

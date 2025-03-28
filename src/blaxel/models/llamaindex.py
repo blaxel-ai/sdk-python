@@ -1,3 +1,8 @@
+import os
+
+# Transformers is a dependency of DeepSeek, and it logs a lot of warnings that are not useful
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+
 from logging import getLogger
 
 from google.genai.types import HttpOptions
