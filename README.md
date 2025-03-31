@@ -243,13 +243,12 @@ Example of a tool which is sending fake information about the weather:
 ```python
 from blaxel.mcp.server import FastMCP
 
-mcp = FastMCP("My App")
+mcp = FastMCP("My Weather MCP server")
 
-# Add an addition tool
 @mcp.tool()
-def add(a: int, b: int) -> int:
-    """Add two numbers"""
-    return a + b
+def weather(city: str) -> str:
+    """Get the weather for a city"""
+    return f"The weather in {city} is sunny"
 
 if __name__ == "__main__":
     if os.getenv("BL_SERVER_PORT"):
@@ -276,13 +275,7 @@ Connect the observability layer:
 from blaxel import sdk
 ```
 
-Load blaxel transport:
-
-```python
-from blaxel.mcp import FastMCP
-```
-
-Update your import from FastMCP to blaxel
+Update your import of FastMCP
 
 ```python
 from blaxel.mcp.server import FastMCP
