@@ -29,9 +29,16 @@ async def test_model_llamaindex():
     result = await model.acomplete("Hello, world!")
     logger.info(result)
 
+async def test_model_crewai():
+    # not working: cohere
+    model = await bl_model(MODEL).to_crewai()
+    result = model.call([{"role": "user", "content": "Hello, world!"}])
+    logger.info(result)
+
 async def main():
     await test_model_langchain()
     await test_model_llamaindex()
+    await test_model_crewai()
 
 if __name__ == "__main__":
     asyncio.run(main())

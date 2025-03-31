@@ -4,6 +4,7 @@ from ..client import client
 from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
+from .crewai import get_crewai_model
 from .langchain import get_langchain_model
 from .llamaindex import get_llamaindex_model
 
@@ -20,6 +21,10 @@ class BLModel:
     async def to_llamaindex(self):
         url, type, model = await self._get_parameters()
         return await get_llamaindex_model(url, type, model, **self.kwargs)
+
+    async def to_crewai(self):
+        url, type, model = await self._get_parameters()
+        return await get_crewai_model(url, type, model, **self.kwargs)
 
     async def _get_parameters(self):
         url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"

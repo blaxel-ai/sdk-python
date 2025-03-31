@@ -65,12 +65,14 @@ dependencies = [
     "llama-index-llms-deepseek>=0.1.1",
     "llama-index-llms-cohere>=0.4.0",
     "llama-index-llms-mistralai>=0.4.0",
+    "crewai>=0.95.0",
 ]
 [dependency-groups]
 dev = [
     "pdoc3>=0.11.5",
     "python-dotenv>=1.1.0",
     "ruff>=0.8.2",
+    "nest-asyncio>=1.6.0",
 ]
 
 [build-system]

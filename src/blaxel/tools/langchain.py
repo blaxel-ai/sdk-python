@@ -34,7 +34,8 @@ def get_langchain_tool(tool: Tool) -> StructuredTool:
         name=tool.name,
         description=tool.description,
         args_schema=tool.input_schema,
-        coroutine=langchain_coroutine
+        coroutine=langchain_coroutine,
+        sync_coroutine=tool.sync_coroutine,
     )
 
 def get_langchain_tools(tools: list[Tool]) -> list[StructuredTool]:

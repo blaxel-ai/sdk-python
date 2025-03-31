@@ -1,9 +1,13 @@
+import asyncio
 import os
 from contextlib import AsyncExitStack
+from functools import partial
 from logging import getLogger
+from time import sleep
 from types import TracebackType
 from typing import Any, cast
 
+from crewai.tools import BaseTool
 from langchain_core.tools import StructuredTool
 from llama_index.core.tools import FunctionTool
 from mcp import ClientSession
@@ -16,6 +20,7 @@ from ..client.api.functions import get_function
 from ..client.models.function import Function
 from ..common.settings import settings
 from ..mcp.client import websocket_client
+from .crewai import get_crewai_tools
 from .langchain import get_langchain_tools
 from .llamaindex import get_llamaindex_tools
 from .types import Tool
@@ -47,11 +52,19 @@ def convert_mcp_tool_to_blaxel_tool(
         logger.debug(f"Tool {tool.name} returned {call_tool_result}")
         return call_tool_result
 
+    def sync_call_tool(**arguments: dict[str, Any]) -> CallToolResult:
+        try:
+            loop = asyncio.get_running_loop()
+            return loop.run_until_complete(session.call_tool(tool.name, arguments))
+        except RuntimeError:
+            return asyncio.run(session.call_tool(tool.name, arguments))
+
     return Tool(
         name=tool.name,
         description=tool.description or "",
         input_schema=tool.inputSchema,
         coroutine=call_tool,
+        sync_coroutine=sync_call_tool,
         response_format="content_and_artifact",
     )
 
@@ -94,6 +107,9 @@ class BlTools:
 
     def to_llamaindex(self) -> list[FunctionTool]:
         return get_llamaindex_tools(self.get_tools())
+
+    def to_crewai(self) -> list[BaseTool]:
+        return get_crewai_tools(self.get_tools())
 
     async def connect_to_server_via_websocket(self, function: Function):
         # Create and store the connection
@@ -151,9 +167,9 @@ class BlTools:
                 function = await self._get_function(name)
                 if function:
                     functions.append(function)
+                    await self.connect_to_server_via_websocket(function)
                 else:
                     logger.warning(f"Function {name} not loaded, skipping")
-                await self.connect_to_server_via_websocket(function)
             return self
         except Exception:
             await self.exit_stack.aclose()

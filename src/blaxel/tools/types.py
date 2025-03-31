@@ -17,3 +17,4 @@ class Tool(BaseModel):
     description: str
     input_schema: Dict[str, Any]
     coroutine: Optional[Callable[..., Awaitable[Any]]] = None
+    sync_coroutine: Optional[Callable[..., Any]] = None
