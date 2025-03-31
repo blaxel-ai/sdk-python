@@ -57,6 +57,11 @@ class Settings:
         return os.environ.get("BL_TYPE", "agents")
 
     @property
+    def workspace(self) -> str:
+        """Get the workspace."""
+        return self.auth.workspace_name
+
+    @property
     def run_internal_hostname(self) -> str:
         """Get the run internal hostname."""
         return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "internal.run.beamlit.net")
