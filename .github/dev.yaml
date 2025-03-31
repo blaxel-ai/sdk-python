@@ -1,0 +1,36 @@
+name: Python SDK dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+jobs:
+  pypi-publish:
+    name: Upload to PyPI
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      # For PyPI's trusted publishing.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+      - name: Set version
+        run: |
+          VERSION=$(git describe --tags --abbrev=0)
+          VERSION="${VERSION#v}"
+          # Split version into parts and increment minor version
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          patch=$((patch + 1))
+          VERSION="${major}.${minor}.${patch}"
+          echo "Current version: $VERSION"
+          sed -i -E "s/^version = .*/version = \"${VERSION}.pre-${{ github.run_number }}\"/" pyproject.toml
+      - name: Publish to PyPi
+        run: |
+          uv build
+          uv publish -v --trusted-publishing automatic dist/*

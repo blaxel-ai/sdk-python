@@ -1,0 +1,28 @@
+name: Python SDK release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  pypi-publish:
+    name: Upload to PyPI
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+      - name: Set version
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "Setting version to $VERSION"
+          sed -i -E "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
+      - name: Publish to PyPi
+        run: |
+          uv build
+          uv publish -v --trusted-publishing automatic dist/*
