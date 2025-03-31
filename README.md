@@ -241,9 +241,9 @@ We follow current standard for tool development over MCP Server.
 Example of a tool which is sending fake information about the weather:
 
 ```python
-from blaxel.mcp.server import BlMCP
+from blaxel.mcp.server import FastMCP
 
-mcp = BlMCP("My App")
+mcp = FastMCP("My App")
 
 # Add an addition tool
 @mcp.tool()
@@ -279,13 +279,13 @@ from blaxel import sdk
 Load blaxel transport:
 
 ```python
-from blaxel.mcp import BlMCP
+from blaxel.mcp import FastMCP
 ```
 
 Update your import from FastMCP to blaxel
 
 ```python
-from blaxel.mcp.server import BlMCP
+from blaxel.mcp.server import FastMCP
 ```
 
 Update your entrypoint to support our transport:

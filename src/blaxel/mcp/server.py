@@ -8,7 +8,7 @@ import anyio
 import mcp.types as types
 from anyio.streams.memory import (MemoryObjectReceiveStream,
                                   MemoryObjectSendStream)
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP as FastMCPBase
 from websockets.server import WebSocketServerProtocol, serve
 
 logger = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ class BlaxelMcpServerTransport:
                 tg.start_soon(message_sender)
                 yield read_stream, write_stream
 
-class BlMCP(FastMCP):
+class FastMCP(FastMCPBase):
     def run(self, transport: Literal["stdio", "sse", "ws"] = "stdio") -> None:
         """Run the FastMCP server. Note this is a synchronous function.
 
