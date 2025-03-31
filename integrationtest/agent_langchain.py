@@ -10,7 +10,7 @@ from langchain_core.messages import AIMessage
 from langgraph.prebuilt import create_react_agent
 
 from blaxel.models import bl_model
-from blaxel.tools import BlTools
+from blaxel.tools import bl_tools
 
 logger = getLogger(__name__)
 
@@ -23,8 +23,8 @@ MODEL = "gpt-4o-mini"
 # MODEL = "mistral-large-latest"
 
 async def main():
-    async with BlTools(["blaxel-search"]) as bl_tools:
-        tools = bl_tools.to_langchain()
+    async with bl_tools(["blaxel-search"]) as t:
+        tools = t.to_langchain()
 
         model = await bl_model(MODEL, temperature=0).to_langchain()
 

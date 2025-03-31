@@ -5,12 +5,12 @@ logger = getLogger(__name__)
 
 os.environ["BL_FUNCTION_ADD_URL"] = "http://localhost:8080"
 
-from blaxel.tools import BlTools
+from blaxel.tools import bl_tools
 
 
 async def main():
-    async with BlTools(["add"]) as tools:
-        tools = tools.to_langchain()
+    async with bl_tools(["add"]) as t:
+        tools = t.to_langchain()
         result = await tools[0].ainvoke({"a": 1, "b": 2})
         logger.info(result)
 

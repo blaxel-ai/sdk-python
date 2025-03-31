@@ -72,7 +72,7 @@ from blaxel import sdk
 
 ```python
 from blaxel.models import bl_model
-from blaxel.tools import BlTools
+from blaxel.tools import bl_tools
 ```
 
 Then you need to use it in your agent. Here are examples with different frameworks:
@@ -86,8 +86,8 @@ from langchain_core.messages import HumanMessage
 
 async def create_agent():
     model = await bl_model("gpt-4o-mini").to_langchain()
-    async with BlTools(["blaxel-search", "webcrawl"]) as bl_tools:
-        tools = bl_tools.to_langchain()
+    async with bl_tools(["blaxel-search", "webcrawl"]) as t:
+        tools = t.to_langchain()
         tools.append(
             Tool(
                 name="weather",
@@ -111,8 +111,8 @@ from llama_index.core.tools import FunctionTool
 
 async def create_llamaindex_agent():
     model = await bl_model("gpt-4o-mini").to_llamaindex()
-    async with BlTools(["blaxel-search", "webcrawl"]) as bl_tools:
-        tools = bl_tools.to_llamaindex()
+    async with bl_tools(["blaxel-search", "webcrawl"]) as t:
+        tools = t.to_llamaindex()
         tools.append(
             FunctionTool.from_defaults(
                 fn=lambda city: f"The weather in {city} is sunny",
@@ -132,8 +132,8 @@ from crewai import Agent, Task, Crew
 
 async def create_crewai_agent():
     model = await bl_model("gpt-4o-mini").to_crewai()
-    async with BlTools(["blaxel-search", "webcrawl"]) as bl_tools:
-        tools = bl_tools.to_crewai()
+    async with bl_tools(["blaxel-search", "webcrawl"]) as t:
+        tools = t.to_crewai()
         tools.append(
             Tool(
                 name="weather",

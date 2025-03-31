@@ -8,7 +8,7 @@ load_dotenv()
 from logging import getLogger
 
 from blaxel.models import bl_model
-from blaxel.tools import BlTools
+from blaxel.tools import bl_tools
 
 logger = getLogger(__name__)
 
@@ -16,8 +16,8 @@ logger = getLogger(__name__)
 MODEL = "gpt-4o-mini"
 
 async def main():
-    async with BlTools(["blaxel-search"]) as bl_tools:
-        tools = bl_tools.to_openai()
+    async with bl_tools(["blaxel-search"]) as t:
+        tools = t.to_openai()
 
         model = await bl_model(MODEL).to_openai()
 

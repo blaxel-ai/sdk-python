@@ -190,3 +190,6 @@ class BlTools:
         exc_tb: TracebackType | None,
     ) -> None:
         await self.exit_stack.aclose()
+
+def bl_tools(functions: list[str]) -> BlTools:
+    return BlTools(functions)

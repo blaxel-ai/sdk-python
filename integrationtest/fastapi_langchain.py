@@ -9,15 +9,15 @@ from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
 
 from blaxel.models import bl_model
-from blaxel.tools import BlTools
+from blaxel.tools import bl_tools
 
 logger = getLogger(__name__)
 
 async def main():
     router = APIRouter()
 
-    async with BlTools(["blaxel-search"]) as bl_tools:
-        tools = bl_tools.to_langchain()
+    async with bl_tools(["blaxel-search"]) as t:
+        tools = t.to_langchain()
         model = await bl_model("gpt-4o-mini").to_langchain()
         agent = create_react_agent(model=model, tools=tools, prompt="You are a helpful assistant that can answer questions and help with tasks.")
 

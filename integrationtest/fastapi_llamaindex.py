@@ -10,15 +10,15 @@ from llama_index.core.agent.workflow import (AgentOutput, ReActAgent,
 from llama_index.core.workflow import Context
 
 from blaxel.models import bl_model
-from blaxel.tools import BlTools
+from blaxel.tools import bl_tools
 
 logger = getLogger(__name__)
 
 async def main():
     router = APIRouter()
 
-    async with BlTools(["blaxel-search"]) as bl_tools:
-        tools = bl_tools.to_llamaindex()
+    async with bl_tools(["blaxel-search"]) as t:
+        tools = t.to_llamaindex()
         model = await bl_model("gpt-4o-mini").to_llamaindex()
         agent = ReActAgent(llm=model, tools=tools, system_prompt="You are a helpful assistant. Maximum number of tool call is 1.")
         context = Context(agent)
