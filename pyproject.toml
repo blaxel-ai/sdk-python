@@ -73,6 +73,7 @@ dev = [
     "python-dotenv>=1.1.0",
     "ruff>=0.8.2",
     "nest-asyncio>=1.6.0",
+    "fastapi>=0.115.12",
 ]
 
 [build-system]
