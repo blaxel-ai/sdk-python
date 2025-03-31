@@ -23,6 +23,7 @@ from ..mcp.client import websocket_client
 from .crewai import get_crewai_tools
 from .langchain import get_langchain_tools
 from .llamaindex import get_llamaindex_tools
+from .openai import get_openai_tools
 from .types import Tool
 
 logger = getLogger(__name__)
@@ -45,6 +46,7 @@ def convert_mcp_tool_to_blaxel_tool(
     """
 
     async def call_tool(
+        *args: Any,
         **arguments: dict[str, Any],
     ) -> CallToolResult:
         logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
@@ -112,6 +114,9 @@ class BlTools:
 
     def to_crewai(self) -> list[BaseTool]:
         return get_crewai_tools(self.get_tools())
+
+    def to_openai(self) -> list[FunctionTool]:
+        return get_openai_tools(self.get_tools())
 
     async def connect_to_server_via_websocket(self, name: str):
         # Create and store the connection

@@ -7,6 +7,7 @@ from ..common.settings import settings
 from .crewai import get_crewai_model
 from .langchain import get_langchain_model
 from .llamaindex import get_llamaindex_model
+from .openai import get_openai_model
 
 
 class BLModel:
@@ -25,6 +26,10 @@ class BLModel:
     async def to_crewai(self):
         url, type, model = await self._get_parameters()
         return await get_crewai_model(url, type, model, **self.kwargs)
+
+    async def to_openai(self):
+        url, type, model = await self._get_parameters()
+        return await get_openai_model(url, type, model, **self.kwargs)
 
     async def _get_parameters(self):
         url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"
