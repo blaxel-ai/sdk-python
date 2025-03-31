@@ -86,7 +86,9 @@ class BlTools:
 
     def _url(self, name: str) -> str:
         env_var = name.replace("-", "_").upper()
-        if os.getenv(f"BL_FUNCTION_{env_var}_SERVICE_NAME"):
+        if os.getenv(f"BL_FUNCTION_{env_var}_URL"):
+            return os.getenv(f"BL_FUNCTION_{env_var}_URL")
+        elif os.getenv(f"BL_FUNCTION_{env_var}_SERVICE_NAME"):
             return f"https://{os.getenv(f'BL_FUNCTION_{env_var}_SERVICE_NAME')}.{settings.run_internal_hostname}"
         return self._external_url(name)
 
@@ -111,28 +113,28 @@ class BlTools:
     def to_crewai(self) -> list[BaseTool]:
         return get_crewai_tools(self.get_tools())
 
-    async def connect_to_server_via_websocket(self, function: Function):
+    async def connect_to_server_via_websocket(self, name: str):
         # Create and store the connection
         try:
-            url = self._url(function.metadata.name)
+            url = self._url(name)
             headers = settings.auth.get_headers()
             read, write = await self.exit_stack.enter_async_context(websocket_client(url, headers, timeout=30))
             session = cast(
                 ClientSession,
                 await self.exit_stack.enter_async_context(ClientSession(read, write)),
             )
-            await self._initialize_session_and_load_tools(function.metadata.name, session)
+            await self._initialize_session_and_load_tools(name, session)
         except Exception as e:
-            if not self._fallback_url(function.metadata.name):
+            if not self._fallback_url(name):
                 raise e
-            url = self._fallback_url(function.metadata.name)
+            url = self._fallback_url(name)
             headers = settings.auth.get_headers()
             read, write = await self.exit_stack.enter_async_context(websocket_client(url, headers))
             session = cast(
                 ClientSession,
                 await self.exit_stack.enter_async_context(ClientSession(read, write)),
             )
-            await self._initialize_session_and_load_tools(function.metadata.name, session)
+            await self._initialize_session_and_load_tools(name, session)
 
     async def _initialize_session_and_load_tools(
         self, name: str, session: ClientSession
@@ -167,9 +169,10 @@ class BlTools:
                 function = await self._get_function(name)
                 if function:
                     functions.append(function)
-                    await self.connect_to_server_via_websocket(function)
                 else:
-                    logger.warning(f"Function {name} not loaded, skipping")
+                    if not os.getenv(f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"):
+                        logger.warning(f"Function {name} not loaded, skipping")
+                await self.connect_to_server_via_websocket(name)
             return self
         except Exception:
             await self.exit_stack.aclose()
