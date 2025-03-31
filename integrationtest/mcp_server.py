@@ -1,6 +1,6 @@
-from blaxel.mcp.server import BlaxelMCP
+from blaxel.mcp.server import BlMCP
 
-mcp = BlaxelMCP("My App")
+mcp = BlMCP("My App")
 
 # Add an addition tool
 @mcp.tool()

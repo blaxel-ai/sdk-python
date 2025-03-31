@@ -110,7 +110,7 @@ class BlaxelMcpServerTransport:
                 tg.start_soon(message_sender)
                 yield read_stream, write_stream
 
-class BlaxelMCP(FastMCP):
+class BlMCP(FastMCP):
     def run(self, transport: Literal["stdio", "sse", "ws"] = "stdio") -> None:
         """Run the FastMCP server. Note this is a synchronous function.
 
