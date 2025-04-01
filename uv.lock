@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version < '3.11'",
@@ -340,7 +339,6 @@ name = "blaxel"
 version = "0.0.64"
 source = { editable = "." }
 dependencies = [
-    { name = "asgi-correlation-id" },
     { name = "attrs" },
     { name = "crewai" },
     { name = "httpx" },
@@ -351,7 +349,6 @@ dependencies = [
     { name = "langchain-deepseek-official" },
     { name = "langchain-openai" },
     { name = "langchain-xai" },
-    { name = "langgraph" },
     { name = "llama-index" },
     { name = "llama-index-llms-anthropic" },
     { name = "llama-index-llms-cohere" },
@@ -365,26 +362,14 @@ dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-anthropic" },
-    { name = "opentelemetry-instrumentation-chromadb" },
     { name = "opentelemetry-instrumentation-cohere" },
+    { name = "opentelemetry-instrumentation-crewai" },
     { name = "opentelemetry-instrumentation-fastapi" },
-    { name = "opentelemetry-instrumentation-groq" },
-    { name = "opentelemetry-instrumentation-httpx" },
-    { name = "opentelemetry-instrumentation-lancedb" },
     { name = "opentelemetry-instrumentation-langchain" },
     { name = "opentelemetry-instrumentation-llamaindex" },
-    { name = "opentelemetry-instrumentation-marqo" },
-    { name = "opentelemetry-instrumentation-milvus" },
-    { name = "opentelemetry-instrumentation-mistralai" },
     { name = "opentelemetry-instrumentation-ollama" },
     { name = "opentelemetry-instrumentation-openai" },
-    { name = "opentelemetry-instrumentation-pinecone" },
-    { name = "opentelemetry-instrumentation-qdrant" },
-    { name = "opentelemetry-instrumentation-replicate" },
     { name = "opentelemetry-instrumentation-system-metrics" },
-    { name = "opentelemetry-instrumentation-together" },
-    { name = "opentelemetry-instrumentation-watsonx" },
-    { name = "opentelemetry-instrumentation-weaviate" },
     { name = "opentelemetry-sdk" },
     { name = "pillow" },
     { name = "pydantic" },
@@ -397,9 +382,11 @@ dependencies = [
     { name = "websockets" },
 ]
 
-[package.dev-dependencies]
+[package.dependency-groups]
 dev = [
+    { name = "asgi-correlation-id" },
     { name = "fastapi" },
+    { name = "langgraph" },
     { name = "nest-asyncio" },
     { name = "pdoc3" },
     { name = "python-dotenv" },
@@ -408,7 +395,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "asgi-correlation-id", specifier = ">=4.3.4,<5.0.0" },
     { name = "attrs", specifier = ">=21.3.0" },
     { name = "crewai", specifier = ">=0.95.0" },
     { name = "httpx", specifier = ">=0.28.1" },
@@ -419,7 +405,6 @@ requires-dist = [
     { name = "langchain-deepseek-official", specifier = ">=0.1.0.post1" },
     { name = "langchain-openai", specifier = ">=0.3.10" },
     { name = "langchain-xai", specifier = ">=0.2.2" },
-    { name = "langgraph", specifier = ">=0.2.40,<0.3.0" },
     { name = "llama-index", specifier = ">=0.12.26" },
     { name = "llama-index-llms-anthropic", specifier = ">=0.6.10" },
     { name = "llama-index-llms-cohere", specifier = ">=0.4.0" },
@@ -433,26 +418,14 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.28.2" },
     { name = "opentelemetry-exporter-otlp", specifier = ">=1.28.2" },
     { name = "opentelemetry-instrumentation-anthropic", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-chromadb", specifier = ">=0.35.0" },
     { name = "opentelemetry-instrumentation-cohere", specifier = ">=0.35.0" },
+    { name = "opentelemetry-instrumentation-crewai", specifier = ">=0.39.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.49b2" },
-    { name = "opentelemetry-instrumentation-groq", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-httpx", specifier = ">=0.49b2" },
-    { name = "opentelemetry-instrumentation-lancedb", specifier = ">=0.35.0" },
     { name = "opentelemetry-instrumentation-langchain", specifier = ">=0.35.0" },
     { name = "opentelemetry-instrumentation-llamaindex", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-marqo", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-milvus", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-mistralai", specifier = ">=0.35.0" },
     { name = "opentelemetry-instrumentation-ollama", specifier = ">=0.35.0" },
     { name = "opentelemetry-instrumentation-openai", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-pinecone", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-qdrant", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-replicate", specifier = ">=0.35.0" },
     { name = "opentelemetry-instrumentation-system-metrics", specifier = ">=0.50b0" },
-    { name = "opentelemetry-instrumentation-together", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-watsonx", specifier = ">=0.35.0" },
-    { name = "opentelemetry-instrumentation-weaviate", specifier = ">=0.35.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.28.2" },
     { name = "pillow", specifier = ">=10.0.0" },
     { name = "pydantic", specifier = ">=2.10.3,<2.11.0" },
@@ -465,9 +438,11 @@ requires-dist = [
     { name = "websockets", specifier = "<15.0.0" },
 ]
 
-[package.metadata.requires-dev]
+[package.metadata.dependency-groups]
 dev = [
+    { name = "asgi-correlation-id", specifier = ">=4.3.4,<5.0.0" },
     { name = "fastapi", specifier = ">=0.115.12" },
+    { name = "langgraph", specifier = ">=0.2.40,<0.3.0" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "pdoc3", specifier = ">=0.11.5" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
@@ -732,7 +707,7 @@ name = "click"
 version = "8.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593 }
 wheels = [
@@ -2867,21 +2842,6 @@ wheels = [
 ]
 
 [[package]]
-name = "opentelemetry-instrumentation-chromadb"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/02/da/1284eb72661e1939d3a92055bf091b77b679d651e2110ee18ada0a569699/opentelemetry_instrumentation_chromadb-0.39.0.tar.gz", hash = "sha256:355a2e119c0d93dc713a4a2ccfe3f2da6dd0c256d6cf9e889ab127970417fa12", size = 4384 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/88/e80e13eff5f58334eb0a0ddb99f166f67f039138a9513ffa7471c0acddf3/opentelemetry_instrumentation_chromadb-0.39.0-py3-none-any.whl", hash = "sha256:2577f40818b57843923e42d551d655c769675858124d6b41a6ac71f5973acf0e", size = 6295 },
-]
-
-[[package]]
 name = "opentelemetry-instrumentation-cohere"
 version = "0.39.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2894,6 +2854,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/77/21/422576e4db851c9738552781f9a10fa234f32560392cdd0ded46e9d7ddad/opentelemetry_instrumentation_cohere-0.39.0.tar.gz", hash = "sha256:cd1644ec795aa89b9609890e7da2ce0b97287900e0558ba4237588436fd87556", size = 4154 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/db/ecca728400229cf4c9cc18e65ddcbfffb70dfdc5b0ee70762f8bd80b1584/opentelemetry_instrumentation_cohere-0.39.0-py3-none-any.whl", hash = "sha256:3edf85d1f5236492568d5a7ced15617922c832535cc74cf2b6d5a55abe1968a6", size = 5635 },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-crewai"
+version = "0.39.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/28/f2/20a33efa197132c7c312817785a4a746db4277e431d85d86908d7f8b8cdc/opentelemetry_instrumentation_crewai-0.39.0.tar.gz", hash = "sha256:7dcf2ac928520cd9461f9a58657aa5aaf73250343bb436d29fce401416461faf", size = 4531 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/7d/fcdc7048868bd2dfa90b2bccc6f2e751541062e625677537c49059ccadc9/opentelemetry_instrumentation_crewai-0.39.0-py3-none-any.whl", hash = "sha256:2b1a73e76fb4cf5f1668fe95276ab87be64111a3545fadb05b6d39865b17c30e", size = 6066 },
 ]
 
 [[package]]
@@ -2910,52 +2885,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/30/01/d159829077f2795c716445df6f8edfdd33391e82d712ba4613fb62b99dc5/opentelemetry_instrumentation_fastapi-0.52b1.tar.gz", hash = "sha256:d26ab15dc49e041301d5c2571605b8f5c3a6ee4a85b60940338f56c120221e98", size = 19247 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/89/acef7f625b218523873e32584dc5243d95ffa4facba737fd8b854c049c58/opentelemetry_instrumentation_fastapi-0.52b1-py3-none-any.whl", hash = "sha256:73c8804f053c5eb2fd2c948218bff9561f1ef65e89db326a6ab0b5bf829969f4", size = 12114 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-groq"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/6fa59d3dc0b8f69c8c472fcf05cdd55a65dec55837778bb94265d358970d/opentelemetry_instrumentation_groq-0.39.0.tar.gz", hash = "sha256:7664f9d097dcc4bf8d611068c85c4e19b522ae70dda13b4d172230d830191600", size = 6170 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/fe/10af62a028f840c1491cff0f16def8e04480fc40bf1beb761dbb7b24bb80/opentelemetry_instrumentation_groq-0.39.0-py3-none-any.whl", hash = "sha256:60d3b0bdcb8f765ab0f0ee749a9b78285338ae40506ff27ed961a76f23d377d7", size = 7939 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-httpx"
-version = "0.52b1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-util-http" },
-    { name = "wrapt" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/21/b4afd5f8102a2528f5b131f185229fb349e40fb0542db0903becfb415cf8/opentelemetry_instrumentation_httpx-0.52b1.tar.gz", hash = "sha256:b32252f21fff7f1bd88cc42716dcf948b3f9e8fc689d3d5d479222491f443c8d", size = 17700 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/35/ea781c0040ee4ff4badfd8404abec53717a0cdeea037b4dc23edbaf07a1a/opentelemetry_instrumentation_httpx-0.52b1-py3-none-any.whl", hash = "sha256:8476c3133dc28c7192e17f0f7a28170d2410b125551b7c450dd76eb7192cb89f", size = 14108 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-lancedb"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/63/0883bfe69b3a871c0e8d5c1d08cd01a0df49c01507eeb60bff9dc38f04b9/opentelemetry_instrumentation_lancedb-0.39.0.tar.gz", hash = "sha256:c52496b6a4fe30162a759798c700cc2cbda33bbf2afee4bfa890303753245e5d", size = 2984 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/30/ca99b6240e9cea9ab5ea87b528743cd3210c864777953c42a1fd935bf4c5/opentelemetry_instrumentation_lancedb-0.39.0-py3-none-any.whl", hash = "sha256:eda6cab946d76e8854ee2dc3843ec0e3bc3e621993f83fa8612a10d115944633", size = 4767 },
 ]
 
 [[package]]
@@ -2990,51 +2919,6 @@ wheels = [
 ]
 
 [[package]]
-name = "opentelemetry-instrumentation-marqo"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/a0/06d5da5640f1e57c89f23fe1f2333eabc460e271ffda40d3e69aa065ad95/opentelemetry_instrumentation_marqo-0.39.0.tar.gz", hash = "sha256:bc6e6ad08b42ad9320922baaf508800f48ce0e5b93c6486de629e020dbfc1ef2", size = 3259 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/99/4840d99f329d2d2a9e95a721019273b37537e0a620d98af270bfe8ee0dad/opentelemetry_instrumentation_marqo-0.39.0-py3-none-any.whl", hash = "sha256:25a4ba15a828c2d6a31b6968fb22f6625c6d2b94c8dfb38cd218d1fc87c14c32", size = 5070 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-milvus"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/2b/70c2d492e46bb6ac6f49b346e49a5018c6261b71e6f4f1812ec97dd6fdd1/opentelemetry_instrumentation_milvus-0.39.0.tar.gz", hash = "sha256:9f272ae1ba7d730739963557c30c02a138eedd53cece2d0f084169b89693d464", size = 3633 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/a1/50d93e21465575ddb879b66270a3a43962d39875c6175cbd9b456229bbdc/opentelemetry_instrumentation_milvus-0.39.0-py3-none-any.whl", hash = "sha256:0974a56df60b21269530a838719c43f4a15cdd4813259a846ab2b795c98d0157", size = 5424 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-mistralai"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/35/6c/e80b812d9a169b78282c47965b1e68fe15da6331c1cc233e1aa49a75b265/opentelemetry_instrumentation_mistralai-0.39.0.tar.gz", hash = "sha256:b61ec4a67d1cc8a99988ba48e7ccc7fcab5d1a662c4f62d17fab1eaf033dceca", size = 4344 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/6c/745422a058b600aa279bf3cf75645a5e9109a03f39f8a571f92d38050e06/opentelemetry_instrumentation_mistralai-0.39.0-py3-none-any.whl", hash = "sha256:a589e6ca4c20f6b4c15582c0c8f4c1b0c655997d4c24a8e7a6fce36c736fb83c", size = 5937 },
-]
-
-[[package]]
 name = "opentelemetry-instrumentation-ollama"
 version = "0.39.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3066,51 +2950,6 @@ wheels = [
 ]
 
 [[package]]
-name = "opentelemetry-instrumentation-pinecone"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/12/6c/cd0e2a500eff645e07b449726d07838bb92670c3a98b7529c732880fc12b/opentelemetry_instrumentation_pinecone-0.39.0.tar.gz", hash = "sha256:e814e71cb5293b28e00acf58629148cc30f979fa32f3b1027d3965576be94c72", size = 4484 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/3e/2c00b1ec1c7abc11efbabe53c82430c816629de49f9c3b3a94f49deb8b1f/opentelemetry_instrumentation_pinecone-0.39.0-py3-none-any.whl", hash = "sha256:fe652c22e97899ce8fac511cb470f5e55a991472eb5c177ba49334f2b817a5d0", size = 6352 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-qdrant"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/b6/1d970ffeda9525db6af94612933cde585b5a468b4027600dcec1e45c79e6/opentelemetry_instrumentation_qdrant-0.39.0.tar.gz", hash = "sha256:f9852e018bf62b6a698aca76ceba6aed91145a024866d3af9248da2ceb948731", size = 3804 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/e5/d6b33880104c8f461a3b2af6f12592e2503ab5fe53bbcb23ad9f5d8b4abe/opentelemetry_instrumentation_qdrant-0.39.0-py3-none-any.whl", hash = "sha256:7e6885aac894c8216c35803a2b4c76e0e1dd2915246b115de969c8f93136ef5f", size = 6294 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-replicate"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/f8/2483f27cf4fbbac36d3c6316e27299cbf38977d2a926cf54d2b412d37281/opentelemetry_instrumentation_replicate-0.39.0.tar.gz", hash = "sha256:7f113f3bdd6bf1be3872b3de5d595a63ed368874697c2f1388bdaada18479c57", size = 3563 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/e0/2d80ed899d160d319ce3032f6c4f806ed85bfb1e3e79df361467332d63f9/opentelemetry_instrumentation_replicate-0.39.0-py3-none-any.whl", hash = "sha256:074de415aa96d8d00062c70676e6bec9d43c0db7d674d517b99e9a522cb62c49", size = 5164 },
-]
-
-[[package]]
 name = "opentelemetry-instrumentation-system-metrics"
 version = "0.52b1"
 source = { registry = "https://pypi.org/simple" }
@@ -3122,51 +2961,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/2d/f1/230f5c747e0f9aba6e3a85051ee623e59dc0cad1d8b55b87be3316ff8906/opentelemetry_instrumentation_system_metrics-0.52b1.tar.gz", hash = "sha256:8e9fdea1ebffb50ecb2907e4fc7c92605d63bd46fe9a6ed731a22f9334e27a16", size = 15007 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/db/50/55b3f40338084d5ee6b060def23d4a0704da2aaac3e424c24a86265b7ebe/opentelemetry_instrumentation_system_metrics-0.52b1-py3-none-any.whl", hash = "sha256:768063d811d0b20c483b320c4c7e508df597a90fbbe9ece9d592a79e00dd518b", size = 13092 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-together"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/6c/c418208b58f54a812a5f83958981b91ea7ec9d8aaf33569f0e442e23933d/opentelemetry_instrumentation_together-0.39.0.tar.gz", hash = "sha256:c1a318e3e6fe88a53f66f6bf542c5f0bc155ffc524ca6decdd1d33bb86575b87", size = 3753 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/34/b238c6fbc506c25337499b005809d69f6d41c0537fa13bc737b5c63097bf/opentelemetry_instrumentation_together-0.39.0-py3-none-any.whl", hash = "sha256:532ca25af06bee6a7f57eacac2be273a12aa7e8e1c1dacf397913d10716912c0", size = 5306 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-watsonx"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/c2/0099b7422c3e84acf8a93979411b7e419dc343e474748e35477d792cc84e/opentelemetry_instrumentation_watsonx-0.39.0.tar.gz", hash = "sha256:3e37dd7708776ead3b537e68282e8fe66af2fa5078326db86a17b5954b0eccbc", size = 5765 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/19/9fbc3efb05ab6438198dc9a78693995e4ace5161ba69cb0fe5af7bf84c72/opentelemetry_instrumentation_watsonx-0.39.0-py3-none-any.whl", hash = "sha256:6c3f2f6691dad40a77d4db761407cf01dae0129549fa2b79c6d764a07050d63e", size = 7435 },
-]
-
-[[package]]
-name = "opentelemetry-instrumentation-weaviate"
-version = "0.39.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation" },
-    { name = "opentelemetry-semantic-conventions" },
-    { name = "opentelemetry-semantic-conventions-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/94/e6/14c20cab6e092ab757a7611967881a208564f5771e03de074c1e5843ed1d/opentelemetry_instrumentation_weaviate-0.39.0.tar.gz", hash = "sha256:b509155b77be68e189e7ab9c6b3a926fc2fe1f31c2aa443ed9e34cafe64ed85a", size = 4431 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/a2/e025a656069b8bc413fe19884cbcaf8abd878bb67f4f3f1c67cf5b6948be/opentelemetry_instrumentation_weaviate-0.39.0-py3-none-any.whl", hash = "sha256:0adcab9d8ea856684965e72c062573b6a7012be68230d3941664b251753337b2", size = 6402 },
 ]
 
 [[package]]
@@ -4534,7 +4328,7 @@ name = "tqdm"
 version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [

@@ -1,93 +1,49 @@
-INSTUMENTATION_MAPPINGS = {
-    "httpx": (
-        "opentelemetry.instrumentation.httpx",
-        "HTTPXClientInstrumentor",
-        "httpx",
+from typing import Dict, List
+
+from pydantic import BaseModel
+
+
+class InstrumentationMapping(BaseModel):
+    module_path: str
+    class_name: str
+    required_packages: List[str]
+    ignore_if_packages: List[str]
+
+MAPPINGS: Dict[str, InstrumentationMapping] = {
+    "anthropic": InstrumentationMapping(
+        module_path="opentelemetry.instrumentation.anthropic",
+        class_name="AnthropicInstrumentor",
+        required_packages=["anthropic"],
+        ignore_if_packages=[]
     ),
-    "anthropic": (
-        "opentelemetry.instrumentation.anthropic",
-        "AnthropicInstrumentor",
-        "anthropic",
+    "cohere": InstrumentationMapping(
+        module_path="opentelemetry.instrumentation.cohere",
+        class_name="CohereInstrumentor",
+        required_packages=["cohere"],
+        ignore_if_packages=[]
     ),
-    "chroma": (
-        "opentelemetry.instrumentation.chroma",
-        "ChromaInstrumentor",
-        "chromadb",
+    "langchain": InstrumentationMapping(
+        module_path="opentelemetry.instrumentation.langchain",
+        class_name="LangchainInstrumentor",
+        required_packages=["langchain"],
+        ignore_if_packages=[]
     ),
-    "cohere": (
-        "opentelemetry.instrumentation.cohere",
-        "CohereInstrumentor",
-        "cohere",
+    "llamaindex": InstrumentationMapping(
+        module_path="opentelemetry.instrumentation.llamaindex",
+        class_name="LlamaIndexInstrumentor",
+        required_packages=["llama_index"],
+        ignore_if_packages=[]
     ),
-    "groq": ("opentelemetry.instrumentation.groq", "GroqInstrumentor", "groq"),
-    "lance": (
-        "opentelemetry.instrumentation.lance",
-        "LanceInstrumentor",
-        "pylance",
+    "crewai": InstrumentationMapping(
+        module_path="opentelemetry.instrumentation.crewai",
+        class_name="CrewAIInstrumentor",
+        required_packages=["crewai"],
+        ignore_if_packages=[]
     ),
-    "langchain": (
-        "opentelemetry.instrumentation.langchain",
-        "LangchainInstrumentor",
-        "langchain",
-    ),
-    "llama_index": (
-        "opentelemetry.instrumentation.llama_index",
-        "LlamaIndexInstrumentor",
-        "llama_index",
-    ),
-    "marqo": (
-        "opentelemetry.instrumentation.marqo",
-        "MarqoInstrumentor",
-        "marqo",
-    ),
-    "milvus": (
-        "opentelemetry.instrumentation.milvus",
-        "MilvusInstrumentor",
-        "pymilvus",
-    ),
-    "mistralai": (
-        "opentelemetry.instrumentation.mistralai",
-        "MistralAiInstrumentor",
-        "mistralai",
-    ),
-    "ollama": (
-        "opentelemetry.instrumentation.ollama",
-        "OllamaInstrumentor",
-        "ollama",
-    ),
-    "openai": (
-        "opentelemetry.instrumentation.openai",
-        "OpenAIInstrumentor",
-        "openai",
-    ),
-    "pinecone": (
-        "opentelemetry.instrumentation.pinecone",
-        "PineconeInstrumentor",
-        "pinecone",
-    ),
-    "qdrant": (
-        "opentelemetry.instrumentation.qdrant",
-        "QdrantInstrumentor",
-        "qdrant_client",
-    ),
-    "replicate": (
-        "opentelemetry.instrumentation.replicate",
-        "ReplicateInstrumentor",
-        "replicate",
-    ),
-    "together": (
-        "opentelemetry.instrumentation.together",
-        "TogetherAiInstrumentor",
-        "together",
-    ),
-    "watsonx": (
-        "opentelemetry.instrumentation.watsonx",
-        "WatsonxInstrumentor",
-        "ibm_watson_machine_learning",
-    ),
-    "weaviate": (
-        "opentelemetry.instrumentation.weaviate",
-        "WeaviateInstrumentor",
-        "weaviate",
+    "openai": InstrumentationMapping(
+        module_path="opentelemetry.instrumentation.openai",
+        class_name="OpenAIInstrumentor",
+        required_packages=["openai"],
+        ignore_if_packages=[]
     ),
 }

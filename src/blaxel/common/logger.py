@@ -37,7 +37,6 @@ class ColoredFormatter(logging.Formatter):
         record.levelname = f"{color}{record.levelname}\033[0m:{tab}"
         return super().format(record)
 
-
 def init_logger(log_level: str):
     """
     Initializes the logging configuration for Blaxel.
@@ -48,13 +47,6 @@ def init_logger(log_level: str):
     Parameters:
         log_level (str): The logging level to set (e.g., "DEBUG", "INFO").
     """
-    logging.getLogger("uvicorn.access").handlers.clear()
-    logging.getLogger("uvicorn.access").propagate = False
-    logging.getLogger("uvicorn.error").handlers.clear()
-    logging.getLogger("uvicorn.error").propagate = False
-    logging.getLogger("httpx").handlers.clear()
-    logging.getLogger("httpx").propagate = False
-
     handler = logging.StreamHandler()
     handler.setFormatter(ColoredFormatter("%(levelname)s %(name)s - %(message)s"))
     logging.basicConfig(level=log_level, handlers=[handler])

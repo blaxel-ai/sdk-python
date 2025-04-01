@@ -177,7 +177,10 @@ class BlTools:
                 else:
                     if not os.getenv(f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"):
                         logger.warning(f"Function {name} not loaded, skipping")
-                await self.connect_to_server_via_websocket(name)
+                try:
+                    await self.connect_to_server_via_websocket(name)
+                except Exception as e:
+                    logger.warning(f"Failed to connect to server {name}: {e}")
             return self
         except Exception:
             await self.exit_stack.aclose()

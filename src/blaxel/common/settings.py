@@ -54,7 +54,7 @@ class Settings:
     @property
     def type(self) -> str:
         """Get the type."""
-        return os.environ.get("BL_TYPE", "agents")
+        return os.environ.get("BL_TYPE", "agent")
 
     @property
     def workspace(self) -> str:
@@ -65,5 +65,10 @@ class Settings:
     def run_internal_hostname(self) -> str:
         """Get the run internal hostname."""
         return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "internal.run.beamlit.net")
+
+    @property
+    def enable_opentelemetry(self) -> bool:
+        """Get the enable opentelemetry."""
+        return os.getenv("BL_ENABLE_OPENTELEMETRY", "false").lower() == "true"
 
 settings = Settings()
