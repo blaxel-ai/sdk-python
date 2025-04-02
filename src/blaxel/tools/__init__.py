@@ -1,15 +1,10 @@
 import asyncio
 import os
 from contextlib import AsyncExitStack
-from functools import partial
 from logging import getLogger
-from time import sleep
 from types import TracebackType
 from typing import Any, cast
 
-from crewai.tools import BaseTool
-from langchain_core.tools import StructuredTool
-from llama_index.core.tools import FunctionTool
 from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
@@ -20,10 +15,6 @@ from ..client.api.functions import get_function
 from ..client.models.function import Function
 from ..common.settings import settings
 from ..mcp.client import websocket_client
-from .crewai import get_crewai_tools
-from .langchain import get_langchain_tools
-from .llamaindex import get_llamaindex_tools
-from .openai import get_openai_tools
 from .types import Tool
 
 logger = getLogger(__name__)
@@ -106,16 +97,20 @@ class BlTools:
             all_tools.extend(server_tools)
         return all_tools
 
-    def to_langchain(self) -> list[StructuredTool]:
+    def to_langchain(self):
+        from .langchain import get_langchain_tools
         return get_langchain_tools(self.get_tools())
 
-    def to_llamaindex(self) -> list[FunctionTool]:
+    def to_llamaindex(self):
+        from .llamaindex import get_llamaindex_tools
         return get_llamaindex_tools(self.get_tools())
 
-    def to_crewai(self) -> list[BaseTool]:
+    def to_crewai(self):
+        from .crewai import get_crewai_tools
         return get_crewai_tools(self.get_tools())
 
-    def to_openai(self) -> list[FunctionTool]:
+    def to_openai(self):
+        from .openai import get_openai_tools
         return get_openai_tools(self.get_tools())
 
     async def connect_to_server_via_websocket(self, name: str):

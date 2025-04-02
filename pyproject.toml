@@ -12,57 +12,75 @@ packages = [
 include = ["CHANGELOG.md", "blaxel/py.typed"]
 requires-python = ">=3.10"
 dependencies = [
-    "httpx>=0.28.1",
     "attrs>=21.3.0",
-    "python-dateutil>=2.8.0",
-    "pyyaml>=6.0.2,<6.1.0",
-    "pydantic-settings>=2.6.1,<2.7.0",
-    "pydantic>=2.10.3,<2.11.0",
-    "requests>=2.32.3,<2.33.0",
-    "langchain-core>=0.3.13,<0.4.0",
-    "langchain-community>=0.3.3,<0.4.0",
-    "pyjwt>=2.10.1",
-    "opentelemetry-sdk>=1.28.2",
-    "opentelemetry-exporter-otlp>=1.28.2",
+    "httpx>=0.28.1",
+    "mcp>=1.2.1",
+    # OpenTelemetry dependencies
     "opentelemetry-api>=1.28.2",
-    "opentelemetry-instrumentation-fastapi>=0.49b2",
-    "opentelemetry-instrumentation-system-metrics>=0.50b0",
+    "opentelemetry-exporter-otlp>=1.28.2",
     "opentelemetry-instrumentation-anthropic>=0.35.0",
     "opentelemetry-instrumentation-cohere>=0.35.0",
-    "opentelemetry-instrumentation-langchain>=0.35.0",
-    "opentelemetry-instrumentation-llamaindex>=0.35.0",
+    "opentelemetry-instrumentation-fastapi>=0.49b2",
     "opentelemetry-instrumentation-ollama>=0.35.0",
     "opentelemetry-instrumentation-openai>=0.35.0",
-    "mcp>=1.2.1",
+    "opentelemetry-instrumentation-system-metrics>=0.50b0",
+    "opentelemetry-sdk>=1.28.2",
+    "pydantic>=2.10.3,<2.11.0",
+    "pyjwt>=2.10.1",
+    "python-dateutil>=2.8.0",
+    "pyyaml>=6.0.2,<6.1.0",
+    "requests>=2.32.3,<2.33.0",
     "tomli>=2.2.1",
     "websockets<15.0.0",
-    "langchain-openai>=0.3.10",
-    "langchain-cohere>=0.4.3",
-    "langchain-xai>=0.2.2",
-    "langchain-deepseek-official>=0.1.0.post1",
-    "langchain-anthropic>=0.3.10",
-    "pillow>=10.0.0",
-    "llama-index>=0.12.26",
-    "llama-index-llms-openai>=0.3.28",
-    "llama-index-llms-anthropic>=0.6.10",
-    "llama-index-llms-groq>=0.3.1",
-    "llama-index-llms-google-genai>=0.1.7",
-    "llama-index-llms-deepseek>=0.1.1",
-    "llama-index-llms-cohere>=0.4.0",
-    "llama-index-llms-mistralai>=0.4.0",
+]
+
+[project.optional-dependencies]
+crewai = [
     "crewai>=0.95.0",
-    "openai-agents>=0.0.7",
     "opentelemetry-instrumentation-crewai>=0.39.0",
 ]
+
+langchain = [
+    "langgraph>=0.2.40,<0.3.0",
+    "langchain-cohere>=0.4.3",
+    "langchain-community>=0.3.3,<0.4.0",
+    "langchain-core>=0.3.13,<0.4.0",
+    "langchain-deepseek-official>=0.1.0.post1",
+    "langchain-openai>=0.3.10",
+    "langchain-xai>=0.2.2",
+    "langchain-anthropic>=0.3.10",
+    "opentelemetry-instrumentation-langchain>=0.35.0",
+    "pillow>=10.0.0",
+]
+
+llamaindex = [
+    "llama-index>=0.12.26",
+    "llama-index-llms-anthropic>=0.6.10",
+    "llama-index-llms-cohere>=0.4.0",
+    "llama-index-llms-deepseek>=0.1.1",
+    "llama-index-llms-google-genai>=0.1.7",
+    "llama-index-llms-groq>=0.3.1",
+    "llama-index-llms-mistralai>=0.4.0",
+    "llama-index-llms-openai>=0.3.28",
+    "opentelemetry-instrumentation-llamaindex>=0.35.0",
+]
+
+openai-agents = [
+    "openai-agents>=0.0.7",
+]
+
+pydantic-ai = [
+    "pydantic-ai>=0.0.48",
+]
+
 [dependency-groups]
 dev = [
+    "asgi-correlation-id>=4.3.4,<5.0.0",
+    "fastapi>=0.115.12",
+    "nest-asyncio>=1.6.0",
     "pdoc3>=0.11.5",
     "python-dotenv>=1.1.0",
     "ruff>=0.8.2",
-    "nest-asyncio>=1.6.0",
-    "fastapi>=0.115.12",
-    "asgi-correlation-id>=4.3.4,<5.0.0",
-    "langgraph>=0.2.40,<0.3.0",
 ]
 
 [build-system]

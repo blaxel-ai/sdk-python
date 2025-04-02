@@ -183,11 +183,11 @@ class TelemetryManager:
                         instrumentor_class().instrument()
                         logger.debug(f"Successfully instrumented {name}")
                     except Exception as e:
-                        logger.warn(f"Failed to instrument {name}: {str(e)}")
+                        logger.debug(f"Failed to instrument {name}: {str(e)}")
                 else:
-                    logger.warn(f"Could not load instrumentor for {name}")
+                    logger.debug(f"Could not load instrumentor for {name}")
             else:
-                logger.warn(
+                logger.debug(
                     f"Skipping {name} instrumentation - required package '{mapping.required_packages}' not installed"
                 )
 

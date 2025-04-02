@@ -4,10 +4,6 @@ from ..client import client
 from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
-from .crewai import get_crewai_model
-from .langchain import get_langchain_model
-from .llamaindex import get_llamaindex_model
-from .openai import get_openai_model
 
 
 class BLModel:
@@ -16,18 +12,24 @@ class BLModel:
         self.kwargs = kwargs
 
     async def to_langchain(self):
+        from .langchain import get_langchain_model
+
         url, type, model = await self._get_parameters()
         return await get_langchain_model(url, type, model, **self.kwargs)
 
     async def to_llamaindex(self):
+        from .llamaindex import get_llamaindex_model
         url, type, model = await self._get_parameters()
         return await get_llamaindex_model(url, type, model, **self.kwargs)
 
     async def to_crewai(self):
+        from .crewai import get_crewai_model
+
         url, type, model = await self._get_parameters()
         return await get_crewai_model(url, type, model, **self.kwargs)
 
     async def to_openai(self):
+        from .openai import get_openai_model
         url, type, model = await self._get_parameters()
         return await get_openai_model(url, type, model, **self.kwargs)
 
