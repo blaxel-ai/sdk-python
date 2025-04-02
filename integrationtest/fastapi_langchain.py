@@ -92,4 +92,4 @@ FastAPIInstrumentor.instrument_app(app)
 logger.info(f"Instrumented app in {round(time() - start, 4)} seconds")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=1338, log_level="critical")
+    uvicorn.run(app, host="0.0.0.0", port=1338, log_level="critical", loop="asyncio")

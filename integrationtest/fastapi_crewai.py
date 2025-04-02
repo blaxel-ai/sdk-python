@@ -76,6 +76,5 @@ async def handle_request(request: Request):
 
 FastAPIInstrumentor.instrument_app(app)
 
-
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=1338, log_level="critical")
+    uvicorn.run(app, host="0.0.0.0", port=1338, log_level="critical", loop="asyncio")
