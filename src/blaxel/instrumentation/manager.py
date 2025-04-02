@@ -165,7 +165,7 @@ class TelemetryManager:
         metrics.set_meter_provider(meter_provider)
         self.meter = meter_provider.get_meter(__name__)
 
-        # # Set up the LoggerProvider
+        # Set up the LoggerProvider
         self.logger_provider = LoggerProvider(resource=resource)
         set_logger_provider(self.logger_provider)
         self.logger_provider.add_log_record_processor(

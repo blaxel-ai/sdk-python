@@ -60,11 +60,10 @@ class AsyncLogRecordProcessor(LogRecordProcessor):
             self._worker_thread.join(timeout=5.0)
         self._exporter.shutdown()
 
-    def force_flush(self, timeout_millis: int = 30000) -> bool:
+    def force_flush(self, timeout_millis: int = 500) -> bool:
         """Wait for all pending exports to complete."""
         try:
-            self._queue.join()
+            self._queue.join(timeout=timeout_millis)
             return True
         except Exception:  # pylint: disable=broad-exception-caught
-            _logger.exception("Exception while flushing logs.")
             return False

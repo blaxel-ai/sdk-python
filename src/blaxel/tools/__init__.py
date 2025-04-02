@@ -1,4 +1,5 @@
 import asyncio
+import json
 from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
@@ -13,6 +14,7 @@ from ..client.api.functions import get_function
 from ..client.models import Function
 from ..common.env import env
 from ..common.settings import settings
+from ..instrumentation.span import SpanManager
 from ..mcp.client import websocket_client
 from .types import Tool
 
@@ -39,15 +41,16 @@ def convert_mcp_tool_to_blaxel_tool(
         *args: Any,
         **arguments: dict[str, Any],
     ) -> CallToolResult:
-        exit_stack = AsyncExitStack()
-        read, write = await exit_stack.enter_async_context(websocket_client(url, settings.headers))
-        session = cast(ClientSession, await exit_stack.enter_async_context(ClientSession(read, write)))
-        await session.initialize()
-        logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
-        call_tool_result = await session.call_tool(tool.name, arguments)
-        logger.debug(f"Tool {tool.name} returned {call_tool_result}")
-        await exit_stack.aclose()
-        return call_tool_result
+        with SpanManager("blaxel-tracer").create_active_span(tool.name, {"tool.name": tool.name, "tool.args": json.dumps(arguments)}):
+            exit_stack = AsyncExitStack()
+            read, write = await exit_stack.enter_async_context(websocket_client(url, settings.headers))
+            session = cast(ClientSession, await exit_stack.enter_async_context(ClientSession(read, write)))
+            await session.initialize()
+            logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
+            call_tool_result = await session.call_tool(tool.name, arguments)
+            logger.debug(f"Tool {tool.name} returned {call_tool_result}")
+            await exit_stack.aclose()
+            return call_tool_result
 
     async def call_tool(
         *args: Any,

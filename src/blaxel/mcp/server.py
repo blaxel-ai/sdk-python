@@ -2,21 +2,25 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from typing import Literal
+from typing import Dict, Literal
 
 import anyio
 import mcp.types as types
 from anyio.streams.memory import (MemoryObjectReceiveStream,
                                   MemoryObjectSendStream)
 from mcp.server.fastmcp import FastMCP as FastMCPBase
+from opentelemetry.trace import Span, StatusCode
 from websockets.server import WebSocketServerProtocol, serve
+
 from ..common.env import env
+from ..instrumentation.span import SpanManager
 
 logger = logging.getLogger(__name__)
 
 
 class BlaxelMcpServerTransport:
     """WebSocket server transport for MCP."""
+    spans: Dict[str, Span] = {}
 
     def __init__(self, port: int = 8080):
         """Initialize the WebSocket server transport.
@@ -30,7 +34,7 @@ class BlaxelMcpServerTransport:
             self.port = port
         self.clients = {}
         self.server = None
-        self.spans = {}
+        self.span_manager = SpanManager("blaxel-tracer")
 
     @asynccontextmanager
     async def websocket_server(self):
@@ -51,14 +55,25 @@ class BlaxelMcpServerTransport:
 
             try:
                 async for message in websocket:
+                    span = self.span_manager.create_span("message", {"mcp.client.id": client_id})
                     try:
                         msg = types.JSONRPCMessage.model_validate_json(message)
                         # Modify message ID to include client ID
                         if hasattr(msg, "id") and msg.id is not None:
                             original_id = msg.id
                             msg.id = f"{client_id}:{original_id}"
+                        span.set_attributes({
+                            "mcp.message.parsed": True,
+                            "mcp.method": msg.method,
+                            "mcp.messageId": msg.id,
+                            "mcp.toolName": msg.params.name
+                        })
+                        self.spans[client_id+":"+msg.id] =  span
                         await read_stream_writer.send(msg)
                     except Exception as exc:
+                        span.set_status(StatusCode.ERROR)
+                        span.record_exception(exc)
+                        span.end()
                         logger.error(f"Failed to parse message: {exc}")
                         await read_stream_writer.send(exc)
             except Exception as e:
@@ -87,12 +102,23 @@ class BlaxelMcpServerTransport:
                     if client_id and client_id in self.clients:
                         # Send to specific client
                         websocket = self.clients[client_id]
+                        span = self.spans.get(client_id+":"+msg_id)
                         try:
                             await websocket.send(data)
+                            if span:
+                                span.set_attributes({
+                                    "mcp.message.response_sent": True,
+                                })
                         except Exception as e:
+                            if span:
+                                span.set_status(StatusCode.ERROR)
+                                span.record_exception(e)
                             logger.error(f"Failed to send message to client {client_id}: {e}")
                             if client_id in self.clients:
                                 del self.clients[client_id]
+                        finally:
+                            if span:
+                                span.end()
                     else:
                         # Broadcast to all clients
                         dead_clients = []

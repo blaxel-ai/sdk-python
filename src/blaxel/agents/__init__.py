@@ -7,8 +7,9 @@ from ..cache import find_from_cache
 from ..client import client
 from ..client.api.agents import get_agent
 from ..client.models import Agent
-from ..common.settings import settings
 from ..common.env import env
+from ..common.settings import settings
+from ..instrumentation.span import SpanManager
 
 logger = getLogger(__name__)
 
@@ -64,11 +65,12 @@ class BlAgent:
         )
 
     def run(self, input: Any) -> str:
-        logger.debug(f"Agent Calling: {self.name}")
-        response = self.call(self.url, input)
-        if response.status_code >= 400:
-            raise Exception(f"Agent {self.name} returned status code {response.status_code} with body {response.text}")
-        return response.text
+        with SpanManager("blaxel-tracer").create_active_span(self.name, {"agent.name": self.name, "agent.args": json.dumps(input)}):
+            logger.debug(f"Agent Calling: {self.name}")
+            response = self.call(self.url, input)
+            if response.status_code >= 400:
+                raise Exception(f"Agent {self.name} returned status code {response.status_code} with body {response.text}")
+            return response.text
 
     async def arun(self, input: Any) -> Awaitable[str]:
         logger.debug(f"Agent Calling: {self.name}")
