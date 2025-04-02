@@ -14,6 +14,7 @@ from ..client import client
 from ..client.api.functions import get_function
 from ..client.models.function import Function
 from ..common.settings import settings
+from ..common.env import env
 from ..mcp.client import websocket_client
 from .types import Tool
 
@@ -79,10 +80,10 @@ class BlTools:
 
     def _url(self, name: str) -> str:
         env_var = name.replace("-", "_").upper()
-        if os.getenv(f"BL_FUNCTION_{env_var}_URL"):
-            return os.getenv(f"BL_FUNCTION_{env_var}_URL")
-        elif os.getenv(f"BL_FUNCTION_{env_var}_SERVICE_NAME"):
-            return f"https://{os.getenv(f'BL_FUNCTION_{env_var}_SERVICE_NAME')}.{settings.run_internal_hostname}"
+        if env[f"BL_FUNCTION_{env_var}_URL"]:
+            return env[f"BL_FUNCTION_{env_var}_URL"]
+        elif env[f"BL_FUNCTION_{env_var}_SERVICE_NAME"]:
+            return f"https://{env[f'BL_FUNCTION_{env_var}_SERVICE_NAME']}.{settings.run_internal_hostname}"
         return self._external_url(name)
 
     def _fallback_url(self, name: str) -> str | None:
@@ -170,7 +171,7 @@ class BlTools:
                 if function:
                     functions.append(function)
                 else:
-                    if not os.getenv(f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"):
+                    if not env[f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"]:
                         logger.warning(f"Function {name} not loaded, skipping")
                 try:
                     await self.connect_to_server_via_websocket(name)

@@ -10,6 +10,7 @@ from anyio.streams.memory import (MemoryObjectReceiveStream,
                                   MemoryObjectSendStream)
 from mcp.server.fastmcp import FastMCP as FastMCPBase
 from websockets.server import WebSocketServerProtocol, serve
+from ..common.env import env
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,10 @@ class BlaxelMcpServerTransport:
         Args:
             port: The port to listen on (defaults to 8080 or BL_SERVER_PORT env var)
         """
-        self.port = int(os.getenv("BL_SERVER_PORT", port))
+        if env["BL_SERVER_PORT"] is not None:
+            self.port = int(env["BL_SERVER_PORT"])
+        else:
+            self.port = port
         self.clients = {}
         self.server = None
         self.spans = {}

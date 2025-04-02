@@ -1,5 +1,5 @@
 from typing_extensions import Literal
-from langgraph.graph import StateGraph, START, END, MessagesState
+from langgraph.graph import StateGraph, END, MessagesState
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command, interrupt
 from langgraph.prebuilt import ToolNode
@@ -83,7 +83,7 @@ async def create_agent_graph(tools):
     builder.add_node("run_tool", ToolNode(tools))
     builder.add_node("human_review_node", human_review_node)
 
-    builder.add_edge(START, "call_llm")
+    builder.set_entry_point("call_llm")
     builder.add_conditional_edges("call_llm", route_after_llm)
     builder.add_edge("run_tool", "call_llm")
 

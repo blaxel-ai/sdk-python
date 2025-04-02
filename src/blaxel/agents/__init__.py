@@ -8,6 +8,7 @@ from ..client import client
 from ..client.api.agents import get_agent
 from ..client.models import Agent
 from ..common.settings import settings
+from ..common.env import env
 
 logger = getLogger(__name__)
 
@@ -29,6 +30,8 @@ class BlAgent:
     @property
     def url(self):
         env_var = self.name.replace("-", "_").upper()
+        if env[f"BL_AGENT_{env_var}_URL"]:
+            return env[f"BL_AGENT_{env_var}_URL"]
         if f"BL_AGENT_{env_var}_SERVICE_NAME" in settings.env:
             return f"https://{settings.env[f'BL_AGENT_{env_var}_SERVICE_NAME']}.{settings.run_internal_hostname}"
         return self.external_url
