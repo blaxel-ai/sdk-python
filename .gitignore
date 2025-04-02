@@ -22,3 +22,5 @@ dmypy.json
 /coverage.xml
 /.coverage
 uv.lock
+
+telemetry.sh
