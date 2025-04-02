@@ -5,33 +5,53 @@ from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
 
-
 class BLModel:
+    models = {}
+
     def __init__(self, model_name, **kwargs):
         self.model_name = model_name
         self.kwargs = kwargs
 
     async def to_langchain(self):
-        from .langchain import get_langchain_model
+        if f"langchain_{self.model_name}" in BLModel.models:
+            return BLModel.models[f"langchain_{self.model_name}"]
 
+        from .langchain import get_langchain_model
         url, type, model = await self._get_parameters()
-        return await get_langchain_model(url, type, model, **self.kwargs)
+        model = await get_langchain_model(url, type, model, **self.kwargs)
+        BLModel.models[f"langchain_{self.model_name}"] = model
+        return model
 
     async def to_llamaindex(self):
+        if f"llamaindex_{self.model_name}" in BLModel.models:
+            return BLModel.models[f"llamaindex_{self.model_name}"]
+
         from .llamaindex import get_llamaindex_model
         url, type, model = await self._get_parameters()
-        return await get_llamaindex_model(url, type, model, **self.kwargs)
+        model = await get_llamaindex_model(url, type, model, **self.kwargs)
+        BLModel.models[f"llamaindex_{self.model_name}"] = model
+        return model
 
     async def to_crewai(self):
+        if f"crewai_{self.model_name}" in BLModel.models:
+            return BLModel.models[f"crewai_{self.model_name}"]
+
         from .crewai import get_crewai_model
 
         url, type, model = await self._get_parameters()
-        return await get_crewai_model(url, type, model, **self.kwargs)
+        model = await get_crewai_model(url, type, model, **self.kwargs)
+        BLModel.models[f"crewai_{self.model_name}"] = model
+        return model
 
     async def to_openai(self):
+        if f"openai_{self.model_name}" in BLModel.models:
+            return BLModel.models[f"openai_{self.model_name}"]
+
         from .openai import get_openai_model
         url, type, model = await self._get_parameters()
-        return await get_openai_model(url, type, model, **self.kwargs)
+        model = await get_openai_model(url, type, model, **self.kwargs)
+        BLModel.models[f"openai_{self.model_name}"] = model
+        return model
 
     async def _get_parameters(self):
         url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"
