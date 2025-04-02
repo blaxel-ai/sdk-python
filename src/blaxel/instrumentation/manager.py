@@ -19,7 +19,6 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
     OTLPSpanExporter
 from opentelemetry.metrics import NoOpMeterProvider
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -30,6 +29,7 @@ from opentelemetry.trace import NoOpTracerProvider
 from blaxel.instrumentation.span import DefaultAttributesSpanProcessor
 
 from ..common.settings import Settings
+from .log import AsyncLogRecordProcessor
 from .map import MAPPINGS
 
 logger = logging.getLogger(__name__)
@@ -165,11 +165,11 @@ class TelemetryManager:
         metrics.set_meter_provider(meter_provider)
         self.meter = meter_provider.get_meter(__name__)
 
-        # Set up the LoggerProvider
+        # # Set up the LoggerProvider
         self.logger_provider = LoggerProvider(resource=resource)
         set_logger_provider(self.logger_provider)
         self.logger_provider.add_log_record_processor(
-            BatchLogRecordProcessor(self.get_log_exporter())
+            AsyncLogRecordProcessor(self.get_log_exporter())
         )
         handler = LoggingHandler(level=logging.NOTSET, logger_provider=self.logger_provider)
         logging.getLogger().addHandler(handler)
