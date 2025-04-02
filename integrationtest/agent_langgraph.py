@@ -1,12 +1,15 @@
-from typing_extensions import Literal
-from langgraph.graph import StateGraph, END, MessagesState
+import asyncio
+
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.types import Command, interrupt
+from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
+from langgraph.types import Command, interrupt
+from typing_extensions import Literal
+
 from blaxel.models import bl_model
 from blaxel.tools import bl_tools
 
-import asyncio
+
 class State(MessagesState):
     """Simple state."""
 
@@ -66,7 +69,7 @@ async def create_agent_graph(tools):
             }
             return Command(goto="call_llm", update={"messages": [tool_message]})
 
-    def route_after_llm(state) -> Literal[END, "human_review_node"]:
+    def route_after_llm(state) -> Literal["__end__", "human_review_node"]:
         if len(state["messages"][-1].tool_calls) == 0:
             return END
         else:
@@ -100,40 +103,39 @@ async def create_agent_graph(tools):
 
 
 async def run_graphs():
-    async with bl_tools(["blaxel-search"]) as blTools:
-        tools = blTools.to_langchain()
-        graph = await create_agent_graph(tools)
+    tools = await bl_tools(["blaxel-search"]).to_langchain()
+    graph = await create_agent_graph(tools)
 
-        # With no tool call
-        initial_input = {"messages": [{"role": "user", "content": "hi!"}]}
-        thread = {"configurable": {"thread_id": "1"}}
-        async for event in graph.astream(initial_input, thread, stream_mode="updates"):
-            print(event)
-            print("\n")
-
-
-        # With a tool call, should make interupt
-
-        # Run the graph until the first interruption
-        initial_input = {"messages": [{"role": "user", "content": "what's the weather in sf?"}]}
-        thread = {"configurable": {"thread_id": "2"}}
-        async for event in graph.astream(initial_input, thread, stream_mode="updates"):
-            print(event)
-            print("\n")
+    # With no tool call
+    initial_input = {"messages": [{"role": "user", "content": "hi!"}]}
+    thread = {"configurable": {"thread_id": "1"}}
+    async for event in graph.astream(initial_input, thread, stream_mode="updates"):
+        print(event)
+        print("\n")
 
 
-        # Pending Executions!
-        print("Pending Executions!")
-        print(graph.get_state(thread).next)
+    # With a tool call, should make interupt
 
-        # Resume the pending interupt
-        async for event in graph.astream(
-            # provide value
-            Command(resume={"action": "continue"}),
-            thread,
-            stream_mode="updates",
-        ):
-            print(event)
-            print("\n")
+    # Run the graph until the first interruption
+    initial_input = {"messages": [{"role": "user", "content": "what's the weather in sf?"}]}
+    thread = {"configurable": {"thread_id": "2"}}
+    async for event in graph.astream(initial_input, thread, stream_mode="updates"):
+        print(event)
+        print("\n")
+
+
+    # Pending Executions!
+    print("Pending Executions!")
+    print(graph.get_state(thread).next)
+
+    # Resume the pending interupt
+    async for event in graph.astream(
+        # provide value
+        Command(resume={"action": "continue"}),
+        thread,
+        stream_mode="updates",
+    ):
+        print(event)
+        print("\n")
 
 asyncio.run(run_graphs())

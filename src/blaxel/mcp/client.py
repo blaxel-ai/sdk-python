@@ -22,7 +22,7 @@ def remove_request_params(url: str) -> str:
 async def websocket_client(
     url: str,
     headers: dict[str, Any] | None = None,
-    timeout: float = 5,
+    timeout: float = 30,
 ):
     """
     Client transport for WebSocket.
