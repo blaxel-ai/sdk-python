@@ -49,7 +49,7 @@ class BLModel:
     async def _get_model_metadata(self) -> Model | None:
         cache_data = await find_from_cache('Model', self.model_name)
         if cache_data:
-            return Model(**cache_data)
+            return Model.from_dict(cache_data)
 
         try:
             return await get_model.asyncio(client=client, model_name=self.model_name)

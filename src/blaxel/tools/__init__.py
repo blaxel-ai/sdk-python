@@ -12,7 +12,7 @@ from mcp.types import Tool as MCPTool
 from ..cache import find_from_cache
 from ..client import client
 from ..client.api.functions import get_function
-from ..client.models.function import Function
+from ..client.models import Function
 from ..common.settings import settings
 from ..common.env import env
 from ..mcp.client import websocket_client
@@ -157,7 +157,7 @@ class BlTools:
     async def _get_function(self, tool) -> Function | None:
         cache_data = await find_from_cache('Function', tool)
         if cache_data:
-            return Function(**cache_data)
+            return Function.from_dict(cache_data)
         try:
             return await get_function.asyncio(client=client, function_name=tool)
         except Exception as e:

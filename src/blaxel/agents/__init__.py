@@ -86,11 +86,11 @@ class BlAgent:
 def bl_agent(name: str):
     return BlAgent(name)
 
-async def get_agent_metadata(self):
-    cache_data = await find_from_cache('Agent', self.name)
+async def get_agent_metadata(name):
+    cache_data = await find_from_cache('Agent', name)
     if cache_data:
-        return Agent(**cache_data)
+        return Agent.from_dict(cache_data)
     try:
-        return await get_agent.asyncio(client=client, agent_name=self.name)
+        return await get_agent.asyncio(client=client, agent_name=name)
     except Exception as e:
         return None
