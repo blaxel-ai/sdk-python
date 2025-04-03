@@ -1,3 +1,4 @@
+ARGS:= $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 sdk:
 	cp ../controlplane/api/api/definitions/controlplane.yml ./definition.yml
@@ -18,5 +19,12 @@ doc:
 
 lint:
 	uv run ruff check --fix
+
+tag:
+	git tag -a v$(ARGS) -m "Release v$(ARGS)"
+	git push origin v$(ARGS)
+
+%:
+	@:
 
 .PHONY: sdk
