@@ -22,6 +22,7 @@ logger = getLogger(__name__)
 
 
 def convert_mcp_tool_to_blaxel_tool(
+    name: str,
     url: str,
     tool: MCPTool,
 ) -> Tool:
@@ -41,7 +42,13 @@ def convert_mcp_tool_to_blaxel_tool(
         *args: Any,
         **arguments: dict[str, Any],
     ) -> CallToolResult:
-        with SpanManager("blaxel-tracer").create_active_span(tool.name, {"tool.name": tool.name, "tool.args": json.dumps(arguments)}):
+        span_attributes = {
+            "tool.name": tool.name,
+            "tool.args": json.dumps(arguments),
+            "tool.server": url,
+            "tool.server_name": name,
+        }
+        with SpanManager("blaxel-tracer").create_active_span("blaxel-tool-call", span_attributes) as span:
             exit_stack = AsyncExitStack()
             read, write = await exit_stack.enter_async_context(websocket_client(url, settings.headers))
             session = cast(ClientSession, await exit_stack.enter_async_context(ClientSession(read, write)))
@@ -75,7 +82,7 @@ def convert_mcp_tool_to_blaxel_tool(
     )
 
 
-async def load_mcp_tools(url: str) -> list[Tool]:
+async def load_mcp_tools(name: str, url: str) -> list[Tool]:
     """Load all available MCP tools and convert them to LangChain tools."""
     exit_stack = AsyncExitStack()
     read, write = await exit_stack.enter_async_context(websocket_client(url, settings.headers))
@@ -84,7 +91,7 @@ async def load_mcp_tools(url: str) -> list[Tool]:
 
     tools = await session.list_tools()
     await exit_stack.aclose()
-    return [convert_mcp_tool_to_blaxel_tool(url, tool) for tool in tools.tools]
+    return [convert_mcp_tool_to_blaxel_tool(name, url, tool) for tool in tools.tools]
 
 class BlTools:
     server_name_to_tools: dict[str, list[Tool]] = {}
@@ -162,7 +169,7 @@ class BlTools:
             url: The URL to connect to
         """
         logger.debug(f"Initializing session and loading tools from {url}")
-        server_tools = await load_mcp_tools(url)
+        server_tools = await load_mcp_tools(name, url)
         logger.debug(f"Loaded {len(server_tools)} tools from {url}")
         BlTools.server_name_to_tools[name] = server_tools
 
@@ -175,22 +182,24 @@ class BlTools:
         except Exception as e:
             return None
 
+    async def initialize_function(self, name: str) -> Function | None:
+        if name in BlTools.server_name_to_tools:
+            return
+        function = await self._get_function(name)
+        if not function:
+            if not env[f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"]:
+                logger.warning(f"Function {name} not loaded, skipping")
+        try:
+            await self.connect_to_server_via_websocket(name)
+        except Exception as e:
+            logger.warning(f"Failed to connect to server {name}: {e}")
+
     async def intialize(self) -> "BlTools":
         try:
-            functions = []
-            for name in self.functions:
-                if name in BlTools.server_name_to_tools:
-                    continue
-                function = await self._get_function(name)
-                if function:
-                    functions.append(function)
-                else:
-                    if not env[f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"]:
-                        logger.warning(f"Function {name} not loaded, skipping")
-                try:
-                    await self.connect_to_server_via_websocket(name)
-                except Exception as e:
-                    logger.warning(f"Failed to connect to server {name}: {e}")
+            # Process functions in batches of 10 concurrently
+            for i in range(0, len(self.functions), 10):
+                batch = self.functions[i:i+10]
+                await asyncio.gather(*(self.initialize_function(name) for name in batch))
             return self
         except Exception:
             await self.exit_stack.aclose()

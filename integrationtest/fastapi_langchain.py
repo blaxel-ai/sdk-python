@@ -67,7 +67,7 @@ async def validation_exception_handler(request: Request, e: Exception):
 @app.post("/")
 async def handle_request(request: Request):
     start = time()
-    tools = await bl_tools(["blaxel-search"]).to_langchain()
+    tools = await bl_tools(["blaxel-search", "mymcp"]).to_langchain()
     logger.info(f"Loaded tools in {round(time() - start, 4)} seconds")
     start = time()
     logger.info(f"Converted tools to langchain in {round(time() - start, 4)} seconds")
