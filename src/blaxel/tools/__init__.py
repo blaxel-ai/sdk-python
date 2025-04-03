@@ -183,12 +183,13 @@ class BlTools:
             return None
 
     async def initialize_function(self, name: str) -> Function | None:
-        if name in BlTools.server_name_to_tools:
-            return
-        function = await self._get_function(name)
-        if not function:
-            if not env[f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"]:
-                logger.warning(f"Function {name} not loaded, skipping")
+        # We don't need that call anymore, cache or not, while we only use MCP server
+        # if name in BlTools.server_name_to_tools:
+        #     return
+        # function = await self._get_function(name)
+        # if not function:
+        #     if not env[f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"]:
+        #         logger.warning(f"Function {name} not loaded, skipping")
         try:
             await self.connect_to_server_via_websocket(name)
         except Exception as e:

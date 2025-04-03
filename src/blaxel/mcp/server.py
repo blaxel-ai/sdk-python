@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from contextlib import asynccontextmanager
 from typing import Dict, Literal
@@ -14,6 +13,7 @@ from websockets.server import WebSocketServerProtocol, serve
 
 from ..common.env import env
 from ..instrumentation.span import SpanManager
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -62,19 +62,19 @@ class BlaxelMcpServerTransport:
                         if hasattr(msg, "id") and msg.id is not None:
                             original_id = msg.id
                             msg.id = f"{client_id}:{original_id}"
-                        span.set_attributes({
-                            "mcp.message.parsed": True,
-                            "mcp.method": msg.method,
-                            "mcp.messageId": msg.id,
-                            "mcp.toolName": msg.params.name
-                        })
-                        self.spans[client_id+":"+msg.id] =  span
+                            span.set_attributes({
+                                "mcp.message.parsed": True,
+                                "mcp.method": getattr(msg, "method", None),
+                                "mcp.messageId": getattr(msg, "id", None),
+                                "mcp.toolName": getattr(getattr(msg, "params", None), "name", None)
+                            })
+                            self.spans[client_id+":"+msg.id] =  span
                         await read_stream_writer.send(msg)
                     except Exception as exc:
                         span.set_status(StatusCode.ERROR)
                         span.record_exception(exc)
                         span.end()
-                        logger.error(f"Failed to parse message: {exc}")
+                        logger.error(f"Failed to parse message: {exc}\n{traceback.format_exc()}")
                         await read_stream_writer.send(exc)
             except Exception as e:
                 logger.error(f"WebSocket error: {e}")
