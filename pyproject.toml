@@ -1,6 +1,6 @@
 [project]
 name = "blaxel"
-version = "0.0.64"
+version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
