@@ -8,25 +8,78 @@ from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
-from ..cache import find_from_cache
-from ..client import client
-from ..client.api.functions import get_function
 from ..client.models import Function
 from ..common.env import env
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 from ..mcp.client import websocket_client
 from .types import Tool
+import traceback
 
 logger = getLogger(__name__)
 
+class PersistentWebSocket:
+    def __init__(self, url: str, timeout: int = 5):
+        self.url = url
+        self.timeout = timeout
+        self.exit_stack = AsyncExitStack()
+        self.session: ClientSession = None
+        self.timer_task = None
+
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
+        await self._initialize()
+        self._remove_timer()
+        logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
+        call_tool_result = await self.session.call_tool(tool_name, arguments)
+        logger.debug(f"Tool {tool_name} returned {call_tool_result}")
+        self._reset_timer()
+        return call_tool_result
+    
+    async def list_tools(self):
+        await self._initialize()
+        self._remove_timer()
+        logger.debug("Listing tools")
+        list_tools_result = await self.session.list_tools()
+        logger.debug(f"Tools listed: {list_tools_result}")
+        self._reset_timer()
+        return list_tools_result
+
+    async def _initialize(self):
+        if not self.session:
+            logger.debug(f"Initializing websocket client for {self.url}")
+            read, write = await self.exit_stack.enter_async_context(websocket_client(self.url, settings.headers))
+            self.session = cast(ClientSession, await self.exit_stack.enter_async_context(ClientSession(read, write)))
+            await self.session.initialize()
+
+    def _reset_timer(self):
+        self._remove_timer()
+        self.timer_task = asyncio.create_task(self._close_after_timeout())
+
+    def _remove_timer(self):
+        if self.timer_task:
+            self.timer_task.cancel()
+
+    async def _close_after_timeout(self):
+        await asyncio.sleep(self.timeout)
+        await self._close()
+        self.session = None
+        
+    
+    async def _close(self):
+        logger.debug(f"Closing websocket client {self.url}")
+        if self.session:
+            self.session = None
+            await self.exit_stack.aclose()
+            logger.debug("WebSocket connection closed due to inactivity.")
+
 
 def convert_mcp_tool_to_blaxel_tool(
+    websocket_client: PersistentWebSocket,
     name: str,
     url: str,
     tool: MCPTool,
 ) -> Tool:
-    """Convert an MCP tool to a LangChain tool.
+    """Convert an MCP tool to a blaxel tool.
 
     NOTE: this tool can be executed only in a context of an active MCP client session.
 
@@ -49,14 +102,9 @@ def convert_mcp_tool_to_blaxel_tool(
             "tool.server_name": name,
         }
         with SpanManager("blaxel-tracer").create_active_span("blaxel-tool-call", span_attributes) as span:
-            exit_stack = AsyncExitStack()
-            read, write = await exit_stack.enter_async_context(websocket_client(url, settings.headers))
-            session = cast(ClientSession, await exit_stack.enter_async_context(ClientSession(read, write)))
-            await session.initialize()
             logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
-            call_tool_result = await session.call_tool(tool.name, arguments)
+            call_tool_result = await websocket_client.call_tool(tool.name, arguments)
             logger.debug(f"Tool {tool.name} returned {call_tool_result}")
-            await exit_stack.aclose()
             return call_tool_result
 
     async def call_tool(
@@ -82,19 +130,8 @@ def convert_mcp_tool_to_blaxel_tool(
     )
 
 
-async def load_mcp_tools(name: str, url: str) -> list[Tool]:
-    """Load all available MCP tools and convert them to LangChain tools."""
-    exit_stack = AsyncExitStack()
-    read, write = await exit_stack.enter_async_context(websocket_client(url, settings.headers))
-    session = cast(ClientSession, await exit_stack.enter_async_context(ClientSession(read, write)))
-    await session.initialize()
-
-    tools = await session.list_tools()
-    await exit_stack.aclose()
-    return [convert_mcp_tool_to_blaxel_tool(name, url, tool) for tool in tools.tools]
-
 class BlTools:
-    server_name_to_tools: dict[str, list[Tool]] = {}
+    tools_by_server: dict[str, list[Tool]] = {}
 
     def __init__(self, functions: list[str]):
         self.exit_stack = AsyncExitStack()
@@ -120,7 +157,7 @@ class BlTools:
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
         all_tools: list[Tool] = []
-        for server_tools in BlTools.server_name_to_tools.values():
+        for server_tools in BlTools.tools_by_server.values():
             all_tools.extend(server_tools)
         return all_tools
 
@@ -169,32 +206,22 @@ class BlTools:
             url: The URL to connect to
         """
         logger.debug(f"Initializing session and loading tools from {url}")
-        server_tools = await load_mcp_tools(name, url)
-        logger.debug(f"Loaded {len(server_tools)} tools from {url}")
-        BlTools.server_name_to_tools[name] = server_tools
+        if not BlTools.tools_by_server.get(name):
+            BlTools.tools_by_server[name] = await self.load_mcp_tools(name, url)
+        logger.debug(f"Loaded {len(BlTools.tools_by_server[name])} tools from {url}")
 
-    async def _get_function(self, tool) -> Function | None:
-        cache_data = await find_from_cache('Function', tool)
-        if cache_data:
-            return Function.from_dict(cache_data)
-        try:
-            return await get_function.asyncio(client=client, function_name=tool)
-        except Exception as e:
-            return None
+    async def load_mcp_tools(self, name: str, url: str) -> list[Tool]:
+        """Load all available MCP tools and convert them to Blaxel tools."""
+        websocket = PersistentWebSocket(url)
+        tools = await websocket.list_tools()
+        return [convert_mcp_tool_to_blaxel_tool(websocket, name, url, tool) for tool in tools.tools]
 
     async def initialize_function(self, name: str) -> Function | None:
-        # We don't need that call anymore, cache or not, while we only use MCP server
-        # if name in BlTools.server_name_to_tools:
-        #     return
-        # function = await self._get_function(name)
-        # if not function:
-        #     if not env[f"BL_FUNCTION_{name.replace('-', '_').upper()}_URL"]:
-        #         logger.warning(f"Function {name} not loaded, skipping")
         try:
             await self.connect_to_server_via_websocket(name)
         except Exception as e:
-            logger.warning(f"Failed to connect to server {name}: {e}")
-
+            logger.warning(f"Failed to connect to server {name}: {e}: {traceback.format_exc()}")
+            return None
     async def intialize(self) -> "BlTools":
         try:
             # Process functions in batches of 10 concurrently

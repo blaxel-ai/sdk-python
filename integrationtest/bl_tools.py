@@ -20,6 +20,7 @@ async def test_mcp_tools_langchain():
     if len(tools) == 0:
         raise Exception("No tools found")
     result = await tools[0].ainvoke({ "query": "What is the capital of France?"})
+    result = await tools[0].ainvoke({ "query": "What is the capital of USA?"})
     logger.info(result)
 
 async def test_mcp_tools_llamaindex():
@@ -36,7 +37,25 @@ async def test_mcp_tools_crewai():
     result = tools[0].run(query="What is the capital of France?")
     logger.info(result)
 
+async def test_mcp_tools_blaxel():
+    tools = bl_tools(["blaxel-search"])
+    await tools.intialize()
+    blaxel_tools = tools.get_tools()
+    logger.info(blaxel_tools)
+    if len(blaxel_tools) == 0:
+        raise Exception("No tools found")
+    result = await blaxel_tools[0].coroutine(query="What is the capital of France?")
+    logger.info(result)
+    result = await blaxel_tools[0].coroutine(query="What is the capital of Germany?")
+    logger.info(result)
+    await asyncio.sleep(7)
+    result = await blaxel_tools[0].coroutine(query="What is the capital of USA?")
+    logger.info(result)
+    result = await blaxel_tools[0].coroutine(query="What is the capital of Canada?")
+    logger.info(result)
+
 async def main():
+    await test_mcp_tools_blaxel()
     await test_mcp_tools_langchain()
     await test_mcp_tools_llamaindex()
     await test_mcp_tools_crewai()
