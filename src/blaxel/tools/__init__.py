@@ -129,10 +129,8 @@ def convert_mcp_tool_to_blaxel_tool(
         response_format="content_and_artifact",
     )
 
-
+tools_by_server: dict[str, list[Tool]] = {}
 class BlTools:
-    tools_by_server: dict[str, list[Tool]] = {}
-
     def __init__(self, functions: list[str]):
         self.exit_stack = AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
@@ -157,8 +155,9 @@ class BlTools:
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
         all_tools: list[Tool] = []
-        for server_tools in BlTools.tools_by_server.values():
-            all_tools.extend(server_tools)
+        for server_name, server_tools in tools_by_server.items():
+            if server_name in self.functions:
+                all_tools.extend(server_tools)
         return all_tools
 
     async def to_langchain(self):
@@ -206,9 +205,9 @@ class BlTools:
             url: The URL to connect to
         """
         logger.debug(f"Initializing session and loading tools from {url}")
-        if not BlTools.tools_by_server.get(name):
-            BlTools.tools_by_server[name] = await self.load_mcp_tools(name, url)
-        logger.debug(f"Loaded {len(BlTools.tools_by_server[name])} tools from {url}")
+        if not tools_by_server.get(name):
+            tools_by_server[name] = await self.load_mcp_tools(name, url)
+        logger.debug(f"Loaded {len(tools_by_server[name])} tools from {url}")
 
     async def load_mcp_tools(self, name: str, url: str) -> list[Tool]:
         """Load all available MCP tools and convert them to Blaxel tools."""
