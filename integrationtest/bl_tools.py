@@ -41,7 +41,6 @@ async def test_mcp_tools_blaxel():
     tools = bl_tools(["blaxel-search"])
     await tools.intialize()
     blaxel_tools = tools.get_tools()
-    logger.info(blaxel_tools)
     if len(blaxel_tools) == 0:
         raise Exception("No tools found")
     result = await blaxel_tools[0].coroutine(query="What is the capital of France?")
