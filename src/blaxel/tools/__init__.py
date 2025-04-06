@@ -1,5 +1,6 @@
 import asyncio
 import json
+import traceback
 from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
@@ -14,7 +15,6 @@ from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 from ..mcp.client import websocket_client
 from .types import Tool
-import traceback
 
 logger = getLogger(__name__)
 
@@ -34,7 +34,7 @@ class PersistentWebSocket:
         logger.debug(f"Tool {tool_name} returned {call_tool_result}")
         self._reset_timer()
         return call_tool_result
-    
+
     async def list_tools(self):
         await self._initialize()
         self._remove_timer()
@@ -63,15 +63,14 @@ class PersistentWebSocket:
         await asyncio.sleep(self.timeout)
         await self._close()
         self.session = None
-        
-    
+
+
     async def _close(self):
         logger.debug(f"Closing websocket client {self.url}")
         if self.session:
             self.session = None
             await self.exit_stack.aclose()
             logger.debug("WebSocket connection closed due to inactivity.")
-
 
 def convert_mcp_tool_to_blaxel_tool(
     websocket_client: PersistentWebSocket,
@@ -135,7 +134,6 @@ class BlTools:
 
     def __init__(self, functions: list[str]):
         self.exit_stack = AsyncExitStack()
-        self.sessions: dict[str, ClientSession] = {}
         self.functions = functions
 
     def _external_url(self, name: str) -> str:
@@ -184,6 +182,12 @@ class BlTools:
 
         await self.intialize()
         return get_openai_tools(self.get_tools())
+
+    async def to_pydantic(self):
+        from .pydantic import get_pydantic_tools
+
+        await self.intialize()
+        return get_pydantic_tools(self.get_tools())
 
     async def connect_to_server_via_websocket(self, name: str):
         # Create and store the connection
