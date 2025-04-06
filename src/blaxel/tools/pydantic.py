@@ -28,8 +28,7 @@ def get_pydantic_tool(tool: Tool) -> PydanticTool:
         """Dynamically prepares the ToolDefinition using the custom Tool's attributes."""
         tool_def.name = tool.name  # Override inferred name
         tool_def.description = tool.description  # Override inferred description
-        tool_def.parameters_json_schema["properties"] = tool.input_schema ["properties"] # Override inferred schema
-        tool_def.parameters_json_schema["required"] = tool.input_schema ["required"]
+        tool_def.parameters_json_schema = tool.input_schema
         return tool_def
 
     async def pydantic_function(**kwargs):

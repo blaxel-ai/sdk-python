@@ -5,7 +5,7 @@ from logging import getLogger
 
 import uvicorn
 from asgi_correlation_id import CorrelationIdMiddleware
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -57,18 +57,17 @@ async def validation_exception_handler(request: Request, e: Exception):
 @app.post("/")
 async def handle_request(request: Request):
     start = time.time()
-    tools = await bl_tools(["blaxel-search"]).to_llamaindex()
+    tools = await bl_tools(["blaxel-search"]).to_pydantic()
     logger.info(f"Loaded tools in {round(time.time() - start, 4)} seconds")
 
     start = time.time()
-    model = await bl_model("gpt-4o-mini").to_llamaindex()
+    model = await bl_model("gpt-4o-mini").to_pydantic()
     logger.info(f"Retrieved model in {round(time.time() - start, 4)} seconds")
 
-    with SpanManager("blaxel-llamaindex").create_active_span("agent-request", {}) as span:
+    with SpanManager("blaxel-pydantic").create_active_span("agent-request", {}) as span:
         body = await request.json()
-        tools = await bl_tools(["blaxel-search"]).to_pydantic()
-
-        model = await bl_model("gpt-4o-mini").to_pydantic()
+        if not "inputs" in body:
+            raise HTTPException(status_code=400, detail="inputs is required")
 
         agent = Agent(model=model, tools=tools, model_settings=ModelSettings(temperature=0))
         async with agent.iter(body["inputs"]) as agent_run:
