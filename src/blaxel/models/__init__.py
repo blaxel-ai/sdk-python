@@ -5,6 +5,7 @@ from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
 
+
 class BLModel:
     models = {}
 
@@ -51,6 +52,16 @@ class BLModel:
         url, type, model = await self._get_parameters()
         model = await get_openai_model(url, type, model, **self.kwargs)
         BLModel.models[f"openai_{self.model_name}"] = model
+        return model
+
+    async def to_pydantic(self):
+        if f"pydantic_{self.model_name}" in BLModel.models:
+            return BLModel.models[f"pydantic_{self.model_name}"]
+
+        from .pydantic import get_pydantic_model
+        url, type, model = await self._get_parameters()
+        model = await get_pydantic_model(url, type, model, **self.kwargs)
+        BLModel.models[f"pydantic_{self.model_name}"] = model
         return model
 
     async def _get_parameters(self):
