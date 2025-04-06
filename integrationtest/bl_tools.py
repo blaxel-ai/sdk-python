@@ -1,4 +1,3 @@
-
 import nest_asyncio
 
 nest_asyncio.apply()
@@ -6,6 +5,8 @@ nest_asyncio.apply()
 import asyncio
 
 from dotenv import load_dotenv
+from pydantic_ai import Agent, CallToolsNode
+from pydantic_ai.messages import ToolCallPart
 
 load_dotenv()
 
@@ -37,6 +38,23 @@ async def test_mcp_tools_crewai():
     result = tools[0].run(query="What is the capital of France?")
     logger.info(result)
 
+async def test_mcp_tools_pydantic():
+    tools = await bl_tools(["blaxel-search"]).to_pydantic()
+    if len(tools) == 0:
+        raise Exception("No tools found")
+
+    agent = Agent(model='openai:gpt-4o-mini', tools=tools)
+    # result = await agent.run('What is the capital of France?', deps='human')
+    async with agent.iter('Search what is the capital of France?') as agent_run:
+        async for node in agent_run:
+            # Each node represents a step in the agent's execution
+            if isinstance(node, CallToolsNode):
+                for part in node.model_response.parts:
+                    if isinstance(part, ToolCallPart):
+                        logger.info(f"Tool call: {part}")
+                    else:
+                        logger.info(f"Response: {part}")
+
 async def test_mcp_tools_blaxel():
     tools = bl_tools(["blaxel-search"])
     await tools.intialize()
@@ -58,6 +76,7 @@ async def main():
     await test_mcp_tools_langchain()
     await test_mcp_tools_llamaindex()
     await test_mcp_tools_crewai()
+    await test_mcp_tools_pydantic()
 
 if __name__ == "__main__":
     asyncio.run(main())
