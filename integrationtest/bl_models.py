@@ -21,6 +21,7 @@ MODEL = "gpt-4o-mini"
 # MODEL = "gemini-2-0-flash"
 # MODEL = "deepseek-chat"
 # MODEL = "mistral-large-latest"
+# MODEL = "cerebras-llama-3-3-70b"
 
 async def test_model_langchain():
     model = await bl_model(MODEL).to_langchain()

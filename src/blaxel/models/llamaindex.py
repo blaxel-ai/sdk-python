@@ -7,6 +7,7 @@ from logging import getLogger
 
 from google.genai.types import HttpOptions
 from llama_index.llms.anthropic import Anthropic
+from llama_index.llms.cerebras import Cerebras
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.llms.groq import Groq
@@ -64,6 +65,13 @@ async def get_llamaindex_model(url: str, type: str, model: str, **kwargs):
             model=model,
             api_key=settings.auth.token,
             endpoint=url,
+            **kwargs
+        )
+    elif type == 'cerebras':
+        return Cerebras(
+            model=model,
+            api_key=settings.auth.token,
+            api_base=f"{url}/v1",
             **kwargs
         )
     else:

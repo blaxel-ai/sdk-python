@@ -43,6 +43,13 @@ async def get_crewai_model(url: str, type: str, model: str, **kwargs):
             base_url=f"{url}/v1beta/models/{model}",
             **kwargs
         )
+    elif type == 'cerebras':
+        return LLM(
+            model=f"cerebras/{model}",
+            api_key=settings.auth.token,
+            base_url=f"{url}/v1",
+            **kwargs
+        )
     else:
         if type != "openai":
             logger.warning(f"Model {model} is not supported by CrewAI, defaulting to OpenAI")
