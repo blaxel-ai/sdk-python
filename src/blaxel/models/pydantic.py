@@ -60,6 +60,15 @@ async def get_pydantic_model(url: str,type: str, model: str, **kwargs) -> Model:
                 **kwargs
             ),
         )
+    elif type == 'cerebras':
+        return OpenAIModel(
+            model_name=model,
+            provider=OpenAIProvider(
+                base_url=f"{url}/v1",
+                api_key=settings.auth.token,
+                **kwargs
+            ),
+        )
     elif type == 'anthropic':
         return AnthropicModel(
             model_name=model,
