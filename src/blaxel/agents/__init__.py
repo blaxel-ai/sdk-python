@@ -37,7 +37,7 @@ class BlAgent:
             return f"https://{settings.env[f'BL_AGENT_{env_var}_SERVICE_NAME']}.{settings.run_internal_hostname}"
         return self.external_url
 
-    def call(self, url, input_data):
+    def call(self, url, input_data, headers: dict = {}):
         body = input_data
         if not isinstance(body, str):
             body = json.dumps(body)
@@ -45,12 +45,13 @@ class BlAgent:
         return client.get_httpx_client().post(
             url,
             headers={
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                **headers
             },
             data=body
         )
 
-    async def acall(self, input_data):
+    async def acall(self, input_data, headers: dict = {}):
         logger.debug(f"Agent Calling: {self.name}")
         body = input_data
         if not isinstance(body, str):
@@ -59,22 +60,23 @@ class BlAgent:
         return await client.get_async_httpx_client().post(
             self.url,
             headers={
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                **headers
             },
             data=body
         )
 
-    def run(self, input: Any) -> str:
+    def run(self, input: Any, headers: dict = {}) -> str:
         with SpanManager("blaxel-tracer").create_active_span(self.name, {"agent.name": self.name, "agent.args": json.dumps(input)}):
             logger.debug(f"Agent Calling: {self.name}")
-            response = self.call(self.url, input)
+            response = self.call(self.url, input, headers)
             if response.status_code >= 400:
                 raise Exception(f"Agent {self.name} returned status code {response.status_code} with body {response.text}")
             return response.text
 
-    async def arun(self, input: Any) -> Awaitable[str]:
+    async def arun(self, input: Any, headers: dict = {}) -> Awaitable[str]:
         logger.debug(f"Agent Calling: {self.name}")
-        response = await self.acall(input)
+        response = await self.acall(input, headers)
         if response.status_code >= 400:
             raise Exception(f"Agent {self.name} returned status code {response.status_code} with body {response.text}")
         return response.text
