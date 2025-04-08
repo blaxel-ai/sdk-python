@@ -44,7 +44,6 @@ class PersistentWebSocket:
         logger.debug("Listing tools")
         list_tools_result = await self.session.list_tools()
         self.tools_cache = list_tools_result.tools
-        print(self.tools_cache)
         logger.debug(f"Tools listed: {list_tools_result}")
         self._reset_timer()
         return list_tools_result
