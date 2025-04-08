@@ -56,7 +56,7 @@ async def test_mcp_tools_pydantic():
                         logger.info(f"Response: {part}")
 
 async def test_mcp_tools_blaxel():
-    tools = bl_tools(["blaxel-search"])
+    tools = bl_tools(["blaxel-search"], {"test": "test"})
     await tools.intialize()
     blaxel_tools = tools.get_tools()
     if len(blaxel_tools) == 0:
