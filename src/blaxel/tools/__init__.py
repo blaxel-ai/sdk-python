@@ -1,6 +1,5 @@
 import asyncio
 import json
-import traceback
 from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
@@ -9,7 +8,6 @@ from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
-from ..client.models import Function
 from ..common.env import env
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
@@ -25,11 +23,16 @@ class PersistentWebSocket:
         self.exit_stack = AsyncExitStack()
         self.session: ClientSession = None
         self.timer_task = None
+        self.tools_cache = []
+    def with_metas(self, metas: dict[str, Any]):
+        self.metas = metas
+        return self
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         await self._initialize()
         self._remove_timer()
         logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
+        arguments["meta"] = self.metas
         call_tool_result = await self.session.call_tool(tool_name, arguments)
         logger.debug(f"Tool {tool_name} returned {call_tool_result}")
         self._reset_timer()
@@ -40,9 +43,13 @@ class PersistentWebSocket:
         self._remove_timer()
         logger.debug("Listing tools")
         list_tools_result = await self.session.list_tools()
+        self.tools_cache = list_tools_result.tools
         logger.debug(f"Tools listed: {list_tools_result}")
         self._reset_timer()
         return list_tools_result
+    
+    def get_tools(self):
+        return self.tools_cache
 
     async def _initialize(self):
         if not self.session:
@@ -128,11 +135,13 @@ def convert_mcp_tool_to_blaxel_tool(
         response_format="content_and_artifact",
     )
 
-tools_by_server: dict[str, list[Tool]] = {}
+toolPersistances: dict[str, PersistentWebSocket] = {}
+
 class BlTools:
-    def __init__(self, functions: list[str]):
+    def __init__(self, functions: list[str], metas: dict[str, Any] = {}):
         self.exit_stack = AsyncExitStack()
         self.functions = functions
+        self.metas = metas
 
     def _external_url(self, name: str) -> str:
         return f"{settings.run_url}/{settings.auth.workspace_name}/functions/{name}"
@@ -153,9 +162,12 @@ class BlTools:
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
         all_tools: list[Tool] = []
-        for server_name, server_tools in tools_by_server.items():
-            if server_name in self.functions:
-                all_tools.extend(server_tools)
+        for name in self.functions:
+            toolPersistances.get(name).with_metas(self.metas)
+            websocket = toolPersistances.get(name)
+            tools = websocket.get_tools()
+            converted_tools = [convert_mcp_tool_to_blaxel_tool(websocket, name, self._url(name), tool) for tool in tools]
+            all_tools.extend(converted_tools)
         return all_tools
 
     async def to_langchain(self):
@@ -188,18 +200,18 @@ class BlTools:
         await self.intialize()
         return get_pydantic_tools(self.get_tools())
 
-    async def connect_to_server_via_websocket(self, name: str):
+    async def connect(self, name: str):
         # Create and store the connection
         try:
             url = self._url(name)
-            await self._initialize_session_and_load_tools(name, url)
+            await self.connect_with_url(name, url)
         except Exception as e:
             if not self._fallback_url(name):
                 raise e
             url = self._fallback_url(name)
-            await self._initialize_session_and_load_tools(name, url)
+            await self.connect_with_url(name, url)
 
-    async def _initialize_session_and_load_tools(
+    async def connect_with_url(
         self, name: str, url: str
     ) -> None:
         """Initialize a session and load tools from it.
@@ -209,33 +221,25 @@ class BlTools:
             url: The URL to connect to
         """
         logger.debug(f"Initializing session and loading tools from {url}")
-        if not tools_by_server.get(name):
-            tools_by_server[name] = await self.load_mcp_tools(name, url)
-        logger.debug(f"Loaded {len(tools_by_server[name])} tools from {url}")
+        
+        if not toolPersistances.get(name):
+            toolPersistances[name] = PersistentWebSocket(url)
+            await toolPersistances[name].list_tools()
+        logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools from {url}")
+        return toolPersistances[name].with_metas(self.metas)
+        
 
-    async def load_mcp_tools(self, name: str, url: str) -> list[Tool]:
-        """Load all available MCP tools and convert them to Blaxel tools."""
-        websocket = PersistentWebSocket(url)
-        tools = await websocket.list_tools()
-        return [convert_mcp_tool_to_blaxel_tool(websocket, name, url, tool) for tool in tools.tools]
-
-    async def initialize_function(self, name: str) -> Function | None:
-        try:
-            await self.connect_to_server_via_websocket(name)
-        except Exception as e:
-            logger.warning(f"Failed to connect to server {name}: {e}: {traceback.format_exc()}")
-            return None
     async def intialize(self) -> "BlTools":
         try:
             # Process functions in batches of 10 concurrently
             for i in range(0, len(self.functions), 10):
                 batch = self.functions[i:i+10]
-                await asyncio.gather(*(self.initialize_function(name) for name in batch))
+                await asyncio.gather(*(self.connect(name) for name in batch))
             return self
         except Exception:
             await self.exit_stack.aclose()
             raise
 
 
-def bl_tools(functions: list[str]) -> BlTools:
-    return BlTools(functions)
+def bl_tools(functions: list[str], metas: dict[str, Any] = {}) -> BlTools:
+    return BlTools(functions, metas)
