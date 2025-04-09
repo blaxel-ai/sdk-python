@@ -32,7 +32,7 @@ class PersistentWebSocket:
         await self._initialize()
         self._remove_timer()
         logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
-        arguments["meta"] = self.metas
+        arguments.update(self.metas)
         call_tool_result = await self.session.call_tool(tool_name, arguments)
         logger.debug(f"Tool {tool_name} returned {call_tool_result}")
         self._reset_timer()
