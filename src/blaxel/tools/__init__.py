@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import traceback
 from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
@@ -16,8 +18,12 @@ from .types import Tool
 
 logger = getLogger(__name__)
 
+DEFAULT_TIMEOUT = 1
+if os.getenv("BL_SERVER_PORT"):
+    DEFAULT_TIMEOUT = 5
+
 class PersistentWebSocket:
-    def __init__(self, url: str, timeout: int = 5):
+    def __init__(self, url: str, timeout: int = DEFAULT_TIMEOUT):
         self.url = url
         self.timeout = timeout
         self.exit_stack = AsyncExitStack()
@@ -47,7 +53,7 @@ class PersistentWebSocket:
         logger.debug(f"Tools listed: {list_tools_result}")
         self._reset_timer()
         return list_tools_result
-    
+
     def get_tools(self):
         return self.tools_cache
 
@@ -138,10 +144,11 @@ def convert_mcp_tool_to_blaxel_tool(
 toolPersistances: dict[str, PersistentWebSocket] = {}
 
 class BlTools:
-    def __init__(self, functions: list[str], metas: dict[str, Any] = {}):
+    def __init__(self, functions: list[str], metas: dict[str, Any] = {}, timeout: int = DEFAULT_TIMEOUT):
         self.exit_stack = AsyncExitStack()
         self.functions = functions
         self.metas = metas
+        self.timeout = timeout
 
     def _external_url(self, name: str) -> str:
         return f"{settings.run_url}/{settings.auth.workspace_name}/functions/{name}"
@@ -221,13 +228,12 @@ class BlTools:
             url: The URL to connect to
         """
         logger.debug(f"Initializing session and loading tools from {url}")
-        
+
         if not toolPersistances.get(name):
             toolPersistances[name] = PersistentWebSocket(url)
             await toolPersistances[name].list_tools()
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools from {url}")
         return toolPersistances[name].with_metas(self.metas)
-        
 
     async def intialize(self) -> "BlTools":
         try:
@@ -241,5 +247,5 @@ class BlTools:
             raise
 
 
-def bl_tools(functions: list[str], metas: dict[str, Any] = {}) -> BlTools:
-    return BlTools(functions, metas)
+def bl_tools(functions: list[str], metas: dict[str, Any] = {}, timeout: int = DEFAULT_TIMEOUT) -> BlTools:
+    return BlTools(functions, metas=metas, timeout=timeout)
