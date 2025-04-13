@@ -1,7 +1,3 @@
-import asyncio
-import functools
-from concurrent.futures import ThreadPoolExecutor
-
 from crewai.tools import BaseTool
 
 from .common import create_model_from_json_schema

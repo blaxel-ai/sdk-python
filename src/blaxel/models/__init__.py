@@ -64,7 +64,17 @@ class BLModel:
         BLModel.models[f"pydantic_{self.model_name}"] = model
         return model
 
-    async def _get_parameters(self):
+    async def to_googleadk(self):
+        if f"googleadk_{self.model_name}" in BLModel.models:
+            return BLModel.models[f"googleadk_{self.model_name}"]
+
+        from .googleadk import get_googleadk_model
+        url, type, model = await self._get_parameters()
+        model = await get_googleadk_model(url, type, model, **self.kwargs)
+        BLModel.models[f"googleadk_{self.model_name}"] = model
+        return model
+
+    async def _get_parameters(self) -> tuple[str, str, str]:
         url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"
         model_data = await self._get_model_metadata()
         if not model_data:
