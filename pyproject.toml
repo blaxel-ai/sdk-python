@@ -75,6 +75,11 @@ pydantic-ai = [
     "pydantic-ai>=0.0.48",
 ]
 
+google-adk = [
+    "google-adk>=0.1.0",
+    "litellm>=1.65.1",
+]
+
 [dependency-groups]
 dev = [
     "asgi-correlation-id>=4.3.4,<5.0.0",

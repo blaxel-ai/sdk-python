@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
@@ -16,46 +17,57 @@ from .types import Tool
 
 logger = getLogger(__name__)
 
+DEFAULT_TIMEOUT = 1
+if os.getenv("BL_SERVER_PORT"):
+    DEFAULT_TIMEOUT = 5
+
 class PersistentWebSocket:
-    def __init__(self, url: str, timeout: int = 5):
+    def __init__(self, url: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
         self.url = url
         self.timeout = timeout
-        self.exit_stack = AsyncExitStack()
+        self.timeout_enabled = timeout_enabled
+        self.session_exit_stack = AsyncExitStack()
+        self.client_exit_stack = AsyncExitStack()
         self.session: ClientSession = None
         self.timer_task = None
         self.tools_cache = []
+
     def with_metas(self, metas: dict[str, Any]):
         self.metas = metas
         return self
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         await self._initialize()
-        self._remove_timer()
+        if self.timeout_enabled:
+            self._remove_timer()
         logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
         arguments.update(self.metas)
         call_tool_result = await self.session.call_tool(tool_name, arguments)
         logger.debug(f"Tool {tool_name} returned {call_tool_result}")
-        self._reset_timer()
+        if self.timeout_enabled:
+            self._reset_timer()
         return call_tool_result
 
     async def list_tools(self):
         await self._initialize()
-        self._remove_timer()
+        if self.timeout_enabled:
+            self._remove_timer()
         logger.debug("Listing tools")
         list_tools_result = await self.session.list_tools()
         self.tools_cache = list_tools_result.tools
         logger.debug(f"Tools listed: {list_tools_result}")
-        self._reset_timer()
+        if self.timeout_enabled:
+            self._reset_timer()
         return list_tools_result
-    
+
     def get_tools(self):
         return self.tools_cache
 
     async def _initialize(self):
         if not self.session:
             logger.debug(f"Initializing websocket client for {self.url}")
-            read, write = await self.exit_stack.enter_async_context(websocket_client(self.url, settings.headers))
-            self.session = cast(ClientSession, await self.exit_stack.enter_async_context(ClientSession(read, write)))
+            read, write = await self.client_exit_stack.enter_async_context(websocket_client(self.url, settings.headers))
+            self.session = cast(ClientSession, await self.session_exit_stack.enter_async_context(ClientSession(read, write)))
             await self.session.initialize()
 
     def _reset_timer(self):
@@ -76,7 +88,14 @@ class PersistentWebSocket:
         logger.debug(f"Closing websocket client {self.url}")
         if self.session:
             self.session = None
-            await self.exit_stack.aclose()
+            try:
+                await self.session_exit_stack.aclose()
+            except Exception as e:
+                logger.debug(f"Error closing session exit stack: {e}")
+            try:
+                await self.client_exit_stack.aclose()
+            except Exception as e:
+                logger.debug(f"Error closing client exit stack: {e}")
             logger.debug("WebSocket connection closed due to inactivity.")
 
 def convert_mcp_tool_to_blaxel_tool(
@@ -138,10 +157,11 @@ def convert_mcp_tool_to_blaxel_tool(
 toolPersistances: dict[str, PersistentWebSocket] = {}
 
 class BlTools:
-    def __init__(self, functions: list[str], metas: dict[str, Any] = {}):
-        self.exit_stack = AsyncExitStack()
+    def __init__(self, functions: list[str], metas: dict[str, Any] = {}, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
         self.functions = functions
         self.metas = metas
+        self.timeout = timeout
+        self.timeout_enabled = timeout_enabled
 
     def _external_url(self, name: str) -> str:
         return f"{settings.run_url}/{settings.auth.workspace_name}/functions/{name}"
@@ -200,6 +220,12 @@ class BlTools:
         await self.intialize()
         return get_pydantic_tools(self.get_tools())
 
+    async def to_google_adk(self):
+        from .googleadk import get_google_adk_tools
+
+        await self.intialize()
+        return get_google_adk_tools(self.get_tools())
+
     async def connect(self, name: str):
         # Create and store the connection
         try:
@@ -221,25 +247,19 @@ class BlTools:
             url: The URL to connect to
         """
         logger.debug(f"Initializing session and loading tools from {url}")
-        
+
         if not toolPersistances.get(name):
-            toolPersistances[name] = PersistentWebSocket(url)
+            toolPersistances[name] = PersistentWebSocket(url, timeout=self.timeout, timeout_enabled=self.timeout_enabled)
             await toolPersistances[name].list_tools()
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools from {url}")
         return toolPersistances[name].with_metas(self.metas)
-        
 
     async def intialize(self) -> "BlTools":
-        try:
-            # Process functions in batches of 10 concurrently
-            for i in range(0, len(self.functions), 10):
-                batch = self.functions[i:i+10]
-                await asyncio.gather(*(self.connect(name) for name in batch))
-            return self
-        except Exception:
-            await self.exit_stack.aclose()
-            raise
+        for i in range(0, len(self.functions), 10):
+            batch = self.functions[i:i+10]
+            await asyncio.gather(*(self.connect(name) for name in batch))
+        return self
 
 
-def bl_tools(functions: list[str], metas: dict[str, Any] = {}) -> BlTools:
-    return BlTools(functions, metas)
+def bl_tools(functions: list[str], metas: dict[str, Any] = {}, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True) -> BlTools:
+    return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled)

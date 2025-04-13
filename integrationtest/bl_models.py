@@ -21,7 +21,7 @@ MODEL = "gpt-4o-mini"
 # MODEL = "gemini-2-0-flash"
 # MODEL = "deepseek-chat"
 # MODEL = "mistral-large-latest"
-# MODEL = "cerebras-llama-3-3-70b"
+# MODEL = "cerebras-llama-4-scout-17b"
 
 async def test_model_langchain():
     model = await bl_model(MODEL).to_langchain()
@@ -48,11 +48,25 @@ async def test_model_pydantic():
     )
     logger.info(result)
 
+async def test_model_google_adk():
+    from google.adk.models.llm_request import LlmRequest
+
+    model = await bl_model(MODEL).to_google_adk()
+    request = LlmRequest(
+        model=MODEL,
+        contents=[{"role": "user", "parts": [{"text": "Hello, world!"}]}],
+        config={},
+        tools_dict={},
+    )
+    async for result in model.generate_content_async(request):
+        logger.info(result)
+
 async def main():
-    await test_model_langchain()
-    await test_model_llamaindex()
-    await test_model_crewai()
-    await test_model_pydantic()
+    # await test_model_langchain()
+    # await test_model_llamaindex()
+    # await test_model_crewai()
+    # await test_model_pydantic()
+    await test_model_google_adk()
 
 if __name__ == "__main__":
     asyncio.run(main())
