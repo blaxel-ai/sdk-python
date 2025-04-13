@@ -88,8 +88,14 @@ class PersistentWebSocket:
         logger.debug(f"Closing websocket client {self.url}")
         if self.session:
             self.session = None
-            await self.session_exit_stack.aclose()
-            await self.client_exit_stack.aclose()
+            try:
+                await self.session_exit_stack.aclose()
+            except Exception as e:
+                logger.debug(f"Error closing session exit stack: {e}")
+            try:
+                await self.client_exit_stack.aclose()
+            except Exception as e:
+                logger.debug(f"Error closing client exit stack: {e}")
             logger.debug("WebSocket connection closed due to inactivity.")
 
 def convert_mcp_tool_to_blaxel_tool(

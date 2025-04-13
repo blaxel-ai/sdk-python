@@ -12,6 +12,7 @@ async def get_google_adk_model(url: str, type: str, model: str, **kwargs):
             model=f"mistral/{model}",
             api_key=settings.auth.token,
             api_base=f"{url}/v1",
+            **kwargs
         )
     elif type == 'cohere':
         return LiteLlm(
@@ -57,9 +58,10 @@ async def get_google_adk_model(url: str, type: str, model: str, **kwargs):
         )
     else:
         if type != "openai":
-            logger.warning(f"Model {model} is not supported by Pydantic, defaulting to OpenAI")
+            logger.warning(f"Model {model} is not supported by Google ADK, defaulting to OpenAI")
         return LiteLlm(
             model=f"openai/{model}",
             api_key=settings.auth.token,
             api_base=f"{url}/v1",
+            **kwargs
         )
