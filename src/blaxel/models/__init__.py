@@ -64,13 +64,13 @@ class BLModel:
         BLModel.models[f"pydantic_{self.model_name}"] = model
         return model
 
-    async def to_googleadk(self):
+    async def to_google_adk(self):
         if f"googleadk_{self.model_name}" in BLModel.models:
             return BLModel.models[f"googleadk_{self.model_name}"]
 
-        from .googleadk import get_googleadk_model
+        from .googleadk import get_google_adk_model
         url, type, model = await self._get_parameters()
-        model = await get_googleadk_model(url, type, model, **self.kwargs)
+        model = await get_google_adk_model(url, type, model, **self.kwargs)
         BLModel.models[f"googleadk_{self.model_name}"] = model
         return model
 

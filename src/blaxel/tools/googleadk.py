@@ -1,5 +1,4 @@
 import inspect
-import json
 from typing import Any, Optional, override
 
 from google.adk.tools import BaseTool, ToolContext
@@ -8,7 +7,7 @@ from google.genai import types
 from .types import Tool
 
 
-def get_googleadk_tools(tools: list[Tool]) -> list[BaseTool]:
+def get_google_adk_tools(tools: list[Tool]) -> list[BaseTool]:
     class GoogleADKTool(BaseTool):
         _tool: Tool
 

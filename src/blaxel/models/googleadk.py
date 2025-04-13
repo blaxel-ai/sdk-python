@@ -6,7 +6,7 @@ from ..common.settings import settings
 
 logger = getLogger(__name__)
 
-async def get_googleadk_model(url: str, type: str, model: str, **kwargs):
+async def get_google_adk_model(url: str, type: str, model: str, **kwargs):
     if type == 'mistral':
         return LiteLlm(
             model=f"mistral/{model}",

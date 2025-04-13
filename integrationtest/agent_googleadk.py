@@ -31,8 +31,8 @@ async def main():
     USER_ID = "user_1"
     SESSION_ID = "session_001" # Using a fixed ID for simplicity
 
-    tools = await bl_tools(["blaxel-search"], timeout_enabled=False).to_googleadk()
-    model = await bl_model(MODEL, temperature=0).to_googleadk()
+    tools = await bl_tools(["blaxel-search"], timeout_enabled=False).to_google_adk()
+    model = await bl_model(MODEL, temperature=0).to_google_adk()
 
     description = "Provides weather information for specific cities."
     prompt = """You are a helpful weather assistant. Your primary goal is to provide current weather reports. "

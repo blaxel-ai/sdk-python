@@ -55,8 +55,8 @@ async def test_mcp_tools_pydantic():
                     else:
                         logger.info(f"Response: {part}")
 
-async def test_mcp_tools_googleadk():
-    tools = await bl_tools(["blaxel-search"]).to_googleadk()
+async def test_mcp_tools_google_adk():
+    tools = await bl_tools(["blaxel-search"]).to_google_adk()
     if len(tools) == 0:
         raise Exception("No tools found")
     result = await tools[0].run_async(args={"query": "What is the capital of France?"}, tool_context=None)
@@ -84,7 +84,7 @@ async def main():
     await test_mcp_tools_llamaindex()
     await test_mcp_tools_crewai()
     await test_mcp_tools_pydantic()
-    await test_mcp_tools_googleadk()
+    await test_mcp_tools_google_adk()
 
 if __name__ == "__main__":
     asyncio.run(main())

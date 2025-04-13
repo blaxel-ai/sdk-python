@@ -48,10 +48,10 @@ async def test_model_pydantic():
     )
     logger.info(result)
 
-async def test_model_googleadk():
+async def test_model_google_adk():
     from google.adk.models.llm_request import LlmRequest
 
-    model = await bl_model(MODEL).to_googleadk()
+    model = await bl_model(MODEL).to_google_adk()
     request = LlmRequest(
         model=MODEL,
         contents=[{"role": "user", "parts": [{"text": "Hello, world!"}]}],
@@ -66,7 +66,7 @@ async def main():
     # await test_model_llamaindex()
     # await test_model_crewai()
     # await test_model_pydantic()
-    await test_model_googleadk()
+    await test_model_google_adk()
 
 if __name__ == "__main__":
     asyncio.run(main())

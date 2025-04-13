@@ -214,11 +214,11 @@ class BlTools:
         await self.intialize()
         return get_pydantic_tools(self.get_tools())
 
-    async def to_googleadk(self):
-        from .googleadk import get_googleadk_tools
+    async def to_google_adk(self):
+        from .googleadk import get_google_adk_tools
 
         await self.intialize()
-        return get_googleadk_tools(self.get_tools())
+        return get_google_adk_tools(self.get_tools())
 
     async def connect(self, name: str):
         # Create and store the connection
