@@ -18,14 +18,31 @@ def get_google_adk_tools(tools: list[Tool]) -> list[BaseTool]:
             )
             self._tool = tool
 
+        def _clean_schema(self, schema: dict) -> dict:
+            if not isinstance(schema, dict):
+                return schema
+
+            # Create a copy of the schema
+            cleaned_schema = schema.copy()
+
+            # Remove $schema and additionalProperties at current level
+            if "$schema" in cleaned_schema:
+                del cleaned_schema["$schema"]
+            if "additionalProperties" in cleaned_schema:
+                del cleaned_schema["additionalProperties"]
+
+            # Recursively clean properties if they exist
+            if "properties" in cleaned_schema:
+                cleaned_schema["properties"] = {
+                    k: self._clean_schema(v) for k, v in cleaned_schema["properties"].items()
+                }
+
+            return cleaned_schema
+
         @override
         def _get_declaration(self) -> Optional[types.FunctionDeclaration]:
-            # Create a copy of the schema and remove $schema and additionalProperties
-            schema = self._tool.input_schema.copy()
-            if "$schema" in schema:
-                del schema["$schema"]
-            if "additionalProperties" in schema:
-                del schema["additionalProperties"]
+            # Clean the schema recursively
+            schema = self._clean_schema(self._tool.input_schema)
 
             function_decl = types.FunctionDeclaration.model_validate(
                 types.FunctionDeclaration(
