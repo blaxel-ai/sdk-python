@@ -62,7 +62,7 @@ openai-agents = ["openai-agents>=0.0.7"]
 
 pydantic-ai = ["pydantic-ai>=0.0.48"]
 
-google-adk = ["google-adk>=0.1.0", "litellm>=1.65.1"]
+google-adk = ["google-adk>=0.2.0", "litellm>=1.63.11"]
 
 [dependency-groups]
 dev = [
