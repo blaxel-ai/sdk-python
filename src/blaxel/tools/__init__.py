@@ -10,6 +10,7 @@ from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
 from ..common.env import env
+from ..common.internal import get_global_unique_hash
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 from ..mcp.client import websocket_client
@@ -22,15 +23,19 @@ if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
 
 class PersistentWebSocket:
-    def __init__(self, url: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
+    def __init__(self, url: str, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
         self.url = url
+        self.name = name
         self.timeout = timeout
-        self.timeout_enabled = timeout_enabled
         self.session_exit_stack = AsyncExitStack()
         self.client_exit_stack = AsyncExitStack()
         self.session: ClientSession = None
         self.timer_task = None
         self.tools_cache = []
+        if settings.run_internal_hostname:
+            self.timeout_enabled = False
+        else:
+            self.timeout_enabled = timeout_enabled
 
     def with_metas(self, metas: dict[str, Any]):
         self.metas = metas
@@ -46,19 +51,30 @@ class PersistentWebSocket:
         logger.debug(f"Tool {tool_name} returned {call_tool_result}")
         if self.timeout_enabled:
             self._reset_timer()
+        else:
+            await self._close()
         return call_tool_result
 
     async def list_tools(self):
-        await self._initialize()
-        if self.timeout_enabled:
-            self._remove_timer()
-        logger.debug("Listing tools")
-        list_tools_result = await self.session.list_tools()
-        self.tools_cache = list_tools_result.tools
-        logger.debug(f"Tools listed: {list_tools_result}")
-        if self.timeout_enabled:
-            self._reset_timer()
-        return list_tools_result
+        span_attributes = {
+            "tool.server": self.url,
+            "tool.server_name": self.name,
+            "span.type": "tool.list",
+        }
+        with SpanManager("blaxel-tracer").create_active_span(self.name, span_attributes) as span:
+            await self._initialize()
+            if self.timeout_enabled:
+                self._remove_timer()
+            logger.debug("Listing tools")
+            list_tools_result = await self.session.list_tools()
+            self.tools_cache = list_tools_result.tools
+            logger.debug(f"Tools listed: {list_tools_result}")
+            if self.timeout_enabled:
+                self._reset_timer()
+            else:
+                await self._close()
+            span.set_attribute("tool.list.result", list_tools_result.model_dump_json())
+            return list_tools_result
 
     def get_tools(self):
         return self.tools_cache
@@ -125,6 +141,7 @@ def convert_mcp_tool_to_blaxel_tool(
             "tool.args": json.dumps(arguments),
             "tool.server": url,
             "tool.server_name": name,
+            "span.type": "tool.call",
         }
         with SpanManager("blaxel-tracer").create_active_span("blaxel-tool-call", span_attributes) as span:
             logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
@@ -163,21 +180,32 @@ class BlTools:
         self.timeout = timeout
         self.timeout_enabled = timeout_enabled
 
-    def _external_url(self, name: str) -> str:
-        return f"{settings.run_url}/{settings.auth.workspace_name}/functions/{name}"
+    def _internal_url(self, name: str):
+        """Get the internal URL for the agent using a hash of workspace and agent name."""
+        hash = get_global_unique_hash(settings.workspace, "function", name)
+        return f"{settings.run_internal_protocol}://{hash}.{settings.run_internal_hostname}"
 
-    def _url(self, name: str) -> str:
+    def _forced_url(self, name: str):
+        """Get the forced URL from environment variables if set."""
         env_var = name.replace("-", "_").upper()
         if env[f"BL_FUNCTION_{env_var}_URL"]:
             return env[f"BL_FUNCTION_{env_var}_URL"]
-        elif env[f"BL_FUNCTION_{env_var}_SERVICE_NAME"]:
-            return f"https://{env[f'BL_FUNCTION_{env_var}_SERVICE_NAME']}.{settings.run_internal_hostname}"
-        return self._external_url(name)
+        return None
 
-    def _fallback_url(self, name: str) -> str | None:
-        if self._external_url(name) != self._url(name):
+    def _external_url(self, name: str):
+        return f"{settings.run_url}/{settings.workspace}/functions/{name}"
+
+    def _fallback_url(self, name: str):
+        if self._external_url(name) != self._internal_url(name):
             return self._external_url(name)
         return None
+
+    def _url(self, name: str):
+        if self._forced_url(name):
+            return self._forced_url(name)
+        if settings.run_internal_hostname:
+            return self._internal_url(name)
+        return self._external_url(name)
 
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
@@ -249,7 +277,7 @@ class BlTools:
         logger.debug(f"Initializing session and loading tools from {url}")
 
         if not toolPersistances.get(name):
-            toolPersistances[name] = PersistentWebSocket(url, timeout=self.timeout, timeout_enabled=self.timeout_enabled)
+            toolPersistances[name] = PersistentWebSocket(url, name, timeout=self.timeout, timeout_enabled=self.timeout_enabled)
             await toolPersistances[name].list_tools()
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools from {url}")
         return toolPersistances[name].with_metas(self.metas)

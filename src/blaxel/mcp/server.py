@@ -1,4 +1,5 @@
 import logging
+import traceback
 import uuid
 from contextlib import asynccontextmanager
 from typing import Dict, Literal
@@ -13,7 +14,6 @@ from websockets.server import WebSocketServerProtocol, serve
 
 from ..common.env import env
 from ..instrumentation.span import SpanManager
-import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,8 @@ class BlaxelMcpServerTransport:
                                 "mcp.message.parsed": True,
                                 "mcp.method": getattr(msg, "method", None),
                                 "mcp.messageId": getattr(msg, "id", None),
-                                "mcp.toolName": getattr(getattr(msg, "params", None), "name", None)
+                                "mcp.toolName": getattr(getattr(msg, "params", None), "name", None),
+                                "span.type": "mcp.message",
                             })
                             self.spans[client_id+":"+msg.id] =  span
                         await read_stream_writer.send(msg)

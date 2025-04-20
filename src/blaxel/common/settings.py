@@ -64,7 +64,12 @@ class Settings:
     @property
     def run_internal_hostname(self) -> str:
         """Get the run internal hostname."""
-        return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "internal.run.beamlit.net")
+        return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "")
+
+    @property
+    def run_internal_protocol(self) -> str:
+        """Get the run internal protocol."""
+        return os.environ.get("BL_RUN_INTERNAL_PROTOCOL", "https")
 
     @property
     def enable_opentelemetry(self) -> bool:
