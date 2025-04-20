@@ -32,7 +32,7 @@ class PersistentWebSocket:
         self.session: ClientSession = None
         self.timer_task = None
         self.tools_cache = []
-        if settings.run_internal_hostname:
+        if settings.bl_cloud:
             self.timeout_enabled = False
         else:
             self.timeout_enabled = timeout_enabled

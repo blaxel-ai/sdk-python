@@ -65,6 +65,11 @@ class Settings:
     def run_internal_hostname(self) -> str:
         """Get the run internal hostname."""
         return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "")
+    
+    @property
+    def bl_cloud(self) -> bool:
+        """Is running on bl cloud."""
+        return os.environ.get("BL_CLOUD", "") == "true"
 
     @property
     def run_internal_protocol(self) -> str:
