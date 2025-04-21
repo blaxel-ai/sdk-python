@@ -41,9 +41,7 @@ class Settings:
     @property
     def headers(self) -> Dict[str, str]:
         """Get the headers for API requests."""
-        if self._headers is None:
-            self._headers = self.auth.get_headers()
-        return self._headers
+        return self.auth.get_headers()
 
 
     @property
@@ -64,7 +62,12 @@ class Settings:
     @property
     def run_internal_hostname(self) -> str:
         """Get the run internal hostname."""
-        return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "internal.run.beamlit.net")
+        return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "")
+
+    @property
+    def bl_cloud(self) -> bool:
+        """Is running on bl cloud."""
+        return os.environ.get("BL_CLOUD", "") == "true"
 
     @property
     def enable_opentelemetry(self) -> bool:

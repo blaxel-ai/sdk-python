@@ -14,9 +14,6 @@ class BLModel:
         self.kwargs = kwargs
 
     async def to_langchain(self):
-        if f"langchain_{self.model_name}" in BLModel.models:
-            return BLModel.models[f"langchain_{self.model_name}"]
-
         from .langchain import get_langchain_model
         url, type, model = await self._get_parameters()
         model = await get_langchain_model(url, type, model, **self.kwargs)
@@ -24,9 +21,6 @@ class BLModel:
         return model
 
     async def to_llamaindex(self):
-        if f"llamaindex_{self.model_name}" in BLModel.models:
-            return BLModel.models[f"llamaindex_{self.model_name}"]
-
         from .llamaindex import get_llamaindex_model
         url, type, model = await self._get_parameters()
         model = await get_llamaindex_model(url, type, model, **self.kwargs)
@@ -34,9 +28,6 @@ class BLModel:
         return model
 
     async def to_crewai(self):
-        if f"crewai_{self.model_name}" in BLModel.models:
-            return BLModel.models[f"crewai_{self.model_name}"]
-
         from .crewai import get_crewai_model
 
         url, type, model = await self._get_parameters()
@@ -45,9 +36,6 @@ class BLModel:
         return model
 
     async def to_openai(self):
-        if f"openai_{self.model_name}" in BLModel.models:
-            return BLModel.models[f"openai_{self.model_name}"]
-
         from .openai import get_openai_model
         url, type, model = await self._get_parameters()
         model = await get_openai_model(url, type, model, **self.kwargs)
@@ -55,9 +43,6 @@ class BLModel:
         return model
 
     async def to_pydantic(self):
-        if f"pydantic_{self.model_name}" in BLModel.models:
-            return BLModel.models[f"pydantic_{self.model_name}"]
-
         from .pydantic import get_pydantic_model
         url, type, model = await self._get_parameters()
         model = await get_pydantic_model(url, type, model, **self.kwargs)
@@ -65,9 +50,6 @@ class BLModel:
         return model
 
     async def to_google_adk(self):
-        if f"googleadk_{self.model_name}" in BLModel.models:
-            return BLModel.models[f"googleadk_{self.model_name}"]
-
         from .googleadk import get_google_adk_model
         url, type, model = await self._get_parameters()
         model = await get_google_adk_model(url, type, model, **self.kwargs)
@@ -75,6 +57,11 @@ class BLModel:
         return model
 
     async def _get_parameters(self) -> tuple[str, str, str]:
+        if self.model_name in self.models:
+            # We get the headers in case we need to refresh the token
+            settings.auth.get_headers()
+            model = self.models[self.model_name]
+            return model["url"], model["type"], model["model"]
         url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"
         model_data = await self._get_model_metadata()
         if not model_data:
@@ -85,6 +72,11 @@ class BLModel:
 
         type = runtime.type_ or 'openai'
         model = runtime.model
+        self.models[self.model_name] = {
+            "url": url,
+            "type": type,
+            "model": model
+        }
         return url, type, model
 
     async def _get_model_metadata(self) -> Model | None:

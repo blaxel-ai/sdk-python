@@ -11,7 +11,7 @@ from typing import Generator, Optional
 import requests
 from httpx import Request, Response
 
-from .types import BlaxelAuth, CredentialsType
+from .types import BlaxelAuth
 
 
 @dataclass

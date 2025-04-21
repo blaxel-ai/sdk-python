@@ -11,12 +11,6 @@ from typing import Any, Dict, List, Optional, Type
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
-from opentelemetry.exporter.otlp.proto.http._log_exporter import \
-    OTLPLogExporter
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import \
-    OTLPMetricExporter
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
-    OTLPSpanExporter
 from opentelemetry.metrics import NoOpMeterProvider
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk.metrics import MeterProvider
@@ -26,6 +20,9 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import NoOpTracerProvider
 
+from blaxel.instrumentation.exporters import (DynamicHeadersLogExporter,
+                                              DynamicHeadersMetricExporter,
+                                              DynamicHeadersSpanExporter)
 from blaxel.instrumentation.span import DefaultAttributesSpanProcessor
 
 from ..common.settings import Settings
@@ -81,20 +78,21 @@ class TelemetryManager:
             resources_dict["workload.type"] = self.resource_type
         return resources_dict
 
-    def get_metrics_exporter(self) -> Optional[OTLPMetricExporter]:
+    def get_metrics_exporter(self) -> Optional[DynamicHeadersMetricExporter]:
         if not self.enabled:
             return None
-        return OTLPMetricExporter(headers=self.auth_headers)
+        return DynamicHeadersMetricExporter(get_headers=lambda: self.auth_headers)
 
-    def get_span_exporter(self) -> Optional[OTLPSpanExporter]:
+    def get_span_exporter(self) -> Optional[DynamicHeadersSpanExporter]:
         if not self.enabled:
             return None
-        return OTLPSpanExporter(headers=self.auth_headers)
+        return DynamicHeadersSpanExporter(get_headers=lambda: self.auth_headers)
 
-    def get_log_exporter(self) -> Optional[OTLPLogExporter]:
+    def get_log_exporter(self) -> Optional[DynamicHeadersLogExporter]:
         if not self.enabled:
             return None
-        return OTLPLogExporter(headers=self.auth_headers)
+        print(self.auth_headers)
+        return DynamicHeadersLogExporter(get_headers=lambda: self.auth_headers)
 
     def _import_class(self, module_path: str, class_name: str) -> Optional[Type]:
         """Dynamically import a class from a module path."""
