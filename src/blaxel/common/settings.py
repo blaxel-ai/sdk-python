@@ -21,7 +21,7 @@ class Settings:
     @property
     def log_level(self) -> str:
         """Get the log level."""
-        return os.environ.get("LOG_LEVEL", "INFO")
+        return os.environ.get("LOG_LEVEL", "INFO").upper()
 
     @property
     def base_url(self) -> str:
