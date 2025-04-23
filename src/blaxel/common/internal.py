@@ -38,7 +38,6 @@ def get_global_unique_hash(workspace: str, type: str, name: str) -> str:
     """
     global_unique_name = f"{workspace}-{type}-{name}"
     hash = get_alphanumeric_limited_hash(global_unique_name, 48)
-    logger.debug(f"Global unique name for {global_unique_name}: {hash}")
     return hash
 
 class Agent:

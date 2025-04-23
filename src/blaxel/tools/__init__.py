@@ -186,7 +186,6 @@ class BlTools:
     def _internal_url(self, name: str):
         """Get the internal URL for the agent using a hash of workspace and agent name."""
         hash = get_global_unique_hash(settings.workspace, "function", name)
-        logger.debug(f"Internal URL for {name}: {hash}.{settings.run_internal_hostname}")
         return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
 
     def _forced_url(self, name: str):
