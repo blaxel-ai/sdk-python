@@ -226,6 +226,12 @@ class BlTools:
         await self.initialize()
         return get_google_adk_tools(self.get_tools())
 
+    async def to_livekit(self):
+        from .livekit import get_livekit_tools
+
+        await self.initialize()
+        return get_livekit_tools(self.get_tools())
+
     async def connect(self, name: str):
         # Create and store the connection
         try:

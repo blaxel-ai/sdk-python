@@ -4,6 +4,8 @@ from ..client import client
 from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
+# This has to be here because livekit plugins must be registered on the main thread
+from .livekit import get_livekit_model
 
 
 class BLModel:
@@ -54,6 +56,12 @@ class BLModel:
         url, type, model = await self._get_parameters()
         model = await get_google_adk_model(url, type, model, **self.kwargs)
         BLModel.models[f"googleadk_{self.model_name}"] = model
+        return model
+
+    async def to_livekit(self):
+        url, type, model = await self._get_parameters()
+        model = await get_livekit_model(url, type, model, **self.kwargs)
+        BLModel.models[f"livekit_{self.model_name}"] = model
         return model
 
     async def _get_parameters(self) -> tuple[str, str, str]:
