@@ -193,37 +193,37 @@ class BlTools:
     async def to_langchain(self):
         from .langchain import get_langchain_tools
 
-        await self.intialize()
+        await self.initialize()
         return get_langchain_tools(self.get_tools())
 
     async def to_llamaindex(self):
         from .llamaindex import get_llamaindex_tools
 
-        await self.intialize()
+        await self.initialize()
         return get_llamaindex_tools(self.get_tools())
 
     async def to_crewai(self):
         from .crewai import get_crewai_tools
 
-        await self.intialize()
+        await self.initialize()
         return get_crewai_tools(self.get_tools())
 
     async def to_openai(self):
         from .openai import get_openai_tools
 
-        await self.intialize()
+        await self.initialize()
         return get_openai_tools(self.get_tools())
 
     async def to_pydantic(self):
         from .pydantic import get_pydantic_tools
 
-        await self.intialize()
+        await self.initialize()
         return get_pydantic_tools(self.get_tools())
 
     async def to_google_adk(self):
         from .googleadk import get_google_adk_tools
 
-        await self.intialize()
+        await self.initialize()
         return get_google_adk_tools(self.get_tools())
 
     async def connect(self, name: str):
@@ -254,7 +254,7 @@ class BlTools:
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools from {url}")
         return toolPersistances[name].with_metas(self.metas)
 
-    async def intialize(self) -> "BlTools":
+    async def initialize(self) -> "BlTools":
         for i in range(0, len(self.functions), 10):
             batch = self.functions[i:i+10]
             await asyncio.gather(*(self.connect(name) for name in batch))
