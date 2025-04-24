@@ -91,7 +91,6 @@ class TelemetryManager:
     def get_log_exporter(self) -> Optional[DynamicHeadersLogExporter]:
         if not self.enabled:
             return None
-        print(self.auth_headers)
         return DynamicHeadersLogExporter(get_headers=lambda: self.auth_headers)
 
     def _import_class(self, module_path: str, class_name: str) -> Optional[Type]:

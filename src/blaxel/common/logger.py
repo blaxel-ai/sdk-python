@@ -47,6 +47,9 @@ def init_logger(log_level: str):
     Parameters:
         log_level (str): The logging level to set (e.g., "DEBUG", "INFO").
     """
+    # Disable urllib3 logging
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+    logging.getLogger("httpx").setLevel(logging.CRITICAL)
     handler = logging.StreamHandler()
     handler.setFormatter(ColoredFormatter("%(levelname)s %(name)s - %(message)s"))
     logging.basicConfig(level=log_level, handlers=[handler])
