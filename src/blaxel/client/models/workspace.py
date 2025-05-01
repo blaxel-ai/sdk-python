@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.workspace_labels import WorkspaceLabels
+    from ..models.workspace_runtime import WorkspaceRuntime
 
 
 T = TypeVar("T", bound="Workspace")
@@ -26,6 +27,7 @@ class Workspace:
         labels (Union[Unset, WorkspaceLabels]): Workspace labels
         name (Union[Unset, str]): Workspace name
         region (Union[Unset, str]): Workspace write region
+        runtime (Union[Unset, WorkspaceRuntime]): Workspace runtime
     """
 
     created_at: Union[Unset, str] = UNSET
@@ -37,6 +39,7 @@ class Workspace:
     labels: Union[Unset, "WorkspaceLabels"] = UNSET
     name: Union[Unset, str] = UNSET
     region: Union[Unset, str] = UNSET
+    runtime: Union[Unset, "WorkspaceRuntime"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,6 +65,12 @@ class Workspace:
 
         region = self.region
 
+        runtime: Union[Unset, dict[str, Any]] = UNSET
+        if self.runtime and not isinstance(self.runtime, Unset) and not isinstance(self.runtime, dict):
+            runtime = self.runtime.to_dict()
+        elif self.runtime and isinstance(self.runtime, dict):
+            runtime = self.runtime
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -83,12 +92,15 @@ class Workspace:
             field_dict["name"] = name
         if region is not UNSET:
             field_dict["region"] = region
+        if runtime is not UNSET:
+            field_dict["runtime"] = runtime
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.workspace_labels import WorkspaceLabels
+        from ..models.workspace_runtime import WorkspaceRuntime
 
         if not src_dict:
             return None
@@ -116,6 +128,13 @@ class Workspace:
 
         region = d.pop("region", UNSET)
 
+        _runtime = d.pop("runtime", UNSET)
+        runtime: Union[Unset, WorkspaceRuntime]
+        if isinstance(_runtime, Unset):
+            runtime = UNSET
+        else:
+            runtime = WorkspaceRuntime.from_dict(_runtime)
+
         workspace = cls(
             created_at=created_at,
             updated_at=updated_at,
@@ -126,6 +145,7 @@ class Workspace:
             labels=labels,
             name=name,
             region=region,
+            runtime=runtime,
         )
 
         workspace.additional_properties = d

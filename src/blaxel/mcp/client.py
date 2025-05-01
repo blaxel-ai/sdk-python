@@ -1,5 +1,4 @@
 import logging
-import os
 from contextlib import asynccontextmanager
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -7,8 +6,7 @@ from urllib.parse import urljoin, urlparse
 import anyio
 import mcp.types as types
 from anyio.abc import TaskStatus
-from anyio.streams.memory import (MemoryObjectReceiveStream,
-                                  MemoryObjectSendStream)
+from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect as ws_connect
 

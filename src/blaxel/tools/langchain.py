@@ -1,8 +1,7 @@
 from typing import Any
 
 from langchain_core.tools import StructuredTool
-from mcp.types import (CallToolResult, EmbeddedResource, ImageContent,
-                       TextContent)
+from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
 
 from .types import Tool, ToolException
 

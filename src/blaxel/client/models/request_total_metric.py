@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,6 +20,7 @@ class RequestTotalMetric:
     """Metrics for request total
 
     Attributes:
+        items (Union[Unset, list[Any]]): Historical requests for all resources globally
         request_total (Union[Unset, float]): Number of requests for all resources globally
         request_total_per_code (Union[Unset, RequestTotalMetricRequestTotalPerCode]): Number of requests for all
             resources globally per code
@@ -27,6 +28,7 @@ class RequestTotalMetric:
         rps_per_code (Union[Unset, RequestTotalMetricRpsPerCode]): Number of requests for all resources globally
     """
 
+    items: Union[Unset, list[Any]] = UNSET
     request_total: Union[Unset, float] = UNSET
     request_total_per_code: Union[Unset, "RequestTotalMetricRequestTotalPerCode"] = UNSET
     rps: Union[Unset, float] = UNSET
@@ -34,6 +36,10 @@ class RequestTotalMetric:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        items: Union[Unset, list[Any]] = UNSET
+        if not isinstance(self.items, Unset):
+            items = self.items
+
         request_total = self.request_total
 
         request_total_per_code: Union[Unset, dict[str, Any]] = UNSET
@@ -57,6 +63,8 @@ class RequestTotalMetric:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if items is not UNSET:
+            field_dict["items"] = items
         if request_total is not UNSET:
             field_dict["requestTotal"] = request_total
         if request_total_per_code is not UNSET:
@@ -78,6 +86,8 @@ class RequestTotalMetric:
         if not src_dict:
             return None
         d = src_dict.copy()
+        items = cast(list[Any], d.pop("items", UNSET))
+
         request_total = d.pop("requestTotal", UNSET)
 
         _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
@@ -97,6 +107,7 @@ class RequestTotalMetric:
             rps_per_code = RequestTotalMetricRpsPerCode.from_dict(_rps_per_code)
 
         request_total_metric = cls(
+            items=items,
             request_total=request_total,
             request_total_per_code=request_total_per_code,
             rps=rps,

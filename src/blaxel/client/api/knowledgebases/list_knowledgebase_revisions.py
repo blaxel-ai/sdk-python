@@ -20,9 +20,14 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[RevisionMetadata]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["RevisionMetadata"]]:
     if response.status_code == 200:
-        response_200 = RevisionMetadata.from_dict(response.json())
+        response_200 = []
+        _response_200 = response.json()
+        for response_200_item_data in _response_200:
+            response_200_item = RevisionMetadata.from_dict(response_200_item_data)
+
+            response_200.append(response_200_item)
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -31,7 +36,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Rev
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[RevisionMetadata]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list["RevisionMetadata"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -44,7 +49,7 @@ def sync_detailed(
     knowledgebase_name: str,
     *,
     client: Union[Client],
-) -> Response[RevisionMetadata]:
+) -> Response[list["RevisionMetadata"]]:
     """List knowledgebase revisions
 
      Returns revisions for a knowledgebase by name.
@@ -57,7 +62,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[RevisionMetadata]
+        Response[list['RevisionMetadata']]
     """
 
     kwargs = _get_kwargs(
@@ -75,7 +80,7 @@ def sync(
     knowledgebase_name: str,
     *,
     client: Union[Client],
-) -> Optional[RevisionMetadata]:
+) -> Optional[list["RevisionMetadata"]]:
     """List knowledgebase revisions
 
      Returns revisions for a knowledgebase by name.
@@ -88,7 +93,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        RevisionMetadata
+        list['RevisionMetadata']
     """
 
     return sync_detailed(
@@ -101,7 +106,7 @@ async def asyncio_detailed(
     knowledgebase_name: str,
     *,
     client: Union[Client],
-) -> Response[RevisionMetadata]:
+) -> Response[list["RevisionMetadata"]]:
     """List knowledgebase revisions
 
      Returns revisions for a knowledgebase by name.
@@ -114,7 +119,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[RevisionMetadata]
+        Response[list['RevisionMetadata']]
     """
 
     kwargs = _get_kwargs(
@@ -130,7 +135,7 @@ async def asyncio(
     knowledgebase_name: str,
     *,
     client: Union[Client],
-) -> Optional[RevisionMetadata]:
+) -> Optional[list["RevisionMetadata"]]:
     """List knowledgebase revisions
 
      Returns revisions for a knowledgebase by name.
@@ -143,7 +148,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        RevisionMetadata
+        list['RevisionMetadata']
     """
 
     return (

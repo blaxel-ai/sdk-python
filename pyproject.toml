@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-crewai = ["crewai>=0.102.0", "opentelemetry-instrumentation-crewai>=0.39.0"]
+# crewai = ["crewai>=0.102.0", "opentelemetry-instrumentation-crewai>=0.39.0"]
 
 langchain = [
     "langgraph>=0.2.40,<0.3.0",

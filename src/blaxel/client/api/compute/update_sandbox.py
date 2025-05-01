@@ -5,29 +5,37 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.revision_metadata import RevisionMetadata
+from ...models.sandbox import Sandbox
 from ...types import Response
 
 
 def _get_kwargs(
-    function_name: str,
+    sandbox_name: str,
+    *,
+    body: Sandbox,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": f"/functions/{function_name}/revisions",
+        "method": "put",
+        "url": f"/sandboxes/{sandbox_name}",
     }
 
+    if type(body) == dict:
+        _body = body
+    else:
+        _body = body.to_dict()
+
+    _kwargs["json"] = _body
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["RevisionMetadata"]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Sandbox]:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = RevisionMetadata.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = Sandbox.from_dict(response.json())
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -36,7 +44,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[lis
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["RevisionMetadata"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Sandbox]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,27 +54,30 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 
 
 def sync_detailed(
-    function_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Response[list["RevisionMetadata"]]:
-    """List function revisions
+    body: Sandbox,
+) -> Response[Sandbox]:
+    """Update Sandbox
 
-     Returns revisions for a function by name.
+     Update a Sandbox by name.
 
     Args:
-        function_name (str):
+        sandbox_name (str):
+        body (Sandbox): Micro VM for running agentic tasks
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['RevisionMetadata']]
+        Response[Sandbox]
     """
 
     kwargs = _get_kwargs(
-        function_name=function_name,
+        sandbox_name=sandbox_name,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -77,53 +88,59 @@ def sync_detailed(
 
 
 def sync(
-    function_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Optional[list["RevisionMetadata"]]:
-    """List function revisions
+    body: Sandbox,
+) -> Optional[Sandbox]:
+    """Update Sandbox
 
-     Returns revisions for a function by name.
+     Update a Sandbox by name.
 
     Args:
-        function_name (str):
+        sandbox_name (str):
+        body (Sandbox): Micro VM for running agentic tasks
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['RevisionMetadata']
+        Sandbox
     """
 
     return sync_detailed(
-        function_name=function_name,
+        sandbox_name=sandbox_name,
         client=client,
+        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    function_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Response[list["RevisionMetadata"]]:
-    """List function revisions
+    body: Sandbox,
+) -> Response[Sandbox]:
+    """Update Sandbox
 
-     Returns revisions for a function by name.
+     Update a Sandbox by name.
 
     Args:
-        function_name (str):
+        sandbox_name (str):
+        body (Sandbox): Micro VM for running agentic tasks
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['RevisionMetadata']]
+        Response[Sandbox]
     """
 
     kwargs = _get_kwargs(
-        function_name=function_name,
+        sandbox_name=sandbox_name,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -132,28 +149,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    function_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Optional[list["RevisionMetadata"]]:
-    """List function revisions
+    body: Sandbox,
+) -> Optional[Sandbox]:
+    """Update Sandbox
 
-     Returns revisions for a function by name.
+     Update a Sandbox by name.
 
     Args:
-        function_name (str):
+        sandbox_name (str):
+        body (Sandbox): Micro VM for running agentic tasks
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['RevisionMetadata']
+        Sandbox
     """
 
     return (
         await asyncio_detailed(
-            function_name=function_name,
+            sandbox_name=sandbox_name,
             client=client,
+            body=body,
         )
     ).parsed

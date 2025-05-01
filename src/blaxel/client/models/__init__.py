@@ -2,7 +2,6 @@
 
 from .acl import ACL
 from .agent import Agent
-from .agent_chain import AgentChain
 from .agent_spec import AgentSpec
 from .api_key import ApiKey
 from .configuration import Configuration
@@ -74,6 +73,7 @@ from .policy import Policy
 from .policy_location import PolicyLocation
 from .policy_max_tokens import PolicyMaxTokens
 from .policy_spec import PolicySpec
+from .port import Port
 from .private_cluster import PrivateCluster
 from .private_location import PrivateLocation
 from .repository import Repository
@@ -89,16 +89,29 @@ from .request_total_by_origin_metric_request_total_by_origin_and_code import (
 from .request_total_metric import RequestTotalMetric
 from .request_total_metric_request_total_per_code import RequestTotalMetricRequestTotalPerCode
 from .request_total_metric_rps_per_code import RequestTotalMetricRpsPerCode
+from .request_total_response_data import RequestTotalResponseData
 from .resource_log import ResourceLog
 from .resource_metrics import ResourceMetrics
 from .resource_metrics_request_total_per_code import ResourceMetricsRequestTotalPerCode
+from .resource_metrics_request_total_per_code_previous import (
+    ResourceMetricsRequestTotalPerCodePrevious,
+)
 from .resource_metrics_rps_per_code import ResourceMetricsRpsPerCode
+from .resource_metrics_rps_per_code_previous import ResourceMetricsRpsPerCodePrevious
 from .revision_configuration import RevisionConfiguration
 from .revision_metadata import RevisionMetadata
 from .runtime import Runtime
+from .runtime_configuration import RuntimeConfiguration
 from .runtime_startup_probe import RuntimeStartupProbe
+from .sandbox import Sandbox
+from .sandbox_definition import SandboxDefinition
+from .sandbox_spec import SandboxSpec
+from .sandboxes import Sandboxes
 from .serverless_config import ServerlessConfig
+from .serverless_config_configuration import ServerlessConfigConfiguration
 from .spec_configuration import SpecConfiguration
+from .start_sandbox import StartSandbox
+from .stop_sandbox import StopSandbox
 from .store_agent import StoreAgent
 from .store_agent_labels import StoreAgentLabels
 from .store_configuration import StoreConfiguration
@@ -111,18 +124,20 @@ from .token_rate_metric import TokenRateMetric
 from .token_rate_metrics import TokenRateMetrics
 from .token_total_metric import TokenTotalMetric
 from .trace_ids_response import TraceIdsResponse
+from .trigger import Trigger
+from .trigger_configuration import TriggerConfiguration
 from .update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
 from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .websocket_channel import WebsocketChannel
 from .workspace import Workspace
 from .workspace_labels import WorkspaceLabels
+from .workspace_runtime import WorkspaceRuntime
 from .workspace_user import WorkspaceUser
 
 __all__ = (
     "ACL",
     "Agent",
-    "AgentChain",
     "AgentSpec",
     "ApiKey",
     "Configuration",
@@ -192,6 +207,7 @@ __all__ = (
     "PolicyLocation",
     "PolicyMaxTokens",
     "PolicySpec",
+    "Port",
     "PrivateCluster",
     "PrivateLocation",
     "Repository",
@@ -203,16 +219,27 @@ __all__ = (
     "RequestTotalMetric",
     "RequestTotalMetricRequestTotalPerCode",
     "RequestTotalMetricRpsPerCode",
+    "RequestTotalResponseData",
     "ResourceLog",
     "ResourceMetrics",
     "ResourceMetricsRequestTotalPerCode",
+    "ResourceMetricsRequestTotalPerCodePrevious",
     "ResourceMetricsRpsPerCode",
+    "ResourceMetricsRpsPerCodePrevious",
     "RevisionConfiguration",
     "RevisionMetadata",
     "Runtime",
+    "RuntimeConfiguration",
     "RuntimeStartupProbe",
+    "Sandbox",
+    "SandboxDefinition",
+    "Sandboxes",
+    "SandboxSpec",
     "ServerlessConfig",
+    "ServerlessConfigConfiguration",
     "SpecConfiguration",
+    "StartSandbox",
+    "StopSandbox",
     "StoreAgent",
     "StoreAgentLabels",
     "StoreConfiguration",
@@ -225,11 +252,14 @@ __all__ = (
     "TokenRateMetrics",
     "TokenTotalMetric",
     "TraceIdsResponse",
+    "Trigger",
+    "TriggerConfiguration",
     "UpdateWorkspaceServiceAccountBody",
     "UpdateWorkspaceServiceAccountResponse200",
     "UpdateWorkspaceUserRoleBody",
     "WebsocketChannel",
     "Workspace",
     "WorkspaceLabels",
+    "WorkspaceRuntime",
     "WorkspaceUser",
 )

@@ -9,10 +9,8 @@ if TYPE_CHECKING:
     from ..models.core_spec_configurations import CoreSpecConfigurations
     from ..models.flavor import Flavor
     from ..models.model_private_cluster import ModelPrivateCluster
-    from ..models.pod_template_spec import PodTemplateSpec
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
-    from ..models.serverless_config import ServerlessConfig
 
 
 T = TypeVar("T", bound="CoreSpec")
@@ -24,29 +22,25 @@ class CoreSpec:
 
     Attributes:
         configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the agent
+        enabled (Union[Unset, bool]): Enable or disable the resource
         flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
         integration_connections (Union[Unset, list[str]]):
-        pod_template (Union[Unset, PodTemplateSpec]): Pod template specification
         policies (Union[Unset, list[str]]):
         private_clusters (Union[Unset, ModelPrivateCluster]): Private cluster where the model deployment is deployed
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
-        serverless_config (Union[Unset, ServerlessConfig]): Configuration for a serverless deployment
     """
 
     configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
     enabled: Union[Unset, bool] = UNSET
     flavors: Union[Unset, list["Flavor"]] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
-    pod_template: Union[Unset, "PodTemplateSpec"] = UNSET
     policies: Union[Unset, list[str]] = UNSET
     private_clusters: Union[Unset, "ModelPrivateCluster"] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
-    serverless_config: Union[Unset, "ServerlessConfig"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -76,12 +70,6 @@ class CoreSpec:
         if not isinstance(self.integration_connections, Unset):
             integration_connections = self.integration_connections
 
-        pod_template: Union[Unset, dict[str, Any]] = UNSET
-        if self.pod_template and not isinstance(self.pod_template, Unset) and not isinstance(self.pod_template, dict):
-            pod_template = self.pod_template.to_dict()
-        elif self.pod_template and isinstance(self.pod_template, dict):
-            pod_template = self.pod_template
-
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
@@ -110,16 +98,6 @@ class CoreSpec:
 
         sandbox = self.sandbox
 
-        serverless_config: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.serverless_config
-            and not isinstance(self.serverless_config, Unset)
-            and not isinstance(self.serverless_config, dict)
-        ):
-            serverless_config = self.serverless_config.to_dict()
-        elif self.serverless_config and isinstance(self.serverless_config, dict):
-            serverless_config = self.serverless_config
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -131,8 +109,6 @@ class CoreSpec:
             field_dict["flavors"] = flavors
         if integration_connections is not UNSET:
             field_dict["integrationConnections"] = integration_connections
-        if pod_template is not UNSET:
-            field_dict["podTemplate"] = pod_template
         if policies is not UNSET:
             field_dict["policies"] = policies
         if private_clusters is not UNSET:
@@ -143,8 +119,6 @@ class CoreSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
-        if serverless_config is not UNSET:
-            field_dict["serverlessConfig"] = serverless_config
 
         return field_dict
 
@@ -153,10 +127,8 @@ class CoreSpec:
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
         from ..models.model_private_cluster import ModelPrivateCluster
-        from ..models.pod_template_spec import PodTemplateSpec
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
-        from ..models.serverless_config import ServerlessConfig
 
         if not src_dict:
             return None
@@ -178,13 +150,6 @@ class CoreSpec:
             flavors.append(componentsschemas_flavors_item)
 
         integration_connections = cast(list[str], d.pop("integrationConnections", UNSET))
-
-        _pod_template = d.pop("podTemplate", UNSET)
-        pod_template: Union[Unset, PodTemplateSpec]
-        if isinstance(_pod_template, Unset):
-            pod_template = UNSET
-        else:
-            pod_template = PodTemplateSpec.from_dict(_pod_template)
 
         policies = cast(list[str], d.pop("policies", UNSET))
 
@@ -211,25 +176,16 @@ class CoreSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
-        _serverless_config = d.pop("serverlessConfig", UNSET)
-        serverless_config: Union[Unset, ServerlessConfig]
-        if isinstance(_serverless_config, Unset):
-            serverless_config = UNSET
-        else:
-            serverless_config = ServerlessConfig.from_dict(_serverless_config)
-
         core_spec = cls(
             configurations=configurations,
             enabled=enabled,
             flavors=flavors,
             integration_connections=integration_connections,
-            pod_template=pod_template,
             policies=policies,
             private_clusters=private_clusters,
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
-            serverless_config=serverless_config,
         )
 
         core_spec.additional_properties = d

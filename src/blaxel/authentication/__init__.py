@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from httpx import Auth
 
 from .apikey import ApiKey
 from .clientcredentials import ClientCredentials
@@ -73,15 +72,15 @@ def auth(env: str, base_url: str) -> BlaxelAuth:
         return None
 
     if credentials.api_key:
-        logger.debug(f"Using API key for authentication")
+        logger.debug("Using API key for authentication")
         return ApiKey(credentials, credentials.workspace, base_url)
 
     if credentials.client_credentials:
-        logger.debug(f"Using client credentials for authentication")
+        logger.debug("Using client credentials for authentication")
         return ClientCredentials(credentials, credentials.workspace, base_url)
 
     if credentials.device_code:
-        logger.debug(f"Using device code for authentication")
+        logger.debug("Using device code for authentication")
         return DeviceMode(credentials, credentials.workspace, base_url)
 
     return BlaxelAuth(credentials, credentials.workspace, base_url)

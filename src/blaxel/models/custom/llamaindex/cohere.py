@@ -4,27 +4,36 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import cohere
 from cohere.types import ToolCall
-from llama_index.core.base.llms.types import (ChatMessage, ChatResponse,
-                                              ChatResponseAsyncGen,
-                                              ChatResponseGen,
-                                              CompletionResponse,
-                                              CompletionResponseAsyncGen,
-                                              CompletionResponseGen,
-                                              LLMMetadata, MessageRole)
+from llama_index.core.base.llms.types import (
+    ChatMessage,
+    ChatResponse,
+    ChatResponseAsyncGen,
+    ChatResponseGen,
+    CompletionResponse,
+    CompletionResponseAsyncGen,
+    CompletionResponseGen,
+    LLMMetadata,
+    MessageRole,
+)
 from llama_index.core.bridge.pydantic import Field, PrivateAttr
 from llama_index.core.callbacks import CallbackManager
-from llama_index.core.llms.callbacks import (llm_chat_callback,
-                                             llm_completion_callback)
+from llama_index.core.llms.callbacks import llm_chat_callback, llm_completion_callback
 from llama_index.core.llms.function_calling import FunctionCallingLLM
 from llama_index.core.llms.llm import ToolSelection
 from llama_index.core.tools.types import BaseTool
 from llama_index.core.types import BaseOutputParser, PydanticProgramMode
 from llama_index.llms.cohere.utils import (
-    CHAT_MODELS, _get_message_cohere_format, _message_to_cohere_tool_results,
-    _messages_to_cohere_tool_results_curr_chat_turn, acompletion_with_retry,
-    cohere_modelname_to_contextsize, completion_with_retry,
-    format_to_cohere_tools, is_cohere_function_calling_model,
-    remove_documents_from_messages)
+    CHAT_MODELS,
+    _get_message_cohere_format,
+    _message_to_cohere_tool_results,
+    _messages_to_cohere_tool_results_curr_chat_turn,
+    acompletion_with_retry,
+    cohere_modelname_to_contextsize,
+    completion_with_retry,
+    format_to_cohere_tools,
+    is_cohere_function_calling_model,
+    remove_documents_from_messages,
+)
 
 
 class Cohere(FunctionCallingLLM):
@@ -200,9 +209,9 @@ class Cohere(FunctionCallingLLM):
             The request for the Cohere chat API.
         """
         additional_kwargs = messages[-1].additional_kwargs
-
+        documents = additional_kwargs.pop("documents", [])
         # cohere SDK will fail loudly if both connectors and documents are provided
-        if additional_kwargs.get("documents", []) and documents and len(documents) > 0:
+        if documents and len(documents) > 0:
             raise ValueError(
                 "Received documents both as a keyword argument and as an prompt additional keyword argument. Please choose only one option."
             )

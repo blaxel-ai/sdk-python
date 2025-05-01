@@ -1,4 +1,3 @@
-import os
 
 import httpx
 from httpx import AsyncClient

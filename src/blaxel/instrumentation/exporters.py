@@ -1,11 +1,8 @@
 from typing import Callable, Dict, Sequence
 
-from opentelemetry.exporter.otlp.proto.http._log_exporter import \
-    OTLPLogExporter
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import \
-    OTLPMetricExporter
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
-    OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.sdk.metrics.export import MetricExportResult, MetricsData
 

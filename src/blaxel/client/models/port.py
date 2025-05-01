@@ -5,46 +5,40 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="AgentChain")
+T = TypeVar("T", bound="Port")
 
 
 @_attrs_define
-class AgentChain:
-    """Agent chain configuration
+class Port:
+    """A port for a resource
 
     Attributes:
-        description (Union[Unset, str]): Description of the agent in case you want to override the default one
-        enabled (Union[Unset, bool]): Whether the agent chain is enabled
-        name (Union[Unset, str]): The name of the agent to chain to
-        prompt (Union[Unset, str]): Prompt of the agent in case you want to override the default one
+        name (Union[Unset, str]): The name of the port
+        protocol (Union[Unset, str]): The protocol of the port
+        target (Union[Unset, int]): The target port of the port
     """
 
-    description: Union[Unset, str] = UNSET
-    enabled: Union[Unset, bool] = UNSET
     name: Union[Unset, str] = UNSET
-    prompt: Union[Unset, str] = UNSET
+    protocol: Union[Unset, str] = UNSET
+    target: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        description = self.description
-
-        enabled = self.enabled
-
         name = self.name
 
-        prompt = self.prompt
+        protocol = self.protocol
+
+        target = self.target
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if description is not UNSET:
-            field_dict["description"] = description
-        if enabled is not UNSET:
-            field_dict["enabled"] = enabled
         if name is not UNSET:
             field_dict["name"] = name
-        if prompt is not UNSET:
-            field_dict["prompt"] = prompt
+        if protocol is not UNSET:
+            field_dict["protocol"] = protocol
+        if target is not UNSET:
+            field_dict["target"] = target
 
         return field_dict
 
@@ -53,23 +47,20 @@ class AgentChain:
         if not src_dict:
             return None
         d = src_dict.copy()
-        description = d.pop("description", UNSET)
-
-        enabled = d.pop("enabled", UNSET)
-
         name = d.pop("name", UNSET)
 
-        prompt = d.pop("prompt", UNSET)
+        protocol = d.pop("protocol", UNSET)
 
-        agent_chain = cls(
-            description=description,
-            enabled=enabled,
+        target = d.pop("target", UNSET)
+
+        port = cls(
             name=name,
-            prompt=prompt,
+            protocol=protocol,
+            target=target,
         )
 
-        agent_chain.additional_properties = d
-        return agent_chain
+        port.additional_properties = d
+        return port
 
     @property
     def additional_keys(self) -> list[str]:

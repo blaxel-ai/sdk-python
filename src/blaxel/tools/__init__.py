@@ -126,7 +126,7 @@ def convert_mcp_tool_to_blaxel_tool(
             "tool.server": url,
             "tool.server_name": name,
         }
-        with SpanManager("blaxel-tracer").create_active_span("blaxel-tool-call", span_attributes) as span:
+        with SpanManager("blaxel-tracer").create_active_span("blaxel-tool-call", span_attributes):
             logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
             call_tool_result = await websocket_client.call_tool(tool.name, arguments)
             logger.debug(f"Tool {tool.name} returned {call_tool_result}")

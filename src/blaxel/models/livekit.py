@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from livekit.plugins import anthropic, groq, openai
+from livekit.plugins import groq, openai
 
 from ..common.settings import settings
 

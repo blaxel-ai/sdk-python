@@ -12,7 +12,11 @@ if TYPE_CHECKING:
     from ..models.request_duration_over_time_metrics import RequestDurationOverTimeMetrics
     from ..models.request_total_by_origin_metric import RequestTotalByOriginMetric
     from ..models.resource_metrics_request_total_per_code import ResourceMetricsRequestTotalPerCode
+    from ..models.resource_metrics_request_total_per_code_previous import (
+        ResourceMetricsRequestTotalPerCodePrevious,
+    )
     from ..models.resource_metrics_rps_per_code import ResourceMetricsRpsPerCode
+    from ..models.resource_metrics_rps_per_code_previous import ResourceMetricsRpsPerCodePrevious
     from ..models.time_to_first_token_over_time_metrics import TimeToFirstTokenOverTimeMetrics
     from ..models.token_rate_metrics import TokenRateMetrics
     from ..models.token_total_metric import TokenTotalMetric
@@ -26,41 +30,69 @@ class ResourceMetrics:
     """Metrics for a single resource deployment (eg. model deployment, function deployment)
 
     Attributes:
+        inference_errors_global (Union[Unset, list['Metric']]): Array of metrics
         inference_global (Union[Unset, list['Metric']]): Array of metrics
         last_n_requests (Union[Unset, list['Metric']]): Array of metrics
         latency (Union[Unset, LatencyMetric]): Latency metrics
+        latency_previous (Union[Unset, LatencyMetric]): Latency metrics
         memory_allocation (Union[Unset, MemoryAllocationMetric]): Metrics for memory allocation
         model_ttft (Union[Unset, LatencyMetric]): Latency metrics
         model_ttft_over_time (Union[Unset, TimeToFirstTokenOverTimeMetrics]): Time to first token over time metrics
         request_duration_over_time (Union[Unset, RequestDurationOverTimeMetrics]): Request duration over time metrics
         request_total (Union[Unset, float]): Number of requests for the resource globally
         request_total_by_origin (Union[Unset, RequestTotalByOriginMetric]): Request total by origin metric
+        request_total_by_origin_previous (Union[Unset, RequestTotalByOriginMetric]): Request total by origin metric
         request_total_per_code (Union[Unset, ResourceMetricsRequestTotalPerCode]): Number of requests for the resource
             globally per code
+        request_total_per_code_previous (Union[Unset, ResourceMetricsRequestTotalPerCodePrevious]): Number of requests
+            for the resource globally per code for the previous period
+        request_total_previous (Union[Unset, float]): Number of requests for the resource globally for the previous
+            period
         rps (Union[Unset, float]): Number of requests per second for the resource globally
         rps_per_code (Union[Unset, ResourceMetricsRpsPerCode]): Number of requests per second for the resource globally
             per code
+        rps_per_code_previous (Union[Unset, ResourceMetricsRpsPerCodePrevious]): Number of requests per second for the
+            resource globally per code for the previous period
+        rps_previous (Union[Unset, float]): Number of requests per second for the resource globally for the previous
+            period
         token_rate (Union[Unset, TokenRateMetrics]): Token rate metrics
         token_total (Union[Unset, TokenTotalMetric]): Token total metric
     """
 
+    inference_errors_global: Union[Unset, list["Metric"]] = UNSET
     inference_global: Union[Unset, list["Metric"]] = UNSET
     last_n_requests: Union[Unset, list["Metric"]] = UNSET
     latency: Union[Unset, "LatencyMetric"] = UNSET
+    latency_previous: Union[Unset, "LatencyMetric"] = UNSET
     memory_allocation: Union[Unset, "MemoryAllocationMetric"] = UNSET
     model_ttft: Union[Unset, "LatencyMetric"] = UNSET
     model_ttft_over_time: Union[Unset, "TimeToFirstTokenOverTimeMetrics"] = UNSET
     request_duration_over_time: Union[Unset, "RequestDurationOverTimeMetrics"] = UNSET
     request_total: Union[Unset, float] = UNSET
     request_total_by_origin: Union[Unset, "RequestTotalByOriginMetric"] = UNSET
+    request_total_by_origin_previous: Union[Unset, "RequestTotalByOriginMetric"] = UNSET
     request_total_per_code: Union[Unset, "ResourceMetricsRequestTotalPerCode"] = UNSET
+    request_total_per_code_previous: Union[Unset, "ResourceMetricsRequestTotalPerCodePrevious"] = UNSET
+    request_total_previous: Union[Unset, float] = UNSET
     rps: Union[Unset, float] = UNSET
     rps_per_code: Union[Unset, "ResourceMetricsRpsPerCode"] = UNSET
+    rps_per_code_previous: Union[Unset, "ResourceMetricsRpsPerCodePrevious"] = UNSET
+    rps_previous: Union[Unset, float] = UNSET
     token_rate: Union[Unset, "TokenRateMetrics"] = UNSET
     token_total: Union[Unset, "TokenTotalMetric"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        inference_errors_global: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.inference_errors_global, Unset):
+            inference_errors_global = []
+            for componentsschemas_array_metric_item_data in self.inference_errors_global:
+                if type(componentsschemas_array_metric_item_data) == dict:
+                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data
+                else:
+                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data.to_dict()
+                inference_errors_global.append(componentsschemas_array_metric_item)
+
         inference_global: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.inference_global, Unset):
             inference_global = []
@@ -86,6 +118,16 @@ class ResourceMetrics:
             latency = self.latency.to_dict()
         elif self.latency and isinstance(self.latency, dict):
             latency = self.latency
+
+        latency_previous: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.latency_previous
+            and not isinstance(self.latency_previous, Unset)
+            and not isinstance(self.latency_previous, dict)
+        ):
+            latency_previous = self.latency_previous.to_dict()
+        elif self.latency_previous and isinstance(self.latency_previous, dict):
+            latency_previous = self.latency_previous
 
         memory_allocation: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -135,6 +177,16 @@ class ResourceMetrics:
         elif self.request_total_by_origin and isinstance(self.request_total_by_origin, dict):
             request_total_by_origin = self.request_total_by_origin
 
+        request_total_by_origin_previous: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.request_total_by_origin_previous
+            and not isinstance(self.request_total_by_origin_previous, Unset)
+            and not isinstance(self.request_total_by_origin_previous, dict)
+        ):
+            request_total_by_origin_previous = self.request_total_by_origin_previous.to_dict()
+        elif self.request_total_by_origin_previous and isinstance(self.request_total_by_origin_previous, dict):
+            request_total_by_origin_previous = self.request_total_by_origin_previous
+
         request_total_per_code: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.request_total_per_code
@@ -145,6 +197,18 @@ class ResourceMetrics:
         elif self.request_total_per_code and isinstance(self.request_total_per_code, dict):
             request_total_per_code = self.request_total_per_code
 
+        request_total_per_code_previous: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.request_total_per_code_previous
+            and not isinstance(self.request_total_per_code_previous, Unset)
+            and not isinstance(self.request_total_per_code_previous, dict)
+        ):
+            request_total_per_code_previous = self.request_total_per_code_previous.to_dict()
+        elif self.request_total_per_code_previous and isinstance(self.request_total_per_code_previous, dict):
+            request_total_per_code_previous = self.request_total_per_code_previous
+
+        request_total_previous = self.request_total_previous
+
         rps = self.rps
 
         rps_per_code: Union[Unset, dict[str, Any]] = UNSET
@@ -152,6 +216,18 @@ class ResourceMetrics:
             rps_per_code = self.rps_per_code.to_dict()
         elif self.rps_per_code and isinstance(self.rps_per_code, dict):
             rps_per_code = self.rps_per_code
+
+        rps_per_code_previous: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.rps_per_code_previous
+            and not isinstance(self.rps_per_code_previous, Unset)
+            and not isinstance(self.rps_per_code_previous, dict)
+        ):
+            rps_per_code_previous = self.rps_per_code_previous.to_dict()
+        elif self.rps_per_code_previous and isinstance(self.rps_per_code_previous, dict):
+            rps_per_code_previous = self.rps_per_code_previous
+
+        rps_previous = self.rps_previous
 
         token_rate: Union[Unset, dict[str, Any]] = UNSET
         if self.token_rate and not isinstance(self.token_rate, Unset) and not isinstance(self.token_rate, dict):
@@ -168,12 +244,16 @@ class ResourceMetrics:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if inference_errors_global is not UNSET:
+            field_dict["inferenceErrorsGlobal"] = inference_errors_global
         if inference_global is not UNSET:
             field_dict["inferenceGlobal"] = inference_global
         if last_n_requests is not UNSET:
             field_dict["lastNRequests"] = last_n_requests
         if latency is not UNSET:
             field_dict["latency"] = latency
+        if latency_previous is not UNSET:
+            field_dict["latencyPrevious"] = latency_previous
         if memory_allocation is not UNSET:
             field_dict["memoryAllocation"] = memory_allocation
         if model_ttft is not UNSET:
@@ -186,12 +266,22 @@ class ResourceMetrics:
             field_dict["requestTotal"] = request_total
         if request_total_by_origin is not UNSET:
             field_dict["requestTotalByOrigin"] = request_total_by_origin
+        if request_total_by_origin_previous is not UNSET:
+            field_dict["requestTotalByOriginPrevious"] = request_total_by_origin_previous
         if request_total_per_code is not UNSET:
             field_dict["requestTotalPerCode"] = request_total_per_code
+        if request_total_per_code_previous is not UNSET:
+            field_dict["requestTotalPerCodePrevious"] = request_total_per_code_previous
+        if request_total_previous is not UNSET:
+            field_dict["requestTotalPrevious"] = request_total_previous
         if rps is not UNSET:
             field_dict["rps"] = rps
         if rps_per_code is not UNSET:
             field_dict["rpsPerCode"] = rps_per_code
+        if rps_per_code_previous is not UNSET:
+            field_dict["rpsPerCodePrevious"] = rps_per_code_previous
+        if rps_previous is not UNSET:
+            field_dict["rpsPrevious"] = rps_previous
         if token_rate is not UNSET:
             field_dict["tokenRate"] = token_rate
         if token_total is not UNSET:
@@ -209,7 +299,13 @@ class ResourceMetrics:
         from ..models.resource_metrics_request_total_per_code import (
             ResourceMetricsRequestTotalPerCode,
         )
+        from ..models.resource_metrics_request_total_per_code_previous import (
+            ResourceMetricsRequestTotalPerCodePrevious,
+        )
         from ..models.resource_metrics_rps_per_code import ResourceMetricsRpsPerCode
+        from ..models.resource_metrics_rps_per_code_previous import (
+            ResourceMetricsRpsPerCodePrevious,
+        )
         from ..models.time_to_first_token_over_time_metrics import TimeToFirstTokenOverTimeMetrics
         from ..models.token_rate_metrics import TokenRateMetrics
         from ..models.token_total_metric import TokenTotalMetric
@@ -217,6 +313,13 @@ class ResourceMetrics:
         if not src_dict:
             return None
         d = src_dict.copy()
+        inference_errors_global = []
+        _inference_errors_global = d.pop("inferenceErrorsGlobal", UNSET)
+        for componentsschemas_array_metric_item_data in _inference_errors_global or []:
+            componentsschemas_array_metric_item = Metric.from_dict(componentsschemas_array_metric_item_data)
+
+            inference_errors_global.append(componentsschemas_array_metric_item)
+
         inference_global = []
         _inference_global = d.pop("inferenceGlobal", UNSET)
         for componentsschemas_array_metric_item_data in _inference_global or []:
@@ -237,6 +340,13 @@ class ResourceMetrics:
             latency = UNSET
         else:
             latency = LatencyMetric.from_dict(_latency)
+
+        _latency_previous = d.pop("latencyPrevious", UNSET)
+        latency_previous: Union[Unset, LatencyMetric]
+        if isinstance(_latency_previous, Unset):
+            latency_previous = UNSET
+        else:
+            latency_previous = LatencyMetric.from_dict(_latency_previous)
 
         _memory_allocation = d.pop("memoryAllocation", UNSET)
         memory_allocation: Union[Unset, MemoryAllocationMetric]
@@ -275,12 +385,30 @@ class ResourceMetrics:
         else:
             request_total_by_origin = RequestTotalByOriginMetric.from_dict(_request_total_by_origin)
 
+        _request_total_by_origin_previous = d.pop("requestTotalByOriginPrevious", UNSET)
+        request_total_by_origin_previous: Union[Unset, RequestTotalByOriginMetric]
+        if isinstance(_request_total_by_origin_previous, Unset):
+            request_total_by_origin_previous = UNSET
+        else:
+            request_total_by_origin_previous = RequestTotalByOriginMetric.from_dict(_request_total_by_origin_previous)
+
         _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
         request_total_per_code: Union[Unset, ResourceMetricsRequestTotalPerCode]
         if isinstance(_request_total_per_code, Unset):
             request_total_per_code = UNSET
         else:
             request_total_per_code = ResourceMetricsRequestTotalPerCode.from_dict(_request_total_per_code)
+
+        _request_total_per_code_previous = d.pop("requestTotalPerCodePrevious", UNSET)
+        request_total_per_code_previous: Union[Unset, ResourceMetricsRequestTotalPerCodePrevious]
+        if isinstance(_request_total_per_code_previous, Unset):
+            request_total_per_code_previous = UNSET
+        else:
+            request_total_per_code_previous = ResourceMetricsRequestTotalPerCodePrevious.from_dict(
+                _request_total_per_code_previous
+            )
+
+        request_total_previous = d.pop("requestTotalPrevious", UNSET)
 
         rps = d.pop("rps", UNSET)
 
@@ -290,6 +418,15 @@ class ResourceMetrics:
             rps_per_code = UNSET
         else:
             rps_per_code = ResourceMetricsRpsPerCode.from_dict(_rps_per_code)
+
+        _rps_per_code_previous = d.pop("rpsPerCodePrevious", UNSET)
+        rps_per_code_previous: Union[Unset, ResourceMetricsRpsPerCodePrevious]
+        if isinstance(_rps_per_code_previous, Unset):
+            rps_per_code_previous = UNSET
+        else:
+            rps_per_code_previous = ResourceMetricsRpsPerCodePrevious.from_dict(_rps_per_code_previous)
+
+        rps_previous = d.pop("rpsPrevious", UNSET)
 
         _token_rate = d.pop("tokenRate", UNSET)
         token_rate: Union[Unset, TokenRateMetrics]
@@ -306,18 +443,25 @@ class ResourceMetrics:
             token_total = TokenTotalMetric.from_dict(_token_total)
 
         resource_metrics = cls(
+            inference_errors_global=inference_errors_global,
             inference_global=inference_global,
             last_n_requests=last_n_requests,
             latency=latency,
+            latency_previous=latency_previous,
             memory_allocation=memory_allocation,
             model_ttft=model_ttft,
             model_ttft_over_time=model_ttft_over_time,
             request_duration_over_time=request_duration_over_time,
             request_total=request_total,
             request_total_by_origin=request_total_by_origin,
+            request_total_by_origin_previous=request_total_by_origin_previous,
             request_total_per_code=request_total_per_code,
+            request_total_per_code_previous=request_total_per_code_previous,
+            request_total_previous=request_total_previous,
             rps=rps,
             rps_per_code=rps_per_code,
+            rps_per_code_previous=rps_per_code_previous,
+            rps_previous=rps_previous,
             token_rate=token_rate,
             token_total=token_total,
         )

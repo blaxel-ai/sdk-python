@@ -1,5 +1,4 @@
 
-import logging
 
 from ..client import client
 from ..instrumentation.manager import telemetry_manager

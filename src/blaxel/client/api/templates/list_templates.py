@@ -18,9 +18,14 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Template]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["Template"]]:
     if response.status_code == 200:
-        response_200 = Template.from_dict(response.json())
+        response_200 = []
+        _response_200 = response.json()
+        for response_200_item_data in _response_200:
+            response_200_item = Template.from_dict(response_200_item_data)
+
+            response_200.append(response_200_item)
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -29,7 +34,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Tem
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Template]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Template"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -41,7 +46,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Tem
 def sync_detailed(
     *,
     client: Union[Client],
-) -> Response[Template]:
+) -> Response[list["Template"]]:
     """List templates
 
      Returns a list of all templates.
@@ -51,7 +56,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Template]
+        Response[list['Template']]
     """
 
     kwargs = _get_kwargs()
@@ -66,7 +71,7 @@ def sync_detailed(
 def sync(
     *,
     client: Union[Client],
-) -> Optional[Template]:
+) -> Optional[list["Template"]]:
     """List templates
 
      Returns a list of all templates.
@@ -76,7 +81,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Template
+        list['Template']
     """
 
     return sync_detailed(
@@ -87,7 +92,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Union[Client],
-) -> Response[Template]:
+) -> Response[list["Template"]]:
     """List templates
 
      Returns a list of all templates.
@@ -97,7 +102,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Template]
+        Response[list['Template']]
     """
 
     kwargs = _get_kwargs()
@@ -110,7 +115,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Union[Client],
-) -> Optional[Template]:
+) -> Optional[list["Template"]]:
     """List templates
 
      Returns a list of all templates.
@@ -120,7 +125,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Template
+        list['Template']
     """
 
     return (

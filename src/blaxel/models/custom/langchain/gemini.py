@@ -6,33 +6,56 @@ import logging
 import uuid
 import warnings
 from operator import itemgetter
-from typing import (Any, AsyncIterator, Callable, Dict, Iterator, List,
-                    Mapping, Optional, Sequence, Tuple, Type, Union, cast)
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import httpx
 import requests
-from langchain_core.callbacks.manager import (AsyncCallbackManagerForLLMRun,
-                                              CallbackManagerForLLMRun)
+from langchain_core.callbacks.manager import AsyncCallbackManagerForLLMRun, CallbackManagerForLLMRun
 from langchain_core.language_models import LanguageModelInput
-from langchain_core.language_models.chat_models import (BaseChatModel,
-                                                        LangSmithParams)
-from langchain_core.messages import (AIMessage, AIMessageChunk, BaseMessage,
-                                     FunctionMessage, HumanMessage,
-                                     SystemMessage, ToolMessage)
+from langchain_core.language_models.chat_models import BaseChatModel, LangSmithParams
+from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
+    BaseMessage,
+    FunctionMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 from langchain_core.messages.ai import UsageMetadata
-from langchain_core.messages.tool import (invalid_tool_call, tool_call,
-                                          tool_call_chunk)
+from langchain_core.messages.tool import invalid_tool_call, tool_call, tool_call_chunk
 from langchain_core.output_parsers.openai_tools import (
-    JsonOutputKeyToolsParser, PydanticToolsParser, parse_tool_calls)
-from langchain_core.outputs import (ChatGeneration, ChatGenerationChunk,
-                                    ChatResult)
+    JsonOutputKeyToolsParser,
+    PydanticToolsParser,
+    parse_tool_calls,
+)
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.tools import BaseTool
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
-from tenacity import (before_sleep_log, retry, retry_if_exception_type,
-                      stop_after_attempt, wait_exponential)
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 from typing_extensions import Self, is_typeddict
 
 WARNED_STRUCTURED_OUTPUT_JSON_MODE = False
@@ -189,7 +212,7 @@ def _chat_with_retry(generation_method: Callable, **kwargs: Any) -> Any:
         try:
             # Extract request parameters and other kwargs
             request = kwargs.pop('request', {})
-            metadata = kwargs.pop('metadata', None)
+            kwargs.pop('metadata', None)
 
             # Unpack request parameters into kwargs
             kwargs.update(request)
@@ -238,7 +261,7 @@ async def _achat_with_retry(generation_method: Callable, **kwargs: Any) -> Any:
         try:
             # Extract request parameters and other kwargs
             request = kwargs.pop('request', {})
-            metadata = kwargs.pop('metadata', None)
+            kwargs.pop('metadata', None)
 
             # Unpack request parameters into kwargs
             kwargs.update(request)

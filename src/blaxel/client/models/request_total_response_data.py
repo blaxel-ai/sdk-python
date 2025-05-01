@@ -5,22 +5,22 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="LastNRequestsMetric")
+T = TypeVar("T", bound="RequestTotalResponseData")
 
 
 @_attrs_define
-class LastNRequestsMetric:
-    """Last N requests
+class RequestTotalResponseData:
+    """Request total response data
 
     Attributes:
-        date (Union[Unset, str]): Timestamp
+        request_total (Union[Unset, float]): Request total
         status_code (Union[Unset, str]): Status code
         workload_id (Union[Unset, str]): Workload ID
         workload_type (Union[Unset, str]): Workload type
         workspace (Union[Unset, str]): Workspace
     """
 
-    date: Union[Unset, str] = UNSET
+    request_total: Union[Unset, float] = UNSET
     status_code: Union[Unset, str] = UNSET
     workload_id: Union[Unset, str] = UNSET
     workload_type: Union[Unset, str] = UNSET
@@ -28,7 +28,7 @@ class LastNRequestsMetric:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        date = self.date
+        request_total = self.request_total
 
         status_code = self.status_code
 
@@ -41,8 +41,8 @@ class LastNRequestsMetric:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if date is not UNSET:
-            field_dict["date"] = date
+        if request_total is not UNSET:
+            field_dict["requestTotal"] = request_total
         if status_code is not UNSET:
             field_dict["statusCode"] = status_code
         if workload_id is not UNSET:
@@ -59,7 +59,7 @@ class LastNRequestsMetric:
         if not src_dict:
             return None
         d = src_dict.copy()
-        date = d.pop("date", UNSET)
+        request_total = d.pop("requestTotal", UNSET)
 
         status_code = d.pop("statusCode", UNSET)
 
@@ -69,16 +69,16 @@ class LastNRequestsMetric:
 
         workspace = d.pop("workspace", UNSET)
 
-        last_n_requests_metric = cls(
-            date=date,
+        request_total_response_data = cls(
+            request_total=request_total,
             status_code=status_code,
             workload_id=workload_id,
             workload_type=workload_type,
             workspace=workspace,
         )
 
-        last_n_requests_metric.additional_properties = d
-        return last_n_requests_metric
+        request_total_response_data.additional_properties = d
+        return request_total_response_data
 
     @property
     def additional_keys(self) -> list[str]:

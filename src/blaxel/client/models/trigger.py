@@ -6,28 +6,25 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.serverless_config_configuration import ServerlessConfigConfiguration
+    from ..models.trigger_configuration import TriggerConfiguration
 
 
-T = TypeVar("T", bound="ServerlessConfig")
+T = TypeVar("T", bound="Trigger")
 
 
 @_attrs_define
-class ServerlessConfig:
-    """Configuration for a serverless deployment
+class Trigger:
+    """Trigger configuration
 
     Attributes:
-        configuration (Union[Unset, ServerlessConfigConfiguration]): The configuration for the deployment
-        max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
-            the deployment is always running in at least one location).
-        min_scale (Union[Unset, int]): The maximum number of replicas for the deployment.
-        timeout (Union[Unset, int]): The timeout for the deployment in seconds
+        configuration (Union[Unset, TriggerConfiguration]): The configuration of the trigger
+        id (Union[Unset, str]): The id of the trigger
+        type_ (Union[Unset, str]): The type of trigger, can be http or http-async
     """
 
-    configuration: Union[Unset, "ServerlessConfigConfiguration"] = UNSET
-    max_scale: Union[Unset, int] = UNSET
-    min_scale: Union[Unset, int] = UNSET
-    timeout: Union[Unset, int] = UNSET
+    configuration: Union[Unset, "TriggerConfiguration"] = UNSET
+    id: Union[Unset, str] = UNSET
+    type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -41,55 +38,48 @@ class ServerlessConfig:
         elif self.configuration and isinstance(self.configuration, dict):
             configuration = self.configuration
 
-        max_scale = self.max_scale
+        id = self.id
 
-        min_scale = self.min_scale
-
-        timeout = self.timeout
+        type_ = self.type_
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
         if configuration is not UNSET:
             field_dict["configuration"] = configuration
-        if max_scale is not UNSET:
-            field_dict["maxScale"] = max_scale
-        if min_scale is not UNSET:
-            field_dict["minScale"] = min_scale
-        if timeout is not UNSET:
-            field_dict["timeout"] = timeout
+        if id is not UNSET:
+            field_dict["id"] = id
+        if type_ is not UNSET:
+            field_dict["type"] = type_
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
-        from ..models.serverless_config_configuration import ServerlessConfigConfiguration
+        from ..models.trigger_configuration import TriggerConfiguration
 
         if not src_dict:
             return None
         d = src_dict.copy()
         _configuration = d.pop("configuration", UNSET)
-        configuration: Union[Unset, ServerlessConfigConfiguration]
+        configuration: Union[Unset, TriggerConfiguration]
         if isinstance(_configuration, Unset):
             configuration = UNSET
         else:
-            configuration = ServerlessConfigConfiguration.from_dict(_configuration)
+            configuration = TriggerConfiguration.from_dict(_configuration)
 
-        max_scale = d.pop("maxScale", UNSET)
+        id = d.pop("id", UNSET)
 
-        min_scale = d.pop("minScale", UNSET)
+        type_ = d.pop("type", UNSET)
 
-        timeout = d.pop("timeout", UNSET)
-
-        serverless_config = cls(
+        trigger = cls(
             configuration=configuration,
-            max_scale=max_scale,
-            min_scale=min_scale,
-            timeout=timeout,
+            id=id,
+            type_=type_,
         )
 
-        serverless_config.additional_properties = d
-        return serverless_config
+        trigger.additional_properties = d
+        return trigger
 
     @property
     def additional_keys(self) -> list[str]:

@@ -20,9 +20,11 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import NoOpTracerProvider
 
-from blaxel.instrumentation.exporters import (DynamicHeadersLogExporter,
-                                              DynamicHeadersMetricExporter,
-                                              DynamicHeadersSpanExporter)
+from blaxel.instrumentation.exporters import (
+    DynamicHeadersLogExporter,
+    DynamicHeadersMetricExporter,
+    DynamicHeadersSpanExporter,
+)
 from blaxel.instrumentation.span import DefaultAttributesSpanProcessor
 
 from ..common.settings import Settings

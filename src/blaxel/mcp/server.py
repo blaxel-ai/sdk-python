@@ -1,19 +1,18 @@
 import logging
+import traceback
 import uuid
 from contextlib import asynccontextmanager
 from typing import Dict, Literal
 
 import anyio
 import mcp.types as types
-from anyio.streams.memory import (MemoryObjectReceiveStream,
-                                  MemoryObjectSendStream)
+from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from mcp.server.fastmcp import FastMCP as FastMCPBase
 from opentelemetry.trace import Span, StatusCode
 from websockets.server import WebSocketServerProtocol, serve
 
 from ..common.env import env
 from ..instrumentation.span import SpanManager
-import traceback
 
 logger = logging.getLogger(__name__)
 

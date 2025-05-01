@@ -22,6 +22,8 @@ class Metrics:
         agents (Union[Unset, Any]): Metrics for agents
         functions (Union[Unset, Any]): Metrics for functions
         inference_global (Union[Unset, list[Any]]): Historical requests for all resources globally
+        items (Union[Unset, list[Any]]): Historical requests for all resources globally
+        last_n_requests (Union[Unset, int]): Metric value
         models (Union[Unset, MetricsModels]): Metrics for models
         request_total (Union[Unset, float]): Number of requests for all resources globally
         request_total_per_code (Union[Unset, MetricsRequestTotalPerCode]): Number of requests for all resources globally
@@ -34,6 +36,8 @@ class Metrics:
     agents: Union[Unset, Any] = UNSET
     functions: Union[Unset, Any] = UNSET
     inference_global: Union[Unset, list[Any]] = UNSET
+    items: Union[Unset, list[Any]] = UNSET
+    last_n_requests: Union[Unset, int] = UNSET
     models: Union[Unset, "MetricsModels"] = UNSET
     request_total: Union[Unset, float] = UNSET
     request_total_per_code: Union[Unset, "MetricsRequestTotalPerCode"] = UNSET
@@ -49,6 +53,12 @@ class Metrics:
         inference_global: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.inference_global, Unset):
             inference_global = self.inference_global
+
+        items: Union[Unset, list[Any]] = UNSET
+        if not isinstance(self.items, Unset):
+            items = self.items
+
+        last_n_requests = self.last_n_requests
 
         models: Union[Unset, dict[str, Any]] = UNSET
         if self.models and not isinstance(self.models, Unset) and not isinstance(self.models, dict):
@@ -85,6 +95,10 @@ class Metrics:
             field_dict["functions"] = functions
         if inference_global is not UNSET:
             field_dict["inferenceGlobal"] = inference_global
+        if items is not UNSET:
+            field_dict["items"] = items
+        if last_n_requests is not UNSET:
+            field_dict["lastNRequests"] = last_n_requests
         if models is not UNSET:
             field_dict["models"] = models
         if request_total is not UNSET:
@@ -112,6 +126,10 @@ class Metrics:
         functions = d.pop("functions", UNSET)
 
         inference_global = cast(list[Any], d.pop("inferenceGlobal", UNSET))
+
+        items = cast(list[Any], d.pop("items", UNSET))
+
+        last_n_requests = d.pop("lastNRequests", UNSET)
 
         _models = d.pop("models", UNSET)
         models: Union[Unset, MetricsModels]
@@ -142,6 +160,8 @@ class Metrics:
             agents=agents,
             functions=functions,
             inference_global=inference_global,
+            items=items,
+            last_n_requests=last_n_requests,
             models=models,
             request_total=request_total,
             request_total_per_code=request_total_per_code,

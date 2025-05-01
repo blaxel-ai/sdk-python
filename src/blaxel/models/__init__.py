@@ -4,6 +4,7 @@ from ..client import client
 from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
+
 # This has to be here because livekit plugins must be registered on the main thread
 from .livekit import get_livekit_model
 
@@ -94,7 +95,7 @@ class BLModel:
 
         try:
             return await get_model.asyncio(client=client, model_name=self.model_name)
-        except Exception as e:
+        except Exception:
             return None
 
 def bl_model(model_name, **kwargs):

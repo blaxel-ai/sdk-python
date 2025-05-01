@@ -8,19 +8,17 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_spec_configurations import CoreSpecConfigurations
     from ..models.flavor import Flavor
-    from ..models.function_kit import FunctionKit
-    from ..models.function_schema import FunctionSchema
     from ..models.model_private_cluster import ModelPrivateCluster
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
 
 
-T = TypeVar("T", bound="FunctionSpec")
+T = TypeVar("T", bound="SandboxSpec")
 
 
 @_attrs_define
-class FunctionSpec:
-    """Function specification
+class SandboxSpec:
+    """Sandbox specification
 
     Attributes:
         configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
@@ -32,9 +30,6 @@ class FunctionSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
-        description (Union[Unset, str]): Function description, very important for the agent function to work with an LLM
-        kit (Union[Unset, list['FunctionKit']]): Function kits
-        schema (Union[Unset, FunctionSchema]): Function schema
     """
 
     configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
@@ -46,9 +41,6 @@ class FunctionSpec:
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
-    description: Union[Unset, str] = UNSET
-    kit: Union[Unset, list["FunctionKit"]] = UNSET
-    schema: Union[Unset, "FunctionSchema"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -106,24 +98,6 @@ class FunctionSpec:
 
         sandbox = self.sandbox
 
-        description = self.description
-
-        kit: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.kit, Unset):
-            kit = []
-            for kit_item_data in self.kit:
-                if type(kit_item_data) == dict:
-                    kit_item = kit_item_data
-                else:
-                    kit_item = kit_item_data.to_dict()
-                kit.append(kit_item)
-
-        schema: Union[Unset, dict[str, Any]] = UNSET
-        if self.schema and not isinstance(self.schema, Unset) and not isinstance(self.schema, dict):
-            schema = self.schema.to_dict()
-        elif self.schema and isinstance(self.schema, dict):
-            schema = self.schema
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -145,12 +119,6 @@ class FunctionSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
-        if description is not UNSET:
-            field_dict["description"] = description
-        if kit is not UNSET:
-            field_dict["kit"] = kit
-        if schema is not UNSET:
-            field_dict["schema"] = schema
 
         return field_dict
 
@@ -158,8 +126,6 @@ class FunctionSpec:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
-        from ..models.function_kit import FunctionKit
-        from ..models.function_schema import FunctionSchema
         from ..models.model_private_cluster import ModelPrivateCluster
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
@@ -210,23 +176,7 @@ class FunctionSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
-        description = d.pop("description", UNSET)
-
-        kit = []
-        _kit = d.pop("kit", UNSET)
-        for kit_item_data in _kit or []:
-            kit_item = FunctionKit.from_dict(kit_item_data)
-
-            kit.append(kit_item)
-
-        _schema = d.pop("schema", UNSET)
-        schema: Union[Unset, FunctionSchema]
-        if isinstance(_schema, Unset):
-            schema = UNSET
-        else:
-            schema = FunctionSchema.from_dict(_schema)
-
-        function_spec = cls(
+        sandbox_spec = cls(
             configurations=configurations,
             enabled=enabled,
             flavors=flavors,
@@ -236,13 +186,10 @@ class FunctionSpec:
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
-            description=description,
-            kit=kit,
-            schema=schema,
         )
 
-        function_spec.additional_properties = d
-        return function_spec
+        sandbox_spec.additional_properties = d
+        return sandbox_spec
 
     @property
     def additional_keys(self) -> list[str]:

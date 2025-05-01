@@ -6,15 +6,13 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.agent_chain import AgentChain
     from ..models.core_spec_configurations import CoreSpecConfigurations
     from ..models.flavor import Flavor
     from ..models.model_private_cluster import ModelPrivateCluster
-    from ..models.pod_template_spec import PodTemplateSpec
     from ..models.repository import Repository
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
-    from ..models.serverless_config import ServerlessConfig
+    from ..models.trigger import Trigger
 
 
 T = TypeVar("T", bound="AgentSpec")
@@ -26,17 +24,14 @@ class AgentSpec:
 
     Attributes:
         configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the agent
+        enabled (Union[Unset, bool]): Enable or disable the resource
         flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
         integration_connections (Union[Unset, list[str]]):
-        pod_template (Union[Unset, PodTemplateSpec]): Pod template specification
         policies (Union[Unset, list[str]]):
         private_clusters (Union[Unset, ModelPrivateCluster]): Private cluster where the model deployment is deployed
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
-        serverless_config (Union[Unset, ServerlessConfig]): Configuration for a serverless deployment
-        agent_chain (Union[Unset, list['AgentChain']]): Agent chain
         description (Union[Unset, str]): Description, small description computed from the prompt
         functions (Union[Unset, list[str]]):
         knowledgebase (Union[Unset, str]): Knowledgebase Name
@@ -44,20 +39,18 @@ class AgentSpec:
         prompt (Union[Unset, str]): Prompt, describe what your agent does
         repository (Union[Unset, Repository]): Repository
         store_id (Union[Unset, str]): Store id
+        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
     configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
     enabled: Union[Unset, bool] = UNSET
     flavors: Union[Unset, list["Flavor"]] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
-    pod_template: Union[Unset, "PodTemplateSpec"] = UNSET
     policies: Union[Unset, list[str]] = UNSET
     private_clusters: Union[Unset, "ModelPrivateCluster"] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
-    serverless_config: Union[Unset, "ServerlessConfig"] = UNSET
-    agent_chain: Union[Unset, list["AgentChain"]] = UNSET
     description: Union[Unset, str] = UNSET
     functions: Union[Unset, list[str]] = UNSET
     knowledgebase: Union[Unset, str] = UNSET
@@ -65,6 +58,7 @@ class AgentSpec:
     prompt: Union[Unset, str] = UNSET
     repository: Union[Unset, "Repository"] = UNSET
     store_id: Union[Unset, str] = UNSET
+    triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -94,12 +88,6 @@ class AgentSpec:
         if not isinstance(self.integration_connections, Unset):
             integration_connections = self.integration_connections
 
-        pod_template: Union[Unset, dict[str, Any]] = UNSET
-        if self.pod_template and not isinstance(self.pod_template, Unset) and not isinstance(self.pod_template, dict):
-            pod_template = self.pod_template.to_dict()
-        elif self.pod_template and isinstance(self.pod_template, dict):
-            pod_template = self.pod_template
-
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
@@ -128,26 +116,6 @@ class AgentSpec:
 
         sandbox = self.sandbox
 
-        serverless_config: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.serverless_config
-            and not isinstance(self.serverless_config, Unset)
-            and not isinstance(self.serverless_config, dict)
-        ):
-            serverless_config = self.serverless_config.to_dict()
-        elif self.serverless_config and isinstance(self.serverless_config, dict):
-            serverless_config = self.serverless_config
-
-        agent_chain: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.agent_chain, Unset):
-            agent_chain = []
-            for componentsschemas_agent_chains_item_data in self.agent_chain:
-                if type(componentsschemas_agent_chains_item_data) == dict:
-                    componentsschemas_agent_chains_item = componentsschemas_agent_chains_item_data
-                else:
-                    componentsschemas_agent_chains_item = componentsschemas_agent_chains_item_data.to_dict()
-                agent_chain.append(componentsschemas_agent_chains_item)
-
         description = self.description
 
         functions: Union[Unset, list[str]] = UNSET
@@ -168,6 +136,16 @@ class AgentSpec:
 
         store_id = self.store_id
 
+        triggers: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.triggers, Unset):
+            triggers = []
+            for componentsschemas_triggers_item_data in self.triggers:
+                if type(componentsschemas_triggers_item_data) == dict:
+                    componentsschemas_triggers_item = componentsschemas_triggers_item_data
+                else:
+                    componentsschemas_triggers_item = componentsschemas_triggers_item_data.to_dict()
+                triggers.append(componentsschemas_triggers_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -179,8 +157,6 @@ class AgentSpec:
             field_dict["flavors"] = flavors
         if integration_connections is not UNSET:
             field_dict["integrationConnections"] = integration_connections
-        if pod_template is not UNSET:
-            field_dict["podTemplate"] = pod_template
         if policies is not UNSET:
             field_dict["policies"] = policies
         if private_clusters is not UNSET:
@@ -191,10 +167,6 @@ class AgentSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
-        if serverless_config is not UNSET:
-            field_dict["serverlessConfig"] = serverless_config
-        if agent_chain is not UNSET:
-            field_dict["agentChain"] = agent_chain
         if description is not UNSET:
             field_dict["description"] = description
         if functions is not UNSET:
@@ -209,20 +181,20 @@ class AgentSpec:
             field_dict["repository"] = repository
         if store_id is not UNSET:
             field_dict["storeId"] = store_id
+        if triggers is not UNSET:
+            field_dict["triggers"] = triggers
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
-        from ..models.agent_chain import AgentChain
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
         from ..models.model_private_cluster import ModelPrivateCluster
-        from ..models.pod_template_spec import PodTemplateSpec
         from ..models.repository import Repository
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
-        from ..models.serverless_config import ServerlessConfig
+        from ..models.trigger import Trigger
 
         if not src_dict:
             return None
@@ -244,13 +216,6 @@ class AgentSpec:
             flavors.append(componentsschemas_flavors_item)
 
         integration_connections = cast(list[str], d.pop("integrationConnections", UNSET))
-
-        _pod_template = d.pop("podTemplate", UNSET)
-        pod_template: Union[Unset, PodTemplateSpec]
-        if isinstance(_pod_template, Unset):
-            pod_template = UNSET
-        else:
-            pod_template = PodTemplateSpec.from_dict(_pod_template)
 
         policies = cast(list[str], d.pop("policies", UNSET))
 
@@ -277,20 +242,6 @@ class AgentSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
-        _serverless_config = d.pop("serverlessConfig", UNSET)
-        serverless_config: Union[Unset, ServerlessConfig]
-        if isinstance(_serverless_config, Unset):
-            serverless_config = UNSET
-        else:
-            serverless_config = ServerlessConfig.from_dict(_serverless_config)
-
-        agent_chain = []
-        _agent_chain = d.pop("agentChain", UNSET)
-        for componentsschemas_agent_chains_item_data in _agent_chain or []:
-            componentsschemas_agent_chains_item = AgentChain.from_dict(componentsschemas_agent_chains_item_data)
-
-            agent_chain.append(componentsschemas_agent_chains_item)
-
         description = d.pop("description", UNSET)
 
         functions = cast(list[str], d.pop("functions", UNSET))
@@ -310,19 +261,23 @@ class AgentSpec:
 
         store_id = d.pop("storeId", UNSET)
 
+        triggers = []
+        _triggers = d.pop("triggers", UNSET)
+        for componentsschemas_triggers_item_data in _triggers or []:
+            componentsschemas_triggers_item = Trigger.from_dict(componentsschemas_triggers_item_data)
+
+            triggers.append(componentsschemas_triggers_item)
+
         agent_spec = cls(
             configurations=configurations,
             enabled=enabled,
             flavors=flavors,
             integration_connections=integration_connections,
-            pod_template=pod_template,
             policies=policies,
             private_clusters=private_clusters,
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
-            serverless_config=serverless_config,
-            agent_chain=agent_chain,
             description=description,
             functions=functions,
             knowledgebase=knowledgebase,
@@ -330,6 +285,7 @@ class AgentSpec:
             prompt=prompt,
             repository=repository,
             store_id=store_id,
+            triggers=triggers,
         )
 
         agent_spec.additional_properties = d

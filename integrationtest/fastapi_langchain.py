@@ -44,7 +44,7 @@ async def log_requests(request: Request, call_next):
     response: Response = await call_next(request)
 
     process_time = (time() - start_time) * 1000
-    formatted_process_time = '{0:.2f}'.format(process_time)
+    formatted_process_time = f'{process_time:.2f}'
     rid_header = response.headers.get("X-Request-Id")
     request_id = rid_header or response.headers.get("X-Blaxel-Request-Id")
     logger.info(f"{request.method} {request.url.path} {response.status_code} {formatted_process_time}ms rid={request_id}")

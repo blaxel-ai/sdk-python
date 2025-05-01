@@ -1,7 +1,6 @@
 import asyncio
 
 from dotenv import load_dotenv
-from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 
 load_dotenv()
 

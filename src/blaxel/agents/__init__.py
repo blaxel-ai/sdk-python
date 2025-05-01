@@ -98,5 +98,5 @@ async def get_agent_metadata(name):
         return Agent.from_dict(cache_data)
     try:
         return await get_agent.asyncio(client=client, agent_name=name)
-    except Exception as e:
+    except Exception:
         return None
