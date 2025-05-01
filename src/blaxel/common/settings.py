@@ -21,7 +21,7 @@ class Settings:
     @property
     def log_level(self) -> str:
         """Get the log level."""
-        return os.environ.get("LOG_LEVEL", "INFO")
+        return os.environ.get("LOG_LEVEL", "INFO").upper()
 
     @property
     def base_url(self) -> str:
@@ -68,6 +68,11 @@ class Settings:
     def bl_cloud(self) -> bool:
         """Is running on bl cloud."""
         return os.environ.get("BL_CLOUD", "") == "true"
+
+    @property
+    def run_internal_protocol(self) -> str:
+        """Get the run internal protocol."""
+        return os.environ.get("BL_RUN_INTERNAL_PROTOCOL", "https")
 
     @property
     def enable_opentelemetry(self) -> bool:

@@ -4,7 +4,7 @@ from blaxel.agents import bl_agent
 
 
 async def main():
-    agent = bl_agent("vercel-first")
+    agent = bl_agent("template-google-adk-py")
     print(await agent.arun({"inputs": "Hello, world!"}))
     print(agent.run({"inputs": "Hello, world!"}))
 
