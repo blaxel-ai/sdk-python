@@ -117,6 +117,7 @@ class DeviceMode(BlaxelAuth):
         current_time = datetime.now()
         # Refresh if token expires in less than 10 minutes
         if current_time + timedelta(minutes=10) > exp_time:
+            print("Refreshing token")
             return self.do_refresh()
 
         return None

@@ -24,3 +24,4 @@ dmypy.json
 uv.lock
 
 telemetry.sh
+definition.yml

@@ -19,16 +19,25 @@ def get_credentials() -> Optional[CredentialsType]:
     Returns:
         Optional[CredentialsType]: The credentials or None if not found
     """
+    def get_workspace():
+        if os.environ.get("BL_WORKSPACE"):
+            return os.environ.get("BL_WORKSPACE")
+        home_dir = Path.home()
+        config_path = home_dir / '.blaxel' / 'config.yaml'
+        with open(config_path, encoding='utf-8') as f:
+            config_json = yaml.safe_load(f)
+        return config_json.get("context", {}).get("workspace")
+
     if os.environ.get("BL_API_KEY"):
         return CredentialsType(
             api_key=os.environ.get("BL_API_KEY"),
-            workspace=os.environ.get("BL_WORKSPACE")
+            workspace=get_workspace()
         )
 
     if os.environ.get("BL_CLIENT_CREDENTIALS"):
         return CredentialsType(
             client_credentials=os.environ.get("BL_CLIENT_CREDENTIALS"),
-            workspace=os.environ.get("BL_WORKSPACE")
+            workspace=get_workspace()
         )
 
     try:

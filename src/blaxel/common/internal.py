@@ -2,24 +2,24 @@ import base64
 import hashlib
 import os
 import re
-from typing import Optional
 from logging import getLogger
+from typing import Optional
 
 logger = getLogger(__name__)
 
 def get_alphanumeric_limited_hash(input_str, max_size):
     # Create SHA-256 hash of the input string
     hash_obj = hashlib.sha256(input_str.encode('utf-8'))
-    
+
     # Get the hash digest in base64 format
     hash_base64 = base64.b64encode(hash_obj.digest()).decode('utf-8')
-    
+
     # Remove non-alphanumeric characters and convert to lowercase
     alphanumeric = re.sub(r'[^a-zA-Z0-9]', '', hash_base64).lower()
-    
+
     # Skip the first character to match the Node.js crypto output
     alphanumeric = alphanumeric[1:]
-    
+
     # Limit to max_size characters
     return alphanumeric[:max_size] if len(alphanumeric) > max_size else alphanumeric
 
