@@ -16,7 +16,7 @@ class File:
         last_modified (Union[Unset, str]):
         owner (Union[Unset, str]):
         path (Union[Unset, str]):
-        permissions (Union[Unset, str]): swagger:strfmt string
+        permissions (Union[Unset, str]):
         size (Union[Unset, int]):
     """
 

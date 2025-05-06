@@ -5,24 +5,37 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.integration import Integration
+from ...models.preview import Preview
 from ...types import Response
 
 
 def _get_kwargs(
-    integration_name: str,
+    sandbox_name: str,
+    *,
+    body: Preview,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": f"/integrations/{integration_name}",
+        "method": "post",
+        "url": f"/sandboxes/{sandbox_name}/previews",
     }
 
+    if type(body) == dict:
+        _body = body
+    else:
+        _body = body.to_dict()
+
+    _kwargs["json"] = _body
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Integration]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Preview]:
     if response.status_code == 200:
-        response_200 = Integration.from_dict(response.json())
+        response_200 = Preview.from_dict(response.json())
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -31,7 +44,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Int
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Integration]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Preview]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -41,27 +54,30 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Int
 
 
 def sync_detailed(
-    integration_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Response[Integration]:
-    """List integrations connections
+    body: Preview,
+) -> Response[Preview]:
+    """Create Sandbox Preview
 
-     Returns integration information by name.
+     Create a preview
 
     Args:
-        integration_name (str):
+        sandbox_name (str):
+        body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Integration]
+        Response[Preview]
     """
 
     kwargs = _get_kwargs(
-        integration_name=integration_name,
+        sandbox_name=sandbox_name,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -72,53 +88,59 @@ def sync_detailed(
 
 
 def sync(
-    integration_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Optional[Integration]:
-    """List integrations connections
+    body: Preview,
+) -> Optional[Preview]:
+    """Create Sandbox Preview
 
-     Returns integration information by name.
+     Create a preview
 
     Args:
-        integration_name (str):
+        sandbox_name (str):
+        body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Integration
+        Preview
     """
 
     return sync_detailed(
-        integration_name=integration_name,
+        sandbox_name=sandbox_name,
         client=client,
+        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    integration_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Response[Integration]:
-    """List integrations connections
+    body: Preview,
+) -> Response[Preview]:
+    """Create Sandbox Preview
 
-     Returns integration information by name.
+     Create a preview
 
     Args:
-        integration_name (str):
+        sandbox_name (str):
+        body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Integration]
+        Response[Preview]
     """
 
     kwargs = _get_kwargs(
-        integration_name=integration_name,
+        sandbox_name=sandbox_name,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -127,28 +149,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    integration_name: str,
+    sandbox_name: str,
     *,
     client: Union[Client],
-) -> Optional[Integration]:
-    """List integrations connections
+    body: Preview,
+) -> Optional[Preview]:
+    """Create Sandbox Preview
 
-     Returns integration information by name.
+     Create a preview
 
     Args:
-        integration_name (str):
+        sandbox_name (str):
+        body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Integration
+        Preview
     """
 
     return (
         await asyncio_detailed(
-            integration_name=integration_name,
+            sandbox_name=sandbox_name,
             client=client,
+            body=body,
         )
     ).parsed

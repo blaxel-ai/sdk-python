@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.file import File
+    from ..models.subdirectory import Subdirectory
 
 
 T = TypeVar("T", bound="Directory")
@@ -18,12 +19,12 @@ class Directory:
     Attributes:
         files (Union[Unset, list['File']]):
         path (Union[Unset, str]):
-        subdirectories (Union[Unset, list['Directory']]): @name Subdirectories
+        subdirectories (Union[Unset, list['Subdirectory']]): @name Subdirectories
     """
 
     files: Union[Unset, list["File"]] = UNSET
     path: Union[Unset, str] = UNSET
-    subdirectories: Union[Unset, list["Directory"]] = UNSET
+    subdirectories: Union[Unset, list["Subdirectory"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -64,6 +65,7 @@ class Directory:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.file import File
+        from ..models.subdirectory import Subdirectory
 
         if not src_dict:
             return None
@@ -80,7 +82,7 @@ class Directory:
         subdirectories = []
         _subdirectories = d.pop("subdirectories", UNSET)
         for subdirectories_item_data in _subdirectories or []:
-            subdirectories_item = Directory.from_dict(subdirectories_item_data)
+            subdirectories_item = Subdirectory.from_dict(subdirectories_item_data)
 
             subdirectories.append(subdirectories_item)
 

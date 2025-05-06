@@ -31,6 +31,7 @@ class Metrics:
         rps (Union[Unset, float]): Number of requests per second for all resources globally
         rps_per_code (Union[Unset, MetricsRpsPerCode]): Number of requests per second for all resources globally per
             code
+        sandboxes (Union[Unset, Any]): Metrics for sandboxes
     """
 
     agents: Union[Unset, Any] = UNSET
@@ -43,6 +44,7 @@ class Metrics:
     request_total_per_code: Union[Unset, "MetricsRequestTotalPerCode"] = UNSET
     rps: Union[Unset, float] = UNSET
     rps_per_code: Union[Unset, "MetricsRpsPerCode"] = UNSET
+    sandboxes: Union[Unset, Any] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -86,6 +88,8 @@ class Metrics:
         elif self.rps_per_code and isinstance(self.rps_per_code, dict):
             rps_per_code = self.rps_per_code
 
+        sandboxes = self.sandboxes
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -109,6 +113,8 @@ class Metrics:
             field_dict["rps"] = rps
         if rps_per_code is not UNSET:
             field_dict["rpsPerCode"] = rps_per_code
+        if sandboxes is not UNSET:
+            field_dict["sandboxes"] = sandboxes
 
         return field_dict
 
@@ -156,6 +162,8 @@ class Metrics:
         else:
             rps_per_code = MetricsRpsPerCode.from_dict(_rps_per_code)
 
+        sandboxes = d.pop("sandboxes", UNSET)
+
         metrics = cls(
             agents=agents,
             functions=functions,
@@ -167,6 +175,7 @@ class Metrics:
             request_total_per_code=request_total_per_code,
             rps=rps,
             rps_per_code=rps_per_code,
+            sandboxes=sandboxes,
         )
 
         metrics.additional_properties = d

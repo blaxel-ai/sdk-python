@@ -1,29 +1,40 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.integration import Integration
+from ...models.check_workspace_availability_body import CheckWorkspaceAvailabilityBody
 from ...types import Response
 
 
 def _get_kwargs(
-    integration_name: str,
+    *,
+    body: CheckWorkspaceAvailabilityBody,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": f"/integrations/{integration_name}",
+        "method": "post",
+        "url": "/workspaces/availability",
     }
 
+    if type(body) == dict:
+        _body = body
+    else:
+        _body = body.to_dict()
+
+    _kwargs["json"] = _body
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Integration]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[bool]:
     if response.status_code == 200:
-        response_200 = Integration.from_dict(response.json())
-
+        response_200 = cast(bool, response.json())
         return response_200
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -31,7 +42,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Int
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Integration]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[bool]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -41,27 +52,27 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Int
 
 
 def sync_detailed(
-    integration_name: str,
     *,
     client: Union[Client],
-) -> Response[Integration]:
-    """List integrations connections
+    body: CheckWorkspaceAvailabilityBody,
+) -> Response[bool]:
+    """Check workspace availability
 
-     Returns integration information by name.
+     Check if a workspace is available.
 
     Args:
-        integration_name (str):
+        body (CheckWorkspaceAvailabilityBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Integration]
+        Response[bool]
     """
 
     kwargs = _get_kwargs(
-        integration_name=integration_name,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -72,53 +83,53 @@ def sync_detailed(
 
 
 def sync(
-    integration_name: str,
     *,
     client: Union[Client],
-) -> Optional[Integration]:
-    """List integrations connections
+    body: CheckWorkspaceAvailabilityBody,
+) -> Optional[bool]:
+    """Check workspace availability
 
-     Returns integration information by name.
+     Check if a workspace is available.
 
     Args:
-        integration_name (str):
+        body (CheckWorkspaceAvailabilityBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Integration
+        bool
     """
 
     return sync_detailed(
-        integration_name=integration_name,
         client=client,
+        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    integration_name: str,
     *,
     client: Union[Client],
-) -> Response[Integration]:
-    """List integrations connections
+    body: CheckWorkspaceAvailabilityBody,
+) -> Response[bool]:
+    """Check workspace availability
 
-     Returns integration information by name.
+     Check if a workspace is available.
 
     Args:
-        integration_name (str):
+        body (CheckWorkspaceAvailabilityBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Integration]
+        Response[bool]
     """
 
     kwargs = _get_kwargs(
-        integration_name=integration_name,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -127,28 +138,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    integration_name: str,
     *,
     client: Union[Client],
-) -> Optional[Integration]:
-    """List integrations connections
+    body: CheckWorkspaceAvailabilityBody,
+) -> Optional[bool]:
+    """Check workspace availability
 
-     Returns integration information by name.
+     Check if a workspace is available.
 
     Args:
-        integration_name (str):
+        body (CheckWorkspaceAvailabilityBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Integration
+        bool
     """
 
     return (
         await asyncio_detailed(
-            integration_name=integration_name,
             client=client,
+            body=body,
         )
     ).parsed

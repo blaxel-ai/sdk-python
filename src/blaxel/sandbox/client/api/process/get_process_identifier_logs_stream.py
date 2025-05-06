@@ -6,7 +6,9 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.error_response import ErrorResponse
-from ...models.get_process_identifier_logs_response_200 import GetProcessIdentifierLogsResponse200
+from ...models.get_process_identifier_logs_stream_response_200 import (
+    GetProcessIdentifierLogsStreamResponse200,
+)
 from ...types import UNSET, Response, Unset
 
 
@@ -23,7 +25,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/process/{identifier}/logs",
+        "url": f"/process/{identifier}/logs/stream",
         "params": params,
     }
 
@@ -32,9 +34,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
+) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]:
     if response.status_code == 200:
-        response_200 = GetProcessIdentifierLogsResponse200.from_dict(response.json())
+        response_200 = GetProcessIdentifierLogsStreamResponse200.from_dict(response.json())
 
         return response_200
     if response.status_code == 404:
@@ -53,7 +55,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
+) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,10 +69,10 @@ def sync_detailed(
     *,
     client: Union[Client],
     stream: Union[Unset, bool] = UNSET,
-) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
-    """Get process logs
+) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]:
+    """Get process logs in realtime
 
-     Get the stdout and stderr output of a process
+     Get the stdout and stderr output of a process in realtime
 
     Args:
         identifier (str):
@@ -81,7 +83,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]
+        Response[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]
     """
 
     kwargs = _get_kwargs(
@@ -101,10 +103,10 @@ def sync(
     *,
     client: Union[Client],
     stream: Union[Unset, bool] = UNSET,
-) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
-    """Get process logs
+) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]:
+    """Get process logs in realtime
 
-     Get the stdout and stderr output of a process
+     Get the stdout and stderr output of a process in realtime
 
     Args:
         identifier (str):
@@ -115,7 +117,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, GetProcessIdentifierLogsResponse200]
+        Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]
     """
 
     return sync_detailed(
@@ -130,10 +132,10 @@ async def asyncio_detailed(
     *,
     client: Union[Client],
     stream: Union[Unset, bool] = UNSET,
-) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
-    """Get process logs
+) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]:
+    """Get process logs in realtime
 
-     Get the stdout and stderr output of a process
+     Get the stdout and stderr output of a process in realtime
 
     Args:
         identifier (str):
@@ -144,7 +146,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]
+        Response[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]
     """
 
     kwargs = _get_kwargs(
@@ -162,10 +164,10 @@ async def asyncio(
     *,
     client: Union[Client],
     stream: Union[Unset, bool] = UNSET,
-) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
-    """Get process logs
+) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]]:
+    """Get process logs in realtime
 
-     Get the stdout and stderr output of a process
+     Get the stdout and stderr output of a process in realtime
 
     Args:
         identifier (str):
@@ -176,7 +178,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, GetProcessIdentifierLogsResponse200]
+        Union[ErrorResponse, GetProcessIdentifierLogsStreamResponse200]
     """
 
     return (

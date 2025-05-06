@@ -4,6 +4,7 @@ from .acl import ACL
 from .agent import Agent
 from .agent_spec import AgentSpec
 from .api_key import ApiKey
+from .check_workspace_availability_body import CheckWorkspaceAvailabilityBody
 from .configuration import Configuration
 from .continent import Continent
 from .core_event import CoreEvent
@@ -13,6 +14,7 @@ from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
+from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
 from .entrypoint import Entrypoint
 from .entrypoint_env import EntrypointEnv
@@ -33,11 +35,19 @@ from .get_workspace_service_accounts_response_200_item import (
 )
 from .histogram_bucket import HistogramBucket
 from .histogram_stats import HistogramStats
+from .integration import Integration
+from .integration_additional_infos import IntegrationAdditionalInfos
 from .integration_connection import IntegrationConnection
 from .integration_connection_spec import IntegrationConnectionSpec
 from .integration_connection_spec_config import IntegrationConnectionSpecConfig
 from .integration_connection_spec_secret import IntegrationConnectionSpecSecret
+from .integration_endpoint import IntegrationEndpoint
+from .integration_endpoint_token import IntegrationEndpointToken
+from .integration_endpoints import IntegrationEndpoints
+from .integration_headers import IntegrationHeaders
 from .integration_model import IntegrationModel
+from .integration_organization import IntegrationOrganization
+from .integration_query_params import IntegrationQueryParams
 from .integration_repository import IntegrationRepository
 from .invite_workspace_user_body import InviteWorkspaceUserBody
 from .knowledgebase import Knowledgebase
@@ -74,6 +84,12 @@ from .policy_location import PolicyLocation
 from .policy_max_tokens import PolicyMaxTokens
 from .policy_spec import PolicySpec
 from .port import Port
+from .preview import Preview
+from .preview_metadata import PreviewMetadata
+from .preview_spec import PreviewSpec
+from .preview_token import PreviewToken
+from .preview_token_metadata import PreviewTokenMetadata
+from .preview_token_spec import PreviewTokenSpec
 from .private_cluster import PrivateCluster
 from .private_location import PrivateLocation
 from .repository import Repository
@@ -106,7 +122,6 @@ from .runtime_startup_probe import RuntimeStartupProbe
 from .sandbox import Sandbox
 from .sandbox_definition import SandboxDefinition
 from .sandbox_spec import SandboxSpec
-from .sandboxes import Sandboxes
 from .serverless_config import ServerlessConfig
 from .serverless_config_configuration import ServerlessConfigConfiguration
 from .spec_configuration import SpecConfiguration
@@ -140,6 +155,7 @@ __all__ = (
     "Agent",
     "AgentSpec",
     "ApiKey",
+    "CheckWorkspaceAvailabilityBody",
     "Configuration",
     "Continent",
     "CoreEvent",
@@ -149,6 +165,7 @@ __all__ = (
     "CreateApiKeyForServiceAccountBody",
     "CreateWorkspaceServiceAccountBody",
     "CreateWorkspaceServiceAccountResponse200",
+    "DeleteSandboxPreviewTokenResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
     "Entrypoint",
     "EntrypointEnv",
@@ -167,11 +184,19 @@ __all__ = (
     "GetWorkspaceServiceAccountsResponse200Item",
     "HistogramBucket",
     "HistogramStats",
+    "Integration",
+    "IntegrationAdditionalInfos",
     "IntegrationConnection",
     "IntegrationConnectionSpec",
     "IntegrationConnectionSpecConfig",
     "IntegrationConnectionSpecSecret",
+    "IntegrationEndpoint",
+    "IntegrationEndpoints",
+    "IntegrationEndpointToken",
+    "IntegrationHeaders",
     "IntegrationModel",
+    "IntegrationOrganization",
+    "IntegrationQueryParams",
     "IntegrationRepository",
     "InviteWorkspaceUserBody",
     "Knowledgebase",
@@ -208,6 +233,12 @@ __all__ = (
     "PolicyMaxTokens",
     "PolicySpec",
     "Port",
+    "Preview",
+    "PreviewMetadata",
+    "PreviewSpec",
+    "PreviewToken",
+    "PreviewTokenMetadata",
+    "PreviewTokenSpec",
     "PrivateCluster",
     "PrivateLocation",
     "Repository",
@@ -233,7 +264,6 @@ __all__ = (
     "RuntimeStartupProbe",
     "Sandbox",
     "SandboxDefinition",
-    "Sandboxes",
     "SandboxSpec",
     "ServerlessConfig",
     "ServerlessConfigConfiguration",
