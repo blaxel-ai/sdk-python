@@ -97,6 +97,8 @@ class SandboxFileSystem(SandboxHandleBase):
         raise Exception("Unsupported file type")
 
     def format_path(self, path: str) -> str:
+        if path == "/":
+            return "%2F"
         if path.startswith("/"):
             path = path[1:]
         return path
