@@ -38,13 +38,14 @@ class BlJob:
         """
         Run a job defined in a function, it's run in the current process.
         Handles both async and sync functions.
+        Arguments are passed as keyword arguments to the function.
         """
         try:
             parsed_args = self.get_arguments()
             if asyncio.iscoroutinefunction(func):
-                asyncio.run(func(parsed_args))
+                asyncio.run(func(**parsed_args))
             else:
-                func(parsed_args)
+                func(**parsed_args)
             sys.exit(0)
         except Exception as error:
             print('Job execution failed:', error, file=sys.stderr)
