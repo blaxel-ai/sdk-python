@@ -5,9 +5,6 @@ from ..client.api.models import get_model
 from ..client.models import Model
 from ..common.settings import settings
 
-# This has to be here because livekit plugins must be registered on the main thread
-from .livekit import get_livekit_model
-
 
 class BLModel:
     models = {}
@@ -60,6 +57,9 @@ class BLModel:
         return model
 
     async def to_livekit(self):
+        # This has to be here because livekit plugins must be registered on the main thread
+        from .livekit import get_livekit_model
+
         url, type, model = await self._get_parameters()
         model = await get_livekit_model(url, type, model, **self.kwargs)
         BLModel.models[f"livekit_{self.model_name}"] = model
