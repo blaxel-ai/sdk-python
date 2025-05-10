@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def create_sandbox(sandbox_name: str):
     # Create sandbox
-    image = "blaxel/prod-base:14769328323"
+    image = "blaxel/prod-base:latest"
     logger.info(f"Creating sandbox {sandbox_name} with image {image}")
     sandbox = await SandboxInstance.create(Sandbox(
         metadata=Metadata(name=sandbox_name),

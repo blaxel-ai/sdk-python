@@ -15,13 +15,11 @@ class PreviewTokenSpec:
     Attributes:
         expired (Union[Unset, bool]): Whether the token is expired
         expires_at (Union[Unset, str]): Expiration time of the token
-        public (Union[Unset, bool]): Whether the token is public
         token (Union[Unset, str]): Token
     """
 
     expired: Union[Unset, bool] = UNSET
     expires_at: Union[Unset, str] = UNSET
-    public: Union[Unset, bool] = UNSET
     token: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -29,8 +27,6 @@ class PreviewTokenSpec:
         expired = self.expired
 
         expires_at = self.expires_at
-
-        public = self.public
 
         token = self.token
 
@@ -41,8 +37,6 @@ class PreviewTokenSpec:
             field_dict["expired"] = expired
         if expires_at is not UNSET:
             field_dict["expiresAt"] = expires_at
-        if public is not UNSET:
-            field_dict["public"] = public
         if token is not UNSET:
             field_dict["token"] = token
 
@@ -57,14 +51,11 @@ class PreviewTokenSpec:
 
         expires_at = d.pop("expiresAt", UNSET)
 
-        public = d.pop("public", UNSET)
-
         token = d.pop("token", UNSET)
 
         preview_token_spec = cls(
             expired=expired,
             expires_at=expires_at,
-            public=public,
             token=token,
         )
 

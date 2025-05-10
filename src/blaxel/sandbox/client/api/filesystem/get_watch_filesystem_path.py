@@ -10,11 +10,11 @@ from ...types import Response
 
 
 def _get_kwargs(
-    identifier: str,
+    path: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/process/{identifier}/logs/stream",
+        "url": f"/watch/filesystem/{path}",
     }
 
     return _kwargs
@@ -24,10 +24,10 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Uni
     if response.status_code == 200:
         response_200 = response.text
         return response_200
-    if response.status_code == 404:
-        response_404 = ErrorResponse.from_dict(response.text)
+    if response.status_code == 400:
+        response_400 = ErrorResponse.from_dict(response.text)
 
-        return response_404
+        return response_400
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.text)
 
@@ -48,17 +48,17 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 
 
 def sync_detailed(
-    identifier: str,
+    path: str,
     *,
     client: Union[Client],
 ) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream file modification events in a directory
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the path of modified files (one per line) in the given directory. Closes when the client
+    disconnects.
 
     Args:
-        identifier (str):
+        path (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -69,7 +69,7 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
-        identifier=identifier,
+        path=path,
     )
 
     response = client.get_httpx_client().request(
@@ -80,17 +80,17 @@ def sync_detailed(
 
 
 def sync(
-    identifier: str,
+    path: str,
     *,
     client: Union[Client],
 ) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream file modification events in a directory
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the path of modified files (one per line) in the given directory. Closes when the client
+    disconnects.
 
     Args:
-        identifier (str):
+        path (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -101,23 +101,23 @@ def sync(
     """
 
     return sync_detailed(
-        identifier=identifier,
+        path=path,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    identifier: str,
+    path: str,
     *,
     client: Union[Client],
 ) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream file modification events in a directory
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the path of modified files (one per line) in the given directory. Closes when the client
+    disconnects.
 
     Args:
-        identifier (str):
+        path (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -128,7 +128,7 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
-        identifier=identifier,
+        path=path,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -137,17 +137,17 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    identifier: str,
+    path: str,
     *,
     client: Union[Client],
 ) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream file modification events in a directory
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the path of modified files (one per line) in the given directory. Closes when the client
+    disconnects.
 
     Args:
-        identifier (str):
+        path (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -159,7 +159,7 @@ async def asyncio(
 
     return (
         await asyncio_detailed(
-            identifier=identifier,
+            path=path,
             client=client,
         )
     ).parsed

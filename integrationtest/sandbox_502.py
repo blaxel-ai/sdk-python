@@ -4,8 +4,6 @@ import random
 import string
 
 from blaxel.client.models import Metadata, Port, Runtime, Sandbox, SandboxSpec
-from blaxel.common.settings import settings
-from blaxel.sandbox.client import client
 from blaxel.sandbox.client.models import ProcessRequest
 from blaxel.sandbox.sandbox import SandboxInstance
 

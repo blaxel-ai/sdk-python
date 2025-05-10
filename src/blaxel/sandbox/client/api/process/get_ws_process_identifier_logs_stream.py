@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 import httpx
 
@@ -14,22 +14,22 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/process/{identifier}/logs/stream",
+        "url": f"/ws/process/{identifier}/logs/stream",
     }
 
     return _kwargs
 
 
 def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, str]]:
-    if response.status_code == 200:
-        response_200 = response.text
-        return response_200
+    if response.status_code == 101:
+        response_101 = cast(str, response.json())
+        return response_101
     if response.status_code == 404:
-        response_404 = ErrorResponse.from_dict(response.text)
+        response_404 = ErrorResponse.from_dict(response.json())
 
         return response_404
     if response.status_code == 500:
-        response_500 = ErrorResponse.from_dict(response.text)
+        response_500 = ErrorResponse.from_dict(response.json())
 
         return response_500
     if client.raise_on_unexpected_status:
@@ -52,10 +52,10 @@ def sync_detailed(
     *,
     client: Union[Client],
 ) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream process logs in real time via WebSocket
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the stdout and stderr output of a process in real time as JSON messages. Closes when the
+    process exits or the client disconnects.
 
     Args:
         identifier (str):
@@ -84,10 +84,10 @@ def sync(
     *,
     client: Union[Client],
 ) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream process logs in real time via WebSocket
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the stdout and stderr output of a process in real time as JSON messages. Closes when the
+    process exits or the client disconnects.
 
     Args:
         identifier (str):
@@ -111,10 +111,10 @@ async def asyncio_detailed(
     *,
     client: Union[Client],
 ) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream process logs in real time via WebSocket
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the stdout and stderr output of a process in real time as JSON messages. Closes when the
+    process exits or the client disconnects.
 
     Args:
         identifier (str):
@@ -141,10 +141,10 @@ async def asyncio(
     *,
     client: Union[Client],
 ) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time
+    """Stream process logs in real time via WebSocket
 
-     Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
-    'stdout:' or 'stderr:'. Closes when the process exits or the client disconnects.
+     Streams the stdout and stderr output of a process in real time as JSON messages. Closes when the
+    process exits or the client disconnects.
 
     Args:
         identifier (str):
