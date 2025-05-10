@@ -14,7 +14,6 @@ class ProcessRequest:
     Attributes:
         command (str):  Example: ls -la.
         name (Union[Unset, str]):  Example: my-process.
-        stream_logs (Union[Unset, bool]):  Example: True.
         timeout (Union[Unset, int]):  Example: 30.
         wait_for_completion (Union[Unset, bool]):
         wait_for_ports (Union[Unset, list[int]]):  Example: [3000, 8080].
@@ -23,7 +22,6 @@ class ProcessRequest:
 
     command: str
     name: Union[Unset, str] = UNSET
-    stream_logs: Union[Unset, bool] = UNSET
     timeout: Union[Unset, int] = UNSET
     wait_for_completion: Union[Unset, bool] = UNSET
     wait_for_ports: Union[Unset, list[int]] = UNSET
@@ -34,8 +32,6 @@ class ProcessRequest:
         command = self.command
 
         name = self.name
-
-        stream_logs = self.stream_logs
 
         timeout = self.timeout
 
@@ -56,8 +52,6 @@ class ProcessRequest:
         )
         if name is not UNSET:
             field_dict["name"] = name
-        if stream_logs is not UNSET:
-            field_dict["streamLogs"] = stream_logs
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
         if wait_for_completion is not UNSET:
@@ -78,8 +72,6 @@ class ProcessRequest:
 
         name = d.pop("name", UNSET)
 
-        stream_logs = d.pop("streamLogs", UNSET)
-
         timeout = d.pop("timeout", UNSET)
 
         wait_for_completion = d.pop("waitForCompletion", UNSET)
@@ -91,7 +83,6 @@ class ProcessRequest:
         process_request = cls(
             command=command,
             name=name,
-            stream_logs=stream_logs,
             timeout=timeout,
             wait_for_completion=wait_for_completion,
             wait_for_ports=wait_for_ports,

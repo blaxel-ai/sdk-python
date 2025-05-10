@@ -14,17 +14,21 @@ class PreviewSpec:
 
     Attributes:
         port (Union[Unset, int]): Port of the preview
+        prefix_url (Union[Unset, str]): Prefix URL
         public (Union[Unset, bool]): Whether the preview is public
         url (Union[Unset, str]): URL of the preview
     """
 
     port: Union[Unset, int] = UNSET
+    prefix_url: Union[Unset, str] = UNSET
     public: Union[Unset, bool] = UNSET
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         port = self.port
+
+        prefix_url = self.prefix_url
 
         public = self.public
 
@@ -35,6 +39,8 @@ class PreviewSpec:
         field_dict.update({})
         if port is not UNSET:
             field_dict["port"] = port
+        if prefix_url is not UNSET:
+            field_dict["prefixUrl"] = prefix_url
         if public is not UNSET:
             field_dict["public"] = public
         if url is not UNSET:
@@ -49,12 +55,15 @@ class PreviewSpec:
         d = src_dict.copy()
         port = d.pop("port", UNSET)
 
+        prefix_url = d.pop("prefixUrl", UNSET)
+
         public = d.pop("public", UNSET)
 
         url = d.pop("url", UNSET)
 
         preview_spec = cls(
             port=port,
+            prefix_url=prefix_url,
             public=public,
             url=url,
         )

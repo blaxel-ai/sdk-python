@@ -10,6 +10,7 @@ from ..client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ..client.client import client
 from ..client.models import Sandbox
 from .filesystem import SandboxFileSystem
+from .preview import SandboxPreviews
 from .process import SandboxProcess
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ class SandboxInstance:
         self.sandbox = sandbox
         self.fs = SandboxFileSystem(sandbox)
         self.process = SandboxProcess(sandbox)
+        self.previews = SandboxPreviews(sandbox)
 
     @property
     def metadata(self):

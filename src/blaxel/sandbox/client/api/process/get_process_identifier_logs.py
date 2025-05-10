@@ -7,24 +7,15 @@ from ... import errors
 from ...client import Client
 from ...models.error_response import ErrorResponse
 from ...models.get_process_identifier_logs_response_200 import GetProcessIdentifierLogsResponse200
-from ...types import UNSET, Response, Unset
+from ...types import Response
 
 
 def _get_kwargs(
     identifier: str,
-    *,
-    stream: Union[Unset, bool] = UNSET,
 ) -> dict[str, Any]:
-    params: dict[str, Any] = {}
-
-    params["stream"] = stream
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/process/{identifier}/logs",
-        "params": params,
     }
 
     return _kwargs
@@ -66,7 +57,6 @@ def sync_detailed(
     identifier: str,
     *,
     client: Union[Client],
-    stream: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
     """Get process logs
 
@@ -74,7 +64,6 @@ def sync_detailed(
 
     Args:
         identifier (str):
-        stream (Union[Unset, bool]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -86,7 +75,6 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         identifier=identifier,
-        stream=stream,
     )
 
     response = client.get_httpx_client().request(
@@ -100,7 +88,6 @@ def sync(
     identifier: str,
     *,
     client: Union[Client],
-    stream: Union[Unset, bool] = UNSET,
 ) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
     """Get process logs
 
@@ -108,7 +95,6 @@ def sync(
 
     Args:
         identifier (str):
-        stream (Union[Unset, bool]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -121,7 +107,6 @@ def sync(
     return sync_detailed(
         identifier=identifier,
         client=client,
-        stream=stream,
     ).parsed
 
 
@@ -129,7 +114,6 @@ async def asyncio_detailed(
     identifier: str,
     *,
     client: Union[Client],
-    stream: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
     """Get process logs
 
@@ -137,7 +121,6 @@ async def asyncio_detailed(
 
     Args:
         identifier (str):
-        stream (Union[Unset, bool]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -149,7 +132,6 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         identifier=identifier,
-        stream=stream,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -161,7 +143,6 @@ async def asyncio(
     identifier: str,
     *,
     client: Union[Client],
-    stream: Union[Unset, bool] = UNSET,
 ) -> Optional[Union[ErrorResponse, GetProcessIdentifierLogsResponse200]]:
     """Get process logs
 
@@ -169,7 +150,6 @@ async def asyncio(
 
     Args:
         identifier (str):
-        stream (Union[Unset, bool]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -183,6 +163,5 @@ async def asyncio(
         await asyncio_detailed(
             identifier=identifier,
             client=client,
-            stream=stream,
         )
     ).parsed

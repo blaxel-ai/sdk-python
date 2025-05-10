@@ -3,7 +3,7 @@ name: Python SDK dev
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["develop"]
 
 jobs:
   pypi-publish:

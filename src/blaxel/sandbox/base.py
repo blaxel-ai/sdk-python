@@ -58,8 +58,10 @@ class SandboxHandleBase:
     def url(self):
         if self.forced_url:
             return self.forced_url
-        if settings.run_internal_hostname:
-            return self.internal_url
+        # Uncomment and use this when agent and mcp are available in mk3
+        # Update all requests made in this package to use fallbackUrl when internalUrl is not working
+        # if settings.run_internal_hostname:
+        #     return self.internal_url
         return self.external_url
 
     def handle_response(self, response: Response):

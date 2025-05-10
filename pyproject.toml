@@ -9,8 +9,6 @@ dependencies = [
     "attrs>=21.3.0",
     "httpx>=0.27.0",
     "mcp>=1.2.1",
-    "livekit-agents[openai,groq,anthropic]~=1.0",
-
     # OpenTelemetry dependencies
     "opentelemetry-api>=1.28.0",
     "opentelemetry-exporter-otlp>=1.28.0",
@@ -66,12 +64,15 @@ pydantic-ai = ["pydantic-ai>=0.0.48"]
 
 google-adk = ["google-adk>=0.2.0", "litellm>=1.63.11"]
 
+livekit = [
+    "livekit-agents[openai,groq,anthropic,cartesia,deepgram,elevenlabs,silero,turn-detector]~=1.0",
+    "livekit-plugins-noise-cancellation~=0.2",
+]
+
 [dependency-groups]
 dev = [
     "asgi-correlation-id>=4.3.4,<5.0.0",
     "fastapi>=0.115.12",
-    "livekit-agents[cartesia,deepgram,elevenlabs,silero,turn-detector]~=1.0",
-    "livekit-plugins-noise-cancellation~=0.2",
     "nest-asyncio>=1.6.0",
     "pdoc3>=0.11.5",
     "python-dotenv>=1.1.0",
