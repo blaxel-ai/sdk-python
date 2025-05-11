@@ -64,7 +64,7 @@ class Settings:
         """Get the run internal hostname."""
         if self.generation == "":
             return ""
-        return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "")
+        return os.environ.get("BL_RUN_INTERNAL_HOST", "")
     
     @property
     def generation(self) -> str:
