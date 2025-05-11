@@ -7,6 +7,7 @@ import importlib
 import logging
 import signal
 import time
+import os
 from typing import Any, Dict, List, Optional, Type
 
 from opentelemetry import metrics, trace
