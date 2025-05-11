@@ -27,7 +27,7 @@ class BlJob:
 
     @property
     def index_key(self) -> str:
-        return os.getenv('BL_EXECUTION_INDEX_KEY', 'TASK_INDEX')
+        return os.getenv('BL_TASK_KEY', 'TASK_INDEX')
 
     @property
     def index(self) -> int:
