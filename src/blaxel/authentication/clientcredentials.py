@@ -7,6 +7,7 @@ client credentials and refresh tokens.
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Generator, Optional
+import time
 
 import requests
 from httpx import Request, Response
@@ -46,14 +47,17 @@ class ClientCredentials(BlaxelAuth):
             "X-Blaxel-Workspace": self.workspace_name,
         }
 
-    def get_token(self) -> Optional[Exception]:
+    def _request_token(self, remaining_retries: int = 3) -> Optional[Exception]:
         """
-        Checks if the access token needs to be refreshed and performs the refresh if necessary.
+        Makes the token request with recursive retry logic.
+
+        Args:
+            remaining_retries (int): Number of retry attempts remaining.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Optional[Exception]: An exception if refreshing fails after all retries, otherwise None.
         """
-        if self.need_token():
+        try:
             headers = {"Authorization": f"Basic {self.credentials.client_credentials}", "Content-Type": "application/json"}
             body = {"grant_type": "client_credentials"}
             response = requests.post(f"{self.base_url}/oauth/token", headers=headers, json=body)
@@ -63,6 +67,23 @@ class ClientCredentials(BlaxelAuth):
             self.credentials.refresh_token = creds["refresh_token"]
             self.credentials.expires_in = creds["expires_in"]
             self.expires_at = datetime.now() + timedelta(seconds=self.credentials.expires_in)
+            return None
+        except Exception as e:
+            if remaining_retries > 0:
+                time.sleep(1)
+                return self._request_token(remaining_retries - 1)
+            return e
+
+    def get_token(self) -> Optional[Exception]:
+        """
+        Checks if the access token needs to be refreshed and performs the refresh if necessary.
+        Uses recursive retry logic for up to 3 attempts.
+
+        Returns:
+            Optional[Exception]: An exception if refreshing fails after all retries, otherwise None.
+        """
+        if self.need_token():
+            return self._request_token()
         return None
 
     def need_token(self):
