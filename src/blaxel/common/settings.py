@@ -62,9 +62,14 @@ class Settings:
     @property
     def run_internal_hostname(self) -> str:
         """Get the run internal hostname."""
-        return ''
-        # Not working in python
-        # return os.environ.get("BL_RUN_INTERNAL_HOSTNAME", "")
+        if self.generation == "":
+            return ""
+        return os.environ.get("BL_RUN_INTERNAL_HOST", "")
+    
+    @property
+    def generation(self) -> str:
+        """Get the generation."""
+        return os.environ.get("BL_GENERATION", "")
 
     @property
     def bl_cloud(self) -> bool:
