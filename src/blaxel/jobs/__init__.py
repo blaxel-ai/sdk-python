@@ -51,16 +51,23 @@ class BlJobWrapper:
         Handles both async and sync functions.
         Arguments are passed as keyword arguments to the function.
         """
-        try:
-            parsed_args = self.get_arguments()
-            if asyncio.iscoroutinefunction(func):
-                asyncio.run(func(**parsed_args))
-            else:
-                func(**parsed_args)
-            sys.exit(0)
-        except Exception as error:
-            print('Job execution failed:', error, file=sys.stderr)
-            sys.exit(1)
+        attributes = {
+            "job.name": self.name,
+            "span.type": "job.start",
+        }
+        with SpanManager("blaxel-tracer").create_span(self.name, attributes) as span:
+            try:
+                parsed_args = self.get_arguments()
+                if asyncio.iscoroutinefunction(func):
+                    asyncio.run(func(**parsed_args))
+                else:
+                    func(**parsed_args)
+                span.set_attribute("job.start.success", True)
+                sys.exit(0)
+            except Exception as error:
+                span.set_attribute("job.start.error", str(error))
+                print('Job execution failed:', error, file=sys.stderr)
+                sys.exit(1)
 
 
 
