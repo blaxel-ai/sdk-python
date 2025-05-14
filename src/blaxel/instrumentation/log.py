@@ -49,7 +49,6 @@ class AsyncLogRecordProcessor(LogRecordProcessor):
 
     def emit(self, log_data: LogData):
         if self._shutdown:
-            _logger.warning("Processor is already shutdown, ignoring call")
             return
         self._queue.put(log_data)
 
