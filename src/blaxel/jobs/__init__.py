@@ -62,7 +62,6 @@ class BlJobWrapper:
                 else:
                     func(**parsed_args)
                 span.set_attribute("job.start.success", True)
-                sys.exit(0)
             except Exception as error:
                 span.set_attribute("job.start.error", str(error))
                 print('Job execution failed:', error, file=sys.stderr)
