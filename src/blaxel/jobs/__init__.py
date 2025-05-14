@@ -52,10 +52,9 @@ class BlJobWrapper:
         Arguments are passed as keyword arguments to the function.
         """
         attributes = {
-            "job.name": self.name,
             "span.type": "job.start",
         }
-        with SpanManager("blaxel-tracer").create_span(self.name, attributes) as span:
+        with SpanManager("blaxel-tracer").create_span("job.start", attributes) as span:
             try:
                 parsed_args = self.get_arguments()
                 if asyncio.iscoroutinefunction(func):
