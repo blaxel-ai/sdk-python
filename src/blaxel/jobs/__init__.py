@@ -2,7 +2,6 @@ import argparse
 import os
 import sys
 import asyncio
-import json
 import requests
 
 
@@ -54,18 +53,15 @@ class BlJobWrapper:
         attributes = {
             "span.type": "job.start",
         }
-        with SpanManager("blaxel-tracer").create_span("job.start", attributes) as span:
-            try:
-                parsed_args = self.get_arguments()
-                if asyncio.iscoroutinefunction(func):
-                    asyncio.run(func(**parsed_args))
-                else:
-                    func(**parsed_args)
-                span.set_attribute("job.start.success", True)
-            except Exception as error:
-                span.set_attribute("job.start.error", str(error))
-                print('Job execution failed:', error, file=sys.stderr)
-                sys.exit(1)
+        try:
+            parsed_args = self.get_arguments()
+            if asyncio.iscoroutinefunction(func):
+                asyncio.run(func(**parsed_args))
+            else:
+                func(**parsed_args)
+        except Exception as error:
+            print('Job execution failed:', error, file=sys.stderr)
+            sys.exit(1)
 
 
 
