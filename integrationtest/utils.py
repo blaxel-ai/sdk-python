@@ -19,7 +19,7 @@ async def create_or_get_sandbox(sandbox_name: str):
     try:
         sandbox = await SandboxInstance.get(sandbox_name)
         return sandbox
-    except Exception as e:
+    except Exception:
         image = "blaxel/prod-base:latest"
         logger.info(f"Creating sandbox {sandbox_name} with image {image}")
         sandbox = await SandboxInstance.create(Sandbox(
