@@ -1,48 +1,50 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.error_response import ErrorResponse
+from ...models.job import Job
 from ...types import Response
 
 
 def _get_kwargs(
-    identifier: str,
+    job_id: str,
+    *,
+    body: Job,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": f"/ws/process/{identifier}/logs/stream",
+        "method": "put",
+        "url": f"/jobs/{job_id}",
     }
 
+    if type(body) == dict:
+        _body = body
+    else:
+        _body = body.to_dict()
+
+    _kwargs["json"] = _body
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, str]]:
-    if response.status_code == 101:
-        response_101 = cast(str, response.json())
-        return response_101
-    if response.status_code == 404:
-        response_404 = ErrorResponse.from_dict(response.json())
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Job]:
+    if response.status_code == 200:
+        response_200 = Job.from_dict(response.json())
 
-        return response_404
-    if response.status_code == 422:
-        response_422 = ErrorResponse.from_dict(response.json())
-
-        return response_422
-    if response.status_code == 500:
-        response_500 = ErrorResponse.from_dict(response.json())
-
-        return response_500
+        return response_200
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[ErrorResponse, str]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Job]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -52,27 +54,30 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 
 
 def sync_detailed(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+    body: Job,
+) -> Response[Job]:
+    """Create or update job
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Update a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
+        body (Job): Job
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, str]]
+        Response[Job]
     """
 
     kwargs = _get_kwargs(
-        identifier=identifier,
+        job_id=job_id,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -83,53 +88,59 @@ def sync_detailed(
 
 
 def sync(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+    body: Job,
+) -> Optional[Job]:
+    """Create or update job
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Update a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
+        body (Job): Job
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, str]
+        Job
     """
 
     return sync_detailed(
-        identifier=identifier,
+        job_id=job_id,
         client=client,
+        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+    body: Job,
+) -> Response[Job]:
+    """Create or update job
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Update a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
+        body (Job): Job
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, str]]
+        Response[Job]
     """
 
     kwargs = _get_kwargs(
-        identifier=identifier,
+        job_id=job_id,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -138,28 +149,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+    body: Job,
+) -> Optional[Job]:
+    """Create or update job
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Update a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
+        body (Job): Job
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, str]
+        Job
     """
 
     return (
         await asyncio_detailed(
-            identifier=identifier,
+            job_id=job_id,
             client=client,
+            body=body,
         )
     ).parsed

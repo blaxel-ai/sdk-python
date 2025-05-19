@@ -2,14 +2,14 @@ import asyncio
 import json
 import logging
 
-from blaxel.sandbox.sandbox import SandboxInstance
+from utils import create_or_get_sandbox
 
 logger = logging.getLogger(__name__)
 
 
 async def main():
-    sandbox_name = "spinup-test5"
-    sandbox = await SandboxInstance.get(sandbox_name)
+    sandbox_name = "sandbox-test-3"
+    sandbox = await create_or_get_sandbox(sandbox_name)
     result = await sandbox.fs.ls("/root")
     print(json.dumps(result.to_dict(), indent=4))
     # Filesystem tests

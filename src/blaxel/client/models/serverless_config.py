@@ -18,6 +18,7 @@ class ServerlessConfig:
 
     Attributes:
         configuration (Union[Unset, ServerlessConfigConfiguration]): The configuration for the deployment
+        max_retries (Union[Unset, int]): The maximum number of retries for the deployment
         max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
             the deployment is always running in at least one location).
         min_scale (Union[Unset, int]): The maximum number of replicas for the deployment.
@@ -25,6 +26,7 @@ class ServerlessConfig:
     """
 
     configuration: Union[Unset, "ServerlessConfigConfiguration"] = UNSET
+    max_retries: Union[Unset, int] = UNSET
     max_scale: Union[Unset, int] = UNSET
     min_scale: Union[Unset, int] = UNSET
     timeout: Union[Unset, int] = UNSET
@@ -41,6 +43,8 @@ class ServerlessConfig:
         elif self.configuration and isinstance(self.configuration, dict):
             configuration = self.configuration
 
+        max_retries = self.max_retries
+
         max_scale = self.max_scale
 
         min_scale = self.min_scale
@@ -52,6 +56,8 @@ class ServerlessConfig:
         field_dict.update({})
         if configuration is not UNSET:
             field_dict["configuration"] = configuration
+        if max_retries is not UNSET:
+            field_dict["maxRetries"] = max_retries
         if max_scale is not UNSET:
             field_dict["maxScale"] = max_scale
         if min_scale is not UNSET:
@@ -75,6 +81,8 @@ class ServerlessConfig:
         else:
             configuration = ServerlessConfigConfiguration.from_dict(_configuration)
 
+        max_retries = d.pop("maxRetries", UNSET)
+
         max_scale = d.pop("maxScale", UNSET)
 
         min_scale = d.pop("minScale", UNSET)
@@ -83,6 +91,7 @@ class ServerlessConfig:
 
         serverless_config = cls(
             configuration=configuration,
+            max_retries=max_retries,
             max_scale=max_scale,
             min_scale=min_scale,
             timeout=timeout,

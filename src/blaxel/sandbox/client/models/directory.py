@@ -18,11 +18,13 @@ class Directory:
     """
     Attributes:
         files (Union[Unset, list['File']]):
+        name (Union[Unset, str]):
         path (Union[Unset, str]):
         subdirectories (Union[Unset, list['Subdirectory']]): @name Subdirectories
     """
 
     files: Union[Unset, list["File"]] = UNSET
+    name: Union[Unset, str] = UNSET
     path: Union[Unset, str] = UNSET
     subdirectories: Union[Unset, list["Subdirectory"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -37,6 +39,8 @@ class Directory:
                 else:
                     files_item = files_item_data.to_dict()
                 files.append(files_item)
+
+        name = self.name
 
         path = self.path
 
@@ -55,6 +59,8 @@ class Directory:
         field_dict.update({})
         if files is not UNSET:
             field_dict["files"] = files
+        if name is not UNSET:
+            field_dict["name"] = name
         if path is not UNSET:
             field_dict["path"] = path
         if subdirectories is not UNSET:
@@ -77,6 +83,8 @@ class Directory:
 
             files.append(files_item)
 
+        name = d.pop("name", UNSET)
+
         path = d.pop("path", UNSET)
 
         subdirectories = []
@@ -88,6 +96,7 @@ class Directory:
 
         directory = cls(
             files=files,
+            name=name,
             path=path,
             subdirectories=subdirectories,
         )

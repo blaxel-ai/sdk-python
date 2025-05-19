@@ -1,7 +1,5 @@
-import base64
 import hashlib
 import os
-import re
 from logging import getLogger
 from typing import Optional
 

@@ -44,6 +44,10 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Uni
         response_400 = ErrorResponse.from_dict(response.json())
 
         return response_400
+    if response.status_code == 422:
+        response_422 = ErrorResponse.from_dict(response.json())
+
+        return response_422
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
@@ -69,7 +73,7 @@ def sync_detailed(
     client: Union[Client],
     body: FileRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
-    """Create or update file or directory
+    """Create or update a file or directory
 
      Create or update a file or directory
 
@@ -103,7 +107,7 @@ def sync(
     client: Union[Client],
     body: FileRequest,
 ) -> Optional[Union[ErrorResponse, SuccessResponse]]:
-    """Create or update file or directory
+    """Create or update a file or directory
 
      Create or update a file or directory
 
@@ -132,7 +136,7 @@ async def asyncio_detailed(
     client: Union[Client],
     body: FileRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
-    """Create or update file or directory
+    """Create or update a file or directory
 
      Create or update a file or directory
 
@@ -164,7 +168,7 @@ async def asyncio(
     client: Union[Client],
     body: FileRequest,
 ) -> Optional[Union[ErrorResponse, SuccessResponse]]:
-    """Create or update file or directory
+    """Create or update a file or directory
 
      Create or update a file or directory
 

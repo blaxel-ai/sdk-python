@@ -14,6 +14,7 @@ class File:
     Attributes:
         group (Union[Unset, str]):
         last_modified (Union[Unset, str]):
+        name (Union[Unset, str]):
         owner (Union[Unset, str]):
         path (Union[Unset, str]):
         permissions (Union[Unset, str]):
@@ -22,6 +23,7 @@ class File:
 
     group: Union[Unset, str] = UNSET
     last_modified: Union[Unset, str] = UNSET
+    name: Union[Unset, str] = UNSET
     owner: Union[Unset, str] = UNSET
     path: Union[Unset, str] = UNSET
     permissions: Union[Unset, str] = UNSET
@@ -32,6 +34,8 @@ class File:
         group = self.group
 
         last_modified = self.last_modified
+
+        name = self.name
 
         owner = self.owner
 
@@ -48,6 +52,8 @@ class File:
             field_dict["group"] = group
         if last_modified is not UNSET:
             field_dict["lastModified"] = last_modified
+        if name is not UNSET:
+            field_dict["name"] = name
         if owner is not UNSET:
             field_dict["owner"] = owner
         if path is not UNSET:
@@ -68,6 +74,8 @@ class File:
 
         last_modified = d.pop("lastModified", UNSET)
 
+        name = d.pop("name", UNSET)
+
         owner = d.pop("owner", UNSET)
 
         path = d.pop("path", UNSET)
@@ -79,6 +87,7 @@ class File:
         file = cls(
             group=group,
             last_modified=last_modified,
+            name=name,
             owner=owner,
             path=path,
             permissions=permissions,

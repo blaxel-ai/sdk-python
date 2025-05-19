@@ -3,12 +3,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="GetProcessIdentifierLogsResponse200")
+T = TypeVar("T", bound="PreviewSpecResponseHeaders")
 
 
 @_attrs_define
-class GetProcessIdentifierLogsResponse200:
-    """ """
+class PreviewSpecResponseHeaders:
+    """Those headers will be set in all responses of your preview. This is especially useful to set the CORS headers."""
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
@@ -23,10 +23,10 @@ class GetProcessIdentifierLogsResponse200:
         if not src_dict:
             return None
         d = src_dict.copy()
-        get_process_identifier_logs_response_200 = cls()
+        preview_spec_response_headers = cls()
 
-        get_process_identifier_logs_response_200.additional_properties = d
-        return get_process_identifier_logs_response_200
+        preview_spec_response_headers.additional_properties = d
+        return preview_spec_response_headers
 
     @property
     def additional_keys(self) -> list[str]:

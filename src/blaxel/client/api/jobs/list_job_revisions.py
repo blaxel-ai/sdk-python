@@ -1,48 +1,42 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.error_response import ErrorResponse
+from ...models.revision_metadata import RevisionMetadata
 from ...types import Response
 
 
 def _get_kwargs(
-    identifier: str,
+    job_id: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/ws/process/{identifier}/logs/stream",
+        "url": f"/jobs/{job_id}/revisions",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, str]]:
-    if response.status_code == 101:
-        response_101 = cast(str, response.json())
-        return response_101
-    if response.status_code == 404:
-        response_404 = ErrorResponse.from_dict(response.json())
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["RevisionMetadata"]]:
+    if response.status_code == 200:
+        response_200 = []
+        _response_200 = response.json()
+        for response_200_item_data in _response_200:
+            response_200_item = RevisionMetadata.from_dict(response_200_item_data)
 
-        return response_404
-    if response.status_code == 422:
-        response_422 = ErrorResponse.from_dict(response.json())
+            response_200.append(response_200_item)
 
-        return response_422
-    if response.status_code == 500:
-        response_500 = ErrorResponse.from_dict(response.json())
-
-        return response_500
+        return response_200
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[ErrorResponse, str]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list["RevisionMetadata"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -52,27 +46,27 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 
 
 def sync_detailed(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+) -> Response[list["RevisionMetadata"]]:
+    """List job revisions
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Returns revisions for a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, str]]
+        Response[list['RevisionMetadata']]
     """
 
     kwargs = _get_kwargs(
-        identifier=identifier,
+        job_id=job_id,
     )
 
     response = client.get_httpx_client().request(
@@ -83,53 +77,53 @@ def sync_detailed(
 
 
 def sync(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+) -> Optional[list["RevisionMetadata"]]:
+    """List job revisions
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Returns revisions for a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, str]
+        list['RevisionMetadata']
     """
 
     return sync_detailed(
-        identifier=identifier,
+        job_id=job_id,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Response[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+) -> Response[list["RevisionMetadata"]]:
+    """List job revisions
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Returns revisions for a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, str]]
+        Response[list['RevisionMetadata']]
     """
 
     kwargs = _get_kwargs(
-        identifier=identifier,
+        job_id=job_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -138,28 +132,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    identifier: str,
+    job_id: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
-    """Stream process logs in real time via WebSocket
+) -> Optional[list["RevisionMetadata"]]:
+    """List job revisions
 
-     Streams the stdout and stderr output of a process in real time as JSON messages.
+     Returns revisions for a job by name.
 
     Args:
-        identifier (str):
+        job_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, str]
+        list['RevisionMetadata']
     """
 
     return (
         await asyncio_detailed(
-            identifier=identifier,
+            job_id=job_id,
             client=client,
         )
     ).parsed
