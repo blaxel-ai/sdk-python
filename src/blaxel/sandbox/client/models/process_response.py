@@ -3,6 +3,7 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.process_response_status import ProcessResponseStatus
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ProcessResponse")
@@ -18,7 +19,7 @@ class ProcessResponse:
         name (Union[Unset, str]):  Example: my-process.
         pid (Union[Unset, str]):  Example: 1234.
         started_at (Union[Unset, str]):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
-        status (Union[Unset, str]):  Example: running.
+        status (Union[Unset, ProcessResponseStatus]):  Example: running.
         working_dir (Union[Unset, str]):  Example: /home/user.
     """
 
@@ -28,7 +29,7 @@ class ProcessResponse:
     name: Union[Unset, str] = UNSET
     pid: Union[Unset, str] = UNSET
     started_at: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, ProcessResponseStatus] = UNSET
     working_dir: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -45,7 +46,9 @@ class ProcessResponse:
 
         started_at = self.started_at
 
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         working_dir = self.working_dir
 
@@ -88,7 +91,12 @@ class ProcessResponse:
 
         started_at = d.pop("startedAt", UNSET)
 
-        status = d.pop("status", UNSET)
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, ProcessResponseStatus]
+        if isinstance(_status, Unset):
+            status = UNSET
+        else:
+            status = ProcessResponseStatus(_status)
 
         working_dir = d.pop("workingDir", UNSET)
 

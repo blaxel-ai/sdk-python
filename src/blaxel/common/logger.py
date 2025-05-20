@@ -5,7 +5,9 @@ to set up logging configurations for Blaxel applications.
 import json
 import logging
 import os
+
 from opentelemetry import trace
+
 
 class JsonFormatter(logging.Formatter):
     """

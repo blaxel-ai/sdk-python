@@ -5,9 +5,9 @@ It includes classes and functions for configuring tracers, meters, loggers, and 
 
 import importlib
 import logging
+import os
 import signal
 import time
-import os
 from typing import Any, Dict, List, Optional, Type
 
 from opentelemetry import metrics, trace

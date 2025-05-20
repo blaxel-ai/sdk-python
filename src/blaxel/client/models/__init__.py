@@ -50,6 +50,21 @@ from .integration_organization import IntegrationOrganization
 from .integration_query_params import IntegrationQueryParams
 from .integration_repository import IntegrationRepository
 from .invite_workspace_user_body import InviteWorkspaceUserBody
+from .job import Job
+from .job_execution_config import JobExecutionConfig
+from .job_metrics import JobMetrics
+from .job_metrics_executions_chart import JobMetricsExecutionsChart
+from .job_metrics_executions_total import JobMetricsExecutionsTotal
+from .job_metrics_tasks_chart import JobMetricsTasksChart
+from .job_metrics_tasks_total import JobMetricsTasksTotal
+from .job_spec import JobSpec
+from .jobs_chart import JobsChart
+from .jobs_chart_value import JobsChartValue
+from .jobs_executions import JobsExecutions
+from .jobs_network_chart import JobsNetworkChart
+from .jobs_success_failed_chart import JobsSuccessFailedChart
+from .jobs_tasks import JobsTasks
+from .jobs_total import JobsTotal
 from .knowledgebase import Knowledgebase
 from .knowledgebase_spec import KnowledgebaseSpec
 from .knowledgebase_spec_options import KnowledgebaseSpecOptions
@@ -87,6 +102,8 @@ from .port import Port
 from .preview import Preview
 from .preview_metadata import PreviewMetadata
 from .preview_spec import PreviewSpec
+from .preview_spec_request_headers import PreviewSpecRequestHeaders
+from .preview_spec_response_headers import PreviewSpecResponseHeaders
 from .preview_token import PreviewToken
 from .preview_token_metadata import PreviewTokenMetadata
 from .preview_token_spec import PreviewTokenSpec
@@ -199,6 +216,21 @@ __all__ = (
     "IntegrationQueryParams",
     "IntegrationRepository",
     "InviteWorkspaceUserBody",
+    "Job",
+    "JobExecutionConfig",
+    "JobMetrics",
+    "JobMetricsExecutionsChart",
+    "JobMetricsExecutionsTotal",
+    "JobMetricsTasksChart",
+    "JobMetricsTasksTotal",
+    "JobsChart",
+    "JobsChartValue",
+    "JobsExecutions",
+    "JobsNetworkChart",
+    "JobSpec",
+    "JobsSuccessFailedChart",
+    "JobsTasks",
+    "JobsTotal",
     "Knowledgebase",
     "KnowledgebaseSpec",
     "KnowledgebaseSpecOptions",
@@ -236,6 +268,8 @@ __all__ = (
     "Preview",
     "PreviewMetadata",
     "PreviewSpec",
+    "PreviewSpecRequestHeaders",
+    "PreviewSpecResponseHeaders",
     "PreviewToken",
     "PreviewTokenMetadata",
     "PreviewTokenSpec",

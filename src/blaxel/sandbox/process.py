@@ -13,12 +13,7 @@ from .client.api.process.get_process_identifier_logs import (
     asyncio_detailed as get_process_by_identifier_logs,
 )
 from .client.api.process.post_process import asyncio_detailed as post_process
-from .client.models import (
-    GetProcessIdentifierLogsResponse200,
-    ProcessKillRequest,
-    ProcessResponse,
-    SuccessResponse,
-)
+from .client.models import ProcessKillRequest, ProcessLogs, ProcessResponse, SuccessResponse
 
 
 class SandboxProcess(SandboxHandleBase):
@@ -51,7 +46,11 @@ class SandboxProcess(SandboxHandleBase):
     async def logs(self, identifier: str, type_: str = "stdout") -> str:
         response = await get_process_by_identifier_logs(identifier=identifier, client=self.client)
         self.handle_response(response)
-        data: GetProcessIdentifierLogsResponse200 = response.parsed
-        if type_ in data.additional_properties:
-            return data.additional_properties[type_]
+        data: ProcessLogs = response.parsed
+        if type_ == "all":
+            return data.logs
+        elif type_ == "stderr":
+            return data.stderr
+        elif type_ == "stdout":
+            return data.stdout
         raise Exception("Unsupported log type")

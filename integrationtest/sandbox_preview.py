@@ -3,35 +3,13 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
+from utils import create_or_get_sandbox
 
-from blaxel.client.models import (Metadata, Port, Preview, PreviewSpec,
-                                  Runtime, Sandbox, SandboxSpec)
+from blaxel.client.models import Metadata, Preview, PreviewSpec
 from blaxel.common.settings import settings
 from blaxel.sandbox.sandbox import SandboxInstance
 
 logger = logging.getLogger(__name__)
-
-async def create_sandbox(sandbox_name: str):
-    # Create sandbox
-    image = "blaxel/prod-base:latest"
-    logger.info(f"Creating sandbox {sandbox_name} with image {image}")
-    sandbox = await SandboxInstance.create(Sandbox(
-        metadata=Metadata(name=sandbox_name),
-        spec=SandboxSpec(
-            runtime=Runtime(
-                image=image,
-                memory=2048,
-                cpu=2,
-                ports=[
-                    Port(name="sandbox-api", target=8080, protocol="HTTP")
-                ]
-            )
-        )
-    ))
-    logger.info("Waiting for sandbox to be deployed")
-    await sandbox.wait(max_wait=120000, interval=1000)
-    logger.info("Sandbox deployed")
-    return sandbox
 
 async def test_public_preview(sandbox: SandboxInstance):
     try:
@@ -120,7 +98,7 @@ async def main():
     sandbox_name = "sandbox-preview-test"
     sandbox = None
     try:
-        sandbox = await create_sandbox(sandbox_name)
+        sandbox = await create_or_get_sandbox(sandbox_name)
         await test_public_preview(sandbox)
         await test_private_preview(sandbox)
     finally:

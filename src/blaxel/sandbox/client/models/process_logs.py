@@ -5,33 +5,39 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="Subdirectory")
+T = TypeVar("T", bound="ProcessLogs")
 
 
 @_attrs_define
-class Subdirectory:
+class ProcessLogs:
     """
     Attributes:
-        name (Union[Unset, str]):
-        path (Union[Unset, str]):
+        logs (Union[Unset, str]):  Example: logs output.
+        stderr (Union[Unset, str]):  Example: stderr output.
+        stdout (Union[Unset, str]):  Example: stdout output.
     """
 
-    name: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
+    logs: Union[Unset, str] = UNSET
+    stderr: Union[Unset, str] = UNSET
+    stdout: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        name = self.name
+        logs = self.logs
 
-        path = self.path
+        stderr = self.stderr
+
+        stdout = self.stdout
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if name is not UNSET:
-            field_dict["name"] = name
-        if path is not UNSET:
-            field_dict["path"] = path
+        if logs is not UNSET:
+            field_dict["logs"] = logs
+        if stderr is not UNSET:
+            field_dict["stderr"] = stderr
+        if stdout is not UNSET:
+            field_dict["stdout"] = stdout
 
         return field_dict
 
@@ -40,17 +46,20 @@ class Subdirectory:
         if not src_dict:
             return None
         d = src_dict.copy()
-        name = d.pop("name", UNSET)
+        logs = d.pop("logs", UNSET)
 
-        path = d.pop("path", UNSET)
+        stderr = d.pop("stderr", UNSET)
 
-        subdirectory = cls(
-            name=name,
-            path=path,
+        stdout = d.pop("stdout", UNSET)
+
+        process_logs = cls(
+            logs=logs,
+            stderr=stderr,
+            stdout=stdout,
         )
 
-        subdirectory.additional_properties = d
-        return subdirectory
+        process_logs.additional_properties = d
+        return process_logs
 
     @property
     def additional_keys(self) -> list[str]:

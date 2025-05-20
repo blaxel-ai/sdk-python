@@ -1,18 +1,17 @@
 import argparse
+import asyncio
 import os
 import sys
-import asyncio
+from logging import getLogger
+from typing import Any, Awaitable, Callable, Dict
+
 import requests
 
-
-from typing import Any, Dict, Callable, Awaitable
-from logging import getLogger
 from ..client import client
 from ..common.env import env
 from ..common.internal import get_global_unique_hash
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
-
 
 
 class BlJobWrapper:
@@ -50,9 +49,6 @@ class BlJobWrapper:
         Handles both async and sync functions.
         Arguments are passed as keyword arguments to the function.
         """
-        attributes = {
-            "span.type": "job.start",
-        }
         try:
             parsed_args = self.get_arguments()
             if asyncio.iscoroutinefunction(func):

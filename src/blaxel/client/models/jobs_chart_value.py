@@ -5,33 +5,34 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="Subdirectory")
+T = TypeVar("T", bound="JobsChartValue")
 
 
 @_attrs_define
-class Subdirectory:
-    """
+class JobsChartValue:
+    """Jobs CPU usage
+
     Attributes:
-        name (Union[Unset, str]):
-        path (Union[Unset, str]):
+        timestamp (Union[Unset, str]): Metric timestamp
+        value (Union[Unset, int]): Metric value
     """
 
-    name: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
+    timestamp: Union[Unset, str] = UNSET
+    value: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        name = self.name
+        timestamp = self.timestamp
 
-        path = self.path
+        value = self.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if name is not UNSET:
-            field_dict["name"] = name
-        if path is not UNSET:
-            field_dict["path"] = path
+        if timestamp is not UNSET:
+            field_dict["timestamp"] = timestamp
+        if value is not UNSET:
+            field_dict["value"] = value
 
         return field_dict
 
@@ -40,17 +41,17 @@ class Subdirectory:
         if not src_dict:
             return None
         d = src_dict.copy()
-        name = d.pop("name", UNSET)
+        timestamp = d.pop("timestamp", UNSET)
 
-        path = d.pop("path", UNSET)
+        value = d.pop("value", UNSET)
 
-        subdirectory = cls(
-            name=name,
-            path=path,
+        jobs_chart_value = cls(
+            timestamp=timestamp,
+            value=value,
         )
 
-        subdirectory.additional_properties = d
-        return subdirectory
+        jobs_chart_value.additional_properties = d
+        return jobs_chart_value
 
     @property
     def additional_keys(self) -> list[str]:

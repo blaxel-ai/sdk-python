@@ -4,10 +4,10 @@ authentication for Blaxel. It manages token refreshing and authentication flows 
 client credentials and refresh tokens.
 """
 
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Generator, Optional
-import time
 
 import requests
 from httpx import Request, Response

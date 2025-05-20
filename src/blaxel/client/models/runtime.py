@@ -29,6 +29,8 @@ class Runtime:
             EnvVar types
         generation (Union[Unset, str]): The generation of the deployment
         image (Union[Unset, str]): The Docker image for the deployment
+        max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
+        max_retries (Union[Unset, int]): The maximum number of retries for the deployment
         max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
             the deployment is always running in at least one location).
         memory (Union[Unset, int]): The memory for the deployment in MB
@@ -50,6 +52,8 @@ class Runtime:
     envs: Union[Unset, list[Any]] = UNSET
     generation: Union[Unset, str] = UNSET
     image: Union[Unset, str] = UNSET
+    max_concurrent_tasks: Union[Unset, int] = UNSET
+    max_retries: Union[Unset, int] = UNSET
     max_scale: Union[Unset, int] = UNSET
     memory: Union[Unset, int] = UNSET
     metric_port: Union[Unset, int] = UNSET
@@ -92,6 +96,10 @@ class Runtime:
         generation = self.generation
 
         image = self.image
+
+        max_concurrent_tasks = self.max_concurrent_tasks
+
+        max_retries = self.max_retries
 
         max_scale = self.max_scale
 
@@ -148,6 +156,10 @@ class Runtime:
             field_dict["generation"] = generation
         if image is not UNSET:
             field_dict["image"] = image
+        if max_concurrent_tasks is not UNSET:
+            field_dict["maxConcurrentTasks"] = max_concurrent_tasks
+        if max_retries is not UNSET:
+            field_dict["maxRetries"] = max_retries
         if max_scale is not UNSET:
             field_dict["maxScale"] = max_scale
         if memory is not UNSET:
@@ -201,6 +213,10 @@ class Runtime:
 
         image = d.pop("image", UNSET)
 
+        max_concurrent_tasks = d.pop("maxConcurrentTasks", UNSET)
+
+        max_retries = d.pop("maxRetries", UNSET)
+
         max_scale = d.pop("maxScale", UNSET)
 
         memory = d.pop("memory", UNSET)
@@ -240,6 +256,8 @@ class Runtime:
             envs=envs,
             generation=generation,
             image=image,
+            max_concurrent_tasks=max_concurrent_tasks,
+            max_retries=max_retries,
             max_scale=max_scale,
             memory=memory,
             metric_port=metric_port,

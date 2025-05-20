@@ -1,37 +1,20 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-T = TypeVar("T", bound="Subdirectory")
+T = TypeVar("T", bound="JobMetricsExecutionsTotal")
 
 
 @_attrs_define
-class Subdirectory:
-    """
-    Attributes:
-        name (Union[Unset, str]):
-        path (Union[Unset, str]):
-    """
+class JobMetricsExecutionsTotal:
+    """Total executions"""
 
-    name: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        name = self.name
-
-        path = self.path
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if name is not UNSET:
-            field_dict["name"] = name
-        if path is not UNSET:
-            field_dict["path"] = path
 
         return field_dict
 
@@ -40,17 +23,10 @@ class Subdirectory:
         if not src_dict:
             return None
         d = src_dict.copy()
-        name = d.pop("name", UNSET)
+        job_metrics_executions_total = cls()
 
-        path = d.pop("path", UNSET)
-
-        subdirectory = cls(
-            name=name,
-            path=path,
-        )
-
-        subdirectory.additional_properties = d
-        return subdirectory
+        job_metrics_executions_total.additional_properties = d
+        return job_metrics_executions_total
 
     @property
     def additional_keys(self) -> list[str]:
