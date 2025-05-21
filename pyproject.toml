@@ -92,3 +92,9 @@ ignore = ["UP006", "UP007", "UP035"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/blaxel"]
+
+[project.urls]
+Homepage = "https://blaxel.ai"
+Documentation = "https://docs.blaxel.ai"
+Repository = "https://github.com/blaxel-ai/sdk-python"
+Changelog = "https://docs.blaxel.ai/changelog"
