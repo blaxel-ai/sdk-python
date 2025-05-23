@@ -40,11 +40,6 @@ class JsonFormatter(logging.Formatter):
         # Get current span - try multiple approaches
         current_span = trace.get_current_span()
         
-        # If that doesn't work, try getting from current context explicitly
-        if not current_span.is_recording():
-            ctx = context_api.get_current()
-            current_span = trace.get_current_span(ctx)
-        
         if current_span.is_recording():
             span_context = current_span.get_span_context()
             log_entry[self.trace_id_name] = f"{self.trace_id_prefix}{span_context.trace_id}"
