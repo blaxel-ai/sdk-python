@@ -111,4 +111,6 @@ class ClientCredentials(BlaxelAuth):
 
     @property
     def token(self):
+        if not self.credentials.access_token:
+            self.get_token()
         return self.credentials.access_token
