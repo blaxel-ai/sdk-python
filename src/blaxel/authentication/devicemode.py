@@ -183,4 +183,5 @@ class DeviceMode(BlaxelAuth):
 
     @property
     def token(self):
+        self.refresh_if_needed()
         return self.credentials.access_token
