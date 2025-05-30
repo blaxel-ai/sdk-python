@@ -43,18 +43,25 @@ class PersistentWebSocket:
         return self
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
-        await self._initialize()
-        if self.timeout_enabled:
-            self._remove_timer()
-        logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
-        arguments.update(self.metas)
-        call_tool_result = await self.session.call_tool(tool_name, arguments)
-        logger.debug(f"Tool {tool_name} returned {call_tool_result}")
-        if self.timeout_enabled:
-            self._reset_timer()
-        else:
-            await self._close()
-        return call_tool_result
+        try:
+            await self._initialize()
+            if self.timeout_enabled:
+                self._remove_timer()
+            logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
+            arguments.update(self.metas)
+            call_tool_result = await self.session.call_tool(tool_name, arguments)
+            logger.debug(f"Tool {tool_name} returned {call_tool_result}")
+            if self.timeout_enabled:
+                self._reset_timer()
+            else:
+                await self._close()
+            return call_tool_result
+        except Exception as e:
+            logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
+            return CallToolResult(
+                content=[{"type": "text", "text": f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}"}],
+                isError=True,
+            )
 
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
