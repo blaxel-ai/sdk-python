@@ -3,7 +3,7 @@ import os
 from httpx import Response
 
 from ..client.models import Sandbox
-from ..common.internal import get_global_unique_hash
+from ..common.internal import get_global_unique_hash, get_forced_url
 from ..common.settings import settings
 from .client.client import client
 from .client.models import ErrorResponse
@@ -50,9 +50,7 @@ class SandboxHandleBase:
 
     @property
     def forced_url(self):
-        env_var = self.name.replace("-", "_").upper()
-        env_name = f"BL_SANDBOX_{env_var}_URL"
-        return os.environ.get(env_name)
+        return get_forced_url("sandbox", self.name)
 
     @property
     def url(self):

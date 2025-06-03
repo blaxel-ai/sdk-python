@@ -10,8 +10,7 @@ from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
-from ..common.env import env
-from ..common.internal import get_global_unique_hash
+from ..common.internal import get_global_unique_hash, get_forced_url
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 from ..mcp.client import websocket_client
@@ -197,10 +196,7 @@ class BlTools:
 
     def _forced_url(self, name: str):
         """Get the forced URL from environment variables if set."""
-        env_var = name.replace("-", "_").upper()
-        if env[f"BL_FUNCTION_{env_var}_URL"]:
-            return env[f"BL_FUNCTION_{env_var}_URL"]
-        return None
+        return get_forced_url("function", name)
 
     def _external_url(self, name: str):
         return f"{settings.run_url}/{settings.workspace}/functions/{name}"

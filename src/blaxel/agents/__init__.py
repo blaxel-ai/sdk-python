@@ -6,8 +6,7 @@ from ..cache import find_from_cache
 from ..client import client
 from ..client.api.agents import get_agent
 from ..client.models import Agent
-from ..common.env import env
-from ..common.internal import get_global_unique_hash
+from ..common.internal import get_global_unique_hash, get_forced_url
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 
@@ -26,10 +25,7 @@ class BlAgent:
     @property
     def forced_url(self):
         """Get the forced URL from environment variables if set."""
-        env_var = self.name.replace("-", "_").upper()
-        if env[f"BL_AGENT_{env_var}_URL"]:
-            return env[f"BL_AGENT_{env_var}_URL"]
-        return None
+        return get_forced_url("agent", self.name)
 
     @property
     def external_url(self):
