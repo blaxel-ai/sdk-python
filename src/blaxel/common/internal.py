@@ -2,6 +2,7 @@ import hashlib
 import os
 from logging import getLogger
 from typing import Optional
+from .env import env
 
 logger = getLogger(__name__)
 
@@ -75,3 +76,70 @@ class Agent:
         env_var = self.agent_name.replace("-", "_").upper()
         env_key = f"BL_AGENT_{env_var}_URL"
         return os.environ.get(env_key)
+
+def pluralize(type_str: str) -> str:
+    """
+    Convert a string to its plural form following English pluralization rules.
+    
+    Args:
+        type_str: The input string to pluralize
+        
+    Returns:
+        The pluralized form of the input string
+    """
+    word = type_str.lower()
+
+    # Words ending in s, ss, sh, ch, x, z - add 'es'
+    if (word.endswith('s') or word.endswith('ss') or word.endswith('sh') or
+        word.endswith('ch') or word.endswith('x') or word.endswith('z')):
+        return type_str + 'es'
+
+    # Words ending in consonant + y - change y to ies
+    if word.endswith('y') and len(word) > 1:
+        before_y = word[-2]
+        if before_y not in 'aeiou':
+            return type_str[:-1] + 'ies'
+
+    # Words ending in f or fe - change to ves
+    if word.endswith('f'):
+        return type_str[:-1] + 'ves'
+    if word.endswith('fe'):
+        return type_str[:-2] + 'ves'
+
+    # Words ending in consonant + o - add 'es'
+    if word.endswith('o') and len(word) > 1:
+        before_o = word[-2]
+        if before_o not in 'aeiou':
+            return type_str + 'es'
+
+    # Default case - just add 's'
+    return type_str + 's'
+
+
+def get_forced_url(type_str: str, name: str) -> Optional[str]:
+    """
+    Check for forced URLs in environment variables using both plural and singular forms.
+    
+    Args:
+        type_str: The type identifier
+        name: The name identifier
+        
+    Returns:
+        The forced URL if found in environment variables, None otherwise
+    """
+    plural_type = pluralize(type_str)
+    env_var = name.replace("-", "_").upper()
+    
+    # BL_FUNCTIONS_NAME_URL (plural form)
+    plural_env_key = f"BL_{plural_type.upper()}_{env_var}_URL"
+    if env[plural_env_key] is not None:
+        return env[plural_env_key]
+    
+    # BL_FUNCTION_NAME_URL (singular form)
+    singular_env_key = f"BL_{type_str.upper()}_{env_var}_URL"
+    if env[singular_env_key] is not None:
+        return env[singular_env_key]
+    
+    return None
+
+
