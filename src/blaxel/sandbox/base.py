@@ -1,9 +1,8 @@
-import os
 
 from httpx import Response
 
 from ..client.models import Sandbox
-from ..common.internal import get_global_unique_hash, get_forced_url
+from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from .client.client import client
 from .client.models import ErrorResponse

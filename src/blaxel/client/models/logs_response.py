@@ -1,38 +1,34 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="JobsChartValue")
+T = TypeVar("T", bound="LogsResponse")
 
 
 @_attrs_define
-class JobsChartValue:
-    """Jobs CPU usage
+class LogsResponse:
+    """Response for logs
 
     Attributes:
-        timestamp (Union[Unset, str]): Metric timestamp
-        value (Union[Unset, float]): Metric value
+        data (Union[Unset, list[Any]]): Data
     """
 
-    timestamp: Union[Unset, str] = UNSET
-    value: Union[Unset, float] = UNSET
+    data: Union[Unset, list[Any]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        timestamp = self.timestamp
-
-        value = self.value
+        data: Union[Unset, list[Any]] = UNSET
+        if not isinstance(self.data, Unset):
+            data = self.data
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if timestamp is not UNSET:
-            field_dict["timestamp"] = timestamp
-        if value is not UNSET:
-            field_dict["value"] = value
+        if data is not UNSET:
+            field_dict["data"] = data
 
         return field_dict
 
@@ -41,17 +37,14 @@ class JobsChartValue:
         if not src_dict:
             return None
         d = src_dict.copy()
-        timestamp = d.pop("timestamp", UNSET)
+        data = cast(list[Any], d.pop("data", UNSET))
 
-        value = d.pop("value", UNSET)
-
-        jobs_chart_value = cls(
-            timestamp=timestamp,
-            value=value,
+        logs_response = cls(
+            data=data,
         )
 
-        jobs_chart_value.additional_properties = d
-        return jobs_chart_value
+        logs_response.additional_properties = d
+        return logs_response
 
     @property
     def additional_keys(self) -> list[str]:

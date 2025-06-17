@@ -8,7 +8,7 @@ from typing import Any, Awaitable, Callable, Dict
 import requests
 
 from ..client import client
-from ..common.internal import get_global_unique_hash, get_forced_url
+from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 

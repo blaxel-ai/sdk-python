@@ -5,34 +5,34 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="JobsChartValue")
+T = TypeVar("T", bound="MemoryAllocationByName")
 
 
 @_attrs_define
-class JobsChartValue:
-    """Jobs CPU usage
+class MemoryAllocationByName:
+    """Memory allocation by service name
 
     Attributes:
-        timestamp (Union[Unset, str]): Metric timestamp
-        value (Union[Unset, float]): Metric value
+        allocation (Union[Unset, float]): Memory allocation value
+        name (Union[Unset, str]): Name
     """
 
-    timestamp: Union[Unset, str] = UNSET
-    value: Union[Unset, float] = UNSET
+    allocation: Union[Unset, float] = UNSET
+    name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        timestamp = self.timestamp
+        allocation = self.allocation
 
-        value = self.value
+        name = self.name
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if timestamp is not UNSET:
-            field_dict["timestamp"] = timestamp
-        if value is not UNSET:
-            field_dict["value"] = value
+        if allocation is not UNSET:
+            field_dict["allocation"] = allocation
+        if name is not UNSET:
+            field_dict["name"] = name
 
         return field_dict
 
@@ -41,17 +41,17 @@ class JobsChartValue:
         if not src_dict:
             return None
         d = src_dict.copy()
-        timestamp = d.pop("timestamp", UNSET)
+        allocation = d.pop("allocation", UNSET)
 
-        value = d.pop("value", UNSET)
+        name = d.pop("name", UNSET)
 
-        jobs_chart_value = cls(
-            timestamp=timestamp,
-            value=value,
+        memory_allocation_by_name = cls(
+            allocation=allocation,
+            name=name,
         )
 
-        jobs_chart_value.additional_properties = d
-        return jobs_chart_value
+        memory_allocation_by_name.additional_properties = d
+        return memory_allocation_by_name
 
     @property
     def additional_keys(self) -> list[str]:

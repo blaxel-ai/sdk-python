@@ -5,27 +5,40 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ProcessKillRequest")
+T = TypeVar("T", bound="Resource")
 
 
 @_attrs_define
-class ProcessKillRequest:
-    """
+class Resource:
+    """Resource
+
     Attributes:
-        signal (Union[Unset, str]):  Example: SIGTERM.
+        name (Union[Unset, str]): Name of the resource
+        type_ (Union[Unset, str]): Type of the resource
+        workspace (Union[Unset, str]): Workspace of the resource
     """
 
-    signal: Union[Unset, str] = UNSET
+    name: Union[Unset, str] = UNSET
+    type_: Union[Unset, str] = UNSET
+    workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        signal = self.signal
+        name = self.name
+
+        type_ = self.type_
+
+        workspace = self.workspace
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if signal is not UNSET:
-            field_dict["signal"] = signal
+        if name is not UNSET:
+            field_dict["name"] = name
+        if type_ is not UNSET:
+            field_dict["type"] = type_
+        if workspace is not UNSET:
+            field_dict["workspace"] = workspace
 
         return field_dict
 
@@ -34,14 +47,20 @@ class ProcessKillRequest:
         if not src_dict:
             return None
         d = src_dict.copy()
-        signal = d.pop("signal", UNSET)
+        name = d.pop("name", UNSET)
 
-        process_kill_request = cls(
-            signal=signal,
+        type_ = d.pop("type", UNSET)
+
+        workspace = d.pop("workspace", UNSET)
+
+        resource = cls(
+            name=name,
+            type_=type_,
+            workspace=workspace,
         )
 
-        process_kill_request.additional_properties = d
-        return process_kill_request
+        resource.additional_properties = d
+        return resource
 
     @property
     def additional_keys(self) -> list[str]:

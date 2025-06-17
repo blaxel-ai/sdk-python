@@ -4,6 +4,7 @@ from .acl import ACL
 from .agent import Agent
 from .agent_spec import AgentSpec
 from .api_key import ApiKey
+from .billable_time_metric import BillableTimeMetric
 from .check_workspace_availability_body import CheckWorkspaceAvailabilityBody
 from .configuration import Configuration
 from .continent import Continent
@@ -71,9 +72,12 @@ from .knowledgebase_spec_options import KnowledgebaseSpecOptions
 from .last_n_requests_metric import LastNRequestsMetric
 from .latency_metric import LatencyMetric
 from .location_response import LocationResponse
+from .logs_response import LogsResponse
+from .logs_response_data import LogsResponseData
 from .mcp_definition import MCPDefinition
 from .mcp_definition_entrypoint import MCPDefinitionEntrypoint
 from .mcp_definition_form import MCPDefinitionForm
+from .memory_allocation_by_name import MemoryAllocationByName
 from .memory_allocation_metric import MemoryAllocationMetric
 from .metadata import Metadata
 from .metadata_labels import MetadataLabels
@@ -123,7 +127,10 @@ from .request_total_metric import RequestTotalMetric
 from .request_total_metric_request_total_per_code import RequestTotalMetricRequestTotalPerCode
 from .request_total_metric_rps_per_code import RequestTotalMetricRpsPerCode
 from .request_total_response_data import RequestTotalResponseData
+from .resource import Resource
 from .resource_log import ResourceLog
+from .resource_log_chart import ResourceLogChart
+from .resource_log_response import ResourceLogResponse
 from .resource_metrics import ResourceMetrics
 from .resource_metrics_request_total_per_code import ResourceMetricsRequestTotalPerCode
 from .resource_metrics_request_total_per_code_previous import (
@@ -131,6 +138,7 @@ from .resource_metrics_request_total_per_code_previous import (
 )
 from .resource_metrics_rps_per_code import ResourceMetricsRpsPerCode
 from .resource_metrics_rps_per_code_previous import ResourceMetricsRpsPerCodePrevious
+from .resource_trace import ResourceTrace
 from .revision_configuration import RevisionConfiguration
 from .revision_metadata import RevisionMetadata
 from .runtime import Runtime
@@ -162,6 +170,7 @@ from .update_workspace_service_account_body import UpdateWorkspaceServiceAccount
 from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .websocket_channel import WebsocketChannel
+from .websocket_message import WebsocketMessage
 from .workspace import Workspace
 from .workspace_labels import WorkspaceLabels
 from .workspace_runtime import WorkspaceRuntime
@@ -172,6 +181,7 @@ __all__ = (
     "Agent",
     "AgentSpec",
     "ApiKey",
+    "BillableTimeMetric",
     "CheckWorkspaceAvailabilityBody",
     "Configuration",
     "Continent",
@@ -237,9 +247,12 @@ __all__ = (
     "LastNRequestsMetric",
     "LatencyMetric",
     "LocationResponse",
+    "LogsResponse",
+    "LogsResponseData",
     "MCPDefinition",
     "MCPDefinitionEntrypoint",
     "MCPDefinitionForm",
+    "MemoryAllocationByName",
     "MemoryAllocationMetric",
     "Metadata",
     "MetadataLabels",
@@ -285,12 +298,16 @@ __all__ = (
     "RequestTotalMetricRequestTotalPerCode",
     "RequestTotalMetricRpsPerCode",
     "RequestTotalResponseData",
+    "Resource",
     "ResourceLog",
+    "ResourceLogChart",
+    "ResourceLogResponse",
     "ResourceMetrics",
     "ResourceMetricsRequestTotalPerCode",
     "ResourceMetricsRequestTotalPerCodePrevious",
     "ResourceMetricsRpsPerCode",
     "ResourceMetricsRpsPerCodePrevious",
+    "ResourceTrace",
     "RevisionConfiguration",
     "RevisionMetadata",
     "Runtime",
@@ -322,6 +339,7 @@ __all__ = (
     "UpdateWorkspaceServiceAccountResponse200",
     "UpdateWorkspaceUserRoleBody",
     "WebsocketChannel",
+    "WebsocketMessage",
     "Workspace",
     "WorkspaceLabels",
     "WorkspaceRuntime",

@@ -6,6 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.billable_time_metric import BillableTimeMetric
     from ..models.latency_metric import LatencyMetric
     from ..models.memory_allocation_metric import MemoryAllocationMetric
     from ..models.metric import Metric
@@ -30,6 +31,7 @@ class ResourceMetrics:
     """Metrics for a single resource deployment (eg. model deployment, function deployment)
 
     Attributes:
+        billable_time (Union[Unset, BillableTimeMetric]): Billable time metric
         inference_errors_global (Union[Unset, list['Metric']]): Array of metrics
         inference_global (Union[Unset, list['Metric']]): Array of metrics
         last_n_requests (Union[Unset, list['Metric']]): Array of metrics
@@ -59,6 +61,7 @@ class ResourceMetrics:
         token_total (Union[Unset, TokenTotalMetric]): Token total metric
     """
 
+    billable_time: Union[Unset, "BillableTimeMetric"] = UNSET
     inference_errors_global: Union[Unset, list["Metric"]] = UNSET
     inference_global: Union[Unset, list["Metric"]] = UNSET
     last_n_requests: Union[Unset, list["Metric"]] = UNSET
@@ -83,6 +86,16 @@ class ResourceMetrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        billable_time: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.billable_time
+            and not isinstance(self.billable_time, Unset)
+            and not isinstance(self.billable_time, dict)
+        ):
+            billable_time = self.billable_time.to_dict()
+        elif self.billable_time and isinstance(self.billable_time, dict):
+            billable_time = self.billable_time
+
         inference_errors_global: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.inference_errors_global, Unset):
             inference_errors_global = []
@@ -244,6 +257,8 @@ class ResourceMetrics:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if billable_time is not UNSET:
+            field_dict["billableTime"] = billable_time
         if inference_errors_global is not UNSET:
             field_dict["inferenceErrorsGlobal"] = inference_errors_global
         if inference_global is not UNSET:
@@ -291,6 +306,7 @@ class ResourceMetrics:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+        from ..models.billable_time_metric import BillableTimeMetric
         from ..models.latency_metric import LatencyMetric
         from ..models.memory_allocation_metric import MemoryAllocationMetric
         from ..models.metric import Metric
@@ -313,6 +329,13 @@ class ResourceMetrics:
         if not src_dict:
             return None
         d = src_dict.copy()
+        _billable_time = d.pop("billableTime", UNSET)
+        billable_time: Union[Unset, BillableTimeMetric]
+        if isinstance(_billable_time, Unset):
+            billable_time = UNSET
+        else:
+            billable_time = BillableTimeMetric.from_dict(_billable_time)
+
         inference_errors_global = []
         _inference_errors_global = d.pop("inferenceErrorsGlobal", UNSET)
         for componentsschemas_array_metric_item_data in _inference_errors_global or []:
@@ -443,6 +466,7 @@ class ResourceMetrics:
             token_total = TokenTotalMetric.from_dict(_token_total)
 
         resource_metrics = cls(
+            billable_time=billable_time,
             inference_errors_global=inference_errors_global,
             inference_global=inference_global,
             last_n_requests=last_n_requests,

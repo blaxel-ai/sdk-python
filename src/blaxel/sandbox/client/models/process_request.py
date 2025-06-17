@@ -1,9 +1,13 @@
-from typing import Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.process_request_env import ProcessRequestEnv
+
 
 T = TypeVar("T", bound="ProcessRequest")
 
@@ -13,6 +17,7 @@ class ProcessRequest:
     """
     Attributes:
         command (str):  Example: ls -la.
+        env (Union[Unset, ProcessRequestEnv]):  Example: {'{"PORT"': ' "3000"}'}.
         name (Union[Unset, str]):  Example: my-process.
         timeout (Union[Unset, int]):  Example: 30.
         wait_for_completion (Union[Unset, bool]):
@@ -21,6 +26,7 @@ class ProcessRequest:
     """
 
     command: str
+    env: Union[Unset, "ProcessRequestEnv"] = UNSET
     name: Union[Unset, str] = UNSET
     timeout: Union[Unset, int] = UNSET
     wait_for_completion: Union[Unset, bool] = UNSET
@@ -30,6 +36,12 @@ class ProcessRequest:
 
     def to_dict(self) -> dict[str, Any]:
         command = self.command
+
+        env: Union[Unset, dict[str, Any]] = UNSET
+        if self.env and not isinstance(self.env, Unset) and not isinstance(self.env, dict):
+            env = self.env.to_dict()
+        elif self.env and isinstance(self.env, dict):
+            env = self.env
 
         name = self.name
 
@@ -50,6 +62,8 @@ class ProcessRequest:
                 "command": command,
             }
         )
+        if env is not UNSET:
+            field_dict["env"] = env
         if name is not UNSET:
             field_dict["name"] = name
         if timeout is not UNSET:
@@ -65,10 +79,19 @@ class ProcessRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+        from ..models.process_request_env import ProcessRequestEnv
+
         if not src_dict:
             return None
         d = src_dict.copy()
         command = d.pop("command")
+
+        _env = d.pop("env", UNSET)
+        env: Union[Unset, ProcessRequestEnv]
+        if isinstance(_env, Unset):
+            env = UNSET
+        else:
+            env = ProcessRequestEnv.from_dict(_env)
 
         name = d.pop("name", UNSET)
 
@@ -82,6 +105,7 @@ class ProcessRequest:
 
         process_request = cls(
             command=command,
+            env=env,
             name=name,
             timeout=timeout,
             wait_for_completion=wait_for_completion,

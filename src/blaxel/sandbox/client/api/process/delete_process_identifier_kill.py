@@ -6,32 +6,18 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.error_response import ErrorResponse
-from ...models.process_kill_request import ProcessKillRequest
 from ...models.success_response import SuccessResponse
 from ...types import Response
 
 
 def _get_kwargs(
     identifier: str,
-    *,
-    body: ProcessKillRequest,
 ) -> dict[str, Any]:
-    headers: dict[str, Any] = {}
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/process/{identifier}/kill",
     }
 
-    if type(body) == dict:
-        _body = body
-    else:
-        _body = body.to_dict()
-
-    _kwargs["json"] = _body
-    headers["Content-Type"] = "application/json"
-
-    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -71,7 +57,6 @@ def sync_detailed(
     identifier: str,
     *,
     client: Union[Client],
-    body: ProcessKillRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Kill a process
 
@@ -79,7 +64,6 @@ def sync_detailed(
 
     Args:
         identifier (str):
-        body (ProcessKillRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -91,7 +75,6 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         identifier=identifier,
-        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -105,7 +88,6 @@ def sync(
     identifier: str,
     *,
     client: Union[Client],
-    body: ProcessKillRequest,
 ) -> Optional[Union[ErrorResponse, SuccessResponse]]:
     """Kill a process
 
@@ -113,7 +95,6 @@ def sync(
 
     Args:
         identifier (str):
-        body (ProcessKillRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -126,7 +107,6 @@ def sync(
     return sync_detailed(
         identifier=identifier,
         client=client,
-        body=body,
     ).parsed
 
 
@@ -134,7 +114,6 @@ async def asyncio_detailed(
     identifier: str,
     *,
     client: Union[Client],
-    body: ProcessKillRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Kill a process
 
@@ -142,7 +121,6 @@ async def asyncio_detailed(
 
     Args:
         identifier (str):
-        body (ProcessKillRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -154,7 +132,6 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         identifier=identifier,
-        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -166,7 +143,6 @@ async def asyncio(
     identifier: str,
     *,
     client: Union[Client],
-    body: ProcessKillRequest,
 ) -> Optional[Union[ErrorResponse, SuccessResponse]]:
     """Kill a process
 
@@ -174,7 +150,6 @@ async def asyncio(
 
     Args:
         identifier (str):
-        body (ProcessKillRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -188,6 +163,5 @@ async def asyncio(
         await asyncio_detailed(
             identifier=identifier,
             client=client,
-            body=body,
         )
     ).parsed
