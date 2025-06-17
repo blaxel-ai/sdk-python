@@ -10,7 +10,7 @@ from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
-from ..common.internal import get_global_unique_hash, get_forced_url
+from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from ..instrumentation.span import SpanManager
 from ..mcp.client import websocket_client

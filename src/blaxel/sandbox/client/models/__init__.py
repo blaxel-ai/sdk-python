@@ -11,9 +11,9 @@ from .file_with_content import FileWithContent
 from .get_network_process_pid_ports_response_200 import GetNetworkProcessPidPortsResponse200
 from .port_monitor_request import PortMonitorRequest
 from .post_network_process_pid_monitor_response_200 import PostNetworkProcessPidMonitorResponse200
-from .process_kill_request import ProcessKillRequest
 from .process_logs import ProcessLogs
 from .process_request import ProcessRequest
+from .process_request_env import ProcessRequestEnv
 from .process_response import ProcessResponse
 from .process_response_status import ProcessResponseStatus
 from .subdirectory import Subdirectory
@@ -29,9 +29,9 @@ __all__ = (
     "GetNetworkProcessPidPortsResponse200",
     "PortMonitorRequest",
     "PostNetworkProcessPidMonitorResponse200",
-    "ProcessKillRequest",
     "ProcessLogs",
     "ProcessRequest",
+    "ProcessRequestEnv",
     "ProcessResponse",
     "ProcessResponseStatus",
     "Subdirectory",
