@@ -86,22 +86,12 @@ class BlaxelMcpServerTransport:
                     if client_id and client_id in self.clients:
                         # Send to specific client
                         websocket = self.clients[client_id]
-                        span = self.spans.get(client_id + ":" + msg_id)
                         try:
                             await websocket.send(data)
-                            if span:
-                                span.set_attributes(
-                                    {
-                                        "mcp.message.response_sent": True,
-                                    }
-                                )
                         except Exception as e:
                             logger.error(f"Failed to send message to client {client_id}: {e}")
                             if client_id in self.clients:
                                 del self.clients[client_id]
-                        finally:
-                            if span:
-                                span.end()
                     else:
                         # Broadcast to all clients
                         dead_clients = []
