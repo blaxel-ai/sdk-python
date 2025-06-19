@@ -7,7 +7,16 @@ import json
 import logging
 import os
 
-from opentelemetry.trace import get_current_span
+try:
+    from opentelemetry.trace import get_current_span
+
+    HAS_OPENTELEMETRY = True
+except ImportError:
+    HAS_OPENTELEMETRY = False
+
+    def get_current_span():
+        """Fallback function when opentelemetry is not available."""
+        return None
 
 
 class JsonFormatter(logging.Formatter):
@@ -38,17 +47,18 @@ class JsonFormatter(logging.Formatter):
         }
 
         # Get current active span - equivalent to trace.getActiveSpan() in JS
-        current_span = get_current_span()
+        if HAS_OPENTELEMETRY:
+            current_span = get_current_span()
 
-        # Check if span exists and has valid context (equivalent to 'if (currentSpan)' in JS)
-        if current_span and current_span.get_span_context().is_valid:
-            span_context = current_span.get_span_context()
-            # Format trace_id and span_id as hex strings (like JS does)
-            trace_id_hex = format(span_context.trace_id, "032x")
-            span_id_hex = format(span_context.span_id, "016x")
+            # Check if span exists and has valid context (equivalent to 'if (currentSpan)' in JS)
+            if current_span and current_span.get_span_context().is_valid:
+                span_context = current_span.get_span_context()
+                # Format trace_id and span_id as hex strings (like JS does)
+                trace_id_hex = format(span_context.trace_id, "032x")
+                span_id_hex = format(span_context.span_id, "016x")
 
-            log_entry[self.trace_id_name] = f"{self.trace_id_prefix}{trace_id_hex}"
-            log_entry[self.span_id_name] = f"{self.span_id_prefix}{span_id_hex}"
+                log_entry[self.trace_id_name] = f"{self.trace_id_prefix}{trace_id_hex}"
+                log_entry[self.span_id_name] = f"{self.span_id_prefix}{span_id_hex}"
 
         # Add task ID if available
         task_id = os.environ.get(self.task_index)

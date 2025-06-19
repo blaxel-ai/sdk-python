@@ -8,6 +8,7 @@ import pytest
 from blaxel.core.client.models import Metadata, Sandbox
 from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.sandbox.action import ResponseError, SandboxAction
+from blaxel.core.sandbox.types import SandboxConfiguration
 
 
 @pytest.mark.asyncio
@@ -101,7 +102,8 @@ async def test_sandbox_process_operations():
 async def test_sandbox_handle_base_url_properties():
     """Test SandboxHandleBase URL properties."""
     sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
-    handle = SandboxAction(sandbox_data)
+    sandbox_config = SandboxConfiguration(sandbox_data)
+    handle = SandboxAction(sandbox_config)
 
     # Test that URL properties exist on the base class
     assert hasattr(handle, "url")
@@ -118,7 +120,8 @@ async def test_sandbox_forced_url_base():
 
     try:
         sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
-        handle = SandboxAction(sandbox_data)
+        sandbox_config = SandboxConfiguration(sandbox_data)
+        handle = SandboxAction(sandbox_config)
 
         # The forced URL should be detected on the base class
         assert hasattr(handle, "forced_url")
@@ -135,11 +138,11 @@ async def test_response_error():
     # Mock an HTTP response with error
     mock_response = MagicMock()
     mock_response.status_code = 404
-    mock_response.content = b"Not found"
+    mock_response.reason_phrase = "Not Found"
 
     error = ResponseError(mock_response)
-    assert error.status_code == 404
-    assert error.status_text == b"Not found"
+    assert error.response.status_code == 404
+    assert error.response.reason_phrase == "Not Found"
 
 
 @pytest.mark.asyncio

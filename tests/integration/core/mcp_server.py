@@ -38,8 +38,9 @@ def main():
 
     print("✅ All MCP server tests passed!")
 
-    # Uncomment to run the server
-    # mcp.run(transport="ws")
+    print("🚀 Starting MCP WebSocket server on port 8080...")
+    # Run the server
+    mcp.run(transport="ws")
 
 
 if __name__ == "__main__":

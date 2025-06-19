@@ -7,10 +7,11 @@ import anyio
 import mcp.types as types
 from anyio.abc import TaskStatus
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
-from websockets.client import WebSocketClientProtocol
-from websockets.client import connect as ws_connect
+from websockets.asyncio.client import ClientConnection
+from websockets.asyncio.client import connect as ws_connect
 
 logger = logging.getLogger(__name__)
+
 
 def remove_request_params(url: str) -> str:
     return urljoin(url, urlparse(url).path)
@@ -44,11 +45,14 @@ async def websocket_client(
                 ws_url = url.replace("http://", "ws://").replace("https://", "wss://")
                 logger.debug(f"Connecting to WebSocket endpoint: {remove_request_params(ws_url)}")
 
-                async with ws_connect(ws_url, extra_headers=headers, open_timeout=timeout) as websocket:
+                # Use different parameters based on websockets version
+                connection_kwargs = {"additional_headers": headers, "open_timeout": timeout}
+
+                async with ws_connect(ws_url, **connection_kwargs) as websocket:
                     logger.debug("WebSocket connection established")
 
                     async def ws_reader(
-                        websocket: WebSocketClientProtocol,
+                        websocket: ClientConnection,
                         task_status: TaskStatus[None] = anyio.TASK_STATUS_IGNORED,
                     ):
                         try:
@@ -56,7 +60,9 @@ async def websocket_client(
                             async for message in websocket:
                                 logger.debug(f"Received WebSocket message: {message}")
                                 try:
-                                    parsed_message = types.JSONRPCMessage.model_validate_json(message)
+                                    parsed_message = types.JSONRPCMessage.model_validate_json(
+                                        message
+                                    )
                                     logger.debug(f"Received server message: {parsed_message}")
                                     await read_stream_writer.send(parsed_message)
                                 except Exception as exc:
@@ -68,7 +74,7 @@ async def websocket_client(
                         finally:
                             await read_stream_writer.aclose()
 
-                    async def ws_writer(websocket: WebSocketClientProtocol):
+                    async def ws_writer(websocket: ClientConnection):
                         try:
                             async with write_stream_reader:
                                 async for message in write_stream_reader:

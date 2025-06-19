@@ -43,11 +43,16 @@ tag:
 	git push origin v$(ARGS)
 
 test: install-dev
-	 pytest tests/ -v
+	uv run pytest tests/ -v
+
+test-with-telemetry:
+	uv sync --group test --extra telemetry
+	pip install -e .
+	uv run pytest tests/ -v
 
 install-dev:
+	uv sync --group test
 	pip install -e .
-	pip install pytest-asyncio
 
 %:
 	@:
