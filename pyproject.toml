@@ -38,7 +38,7 @@ telemetry = [
 crewai = ["crewai>=0.120.1", "opentelemetry-instrumentation-crewai>=0.40.6"]
 
 # OpenAI module
-openai = ["openai-agents>=0.0.7"]
+openai = ["openai-agents>=0.0.14"]
 
 # LangGraph module
 langgraph = [

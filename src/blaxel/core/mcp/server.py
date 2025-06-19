@@ -2,7 +2,7 @@ import logging
 import traceback
 import uuid
 from contextlib import asynccontextmanager
-from typing import Dict, Literal
+from typing import Literal
 
 import anyio
 import mcp.types as types
@@ -10,62 +10,13 @@ from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStre
 from mcp.server.fastmcp import FastMCP as FastMCPBase
 from websockets.asyncio.server import ServerConnection, serve
 
-try:
-    from opentelemetry.trace import Span, StatusCode
-
-    HAS_OPENTELEMETRY = True
-except ImportError:
-    HAS_OPENTELEMETRY = False
-
-    # Create dummy classes for when opentelemetry is not available
-    class Span:
-        def set_attributes(self, *args, **kwargs):
-            pass
-
-        def set_status(self, *args, **kwargs):
-            pass
-
-        def record_exception(self, *args, **kwargs):
-            pass
-
-        def end(self, *args, **kwargs):
-            pass
-
-        def add_event(self, *args, **kwargs):
-            pass
-
-        def get_span_context(self, *args, **kwargs):
-            return None
-
-        def is_recording(self, *args, **kwargs):
-            return False
-
-        def set_attribute(self, *args, **kwargs):
-            pass
-
-        def update_name(self, *args, **kwargs):
-            pass
-
-    class StatusCode:
-        ERROR = "ERROR"
-
-
 from ..common.env import env
 
 logger = logging.getLogger(__name__)
 
 
-class DummySpanManager:
-    """Dummy span manager for when opentelemetry is not available."""
-
-    def create_span(self, name: str, attributes: dict = None):
-        return Span()
-
-
 class BlaxelMcpServerTransport:
     """WebSocket server transport for MCP."""
-
-    spans: Dict[str, Span] = {}
 
     def __init__(self, port: int = 8080):
         """Initialize the WebSocket server transport.
@@ -79,13 +30,6 @@ class BlaxelMcpServerTransport:
             self.port = port
         self.clients = {}
         self.server = None
-
-        # Initialize span manager
-        if HAS_OPENTELEMETRY:
-            # TODO: Implement proper OpenTelemetry span manager when telemetry is available
-            self.span_manager = DummySpanManager()
-        else:
-            self.span_manager = DummySpanManager()
 
     @asynccontextmanager
     async def websocket_server(self):
@@ -106,30 +50,14 @@ class BlaxelMcpServerTransport:
 
             try:
                 async for message in websocket:
-                    span = self.span_manager.create_span("message", {"mcp.client.id": client_id})
                     try:
                         msg = types.JSONRPCMessage.model_validate_json(message)
                         # Modify message ID to include client ID
                         if hasattr(msg, "id") and msg.id is not None:
                             original_id = msg.id
                             msg.id = f"{client_id}:{original_id}"
-                            span.set_attributes(
-                                {
-                                    "mcp.message.parsed": True,
-                                    "mcp.method": getattr(msg, "method", None),
-                                    "mcp.messageId": getattr(msg, "id", None),
-                                    "mcp.toolName": getattr(
-                                        getattr(msg, "params", None), "name", None
-                                    ),
-                                    "span.type": "mcp.message",
-                                }
-                            )
-                            self.spans[client_id + ":" + msg.id] = span
                         await read_stream_writer.send(msg)
                     except Exception as exc:
-                        span.set_status(StatusCode.ERROR)
-                        span.record_exception(exc)
-                        span.end()
                         logger.error(f"Failed to parse message: {exc}\n{traceback.format_exc()}")
                         await read_stream_writer.send(exc)
             except Exception as e:
@@ -168,9 +96,6 @@ class BlaxelMcpServerTransport:
                                     }
                                 )
                         except Exception as e:
-                            if span:
-                                span.set_status(StatusCode.ERROR)
-                                span.record_exception(e)
                             logger.error(f"Failed to send message to client {client_id}: {e}")
                             if client_id in self.clients:
                                 del self.clients[client_id]
