@@ -8,6 +8,7 @@ import anyio
 import mcp.types as types
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from mcp.server.fastmcp import FastMCP as FastMCPBase
+from mcp.shared.message import SessionMessage
 from websockets.asyncio.server import ServerConnection, serve
 
 from ..common.env import env
@@ -34,11 +35,11 @@ class BlaxelMcpServerTransport:
     @asynccontextmanager
     async def websocket_server(self):
         """Create and run a WebSocket server for MCP communication."""
-        read_stream: MemoryObjectReceiveStream[types.JSONRPCMessage | Exception]
-        read_stream_writer: MemoryObjectSendStream[types.JSONRPCMessage | Exception]
+        read_stream: MemoryObjectReceiveStream[SessionMessage | Exception]
+        read_stream_writer: MemoryObjectSendStream[SessionMessage | Exception]
 
-        write_stream: MemoryObjectSendStream[types.JSONRPCMessage]
-        write_stream_reader: MemoryObjectReceiveStream[types.JSONRPCMessage]
+        write_stream: MemoryObjectSendStream[SessionMessage]
+        write_stream_reader: MemoryObjectReceiveStream[SessionMessage]
 
         read_stream_writer, read_stream = anyio.create_memory_object_stream(0)
         write_stream, write_stream_reader = anyio.create_memory_object_stream(0)
@@ -56,7 +57,7 @@ class BlaxelMcpServerTransport:
                         if hasattr(msg, "id") and msg.id is not None:
                             original_id = msg.id
                             msg.id = f"{client_id}:{original_id}"
-                        await read_stream_writer.send(msg)
+                        await read_stream_writer.send(SessionMessage(message=msg))
                     except Exception as exc:
                         logger.error(f"Failed to parse message: {exc}\n{traceback.format_exc()}")
                         await read_stream_writer.send(exc)
@@ -69,11 +70,11 @@ class BlaxelMcpServerTransport:
 
         async def message_sender():
             async with write_stream_reader:
-                async for message in write_stream_reader:
+                async for session_message in write_stream_reader:
                     # Extract client ID from message ID
                     client_id = None
                     msg_id = None
-
+                    message = session_message.message
                     if hasattr(message, "id") and message.id is not None:
                         parts = str(message.id).split(":", 1)
                         if len(parts) == 2:
