@@ -1,8 +1,8 @@
-# Blaxel Python SDK
-
 <p align="center">
-  <img src="https://blaxel.ai/logo-bg.png" alt="Blaxel"/>
+  <img src="https://blaxel.ai/logo.png" alt="Blaxel" width=500/>
 </p>
+
+# Python SDK
 
 **Blaxel is a computing platform for AI agent builders, with all the services and infrastructure to build and deploy agents efficiently.** This repository contains the Python SDK to create and manage resources on Blaxel.
 
@@ -22,15 +22,28 @@
 Install Blaxel SDK which lets you manage Blaxel resources.
 
 ```bash
-## Using pip
+# Base package (core functionality)
 pip install blaxel
 
-## Using uv
-uv pip install blaxel
+# With specific modules
+pip install "blaxel[telemetry]"
+pip install "blaxel[core,telemetry,crewai]"
 
-## Using uv add
-uv add blaxel
-``` 
+# Everything
+pip install "blaxel[all]"
+```
+
+### Available modules
+
+- `blaxel.core` - Core functionality (always available)
+- `blaxel.telemetry` - Telemetry and monitoring
+- `blaxel.crewai` - CrewAI integration
+- `blaxel.openai` - OpenAI integration
+- `blaxel.langgraph` - LangGraph integration
+- `blaxel.livekit` - LiveKit integration
+- `blaxel.llamaindex` - LlamaIndex integration
+- `blaxel.pydantic` - Pydantic AI integration
+- `blaxel.googleadk` - Google ADK integration
 
 
 

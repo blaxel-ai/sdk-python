@@ -15,7 +15,7 @@
 {% set transformed_dict = source %}
 {% set type_string = property.get_type_string(json=True) %}
 {% if property.required %}
-if type({{source}}) == dict:
+if type({{source}}) is dict:
     {{ destination }} = {{ transformed_dict }}
 else:
     {{ destination }} = {{ transformed_to_dict }}

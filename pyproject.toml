@@ -1,87 +1,99 @@
 [project]
 name = "blaxel"
-version = "0.1.14dev4"
-description = "Add your description here"
+version = "0.2.0"
+description = "Blaxel - AI development platform SDK"
 readme = "README.md"
 authors = [{ name = "cploujoux", email = "cploujoux@blaxel.ai" }]
 requires-python = ">=3.10"
 dependencies = [
-    "attrs>=21.3.0",
-    "httpx>=0.27.0",
-    "mcp<=1.7.1",
-    # OpenTelemetry dependencies
-    "opentelemetry-api>=1.28.0",
-    "opentelemetry-exporter-otlp>=1.28.0",
-    "opentelemetry-instrumentation-anthropic==0.40.6",
-    "opentelemetry-instrumentation-cohere==0.40.6",
-    "opentelemetry-instrumentation-fastapi==0.54b1",
-    "opentelemetry-instrumentation-ollama==0.40.6",
-    "opentelemetry-instrumentation-openai==0.40.6",
-    "opentelemetry-instrumentation-system-metrics",
-    "opentelemetry-sdk>=1.28.0",
-    "pydantic>=2.10.3,<2.11.0",
-    "pyjwt>=2.10.1",
-    "python-dateutil>=2.8.0",
-    "pyyaml>=6.0.2,<6.1.0",
-    "requests>=2.32.3,<2.33.0",
-    "tomli>=2.2.1",
-    "websockets<15.0.0",
+  # Core dependencies that are always needed
+  "pydantic>=2.0.0",
+  "pyjwt>=2.0.0",
+  "python-dateutil>=2.8.0",
+  "pyyaml>=6.0.0",
+  "requests>=2.32.3",
+  "tomli>=2.2.1",
+  "websockets<16.0.0",
+  "attrs>=21.3.0",
+  "httpx>=0.27.0",
+  "mcp<=1.7.1",
 ]
 
 [project.optional-dependencies]
+# Core functionality (always include blaxel.core dependencies)
+core = []
+
+# Telemetry module
+telemetry = [
+  "opentelemetry-exporter-otlp>=1.28.0",
+  "opentelemetry-instrumentation-anthropic==0.40.6",
+  "opentelemetry-instrumentation-cohere==0.40.6",
+  "opentelemetry-instrumentation-fastapi==0.54b1",
+  "opentelemetry-instrumentation-google-generativeai>=0.40.7",
+  "opentelemetry-instrumentation-ollama==0.40.6",
+  "opentelemetry-instrumentation-openai==0.40.6",
+]
+
+# CrewAI module
 crewai = ["crewai>=0.120.1", "opentelemetry-instrumentation-crewai>=0.40.6"]
 
-langchain = [
-    "langgraph>=0.2.40,<0.3.0",
-    "langchain-cohere>=0.4.3",
-    "langchain-community>=0.3.3,<0.4.0",
-    "langchain-core>=0.3.13,<0.4.0",
-    "langchain-deepseek-official>=0.1.0.post1",
-    "langchain-openai>=0.3.10",
-    "langchain-xai>=0.2.2",
-    "langchain-anthropic>=0.3.10",
-    "langchain-cerebras>=0.5.0",
-    "opentelemetry-instrumentation-langchain>=0.35.0",
-    "pillow>=10.0.0",
+# OpenAI module
+openai = ["openai-agents>=0.0.7"]
+
+# LangGraph module
+langgraph = [
+  "langgraph>=0.2.40,<0.3.0",
+  "langchain-cohere>=0.4.3",
+  "langchain-community>=0.3.3,<0.4.0",
+  "langchain-core>=0.3.13,<0.4.0",
+  "langchain-deepseek-official>=0.1.0.post1",
+  "langchain-openai>=0.3.10",
+  "langchain-xai>=0.2.2",
+  "langchain-anthropic>=0.3.10",
+  "langchain-cerebras>=0.5.0",
+  "opentelemetry-instrumentation-langchain>=0.35.0",
+  "pillow>=10.0.0",
 ]
 
-llamaindex = [
-    "llama-index>=0.12.26",
-    "llama-index-llms-anthropic>=0.6.10",
-    "llama-index-llms-cohere>=0.4.0",
-    "llama-index-llms-deepseek>=0.1.1",
-    "llama-index-llms-google-genai>=0.1.7",
-    "llama-index-llms-groq>=0.3.1",
-    "llama-index-llms-mistralai>=0.4.0",
-    "llama-index-llms-openai>=0.3.28",
-    "llama-index-llms-cerebras>=0.2.2",
-    "opentelemetry-instrumentation-llamaindex>=0.35.0",
-]
-
-openai-agents = ["openai-agents>=0.0.7"]
-
-pydantic-ai = ["pydantic-ai>=0.0.48"]
-
-google-adk = ["google-adk>=1.1.1", "litellm>=1.63.11"]
-
+# LiveKit module
 livekit = [
-    "livekit-agents[openai,groq,anthropic,cartesia,deepgram,elevenlabs,silero,turn-detector]~=1.0",
-    "livekit-plugins-noise-cancellation~=0.2",
+  "livekit-agents[openai,groq,anthropic,cartesia,deepgram,elevenlabs,silero,turn-detector]~=1.0",
+  "livekit-plugins-noise-cancellation~=0.2",
 ]
 
-[dependency-groups]
-dev = [
-    "asgi-correlation-id>=4.3.4,<5.0.0",
-    "fastapi>=0.115.12",
-    "nest-asyncio>=1.6.0",
-    "pdoc3>=0.11.5",
-    "python-dotenv>=1.1.0",
-    "ruff>=0.8.2",
+# LlamaIndex module
+llamaindex = [
+  "llama-index>=0.12.37",
+  "llama-index-llms-anthropic>=0.6.14",
+  "llama-index-llms-cerebras>=0.2.2",
+  "llama-index-llms-cohere>=0.4.1",
+  "llama-index-llms-deepseek>=0.1.1",
+  "llama-index-llms-google-genai>=0.1.13",
+  "llama-index-llms-groq>=0.3.1",
+  "llama-index-llms-mistralai>=0.4.0",
+  "llama-index-llms-openai>=0.3.42",
+  "opentelemetry-instrumentation-llamaindex>=0.40.7",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+# Pydantic module
+pydantic = ["pydantic-ai>=0.0.48"]
+
+# Google ADK module
+googleadk = ["google-adk>=1.1.1", "litellm>=1.63.11"]
+
+# Convenience extras for common combinations
+all = [
+  "blaxel[core,telemetry,crewai,openai,langgraph,livekit,llamaindex,pydantic,googleadk]",
+]
+
+# Development dependencies
+dev = ["ruff", "pyright", "pytest", "uv"]
+
+[project.urls]
+Homepage = "https://blaxel.ai"
+Documentation = "https://docs.blaxel.ai"
+Repository = "https://github.com/blaxel-ai/sdk-python"
+Changelog = "https://docs.blaxel.ai/changelog"
 
 [tool.ruff]
 line-length = 100
@@ -90,11 +102,40 @@ line-length = 100
 select = ["F", "I", "UP"]
 ignore = ["UP006", "UP007", "UP035"]
 
+[tool.pyright]
+# Add pyright configurations here if needed
+# reportMissingImports = true
+# pythonVersion = "3.9"
+
+[tool.pytest.ini_options]
+# Add pytest configurations here
+# minversion = "6.0"
+# addopts = "-ra -q"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/blaxel"]
 
-[project.urls]
-Homepage = "https://blaxel.ai"
-Documentation = "https://docs.blaxel.ai"
-Repository = "https://github.com/blaxel-ai/sdk-python"
-Changelog = "https://docs.blaxel.ai/changelog"
+[dependency-groups]
+dev = [
+  "nest-asyncio>=1.6.0",
+  "asgi-correlation-id>=4.3.4,<5.0.0",
+  "fastapi>=0.115.12",
+  "nest-asyncio>=1.6.0",
+  "pdoc3>=0.11.5",
+  "python-dotenv>=1.1.0",
+  "ruff>=0.8.2",
+]
+test = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.24.0",
+  "pytest-cov>=6.0.0",
+  "pytest-mock>=3.14.0",
+  "coverage>=7.0.0",
+]
