@@ -75,16 +75,54 @@ class SandboxProcess(SandboxAction):
 
         return {"close": close}
 
-    async def exec(self, process: Union[ProcessRequest, Dict[str, Any]]) -> ProcessResponse:
+    async def exec(
+        self,
+        process: Union[ProcessRequest, Dict[str, Any]],
+        on_log: Optional[Callable[[str], None]] = None,
+    ) -> ProcessResponse:
         if isinstance(process, dict):
             process = ProcessRequest.from_dict(process)
 
+        # Store original wait_for_completion setting
+        should_wait_for_completion = process.wait_for_completion
+
+        # Always start process without wait_for_completion to avoid server-side blocking
+        if should_wait_for_completion and on_log is not None:
+            process.wait_for_completion = False
+
         async with self.get_client() as client_instance:
             response = await client_instance.post("/process", json=process.to_dict())
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
-            return ProcessResponse.from_dict(response.json())
+            # Parse JSON response only once, with better error handling
+            response_data = None
+            if response.content:
+                try:
+                    response_data = response.json()
+                except Exception:
+                    # If JSON parsing fails, check the response first
+                    self.handle_response_error(response, None, None)
+                    raise
+
+            self.handle_response_error(response, response_data, None)
+            result = ProcessResponse.from_dict(response_data)
+
+            # Handle wait_for_completion with parallel log streaming
+            if should_wait_for_completion:
+                stream_control = None
+                if on_log is not None:
+                    stream_control = self.stream_logs(result.pid, {"on_log": on_log})
+                try:
+                    # Wait for process completion
+                    result = await self.wait(result.pid, interval=50)
+                finally:
+                    # Clean up log streaming
+                    if stream_control:
+                        stream_control["close"]()
+            else:
+                # For non-blocking execution, set up log streaming immediately if requested
+                if on_log is not None:
+                    stream = self.stream_logs(result.pid, {"on_log": on_log})
+                    result.additional_properties["close"] = stream["close"]
+            return result
 
     async def wait(
         self, identifier: str, max_wait: int = 60000, interval: int = 1000

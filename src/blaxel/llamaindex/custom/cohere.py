@@ -47,7 +47,6 @@ class Cohere(FunctionCallingLLM):
 
         llm = Cohere(model="command", api_key=api_key)
         resp = llm.complete("Paul Graham is ")
-        print(resp)
         ```
     """
 
@@ -55,9 +54,7 @@ class Cohere(FunctionCallingLLM):
     temperature: Optional[float] = Field(
         description="The temperature to use for sampling.", default=None
     )
-    max_retries: int = Field(
-        default=10, description="The maximum number of API retries."
-    )
+    max_retries: int = Field(default=10, description="The maximum number of API retries.")
     additional_kwargs: Dict[str, Any] = Field(
         default_factory=dict, description="Additional kwargs for the Cohere API."
     )
@@ -167,9 +164,7 @@ class Cohere(FunctionCallingLLM):
         error_on_no_tool_call: bool = False,
     ) -> List[ToolSelection]:
         """Predict and call the tool."""
-        tool_calls: List[ToolCall] = (
-            response.message.additional_kwargs.get("tool_calls", []) or []
-        )
+        tool_calls: List[ToolCall] = response.message.additional_kwargs.get("tool_calls", []) or []
 
         if len(tool_calls) < 1 and error_on_no_tool_call:
             raise ValueError(
@@ -218,10 +213,8 @@ class Cohere(FunctionCallingLLM):
 
         messages, documents = remove_documents_from_messages(messages)
 
-        tool_results: Optional[
-            List[Dict[str, Any]]
-        ] = _messages_to_cohere_tool_results_curr_chat_turn(messages) or kwargs.get(
-            "tool_results"
+        tool_results: Optional[List[Dict[str, Any]]] = (
+            _messages_to_cohere_tool_results_curr_chat_turn(messages) or kwargs.get("tool_results")
         )
         if not tool_results:
             tool_results = None
@@ -235,12 +228,8 @@ class Cohere(FunctionCallingLLM):
                 if message.role == MessageRole.TOOL:
                     temp_tool_results += _message_to_cohere_tool_results(messages, i)
 
-                    if (i == len(messages) - 1) or messages[
-                        i + 1
-                    ].role != MessageRole.TOOL:
-                        cohere_message = _get_message_cohere_format(
-                            message, temp_tool_results
-                        )
+                    if (i == len(messages) - 1) or messages[i + 1].role != MessageRole.TOOL:
+                        cohere_message = _get_message_cohere_format(message, temp_tool_results)
                         chat_history.append(cohere_message)
                         temp_tool_results = []
                 else:
@@ -262,12 +251,8 @@ class Cohere(FunctionCallingLLM):
                 if message.role == MessageRole.TOOL:
                     temp_tool_results += _message_to_cohere_tool_results(messages, i)
 
-                    if (i == len(messages) - 1) or messages[
-                        i + 1
-                    ].role != MessageRole.TOOL:
-                        cohere_message = _get_message_cohere_format(
-                            message, temp_tool_results
-                        )
+                    if (i == len(messages) - 1) or messages[i + 1].role != MessageRole.TOOL:
+                        cohere_message = _get_message_cohere_format(message, temp_tool_results)
                         chat_history.append(cohere_message)
                         temp_tool_results = []
                 else:
@@ -327,9 +312,7 @@ class Cohere(FunctionCallingLLM):
         )
 
     @llm_completion_callback()
-    def complete(
-        self, prompt: str, formatted: bool = False, **kwargs: Any
-    ) -> CompletionResponse:
+    def complete(self, prompt: str, formatted: bool = False, **kwargs: Any) -> CompletionResponse:
         all_kwargs = self._get_all_kwargs(**kwargs)
         if "stream" in all_kwargs:
             warnings.warn(
@@ -351,9 +334,7 @@ class Cohere(FunctionCallingLLM):
         )
 
     @llm_chat_callback()
-    def stream_chat(
-        self, messages: Sequence[ChatMessage], **kwargs: Any
-    ) -> ChatResponseGen:
+    def stream_chat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponseGen:
         all_kwargs = self._get_all_kwargs(**kwargs)
         all_kwargs["stream"] = True
         if all_kwargs["model"] not in CHAT_MODELS:
@@ -402,16 +383,12 @@ class Cohere(FunctionCallingLLM):
             for r in response:
                 content_delta = r.text
                 content += content_delta
-                yield CompletionResponse(
-                    text=content, delta=content_delta, raw=r._asdict()
-                )
+                yield CompletionResponse(text=content, delta=content_delta, raw=r._asdict())
 
         return gen()
 
     @llm_chat_callback()
-    async def achat(
-        self, messages: Sequence[ChatMessage], **kwargs: Any
-    ) -> ChatResponse:
+    async def achat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponse:
         all_kwargs = self._get_all_kwargs(**kwargs)
         if all_kwargs["model"] not in CHAT_MODELS:
             raise ValueError(f"{all_kwargs['model']} not supported for chat")
@@ -535,8 +512,6 @@ class Cohere(FunctionCallingLLM):
             async for r in response:
                 content_delta = r.text
                 content += content_delta
-                yield CompletionResponse(
-                    text=content, delta=content_delta, raw=r._asdict()
-                )
+                yield CompletionResponse(text=content, delta=content_delta, raw=r._asdict())
 
         return gen()

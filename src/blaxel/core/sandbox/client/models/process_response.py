@@ -1,10 +1,9 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.process_response_status import ProcessResponseStatus
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ProcessResponse")
 
@@ -13,24 +12,26 @@ T = TypeVar("T", bound="ProcessResponse")
 class ProcessResponse:
     """
     Attributes:
-        command (Union[Unset, str]):  Example: ls -la.
-        completed_at (Union[Unset, str]):  Example: Wed, 01 Jan 2023 12:01:00 GMT.
-        exit_code (Union[Unset, int]):
-        name (Union[Unset, str]):  Example: my-process.
-        pid (Union[Unset, str]):  Example: 1234.
-        started_at (Union[Unset, str]):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
-        status (Union[Unset, ProcessResponseStatus]):  Example: running.
-        working_dir (Union[Unset, str]):  Example: /home/user.
+        command (str):  Example: ls -la.
+        completed_at (str):  Example: Wed, 01 Jan 2023 12:01:00 GMT.
+        exit_code (int):
+        logs (str):  Example: logs output.
+        name (str):  Example: my-process.
+        pid (str):  Example: 1234.
+        started_at (str):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
+        status (ProcessResponseStatus):  Example: running.
+        working_dir (str):  Example: /home/user.
     """
 
-    command: Union[Unset, str] = UNSET
-    completed_at: Union[Unset, str] = UNSET
-    exit_code: Union[Unset, int] = UNSET
-    name: Union[Unset, str] = UNSET
-    pid: Union[Unset, str] = UNSET
-    started_at: Union[Unset, str] = UNSET
-    status: Union[Unset, ProcessResponseStatus] = UNSET
-    working_dir: Union[Unset, str] = UNSET
+    command: str
+    completed_at: str
+    exit_code: int
+    logs: str
+    name: str
+    pid: str
+    started_at: str
+    status: ProcessResponseStatus
+    working_dir: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -40,37 +41,33 @@ class ProcessResponse:
 
         exit_code = self.exit_code
 
+        logs = self.logs
+
         name = self.name
 
         pid = self.pid
 
         started_at = self.started_at
 
-        status: Union[Unset, str] = UNSET
-        if not isinstance(self.status, Unset):
-            status = self.status.value
+        status = self.status.value
 
         working_dir = self.working_dir
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if command is not UNSET:
-            field_dict["command"] = command
-        if completed_at is not UNSET:
-            field_dict["completedAt"] = completed_at
-        if exit_code is not UNSET:
-            field_dict["exitCode"] = exit_code
-        if name is not UNSET:
-            field_dict["name"] = name
-        if pid is not UNSET:
-            field_dict["pid"] = pid
-        if started_at is not UNSET:
-            field_dict["startedAt"] = started_at
-        if status is not UNSET:
-            field_dict["status"] = status
-        if working_dir is not UNSET:
-            field_dict["workingDir"] = working_dir
+        field_dict.update(
+            {
+                "command": command,
+                "completedAt": completed_at,
+                "exitCode": exit_code,
+                "logs": logs,
+                "name": name,
+                "pid": pid,
+                "startedAt": started_at,
+                "status": status,
+                "workingDir": working_dir,
+            }
+        )
 
         return field_dict
 
@@ -79,31 +76,29 @@ class ProcessResponse:
         if not src_dict:
             return None
         d = src_dict.copy()
-        command = d.pop("command", UNSET)
+        command = d.pop("command")
 
-        completed_at = d.pop("completedAt", UNSET)
+        completed_at = d.pop("completedAt")
 
-        exit_code = d.pop("exitCode", UNSET)
+        exit_code = d.pop("exitCode")
 
-        name = d.pop("name", UNSET)
+        logs = d.pop("logs")
 
-        pid = d.pop("pid", UNSET)
+        name = d.pop("name")
 
-        started_at = d.pop("startedAt", UNSET)
+        pid = d.pop("pid")
 
-        _status = d.pop("status", UNSET)
-        status: Union[Unset, ProcessResponseStatus]
-        if isinstance(_status, Unset):
-            status = UNSET
-        else:
-            status = ProcessResponseStatus(_status)
+        started_at = d.pop("startedAt")
 
-        working_dir = d.pop("workingDir", UNSET)
+        status = ProcessResponseStatus(d.pop("status"))
+
+        working_dir = d.pop("workingDir")
 
         process_response = cls(
             command=command,
             completed_at=completed_at,
             exit_code=exit_code,
+            logs=logs,
             name=name,
             pid=pid,
             started_at=started_at,
