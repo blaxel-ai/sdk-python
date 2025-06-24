@@ -79,7 +79,7 @@ llamaindex = [
 pydantic = ["pydantic-ai>=0.0.48"]
 
 # Google ADK module
-googleadk = ["google-adk>=1.1.1", "litellm>=1.63.11"]
+googleadk = ["google-adk>=1.4.0", "litellm>=1.63.11"]
 
 # Convenience extras for common combinations
 all = [
