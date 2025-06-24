@@ -8,9 +8,10 @@ from blaxel.telemetry.span import SpanManager
 
 logger = logging.getLogger(__name__)
 
+
 class BlaxelLanggraphInstrumentor(BaseInstrumentor):
     def instrumentation_dependencies(self):
-        return ["blaxel_langgraph", "blaxel.core"]
+        return ["langgraph"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
@@ -22,21 +23,45 @@ class BlaxelLanggraphInstrumentor(BaseInstrumentor):
         import blaxel.langgraph.custom.gemini
 
         # Restore original methods
-        if hasattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content"):
-            blaxel.langgraph.custom.gemini.GeminiRestClient.generate_content = blaxel.langgraph.custom.gemini.GeminiRestClient._blaxel_original_generate_content
-            delattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content")
+        if hasattr(
+            blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content"
+        ):
+            blaxel.langgraph.custom.gemini.GeminiRestClient.generate_content = (
+                blaxel.langgraph.custom.gemini.GeminiRestClient._blaxel_original_generate_content
+            )
+            delattr(
+                blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content"
+            )
 
-        if hasattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content_async"):
+        if hasattr(
+            blaxel.langgraph.custom.gemini.GeminiRestClient,
+            "_blaxel_original_generate_content_async",
+        ):
             blaxel.langgraph.custom.gemini.GeminiRestClient.generate_content_async = blaxel.langgraph.custom.gemini.GeminiRestClient._blaxel_original_generate_content_async
-            delattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content_async")
+            delattr(
+                blaxel.langgraph.custom.gemini.GeminiRestClient,
+                "_blaxel_original_generate_content_async",
+            )
 
-        if hasattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_stream_generate_content"):
+        if hasattr(
+            blaxel.langgraph.custom.gemini.GeminiRestClient,
+            "_blaxel_original_stream_generate_content",
+        ):
             blaxel.langgraph.custom.gemini.GeminiRestClient.stream_generate_content = blaxel.langgraph.custom.gemini.GeminiRestClient._blaxel_original_stream_generate_content
-            delattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_stream_generate_content")
+            delattr(
+                blaxel.langgraph.custom.gemini.GeminiRestClient,
+                "_blaxel_original_stream_generate_content",
+            )
 
-        if hasattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_stream_generate_content_async"):
+        if hasattr(
+            blaxel.langgraph.custom.gemini.GeminiRestClient,
+            "_blaxel_original_stream_generate_content_async",
+        ):
             blaxel.langgraph.custom.gemini.GeminiRestClient.stream_generate_content_async = blaxel.langgraph.custom.gemini.GeminiRestClient._blaxel_original_stream_generate_content_async
-            delattr(blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_stream_generate_content_async")
+            delattr(
+                blaxel.langgraph.custom.gemini.GeminiRestClient,
+                "_blaxel_original_stream_generate_content_async",
+            )
 
     def _patch_tool(self, tracer: Tracer):
         def _traced_run(original, instance, args, kwargs):
@@ -69,6 +94,6 @@ class BlaxelLanggraphInstrumentor(BaseInstrumentor):
                     span.set_attribute("tool.error", str(e))
                     raise
 
-        wrap_function_wrapper('langchain_core.tools', 'BaseTool.run', _traced_run)
-        wrap_function_wrapper('langchain_core.tools', 'BaseTool.arun', _traced_arun)
-        wrap_function_wrapper('langchain_core.tools', 'BaseTool.arun', _traced_arun)
+        wrap_function_wrapper("langchain_core.tools", "BaseTool.run", _traced_run)
+        wrap_function_wrapper("langchain_core.tools", "BaseTool.arun", _traced_arun)
+        wrap_function_wrapper("langchain_core.tools", "BaseTool.arun", _traced_arun)

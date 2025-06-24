@@ -30,7 +30,7 @@ TO_INSTRUMENT = [
 
 class BlaxelLlamaIndexInstrumentor(BaseInstrumentor):
     def instrumentation_dependencies(self):
-        return ["blaxel_llamaindex", "blaxel.core"]
+        return ["llama_index"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
@@ -49,12 +49,8 @@ class BlaxelLlamaIndexInstrumentor(BaseInstrumentor):
         pass
 
     def _instrument_module(self, module_name, class_name, tracer):
-        wrap_function_wrapper(
-            module_name, f"{class_name}.call", query_wrapper(tracer)
-        )
-        wrap_function_wrapper(
-            module_name, f"{class_name}.acall", aquery_wrapper(tracer)
-        )
+        wrap_function_wrapper(module_name, f"{class_name}.call", query_wrapper(tracer))
+        wrap_function_wrapper(module_name, f"{class_name}.acall", aquery_wrapper(tracer))
 
 
 @_with_tracer_wrapper

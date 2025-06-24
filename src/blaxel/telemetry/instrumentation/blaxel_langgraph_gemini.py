@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 
 WRAPPED_METHODS = [
     {
-        "package": "blaxel_langgraph.custom.gemini",
+        "package": "blaxel.langgraph.custom.gemini",
         "object": "GeminiRestClient",
         "method": "generate_content",
         "span_name": "gemini.generate_content",
     },
     {
-        "package": "blaxel_langgraph.custom.gemini",
+        "package": "blaxel.langgraph.custom.gemini",
         "object": "GeminiRestClient",
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
@@ -112,20 +112,14 @@ def _set_input_attributes(span, args, kwargs, llm_model):
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
+    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty"))
 
     return
 
@@ -157,12 +151,8 @@ def _set_response_attributes(span, response, llm_model):
                 _set_span_attribute(span, f"{prefix}.content", item.text)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response.text, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-            )
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text)
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
@@ -170,12 +160,8 @@ def _set_response_attributes(span, response, llm_model):
                 _set_span_attribute(span, f"{prefix}.content", item)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
-            )
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response)
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
 
     return
 
@@ -246,9 +232,9 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if hasattr(instance, "_model_id"):
         llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace(
-            "publishers/google/models/", ""
-        ).replace("models/", "")
+        llm_model = instance._model_name.replace("publishers/google/models/", "").replace(
+            "models/", ""
+        )
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
 
@@ -290,9 +276,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if hasattr(instance, "_model_id"):
         llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace(
-            "publishers/google/models/", ""
-        ).replace("models/", "")
+        llm_model = instance._model_name.replace("publishers/google/models/", "").replace(
+            "models/", ""
+        )
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
 
@@ -330,7 +316,7 @@ class BlaxelLanggraphGeminiInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["blaxel_langgraph"]
+        return ["langgraph"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")

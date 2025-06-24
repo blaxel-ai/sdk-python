@@ -10,9 +10,10 @@ from blaxel.telemetry.span import SpanManager
 
 logger = logging.getLogger(__name__)
 
+
 class BlaxelCoreInstrumentor(BaseInstrumentor):
     def instrumentation_dependencies(self):
-        return ["blaxel.core"]
+        return []
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
