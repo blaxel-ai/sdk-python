@@ -1,2 +1,0 @@
-Module blaxel-docs
-==================

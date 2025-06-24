@@ -1,0 +1,52 @@
+name: Test blaxel package
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+  push:
+    branches: ["main", "develop"]
+
+jobs:
+  test:
+    name: Test blaxel package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test package installation (base)
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install -e .
+          python -c "import blaxel.core; print('✅ blaxel.core imports successfully')"
+
+      - name: Test package installation (with extras)
+        run: |
+          source .venv/bin/activate
+          uv pip install -e ".[telemetry,crewai]"
+          python -c "
+          import blaxel.core
+          import blaxel.telemetry
+          import blaxel.crewai
+          print('✅ blaxel with extras imports successfully')
+          "
+
+      - name: Test package build
+        run: |
+          uv build
+          echo "✅ Package builds successfully"
+          ls -la dist/
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          make test

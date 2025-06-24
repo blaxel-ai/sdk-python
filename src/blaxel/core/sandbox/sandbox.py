@@ -1,0 +1,151 @@
+import asyncio
+import logging
+import time
+from typing import Any, Dict, List, Union
+
+from ..client.api.compute.create_sandbox import asyncio as create_sandbox
+from ..client.api.compute.delete_sandbox import asyncio as delete_sandbox
+from ..client.api.compute.get_sandbox import asyncio as get_sandbox
+from ..client.api.compute.list_sandboxes import asyncio as list_sandboxes
+from ..client.client import client
+from ..client.models import Metadata, Sandbox
+from .filesystem import SandboxFileSystem
+from .network import SandboxNetwork
+from .preview import SandboxPreviews
+from .process import SandboxProcess
+from .session import SandboxSessions
+from .types import SandboxConfiguration, SessionWithToken
+
+logger = logging.getLogger(__name__)
+
+
+class SandboxInstance:
+    def __init__(self, sandbox: Sandbox):
+        self.sandbox = sandbox
+        self.config = SandboxConfiguration(sandbox)
+        self.fs = SandboxFileSystem(self.config)
+        self.process = SandboxProcess(self.config)
+        self.previews = SandboxPreviews(sandbox)
+        self.sessions = SandboxSessions(self.config)
+        self.network = SandboxNetwork(self.config)
+
+    @property
+    def metadata(self):
+        return self.sandbox.metadata
+
+    @property
+    def status(self):
+        return self.sandbox.status
+
+    @property
+    def events(self):
+        return self.sandbox.events
+
+    @property
+    def spec(self):
+        return self.sandbox.spec
+
+    async def wait(self, max_wait: int = 60000, interval: int = 1000) -> None:
+        start_time = time.time() * 1000  # Convert to milliseconds
+        while self.sandbox.status != "DEPLOYED":
+            await asyncio.sleep(interval / 1000)  # Convert to seconds
+            try:
+                response = await get_sandbox(
+                    self.sandbox.metadata.name,
+                    client=client,
+                )
+                logger.info(f"Waiting for sandbox to be deployed, status: {response.status}")
+                self.sandbox = response
+                self.config = SandboxConfiguration(self.sandbox)
+            except Exception as e:
+                logger.error("Could not retrieve sandbox", exc_info=e)
+
+            if self.sandbox.status == "FAILED":
+                raise Exception("Sandbox failed to deploy")
+
+            if (time.time() * 1000) - start_time > max_wait:
+                raise Exception("Sandbox did not deploy in time")
+
+    @classmethod
+    async def create(cls, sandbox: Union[Sandbox, Dict[str, Any]]) -> "SandboxInstance":
+        if isinstance(sandbox, dict):
+            sandbox = Sandbox.from_dict(sandbox)
+
+        if not sandbox.spec:
+            raise Exception("Sandbox spec is required")
+        if not sandbox.spec.runtime:
+            raise Exception("Sandbox runtime is required")
+        sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
+
+        response = await create_sandbox(
+            client=client,
+            body=sandbox,
+        )
+        return cls(response)
+
+    @classmethod
+    async def get(cls, sandbox_name: str) -> "SandboxInstance":
+        response = await get_sandbox(
+            sandbox_name,
+            client=client,
+        )
+        return cls(response)
+
+    @classmethod
+    async def list(cls) -> List["SandboxInstance"]:
+        response = await list_sandboxes()
+        return [cls(sandbox) for sandbox in response]
+
+    @classmethod
+    async def delete(cls, sandbox_name: str) -> Sandbox:
+        response = await delete_sandbox(
+            sandbox_name,
+            client=client,
+        )
+        return response
+
+    @classmethod
+    async def create_if_not_exists(
+        cls, sandbox: Union[Sandbox, Dict[str, Any]]
+    ) -> "SandboxInstance":
+        """Create a sandbox if it doesn't exist, otherwise return existing."""
+        if isinstance(sandbox, dict):
+            sandbox = Sandbox.from_dict(sandbox)
+
+        try:
+            sandbox_instance = await cls.get(sandbox.metadata.name)
+            return sandbox_instance
+        except Exception as e:
+            # Check if it's a 404 error (sandbox not found)
+            if hasattr(e, "status_code") and e.status_code == 404:
+                return await cls.create(sandbox)
+            raise e
+
+    @classmethod
+    async def from_session(
+        cls, session: Union[SessionWithToken, Dict[str, Any]]
+    ) -> "SandboxInstance":
+        """Create a sandbox instance from a session with token."""
+        if isinstance(session, dict):
+            session = SessionWithToken.from_dict(session)
+
+        # Create a minimal sandbox configuration for session-based access
+        sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
+        sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
+        config = SandboxConfiguration(
+            sandbox=sandbox,
+            force_url=session.url,
+            headers={"X-Blaxel-Preview-Token": session.token},
+            params={"bl_preview_token": session.token},
+        )
+
+        instance = cls.__new__(cls)
+        instance.sandbox = sandbox
+        instance.config = config
+        instance.fs = SandboxFileSystem(config)
+        instance.process = SandboxProcess(config)
+        instance.previews = SandboxPreviews(sandbox)
+        instance.sessions = SandboxSessions(config)
+        instance.network = SandboxNetwork(config)
+
+        return instance

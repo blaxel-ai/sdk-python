@@ -1,1 +1,0 @@
-uv run pdoc blaxel-docs src/blaxel -o docs --force --skip-errors

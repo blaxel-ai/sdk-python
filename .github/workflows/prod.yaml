@@ -7,7 +7,7 @@ on:
 
 jobs:
   pypi-publish:
-    name: Upload to PyPI
+    name: Upload blaxel package to PyPI
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -22,7 +22,13 @@ jobs:
           VERSION="${VERSION#v}"
           echo "Setting version to $VERSION"
           sed -i -E "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
-      - name: Publish to PyPi
+      - name: Test package installation
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install -e .
+          python -c "import blaxel.core; print('✅ blaxel package imports successfully')"
+      - name: Build and publish blaxel package
         run: |
           uv build
           uv publish -v --trusted-publishing automatic dist/*
