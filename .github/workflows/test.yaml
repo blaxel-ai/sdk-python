@@ -6,6 +6,10 @@ on:
   push:
     branches: ["main", "develop"]
 
+env:
+  BL_API_KEY: fake_api_key
+  BL_WORKSPACE: fake_workspace
+
 jobs:
   test:
     name: Test blaxel package
