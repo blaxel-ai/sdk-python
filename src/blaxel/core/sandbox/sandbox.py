@@ -15,7 +15,7 @@ from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .session import SandboxSessions
-from .types import SandboxConfiguration, SessionWithToken
+from .types import SandboxConfiguration, SandboxCreateConfiguration, SessionWithToken
 
 logger = logging.getLogger(__name__)
 
@@ -69,22 +69,53 @@ class SandboxInstance:
 
     @classmethod
     async def create(
-        cls, sandbox: Union[Sandbox, Dict[str, Any], None] = None
+        cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None
     ) -> "SandboxInstance":
-        if sandbox is None:
-            sandbox = Sandbox()
-        if isinstance(sandbox, dict):
-            sandbox = Sandbox.from_dict(sandbox)
-        if not sandbox.metadata:
-            sandbox.metadata = Metadata(name=uuid.uuid4().hex)
-        if not sandbox.spec:
-            sandbox.spec = SandboxSpec(runtime=Runtime(image="blaxel/prod-base:latest"))
-        if not sandbox.spec.runtime:
-            sandbox.spec.runtime = Runtime(image="blaxel/prod-base:latest")
+        # Generate default values
+        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        default_image = "blaxel/prod-base:latest"
+        default_memory = 4096
 
-        sandbox.spec.runtime.image = sandbox.spec.runtime.image or "blaxel/prod-base:latest"
-        sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or 4096
-        sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
+        # Handle SandboxCreateConfiguration or simple dict with name/image/memory keys
+        if sandbox is None or isinstance(sandbox, (SandboxCreateConfiguration, dict)) and (
+            not isinstance(sandbox, Sandbox) and (
+                sandbox is None or
+                'name' in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__) or
+                'image' in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__) or
+                'memory' in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+            )
+        ):
+            if sandbox is None:
+                sandbox = SandboxCreateConfiguration()
+            elif isinstance(sandbox, dict) and not isinstance(sandbox, Sandbox):
+                sandbox = SandboxCreateConfiguration.from_dict(sandbox)
+
+            # Set defaults if not provided
+            name = sandbox.name or default_name
+            image = sandbox.image or default_image
+            memory = sandbox.memory or default_memory
+
+            # Create full Sandbox object
+            sandbox = Sandbox(
+                metadata=Metadata(name=name),
+                spec=SandboxSpec(runtime=Runtime(image=image, memory=memory, generation="mk3"))
+            )
+        else:
+            # Handle existing Sandbox object or dict conversion
+            if isinstance(sandbox, dict):
+                sandbox = Sandbox.from_dict(sandbox)
+
+            # Set defaults for missing fields
+            if not sandbox.metadata:
+                sandbox.metadata = Metadata(name=uuid.uuid4().hex.replace('-', ''))
+            if not sandbox.spec:
+                sandbox.spec = SandboxSpec(runtime=Runtime(image=default_image))
+            if not sandbox.spec.runtime:
+                sandbox.spec.runtime = Runtime(image=default_image, memory=default_memory)
+
+            sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
+            sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
+            sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
 
         response = await create_sandbox(
             client=client,
@@ -115,14 +146,30 @@ class SandboxInstance:
 
     @classmethod
     async def create_if_not_exists(
-        cls, sandbox: Union[Sandbox, Dict[str, Any]]
+        cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
-        if isinstance(sandbox, dict):
-            sandbox = Sandbox.from_dict(sandbox)
-
         try:
-            sandbox_instance = await cls.get(sandbox.metadata.name)
+            # Extract name from different configuration types
+            if isinstance(sandbox, SandboxCreateConfiguration):
+                name = sandbox.name
+            elif isinstance(sandbox, dict):
+                if 'name' in sandbox:
+                    name = sandbox['name']
+                elif 'metadata' in sandbox and isinstance(sandbox['metadata'], dict):
+                    name = sandbox['metadata'].get('name')
+                else:
+                    # If no name provided, we can't check if it exists, so create new
+                    return await cls.create(sandbox)
+            elif isinstance(sandbox, Sandbox):
+                name = sandbox.metadata.name if sandbox.metadata else None
+            else:
+                name = None
+
+            if not name:
+                raise ValueError("Sandbox name is required")
+
+            sandbox_instance = await cls.get(name)
             return sandbox_instance
         except Exception as e:
             # Check if it's a 404 error (sandbox not found)
