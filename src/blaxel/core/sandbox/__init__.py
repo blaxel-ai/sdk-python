@@ -8,6 +8,7 @@ from .sandbox import (
 from .types import (
     CopyResponse,
     SandboxConfiguration,
+    SandboxCreateConfiguration,
     SandboxFilesystemFile,
     SessionCreateOptions,
     SessionWithToken,
@@ -19,6 +20,7 @@ __all__ = [
     "SessionCreateOptions",
     "SessionWithToken",
     "SandboxConfiguration",
+    "SandboxCreateConfiguration",
     "WatchEvent",
     "SandboxFilesystemFile",
     "CopyResponse",

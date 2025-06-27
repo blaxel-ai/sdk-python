@@ -101,3 +101,24 @@ class CopyResponse:
         self.message = message
         self.source = source
         self.destination = destination
+
+
+class SandboxCreateConfiguration:
+    """Simplified configuration for creating sandboxes with default values."""
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        image: Optional[str] = None,
+        memory: Optional[int] = None,
+    ):
+        self.name = name
+        self.image = image
+        self.memory = memory
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
+        return cls(
+            name=data.get("name"),
+            image=data.get("image"),
+            memory=data.get("memory"),
+        )
