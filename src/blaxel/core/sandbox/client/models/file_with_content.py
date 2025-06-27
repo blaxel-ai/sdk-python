@@ -1,9 +1,7 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="FileWithContent")
 
@@ -12,24 +10,24 @@ T = TypeVar("T", bound="FileWithContent")
 class FileWithContent:
     """
     Attributes:
-        content (Union[Unset, str]):
-        group (Union[Unset, str]):
-        last_modified (Union[Unset, str]):
-        name (Union[Unset, str]):
-        owner (Union[Unset, str]):
-        path (Union[Unset, str]):
-        permissions (Union[Unset, str]):
-        size (Union[Unset, int]):
+        content (str):
+        group (str):
+        last_modified (str):
+        name (str):
+        owner (str):
+        path (str):
+        permissions (str):
+        size (int):
     """
 
-    content: Union[Unset, str] = UNSET
-    group: Union[Unset, str] = UNSET
-    last_modified: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    owner: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
-    permissions: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
+    content: str
+    group: str
+    last_modified: str
+    name: str
+    owner: str
+    path: str
+    permissions: str
+    size: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -51,23 +49,18 @@ class FileWithContent:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if content is not UNSET:
-            field_dict["content"] = content
-        if group is not UNSET:
-            field_dict["group"] = group
-        if last_modified is not UNSET:
-            field_dict["lastModified"] = last_modified
-        if name is not UNSET:
-            field_dict["name"] = name
-        if owner is not UNSET:
-            field_dict["owner"] = owner
-        if path is not UNSET:
-            field_dict["path"] = path
-        if permissions is not UNSET:
-            field_dict["permissions"] = permissions
-        if size is not UNSET:
-            field_dict["size"] = size
+        field_dict.update(
+            {
+                "content": content,
+                "group": group,
+                "lastModified": last_modified,
+                "name": name,
+                "owner": owner,
+                "path": path,
+                "permissions": permissions,
+                "size": size,
+            }
+        )
 
         return field_dict
 
@@ -76,21 +69,21 @@ class FileWithContent:
         if not src_dict:
             return None
         d = src_dict.copy()
-        content = d.pop("content", UNSET)
+        content = d.pop("content")
 
-        group = d.pop("group", UNSET)
+        group = d.pop("group")
 
-        last_modified = d.pop("lastModified", UNSET)
+        last_modified = d.pop("lastModified")
 
-        name = d.pop("name", UNSET)
+        name = d.pop("name")
 
-        owner = d.pop("owner", UNSET)
+        owner = d.pop("owner")
 
-        path = d.pop("path", UNSET)
+        path = d.pop("path")
 
-        permissions = d.pop("permissions", UNSET)
+        permissions = d.pop("permissions")
 
-        size = d.pop("size", UNSET)
+        size = d.pop("size")
 
         file_with_content = cls(
             content=content,

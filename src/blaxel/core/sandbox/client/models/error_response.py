@@ -1,9 +1,7 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ErrorResponse")
 
@@ -12,10 +10,10 @@ T = TypeVar("T", bound="ErrorResponse")
 class ErrorResponse:
     """
     Attributes:
-        error (Union[Unset, str]):  Example: Error message.
+        error (str):  Example: Error message.
     """
 
-    error: Union[Unset, str] = UNSET
+    error: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -23,9 +21,11 @@ class ErrorResponse:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if error is not UNSET:
-            field_dict["error"] = error
+        field_dict.update(
+            {
+                "error": error,
+            }
+        )
 
         return field_dict
 
@@ -34,7 +34,7 @@ class ErrorResponse:
         if not src_dict:
             return None
         d = src_dict.copy()
-        error = d.pop("error", UNSET)
+        error = d.pop("error")
 
         error_response = cls(
             error=error,

@@ -1,9 +1,7 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ProcessLogs")
 
@@ -12,14 +10,14 @@ T = TypeVar("T", bound="ProcessLogs")
 class ProcessLogs:
     """
     Attributes:
-        logs (Union[Unset, str]):  Example: logs output.
-        stderr (Union[Unset, str]):  Example: stderr output.
-        stdout (Union[Unset, str]):  Example: stdout output.
+        logs (str):  Example: logs output.
+        stderr (str):  Example: stderr output.
+        stdout (str):  Example: stdout output.
     """
 
-    logs: Union[Unset, str] = UNSET
-    stderr: Union[Unset, str] = UNSET
-    stdout: Union[Unset, str] = UNSET
+    logs: str
+    stderr: str
+    stdout: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,13 +29,13 @@ class ProcessLogs:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if logs is not UNSET:
-            field_dict["logs"] = logs
-        if stderr is not UNSET:
-            field_dict["stderr"] = stderr
-        if stdout is not UNSET:
-            field_dict["stdout"] = stdout
+        field_dict.update(
+            {
+                "logs": logs,
+                "stderr": stderr,
+                "stdout": stdout,
+            }
+        )
 
         return field_dict
 
@@ -46,11 +44,11 @@ class ProcessLogs:
         if not src_dict:
             return None
         d = src_dict.copy()
-        logs = d.pop("logs", UNSET)
+        logs = d.pop("logs")
 
-        stderr = d.pop("stderr", UNSET)
+        stderr = d.pop("stderr")
 
-        stdout = d.pop("stdout", UNSET)
+        stdout = d.pop("stdout")
 
         process_logs = cls(
             logs=logs,

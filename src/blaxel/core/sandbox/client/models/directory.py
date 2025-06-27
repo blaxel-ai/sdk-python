@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.file import File
@@ -17,54 +15,49 @@ T = TypeVar("T", bound="Directory")
 class Directory:
     """
     Attributes:
-        files (Union[Unset, list['File']]):
-        name (Union[Unset, str]):
-        path (Union[Unset, str]):
-        subdirectories (Union[Unset, list['Subdirectory']]): @name Subdirectories
+        files (list['File']):
+        name (str):
+        path (str):
+        subdirectories (list['Subdirectory']): @name Subdirectories
     """
 
-    files: Union[Unset, list["File"]] = UNSET
-    name: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
-    subdirectories: Union[Unset, list["Subdirectory"]] = UNSET
+    files: list["File"]
+    name: str
+    path: str
+    subdirectories: list["Subdirectory"]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        files: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.files, Unset):
-            files = []
-            for files_item_data in self.files:
-                if type(files_item_data) is dict:
-                    files_item = files_item_data
-                else:
-                    files_item = files_item_data.to_dict()
-                files.append(files_item)
+        files = []
+        for files_item_data in self.files:
+            if type(files_item_data) is dict:
+                files_item = files_item_data
+            else:
+                files_item = files_item_data.to_dict()
+            files.append(files_item)
 
         name = self.name
 
         path = self.path
 
-        subdirectories: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.subdirectories, Unset):
-            subdirectories = []
-            for subdirectories_item_data in self.subdirectories:
-                if type(subdirectories_item_data) is dict:
-                    subdirectories_item = subdirectories_item_data
-                else:
-                    subdirectories_item = subdirectories_item_data.to_dict()
-                subdirectories.append(subdirectories_item)
+        subdirectories = []
+        for subdirectories_item_data in self.subdirectories:
+            if type(subdirectories_item_data) is dict:
+                subdirectories_item = subdirectories_item_data
+            else:
+                subdirectories_item = subdirectories_item_data.to_dict()
+            subdirectories.append(subdirectories_item)
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if files is not UNSET:
-            field_dict["files"] = files
-        if name is not UNSET:
-            field_dict["name"] = name
-        if path is not UNSET:
-            field_dict["path"] = path
-        if subdirectories is not UNSET:
-            field_dict["subdirectories"] = subdirectories
+        field_dict.update(
+            {
+                "files": files,
+                "name": name,
+                "path": path,
+                "subdirectories": subdirectories,
+            }
+        )
 
         return field_dict
 
@@ -77,19 +70,19 @@ class Directory:
             return None
         d = src_dict.copy()
         files = []
-        _files = d.pop("files", UNSET)
-        for files_item_data in _files or []:
+        _files = d.pop("files")
+        for files_item_data in _files:
             files_item = File.from_dict(files_item_data)
 
             files.append(files_item)
 
-        name = d.pop("name", UNSET)
+        name = d.pop("name")
 
-        path = d.pop("path", UNSET)
+        path = d.pop("path")
 
         subdirectories = []
-        _subdirectories = d.pop("subdirectories", UNSET)
-        for subdirectories_item_data in _subdirectories or []:
+        _subdirectories = d.pop("subdirectories")
+        for subdirectories_item_data in _subdirectories:
             subdirectories_item = Subdirectory.from_dict(subdirectories_item_data)
 
             subdirectories.append(subdirectories_item)

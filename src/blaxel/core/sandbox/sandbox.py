@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+import uuid
 from typing import Any, Dict, List, Union
 
 from ..client.api.compute.create_sandbox import asyncio as create_sandbox
@@ -8,7 +9,7 @@ from ..client.api.compute.delete_sandbox import asyncio as delete_sandbox
 from ..client.api.compute.get_sandbox import asyncio as get_sandbox
 from ..client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ..client.client import client
-from ..client.models import Metadata, Sandbox
+from ..client.models import Metadata, Runtime, Sandbox, SandboxSpec
 from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
@@ -67,14 +68,22 @@ class SandboxInstance:
                 raise Exception("Sandbox did not deploy in time")
 
     @classmethod
-    async def create(cls, sandbox: Union[Sandbox, Dict[str, Any]]) -> "SandboxInstance":
+    async def create(
+        cls, sandbox: Union[Sandbox, Dict[str, Any], None] = None
+    ) -> "SandboxInstance":
+        if sandbox is None:
+            sandbox = Sandbox()
         if isinstance(sandbox, dict):
             sandbox = Sandbox.from_dict(sandbox)
-
+        if not sandbox.metadata:
+            sandbox.metadata = Metadata(name=uuid.uuid4().hex)
         if not sandbox.spec:
-            raise Exception("Sandbox spec is required")
+            sandbox.spec = SandboxSpec(runtime=Runtime(image="blaxel/prod-base:latest"))
         if not sandbox.spec.runtime:
-            raise Exception("Sandbox runtime is required")
+            sandbox.spec.runtime = Runtime(image="blaxel/prod-base:latest")
+
+        sandbox.spec.runtime.image = sandbox.spec.runtime.image or "blaxel/prod-base:latest"
+        sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or 4096
         sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
 
         response = await create_sandbox(
