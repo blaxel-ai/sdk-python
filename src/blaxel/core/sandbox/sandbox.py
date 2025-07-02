@@ -10,6 +10,7 @@ from ..client.api.compute.get_sandbox import asyncio as get_sandbox
 from ..client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ..client.client import client
 from ..client.models import Metadata, Runtime, Sandbox, SandboxSpec
+from ..client.types import UNSET
 from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
@@ -76,13 +77,19 @@ class SandboxInstance:
         default_image = "blaxel/prod-base:latest"
         default_memory = 4096
 
-        # Handle SandboxCreateConfiguration or simple dict with name/image/memory keys
-        if sandbox is None or isinstance(sandbox, (SandboxCreateConfiguration, dict)) and (
-            not isinstance(sandbox, Sandbox) and (
-                sandbox is None or
-                'name' in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__) or
-                'image' in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__) or
-                'memory' in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+        # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports keys
+        if (
+            sandbox is None
+            or isinstance(sandbox, SandboxCreateConfiguration | dict)
+            and (
+                not isinstance(sandbox, Sandbox)
+                and (
+                    sandbox is None
+                    or "name" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "image" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "memory" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "ports" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                )
             )
         ):
             if sandbox is None:
@@ -94,11 +101,14 @@ class SandboxInstance:
             name = sandbox.name or default_name
             image = sandbox.image or default_image
             memory = sandbox.memory or default_memory
+            ports = sandbox._normalize_ports() or UNSET
 
             # Create full Sandbox object
             sandbox = Sandbox(
                 metadata=Metadata(name=name),
-                spec=SandboxSpec(runtime=Runtime(image=image, memory=memory, generation="mk3"))
+                spec=SandboxSpec(
+                    runtime=Runtime(image=image, memory=memory, ports=ports, generation="mk3")
+                ),
             )
         else:
             # Handle existing Sandbox object or dict conversion
@@ -107,7 +117,7 @@ class SandboxInstance:
 
             # Set defaults for missing fields
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=uuid.uuid4().hex.replace('-', ''))
+                sandbox.metadata = Metadata(name=uuid.uuid4().hex.replace("-", ""))
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(runtime=Runtime(image=default_image))
             if not sandbox.spec.runtime:
@@ -154,10 +164,10 @@ class SandboxInstance:
             if isinstance(sandbox, SandboxCreateConfiguration):
                 name = sandbox.name
             elif isinstance(sandbox, dict):
-                if 'name' in sandbox:
-                    name = sandbox['name']
-                elif 'metadata' in sandbox and isinstance(sandbox['metadata'], dict):
-                    name = sandbox['metadata'].get('name')
+                if "name" in sandbox:
+                    name = sandbox["name"]
+                elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
+                    name = sandbox["metadata"].get("name")
                 else:
                     # If no name provided, we can't check if it exists, so create new
                     return await cls.create(sandbox)

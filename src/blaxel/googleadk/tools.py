@@ -69,4 +69,3 @@ async def bl_tools(tools_names: list[str], **kwargs: Any) -> list[BaseTool]:
     tools = bl_tools_core(tools_names, **kwargs)
     await tools.initialize()
     return [GoogleADKTool(tool) for tool in tools.get_tools()]
-    return [GoogleADKTool(tool) for tool in tools.get_tools()]
