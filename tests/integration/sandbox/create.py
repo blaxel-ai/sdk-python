@@ -1,6 +1,7 @@
 import asyncio
 import sys
-from blaxel.core.sandbox import SandboxInstance, SandboxCreateConfiguration
+
+from blaxel.core.sandbox import SandboxCreateConfiguration, SandboxInstance
 
 
 async def main():
@@ -11,22 +12,18 @@ async def main():
         sandbox = await SandboxInstance.create()
         await sandbox.wait()
         print(f"✅ Created sandbox with default name: {sandbox.metadata.name}")
-        print(await sandbox.fs.ls('/blaxel'))
+        print(await sandbox.fs.ls("/blaxel"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted default sandbox")
 
         # Test 2: Create sandbox with spec containing runtime image
         print("\nTest 2: Create sandbox with spec runtime...")
-        sandbox = await SandboxInstance.create({
-            "spec": {
-                "runtime": {
-                    "image": "blaxel/prod-base:latest"
-                }
-            }
-        })
+        sandbox = await SandboxInstance.create(
+            {"spec": {"runtime": {"image": "blaxel/prod-base:latest"}}}
+        )
         await sandbox.wait()
         print(f"✅ Created sandbox with spec: {sandbox.metadata.name}")
-        print(await sandbox.fs.ls('/blaxel'))
+        print(await sandbox.fs.ls("/blaxel"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted spec sandbox")
 
@@ -35,7 +32,7 @@ async def main():
         sandbox = await SandboxInstance.create({"name": "sandbox-with-name"})
         await sandbox.wait()
         print(f"✅ Created sandbox with name: {sandbox.metadata.name}")
-        print(await sandbox.fs.ls('/blaxel/'))
+        print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted named sandbox")
 
@@ -45,7 +42,7 @@ async def main():
         sandbox = await SandboxInstance.create(config)
         await sandbox.wait()
         print(f"✅ Created sandbox with config: {sandbox.metadata.name}")
-        print(await sandbox.fs.ls('/blaxel/'))
+        print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted config sandbox")
 
@@ -54,18 +51,18 @@ async def main():
         sandbox = await SandboxInstance.create_if_not_exists({"name": "sandbox-cine-name"})
         await sandbox.wait()
         print(f"✅ Created/found sandbox: {sandbox.metadata.name}")
-        print(await sandbox.fs.ls('/blaxel/'))
+        print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted create-if-not-exists sandbox")
 
         # Test 6: Create sandbox if not exists with metadata structure
         print("\nTest 6: Create sandbox if not exists with metadata...")
-        sandbox = await SandboxInstance.create_if_not_exists({
-            "metadata": {"name": "sandbox-cine-metadata"}
-        })
+        sandbox = await SandboxInstance.create_if_not_exists(
+            {"metadata": {"name": "sandbox-cine-metadata"}}
+        )
         await sandbox.wait()
         print(f"✅ Created/found sandbox with metadata: {sandbox.metadata.name}")
-        print(await sandbox.fs.ls('/blaxel/'))
+        print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted metadata sandbox")
 
@@ -74,22 +71,48 @@ async def main():
         custom_config = SandboxCreateConfiguration(
             name="sandbox-custom",
             image="blaxel/prod-base:latest",
-            memory=2048
+            memory=2048,
         )
         sandbox = await SandboxInstance.create(custom_config)
         await sandbox.wait()
         print(f"✅ Created custom sandbox: {sandbox.metadata.name}")
         print(f"   Image: {sandbox.spec.runtime.image}")
         print(f"   Memory: {sandbox.spec.runtime.memory}")
-        print(await sandbox.fs.ls('/blaxel/'))
+        print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted custom sandbox")
+
+        # Test 8: Create sandbox with ports
+        print("\nTest 8: Create sandbox with ports...")
+        ports_config = SandboxCreateConfiguration(
+            name="sandbox-with-ports",
+            image="blaxel/prod-base:latest",
+            memory=2048,
+            ports=[
+                {"name": "web", "target": 3000},  # Will default to HTTP
+                {"name": "api", "target": 8080, "protocol": "TCP"},
+            ],
+        )
+        sandbox = await SandboxInstance.create(ports_config)
+        await sandbox.wait()
+        print(f"✅ Created sandbox with ports: {sandbox.metadata.name}")
+        print(f"   Image: {sandbox.spec.runtime.image}")
+        print(f"   Memory: {sandbox.spec.runtime.memory}")
+        sandbox = await SandboxInstance.get(sandbox.metadata.name)
+        if sandbox.spec.runtime.ports:
+            print(f"   Ports: {len(sandbox.spec.runtime.ports)} configured")
+            for port in sandbox.spec.runtime.ports:
+                print(f"     - {port.name}: {port.target} ({port.protocol})")
+        print(await sandbox.fs.ls("/blaxel/"))
+        await SandboxInstance.delete(sandbox.metadata.name)
+        print("✅ Deleted ports sandbox")
 
         print("\n🎉 All sandbox creation tests passed!")
 
     except Exception as e:
         print(f"❌ There was an error => {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

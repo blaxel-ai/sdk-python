@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from ..client.models import Sandbox
+from ..client.models import Port, Sandbox
+from ..client.types import UNSET
 
 
 class SessionCreateOptions:
@@ -105,15 +106,18 @@ class CopyResponse:
 
 class SandboxCreateConfiguration:
     """Simplified configuration for creating sandboxes with default values."""
+
     def __init__(
         self,
         name: Optional[str] = None,
         image: Optional[str] = None,
         memory: Optional[int] = None,
+        ports: Optional[Union[List[Port], List[Dict[str, Any]]]] = None,
     ):
         self.name = name
         self.image = image
         self.memory = memory
+        self.ports = ports
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -121,4 +125,28 @@ class SandboxCreateConfiguration:
             name=data.get("name"),
             image=data.get("image"),
             memory=data.get("memory"),
+            ports=data.get("ports"),
         )
+
+    def _normalize_ports(self) -> Optional[List[Port]]:
+        """Convert ports to Port objects with default protocol HTTP if not specified."""
+        if not self.ports:
+            return None
+
+        port_objects = []
+        for port in self.ports:
+            if isinstance(port, Port):
+                # If it's already a Port object, ensure protocol defaults to HTTP
+                if port.protocol is UNSET or not port.protocol:
+                    port.protocol = "HTTP"
+                port_objects.append(port)
+            elif isinstance(port, dict):
+                # Convert dict to Port object with HTTP as default protocol
+                port_dict = port.copy()
+                if "protocol" not in port_dict or not port_dict["protocol"]:
+                    port_dict["protocol"] = "HTTP"
+                port_objects.append(Port.from_dict(port_dict))
+            else:
+                raise ValueError(f"Invalid port type: {type(port)}. Expected Port object or dict.")
+
+        return port_objects
