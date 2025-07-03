@@ -46,7 +46,7 @@ class SandboxSessions:
             self.sandbox_name, client=client, body=preview_body
         )
 
-        preview = SandboxPreview(preview_response, self.sandbox_name)
+        preview = SandboxPreview(preview_response)
         token_obj = await preview.tokens.create(expires_at)
 
         return SessionWithToken(
