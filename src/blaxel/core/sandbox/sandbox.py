@@ -77,7 +77,7 @@ class SandboxInstance:
         default_image = "blaxel/prod-base:latest"
         default_memory = 4096
 
-        # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports keys
+        # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs keys
         if (
             sandbox is None
             or isinstance(sandbox, SandboxCreateConfiguration | dict)
@@ -89,6 +89,7 @@ class SandboxInstance:
                     or "image" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "memory" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "ports" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "envs" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -102,12 +103,13 @@ class SandboxInstance:
             image = sandbox.image or default_image
             memory = sandbox.memory or default_memory
             ports = sandbox._normalize_ports() or UNSET
+            envs = sandbox._normalize_envs() or UNSET
 
             # Create full Sandbox object
             sandbox = Sandbox(
                 metadata=Metadata(name=name),
                 spec=SandboxSpec(
-                    runtime=Runtime(image=image, memory=memory, ports=ports, generation="mk3")
+                    runtime=Runtime(image=image, memory=memory, ports=ports, envs=envs, generation="mk3")
                 ),
             )
         else:

@@ -107,6 +107,57 @@ async def main():
         await SandboxInstance.delete(sandbox.metadata.name)
         print("✅ Deleted ports sandbox")
 
+        # Test 9: Create sandbox with environment variables
+        print("\nTest 9: Create sandbox with environment variables...")
+        envs_config = SandboxCreateConfiguration(
+            name="sandbox-with-envs",
+            image="blaxel/prod-base:latest",
+            memory=2048,
+            envs=[
+                {"name": "NODE_ENV", "value": "development"},
+                {"name": "DEBUG", "value": "true"},
+                {"name": "API_KEY", "value": "secret123"},
+                {"name": "PORT", "value": "3000"},
+            ],
+        )
+        sandbox = await SandboxInstance.create(envs_config)
+        await sandbox.wait()
+        print(f"✅ Created sandbox with envs: {sandbox.metadata.name}")
+        print(f"   Image: {sandbox.spec.runtime.image}")
+        print(f"   Memory: {sandbox.spec.runtime.memory}")
+        sandbox = await SandboxInstance.get(sandbox.metadata.name)
+        if sandbox.spec.runtime.envs:
+            print(f"   Envs: {len(sandbox.spec.runtime.envs)} configured")
+            for env in sandbox.spec.runtime.envs:
+                print(f"     - {env['name']}: {env['value']}")
+        print(await sandbox.fs.ls("/blaxel/"))
+        await SandboxInstance.delete(sandbox.metadata.name)
+        print("✅ Deleted envs sandbox")
+
+        # Test 10: Create sandbox with environment variables using dict syntax
+        print("\nTest 10: Create sandbox with envs using dict syntax...")
+        sandbox = await SandboxInstance.create({
+            "name": "sandbox-with-envs-dict",
+            "image": "blaxel/prod-base:latest",
+            "memory": 2048,
+            "envs": [
+                {"name": "ENVIRONMENT", "value": "test"},
+                {"name": "VERSION", "value": "1.0.0"},
+            ]
+        })
+        await sandbox.wait()
+        print(f"✅ Created sandbox with envs dict: {sandbox.metadata.name}")
+        print(f"   Image: {sandbox.spec.runtime.image}")
+        print(f"   Memory: {sandbox.spec.runtime.memory}")
+        sandbox = await SandboxInstance.get(sandbox.metadata.name)
+        if sandbox.spec.runtime.envs:
+            print(f"   Envs: {len(sandbox.spec.runtime.envs)} configured")
+            for env in sandbox.spec.runtime.envs:
+                print(f"     - {env['name']}: {env['value']}")
+        print(await sandbox.fs.ls("/blaxel/"))
+        await SandboxInstance.delete(sandbox.metadata.name)
+        print("✅ Deleted envs dict sandbox")
+
         print("\n🎉 All sandbox creation tests passed!")
 
     except Exception as e:
