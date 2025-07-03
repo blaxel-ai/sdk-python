@@ -63,7 +63,7 @@ livekit = [
 
 # LlamaIndex module
 llamaindex = [
-  "llama-index>=0.12.37",
+  "llama-index>=0.12.46",
   "llama-index-llms-anthropic>=0.6.14",
   "llama-index-llms-cerebras>=0.2.2",
   "llama-index-llms-cohere>=0.4.1",

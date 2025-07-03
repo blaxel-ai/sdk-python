@@ -25,11 +25,6 @@ Classes
     Args:
         port: The port to listen on (defaults to 8080 or BL_SERVER_PORT env var)
 
-    ### Class variables
-
-    `spans: Dict[str, opentelemetry.trace.span.Span]`
-    :
-
     ### Methods
 
     `websocket_server(self)`

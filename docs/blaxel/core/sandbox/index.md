@@ -3,15 +3,21 @@ Module blaxel.core.sandbox
 
 Sub-modules
 -----------
-* blaxel.core.sandbox.base
+* blaxel.core.sandbox.action
 * blaxel.core.sandbox.client
 * blaxel.core.sandbox.filesystem
+* blaxel.core.sandbox.network
 * blaxel.core.sandbox.preview
 * blaxel.core.sandbox.process
 * blaxel.core.sandbox.sandbox
+* blaxel.core.sandbox.session
+* blaxel.core.sandbox.types
 
 Classes
 -------
+
+`CopyResponse(message: str, source: str, destination: str)`
+:   
 
 `Sandbox(events: blaxel.core.client.types.Unset | list['CoreEvent'] = <blaxel.core.client.types.Unset object>, metadata: blaxel.core.client.types.Unset | ForwardRef('Metadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('SandboxSpec') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Micro VM for running agentic tasks
@@ -54,16 +60,38 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`SandboxFileSystem(sandbox)`
+`SandboxConfiguration(sandbox: blaxel.core.client.models.sandbox.Sandbox, force_url: str | None = None, headers: Dict[str, str] | None = None, params: Dict[str, str] | None = None)`
+:   
+
+    ### Instance variables
+
+    `metadata`
+    :
+
+    `spec`
+    :
+
+    `status`
+    :
+
+`SandboxCreateConfiguration(name: str | None = None, image: str | None = None, memory: int | None = None, ports: List[blaxel.core.client.models.port.Port] | List[Dict[str, Any]] | None = None, envs: List[Dict[str, str]] | None = None)`
+:   Simplified configuration for creating sandboxes with default values.
+
+    ### Static methods
+
+    `from_dict(data: Dict[str, Any]) ‑> blaxel.core.sandbox.types.SandboxCreateConfiguration`
+    :
+
+`SandboxFileSystem(sandbox_config: blaxel.core.sandbox.types.SandboxConfiguration)`
 :   
 
     ### Ancestors (in MRO)
 
-    * blaxel.core.sandbox.base.SandboxHandleBase
+    * blaxel.core.sandbox.action.SandboxAction
 
     ### Methods
 
-    `cp(self, source: str, destination: str) ‑> Dict[str, str]`
+    `cp(self, source: str, destination: str) ‑> blaxel.core.sandbox.types.CopyResponse`
     :
 
     `format_path(self, path: str) ‑> str`
@@ -81,7 +109,24 @@ Classes
     `rm(self, path: str, recursive: bool = False) ‑> blaxel.core.sandbox.client.models.success_response.SuccessResponse`
     :
 
+    `watch(self, path: str, callback: Callable[[blaxel.core.sandbox.types.WatchEvent], None], options: Dict[str, Any] | None = None) ‑> Dict[str, Callable]`
+    :   Watch for file system changes.
+
     `write(self, path: str, content: str) ‑> blaxel.core.sandbox.client.models.success_response.SuccessResponse`
+    :
+
+    `write_binary(self, path: str, content: bytes | bytearray) ‑> blaxel.core.sandbox.client.models.success_response.SuccessResponse`
+    :   Write binary content to a file.
+
+    `write_tree(self, files: List[blaxel.core.sandbox.types.SandboxFilesystemFile | Dict[str, Any]], destination_path: str | None = None) ‑> blaxel.core.sandbox.client.models.directory.Directory`
+    :   Write multiple files in a tree structure.
+
+`SandboxFilesystemFile(path: str, content: str)`
+:   
+
+    ### Static methods
+
+    `from_dict(data: Dict[str, Any]) ‑> blaxel.core.sandbox.types.SandboxFilesystemFile`
     :
 
 `SandboxInstance(sandbox: blaxel.core.client.models.sandbox.Sandbox)`
@@ -89,11 +134,17 @@ Classes
 
     ### Static methods
 
-    `create(sandbox: blaxel.core.client.models.sandbox.Sandbox) ‑> blaxel.core.sandbox.sandbox.SandboxInstance`
+    `create(sandbox: blaxel.core.client.models.sandbox.Sandbox | blaxel.core.sandbox.types.SandboxCreateConfiguration | Dict[str, Any] | None = None) ‑> blaxel.core.sandbox.sandbox.SandboxInstance`
     :
+
+    `create_if_not_exists(sandbox: blaxel.core.client.models.sandbox.Sandbox | blaxel.core.sandbox.types.SandboxCreateConfiguration | Dict[str, Any]) ‑> blaxel.core.sandbox.sandbox.SandboxInstance`
+    :   Create a sandbox if it doesn't exist, otherwise return existing.
 
     `delete(sandbox_name: str) ‑> blaxel.core.client.models.sandbox.Sandbox`
     :
+
+    `from_session(session: blaxel.core.sandbox.types.SessionWithToken | Dict[str, Any]) ‑> blaxel.core.sandbox.sandbox.SandboxInstance`
+    :   Create a sandbox instance from a session with token.
 
     `get(sandbox_name: str) ‑> blaxel.core.sandbox.sandbox.SandboxInstance`
     :
@@ -130,7 +181,7 @@ Classes
 
     ### Methods
 
-    `create(self, preview: blaxel.core.client.models.preview.Preview) ‑> blaxel.core.sandbox.preview.SandboxPreview`
+    `create(self, preview: blaxel.core.client.models.preview.Preview | Dict[str, Any]) ‑> blaxel.core.sandbox.preview.SandboxPreview`
     :   Create a new preview.
 
     `delete(self, preview_name: str) ‑> dict`
@@ -142,16 +193,16 @@ Classes
     `list(self) ‑> List[blaxel.core.sandbox.preview.SandboxPreview]`
     :   List all previews for the sandbox.
 
-`SandboxProcess(sandbox: blaxel.core.client.models.sandbox.Sandbox)`
+`SandboxProcess(sandbox_config: blaxel.core.sandbox.types.SandboxConfiguration)`
 :   
 
     ### Ancestors (in MRO)
 
-    * blaxel.core.sandbox.base.SandboxHandleBase
+    * blaxel.core.sandbox.action.SandboxAction
 
     ### Methods
 
-    `exec(self, process: blaxel.core.sandbox.client.models.process_request.ProcessRequest) ‑> blaxel.core.sandbox.client.models.process_response.ProcessResponse`
+    `exec(self, process: blaxel.core.sandbox.client.models.process_request.ProcessRequest | Dict[str, Any], on_log: Callable[[str], None] | None = None) ‑> blaxel.core.sandbox.client.models.process_response.ProcessResponse`
     :
 
     `get(self, identifier: str) ‑> blaxel.core.sandbox.client.models.process_response.ProcessResponse`
@@ -163,8 +214,33 @@ Classes
     `list(self) ‑> list[blaxel.core.sandbox.client.models.process_response.ProcessResponse]`
     :
 
-    `logs(self, identifier: str, type_: str = 'stdout') ‑> str`
+    `logs(self, identifier: str, log_type: Literal['stdout', 'stderr', 'all'] = 'all') ‑> str`
     :
 
     `stop(self, identifier: str) ‑> blaxel.core.sandbox.client.models.success_response.SuccessResponse`
     :
+
+    `stream_logs(self, identifier: str, options: Dict[str, Callable[[str], None]] | None = None) ‑> Dict[str, Callable[[], None]]`
+    :   Stream logs from a process with callbacks for different output types.
+
+    `wait(self, identifier: str, max_wait: int = 60000, interval: int = 1000) ‑> blaxel.core.sandbox.client.models.process_response.ProcessResponse`
+    :   Wait for a process to complete.
+
+`SessionCreateOptions(expires_at: datetime.datetime | None = None, response_headers: Dict[str, str] | None = None, request_headers: Dict[str, str] | None = None)`
+:   
+
+    ### Static methods
+
+    `from_dict(data: Dict[str, Any]) ‑> blaxel.core.sandbox.types.SessionCreateOptions`
+    :
+
+`SessionWithToken(name: str, url: str, token: str, expires_at: datetime.datetime)`
+:   
+
+    ### Static methods
+
+    `from_dict(data: Dict[str, Any]) ‑> blaxel.core.sandbox.types.SessionWithToken`
+    :
+
+`WatchEvent(op: str, path: str, name: str, content: str | None = None)`
+:

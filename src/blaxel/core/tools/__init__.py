@@ -22,12 +22,15 @@ if os.getenv("BL_SERVER_PORT"):
 
 
 class PersistentWebSocket:
-    def __init__(
-        self, url: str, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True
-    ):
-        self.url = url
+    def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
         self.name = name
         self.timeout = timeout
+        self.type = "function"
+        self.pluralType = "functions"
+        if name.startswith("sandbox/") or name.startswith("sandboxes/"):
+            self.name = name.split("/")[1]
+            self.type = "sandbox"
+            self.pluralType = "sandboxes"
         self.session_exit_stack = AsyncExitStack()
         self.client_exit_stack = AsyncExitStack()
         self.session: ClientSession = None
@@ -37,6 +40,42 @@ class PersistentWebSocket:
             self.timeout_enabled = False
         else:
             self.timeout_enabled = timeout_enabled
+        self.use_fallback_url = False
+
+    @property
+    def _internal_url(self):
+        """Get the internal URL for the agent using a hash of workspace and agent name."""
+        hash = get_global_unique_hash(settings.workspace, self.type, self.name)
+        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
+
+    @property
+    def _forced_url(self):
+        """Get the forced URL from environment variables if set."""
+        return get_forced_url(self.type, self.name)
+
+    @property
+    def _external_url(self):
+        return f"{settings.run_url}/{settings.workspace}/{self.pluralType}/{self.name}"
+
+    @property
+    def _fallback_url(self):
+        if self._external_url != self._url:
+            return self._external_url
+        return None
+
+    @property
+    def _url(self):
+        if self.use_fallback_url:
+            return self._fallback_url
+        logger.debug(f"Getting URL for {self.name}")
+        if self._forced_url:
+            logger.debug(f"Forced URL found for {self.name}: {self._forced_url}")
+            return self._forced_url
+        if settings.run_internal_hostname:
+            logger.debug(f"Internal hostname found for {self.name}: {self._internal_url}")
+            return self._internal_url
+        logger.debug(f"No URL found for {self.name}, using external URL")
+        return self._external_url
 
     def with_metas(self, metas: dict[str, Any]):
         self.metas = metas
@@ -44,7 +83,7 @@ class PersistentWebSocket:
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         try:
-            await self._initialize()
+            await self.initialize()
             if self.timeout_enabled:
                 self._remove_timer()
             logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
@@ -70,7 +109,7 @@ class PersistentWebSocket:
 
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
-        await self._initialize()
+        await self.initialize()
         logger.debug(f"Initialized websocket for {self.name}")
         if self.timeout_enabled:
             self._remove_timer()
@@ -87,17 +126,23 @@ class PersistentWebSocket:
     def get_tools(self):
         return self.tools_cache
 
-    async def _initialize(self):
+    async def initialize(self, fallback: bool = False):
         if not self.session:
-            logger.debug(f"Initializing websocket client for {self.url}")
-            read, write = await self.client_exit_stack.enter_async_context(
-                websocket_client(self.url, settings.headers)
-            )
-            self.session = cast(
-                ClientSession,
-                await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
-            )
-            await self.session.initialize()
+            try:
+                logger.debug(f"Initializing websocket client for {self._url}")
+                read, write = await self.client_exit_stack.enter_async_context(
+                    websocket_client(self._url, settings.headers)
+                )
+                self.session = cast(
+                    ClientSession,
+                    await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
+                )
+                await self.session.initialize()
+            except Exception as e:
+                if not fallback:
+                    self.use_fallback_url = True
+                    return await self.initialize(fallback=True)
+                raise e
 
     def _reset_timer(self):
         self._remove_timer()
@@ -113,7 +158,7 @@ class PersistentWebSocket:
         self.session = None
 
     async def _close(self):
-        logger.debug(f"Closing websocket client {self.url}")
+        logger.debug(f"Closing websocket client {self._url}")
         if self.session:
             self.session = None
             try:
@@ -129,8 +174,6 @@ class PersistentWebSocket:
 
 def convert_mcp_tool_to_blaxel_tool(
     websocket_client: PersistentWebSocket,
-    name: str,
-    url: str,
     tool: MCPTool,
 ) -> Tool:
     """Convert an MCP tool to a blaxel tool.
@@ -193,34 +236,6 @@ class BlTools:
         self.timeout = timeout
         self.timeout_enabled = timeout_enabled
 
-    def _internal_url(self, name: str):
-        """Get the internal URL for the agent using a hash of workspace and agent name."""
-        hash = get_global_unique_hash(settings.workspace, "function", name)
-        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
-
-    def _forced_url(self, name: str):
-        """Get the forced URL from environment variables if set."""
-        return get_forced_url("function", name)
-
-    def _external_url(self, name: str):
-        return f"{settings.run_url}/{settings.workspace}/functions/{name}"
-
-    def _fallback_url(self, name: str):
-        if self._external_url(name) != self._url(name):
-            return self._external_url(name)
-        return None
-
-    def _url(self, name: str):
-        logger.debug(f"Getting URL for {name}")
-        if self._forced_url(name):
-            logger.debug(f"Forced URL found for {name}: {self._forced_url(name)}")
-            return self._forced_url(name)
-        if settings.run_internal_hostname:
-            logger.debug(f"Internal hostname found for {name}: {self._internal_url(name)}")
-            return self._internal_url(name)
-        logger.debug(f"No URL found for {name}, using external URL")
-        return self._external_url(name)
-
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
         all_tools: list[Tool] = []
@@ -228,47 +243,21 @@ class BlTools:
             toolPersistances.get(name).with_metas(self.metas)
             websocket = toolPersistances.get(name)
             tools = websocket.get_tools()
-            converted_tools = [
-                convert_mcp_tool_to_blaxel_tool(websocket, name, self._url(name), tool)
-                for tool in tools
-            ]
+            converted_tools = [convert_mcp_tool_to_blaxel_tool(websocket, tool) for tool in tools]
             all_tools.extend(converted_tools)
         return all_tools
 
     async def connect(self, name: str):
         # Create and store the connection
-        try:
-            url = self._url(name)
-            await self.connect_with_url(name, url)
-        except Exception as e:
-            if not self._fallback_url(name):
-                raise e
-            logger.warning(f"Error connecting to {name}: {e}\n{traceback.format_exc()}")
-            url = self._fallback_url(name)
-            try:
-                await self.connect_with_url(name, url)
-            except Exception as e:
-                logger.error(
-                    f"Error connecting to {name} with fallback URL: {e}\n{traceback.format_exc()}"
-                )
-                raise e
-
-    async def connect_with_url(self, name: str, url: str) -> None:
-        """Initialize a session and load tools from it.
-
-        Args:
-            name: Name to identify this server connection
-            url: The URL to connect to
-        """
-        logger.debug(f"Initializing session and loading tools from {url}")
+        logger.debug("Initializing session and loading tools")
 
         if not toolPersistances.get(name):
             logger.debug(f"Creating new persistent websocket for {name}")
             toolPersistances[name] = PersistentWebSocket(
-                url, name, timeout=self.timeout, timeout_enabled=self.timeout_enabled
+                name, timeout=self.timeout, timeout_enabled=self.timeout_enabled
             )
             await toolPersistances[name].list_tools()
-        logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools from {url}")
+        logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools")
         return toolPersistances[name].with_metas(self.metas)
 
     async def initialize(self) -> "BlTools":

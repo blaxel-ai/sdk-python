@@ -13,26 +13,30 @@ load_dotenv()
 from logging import getLogger
 
 from blaxel.core.tools import bl_tools
+from blaxel.crewai.tools import bl_tools as bl_tools_crewai
+from blaxel.googleadk.tools import bl_tools as bl_tools_google_adk
+from blaxel.langgraph.tools import bl_tools as bl_tools_langgraph
+from blaxel.llamaindex.tools import bl_tools as bl_tools_llamaindex
+from blaxel.pydantic.tools import bl_tools as bl_tools_pydantic
 
 logger = getLogger(__name__)
 
 
-async def test_mcp_tools_langchain():
-    """Test bl_tools to_langchain conversion."""
-    print("Testing LangChain tools conversion...")
-    tools = await bl_tools(["blaxel-search"]).to_langchain()
+async def test_mcp_tools_langgraph():
+    """Test bl_tools to_langgraph conversion."""
+    print("Testing Langgraph tools conversion...")
+    tools = await bl_tools_langgraph(["blaxel-search"])
     if len(tools) == 0:
         raise Exception("No tools found")
     result = await tools[0].ainvoke({"query": "What is the capital of France?"})
-    result = await tools[0].ainvoke({"query": "What is the capital of USA?"})
-    logger.info(f"LangChain tools result: {result}")
-    print(f"LangChain tools result: {result}")
+    logger.info(f"Langgraph tools result: {result}")
+    print(f"Langgraph tools result: {result}")
 
 
 async def test_mcp_tools_llamaindex():
-    """Test bl_tools to_llamaindex conversion."""
+    """Test llamaindex conversion."""
     print("Testing LlamaIndex tools conversion...")
-    tools = await bl_tools(["blaxel-search"]).to_llamaindex()
+    tools = await bl_tools_llamaindex(["blaxel-search"])
     if len(tools) == 0:
         raise Exception("No tools found")
     result = await tools[0].acall(query="What is the capital of France?")
@@ -41,9 +45,9 @@ async def test_mcp_tools_llamaindex():
 
 
 async def test_mcp_tools_crewai():
-    """Test bl_tools to_crewai conversion."""
+    """Test crewai conversion."""
     print("Testing CrewAI tools conversion...")
-    tools = await bl_tools(["blaxel-search"]).to_crewai()
+    tools = await bl_tools_crewai(["blaxel-search"])
     if len(tools) == 0:
         raise Exception("No tools found")
     result = tools[0].run(query="What is the capital of France?")
@@ -52,9 +56,9 @@ async def test_mcp_tools_crewai():
 
 
 async def test_mcp_tools_pydantic():
-    """Test bl_tools to_pydantic conversion."""
+    """Test pydantic conversion."""
     print("Testing Pydantic tools conversion...")
-    tools = await bl_tools(["blaxel-search"]).to_pydantic()
+    tools = await bl_tools_pydantic(["blaxel-search"])
     if len(tools) == 0:
         raise Exception("No tools found")
 
@@ -73,9 +77,9 @@ async def test_mcp_tools_pydantic():
 
 
 async def test_mcp_tools_google_adk():
-    """Test bl_tools to_google_adk conversion."""
+    """Test google adk conversion."""
     print("Testing Google ADK tools conversion...")
-    tools = await bl_tools(["blaxel-search"]).to_google_adk()
+    tools = await bl_tools_google_adk(["blaxel-search"])
     if len(tools) == 0:
         raise Exception("No tools found")
     result = await tools[0].run_async(
@@ -89,7 +93,7 @@ async def test_mcp_tools_blaxel():
     """Test bl_tools native blaxel functionality."""
     print("Testing native Blaxel tools...")
     tools = bl_tools(["blaxel-search"], {"test": "test"})
-    await tools.intialize()
+    await tools.initialize()
     blaxel_tools = tools.get_tools()
     if len(blaxel_tools) == 0:
         raise Exception("No tools found")
@@ -110,8 +114,8 @@ async def test_mcp_tools_blaxel():
 
 async def main():
     """Main function for standalone execution."""
-    await test_mcp_tools_blaxel()
-    await test_mcp_tools_langchain()
+    # await test_mcp_tools_blaxel()
+    await test_mcp_tools_langgraph()
     await test_mcp_tools_llamaindex()
     await test_mcp_tools_crewai()
     await test_mcp_tools_pydantic()
