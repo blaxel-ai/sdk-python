@@ -35,20 +35,13 @@ Classes
     `connect(self, name: str)`
     :
 
-    `connect_with_url(self, name: str, url: str) ‑> None`
-    :   Initialize a session and load tools from it.
-        
-        Args:
-            name: Name to identify this server connection
-            url: The URL to connect to
-
     `get_tools(self) ‑> list[blaxel.core.tools.types.Tool]`
     :   Get a list of all tools from all connected servers.
 
     `initialize(self) ‑> blaxel.core.tools.BlTools`
     :
 
-`PersistentWebSocket(url: str, name: str, timeout: int = 1, timeout_enabled: bool = True)`
+`PersistentWebSocket(name: str, timeout: int = 1, timeout_enabled: bool = True)`
 :   
 
     ### Methods
@@ -57,6 +50,9 @@ Classes
     :
 
     `get_tools(self)`
+    :
+
+    `initialize(self, fallback: bool = False)`
     :
 
     `list_tools(self)`

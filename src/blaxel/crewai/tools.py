@@ -19,8 +19,8 @@ class CrewAITool(BaseTool):
     def _run(self, *args, **kwargs):
         return self._tool.sync_coroutine(**kwargs)
 
+
 async def bl_tools(tools_names: list[str], **kwargs) -> list[BaseTool]:
     tools = bl_tools_core(tools_names, **kwargs)
     await tools.initialize()
-    return [CrewAITool(tool) for tool in tools.get_tools()]
     return [CrewAITool(tool) for tool in tools.get_tools()]

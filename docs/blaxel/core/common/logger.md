@@ -6,6 +6,9 @@ to set up logging configurations for Blaxel applications.
 Functions
 ---------
 
+`get_current_span()`
+:   Fallback function when opentelemetry is not available.
+
 `init_logger(log_level: str)`
 :   Initializes the logging configuration for Blaxel.
     

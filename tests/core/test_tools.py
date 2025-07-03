@@ -34,19 +34,6 @@ async def test_bl_tools_with_timeout():
 
 
 @pytest.mark.asyncio
-async def test_bl_tools_url_methods():
-    """Test tools URL generation methods."""
-    tools = bl_tools(["test-function"])
-
-    # Test URL methods exist
-    assert hasattr(tools, "_url")
-    assert hasattr(tools, "_forced_url")
-    assert hasattr(tools, "_external_url")
-    assert hasattr(tools, "_internal_url")
-    assert hasattr(tools, "_fallback_url")
-
-
-@pytest.mark.asyncio
 @patch("blaxel.core.tools.websocket_client")
 async def test_bl_tools_framework_conversions(mock_websocket):
     """Test tools framework conversions."""
@@ -70,7 +57,6 @@ async def test_bl_tools_core_methods():
     assert hasattr(tools, "get_tools")
     assert hasattr(tools, "initialize")
     assert hasattr(tools, "connect")
-    assert hasattr(tools, "connect_with_url")
 
 
 @pytest.mark.asyncio

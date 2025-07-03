@@ -13,3 +13,9 @@ Sub-modules
 * blaxel.openai
 * blaxel.pydantic
 * blaxel.telemetry
+
+Functions
+---------
+
+`autoload() ‑> None`
+:

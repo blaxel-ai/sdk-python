@@ -1,7 +1,7 @@
 ARGS:= $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 install:
-	uv sync --all-packages --all-extras --dev
+	uv sync --all-groups --all-packages --all-extras
 
 sdk-sandbox:
 	cp ../sandbox/sandbox-api/docs/openapi.yml ./definition.yml
@@ -33,7 +33,7 @@ sdk: sdk-sandbox sdk-controlplane
 
 doc:
 	rm -rf docs
-	uv run pdoc blaxel-docs src/* -o docs --force --skip-errors
+	uv run pdoc blaxel src/* -o docs --force --skip-errors
 
 lint:
 	uv run ruff check --fix

@@ -5,12 +5,12 @@ Functions
 ---------
 
 `to_utc_z(dt: datetime.datetime) ‑> str`
-:   
+:   Convert datetime to UTC Z format string.
 
 Classes
 -------
 
-`SandboxPreview(preview: blaxel.core.client.models.preview.Preview)`
+`SandboxPreview(preview: blaxel.core.client.models.preview.Preview, sandbox_name: str = '')`
 :   Represents a sandbox preview with its metadata and tokens.
 
     ### Instance variables
@@ -38,15 +38,12 @@ Classes
     `value: str`
     :
 
-`SandboxPreviewTokens(preview: blaxel.core.client.models.preview.Preview)`
+`SandboxPreviewTokens(preview: blaxel.core.client.models.preview.Preview, sandbox_name: str)`
 :   Manages preview tokens for a sandbox preview.
 
     ### Instance variables
 
     `preview_name: str`
-    :
-
-    `resource_name: str`
     :
 
     ### Methods
@@ -70,7 +67,7 @@ Classes
 
     ### Methods
 
-    `create(self, preview: blaxel.core.client.models.preview.Preview) ‑> blaxel.core.sandbox.preview.SandboxPreview`
+    `create(self, preview: blaxel.core.client.models.preview.Preview | Dict[str, Any]) ‑> blaxel.core.sandbox.preview.SandboxPreview`
     :   Create a new preview.
 
     `delete(self, preview_name: str) ‑> dict`

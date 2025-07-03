@@ -13,7 +13,7 @@ Sub-modules
 Classes
 -------
 
-`Client(base_url: str = '', auth: httpx.Auth = None, *, raise_on_unexpected_status: bool = True, cookies: dict[str, str] = _Nothing.NOTHING, headers: dict[str, str] = _Nothing.NOTHING, timeout: openai.Timeout | None = None, verify_ssl: str | bool | ssl.SSLContext = True, follow_redirects: bool = False, httpx_args: dict[str, typing.Any] = _Nothing.NOTHING)`
+`Client(base_url: str = '', auth: httpx.Auth = None, *, raise_on_unexpected_status: bool = True, cookies: dict[str, str] = _Nothing.NOTHING, headers: dict[str, str] = _Nothing.NOTHING, timeout: httpx.Timeout | None = None, verify_ssl: str | bool | ssl.SSLContext = True, follow_redirects: bool = False, httpx_args: dict[str, typing.Any] = _Nothing.NOTHING)`
 :   A Client which has been authenticated for use on secured endpoints
     
     The following are accepted as keyword arguments and will be used to construct httpx Clients internally:
@@ -80,5 +80,5 @@ Classes
     `with_headers(self, headers: dict[str, str]) ‑> blaxel.core.sandbox.client.client.Client`
     :   Get a new client matching this one with additional headers
 
-    `with_timeout(self, timeout: openai.Timeout) ‑> blaxel.core.sandbox.client.client.Client`
+    `with_timeout(self, timeout: httpx.Timeout) ‑> blaxel.core.sandbox.client.client.Client`
     :   Get a new client matching this one with a new timeout (in seconds)
