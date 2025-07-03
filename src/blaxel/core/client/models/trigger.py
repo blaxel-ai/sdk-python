@@ -17,7 +17,7 @@ class Trigger:
     """Trigger configuration
 
     Attributes:
-        configuration (Union[Unset, TriggerConfiguration]): The configuration of the trigger
+        configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
         id (Union[Unset, str]): The id of the trigger
         type_ (Union[Unset, str]): The type of trigger, can be http or http-async
     """

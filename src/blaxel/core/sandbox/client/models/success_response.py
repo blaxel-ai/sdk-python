@@ -1,7 +1,9 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="SuccessResponse")
 
@@ -11,11 +13,11 @@ class SuccessResponse:
     """
     Attributes:
         message (str):  Example: File created successfully.
-        path (str):  Example: /path/to/file.
+        path (Union[Unset, str]):  Example: /path/to/file.
     """
 
     message: str
-    path: str
+    path: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -28,9 +30,10 @@ class SuccessResponse:
         field_dict.update(
             {
                 "message": message,
-                "path": path,
             }
         )
+        if path is not UNSET:
+            field_dict["path"] = path
 
         return field_dict
 
@@ -41,7 +44,7 @@ class SuccessResponse:
         d = src_dict.copy()
         message = d.pop("message")
 
-        path = d.pop("path")
+        path = d.pop("path", UNSET)
 
         success_response = cls(
             message=message,

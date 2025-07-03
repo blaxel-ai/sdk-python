@@ -1,20 +1,50 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="TriggerConfiguration")
 
 
 @_attrs_define
 class TriggerConfiguration:
-    """The configuration of the trigger"""
+    """Trigger configuration
 
+    Attributes:
+        authentication_type (Union[Unset, str]): The authentication type of the trigger
+        path (Union[Unset, str]): The path of the trigger
+        retry (Union[Unset, int]): The retry of the trigger
+        schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * *
+    """
+
+    authentication_type: Union[Unset, str] = UNSET
+    path: Union[Unset, str] = UNSET
+    retry: Union[Unset, int] = UNSET
+    schedule: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        authentication_type = self.authentication_type
+
+        path = self.path
+
+        retry = self.retry
+
+        schedule = self.schedule
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
+        field_dict.update({})
+        if authentication_type is not UNSET:
+            field_dict["authenticationType"] = authentication_type
+        if path is not UNSET:
+            field_dict["path"] = path
+        if retry is not UNSET:
+            field_dict["retry"] = retry
+        if schedule is not UNSET:
+            field_dict["schedule"] = schedule
 
         return field_dict
 
@@ -23,7 +53,20 @@ class TriggerConfiguration:
         if not src_dict:
             return None
         d = src_dict.copy()
-        trigger_configuration = cls()
+        authentication_type = d.pop("authenticationType", UNSET)
+
+        path = d.pop("path", UNSET)
+
+        retry = d.pop("retry", UNSET)
+
+        schedule = d.pop("schedule", UNSET)
+
+        trigger_configuration = cls(
+            authentication_type=authentication_type,
+            path=path,
+            retry=retry,
+            schedule=schedule,
+        )
 
         trigger_configuration.additional_properties = d
         return trigger_configuration

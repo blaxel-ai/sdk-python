@@ -4,7 +4,7 @@ install:
 	uv sync --all-groups --all-packages --all-extras
 
 sdk-sandbox:
-	cp ../sandbox/sandbox-api/docs/openapi.yml ./definition.yml
+	cp ../../sandbox/sandbox-api/docs/openapi.yml ./definition.yml
 	rm -rf src/blaxel/core/sandbox/client/api src/blaxel/core/sandbox/client/models
 	openapi-python-client generate \
 		--path=definition.yml \
@@ -17,7 +17,7 @@ sdk-sandbox:
 	uv run ruff check --fix
 
 sdk-controlplane:
-	cp ../controlplane/api/api/definitions/controlplane.yml ./definition.yml
+	cp ../../controlplane/api/api/definitions/controlplane.yml ./definition.yml
 	rm -rf src/blaxel/core/client/api src/blaxel/core/client/models
 	openapi-python-client generate \
 		--path=definition.yml \

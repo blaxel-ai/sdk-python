@@ -71,8 +71,23 @@ class SandboxSessions:
         threshold = now + timedelta(seconds=delta_seconds)
 
         if all_sessions:
+            all_sessions.sort(
+                key=lambda s: datetime.fromisoformat(s.expires_at)
+                if isinstance(s.expires_at, str)
+                else s.expires_at
+            )
             session_data = all_sessions[0]
-            if session_data.expires_at < threshold:
+            expires_at = datetime.fromisoformat(session_data.expires_at)
+
+            # Make both datetimes timezone-aware or timezone-naive for comparison
+            if expires_at.tzinfo is not None and threshold.tzinfo is None:
+                # expires_at is timezone-aware, make threshold timezone-aware too
+                threshold = threshold.replace(tzinfo=expires_at.tzinfo)
+            elif expires_at.tzinfo is None and threshold.tzinfo is not None:
+                # threshold is timezone-aware, make expires_at timezone-aware too
+                expires_at = expires_at.replace(tzinfo=threshold.tzinfo)
+
+            if expires_at < threshold:
                 await self.delete(session_data.name)
                 session_data = await self.create(options)
         else:
