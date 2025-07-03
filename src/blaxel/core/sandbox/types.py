@@ -113,11 +113,13 @@ class SandboxCreateConfiguration:
         image: Optional[str] = None,
         memory: Optional[int] = None,
         ports: Optional[Union[List[Port], List[Dict[str, Any]]]] = None,
+        envs: Optional[List[Dict[str, str]]] = None,
     ):
         self.name = name
         self.image = image
         self.memory = memory
         self.ports = ports
+        self.envs = envs
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -126,6 +128,7 @@ class SandboxCreateConfiguration:
             image=data.get("image"),
             memory=data.get("memory"),
             ports=data.get("ports"),
+            envs=data.get("envs"),
         )
 
     def _normalize_ports(self) -> Optional[List[Port]]:
@@ -150,3 +153,20 @@ class SandboxCreateConfiguration:
                 raise ValueError(f"Invalid port type: {type(port)}. Expected Port object or dict.")
 
         return port_objects
+
+    def _normalize_envs(self) -> Optional[List[Dict[str, str]]]:
+        """Convert envs to list of dicts with name and value keys."""
+        if not self.envs:
+            return None
+
+        env_objects = []
+        for env in self.envs:
+            if isinstance(env, dict):
+                # Validate that the dict has the required keys
+                if "name" not in env or "value" not in env:
+                    raise ValueError(f"Environment variable dict must have 'name' and 'value' keys: {env}")
+                env_objects.append({"name": env["name"], "value": env["value"]})
+            else:
+                raise ValueError(f"Invalid env type: {type(env)}. Expected dict with 'name' and 'value' keys.")
+
+        return env_objects
