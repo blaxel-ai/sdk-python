@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from ..models.model_private_cluster import ModelPrivateCluster
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
+    from ..models.trigger import Trigger
 
 
 T = TypeVar("T", bound="JobSpec")
@@ -30,6 +31,7 @@ class JobSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
     configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
@@ -41,6 +43,7 @@ class JobSpec:
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
+    triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -98,6 +101,16 @@ class JobSpec:
 
         sandbox = self.sandbox
 
+        triggers: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.triggers, Unset):
+            triggers = []
+            for componentsschemas_triggers_item_data in self.triggers:
+                if type(componentsschemas_triggers_item_data) is dict:
+                    componentsschemas_triggers_item = componentsschemas_triggers_item_data
+                else:
+                    componentsschemas_triggers_item = componentsschemas_triggers_item_data.to_dict()
+                triggers.append(componentsschemas_triggers_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -119,6 +132,8 @@ class JobSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
+        if triggers is not UNSET:
+            field_dict["triggers"] = triggers
 
         return field_dict
 
@@ -129,6 +144,7 @@ class JobSpec:
         from ..models.model_private_cluster import ModelPrivateCluster
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
+        from ..models.trigger import Trigger
 
         if not src_dict:
             return None
@@ -176,6 +192,13 @@ class JobSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
+        triggers = []
+        _triggers = d.pop("triggers", UNSET)
+        for componentsschemas_triggers_item_data in _triggers or []:
+            componentsschemas_triggers_item = Trigger.from_dict(componentsschemas_triggers_item_data)
+
+            triggers.append(componentsschemas_triggers_item)
+
         job_spec = cls(
             configurations=configurations,
             enabled=enabled,
@@ -186,6 +209,7 @@ class JobSpec:
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
+            triggers=triggers,
         )
 
         job_spec.additional_properties = d
