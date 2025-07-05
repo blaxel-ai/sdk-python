@@ -163,11 +163,21 @@ async def check_usage(sandbox: SandboxInstance) -> None:
 
     # Check disk space
     disk_space = await sandbox.process.exec(
-        name="disk-space", command="df -m", working_dir="/home/user"
+        {
+            "name": "disk-space",
+            "command": "df -m",
+            "working_dir": "/home/user",
+        }
     )
 
     # Check memory usage
-    memory = await sandbox.process.exec(name="memory", command="free -m", working_dir="/home/user")
+    memory = await sandbox.process.exec(
+        {
+            "name": "memory",
+            "command": "free -m",
+            "working_dir": "/home/user",
+        }
+    )
 
     # Get logs
     memory_logs = await sandbox.process.logs(memory.pid, "all")

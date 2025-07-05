@@ -3,7 +3,7 @@ from logging import getLogger
 
 from utils import create_or_get_sandbox
 
-from blaxel.core.sandbox import SandboxInstance
+from blaxel.core.sandbox import ProcessRequestWithLog, SandboxInstance
 from blaxel.core.sandbox.client.models.process_request import ProcessRequest
 
 logger = getLogger(__name__)
@@ -60,12 +60,13 @@ async def test_on_log_callback(sandbox: SandboxInstance):
         print(f"   📝 Log received: {message!r}")  # Show repr to see exact content
 
     # Create a process that outputs logs over time
-    process_request = ProcessRequest(
-        command='sh -c "echo First message; sleep 1; echo Second message; sleep 1; echo Third message"'
+    process_request = ProcessRequestWithLog(
+        command='sh -c "echo First message; sleep 1; echo Second message; sleep 1; echo Third message"',
+        on_log=log_collector,
     )
 
     # Execute with on_log callback (name will be auto-generated)
-    response = await sandbox.process.exec(process_request, on_log=log_collector)
+    response = await sandbox.process.exec(process_request)
 
     # Check that a name was generated
     assert response.name is not None
@@ -104,14 +105,15 @@ async def test_combined_features(sandbox: SandboxInstance):
         realtime_logs.append(message)
 
     # Create a process with a specific name
-    process_request = ProcessRequest(
+    process_request = ProcessRequestWithLog(
         name="combined-test",
         command='sh -c "echo Starting combined test; sleep 1; echo Middle of test; sleep 1; echo Test completed"',
         wait_for_completion=True,
+        on_log=realtime_collector,
     )
 
     # Execute with both features
-    response = await sandbox.process.exec(process_request, on_log=realtime_collector)
+    response = await sandbox.process.exec(process_request)
 
     # Check the response
     assert response.name == "combined-test"
@@ -150,10 +152,10 @@ async def test_on_log_without_name(sandbox: SandboxInstance):
         log_count += 1
 
     # Process without name
-    process_dict = {"command": "echo 'Testing auto name generation'"}
+    process_dict = {"command": "echo 'Testing auto name generation'", "on_log": count_logs}
 
     # Execute with on_log (should auto-generate name)
-    response = await sandbox.process.exec(process_dict, on_log=count_logs)
+    response = await sandbox.process.exec(process_dict)
 
     # Check that name was generated
     assert response.name is not None
