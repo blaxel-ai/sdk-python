@@ -7,7 +7,7 @@ from ..common.settings import settings
 from .action import SandboxAction
 from .client.models import ProcessResponse, SuccessResponse
 from .client.models.process_request import ProcessRequest
-from .types import SandboxConfiguration
+from .types import ProcessRequestWithLog, SandboxConfiguration
 
 
 class SandboxProcess(SandboxAction):
@@ -76,11 +76,17 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     async def exec(
-        self,
-        process: Union[ProcessRequest, Dict[str, Any]],
-        on_log: Optional[Callable[[str], None]] = None,
+        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
     ) -> ProcessResponse:
+        on_log = None
+        if isinstance(process, ProcessRequestWithLog):
+            on_log = process.on_log
+            process = process.to_dict()
+
         if isinstance(process, dict):
+            if "on_log" in process:
+                on_log = process["on_log"]
+                del process["on_log"]
             process = ProcessRequest.from_dict(process)
 
         # Store original wait_for_completion setting

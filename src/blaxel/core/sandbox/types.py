@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from attrs import define as _attrs_define
 
 from ..client.models import Port, Sandbox
 from ..client.types import UNSET
+from .client.models.process_request import ProcessRequest
 
 
 class SessionCreateOptions:
@@ -164,9 +167,18 @@ class SandboxCreateConfiguration:
             if isinstance(env, dict):
                 # Validate that the dict has the required keys
                 if "name" not in env or "value" not in env:
-                    raise ValueError(f"Environment variable dict must have 'name' and 'value' keys: {env}")
+                    raise ValueError(
+                        f"Environment variable dict must have 'name' and 'value' keys: {env}"
+                    )
                 env_objects.append({"name": env["name"], "value": env["value"]})
             else:
-                raise ValueError(f"Invalid env type: {type(env)}. Expected dict with 'name' and 'value' keys.")
+                raise ValueError(
+                    f"Invalid env type: {type(env)}. Expected dict with 'name' and 'value' keys."
+                )
 
         return env_objects
+
+
+@_attrs_define
+class ProcessRequestWithLog(ProcessRequest):
+    on_log: Callable[[str], None] = None
