@@ -73,7 +73,7 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
 
         async def traced_list_tools(self, *args, **kwargs):
             span_attributes = {
-                "tool.server": self.url,
+                "tool.server": self._url,
                 "tool.server_name": self.name,
                 "span.type": "tool.list",
                 **SpanManager.get_default_attributes(),
