@@ -88,8 +88,8 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
         # Patch convert_mcp_tool_to_blaxel_tool to wrap tool calls
         orig_convert = blaxel.core.tools.convert_mcp_tool_to_blaxel_tool
 
-        def traced_convert_mcp_tool_to_blaxel_tool(websocket_client, name, url, tool):
-            Tool = orig_convert(websocket_client, name, url, tool)
+        def traced_convert_mcp_tool_to_blaxel_tool(websocket_client, tool):
+            Tool = orig_convert(websocket_client, tool)
             orig_coroutine = Tool.coroutine
             orig_sync_coroutine = Tool.sync_coroutine
 
@@ -97,8 +97,8 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
                 span_attributes = {
                     "tool.name": tool.name,
                     "tool.args": json.dumps(kwargs),
-                    "tool.server": url,
-                    "tool.server_name": name,
+                    "tool.server": websocket_client._url,
+                    "tool.server_name": websocket_client.name,
                     "span.type": "tool.call",
                     **SpanManager.get_default_attributes(),
                 }
@@ -110,8 +110,8 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
                 span_attributes = {
                     "tool.name": tool.name,
                     "tool.args": json.dumps(kwargs),
-                    "tool.server": url,
-                    "tool.server_name": name,
+                    "tool.server": websocket_client._url,
+                    "tool.server_name": websocket_client.name,
                     "span.type": "tool.call",
                     **SpanManager.get_default_attributes(),
                 }
