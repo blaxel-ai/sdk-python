@@ -12,6 +12,7 @@ from .types import BlaxelAuth, CredentialsType
 
 logger = getLogger(__name__)
 
+
 def get_credentials() -> Optional[CredentialsType]:
     """
     Get credentials from environment variables or config file.
@@ -19,35 +20,34 @@ def get_credentials() -> Optional[CredentialsType]:
     Returns:
         Optional[CredentialsType]: The credentials or None if not found
     """
+
     def get_workspace():
         if os.environ.get("BL_WORKSPACE"):
             return os.environ.get("BL_WORKSPACE")
         home_dir = Path.home()
-        config_path = home_dir / '.blaxel' / 'config.yaml'
-        with open(config_path, encoding='utf-8') as f:
+        config_path = home_dir / ".blaxel" / "config.yaml"
+        with open(config_path, encoding="utf-8") as f:
             config_json = yaml.safe_load(f)
         return config_json.get("context", {}).get("workspace")
 
     if os.environ.get("BL_API_KEY"):
-        return CredentialsType(
-            api_key=os.environ.get("BL_API_KEY"),
-            workspace=get_workspace()
-        )
+        return CredentialsType(api_key=os.environ.get("BL_API_KEY"), workspace=get_workspace())
 
     if os.environ.get("BL_CLIENT_CREDENTIALS"):
         return CredentialsType(
-            client_credentials=os.environ.get("BL_CLIENT_CREDENTIALS"),
-            workspace=get_workspace()
+            client_credentials=os.environ.get("BL_CLIENT_CREDENTIALS"), workspace=get_workspace()
         )
 
     try:
         home_dir = Path.home()
-        config_path = home_dir / '.blaxel' / 'config.yaml'
+        config_path = home_dir / ".blaxel" / "config.yaml"
 
-        with open(config_path, encoding='utf-8') as f:
+        with open(config_path, encoding="utf-8") as f:
             config_json = yaml.safe_load(f)
 
-        workspace_name = os.environ.get("BL_WORKSPACE") or config_json.get("context", {}).get("workspace")
+        workspace_name = os.environ.get("BL_WORKSPACE") or config_json.get("context", {}).get(
+            "workspace"
+        )
 
         for workspace in config_json.get("workspaces", []):
             if workspace.get("name") == workspace_name:
@@ -55,12 +55,12 @@ def get_credentials() -> Optional[CredentialsType]:
                 credentials["workspace"] = workspace_name
                 return CredentialsType(
                     workspace=credentials["workspace"],
-                    api_key=credentials.get("api_key"),
-                    client_credentials=credentials.get("client_credentials"),
+                    api_key=credentials.get("apiKey"),
+                    client_credentials=credentials.get("clientCredentials"),
                     refresh_token=credentials.get("refresh_token"),
                     access_token=credentials.get("access_token"),
                     device_code=credentials.get("device_code"),
-                    expires_in=credentials.get("expires_in")
+                    expires_in=credentials.get("expires_in"),
                 )
 
         return None
@@ -93,5 +93,6 @@ def auth(env: str, base_url: str) -> BlaxelAuth:
         return DeviceMode(credentials, credentials.workspace, base_url)
 
     return BlaxelAuth(credentials, credentials.workspace, base_url)
+
 
 __all__ = ["BlaxelAuth", "CredentialsType"]
