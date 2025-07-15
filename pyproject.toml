@@ -26,12 +26,12 @@ core = []
 # Telemetry module
 telemetry = [
   "opentelemetry-exporter-otlp>=1.28.0",
-  "opentelemetry-instrumentation-anthropic==0.40.6",
-  "opentelemetry-instrumentation-cohere==0.40.6",
-  "opentelemetry-instrumentation-fastapi==0.54b1",
-  "opentelemetry-instrumentation-google-generativeai>=0.40.7",
-  "opentelemetry-instrumentation-ollama==0.40.6",
-  "opentelemetry-instrumentation-openai==0.40.6",
+  "opentelemetry-instrumentation-anthropic==0.41.0",
+  "opentelemetry-instrumentation-cohere==0.41.0",
+  "opentelemetry-instrumentation-fastapi==0.56b0",
+  "opentelemetry-instrumentation-google-generativeai==0.41.0",
+  "opentelemetry-instrumentation-ollama==0.41.0",
+  "opentelemetry-instrumentation-openai==0.41.0",
 ]
 
 # CrewAI module
