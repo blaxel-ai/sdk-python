@@ -4,7 +4,11 @@ install:
 	uv sync --all-groups --all-packages --all-extras
 
 sdk-sandbox:
-	cp ../../sandbox/sandbox-api/docs/openapi.yml ./definition.yml
+	@echo "Downloading sandbox definition from blaxel-ai/sandbox"
+	@curl -H "Authorization: token $$(gh auth token)" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o ./definition.yml \
+		https://api.github.com/repos/blaxel-ai/sandbox/contents/sandbox-api/docs/openapi.yml?ref=main
 	rm -rf src/blaxel/core/sandbox/client/api src/blaxel/core/sandbox/client/models
 	openapi-python-client generate \
 		--path=definition.yml \
@@ -17,7 +21,11 @@ sdk-sandbox:
 	uv run ruff check --fix
 
 sdk-controlplane:
-	cp ../../controlplane/api/api/definitions/controlplane.yml ./definition.yml
+	@echo "Downloading controlplane definition from blaxel-ai/controlplane"
+	@curl -H "Authorization: token $$(gh auth token)" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o ./definition.yml \
+		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=main
 	rm -rf src/blaxel/core/client/api src/blaxel/core/client/models
 	openapi-python-client generate \
 		--path=definition.yml \
