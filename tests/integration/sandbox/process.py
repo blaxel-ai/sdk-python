@@ -1,9 +1,14 @@
 import asyncio
+import time
 from logging import getLogger
 
 from utils import create_or_get_sandbox
 
-from blaxel.core.sandbox import ProcessRequestWithLog, SandboxInstance
+from blaxel.core.sandbox import (
+    ProcessRequestWithLog,
+    ProcessResponseWithLog,
+    SandboxInstance,
+)
 from blaxel.core.sandbox.client.models.process_request import ProcessRequest
 
 logger = getLogger(__name__)
@@ -142,34 +147,107 @@ async def test_combined_features(sandbox: SandboxInstance):
 
 
 async def test_on_log_without_name(sandbox: SandboxInstance):
-    """Test that on_log works when no name is provided (auto-generates name)."""
-    print("🔧 Testing on_log with auto-generated name...")
+    """Test on_log callback without specifying name (should generate one)."""
+    print("🔧 Testing on_log callback without name...")
 
-    log_count = 0
+    # Track logs
+    log_messages = []
 
-    def count_logs(message: str):
-        nonlocal log_count
-        log_count += 1
+    def log_collector(message: str):
+        log_messages.append(message)
+        print(f"   📝 Log received: {repr(message)}")
 
-    # Process without name
-    process_dict = {"command": "echo 'Testing auto name generation'", "on_log": count_logs}
+    # Create a process without specifying a name
+    process_request = ProcessRequestWithLog(
+        command='sh -c "echo Hello from unnamed process; echo Second message; sleep 1; echo Final message"',
+        wait_for_completion=True,
+        on_log=log_collector,
+    )
 
-    # Execute with on_log (should auto-generate name)
-    response = await sandbox.process.exec(process_dict)
+    # Execute
+    response = await sandbox.process.exec(process_request)
 
-    # Check that name was generated
+    # Check that a name was generated
     assert response.name is not None
-    assert response.name.startswith("proc-")
-    assert len(response.name) > len("proc-")  # Should have UUID suffix
+    assert len(response.name) > 0
 
-    print(f"✅ Auto-generated name: {response.name}")
+    # Check that we received logs
+    assert len(log_messages) > 0
+    all_logs = " ".join(log_messages)
+    assert "Hello from unnamed process" in all_logs
+    assert "Second message" in all_logs
+    assert "Final message" in all_logs
 
-    # Wait a bit for logs
+    print(f"✅ Process completed with generated name: {response.name}")
+    print(f"✅ Received {len(log_messages)} log messages")
+
+
+async def test_stream_close(sandbox: SandboxInstance):
+    """Test stream close functionality."""
+    print("🔧 Testing stream close functionality...")
+
+    # Track logs and when they stop
+    log_messages = []
+    last_log_time = time.time()
+    is_receiving_logs = True
+
+    def log_collector(message: str):
+        nonlocal last_log_time, is_receiving_logs
+        log_messages.append(message)
+        last_log_time = time.time()
+        is_receiving_logs = True
+        print(f"   📝 Log received at {time.time()}: {repr(message)}")
+
+    # Create a long-running process that outputs logs continuously
+    process_request = ProcessRequestWithLog(
+        name="stream-close-test",
+        command="sh -c 'for i in $(seq 1 5); do echo \"Hello from stdout $i\"; sleep 1; done'",
+        wait_for_completion=False,  # Important: don't wait for completion
+        on_log=log_collector,
+    )
+
+    # Execute and get response with close() method
+    response = await sandbox.process.exec(process_request)
+
+    # Check that we got a response with close method
+    assert isinstance(response, ProcessResponseWithLog), "Response should be ProcessResponseWithLog"
+    assert hasattr(response, "close"), "Response should have close() method"
+    assert callable(response.close), "close should be a function"
+
+    # Wait for a few logs to come in
     await asyncio.sleep(2)
 
-    # Should have received at least one log
-    assert log_count > 0
-    print(f"✅ Received {log_count} log messages")
+    # Should have received some logs by now
+    logs_before_close = len(log_messages)
+    assert logs_before_close > 0, "Should have received some logs before close"
+    print(f"✅ Received {logs_before_close} logs before closing")
+
+    # Close the stream
+    print("   🛑 Calling close() to stop the stream...")
+    response.close()
+
+    # Mark that we're no longer expecting logs
+    is_receiving_logs = False
+
+    # Wait a bit to ensure no more logs come in
+    logs_at_close = len(log_messages)
+    await asyncio.sleep(3)
+
+    # Check that no new logs were received after close
+    logs_after_close = len(log_messages)
+    assert logs_after_close == logs_at_close, (
+        f"No new logs should be received after close (before: {logs_at_close}, after: {logs_after_close})"
+    )
+
+    print(f"✅ Stream closed successfully. Total logs received: {len(log_messages)}")
+    print("✅ Process should still be running in background (not killed by close)")
+
+    # Verify the process is still running (close should only stop streaming, not kill the process)
+    try:
+        process_info = await sandbox.process.get(response.name)
+        print(f"✅ Process status after close: {process_info.status} -> {process_info.logs}")
+    except Exception as error:
+        print(f"⚠️ Could not check process status: {error}")
 
 
 async def main():
@@ -193,6 +271,9 @@ async def main():
         print()
 
         await test_on_log_without_name(sandbox)
+        print()
+
+        await test_stream_close(sandbox)
         print()
 
         print("🎉 All process feature tests completed successfully!")

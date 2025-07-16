@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Dict, Literal, Optional, Union
+from typing import Callable, Dict, Literal, Optional, Union
 
 import httpx
 
@@ -7,7 +7,7 @@ from ..common.settings import settings
 from .action import SandboxAction
 from .client.models import ProcessResponse, SuccessResponse
 from .client.models.process_request import ProcessRequest
-from .types import ProcessRequestWithLog, SandboxConfiguration
+from .types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
 
 
 class SandboxProcess(SandboxAction):
@@ -76,25 +76,14 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     async def exec(
-        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
-    ) -> ProcessResponse:
-        on_log = None
-        if isinstance(process, ProcessRequestWithLog):
+        self, process: Union[ProcessRequest, ProcessRequestWithLog]
+    ) -> Union[ProcessResponse, ProcessResponseWithLog]:
+        """Execute a process in the sandbox."""
+        on_log: Optional[Callable[[str], None]] = None
+        if isinstance(process, ProcessRequestWithLog) and process.on_log:
             on_log = process.on_log
-            process = process.to_dict()
 
-        if isinstance(process, dict):
-            if "on_log" in process:
-                on_log = process["on_log"]
-                del process["on_log"]
-            process = ProcessRequest.from_dict(process)
-
-        # Store original wait_for_completion setting
-        should_wait_for_completion = process.wait_for_completion
-
-        # Always start process without wait_for_completion to avoid server-side blocking
-        if should_wait_for_completion and on_log is not None:
-            process.wait_for_completion = False
+        should_wait_for_completion = getattr(process, "wait_for_completion", True)
 
         async with self.get_client() as client_instance:
             response = await client_instance.post("/process", json=process.to_dict())
@@ -118,7 +107,7 @@ class SandboxProcess(SandboxAction):
                     stream_control = self.stream_logs(result.pid, {"on_log": on_log})
                 try:
                     # Wait for process completion
-                    result = await self.wait(result.pid, interval=50)
+                    result = await self.wait(result.pid, interval=500, max_wait=1000 * 60 * 60)
                 finally:
                     # Clean up log streaming
                     if stream_control:
@@ -126,8 +115,11 @@ class SandboxProcess(SandboxAction):
             else:
                 # For non-blocking execution, set up log streaming immediately if requested
                 if on_log is not None:
-                    stream = self.stream_logs(result.pid, {"on_log": on_log})
-                    result.additional_properties["close"] = stream["close"]
+                    stream_control = self.stream_logs(result.pid, {"on_log": on_log})
+                    return ProcessResponseWithLog(
+                        result, lambda: stream_control["close"]() if stream_control else None
+                    )
+
             return result
 
     async def wait(
