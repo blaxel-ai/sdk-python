@@ -8,6 +8,7 @@ from .sandbox import (
 from .types import (
     CopyResponse,
     ProcessRequestWithLog,
+    ProcessResponseWithLog,
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxFilesystemFile,
@@ -30,4 +31,5 @@ __all__ = [
     "SandboxPreviews",
     "SandboxProcess",
     "ProcessRequestWithLog",
+    "ProcessResponseWithLog",
 ]

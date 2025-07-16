@@ -6,6 +6,7 @@ from attrs import define as _attrs_define
 from ..client.models import Port, Sandbox
 from ..client.types import UNSET
 from .client.models.process_request import ProcessRequest
+from .client.models.process_response import ProcessResponse
 
 
 class SessionCreateOptions:
@@ -182,3 +183,26 @@ class SandboxCreateConfiguration:
 @_attrs_define
 class ProcessRequestWithLog(ProcessRequest):
     on_log: Callable[[str], None] = None
+
+
+class ProcessResponseWithLog:
+    """A process response with additional close functionality for stream management."""
+
+    def __init__(self, process_response: ProcessResponse, close_func: Callable[[], None]):
+        self._process_response = process_response
+        self._close_func = close_func
+
+    def close(self) -> None:
+        """Close the log stream without terminating the process."""
+        self._close_func()
+
+    def __getattr__(self, name: str) -> Any:
+        """Delegate attribute access to the underlying ProcessResponse."""
+        return getattr(self._process_response, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Handle setting attributes, preserving special attributes."""
+        if name.startswith("_") or name == "close":
+            super().__setattr__(name, value)
+        else:
+            setattr(self._process_response, name, value)
