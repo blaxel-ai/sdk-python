@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable, Dict, Literal, Optional, Union
+from typing import Any, Callable, Dict, Literal, Optional, Union
 
 import httpx
 
@@ -76,15 +76,26 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     async def exec(
-        self, process: Union[ProcessRequest, ProcessRequestWithLog]
+        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
         """Execute a process in the sandbox."""
-        on_log: Optional[Callable[[str], None]] = None
-        if isinstance(process, ProcessRequestWithLog) and process.on_log:
+        on_log = None
+        if isinstance(process, ProcessRequestWithLog):
             on_log = process.on_log
+            process = process.to_dict()
 
-        should_wait_for_completion = getattr(process, "wait_for_completion", True)
+        if isinstance(process, dict):
+            if "on_log" in process:
+                on_log = process["on_log"]
+                del process["on_log"]
+            process = ProcessRequest.from_dict(process)
 
+        # Store original wait_for_completion setting
+        should_wait_for_completion = process.wait_for_completion
+
+        # Always start process without wait_for_completion to avoid server-side blocking
+        if should_wait_for_completion and on_log is not None:
+            process.wait_for_completion = False
         async with self.get_client() as client_instance:
             response = await client_instance.post("/process", json=process.to_dict())
             # Parse JSON response only once, with better error handling

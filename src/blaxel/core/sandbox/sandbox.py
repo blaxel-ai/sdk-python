@@ -47,7 +47,7 @@ class SandboxInstance:
     def spec(self):
         return self.sandbox.spec
 
-    async def wait(self, max_wait: int = 60000, interval: int = 1000) -> None:
+    async def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SandboxInstance":
         start_time = time.time() * 1000  # Convert to milliseconds
         while self.sandbox.status != "DEPLOYED":
             await asyncio.sleep(interval / 1000)  # Convert to seconds
@@ -67,6 +67,17 @@ class SandboxInstance:
 
             if (time.time() * 1000) - start_time > max_wait:
                 raise Exception("Sandbox did not deploy in time")
+
+        if self.sandbox.status == "DEPLOYED":
+            try:
+                # This is a hack for sometime receiving a 502,
+                # need to remove this once we have a better way to handle this
+                await self.fs.ls("/")
+            except:
+                # pass
+                pass
+
+        return self
 
     @classmethod
     async def create(
@@ -109,7 +120,9 @@ class SandboxInstance:
             sandbox = Sandbox(
                 metadata=Metadata(name=name),
                 spec=SandboxSpec(
-                    runtime=Runtime(image=image, memory=memory, ports=ports, envs=envs, generation="mk3")
+                    runtime=Runtime(
+                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3"
+                    )
                 ),
             )
         else:
