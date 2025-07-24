@@ -102,7 +102,7 @@ class TelemetryManager:
             module = importlib.import_module(module_path)
             return getattr(module, class_name)
         except (ImportError, AttributeError) as e:
-            logger.error(f"Could not import {class_name} from {module_path}: {str(e)}")
+            logger.warning(f"Could not import {class_name} from {module_path}: {str(e)}")
             return None
 
     def _is_package_installed(self, package_names: List[str]) -> bool:
@@ -137,65 +137,68 @@ class TelemetryManager:
 
     def instrument(self):
         """Set up OpenTelemetry instrumentation."""
-        if not self.enabled:
-            # Use NoOp implementations to stub tracing and metrics
-            trace.set_tracer_provider(NoOpTracerProvider())
-            self.tracer = trace.get_tracer(__name__)
+        try:
+            if not self.enabled:
+                # Use NoOp implementations to stub tracing and metrics
+                trace.set_tracer_provider(NoOpTracerProvider())
+                self.tracer = trace.get_tracer(__name__)
 
-            metrics.set_meter_provider(NoOpMeterProvider())
-            self.meter = metrics.get_meter(__name__)
-            return
+                metrics.set_meter_provider(NoOpMeterProvider())
+                self.meter = metrics.get_meter(__name__)
+                return
 
-        resource = Resource.create(self.get_resource_attributes())
+            resource = Resource.create(self.get_resource_attributes())
 
-        # Set up the TracerProvider
-        trace_provider = TracerProvider(resource=resource)
-        span_processor = BatchSpanProcessor(self.get_span_exporter())
-        trace_provider.add_span_processor(
-            DefaultAttributesSpanProcessor(
-                {
-                    "workload.id": self.resource_name,
-                    "workload.type": self.resource_type,
-                    "workspace": self.resource_workspace,
-                }
-            )
-        )
-        trace_provider.add_span_processor(span_processor)
-        trace.set_tracer_provider(trace_provider)
-        self.tracer = trace_provider.get_tracer(__name__)
-
-        # Set up the MeterProvider
-        metrics_exporter = PeriodicExportingMetricReader(self.get_metrics_exporter())
-        meter_provider = MeterProvider(resource=resource, metric_readers=[metrics_exporter])
-        metrics.set_meter_provider(meter_provider)
-        self.meter = meter_provider.get_meter(__name__)
-
-        logger_type = os.environ.get("BL_LOGGER", "http")
-        if logger_type == "http":
-            self.logger_provider = LoggerProvider(resource=resource)
-            set_logger_provider(self.logger_provider)
-            self.logger_provider.add_log_record_processor(
-                AsyncLogRecordProcessor(self.get_log_exporter())
-            )
-            handler = LoggingHandler(level=logging.NOTSET, logger_provider=self.logger_provider)
-            logging.getLogger().addHandler(handler)
-
-        # Load and enable instrumentations
-        for name, mapping in MAPPINGS.items():
-            if self._is_package_installed(mapping.required_packages):
-                instrumentor_class = self._import_class(mapping.module_path, mapping.class_name)
-                if instrumentor_class:
-                    try:
-                        instrumentor_class().instrument()
-                        logger.debug(f"Successfully instrumented {name}")
-                    except Exception as e:
-                        logger.debug(f"Failed to instrument {name}: {str(e)}")
-                else:
-                    logger.debug(f"Could not load instrumentor for {name}")
-            else:
-                logger.debug(
-                    f"Skipping {name} instrumentation - required package '{mapping.required_packages}' not installed"
+            # Set up the TracerProvider
+            trace_provider = TracerProvider(resource=resource)
+            span_processor = BatchSpanProcessor(self.get_span_exporter())
+            trace_provider.add_span_processor(
+                DefaultAttributesSpanProcessor(
+                    {
+                        "workload.id": self.resource_name,
+                        "workload.type": self.resource_type,
+                        "workspace": self.resource_workspace,
+                    }
                 )
+            )
+            trace_provider.add_span_processor(span_processor)
+            trace.set_tracer_provider(trace_provider)
+            self.tracer = trace_provider.get_tracer(__name__)
+
+            # Set up the MeterProvider
+            metrics_exporter = PeriodicExportingMetricReader(self.get_metrics_exporter())
+            meter_provider = MeterProvider(resource=resource, metric_readers=[metrics_exporter])
+            metrics.set_meter_provider(meter_provider)
+            self.meter = meter_provider.get_meter(__name__)
+
+            logger_type = os.environ.get("BL_LOGGER", "http")
+            if logger_type == "http":
+                self.logger_provider = LoggerProvider(resource=resource)
+                set_logger_provider(self.logger_provider)
+                self.logger_provider.add_log_record_processor(
+                    AsyncLogRecordProcessor(self.get_log_exporter())
+                )
+                handler = LoggingHandler(level=logging.NOTSET, logger_provider=self.logger_provider)
+                logging.getLogger().addHandler(handler)
+
+            # Load and enable instrumentations
+            for name, mapping in MAPPINGS.items():
+                if self._is_package_installed(mapping.required_packages):
+                    instrumentor_class = self._import_class(mapping.module_path, mapping.class_name)
+                    if instrumentor_class:
+                        try:
+                            instrumentor_class().instrument()
+                            logger.debug(f"Successfully instrumented {name}")
+                        except Exception as e:
+                            logger.debug(f"Failed to instrument {name}: {str(e)}")
+                    else:
+                        logger.debug(f"Could not load instrumentor for {name}")
+                else:
+                    logger.debug(
+                        f"Skipping {name} instrumentation - required package '{mapping.required_packages}' not installed"
+                    )
+        except Exception as e:
+            logger.error(f"Error during instrumentation: {e}")
 
     def shutdown(self):
         """Shutdown the telemetry system gracefully with a 5-second timeout."""
