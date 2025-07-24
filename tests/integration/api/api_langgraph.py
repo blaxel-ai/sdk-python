@@ -38,10 +38,10 @@ async def lifespan(app: FastAPI):
 
 
 # MODEL = "gpt-4o-mini"
-MODEL = "claude-3-7-sonnet-20250219"
+# MODEL = "claude-3-7-sonnet-20250219"
 # MODEL = "xai-grok-beta"
 # MODEL = "cohere-command-r-plus" # x -> tool call not supported
-# MODEL = "gemini-2-5-pro-preview-03-25"
+MODEL = "gemini-2-5-pro-preview-06-05"
 # MODEL = "deepseek-chat"
 # MODEL = "mistral-large-latest"
 

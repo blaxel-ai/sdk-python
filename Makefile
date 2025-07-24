@@ -3,6 +3,9 @@ ARGS:= $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 install:
 	uv sync --all-groups --all-packages --all-extras
 
+install-groups:
+	uv sync --refresh --force-reinstall --extra telemetry --extra langgraph
+
 sdk-sandbox:
 	@echo "Downloading sandbox definition from blaxel-ai/sandbox"
 	@curl -H "Authorization: token $$(gh auth token)" \

@@ -6,9 +6,6 @@ import types
 from typing import Collection
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.google_generativeai.config import Config
-from opentelemetry.instrumentation.google_generativeai.utils import dont_throw
-from opentelemetry.instrumentation.google_generativeai.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.semconv_ai import (
@@ -21,6 +18,34 @@ from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
+
+# Local version for this instrumentation
+__version__ = "1.0.0"
+
+
+# Local configuration class
+class Config:
+    exception_logger = None
+
+
+# Local implementation of dont_throw decorator
+def dont_throw(func):
+    """
+    Decorator that catches exceptions and prevents them from propagating.
+    Logs exceptions using the configured exception logger or standard logger.
+    """
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            if Config.exception_logger:
+                Config.exception_logger(e)
+            else:
+                logger.exception("Exception in instrumentation: %s", e)
+
+    return wrapper
+
 
 WRAPPED_METHODS = [
     {

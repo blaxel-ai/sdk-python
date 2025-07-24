@@ -14,11 +14,11 @@ from blaxel.langgraph import bl_model, bl_tools
 
 logger = getLogger(__name__)
 
-MODEL = "gpt-4o-mini"
+# MODEL = "gpt-4o-mini"
 # MODEL = "claude-3-5-sonnet"
 # MODEL = "xai-grok-beta"
 # MODEL = "cohere-command-r-plus" # x -> tool call not supported
-# MODEL = "gemini-2-0-flash"
+MODEL = "gemini-2-5-pro-preview-06-05"
 # MODEL = "deepseek-chat"
 # MODEL = "mistral-large-latest"
 

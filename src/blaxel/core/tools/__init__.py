@@ -59,7 +59,14 @@ class PersistentWebSocket:
 
     @property
     def _fallback_url(self):
-        if self._external_url != self._url:
+        # Compute the primary URL without fallback to avoid recursion
+        primary_url = self._external_url  # default
+        if self._forced_url:
+            primary_url = self._forced_url
+        elif settings.run_internal_hostname:
+            primary_url = self._internal_url
+
+        if self._external_url != primary_url:
             return self._external_url
         return None
 
@@ -139,7 +146,7 @@ class PersistentWebSocket:
                 )
                 await self.session.initialize()
             except Exception as e:
-                if not fallback:
+                if not fallback and self._fallback_url is not None:
                     self.use_fallback_url = True
                     return await self.initialize(fallback=True)
                 raise e
