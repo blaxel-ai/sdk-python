@@ -4,7 +4,6 @@ import asyncio
 from typing import Any, Callable, List
 
 import pytest
-from agents import ModelSettings, ModelTracing
 
 # Import model functions from different frameworks
 try:
@@ -155,6 +154,8 @@ async def test_crewai(model: Any, model_name: str, request_num: int) -> None:
 async def test_openai(model: Any, model_name: str, request_num: int) -> None:
     """Test OpenAI framework."""
     try:
+        from agents import ModelSettings, ModelTracing
+
         result = await model.get_response(
             None, "Hello, world!", ModelSettings(), [], None, [], ModelTracing(0), None, None
         )
