@@ -1,9 +1,8 @@
 """Tests for model authentication with token expiry."""
 
 import asyncio
-import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
-import os
+from typing import Any, Callable, List
+
 import pytest
 
 # Import model functions from different frameworks
@@ -32,6 +31,11 @@ try:
 except ImportError:
     bl_model_crewai = None
 
+try:
+    from blaxel.googleadk import bl_model as bl_model_googleadk
+except ImportError:
+    bl_model_googleadk = None
+
 
 # Configuration
 EXECUTION_MODE = "parallel"  # "parallel" or "sequential"
@@ -52,6 +56,7 @@ MODELS = [
 FRAMEWORKS = [
     "langgraph",
     "llamaindex",
+    "googleadk"
     # "openai",  # Disabled due to import issues
     # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
     # "crewai",
@@ -126,7 +131,7 @@ async def test_crewai(model: Any, model_name: str, request_num: int) -> None:
     """Test CrewAI framework."""
     try:
         # CrewAI typically works through agents, so we'll create a simple agent
-        from crewai import Agent, Task, Crew
+        from crewai import Agent, Crew, Task
 
         agent = Agent(
             role="Assistant",
@@ -134,19 +139,37 @@ async def test_crewai(model: Any, model_name: str, request_num: int) -> None:
             backstory="You are a helpful assistant",
             llm=model,
         )
-        
+
         task = Task(
             description="Say hello back",
             expected_output="A greeting response",
             agent=agent,
         )
-        
+
         crew = Crew(agents=[agent], tasks=[task])
         result = await crew.kickoff_async()
         print(f"crewai, {model_name} (request {request_num}): {result}")
     except Exception as e:
         print(f"crewai, {model_name} (request {request_num}): Error - {str(e)}")
         raise
+
+
+async def test_googleadk(model: Any, model_name: str, request_num: int) -> None:
+    """Test Google ADK framework."""
+    try:
+        from google.adk.models.llm_request import LlmRequest
+
+        request = LlmRequest(
+            model=model_name,
+            contents=[{"role": "user", "parts": [{"text": "Hello, world!"}]}],
+            config={},
+            tools_dict={},
+        )
+        async for result in model.generate_content_async(request):
+            print(f"googleadk, {model_name} (request {request_num}): {result}")
+
+    except Exception as e:
+        print(f"googleadk, {model_name} (request {request_num}): Error - {str(e)}")
 
 
 async def run_parallel(test_cases: List[TestCase]) -> None:
@@ -156,6 +179,7 @@ async def run_parallel(test_cases: List[TestCase]) -> None:
     # Run all first requests in parallel
     first_requests = []
     for test_case in test_cases:
+
         async def run_test(tc=test_case):
             try:
                 await tc.test_func(tc.model, tc.model_name, 1)
@@ -174,6 +198,7 @@ async def run_parallel(test_cases: List[TestCase]) -> None:
     # Run all second requests in parallel
     second_requests = []
     for test_case in test_cases:
+
         async def run_test(tc=test_case):
             try:
                 await tc.test_func(tc.model, tc.model_name, 2)
@@ -194,7 +219,9 @@ async def run_sequential(test_cases: List[TestCase]) -> None:
         call_number += 1
 
         # First request
-        print(f"\n--- Call {call_number}: {test_case.framework}, {test_case.model_name} (request 1) ---")
+        print(
+            f"\n--- Call {call_number}: {test_case.framework}, {test_case.model_name} (request 1) ---"
+        )
         try:
             await test_case.test_func(test_case.model, test_case.model_name, 1)
         except Exception as e:
@@ -205,7 +232,9 @@ async def run_sequential(test_cases: List[TestCase]) -> None:
 
         # Second request
         call_number += 1
-        print(f"\n--- Call {call_number}: {test_case.framework}, {test_case.model_name} (request 2 after token expiry) ---")
+        print(
+            f"\n--- Call {call_number}: {test_case.framework}, {test_case.model_name} (request 2 after token expiry) ---"
+        )
         try:
             await test_case.test_func(test_case.model, test_case.model_name, 2)
         except Exception as e:
@@ -268,6 +297,15 @@ async def prepare_test_cases() -> List[TestCase]:
                 except Exception as e:
                     print(f"Failed to load crewai {model_name}: {e}")
 
+            # Google ADK framework
+            if "googleadk" in FRAMEWORKS and bl_model_googleadk:
+                print(f"Loading googleadk model: {model_name}")
+                try:
+                    model = await bl_model_googleadk(model_name)
+                    test_cases.append(TestCase("googleadk", model_name, model, test_googleadk))
+                except Exception as e:
+                    print(f"Failed to load googleadk {model_name}: {e}")
+
         except Exception as e:
             print(f"Error loading {model_name}: {e}")
 
@@ -300,6 +338,7 @@ async def test_model_authentication():
 
 if __name__ == "__main__":
     """Allow running the test directly as a script."""
+
     async def main():
         try:
             await test_model_authentication()
@@ -307,4 +346,4 @@ if __name__ == "__main__":
             print(f"Error: {e}")
             raise
 
-    asyncio.run(main()) 
+    asyncio.run(main())
