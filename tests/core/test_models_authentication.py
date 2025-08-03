@@ -65,7 +65,7 @@ FRAMEWORKS = [
     "openai",
     "crewai",
     "livekit",
-    # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
+    "pydantic",
 ]
 
 
