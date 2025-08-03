@@ -44,23 +44,23 @@ EXECUTION_MODE = "parallel"  # "parallel" or "sequential"
 # Models that support authentication/tokens
 MODELS = [
     "gpt-4o-mini",
-    # "claude-sonnet-4",
-    # "cerebras-sandbox",
-    # "cohere-command-r-plus",
-    # "mistral-large-latest",
-    # "deepseek-chat",
-    # "gemini-2-5-pro-preview-06-05",
-    # "xai-grok-beta",
+    "claude-sonnet-4",
+    "cerebras-sandbox",
+    "cohere-command-r-plus",
+    "mistral-large-latest",
+    "deepseek-chat",
+    "gemini-2-5-pro-preview-06-05",
+    "xai-grok-beta",
 ]
 
 # Frameworks to test - comment out any you don't want to test
 FRAMEWORKS = [
-    # "langgraph",
-    # "llamaindex",
-    # "googleadk",
+    "langgraph",
+    "llamaindex",
+    "googleadk",
     "openai",
     # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
-    # "crewai",
+    "crewai",
 ]
 
 
