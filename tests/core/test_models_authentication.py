@@ -37,6 +37,10 @@ try:
 except ImportError:
     bl_model_googleadk = None
 
+try:
+    from blaxel.livekit import bl_model as bl_model_livekit
+except ImportError:
+    bl_model_livekit = None
 
 # Configuration
 EXECUTION_MODE = "parallel"  # "parallel" or "sequential"
@@ -59,8 +63,9 @@ FRAMEWORKS = [
     "llamaindex",
     "googleadk",
     "openai",
-    # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
     "crewai",
+    "livekit",
+    # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
 ]
 
 
@@ -175,6 +180,33 @@ async def test_googleadk(model: Any, model_name: str, request_num: int) -> None:
 
     except Exception as e:
         print(f"googleadk, {model_name} (request {request_num}): Error - {str(e)}")
+
+
+async def test_livekit(model: Any, model_name: str, request_num: int) -> None:
+    """Test Livekit framework."""
+    from livekit.agents.llm.chat_context import ChatContext, ChatMessage
+    from livekit.agents.llm.tool_context import function_tool
+    from livekit.agents.types import APIConnectOptions
+
+    async def fake_tool():
+        return "Hello, world!"
+
+    try:
+        result = model.chat(
+            chat_ctx=ChatContext([ChatMessage(role="user", content=["Hello, world!"])]),
+            tools=[function_tool(fake_tool)],
+            conn_options=APIConnectOptions(),
+            parallel_tool_calls=False,
+            tool_choice="auto",
+        )
+        content = ""
+        async for chunk in result:
+            if chunk.delta and chunk.delta.content:
+                content += chunk.delta.content
+        print(f"livekit, {model_name} (request {request_num}): {content}")
+    except Exception as e:
+        print(f"livekit, {model_name} (request {request_num}): Error - {str(e)}")
+        raise
 
 
 async def run_parallel(test_cases: List[TestCase]) -> None:
@@ -310,6 +342,15 @@ async def prepare_test_cases() -> List[TestCase]:
                     test_cases.append(TestCase("googleadk", model_name, model, test_googleadk))
                 except Exception as e:
                     print(f"Failed to load googleadk {model_name}: {e}")
+
+            # Livekit framework
+            if "livekit" in FRAMEWORKS and bl_model_livekit:
+                print(f"Loading livekit model: {model_name}")
+                try:
+                    model = await bl_model_livekit(model_name)
+                    test_cases.append(TestCase("livekit", model_name, model, test_livekit))
+                except Exception as e:
+                    print(f"Failed to load livekit {model_name}: {e}")
 
         except Exception as e:
             print(f"Error loading {model_name}: {e}")
