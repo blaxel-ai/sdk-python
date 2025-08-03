@@ -39,21 +39,21 @@ EXECUTION_MODE = "parallel"  # "parallel" or "sequential"
 # Models that support authentication/tokens
 MODELS = [
     "gpt-4o-mini",
-    # "claude-3-5-sonnet",
-    # "cerebras-llama-4-scout-17b",
-    # "cohere-command-r-plus",
-    # "mistral-large-latest",
-    # "deepseek-chat",
-    # "gemini-2-0-flash",
-    # "xai-grok-beta",
+    "claude-sonnet-4",
+    "cerebras-sandbox",
+    "cohere-command-r-plus",
+    "mistral-large-latest",
+    "deepseek-chat",
+    "gemini-2-5-pro-preview-06-05",
+    "xai-grok-beta",
 ]
 
 # Frameworks to test - comment out any you don't want to test
 FRAMEWORKS = [
     "langgraph",
-    # "llamaindex",
+    "llamaindex",
     # "openai",  # Disabled due to import issues
-    # "pydantic",
+    # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
     # "crewai",
 ]
 
@@ -89,7 +89,9 @@ async def test_langgraph(model: Any, model_name: str, request_num: int) -> None:
 async def test_llamaindex(model: Any, model_name: str, request_num: int) -> None:
     """Test LlamaIndex framework."""
     try:
-        response = await model.achat(messages=[{"role": "user", "content": "Hello, world!"}])
+        # LlamaIndex uses ChatMessage objects, not dicts
+        from llama_index.core.llms import ChatMessage, MessageRole
+        response = await model.achat(messages=[ChatMessage(role=MessageRole.USER, content="Hello, world!")])
         print(f"llamaindex, {model_name} (request {request_num}): {response.message.content}")
     except Exception as e:
         print(f"llamaindex, {model_name} (request {request_num}): Error - {str(e)}")
