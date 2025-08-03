@@ -4,6 +4,7 @@ import asyncio
 from typing import Any, Callable, List
 
 import pytest
+from agents import ModelSettings, ModelTracing
 
 # Import model functions from different frameworks
 try:
@@ -43,23 +44,23 @@ EXECUTION_MODE = "parallel"  # "parallel" or "sequential"
 # Models that support authentication/tokens
 MODELS = [
     "gpt-4o-mini",
-    "claude-sonnet-4",
-    "cerebras-sandbox",
-    "cohere-command-r-plus",
-    "mistral-large-latest",
-    "deepseek-chat",
-    "gemini-2-5-pro-preview-06-05",
-    "xai-grok-beta",
+    # "claude-sonnet-4",
+    # "cerebras-sandbox",
+    # "cohere-command-r-plus",
+    # "mistral-large-latest",
+    # "deepseek-chat",
+    # "gemini-2-5-pro-preview-06-05",
+    # "xai-grok-beta",
 ]
 
 # Frameworks to test - comment out any you don't want to test
 FRAMEWORKS = [
-    "langgraph",
-    "llamaindex",
-    "googleadk",
-    # "openai",  # Disabled due to import issues
+    # "langgraph",
+    # "llamaindex",
+    # "googleadk",
+    "openai",
     # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
-    "crewai",
+    # "crewai",
 ]
 
 
@@ -106,17 +107,6 @@ async def test_llamaindex(model: Any, model_name: str, request_num: int) -> None
         raise
 
 
-async def test_openai(model: Any, model_name: str, request_num: int) -> None:
-    """Test OpenAI framework."""
-    try:
-        # The bl_model returns an OpenAIChatCompletionsModel, not an AsyncOpenAI client
-        # We need to check how to use this model properly
-        print(f"openai, {model_name} (request {request_num}): OpenAI test not fully implemented")
-    except Exception as e:
-        print(f"openai, {model_name} (request {request_num}): Error - {str(e)}")
-        raise
-
-
 async def test_pydantic(model: Any, model_name: str, request_num: int) -> None:
     """Test Pydantic AI framework."""
     try:
@@ -154,6 +144,18 @@ async def test_crewai(model: Any, model_name: str, request_num: int) -> None:
         print(f"crewai, {model_name} (request {request_num}): {result}")
     except Exception as e:
         print(f"crewai, {model_name} (request {request_num}): Error - {str(e)}")
+        raise
+
+
+async def test_openai(model: Any, model_name: str, request_num: int) -> None:
+    """Test OpenAI framework."""
+    try:
+        result = await model.get_response(
+            None, "Hello, world!", ModelSettings(), [], None, [], ModelTracing(0), None, None
+        )
+        print(f"openai, {model_name} (request {request_num}): {result.output[0].content[0].text}")
+    except Exception as e:
+        print(f"openai, {model_name} (request {request_num}): Error - {str(e)}")
         raise
 
 
