@@ -7,57 +7,48 @@ from blaxel.core import settings
 
 logger = getLogger(__name__)
 
+
+class AuthenticatedLLM(LLM):
+    def call(self, *args, **kwargs):
+        self.additional_params["extra_headers"] = settings.auth.get_headers()
+        return super().call(*args, **kwargs)
+
+
 async def bl_model(name: str, **kwargs):
     url, type, model = await bl_model_core(name).get_parameters()
-    if type == 'mistral':
-        return LLM(
-            model=f"mistral/{model}",
-            api_key=settings.auth.token,
-            base_url=f"{url}/v1",
-            **kwargs
+    if type == "mistral":
+        return AuthenticatedLLM(
+            model=f"mistral/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
         )
-    elif type == 'xai':
-        return LLM(
-            model=f"groq/{model}",
-            api_key=settings.auth.token,
-            base_url=f"{url}/v1",
-            **kwargs
+    elif type == "xai":
+        return AuthenticatedLLM(
+            model=f"groq/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
         )
-    elif type == 'deepseek':
-        return LLM(
-            model=f"openai/{model}",
-            api_key=settings.auth.token,
-            base_url=f"{url}/v1",
-            **kwargs
+    elif type == "deepseek":
+        return AuthenticatedLLM(
+            model=f"openai/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
         )
-    elif type == 'anthropic':
-        return LLM(
+    elif type == "anthropic":
+        return AuthenticatedLLM(
             model=f"anthropic/{model}",
-            api_key=settings.auth.token,
+            api_key="replaced",
             base_url=url,
-            extra_headers=settings.auth.get_headers(),
-            **kwargs
+            **kwargs,
         )
-    elif type == 'gemini':
-        return LLM(
+    elif type == "gemini":
+        return AuthenticatedLLM(
             model=f"gemini/{model}",
-            api_key=settings.auth.token,
+            api_key="replaced",
             base_url=f"{url}/v1beta/models/{model}",
-            **kwargs
+            **kwargs,
         )
-    elif type == 'cerebras':
-        return LLM(
-            model=f"cerebras/{model}",
-            api_key=settings.auth.token,
-            base_url=f"{url}/v1",
-            **kwargs
+    elif type == "cerebras":
+        return AuthenticatedLLM(
+            model=f"cerebras/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
         )
     else:
         if type != "openai":
             logger.warning(f"Model {model} is not supported by CrewAI, defaulting to OpenAI")
-        return LLM(
-            model=f"openai/{model}",
-            api_key=settings.auth.token,
-            base_url=f"{url}/v1",
-            **kwargs
+        return AuthenticatedLLM(
+            model=f"openai/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
         )

@@ -56,10 +56,10 @@ MODELS = [
 FRAMEWORKS = [
     "langgraph",
     "llamaindex",
-    "googleadk"
+    "googleadk",
     # "openai",  # Disabled due to import issues
     # "pydantic",  # Disabled due to compatibility issue with Agent expecting model string
-    # "crewai",
+    "crewai",
 ]
 
 
@@ -96,7 +96,10 @@ async def test_llamaindex(model: Any, model_name: str, request_num: int) -> None
     try:
         # LlamaIndex uses ChatMessage objects, not dicts
         from llama_index.core.llms import ChatMessage, MessageRole
-        response = await model.achat(messages=[ChatMessage(role=MessageRole.USER, content="Hello, world!")])
+
+        response = await model.achat(
+            messages=[ChatMessage(role=MessageRole.USER, content="Hello, world!")]
+        )
         print(f"llamaindex, {model_name} (request {request_num}): {response.message.content}")
     except Exception as e:
         print(f"llamaindex, {model_name} (request {request_num}): Error - {str(e)}")
