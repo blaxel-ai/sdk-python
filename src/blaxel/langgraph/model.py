@@ -1,18 +1,17 @@
 from logging import getLogger
-from typing import Any, AsyncIterator, Iterator, List, Optional, Union
+from typing import Any, AsyncIterator, Iterator, List, Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_cerebras import ChatCerebras
 from langchain_cohere import ChatCohere
+from langchain_core.callbacks import Callbacks
+from langchain_core.language_models import LanguageModelInput
+from langchain_core.messages import BaseMessage
+from langchain_core.outputs import LLMResult
+from langchain_core.runnables import RunnableConfig
 from langchain_deepseek import ChatDeepSeek
 from langchain_openai import ChatOpenAI
 from langchain_xai import ChatXAI
-from langchain_core.messages import BaseMessage
-from langchain_core.outputs import ChatResult, LLMResult
-from langchain_core.callbacks import Callbacks
-from langchain_core.language_models import LanguageModelInput
-from langchain_core.outputs.chat_generation import ChatGenerationChunk
-from langchain_core.runnables import RunnableConfig
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings

@@ -27,6 +27,7 @@ class Runtime:
             endpoint name. In case of hf_public_endpoint, it is not used.
         envs (Union[Unset, list[Any]]): The env variables to set in the deployment. Should be a list of Kubernetes
             EnvVar types
+        expires (Union[Unset, str]): The expiration date for the deployment in ISO 8601 format - 2024-12-31T23:59:59Z
         generation (Union[Unset, str]): The generation of the deployment
         image (Union[Unset, str]): The Docker image for the deployment
         max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
@@ -41,6 +42,7 @@ class Runtime:
         ports (Union[Unset, list['Port']]): Set of ports for a resource
         startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
         timeout (Union[Unset, int]): The timeout for the deployment in seconds
+        ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
         type_ (Union[Unset, str]): The type of origin for the deployment (hf_private_endpoint, hf_public_endpoint)
     """
 
@@ -50,6 +52,7 @@ class Runtime:
     cpu: Union[Unset, int] = UNSET
     endpoint_name: Union[Unset, str] = UNSET
     envs: Union[Unset, list[Any]] = UNSET
+    expires: Union[Unset, str] = UNSET
     generation: Union[Unset, str] = UNSET
     image: Union[Unset, str] = UNSET
     max_concurrent_tasks: Union[Unset, int] = UNSET
@@ -63,6 +66,7 @@ class Runtime:
     ports: Union[Unset, list["Port"]] = UNSET
     startup_probe: Union[Unset, "RuntimeStartupProbe"] = UNSET
     timeout: Union[Unset, int] = UNSET
+    ttl: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -92,6 +96,8 @@ class Runtime:
         envs: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = self.envs
+
+        expires = self.expires
 
         generation = self.generation
 
@@ -135,6 +141,8 @@ class Runtime:
 
         timeout = self.timeout
 
+        ttl = self.ttl
+
         type_ = self.type_
 
         field_dict: dict[str, Any] = {}
@@ -152,6 +160,8 @@ class Runtime:
             field_dict["endpointName"] = endpoint_name
         if envs is not UNSET:
             field_dict["envs"] = envs
+        if expires is not UNSET:
+            field_dict["expires"] = expires
         if generation is not UNSET:
             field_dict["generation"] = generation
         if image is not UNSET:
@@ -178,6 +188,8 @@ class Runtime:
             field_dict["startupProbe"] = startup_probe
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
+        if ttl is not UNSET:
+            field_dict["ttl"] = ttl
         if type_ is not UNSET:
             field_dict["type"] = type_
 
@@ -208,6 +220,8 @@ class Runtime:
         endpoint_name = d.pop("endpointName", UNSET)
 
         envs = cast(list[Any], d.pop("envs", UNSET))
+
+        expires = d.pop("expires", UNSET)
 
         generation = d.pop("generation", UNSET)
 
@@ -245,6 +259,8 @@ class Runtime:
 
         timeout = d.pop("timeout", UNSET)
 
+        ttl = d.pop("ttl", UNSET)
+
         type_ = d.pop("type", UNSET)
 
         runtime = cls(
@@ -254,6 +270,7 @@ class Runtime:
             cpu=cpu,
             endpoint_name=endpoint_name,
             envs=envs,
+            expires=expires,
             generation=generation,
             image=image,
             max_concurrent_tasks=max_concurrent_tasks,
@@ -267,6 +284,7 @@ class Runtime:
             ports=ports,
             startup_probe=startup_probe,
             timeout=timeout,
+            ttl=ttl,
             type_=type_,
         )
 
