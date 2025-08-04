@@ -18,6 +18,7 @@ class PreviewSpec:
     """Preview of a Resource
 
     Attributes:
+        custom_domain (Union[Unset, str]): Custom domain bound to this preview
         port (Union[Unset, int]): Port of the preview
         prefix_url (Union[Unset, str]): Prefix URL
         public (Union[Unset, bool]): Whether the preview is public
@@ -28,6 +29,7 @@ class PreviewSpec:
         url (Union[Unset, str]): URL of the preview
     """
 
+    custom_domain: Union[Unset, str] = UNSET
     port: Union[Unset, int] = UNSET
     prefix_url: Union[Unset, str] = UNSET
     public: Union[Unset, bool] = UNSET
@@ -37,6 +39,8 @@ class PreviewSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        custom_domain = self.custom_domain
+
         port = self.port
 
         prefix_url = self.prefix_url
@@ -68,6 +72,8 @@ class PreviewSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if custom_domain is not UNSET:
+            field_dict["customDomain"] = custom_domain
         if port is not UNSET:
             field_dict["port"] = port
         if prefix_url is not UNSET:
@@ -91,6 +97,8 @@ class PreviewSpec:
         if not src_dict:
             return None
         d = src_dict.copy()
+        custom_domain = d.pop("customDomain", UNSET)
+
         port = d.pop("port", UNSET)
 
         prefix_url = d.pop("prefixUrl", UNSET)
@@ -114,6 +122,7 @@ class PreviewSpec:
         url = d.pop("url", UNSET)
 
         preview_spec = cls(
+            custom_domain=custom_domain,
             port=port,
             prefix_url=prefix_url,
             public=public,

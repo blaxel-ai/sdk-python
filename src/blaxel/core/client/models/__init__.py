@@ -15,6 +15,10 @@ from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
+from .custom_domain import CustomDomain
+from .custom_domain_metadata import CustomDomainMetadata
+from .custom_domain_spec import CustomDomainSpec
+from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
 from .entrypoint import Entrypoint
@@ -113,6 +117,8 @@ from .preview_token_metadata import PreviewTokenMetadata
 from .preview_token_spec import PreviewTokenSpec
 from .private_cluster import PrivateCluster
 from .private_location import PrivateLocation
+from .public_ip import PublicIp
+from .public_ips import PublicIps
 from .repository import Repository
 from .request_duration_over_time_metric import RequestDurationOverTimeMetric
 from .request_duration_over_time_metrics import RequestDurationOverTimeMetrics
@@ -166,6 +172,7 @@ from .token_total_metric import TokenTotalMetric
 from .trace_ids_response import TraceIdsResponse
 from .trigger import Trigger
 from .trigger_configuration import TriggerConfiguration
+from .trigger_configuration_task import TriggerConfigurationTask
 from .update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
 from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
@@ -192,6 +199,10 @@ __all__ = (
     "CreateApiKeyForServiceAccountBody",
     "CreateWorkspaceServiceAccountBody",
     "CreateWorkspaceServiceAccountResponse200",
+    "CustomDomain",
+    "CustomDomainMetadata",
+    "CustomDomainSpec",
+    "CustomDomainSpecTxtRecords",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
     "Entrypoint",
@@ -288,6 +299,8 @@ __all__ = (
     "PreviewTokenSpec",
     "PrivateCluster",
     "PrivateLocation",
+    "PublicIp",
+    "PublicIps",
     "Repository",
     "RequestDurationOverTimeMetric",
     "RequestDurationOverTimeMetrics",
@@ -335,6 +348,7 @@ __all__ = (
     "TraceIdsResponse",
     "Trigger",
     "TriggerConfiguration",
+    "TriggerConfigurationTask",
     "UpdateWorkspaceServiceAccountBody",
     "UpdateWorkspaceServiceAccountResponse200",
     "UpdateWorkspaceUserRoleBody",

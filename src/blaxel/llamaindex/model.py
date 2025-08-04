@@ -4,13 +4,17 @@ import os
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 
 from logging import getLogger
-from typing import Any, AsyncGenerator, Generator, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from google.genai.types import HttpOptions
 from llama_index.core.base.llms.types import (
-    ChatMessage, ChatResponse, ChatResponseAsyncGen, ChatResponseGen,
-    CompletionResponse, CompletionResponseAsyncGen, CompletionResponseGen,
-    LLMMetadata, MessageRole
+    ChatMessage,
+    ChatResponse,
+    ChatResponseAsyncGen,
+    ChatResponseGen,
+    CompletionResponse,
+    CompletionResponseAsyncGen,
+    CompletionResponseGen,
 )
 from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.cerebras import Cerebras
