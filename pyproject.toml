@@ -100,7 +100,7 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["F", "I", "UP"]
-ignore = ["UP006", "UP007", "UP035"]
+ignore = ["UP006", "UP007", "UP035", "UP028"]
 
 [tool.pyright]
 # Add pyright configurations here if needed
