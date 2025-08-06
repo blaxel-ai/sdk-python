@@ -33,12 +33,7 @@ class AgentSpec:
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
         description (Union[Unset, str]): Description, small description computed from the prompt
-        functions (Union[Unset, list[str]]):
-        knowledgebase (Union[Unset, str]): Knowledgebase Name
-        model (Union[Unset, str]): Model name
-        prompt (Union[Unset, str]): Prompt, describe what your agent does
         repository (Union[Unset, Repository]): Repository
-        store_id (Union[Unset, str]): Store id
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
@@ -52,12 +47,7 @@ class AgentSpec:
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
     description: Union[Unset, str] = UNSET
-    functions: Union[Unset, list[str]] = UNSET
-    knowledgebase: Union[Unset, str] = UNSET
-    model: Union[Unset, str] = UNSET
-    prompt: Union[Unset, str] = UNSET
     repository: Union[Unset, "Repository"] = UNSET
-    store_id: Union[Unset, str] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -118,23 +108,11 @@ class AgentSpec:
 
         description = self.description
 
-        functions: Union[Unset, list[str]] = UNSET
-        if not isinstance(self.functions, Unset):
-            functions = self.functions
-
-        knowledgebase = self.knowledgebase
-
-        model = self.model
-
-        prompt = self.prompt
-
         repository: Union[Unset, dict[str, Any]] = UNSET
         if self.repository and not isinstance(self.repository, Unset) and not isinstance(self.repository, dict):
             repository = self.repository.to_dict()
         elif self.repository and isinstance(self.repository, dict):
             repository = self.repository
-
-        store_id = self.store_id
 
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
@@ -169,18 +147,8 @@ class AgentSpec:
             field_dict["sandbox"] = sandbox
         if description is not UNSET:
             field_dict["description"] = description
-        if functions is not UNSET:
-            field_dict["functions"] = functions
-        if knowledgebase is not UNSET:
-            field_dict["knowledgebase"] = knowledgebase
-        if model is not UNSET:
-            field_dict["model"] = model
-        if prompt is not UNSET:
-            field_dict["prompt"] = prompt
         if repository is not UNSET:
             field_dict["repository"] = repository
-        if store_id is not UNSET:
-            field_dict["storeId"] = store_id
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -244,22 +212,12 @@ class AgentSpec:
 
         description = d.pop("description", UNSET)
 
-        functions = cast(list[str], d.pop("functions", UNSET))
-
-        knowledgebase = d.pop("knowledgebase", UNSET)
-
-        model = d.pop("model", UNSET)
-
-        prompt = d.pop("prompt", UNSET)
-
         _repository = d.pop("repository", UNSET)
         repository: Union[Unset, Repository]
         if isinstance(_repository, Unset):
             repository = UNSET
         else:
             repository = Repository.from_dict(_repository)
-
-        store_id = d.pop("storeId", UNSET)
 
         triggers = []
         _triggers = d.pop("triggers", UNSET)
@@ -279,12 +237,7 @@ class AgentSpec:
             runtime=runtime,
             sandbox=sandbox,
             description=description,
-            functions=functions,
-            knowledgebase=knowledgebase,
-            model=model,
-            prompt=prompt,
             repository=repository,
-            store_id=store_id,
             triggers=triggers,
         )
 
