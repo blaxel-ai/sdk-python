@@ -63,16 +63,10 @@ from .job_metrics_executions_total import JobMetricsExecutionsTotal
 from .job_metrics_tasks_chart import JobMetricsTasksChart
 from .job_metrics_tasks_total import JobMetricsTasksTotal
 from .job_spec import JobSpec
-from .jobs_chart import JobsChart
 from .jobs_chart_value import JobsChartValue
-from .jobs_executions import JobsExecutions
 from .jobs_network_chart import JobsNetworkChart
 from .jobs_success_failed_chart import JobsSuccessFailedChart
-from .jobs_tasks import JobsTasks
 from .jobs_total import JobsTotal
-from .knowledgebase import Knowledgebase
-from .knowledgebase_spec import KnowledgebaseSpec
-from .knowledgebase_spec_options import KnowledgebaseSpecOptions
 from .last_n_requests_metric import LastNRequestsMetric
 from .latency_metric import LatencyMetric
 from .location_response import LocationResponse
@@ -244,17 +238,11 @@ __all__ = (
     "JobMetricsExecutionsTotal",
     "JobMetricsTasksChart",
     "JobMetricsTasksTotal",
-    "JobsChart",
     "JobsChartValue",
-    "JobsExecutions",
     "JobsNetworkChart",
     "JobSpec",
     "JobsSuccessFailedChart",
-    "JobsTasks",
     "JobsTotal",
-    "Knowledgebase",
-    "KnowledgebaseSpec",
-    "KnowledgebaseSpecOptions",
     "LastNRequestsMetric",
     "LatencyMetric",
     "LocationResponse",

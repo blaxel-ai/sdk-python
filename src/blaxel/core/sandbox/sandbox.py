@@ -73,6 +73,8 @@ class SandboxInstance:
                     or "memory" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "ports" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "envs" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "ttl" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -87,6 +89,8 @@ class SandboxInstance:
             memory = sandbox.memory or default_memory
             ports = sandbox._normalize_ports() or UNSET
             envs = sandbox._normalize_envs() or UNSET
+            ttl = sandbox.ttl
+            expires = sandbox.expires
 
             # Create full Sandbox object
             sandbox = Sandbox(
@@ -97,6 +101,12 @@ class SandboxInstance:
                     )
                 ),
             )
+
+            # Set ttl and expires if provided
+            if ttl:
+                sandbox.spec.runtime.ttl = ttl
+            if expires:
+                sandbox.spec.runtime.expires = expires.isoformat()
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):

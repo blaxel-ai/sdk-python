@@ -118,21 +118,31 @@ class SandboxCreateConfiguration:
         memory: Optional[int] = None,
         ports: Optional[Union[List[Port], List[Dict[str, Any]]]] = None,
         envs: Optional[List[Dict[str, str]]] = None,
+        ttl: Optional[str] = None,
+        expires: Optional[datetime] = None,
     ):
         self.name = name
         self.image = image
         self.memory = memory
         self.ports = ports
         self.envs = envs
+        self.ttl = ttl
+        self.expires = expires
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
+        expires = data.get("expires")
+        if expires and isinstance(expires, str):
+            expires = datetime.fromisoformat(expires.replace("Z", "+00:00"))
+
         return cls(
             name=data.get("name"),
             image=data.get("image"),
             memory=data.get("memory"),
             ports=data.get("ports"),
             envs=data.get("envs"),
+            ttl=data.get("ttl"),
+            expires=expires,
         )
 
     def _normalize_ports(self) -> Optional[List[Port]]:
