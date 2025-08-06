@@ -19,10 +19,6 @@ async def main():
         sandbox = await create_or_get_sandbox(SANDBOX_NAME)
         print(f"✅ Sandbox ready: {sandbox.metadata.name}")
 
-        # Wait for sandbox to be deployed
-        await sandbox.wait()
-        print("✅ Sandbox deployed successfully")
-
         # Create test binary data
         print("🔧 Creating test binary data...")
         test_binary_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82"

@@ -120,10 +120,6 @@ async def main():
         sandbox = await create_or_get_sandbox(SANDBOX_NAME)
         print(f"✅ Sandbox ready: {sandbox.metadata.name}")
 
-        # Wait for sandbox to be deployed
-        await sandbox.wait()
-        print("✅ Sandbox deployed successfully")
-
         # Run different kill tests
         await test_quick_process_kill(sandbox)
         print()

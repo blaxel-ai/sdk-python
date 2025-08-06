@@ -1,6 +1,4 @@
-import asyncio
 import logging
-import time
 import uuid
 from typing import Any, Dict, List, Union
 
@@ -48,35 +46,9 @@ class SandboxInstance:
         return self.sandbox.spec
 
     async def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SandboxInstance":
-        start_time = time.time() * 1000  # Convert to milliseconds
-        while self.sandbox.status != "DEPLOYED":
-            await asyncio.sleep(interval / 1000)  # Convert to seconds
-            try:
-                response = await get_sandbox(
-                    self.sandbox.metadata.name,
-                    client=client,
-                )
-                logger.info(f"Waiting for sandbox to be deployed, status: {response.status}")
-                self.sandbox = response
-                self.config = SandboxConfiguration(self.sandbox)
-            except Exception as e:
-                logger.error("Could not retrieve sandbox", exc_info=e)
-
-            if self.sandbox.status == "FAILED":
-                raise Exception("Sandbox failed to deploy")
-
-            if (time.time() * 1000) - start_time > max_wait:
-                raise Exception("Sandbox did not deploy in time")
-
-        if self.sandbox.status == "DEPLOYED":
-            try:
-                # This is a hack for sometime receiving a 502,
-                # need to remove this once we have a better way to handle this
-                await self.fs.ls("/")
-            except:
-                # pass
-                pass
-
+        logger.warning(
+            "⚠️  Warning: sandbox.wait() is deprecated. You don't need to wait for the sandbox to be deployed anymore."
+        )
         return self
 
     @classmethod
@@ -146,7 +118,13 @@ class SandboxInstance:
             client=client,
             body=sandbox,
         )
-        return cls(response)
+        instance = cls(response)
+        # TODO remove this part once we have a better way to handle this
+        try:
+            await instance.fs.ls("/")
+        except Exception:
+            pass
+        return instance
 
     @classmethod
     async def get(cls, sandbox_name: str) -> "SandboxInstance":
@@ -175,31 +153,32 @@ class SandboxInstance:
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
         try:
-            # Extract name from different configuration types
-            if isinstance(sandbox, SandboxCreateConfiguration):
-                name = sandbox.name
-            elif isinstance(sandbox, dict):
-                if "name" in sandbox:
-                    name = sandbox["name"]
-                elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
-                    name = sandbox["metadata"].get("name")
-                else:
-                    # If no name provided, we can't check if it exists, so create new
-                    return await cls.create(sandbox)
-            elif isinstance(sandbox, Sandbox):
-                name = sandbox.metadata.name if sandbox.metadata else None
-            else:
-                name = None
-
-            if not name:
-                raise ValueError("Sandbox name is required")
-
-            sandbox_instance = await cls.get(name)
-            return sandbox_instance
+            return await cls.create(sandbox)
         except Exception as e:
-            # Check if it's a 404 error (sandbox not found)
-            if hasattr(e, "status_code") and e.status_code == 404:
-                return await cls.create(sandbox)
+            # Check if it's a 409 conflict error (sandbox already exists)
+            if (hasattr(e, "status_code") and e.status_code == 409) or (
+                hasattr(e, "code") and e.code in [409, "SANDBOX_ALREADY_EXISTS"]
+            ):
+                # Extract name from different configuration types
+                if isinstance(sandbox, SandboxCreateConfiguration):
+                    name = sandbox.name
+                elif isinstance(sandbox, dict):
+                    if "name" in sandbox:
+                        name = sandbox["name"]
+                    elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
+                        name = sandbox["metadata"].get("name")
+                    else:
+                        name = None
+                elif isinstance(sandbox, Sandbox):
+                    name = sandbox.metadata.name if sandbox.metadata else None
+                else:
+                    name = None
+
+                if not name:
+                    raise ValueError("Sandbox name is required")
+
+                sandbox_instance = await cls.get(name)
+                return sandbox_instance
             raise e
 
     @classmethod

@@ -10,7 +10,6 @@ async def main():
         # Test 1: Create sandbox with no parameters (should use defaults)
         print("Test 1: Create sandbox with default parameters...")
         sandbox = await SandboxInstance.create()
-        await sandbox.wait()
         print(f"✅ Created sandbox with default name: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel"))
         await SandboxInstance.delete(sandbox.metadata.name)
@@ -21,7 +20,6 @@ async def main():
         sandbox = await SandboxInstance.create(
             {"spec": {"runtime": {"image": "blaxel/prod-base:latest"}}}
         )
-        await sandbox.wait()
         print(f"✅ Created sandbox with spec: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel"))
         await SandboxInstance.delete(sandbox.metadata.name)
@@ -30,7 +28,6 @@ async def main():
         # Test 3: Create sandbox with simplified name configuration
         print("\nTest 3: Create sandbox with name configuration...")
         sandbox = await SandboxInstance.create({"name": "sandbox-with-name"})
-        await sandbox.wait()
         print(f"✅ Created sandbox with name: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
@@ -40,7 +37,6 @@ async def main():
         print("\nTest 4: Create sandbox with SandboxCreateConfiguration...")
         config = SandboxCreateConfiguration(name="sandbox-config-test")
         sandbox = await SandboxInstance.create(config)
-        await sandbox.wait()
         print(f"✅ Created sandbox with config: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
@@ -49,7 +45,6 @@ async def main():
         # Test 5: Create sandbox if not exists with name
         print("\nTest 5: Create sandbox if not exists with name...")
         sandbox = await SandboxInstance.create_if_not_exists({"name": "sandbox-cine-name"})
-        await sandbox.wait()
         print(f"✅ Created/found sandbox: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
@@ -60,7 +55,6 @@ async def main():
         sandbox = await SandboxInstance.create_if_not_exists(
             {"metadata": {"name": "sandbox-cine-metadata"}}
         )
-        await sandbox.wait()
         print(f"✅ Created/found sandbox with metadata: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel/"))
         await SandboxInstance.delete(sandbox.metadata.name)
@@ -74,7 +68,6 @@ async def main():
             memory=2048,
         )
         sandbox = await SandboxInstance.create(custom_config)
-        await sandbox.wait()
         print(f"✅ Created custom sandbox: {sandbox.metadata.name}")
         print(f"   Image: {sandbox.spec.runtime.image}")
         print(f"   Memory: {sandbox.spec.runtime.memory}")
@@ -94,7 +87,6 @@ async def main():
             ],
         )
         sandbox = await SandboxInstance.create(ports_config)
-        await sandbox.wait()
         print(f"✅ Created sandbox with ports: {sandbox.metadata.name}")
         print(f"   Image: {sandbox.spec.runtime.image}")
         print(f"   Memory: {sandbox.spec.runtime.memory}")
@@ -121,7 +113,6 @@ async def main():
             ],
         )
         sandbox = await SandboxInstance.create(envs_config)
-        await sandbox.wait()
         print(f"✅ Created sandbox with envs: {sandbox.metadata.name}")
         print(f"   Image: {sandbox.spec.runtime.image}")
         print(f"   Memory: {sandbox.spec.runtime.memory}")
@@ -136,16 +127,17 @@ async def main():
 
         # Test 10: Create sandbox with environment variables using dict syntax
         print("\nTest 10: Create sandbox with envs using dict syntax...")
-        sandbox = await SandboxInstance.create({
-            "name": "sandbox-with-envs-dict",
-            "image": "blaxel/prod-base:latest",
-            "memory": 2048,
-            "envs": [
-                {"name": "ENVIRONMENT", "value": "test"},
-                {"name": "VERSION", "value": "1.0.0"},
-            ]
-        })
-        await sandbox.wait()
+        sandbox = await SandboxInstance.create(
+            {
+                "name": "sandbox-with-envs-dict",
+                "image": "blaxel/prod-base:latest",
+                "memory": 2048,
+                "envs": [
+                    {"name": "ENVIRONMENT", "value": "test"},
+                    {"name": "VERSION", "value": "1.0.0"},
+                ],
+            }
+        )
         print(f"✅ Created sandbox with envs dict: {sandbox.metadata.name}")
         print(f"   Image: {sandbox.spec.runtime.image}")
         print(f"   Memory: {sandbox.spec.runtime.memory}")
