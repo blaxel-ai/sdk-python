@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 from blaxel.core.client.models import Metadata, Port, Runtime, Sandbox, SandboxSpec
 from blaxel.core.sandbox import SandboxInstance
 
+env = os.environ.get("BL_ENV", "prod")
+
 sep = "--------------------------------"
 
 
@@ -16,16 +18,14 @@ def info(msg: str) -> None:
 
 async def local_sandbox(sandbox_name: str) -> SandboxInstance:
     """Create a local sandbox instance for testing."""
-    env_var = f"BL_SANDBOXES_{sandbox_name.replace('-', '_').upper()}_URL"
-    os.environ[env_var] = "http://localhost:8080"
-
+    info(f"Using local sandbox {sandbox_name}")
     sandbox = SandboxInstance(Sandbox(metadata=Metadata(name=sandbox_name)))
     return sandbox
 
 
 async def create_or_get_sandbox(
     sandbox_name: str,
-    image: str = "blaxel/prod-nextjs:latest",
+    image: str = f"blaxel/{env}-nextjs:latest",
     ports: Optional[List[Dict[str, Any]]] = None,
     memory: int = 4096,
     envs: Optional[List[Dict[str, str]]] = None,
@@ -66,7 +66,6 @@ async def create_or_get_sandbox(
     sandbox_model = Sandbox(metadata=metadata, spec=spec)
 
     sandbox = await SandboxInstance.create_if_not_exists(sandbox_model)
-    await sandbox.wait(max_wait=120000, interval=1000)
     return sandbox
 
 
