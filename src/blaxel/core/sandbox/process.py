@@ -105,10 +105,10 @@ class SandboxProcess(SandboxAction):
                     response_data = response.json()
                 except Exception:
                     # If JSON parsing fails, check the response first
-                    self.handle_response_error(response, None, None)
+                    self.handle_response_error(response)
                     raise
 
-            self.handle_response_error(response, response_data, None)
+            self.handle_response_error(response)
             result = ProcessResponse.from_dict(response_data)
 
             # Handle wait_for_completion with parallel log streaming
@@ -157,33 +157,25 @@ class SandboxProcess(SandboxAction):
     async def get(self, identifier: str) -> ProcessResponse:
         async with self.get_client() as client_instance:
             response = await client_instance.get(f"/process/{identifier}")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return ProcessResponse.from_dict(response.json())
 
     async def list(self) -> list[ProcessResponse]:
         async with self.get_client() as client_instance:
             response = await client_instance.get("/process")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return [ProcessResponse.from_dict(item) for item in response.json()]
 
     async def stop(self, identifier: str) -> SuccessResponse:
         async with self.get_client() as client_instance:
             response = await client_instance.delete(f"/process/{identifier}")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     async def kill(self, identifier: str) -> SuccessResponse:
         async with self.get_client() as client_instance:
             response = await client_instance.delete(f"/process/{identifier}/kill")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     async def logs(
@@ -191,9 +183,7 @@ class SandboxProcess(SandboxAction):
     ) -> str:
         async with self.get_client() as client_instance:
             response = await client_instance.get(f"/process/{identifier}/logs")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
 
             data = response.json()
             if log_type == "all":

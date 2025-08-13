@@ -21,9 +21,7 @@ class SandboxFileSystem(SandboxAction):
 
         async with self.get_client() as client_instance:
             response = await client_instance.put(f"/filesystem/{path}", json=body.to_dict())
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     async def write(self, path: str, content: str) -> SuccessResponse:
@@ -32,9 +30,7 @@ class SandboxFileSystem(SandboxAction):
 
         async with self.get_client() as client_instance:
             response = await client_instance.put(f"/filesystem/{path}", json=body.to_dict())
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     async def write_binary(self, path: str, content: Union[bytes, bytearray]) -> SuccessResponse:
@@ -86,9 +82,7 @@ class SandboxFileSystem(SandboxAction):
                 json={"files": files_dict},
                 headers={"Content-Type": "application/json"},
             )
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return Directory.from_dict(response.json())
 
     async def read(self, path: str) -> str:
@@ -96,9 +90,7 @@ class SandboxFileSystem(SandboxAction):
 
         async with self.get_client() as client_instance:
             response = await client_instance.get(f"/filesystem/{path}")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
 
             data = response.json()
             if "content" in data:
@@ -111,9 +103,7 @@ class SandboxFileSystem(SandboxAction):
         async with self.get_client() as client_instance:
             params = {"recursive": "true"} if recursive else {}
             response = await client_instance.delete(f"/filesystem/{path}", params=params)
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     async def ls(self, path: str) -> Directory:
@@ -121,9 +111,7 @@ class SandboxFileSystem(SandboxAction):
 
         async with self.get_client() as client_instance:
             response = await client_instance.get(f"/filesystem/{path}")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
 
             data = response.json()
             if not ("files" in data or "subdirectories" in data):
@@ -136,9 +124,7 @@ class SandboxFileSystem(SandboxAction):
 
         async with self.get_client() as client_instance:
             response = await client_instance.get(f"/filesystem/{source}")
-            self.handle_response_error(
-                response, response.json() if response.content else None, None
-            )
+            self.handle_response_error(response)
 
             data = response.json()
             if "files" in data or "subdirectories" in data:
@@ -273,8 +259,8 @@ class SandboxFileSystem(SandboxAction):
         return {"close": close}
 
     def format_path(self, path: str) -> str:
-        if path == "/":
-            return path
+        if path == "/" or path == "":
+            return "%2F"
         if path.startswith("/"):
             path = path[1:]
         return path
