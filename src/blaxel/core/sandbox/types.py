@@ -108,6 +108,18 @@ class CopyResponse:
         self.destination = destination
 
 
+class SandboxUpdateMetadata:
+    """Configuration for updating sandbox metadata."""
+
+    def __init__(
+        self,
+        labels: Optional[Dict[str, str]] = None,
+        display_name: Optional[str] = None,
+    ):
+        self.labels = labels
+        self.display_name = display_name
+
+
 class SandboxCreateConfiguration:
     """Simplified configuration for creating sandboxes with default values."""
 

@@ -6,6 +6,7 @@ from ..client.api.compute.create_sandbox import asyncio as create_sandbox
 from ..client.api.compute.delete_sandbox import asyncio as delete_sandbox
 from ..client.api.compute.get_sandbox import asyncio as get_sandbox
 from ..client.api.compute.list_sandboxes import asyncio as list_sandboxes
+from ..client.api.compute.update_sandbox import asyncio as update_sandbox
 from ..client.client import client
 from ..client.models import Metadata, Runtime, Sandbox, SandboxSpec
 from ..client.types import UNSET
@@ -14,7 +15,12 @@ from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .session import SandboxSessions
-from .types import SandboxConfiguration, SandboxCreateConfiguration, SessionWithToken
+from .types import (
+    SandboxConfiguration,
+    SandboxCreateConfiguration,
+    SandboxUpdateMetadata,
+    SessionWithToken,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +162,54 @@ class SandboxInstance:
             client=client,
         )
         return response
+
+    @classmethod
+    async def update_metadata(
+        cls, sandbox_name: str, metadata: SandboxUpdateMetadata
+    ) -> "SandboxInstance":
+        """Update sandbox metadata by merging new metadata with existing metadata.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            metadata: The metadata fields to update (labels and/or display_name)
+
+        Returns:
+            A new SandboxInstance with updated metadata
+        """
+        # Get the existing sandbox
+        sandbox_instance = await cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+
+        # Merge metadata
+        if updated_sandbox.metadata is None:
+            updated_sandbox.metadata = Metadata()
+
+        # Update labels if provided
+        if metadata.labels is not None:
+            # Handle UNSET or None labels
+            if updated_sandbox.metadata.labels is None or updated_sandbox.metadata.labels is UNSET:
+                updated_sandbox.metadata.labels = {}
+            else:
+                # If labels exist, ensure it's a dict
+                updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
+            updated_sandbox.metadata.labels.update(metadata.labels)
+
+        # Update display_name if provided
+        if metadata.display_name is not None:
+            updated_sandbox.metadata.display_name = metadata.display_name
+
+        # Call the update API
+        response = await update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        # Return new instance with updated sandbox
+        return cls(response)
 
     @classmethod
     async def create_if_not_exists(

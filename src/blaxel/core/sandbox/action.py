@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 import httpx
 
@@ -8,12 +8,16 @@ from .types import SandboxConfiguration
 
 
 class ResponseError(Exception):
-    def __init__(self, response: httpx.Response, data: Any = None, error: Any = None):
+    def __init__(self, response: httpx.Response):
         data_error = {}
-        if isinstance(data, dict) and "error" in data:
-            data_error = data
-        if isinstance(error, dict) and "error" in error:
-            data_error["error"] = error["error"]
+        data = None
+        if response.content:
+            try:
+                data = response.json()
+                data_error = data
+            except Exception:
+                data = response.text
+                data_error["response"] = data
         if response.status_code:
             data_error["status"] = response.status_code
         if response.reason_phrase:
@@ -22,7 +26,7 @@ class ResponseError(Exception):
         super().__init__(str(data_error))
         self.response = response
         self.data = data
-        self.error = error
+        self.error = None
 
 
 class SandboxAction:
@@ -74,6 +78,6 @@ class SandboxAction:
             headers={**settings.headers, **self.sandbox_config.headers},
         )
 
-    def handle_response_error(self, response: httpx.Response, data: Any, error: Any):
-        if not response.is_success or not data:
-            raise ResponseError(response, data, error)
+    def handle_response_error(self, response: httpx.Response):
+        if not response.is_success:
+            raise ResponseError(response)
