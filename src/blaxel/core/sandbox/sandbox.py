@@ -59,7 +59,9 @@ class SandboxInstance:
 
     @classmethod
     async def create(
-        cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None
+        cls,
+        sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
+        safe: bool = True,
     ) -> "SandboxInstance":
         # Generate default values
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
@@ -120,9 +122,11 @@ class SandboxInstance:
 
             # Set defaults for missing fields
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=uuid.uuid4().hex.replace("-", ""))
+                sandbox.metadata = Metadata(name=default_name)
             if not sandbox.spec:
-                sandbox.spec = SandboxSpec(runtime=Runtime(image=default_image))
+                sandbox.spec = SandboxSpec(
+                    runtime=Runtime(image=default_image, memory=default_memory)
+                )
             if not sandbox.spec.runtime:
                 sandbox.spec.runtime = Runtime(image=default_image, memory=default_memory)
 
@@ -136,10 +140,11 @@ class SandboxInstance:
         )
         instance = cls(response)
         # TODO remove this part once we have a better way to handle this
-        try:
-            await instance.fs.ls("/")
-        except Exception:
-            pass
+        if safe:
+            try:
+                await instance.fs.ls("/")
+            except Exception:
+                pass
         return instance
 
     @classmethod
