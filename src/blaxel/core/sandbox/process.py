@@ -112,10 +112,8 @@ class SandboxProcess(SandboxAction):
             result = ProcessResponse.from_dict(response_data)
 
             # Handle wait_for_completion with parallel log streaming
-            if should_wait_for_completion:
-                stream_control = None
-                if on_log is not None:
-                    stream_control = self.stream_logs(result.pid, {"on_log": on_log})
+            if should_wait_for_completion and on_log is not None:
+                stream_control = self.stream_logs(result.pid, {"on_log": on_log})
                 try:
                     # Wait for process completion
                     result = await self.wait(result.pid, interval=500, max_wait=1000 * 60 * 60)
