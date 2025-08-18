@@ -35,7 +35,12 @@ telemetry = [
 ]
 
 # CrewAI module
-crewai = ["crewai>=0.120.1", "opentelemetry-instrumentation-crewai>=0.40.6"]
+crewai = [
+  "crewai==0.159.0",
+  "litellm==1.74.9",
+  "openai==1.99.9",
+  "opentelemetry-instrumentation-crewai==0.41.0",
+]
 
 # OpenAI module
 openai = ["openai-agents>=0.0.19"]

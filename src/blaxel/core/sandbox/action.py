@@ -55,7 +55,8 @@ class SandboxAction:
     @property
     def url(self) -> str:
         if self.forced_url:
-            return self.forced_url
+            url = self.forced_url
+            return url[:-1] if url.endswith("/") else url
         # Uncomment when mk3 is fully available
         # if settings.run_internal_hostname:
         #     return self.internal_url
