@@ -17,7 +17,7 @@ class CustomDomainSpec:
     """Custom domain specification
 
     Attributes:
-        cname_target (Union[Unset, str]): CNAME target for the domain
+        cname_records (Union[Unset, str]): CNAME target for the domain
         last_verified_at (Union[Unset, str]): Last verification attempt timestamp
         status (Union[Unset, str]): Current status of the domain (pending, verified, failed)
         txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
@@ -25,7 +25,7 @@ class CustomDomainSpec:
         verification_error (Union[Unset, str]): Error message if verification failed
     """
 
-    cname_target: Union[Unset, str] = UNSET
+    cname_records: Union[Unset, str] = UNSET
     last_verified_at: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
     txt_records: Union[Unset, "CustomDomainSpecTxtRecords"] = UNSET
@@ -33,7 +33,7 @@ class CustomDomainSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        cname_target = self.cname_target
+        cname_records = self.cname_records
 
         last_verified_at = self.last_verified_at
 
@@ -50,8 +50,8 @@ class CustomDomainSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if cname_target is not UNSET:
-            field_dict["cnameTarget"] = cname_target
+        if cname_records is not UNSET:
+            field_dict["cnameRecords"] = cname_records
         if last_verified_at is not UNSET:
             field_dict["lastVerifiedAt"] = last_verified_at
         if status is not UNSET:
@@ -70,7 +70,7 @@ class CustomDomainSpec:
         if not src_dict:
             return None
         d = src_dict.copy()
-        cname_target = d.pop("cnameTarget", UNSET)
+        cname_records = d.pop("cnameRecords", UNSET)
 
         last_verified_at = d.pop("lastVerifiedAt", UNSET)
 
@@ -86,7 +86,7 @@ class CustomDomainSpec:
         verification_error = d.pop("verificationError", UNSET)
 
         custom_domain_spec = cls(
-            cname_target=cname_target,
+            cname_records=cname_records,
             last_verified_at=last_verified_at,
             status=status,
             txt_records=txt_records,

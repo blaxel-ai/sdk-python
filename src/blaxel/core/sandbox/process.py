@@ -15,9 +15,105 @@ class SandboxProcess(SandboxAction):
         super().__init__(sandbox_config)
 
     def stream_logs(
+        self, process_name: str, options: Optional[Dict[str, Callable[[str], None]]] = None
+    ) -> Dict[str, Callable[[], None]]:
+        """Stream logs from a process with automatic reconnection and deduplication."""
+        if options is None:
+            options = {}
+
+        reconnect_interval = 30  # 30 seconds in Python (TypeScript uses milliseconds)
+        current_stream = None
+        is_running = True
+        reconnect_timer = None
+
+        # Track seen logs to avoid duplicates
+        seen_logs = set()
+
+        def start_stream():
+            nonlocal current_stream, reconnect_timer
+            log_counter = [0]  # Use list to make it mutable in nested function
+
+            # Close existing stream if any
+            if current_stream:
+                current_stream["close"]()
+
+            # Create wrapper options with deduplication
+            wrapped_options = {}
+
+            if "on_log" in options:
+
+                def deduplicated_on_log(log: str):
+                    log_key = f"{log_counter[0]}:{log}"
+                    log_counter[0] += 1
+                    if log_key not in seen_logs:
+                        seen_logs.add(log_key)
+                        options["on_log"](log)
+
+                wrapped_options["on_log"] = deduplicated_on_log
+
+            if "on_stdout" in options:
+
+                def deduplicated_on_stdout(stdout: str):
+                    log_key = f"{log_counter[0]}:{stdout}"
+                    log_counter[0] += 1
+                    if log_key not in seen_logs:
+                        seen_logs.add(log_key)
+                        options["on_stdout"](stdout)
+
+                wrapped_options["on_stdout"] = deduplicated_on_stdout
+
+            if "on_stderr" in options:
+
+                def deduplicated_on_stderr(stderr: str):
+                    log_key = f"{log_counter[0]}:{stderr}"
+                    log_counter[0] += 1
+                    if log_key not in seen_logs:
+                        seen_logs.add(log_key)
+                        options["on_stderr"](stderr)
+
+                wrapped_options["on_stderr"] = deduplicated_on_stderr
+
+            # Start new stream with deduplication
+            current_stream = self._stream_logs(process_name, wrapped_options)
+
+            # Schedule next reconnection
+            if is_running:
+
+                def schedule_reconnect():
+                    if is_running:
+                        start_stream()
+
+                reconnect_timer = asyncio.get_event_loop().call_later(
+                    reconnect_interval, schedule_reconnect
+                )
+
+        # Start the initial stream
+        start_stream()
+
+        # Return control functions
+        def close():
+            nonlocal is_running, reconnect_timer, current_stream
+            is_running = False
+
+            # Cancel reconnect timer
+            if reconnect_timer:
+                reconnect_timer.cancel()
+                reconnect_timer = None
+
+            # Close current stream
+            if current_stream:
+                current_stream["close"]()
+                current_stream = None
+
+            # Clear seen logs
+            seen_logs.clear()
+
+        return {"close": close}
+
+    def _stream_logs(
         self, identifier: str, options: Optional[Dict[str, Callable[[str], None]]] = None
     ) -> Dict[str, Callable[[], None]]:
-        """Stream logs from a process with callbacks for different output types."""
+        """Private method to stream logs from a process with callbacks for different output types."""
         if options is None:
             options = {}
 
@@ -113,7 +209,7 @@ class SandboxProcess(SandboxAction):
 
             # Handle wait_for_completion with parallel log streaming
             if should_wait_for_completion and on_log is not None:
-                stream_control = self.stream_logs(result.pid, {"on_log": on_log})
+                stream_control = self._stream_logs(result.pid, {"on_log": on_log})
                 try:
                     # Wait for process completion
                     result = await self.wait(result.pid, interval=500, max_wait=1000 * 60 * 60)
@@ -124,7 +220,7 @@ class SandboxProcess(SandboxAction):
             else:
                 # For non-blocking execution, set up log streaming immediately if requested
                 if on_log is not None:
-                    stream_control = self.stream_logs(result.pid, {"on_log": on_log})
+                    stream_control = self._stream_logs(result.pid, {"on_log": on_log})
                     return ProcessResponseWithLog(
                         result, lambda: stream_control["close"]() if stream_control else None
                     )

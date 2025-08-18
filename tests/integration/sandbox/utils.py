@@ -19,7 +19,9 @@ def info(msg: str) -> None:
 async def local_sandbox(sandbox_name: str) -> SandboxInstance:
     """Create a local sandbox instance for testing."""
     info(f"Using local sandbox {sandbox_name}")
-    sandbox = SandboxInstance(Sandbox(metadata=Metadata(name=sandbox_name)))
+    sandbox = SandboxInstance(
+        Sandbox(metadata=Metadata(name=sandbox_name)), force_url="http://localhost:8080"
+    )
     return sandbox
 
 
