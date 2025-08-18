@@ -50,6 +50,8 @@ lint:
 	uv run ruff check --fix
 
 tag:
+	git checkout main
+	git pull origin main
 	git tag -a v$(ARGS) -m "Release v$(ARGS)"
 	git push origin v$(ARGS)
 
