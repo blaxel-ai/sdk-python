@@ -10,6 +10,7 @@ from ..client.api.compute.update_sandbox import asyncio as update_sandbox
 from ..client.client import client
 from ..client.models import Metadata, Runtime, Sandbox, SandboxSpec
 from ..client.types import UNSET
+from ..common.settings import settings
 from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
@@ -64,8 +65,9 @@ class SandboxInstance:
         safe: bool = True,
     ) -> "SandboxInstance":
         # Generate default values
+        env = settings.env
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
-        default_image = "blaxel/prod-base:latest"
+        default_image = f"blaxel/{env}-base:latest"
         default_memory = 4096
 
         # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs keys

@@ -19,6 +19,7 @@ class PreviewSpec:
 
     Attributes:
         custom_domain (Union[Unset, str]): Custom domain bound to this preview
+        expires (Union[Unset, str]): The expiration date for the preview in ISO 8601 format - 2024-12-31T23:59:59Z
         port (Union[Unset, int]): Port of the preview
         prefix_url (Union[Unset, str]): Prefix URL
         public (Union[Unset, bool]): Whether the preview is public
@@ -26,20 +27,26 @@ class PreviewSpec:
             preview. This is especially useful to set the Authorization header.
         response_headers (Union[Unset, PreviewSpecResponseHeaders]): Those headers will be set in all responses of your
             preview. This is especially useful to set the CORS headers.
+        ttl (Union[Unset, str]): Time to live for the preview (e.g., "1h", "24h", "7d"). After this duration, the
+            preview will be automatically deleted.
         url (Union[Unset, str]): URL of the preview
     """
 
     custom_domain: Union[Unset, str] = UNSET
+    expires: Union[Unset, str] = UNSET
     port: Union[Unset, int] = UNSET
     prefix_url: Union[Unset, str] = UNSET
     public: Union[Unset, bool] = UNSET
     request_headers: Union[Unset, "PreviewSpecRequestHeaders"] = UNSET
     response_headers: Union[Unset, "PreviewSpecResponseHeaders"] = UNSET
+    ttl: Union[Unset, str] = UNSET
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         custom_domain = self.custom_domain
+
+        expires = self.expires
 
         port = self.port
 
@@ -67,6 +74,8 @@ class PreviewSpec:
         elif self.response_headers and isinstance(self.response_headers, dict):
             response_headers = self.response_headers
 
+        ttl = self.ttl
+
         url = self.url
 
         field_dict: dict[str, Any] = {}
@@ -74,6 +83,8 @@ class PreviewSpec:
         field_dict.update({})
         if custom_domain is not UNSET:
             field_dict["customDomain"] = custom_domain
+        if expires is not UNSET:
+            field_dict["expires"] = expires
         if port is not UNSET:
             field_dict["port"] = port
         if prefix_url is not UNSET:
@@ -84,6 +95,8 @@ class PreviewSpec:
             field_dict["requestHeaders"] = request_headers
         if response_headers is not UNSET:
             field_dict["responseHeaders"] = response_headers
+        if ttl is not UNSET:
+            field_dict["ttl"] = ttl
         if url is not UNSET:
             field_dict["url"] = url
 
@@ -98,6 +111,8 @@ class PreviewSpec:
             return None
         d = src_dict.copy()
         custom_domain = d.pop("customDomain", UNSET)
+
+        expires = d.pop("expires", UNSET)
 
         port = d.pop("port", UNSET)
 
@@ -119,15 +134,19 @@ class PreviewSpec:
         else:
             response_headers = PreviewSpecResponseHeaders.from_dict(_response_headers)
 
+        ttl = d.pop("ttl", UNSET)
+
         url = d.pop("url", UNSET)
 
         preview_spec = cls(
             custom_domain=custom_domain,
+            expires=expires,
             port=port,
             prefix_url=prefix_url,
             public=public,
             request_headers=request_headers,
             response_headers=response_headers,
+            ttl=ttl,
             url=url,
         )
 
