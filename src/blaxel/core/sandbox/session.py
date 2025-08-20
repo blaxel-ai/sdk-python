@@ -37,6 +37,7 @@ class SandboxSessions:
             spec=PreviewSpec(
                 port=443,
                 public=False,
+                expires=expires_at.isoformat(),
                 request_headers=options.request_headers,
                 response_headers=options.response_headers,
             ),

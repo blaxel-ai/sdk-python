@@ -2,14 +2,10 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
-from utils import create_or_get_sandbox
-
 from blaxel.core.sandbox import SandboxInstance, SessionCreateOptions
 from blaxel.core.sandbox.client.models.process_request import ProcessRequest
 
 logger = getLogger(__name__)
-
-SANDBOX_NAME = "sandbox-test-python-session"
 
 
 async def main():
@@ -17,8 +13,8 @@ async def main():
     print("🚀 Starting sandbox session tests...")
 
     try:
-        # Create or get sandbox
-        sandbox = await create_or_get_sandbox(SANDBOX_NAME)
+        # Test with controlplane
+        sandbox = await SandboxInstance.create()
         print(f"✅ Sandbox ready: {sandbox.metadata.name}")
 
         # Wait for sandbox to be deployed
@@ -120,7 +116,7 @@ async def main():
             print(f"⚠️ Failed to clean up sessions: {e}")
 
         try:
-            await SandboxInstance.delete(SANDBOX_NAME)
+            await SandboxInstance.delete(sandbox.metadata.name)
             print("✅ Sandbox deleted")
         except Exception as e:
             print(f"⚠️ Failed to delete sandbox: {e}")
