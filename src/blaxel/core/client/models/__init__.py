@@ -170,6 +170,9 @@ from .trigger_configuration_task import TriggerConfigurationTask
 from .update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
 from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
+from .volume import Volume
+from .volume_attachment import VolumeAttachment
+from .volume_spec import VolumeSpec
 from .websocket_channel import WebsocketChannel
 from .websocket_message import WebsocketMessage
 from .workspace import Workspace
@@ -340,6 +343,9 @@ __all__ = (
     "UpdateWorkspaceServiceAccountBody",
     "UpdateWorkspaceServiceAccountResponse200",
     "UpdateWorkspaceUserRoleBody",
+    "Volume",
+    "VolumeAttachment",
+    "VolumeSpec",
     "WebsocketChannel",
     "WebsocketMessage",
     "Workspace",

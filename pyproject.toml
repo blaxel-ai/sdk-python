@@ -136,6 +136,7 @@ dev = [
   "pdoc3>=0.11.5",
   "python-dotenv>=1.1.0",
   "ruff>=0.8.2",
+  "openapi-python-client>=0.25.3",
 ]
 test = [
   "pytest>=8.0.0",

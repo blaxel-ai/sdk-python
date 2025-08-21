@@ -16,6 +16,7 @@ from .sandbox import (
     SandboxProcess,
 )
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
+from .volume import VolumeCreateConfiguration, VolumeInstance
 
 __all__ = [
     "BlAgent",
@@ -41,4 +42,6 @@ __all__ = [
     "bl_tools",
     "convert_mcp_tool_to_blaxel_tool",
     "websocket_client",
+    "VolumeInstance",
+    "VolumeCreateConfiguration",
 ]

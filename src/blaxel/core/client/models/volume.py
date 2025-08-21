@@ -8,29 +8,27 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_event import CoreEvent
     from ..models.metadata import Metadata
-    from ..models.sandbox_spec import SandboxSpec
+    from ..models.volume_spec import VolumeSpec
 
 
-T = TypeVar("T", bound="Sandbox")
+T = TypeVar("T", bound="Volume")
 
 
 @_attrs_define
-class Sandbox:
-    """Micro VM for running agentic tasks
+class Volume:
+    """Volume resource for persistent storage
 
     Attributes:
         events (Union[Unset, list['CoreEvent']]): Core events
         metadata (Union[Unset, Metadata]): Metadata
-        spec (Union[Unset, SandboxSpec]): Sandbox specification
-        status (Union[Unset, str]): Sandbox status
-        ttl (Union[Unset, int]): TTL timestamp for automatic deletion (optional, nil means no auto-deletion)
+        spec (Union[Unset, VolumeSpec]): Volume specification
+        status (Union[Unset, str]): Volume status computed from events
     """
 
     events: Union[Unset, list["CoreEvent"]] = UNSET
     metadata: Union[Unset, "Metadata"] = UNSET
-    spec: Union[Unset, "SandboxSpec"] = UNSET
+    spec: Union[Unset, "VolumeSpec"] = UNSET
     status: Union[Unset, str] = UNSET
-    ttl: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -58,8 +56,6 @@ class Sandbox:
 
         status = self.status
 
-        ttl = self.ttl
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -71,8 +67,6 @@ class Sandbox:
             field_dict["spec"] = spec
         if status is not UNSET:
             field_dict["status"] = status
-        if ttl is not UNSET:
-            field_dict["ttl"] = ttl
 
         return field_dict
 
@@ -80,7 +74,7 @@ class Sandbox:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
-        from ..models.sandbox_spec import SandboxSpec
+        from ..models.volume_spec import VolumeSpec
 
         if not src_dict:
             return None
@@ -100,26 +94,23 @@ class Sandbox:
             metadata = Metadata.from_dict(_metadata)
 
         _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, SandboxSpec]
+        spec: Union[Unset, VolumeSpec]
         if isinstance(_spec, Unset):
             spec = UNSET
         else:
-            spec = SandboxSpec.from_dict(_spec)
+            spec = VolumeSpec.from_dict(_spec)
 
         status = d.pop("status", UNSET)
 
-        ttl = d.pop("ttl", UNSET)
-
-        sandbox = cls(
+        volume = cls(
             events=events,
             metadata=metadata,
             spec=spec,
             status=status,
-            ttl=ttl,
         )
 
-        sandbox.additional_properties = d
-        return sandbox
+        volume.additional_properties = d
+        return volume
 
     @property
     def additional_keys(self) -> list[str]:

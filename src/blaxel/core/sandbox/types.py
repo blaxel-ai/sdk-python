@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from attrs import define as _attrs_define
 
-from ..client.models import Port, Sandbox
+from ..client.models import Port, Sandbox, VolumeAttachment
 from ..client.types import UNSET
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
@@ -54,6 +54,23 @@ class SessionWithToken:
             url=data["url"],
             token=data["token"],
             expires_at=expires_at,
+        )
+
+
+class VolumeBinding:
+    """Volume binding configuration for sandbox."""
+
+    def __init__(self, name: str, mount_path: str, read_only: Optional[bool] = False):
+        self.name = name
+        self.mount_path = mount_path
+        self.read_only = read_only or False
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "VolumeBinding":
+        return cls(
+            name=data["name"],
+            mount_path=data["mount_path"],
+            read_only=data.get("read_only", False),
         )
 
 
@@ -130,6 +147,7 @@ class SandboxCreateConfiguration:
         memory: Optional[int] = None,
         ports: Optional[Union[List[Port], List[Dict[str, Any]]]] = None,
         envs: Optional[List[Dict[str, str]]] = None,
+        volumes: Optional[Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]]] = None,
         ttl: Optional[str] = None,
         expires: Optional[datetime] = None,
     ):
@@ -138,6 +156,7 @@ class SandboxCreateConfiguration:
         self.memory = memory
         self.ports = ports
         self.envs = envs
+        self.volumes = volumes
         self.ttl = ttl
         self.expires = expires
 
@@ -153,6 +172,7 @@ class SandboxCreateConfiguration:
             memory=data.get("memory"),
             ports=data.get("ports"),
             envs=data.get("envs"),
+            volumes=data.get("volumes"),
             ttl=data.get("ttl"),
             expires=expires,
         )
@@ -200,6 +220,48 @@ class SandboxCreateConfiguration:
                 )
 
         return env_objects
+
+    def _normalize_volumes(self) -> Optional[List[VolumeAttachment]]:
+        """Convert volumes to VolumeAttachment objects."""
+        if not self.volumes:
+            return None
+
+        volume_objects = []
+        for volume in self.volumes:
+            if isinstance(volume, VolumeAttachment):
+                volume_objects.append(volume)
+            elif isinstance(volume, VolumeBinding):
+                # Convert VolumeBinding to VolumeAttachment format
+                volume_attachment = VolumeAttachment(
+                    name=volume.name,
+                    mount_path=volume.mount_path,
+                    read_only=volume.read_only,
+                )
+                volume_objects.append(volume_attachment)
+            elif isinstance(volume, dict):
+                # Validate that the dict has the required keys
+                if "name" not in volume or "mount_path" not in volume:
+                    raise ValueError(
+                        f"Volume binding dict must have 'name' and 'mount_path' keys: {volume}"
+                    )
+                if not isinstance(volume["name"], str) or not isinstance(volume["mount_path"], str):
+                    raise ValueError(
+                        f"Volume binding 'name' and 'mount_path' must be strings: {volume}"
+                    )
+
+                # Convert dict to VolumeAttachment object
+                volume_attachment = VolumeAttachment(
+                    name=volume["name"],
+                    mount_path=volume["mount_path"],
+                    read_only=volume.get("read_only", False),
+                )
+                volume_objects.append(volume_attachment)
+            else:
+                raise ValueError(
+                    f"Invalid volume type: {type(volume)}. Expected VolumeAttachment, VolumeBinding, or dict with 'name' and 'mount_path' keys."
+                )
+
+        return volume_objects
 
 
 @_attrs_define
