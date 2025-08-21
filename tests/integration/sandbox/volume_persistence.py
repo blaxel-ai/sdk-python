@@ -109,7 +109,8 @@ async def main():
         print("\n3. Writing file to volume...")
         await sandbox.process.exec({
             "command": f"echo '{file_content}' > /persistent-data/test-file.txt",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
         print("✅ File written to volume")
 
@@ -120,44 +121,49 @@ async def main():
         print("🔍 Debug: Checking mount points...")
         mount_check = await sandbox.process.exec({
             "command": "mount | grep persistent-data",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        mount_info = mount_check.get("logs", "").strip() if isinstance(mount_check, dict) else str(mount_check).strip()
-        print(f"Mount info: {mount_info or 'No mount found'}")
+        mount_info = mount_check.logs.strip() if mount_check.logs else 'No mount found'
+        print(f"Mount info: {mount_info}")
 
         # Debug: Check directory structure and file existence
         print("🔍 Debug: Checking directory structure...")
         dir_check = await sandbox.process.exec({
             "command": "ls -la /persistent-data/",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        dir_listing = dir_check.get("logs", "").strip() if isinstance(dir_check, dict) else str(dir_check).strip()
+        dir_listing = dir_check.logs.strip() if dir_check.logs else 'No listing'
         print(f"Directory listing: {dir_listing}")
 
         # Debug: Check if specific file exists
         print("🔍 Debug: Checking if test-file.txt exists...")
         file_exists = await sandbox.process.exec({
             "command": "test -f /persistent-data/test-file.txt && echo 'File exists' || echo 'File does not exist'",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        existence_check = file_exists.get("logs", "").strip() if isinstance(file_exists, dict) else str(file_exists).strip()
+        existence_check = file_exists.logs.strip() if file_exists.logs else 'No response'
         print(f"File existence check: {existence_check}")
 
         # Debug: Check file ownership and permissions
         print("🔍 Debug: Checking file details...")
         file_details = await sandbox.process.exec({
             "command": "ls -la /persistent-data/test-file.txt 2>/dev/null || echo 'Cannot access file'",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        details = file_details.get("logs", "").strip() if isinstance(file_details, dict) else str(file_details).strip()
+        details = file_details.logs.strip() if file_details.logs else 'No details'
         print(f"File details: {details}")
 
         # Try to read the file content
         first_read = await sandbox.process.exec({
             "command": "cat /persistent-data/test-file.txt",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        first_content = first_read.get("logs", "").strip() if isinstance(first_read, dict) else str(first_read).strip()
+        first_content = first_read.logs.strip() if first_read.logs else ''
         print(f"✅ File content: {first_content}")
 
         # Step 5: Delete the sandbox
@@ -193,53 +199,59 @@ async def main():
         print("🔍 Debug: Checking mount points in new sandbox...")
         new_mount_check = await new_sandbox.process.exec({
             "command": "mount | grep data",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        new_mount_info = new_mount_check.get("logs", "").strip() if isinstance(new_mount_check, dict) else str(new_mount_check).strip()
-        print(f"Mount info: {new_mount_info or 'No mount found'}")
+        new_mount_info = new_mount_check.logs.strip() if new_mount_check.logs else 'No mount found'
+        print(f"Mount info: {new_mount_info}")
 
         # Debug: Check directory structure and file existence in new sandbox
         print("🔍 Debug: Checking directory structure in new sandbox...")
         new_dir_check = await new_sandbox.process.exec({
             "command": "ls -la /data/",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        new_dir_listing = new_dir_check.get("logs", "").strip() if isinstance(new_dir_check, dict) else str(new_dir_check).strip()
+        new_dir_listing = new_dir_check.logs.strip() if new_dir_check.logs else 'No listing'
         print(f"Directory listing (/data): {new_dir_listing}")
 
         # Debug: Check if specific file exists in new sandbox
         print("🔍 Debug: Checking if test-file.txt exists in new sandbox...")
         new_file_exists = await new_sandbox.process.exec({
             "command": "test -f /data/test-file.txt && echo 'File exists' || echo 'File does not exist'",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        new_existence_check = new_file_exists.get("logs", "").strip() if isinstance(new_file_exists, dict) else str(new_file_exists).strip()
+        new_existence_check = new_file_exists.logs.strip() if new_file_exists.logs else 'No response'
         print(f"File existence check: {new_existence_check}")
 
         # Debug: Check file ownership and permissions in new sandbox
         print("🔍 Debug: Checking file details in new sandbox...")
         new_file_details = await new_sandbox.process.exec({
             "command": "ls -la /data/test-file.txt 2>/dev/null || echo 'Cannot access file'",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        new_details = new_file_details.get("logs", "").strip() if isinstance(new_file_details, dict) else str(new_file_details).strip()
+        new_details = new_file_details.logs.strip() if new_file_details.logs else 'No details'
         print(f"File details: {new_details}")
 
         # Debug: Check current user and groups
         print("🔍 Debug: Checking current user and groups...")
         user_info = await new_sandbox.process.exec({
             "command": "whoami && groups",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        user_details = user_info.get("logs", "").strip() if isinstance(user_info, dict) else str(user_info).strip()
+        user_details = user_info.logs.strip() if user_info.logs else 'No user info'
         print(f"Current user and groups: {user_details}")
 
         # Try to read the file content
         second_read = await new_sandbox.process.exec({
             "command": "cat /data/test-file.txt",
-            "wait_for_completion": True
+            "waitForCompletion": True,
+            "on_log": lambda log: None  # Dummy callback to force waiting
         })
-        second_content = second_read.get("logs", "").strip() if isinstance(second_read, dict) else str(second_read).strip()
+        second_content = second_read.logs.strip() if second_read.logs else ''
         print(f"✅ File content from new sandbox: {second_content}")
 
         # Verify persistence worked
