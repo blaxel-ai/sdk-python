@@ -52,6 +52,22 @@ async def test_wait_for_completion_with_logs(sandbox: SandboxInstance):
     print(f"✅ Retrieved logs (length: {len(logs)} chars)")
     print(f"   First 100 chars: {logs[:100]}...")
 
+    proc = await sandbox.process.exec(
+        {
+            "command": "echo 'Hello, World!'",
+            "wait_for_completion": True,
+        }
+    )
+    assert proc.status == "completed"
+
+    proc = await sandbox.process.exec(
+        {
+            "command": "echo 'Hello, World!'",
+            "waitForCompletion": True,
+        }
+    )
+    assert proc.status == "completed"
+
 
 async def test_on_log_callback(sandbox: SandboxInstance):
     """Test exec with on_log callback parameter."""

@@ -184,6 +184,11 @@ class SandboxProcess(SandboxAction):
             if "on_log" in process:
                 on_log = process["on_log"]
                 del process["on_log"]
+            if "wait_for_completion" in process:
+                process["waitForCompletion"] = process["wait_for_completion"]
+            if "wait_for_ports" in process:
+                process["waitForPorts"] = process["wait_for_ports"]
+                del process["wait_for_ports"]
             process = ProcessRequest.from_dict(process)
 
         # Store original wait_for_completion setting
