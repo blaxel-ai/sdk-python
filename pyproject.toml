@@ -145,3 +145,6 @@ test = [
   "pytest-mock>=3.14.0",
   "coverage>=7.0.0",
 ]
+
+[tool.blaxel]
+commit = "7933c01ade7c069572a6040b48e9a2a462a25d66"

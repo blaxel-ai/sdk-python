@@ -1,5 +1,9 @@
 ARGS:= $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
+# Get git commit hash automatically
+GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
+GIT_COMMIT_SHORT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
 install:
 	uv sync --all-groups --all-packages --all-extras
 
@@ -41,6 +45,28 @@ sdk-controlplane:
 	uv run ruff check --fix
 
 sdk: sdk-sandbox sdk-controlplane
+
+# Build with commit hash injection
+build:
+	@echo "🔨 Building Python SDK with commit: $(GIT_COMMIT_SHORT)"
+	@echo "💉 Injecting commit hash into pyproject.toml"
+	@if [ -f pyproject.toml ]; then \
+		if grep -q "^\[tool\.blaxel\]" pyproject.toml; then \
+			sed -i.bak 's/^commit = .*/commit = "$(GIT_COMMIT)"/' pyproject.toml && rm pyproject.toml.bak; \
+		else \
+			echo "" >> pyproject.toml; \
+			echo "[tool.blaxel]" >> pyproject.toml; \
+			echo 'commit = "$(GIT_COMMIT)"' >> pyproject.toml; \
+		fi; \
+	fi
+	@echo "✅ Build completed with commit: $(GIT_COMMIT_SHORT)"
+
+# Clean build artifacts and reset pyproject.toml
+clean:
+	@echo "🧹 Cleaning build artifacts"
+	@git checkout pyproject.toml 2>/dev/null || true
+	@rm -rf dist/ build/ *.egg-info/
+	@echo "✅ Clean completed"
 
 doc:
 	rm -rf docs

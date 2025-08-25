@@ -96,10 +96,13 @@ class BlJob:
 
     def call(self, url, input_data, headers: dict = {}, params: dict = {}):
         body = {"tasks": input_data}
+        
+        # Merge settings headers with provided headers
+        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
         return client.get_httpx_client().post(
             url + "/executions",
-            headers={"Content-Type": "application/json", **headers},
+            headers=merged_headers,
             json=body,
             params=params,
         )
@@ -107,10 +110,13 @@ class BlJob:
     async def acall(self, url, input_data, headers: dict = {}, params: dict = {}):
         logger.debug(f"Job Calling: {self.name}")
         body = {"tasks": input_data}
+        
+        # Merge settings headers with provided headers
+        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
         return await client.get_async_httpx_client().post(
             url + "/executions",
-            headers={"Content-Type": "application/json", **headers},
+            headers=merged_headers,
             json=body,
             params=params,
         )
