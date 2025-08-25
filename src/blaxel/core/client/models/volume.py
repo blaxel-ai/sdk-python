@@ -8,29 +8,32 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_event import CoreEvent
     from ..models.metadata import Metadata
-    from ..models.sandbox_spec import SandboxSpec
+    from ..models.volume_spec import VolumeSpec
+    from ..models.volume_state import VolumeState
 
 
-T = TypeVar("T", bound="Sandbox")
+T = TypeVar("T", bound="Volume")
 
 
 @_attrs_define
-class Sandbox:
-    """Micro VM for running agentic tasks
+class Volume:
+    """Volume resource for persistent storage
 
     Attributes:
         events (Union[Unset, list['CoreEvent']]): Core events
         metadata (Union[Unset, Metadata]): Metadata
-        spec (Union[Unset, SandboxSpec]): Sandbox specification
-        status (Union[Unset, str]): Sandbox status
-        ttl (Union[Unset, int]): TTL timestamp for automatic deletion (optional, nil means no auto-deletion)
+        spec (Union[Unset, VolumeSpec]): Volume specification - immutable configuration
+        state (Union[Unset, VolumeState]): Volume state - mutable runtime state
+        status (Union[Unset, str]): Volume status computed from events
+        terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
     """
 
     events: Union[Unset, list["CoreEvent"]] = UNSET
     metadata: Union[Unset, "Metadata"] = UNSET
-    spec: Union[Unset, "SandboxSpec"] = UNSET
+    spec: Union[Unset, "VolumeSpec"] = UNSET
+    state: Union[Unset, "VolumeState"] = UNSET
     status: Union[Unset, str] = UNSET
-    ttl: Union[Unset, int] = UNSET
+    terminated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,9 +59,15 @@ class Sandbox:
         elif self.spec and isinstance(self.spec, dict):
             spec = self.spec
 
+        state: Union[Unset, dict[str, Any]] = UNSET
+        if self.state and not isinstance(self.state, Unset) and not isinstance(self.state, dict):
+            state = self.state.to_dict()
+        elif self.state and isinstance(self.state, dict):
+            state = self.state
+
         status = self.status
 
-        ttl = self.ttl
+        terminated_at = self.terminated_at
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -69,10 +78,12 @@ class Sandbox:
             field_dict["metadata"] = metadata
         if spec is not UNSET:
             field_dict["spec"] = spec
+        if state is not UNSET:
+            field_dict["state"] = state
         if status is not UNSET:
             field_dict["status"] = status
-        if ttl is not UNSET:
-            field_dict["ttl"] = ttl
+        if terminated_at is not UNSET:
+            field_dict["terminatedAt"] = terminated_at
 
         return field_dict
 
@@ -80,7 +91,8 @@ class Sandbox:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
-        from ..models.sandbox_spec import SandboxSpec
+        from ..models.volume_spec import VolumeSpec
+        from ..models.volume_state import VolumeState
 
         if not src_dict:
             return None
@@ -100,26 +112,34 @@ class Sandbox:
             metadata = Metadata.from_dict(_metadata)
 
         _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, SandboxSpec]
+        spec: Union[Unset, VolumeSpec]
         if isinstance(_spec, Unset):
             spec = UNSET
         else:
-            spec = SandboxSpec.from_dict(_spec)
+            spec = VolumeSpec.from_dict(_spec)
+
+        _state = d.pop("state", UNSET)
+        state: Union[Unset, VolumeState]
+        if isinstance(_state, Unset):
+            state = UNSET
+        else:
+            state = VolumeState.from_dict(_state)
 
         status = d.pop("status", UNSET)
 
-        ttl = d.pop("ttl", UNSET)
+        terminated_at = d.pop("terminatedAt", UNSET)
 
-        sandbox = cls(
+        volume = cls(
             events=events,
             metadata=metadata,
             spec=spec,
+            state=state,
             status=status,
-            ttl=ttl,
+            terminated_at=terminated_at,
         )
 
-        sandbox.additional_properties = d
-        return sandbox
+        volume.additional_properties = d
+        return volume
 
     @property
     def additional_keys(self) -> list[str]:

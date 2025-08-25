@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from ..models.model_private_cluster import ModelPrivateCluster
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
+    from ..models.volume_attachment import VolumeAttachment
 
 
 T = TypeVar("T", bound="SandboxSpec")
@@ -30,6 +31,7 @@ class SandboxSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        volumes (Union[Unset, list['VolumeAttachment']]):
     """
 
     configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
@@ -41,6 +43,7 @@ class SandboxSpec:
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
+    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -98,6 +101,16 @@ class SandboxSpec:
 
         sandbox = self.sandbox
 
+        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.volumes, Unset):
+            volumes = []
+            for componentsschemas_volume_attachments_item_data in self.volumes:
+                if type(componentsschemas_volume_attachments_item_data) is dict:
+                    componentsschemas_volume_attachments_item = componentsschemas_volume_attachments_item_data
+                else:
+                    componentsschemas_volume_attachments_item = componentsschemas_volume_attachments_item_data.to_dict()
+                volumes.append(componentsschemas_volume_attachments_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -119,6 +132,8 @@ class SandboxSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
+        if volumes is not UNSET:
+            field_dict["volumes"] = volumes
 
         return field_dict
 
@@ -129,6 +144,7 @@ class SandboxSpec:
         from ..models.model_private_cluster import ModelPrivateCluster
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
+        from ..models.volume_attachment import VolumeAttachment
 
         if not src_dict:
             return None
@@ -176,6 +192,15 @@ class SandboxSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
+        volumes = []
+        _volumes = d.pop("volumes", UNSET)
+        for componentsschemas_volume_attachments_item_data in _volumes or []:
+            componentsschemas_volume_attachments_item = VolumeAttachment.from_dict(
+                componentsschemas_volume_attachments_item_data
+            )
+
+            volumes.append(componentsschemas_volume_attachments_item)
+
         sandbox_spec = cls(
             configurations=configurations,
             enabled=enabled,
@@ -186,6 +211,7 @@ class SandboxSpec:
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
+            volumes=volumes,
         )
 
         sandbox_spec.additional_properties = d

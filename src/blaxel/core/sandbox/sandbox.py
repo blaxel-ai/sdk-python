@@ -70,7 +70,7 @@ class SandboxInstance:
         default_image = f"blaxel/{env}-base:latest"
         default_memory = 4096
 
-        # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs keys
+        # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs/volumes keys
         if (
             sandbox is None
             or isinstance(sandbox, SandboxCreateConfiguration | dict)
@@ -83,6 +83,7 @@ class SandboxInstance:
                     or "memory" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "ports" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "envs" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "volumes" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "ttl" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
@@ -99,6 +100,7 @@ class SandboxInstance:
             memory = sandbox.memory or default_memory
             ports = sandbox._normalize_ports() or UNSET
             envs = sandbox._normalize_envs() or UNSET
+            volumes = sandbox._normalize_volumes() or UNSET
             ttl = sandbox.ttl
             expires = sandbox.expires
 
@@ -108,7 +110,8 @@ class SandboxInstance:
                 spec=SandboxSpec(
                     runtime=Runtime(
                         image=image, memory=memory, ports=ports, envs=envs, generation="mk3"
-                    )
+                    ),
+                    volumes=volumes,
                 ),
             )
 
