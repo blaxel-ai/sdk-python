@@ -5,34 +5,29 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="VolumeSpec")
+T = TypeVar("T", bound="VolumeState")
 
 
 @_attrs_define
-class VolumeSpec:
-    """Volume specification - immutable configuration
+class VolumeState:
+    """Volume state - mutable runtime state
 
     Attributes:
-        region (Union[Unset, str]): AWS region where the volume should be created (e.g. us-west-2, eu-west-1)
-        size (Union[Unset, int]): Size of the volume in MB
+        attached_to (Union[Unset, str]): Resource this volume is attached to (e.g. "sandbox:my-sandbox", "model:my-
+            model")
     """
 
-    region: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
+    attached_to: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        region = self.region
-
-        size = self.size
+        attached_to = self.attached_to
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if region is not UNSET:
-            field_dict["region"] = region
-        if size is not UNSET:
-            field_dict["size"] = size
+        if attached_to is not UNSET:
+            field_dict["attachedTo"] = attached_to
 
         return field_dict
 
@@ -41,17 +36,14 @@ class VolumeSpec:
         if not src_dict:
             return None
         d = src_dict.copy()
-        region = d.pop("region", UNSET)
+        attached_to = d.pop("attachedTo", UNSET)
 
-        size = d.pop("size", UNSET)
-
-        volume_spec = cls(
-            region=region,
-            size=size,
+        volume_state = cls(
+            attached_to=attached_to,
         )
 
-        volume_spec.additional_properties = d
-        return volume_spec
+        volume_state.additional_properties = d
+        return volume_state
 
     @property
     def additional_keys(self) -> list[str]:

@@ -20,13 +20,11 @@ class Entrypoint:
         args (Union[Unset, list[Any]]): Args of the entrypoint
         command (Union[Unset, str]): Command of the entrypoint
         env (Union[Unset, EntrypointEnv]): Env of the entrypoint
-        super_gateway_args (Union[Unset, list[Any]]): Super Gateway args of the entrypoint
     """
 
     args: Union[Unset, list[Any]] = UNSET
     command: Union[Unset, str] = UNSET
     env: Union[Unset, "EntrypointEnv"] = UNSET
-    super_gateway_args: Union[Unset, list[Any]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,10 +40,6 @@ class Entrypoint:
         elif self.env and isinstance(self.env, dict):
             env = self.env
 
-        super_gateway_args: Union[Unset, list[Any]] = UNSET
-        if not isinstance(self.super_gateway_args, Unset):
-            super_gateway_args = self.super_gateway_args
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -55,8 +49,6 @@ class Entrypoint:
             field_dict["command"] = command
         if env is not UNSET:
             field_dict["env"] = env
-        if super_gateway_args is not UNSET:
-            field_dict["superGatewayArgs"] = super_gateway_args
 
         return field_dict
 
@@ -78,13 +70,10 @@ class Entrypoint:
         else:
             env = EntrypointEnv.from_dict(_env)
 
-        super_gateway_args = cast(list[Any], d.pop("superGatewayArgs", UNSET))
-
         entrypoint = cls(
             args=args,
             command=command,
             env=env,
-            super_gateway_args=super_gateway_args,
         )
 
         entrypoint.additional_properties = d

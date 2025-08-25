@@ -173,6 +173,7 @@ from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .volume import Volume
 from .volume_attachment import VolumeAttachment
 from .volume_spec import VolumeSpec
+from .volume_state import VolumeState
 from .websocket_channel import WebsocketChannel
 from .websocket_message import WebsocketMessage
 from .workspace import Workspace
@@ -346,6 +347,7 @@ __all__ = (
     "Volume",
     "VolumeAttachment",
     "VolumeSpec",
+    "VolumeState",
     "WebsocketChannel",
     "WebsocketMessage",
     "Workspace",
