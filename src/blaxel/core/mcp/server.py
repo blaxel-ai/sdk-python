@@ -29,8 +29,10 @@ class BlaxelMcpServerTransport:
             self.port = int(env["BL_SERVER_PORT"])
         else:
             self.port = port
+
         self.clients = {}
         self.server = None
+
 
     @asynccontextmanager
     async def websocket_server(self):
@@ -85,31 +87,36 @@ class BlaxelMcpServerTransport:
                     data = message.model_dump_json(by_alias=True, exclude_none=True)
 
                     if client_id and client_id in self.clients:
-                        # Send to specific client
+                        # Send to specific client with retry
                         websocket = self.clients[client_id]
-                        try:
-                            await websocket.send(data)
-                        except Exception as e:
-                            logger.error(f"Failed to send message to client {client_id}: {e}")
+                        success = await self._send_with_retry(websocket, data, client_id)
+                        if not success:
+                            # Remove client after failed retries
                             if client_id in self.clients:
                                 del self.clients[client_id]
+                                logger.info(f"Removed client {client_id} after failed message delivery")
                     else:
-                        # Broadcast to all clients
+                        # Broadcast to all clients with retry
                         dead_clients = []
                         for cid, websocket in self.clients.items():
-                            try:
-                                await websocket.send(data)
-                            except Exception:
+                            success = await self._send_with_retry(websocket, data, cid)
+                            if not success:
                                 dead_clients.append(cid)
 
                         # Clean up dead clients
                         for cid in dead_clients:
                             if cid in self.clients:
                                 del self.clients[cid]
+                                logger.info(f"Removed client {cid} after failed broadcast delivery")
 
         async with anyio.create_task_group() as tg:
             logger.info(f"Starting WebSocket Server on port {self.port}")
-            async with serve(handler, "0.0.0.0", self.port) as server:
+            async with serve(
+                handler,
+                "0.0.0.0",
+                self.port,
+                ping_timeout=None,   # Disable wait timeout
+            ) as server:
                 self.server = server
                 tg.start_soon(message_sender)
                 yield read_stream, write_stream
