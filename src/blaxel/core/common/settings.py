@@ -1,9 +1,87 @@
 import os
+import platform
+from pathlib import Path
 from typing import Dict
+
+import tomli
 
 from ..authentication import BlaxelAuth, auth
 from .logger import init_logger
 
+
+def _get_package_version() -> str:
+    """Get the package version from pyproject.toml."""
+    try:
+        # Navigate up from this file to the project root
+        current_file = Path(__file__)
+        project_root = current_file.parent.parent.parent.parent.parent
+        pyproject_path = project_root / "pyproject.toml"
+        
+        if pyproject_path.exists():
+            with open(pyproject_path, "rb") as f:
+                pyproject_data = tomli.load(f)
+                return pyproject_data.get("project", {}).get("version", "unknown")
+        else:
+            return "unknown"
+    except Exception as e:
+        print(f"Warning: Failed to read package version: {e}")
+        return "unknown"
+
+
+def _get_os_arch() -> str:
+    """Get OS and architecture information."""
+    try:
+        system = platform.system().lower()
+        if system == "windows":
+            os_name = "windows"
+        elif system == "darwin":
+            os_name = "darwin"  
+        elif system == "linux":
+            os_name = "linux"
+        else:
+            os_name = system
+            
+        machine = platform.machine().lower()
+        if machine in ["x86_64", "amd64"]:
+            arch = "amd64"
+        elif machine in ["aarch64", "arm64"]:
+            arch = "arm64"
+        elif machine in ["i386", "i686", "x86"]:
+            arch = "386"
+        else:
+            arch = machine
+            
+        return f"{os_name}/{arch}"
+    except Exception:
+        return "unknown/unknown"
+
+
+def _get_commit_hash() -> str:
+    """Get commit hash from pyproject.toml."""
+    try:
+        # Try to read from pyproject.toml (build-time injection)
+        current_file = Path(__file__)
+        project_root = current_file.parent.parent.parent.parent.parent
+        pyproject_path = project_root / "pyproject.toml"
+        
+        if pyproject_path.exists():
+            with open(pyproject_path, "rb") as f:
+                pyproject_data = tomli.load(f)
+                # Check multiple possible locations for commit
+                commit = None
+                if "tool" in pyproject_data and "blaxel" in pyproject_data["tool"]:
+                    commit = pyproject_data["tool"]["blaxel"].get("commit")
+                if not commit and "project" in pyproject_data:
+                    commit = pyproject_data["project"].get("commit")
+                if not commit and "build" in pyproject_data:
+                    commit = pyproject_data["build"].get("commit")
+                    
+                if commit:
+                    return commit[:7] if len(commit) > 7 else commit
+    except Exception:
+        pass
+    
+    return "unknown"
 
 class Settings:
     auth: BlaxelAuth
@@ -12,6 +90,7 @@ class Settings:
         init_logger(self.log_level)
         self.auth = auth(self.env, self.base_url)
         self._headers = None
+        self._version = None
 
     @property
     def env(self) -> str:
@@ -39,9 +118,20 @@ class Settings:
 
 
     @property
+    def version(self) -> str:
+        """Get the package version."""
+        if self._version is None:
+            self._version = _get_package_version()
+        return self._version
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Get the headers for API requests."""
-        return self.auth.get_headers()
+        headers = self.auth.get_headers()
+        os_arch = _get_os_arch()
+        commit_hash = _get_commit_hash()
+        headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{commit_hash}"
+        return headers
 
 
     @property

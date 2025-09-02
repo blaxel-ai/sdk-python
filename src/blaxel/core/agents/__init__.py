@@ -49,9 +49,12 @@ class BlAgent:
         body = input_data
         if not isinstance(body, str):
             body = json.dumps(body)
+        
+        # Merge settings headers with provided headers
+        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
         return client.get_httpx_client().post(
-            url, headers={"Content-Type": "application/json", **headers}, data=body, params=params
+            url, headers=merged_headers, data=body, params=params
         )
 
     async def acall(self, url, input_data, headers: dict = {}, params: dict = {}):
@@ -59,9 +62,12 @@ class BlAgent:
         body = input_data
         if not isinstance(body, str):
             body = json.dumps(body)
+        
+        # Merge settings headers with provided headers
+        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
         return await client.get_async_httpx_client().post(
-            url, headers={"Content-Type": "application/json", **headers}, data=body, params=params
+            url, headers=merged_headers, data=body, params=params
         )
 
     def run(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
