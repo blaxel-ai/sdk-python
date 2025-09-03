@@ -20,6 +20,7 @@ class Sandbox:
 
     Attributes:
         events (Union[Unset, list['CoreEvent']]): Core events
+        last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
         metadata (Union[Unset, Metadata]): Metadata
         spec (Union[Unset, SandboxSpec]): Sandbox specification
         status (Union[Unset, str]): Sandbox status
@@ -27,6 +28,7 @@ class Sandbox:
     """
 
     events: Union[Unset, list["CoreEvent"]] = UNSET
+    last_used_at: Union[Unset, str] = UNSET
     metadata: Union[Unset, "Metadata"] = UNSET
     spec: Union[Unset, "SandboxSpec"] = UNSET
     status: Union[Unset, str] = UNSET
@@ -43,6 +45,8 @@ class Sandbox:
                 else:
                     componentsschemas_core_events_item = componentsschemas_core_events_item_data.to_dict()
                 events.append(componentsschemas_core_events_item)
+
+        last_used_at = self.last_used_at
 
         metadata: Union[Unset, dict[str, Any]] = UNSET
         if self.metadata and not isinstance(self.metadata, Unset) and not isinstance(self.metadata, dict):
@@ -65,6 +69,8 @@ class Sandbox:
         field_dict.update({})
         if events is not UNSET:
             field_dict["events"] = events
+        if last_used_at is not UNSET:
+            field_dict["lastUsedAt"] = last_used_at
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
         if spec is not UNSET:
@@ -92,6 +98,8 @@ class Sandbox:
 
             events.append(componentsschemas_core_events_item)
 
+        last_used_at = d.pop("lastUsedAt", UNSET)
+
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, Metadata]
         if isinstance(_metadata, Unset):
@@ -112,6 +120,7 @@ class Sandbox:
 
         sandbox = cls(
             events=events,
+            last_used_at=last_used_at,
             metadata=metadata,
             spec=spec,
             status=status,
