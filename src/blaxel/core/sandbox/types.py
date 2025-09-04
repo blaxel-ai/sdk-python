@@ -150,6 +150,7 @@ class SandboxCreateConfiguration:
         volumes: Optional[Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]]] = None,
         ttl: Optional[str] = None,
         expires: Optional[datetime] = None,
+        region: Optional[str] = None,
     ):
         self.name = name
         self.image = image
@@ -159,6 +160,7 @@ class SandboxCreateConfiguration:
         self.volumes = volumes
         self.ttl = ttl
         self.expires = expires
+        self.region = region
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -175,6 +177,7 @@ class SandboxCreateConfiguration:
             volumes=data.get("volumes"),
             ttl=data.get("ttl"),
             expires=expires,
+            region=data.get("region"),
         )
 
     def _normalize_ports(self) -> Optional[List[Port]]:

@@ -19,6 +19,7 @@ class CustomDomainSpec:
     Attributes:
         cname_records (Union[Unset, str]): CNAME target for the domain
         last_verified_at (Union[Unset, str]): Last verification attempt timestamp
+        region (Union[Unset, str]): Region that the custom domain is associated with
         status (Union[Unset, str]): Current status of the domain (pending, verified, failed)
         txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
             verification
@@ -27,6 +28,7 @@ class CustomDomainSpec:
 
     cname_records: Union[Unset, str] = UNSET
     last_verified_at: Union[Unset, str] = UNSET
+    region: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
     txt_records: Union[Unset, "CustomDomainSpecTxtRecords"] = UNSET
     verification_error: Union[Unset, str] = UNSET
@@ -36,6 +38,8 @@ class CustomDomainSpec:
         cname_records = self.cname_records
 
         last_verified_at = self.last_verified_at
+
+        region = self.region
 
         status = self.status
 
@@ -54,6 +58,8 @@ class CustomDomainSpec:
             field_dict["cnameRecords"] = cname_records
         if last_verified_at is not UNSET:
             field_dict["lastVerifiedAt"] = last_verified_at
+        if region is not UNSET:
+            field_dict["region"] = region
         if status is not UNSET:
             field_dict["status"] = status
         if txt_records is not UNSET:
@@ -74,6 +80,8 @@ class CustomDomainSpec:
 
         last_verified_at = d.pop("lastVerifiedAt", UNSET)
 
+        region = d.pop("region", UNSET)
+
         status = d.pop("status", UNSET)
 
         _txt_records = d.pop("txtRecords", UNSET)
@@ -88,6 +96,7 @@ class CustomDomainSpec:
         custom_domain_spec = cls(
             cname_records=cname_records,
             last_verified_at=last_verified_at,
+            region=region,
             status=status,
             txt_records=txt_records,
             verification_error=verification_error,

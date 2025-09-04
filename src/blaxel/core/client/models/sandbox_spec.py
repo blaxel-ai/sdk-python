@@ -31,6 +31,7 @@ class SandboxSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        region (Union[Unset, str]): AWS region where the sandbox should be created (e.g. us-west-2, eu-west-1)
         volumes (Union[Unset, list['VolumeAttachment']]):
     """
 
@@ -43,6 +44,7 @@ class SandboxSpec:
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
+    region: Union[Unset, str] = UNSET
     volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -101,6 +103,8 @@ class SandboxSpec:
 
         sandbox = self.sandbox
 
+        region = self.region
+
         volumes: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.volumes, Unset):
             volumes = []
@@ -132,6 +136,8 @@ class SandboxSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
+        if region is not UNSET:
+            field_dict["region"] = region
         if volumes is not UNSET:
             field_dict["volumes"] = volumes
 
@@ -192,6 +198,8 @@ class SandboxSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
+        region = d.pop("region", UNSET)
+
         volumes = []
         _volumes = d.pop("volumes", UNSET)
         for componentsschemas_volume_attachments_item_data in _volumes or []:
@@ -211,6 +219,7 @@ class SandboxSpec:
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
+            region=region,
             volumes=volumes,
         )
 

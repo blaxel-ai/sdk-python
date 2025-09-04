@@ -23,6 +23,7 @@ class PreviewSpec:
         port (Union[Unset, int]): Port of the preview
         prefix_url (Union[Unset, str]): Prefix URL
         public (Union[Unset, bool]): Whether the preview is public
+        region (Union[Unset, str]): Region where the preview is deployed, this is readonly
         request_headers (Union[Unset, PreviewSpecRequestHeaders]): Those headers will be set in all requests to your
             preview. This is especially useful to set the Authorization header.
         response_headers (Union[Unset, PreviewSpecResponseHeaders]): Those headers will be set in all responses of your
@@ -37,6 +38,7 @@ class PreviewSpec:
     port: Union[Unset, int] = UNSET
     prefix_url: Union[Unset, str] = UNSET
     public: Union[Unset, bool] = UNSET
+    region: Union[Unset, str] = UNSET
     request_headers: Union[Unset, "PreviewSpecRequestHeaders"] = UNSET
     response_headers: Union[Unset, "PreviewSpecResponseHeaders"] = UNSET
     ttl: Union[Unset, str] = UNSET
@@ -53,6 +55,8 @@ class PreviewSpec:
         prefix_url = self.prefix_url
 
         public = self.public
+
+        region = self.region
 
         request_headers: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -91,6 +95,8 @@ class PreviewSpec:
             field_dict["prefixUrl"] = prefix_url
         if public is not UNSET:
             field_dict["public"] = public
+        if region is not UNSET:
+            field_dict["region"] = region
         if request_headers is not UNSET:
             field_dict["requestHeaders"] = request_headers
         if response_headers is not UNSET:
@@ -120,6 +126,8 @@ class PreviewSpec:
 
         public = d.pop("public", UNSET)
 
+        region = d.pop("region", UNSET)
+
         _request_headers = d.pop("requestHeaders", UNSET)
         request_headers: Union[Unset, PreviewSpecRequestHeaders]
         if isinstance(_request_headers, Unset):
@@ -144,6 +152,7 @@ class PreviewSpec:
             port=port,
             prefix_url=prefix_url,
             public=public,
+            region=region,
             request_headers=request_headers,
             response_headers=response_headers,
             ttl=ttl,
