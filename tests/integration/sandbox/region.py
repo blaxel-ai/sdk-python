@@ -1,13 +1,14 @@
 import asyncio
 import os
-import sys
-import time
 import random
 import string
+import sys
+import time
+
 import aiohttp
 
-from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.common.settings import settings
+from blaxel.core.sandbox import SandboxInstance
 
 
 def get_unique_id():
@@ -114,7 +115,7 @@ async def main():
         if actual_region != default_region:
             print(f"   ⚠️ Expected default {default_region}, got {actual_region}")
         else:
-            print(f"   ✓ Default region correctly set")
+            print("   ✓ Default region correctly set")
         
         await SandboxInstance.delete(sandbox.metadata.name)
         print()
