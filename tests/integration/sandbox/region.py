@@ -24,8 +24,8 @@ REGION_CONFIG = {
         "image": "blaxel/prod-base:latest"
     },
     "dev": {
-        "regions": ["eu-lon-1"],
-        "default_region": "eu-lon-1", 
+        "regions": ["eu-dub-1"],
+        "default_region": "eu-dub-1", 
         "image": "blaxel/dev-base:latest"
     }
 }
