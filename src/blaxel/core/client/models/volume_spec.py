@@ -13,7 +13,7 @@ class VolumeSpec:
     """Volume specification - immutable configuration
 
     Attributes:
-        region (Union[Unset, str]): AWS region where the volume should be created (e.g. us-west-2, eu-west-1)
+        region (Union[Unset, str]): Region where the volume should be created (e.g. us-pdx-1, eu-lon-1)
         size (Union[Unset, int]): Size of the volume in MB
     """
 

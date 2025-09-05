@@ -19,13 +19,13 @@ def get_unique_id():
 # Configuration map for available regions per environment
 REGION_CONFIG = {
     "prod": {
-        "regions": ["us-west-2"],
-        "default_region": "us-west-2",
+        "regions": ["us-pdx-1", "eu-lon-1", "us-was-1"],
+        "default_region": "us-pdx-1",
         "image": "blaxel/prod-base:latest"
     },
     "dev": {
-        "regions": ["eu-west-1"],
-        "default_region": "eu-west-1", 
+        "regions": ["eu-lon-1"],
+        "default_region": "eu-lon-1", 
         "image": "blaxel/dev-base:latest"
     }
 }
