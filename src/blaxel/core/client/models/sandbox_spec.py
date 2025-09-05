@@ -31,7 +31,7 @@ class SandboxSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
-        region (Union[Unset, str]): AWS region where the sandbox should be created (e.g. us-west-2, eu-west-1)
+        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
         volumes (Union[Unset, list['VolumeAttachment']]):
     """
 
