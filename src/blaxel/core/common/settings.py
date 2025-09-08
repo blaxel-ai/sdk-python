@@ -175,5 +175,10 @@ class Settings:
     def enable_opentelemetry(self) -> bool:
         """Get the enable opentelemetry."""
         return os.getenv("BL_ENABLE_OPENTELEMETRY", "false").lower() == "true"
+    
+    @property
+    def gw_generation(self) -> str:
+        """Get the gateway generation version for URL construction."""
+        return os.environ.get("GW_GENERATION", "")
 
 settings = Settings()

@@ -17,6 +17,11 @@ class BlAgent:
         self.name = name
 
     @property
+    def resource_hash(self) -> str:
+        """Get the resource hash for v2 URL construction."""
+        return get_global_unique_hash(settings.workspace, "agent", self.name)
+
+    @property
     def internal_url(self):
         """Get the internal URL for the agent using a hash of workspace and agent name."""
         hash = get_global_unique_hash(settings.workspace, "agent", self.name)
@@ -28,7 +33,18 @@ class BlAgent:
         return get_forced_url("agent", self.name)
 
     @property
+    def v2_external_url(self) -> str:
+        """Get the v2 external URL using hash-based subdomain."""
+        hash = self.resource_hash
+        # Agents use the global origin by default (no region specification)
+        domain = "runv2.blaxel.dev"
+        return f"https://{hash}.{domain}"
+
+    @property
     def external_url(self):
+        # Check if we should use v2 URLs
+        if settings.gw_generation == "v2":
+            return self.v2_external_url
         return f"{settings.run_url}/{settings.workspace}/agents/{self.name}"
 
     @property

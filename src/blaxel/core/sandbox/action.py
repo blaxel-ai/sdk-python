@@ -38,7 +38,35 @@ class SandboxAction:
         return self.sandbox_config.metadata.name if self.sandbox_config.metadata else ""
 
     @property
+    def region(self) -> str:
+        """Get the sandbox region from spec."""
+        return self.sandbox_config.spec.region if self.sandbox_config.spec and hasattr(self.sandbox_config.spec, 'region') else ""
+
+    @property
+    def resource_hash(self) -> str:
+        """Get the resource hash for v2 URL construction."""
+        return get_global_unique_hash(settings.workspace, "sandbox", self.name)
+
+    @property
+    def v2_external_url(self) -> str:
+        """Get the v2 external URL using hash-based subdomain with region support."""
+        hash = self.resource_hash
+        region = self.region
+        
+        # Use region directly in the domain if specified
+        domain = "runv2.blaxel.dev"  # Default global origin
+        
+        if region:
+            # Use the region as-is in the domain
+            domain = f"{region}.{domain}"
+        
+        return f"https://{hash}.{domain}"
+
+    @property
     def external_url(self) -> str:
+        # Check if we should use v2 URLs
+        if settings.gw_generation == "v2":
+            return self.v2_external_url
         return f"{settings.run_url}/{settings.workspace}/sandboxes/{self.name}"
 
     @property

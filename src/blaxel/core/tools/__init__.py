@@ -43,6 +43,11 @@ class PersistentWebSocket:
         self.use_fallback_url = False
 
     @property
+    def _resource_hash(self) -> str:
+        """Get the resource hash for v2 URL construction."""
+        return get_global_unique_hash(settings.workspace, self.type, self.name)
+
+    @property
     def _internal_url(self):
         """Get the internal URL for the agent using a hash of workspace and agent name."""
         hash = get_global_unique_hash(settings.workspace, self.type, self.name)
@@ -54,7 +59,19 @@ class PersistentWebSocket:
         return get_forced_url(self.type, self.name)
 
     @property
+    def _v2_external_url(self) -> str:
+        """Get the v2 external URL using hash-based subdomain."""
+        hash = self._resource_hash
+        # For MCP tools (functions) and sandboxes without region info, use global origin
+        # Note: Sandbox MCP tools don't have region information available here
+        domain = "runv2.blaxel.dev"
+        return f"https://{hash}.{domain}"
+
+    @property
     def _external_url(self):
+        # Check if we should use v2 URLs
+        if settings.gw_generation == "v2":
+            return self._v2_external_url
         return f"{settings.run_url}/{settings.workspace}/{self.pluralType}/{self.name}"
 
     @property
