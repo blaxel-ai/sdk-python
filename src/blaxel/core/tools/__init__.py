@@ -9,7 +9,7 @@ from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
-from ..common.internal import get_forced_url, get_global_unique_hash
+from ..common.internal import generate_internal_url, get_forced_url
 from ..common.settings import settings
 from ..mcp.client import websocket_client
 from .types import Tool
@@ -44,9 +44,17 @@ class PersistentWebSocket:
 
     @property
     def _internal_url(self):
-        """Get the internal URL for the agent using a hash of workspace and agent name."""
-        hash = get_global_unique_hash(settings.workspace, self.type, self.name)
-        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
+        """Get the internal URL for the tool/function/mcp."""
+        return generate_internal_url(
+            settings.workspace,
+            self.type,
+            self.name,
+            settings.env,
+            settings.run_internal_protocol,
+            settings.run_internal_hostname,
+            settings.bl_cloud,
+            settings.workspace_id
+        )
 
     @property
     def _forced_url(self):

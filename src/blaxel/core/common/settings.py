@@ -167,6 +167,11 @@ class Settings:
         return os.environ.get("BL_CLOUD", "") == "true"
 
     @property
+    def workspace_id(self) -> str:
+        """Get the workspace ID for cloud environments."""
+        return os.environ.get("BL_WORKSPACE_ID", "")
+
+    @property
     def run_internal_protocol(self) -> str:
         """Get the run internal protocol."""
         return os.environ.get("BL_RUN_INTERNAL_PROTOCOL", "https")

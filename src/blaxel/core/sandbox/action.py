@@ -2,7 +2,7 @@ from typing import Optional
 
 import httpx
 
-from ..common.internal import get_forced_url, get_global_unique_hash
+from ..common.internal import generate_internal_url, get_forced_url
 from ..common.settings import settings
 from .types import SandboxConfiguration
 
@@ -43,8 +43,16 @@ class SandboxAction:
 
     @property
     def internal_url(self) -> str:
-        hash_value = get_global_unique_hash(settings.workspace, "sandbox", self.name)
-        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash_value}.{settings.run_internal_hostname}"
+        return generate_internal_url(
+            settings.workspace,
+            "sandbox",
+            self.name,
+            settings.env,
+            settings.run_internal_protocol,
+            settings.run_internal_hostname,
+            settings.bl_cloud,
+            settings.workspace_id
+        )
 
     @property
     def forced_url(self) -> Optional[str]:

@@ -6,7 +6,7 @@ from ..cache import find_from_cache
 from ..client import client
 from ..client.api.agents import get_agent
 from ..client.models import Agent
-from ..common.internal import get_forced_url, get_global_unique_hash
+from ..common.internal import generate_internal_url, get_forced_url
 from ..common.settings import settings
 
 logger = getLogger(__name__)
@@ -18,9 +18,17 @@ class BlAgent:
 
     @property
     def internal_url(self):
-        """Get the internal URL for the agent using a hash of workspace and agent name."""
-        hash = get_global_unique_hash(settings.workspace, "agent", self.name)
-        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
+        """Get the internal URL for the agent."""
+        return generate_internal_url(
+            settings.workspace,
+            "agent",
+            self.name,
+            settings.env,
+            settings.run_internal_protocol,
+            settings.run_internal_hostname,
+            settings.bl_cloud,
+            settings.workspace_id
+        )
 
     @property
     def forced_url(self):
