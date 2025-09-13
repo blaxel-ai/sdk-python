@@ -115,3 +115,72 @@ def get_forced_url(type_str: str, name: str) -> Optional[str]:
         return env[singular_env_key]
 
     return None
+
+
+def get_workload_type_short(type_str: str) -> str:
+    """
+    Get the short form of a workload type for cloud URL generation.
+    
+    Args:
+        type_str: The full type name (e.g., 'agent', 'mcp', 'function', 'sandbox', etc.)
+    
+    Returns:
+        The short form of the type (e.g., 'agt', 'mcp', 'sbx', 'job', 'mdl')
+    """
+    lower_type = type_str.lower()
+    
+    # Map type names to their short forms
+    type_mapping = {
+        'agent': 'agt',
+        'agents': 'agt',
+        'mcp': 'mcp',
+        'mcps': 'mcp',
+        'function': 'mcp',
+        'functions': 'mcp',
+        'sandbox': 'sbx',
+        'sandboxes': 'sbx',
+        'job': 'job',
+        'jobs': 'job',
+        'model': 'mdl',
+        'models': 'mdl',
+    }
+    
+    # Return mapped value or first 3 letters as fallback
+    return type_mapping.get(lower_type, lower_type[:3])
+
+
+def generate_internal_url(
+    workspace: str,
+    type_str: str,
+    name: str,
+    env: str,
+    protocol: str,
+    hostname: str,
+    bl_cloud: bool,
+    workspace_id: str
+) -> str:
+    """
+    Generate an internal URL based on cloud or legacy format.
+    
+    Args:
+        workspace: The workspace name
+        type_str: The workload type (e.g., 'agent', 'mcp', 'sandbox', 'job')
+        name: The workload name
+        env: The environment (e.g., 'dev', 'prod')
+        protocol: The protocol to use (e.g., 'https')
+        hostname: The internal hostname
+        bl_cloud: Whether cloud mode is enabled
+        workspace_id: The workspace ID for cloud mode
+    
+    Returns:
+        The formatted internal URL
+    """
+    if bl_cloud and workspace_id:
+        # New cloud format: bl-ENV-WORKLOAD_CALLED_NAME-WORKLOAD_TYPE_SHORT-WORKSPACE_ID
+        workload_type_short = get_workload_type_short(type_str)
+        subdomain = f"bl-{env}-{name}-{workload_type_short}-{workspace_id}"
+        return f"{protocol}://{subdomain}.{hostname}"
+    else:
+        # Legacy format: bl-ENV-HASH.internalhostname
+        hash_value = get_global_unique_hash(workspace, type_str, name)
+        return f"{protocol}://bl-{env}-{hash_value}.{hostname}"

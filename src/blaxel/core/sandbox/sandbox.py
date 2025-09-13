@@ -86,6 +86,7 @@ class SandboxInstance:
                     or "volumes" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "ttl" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -103,6 +104,7 @@ class SandboxInstance:
             volumes = sandbox._normalize_volumes() or UNSET
             ttl = sandbox.ttl
             expires = sandbox.expires
+            region = sandbox.region
 
             # Create full Sandbox object
             sandbox = Sandbox(
@@ -120,6 +122,8 @@ class SandboxInstance:
                 sandbox.spec.runtime.ttl = ttl
             if expires:
                 sandbox.spec.runtime.expires = expires.isoformat()
+            if region:
+                sandbox.spec.region = region
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
