@@ -23,6 +23,7 @@ from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewToken
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
 from .entrypoint import Entrypoint
 from .entrypoint_env import EntrypointEnv
+from .expiration_policy import ExpirationPolicy
 from .flavor import Flavor
 from .form import Form
 from .form_config import FormConfig
@@ -113,6 +114,7 @@ from .private_cluster import PrivateCluster
 from .private_location import PrivateLocation
 from .public_ip import PublicIp
 from .public_ips import PublicIps
+from .region import Region
 from .repository import Repository
 from .request_duration_over_time_metric import RequestDurationOverTimeMetric
 from .request_duration_over_time_metrics import RequestDurationOverTimeMetrics
@@ -146,6 +148,7 @@ from .runtime_configuration import RuntimeConfiguration
 from .runtime_startup_probe import RuntimeStartupProbe
 from .sandbox import Sandbox
 from .sandbox_definition import SandboxDefinition
+from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_spec import SandboxSpec
 from .serverless_config import ServerlessConfig
 from .serverless_config_configuration import ServerlessConfigConfiguration
@@ -205,6 +208,7 @@ __all__ = (
     "DeleteWorkspaceServiceAccountResponse200",
     "Entrypoint",
     "EntrypointEnv",
+    "ExpirationPolicy",
     "Flavor",
     "Form",
     "FormConfig",
@@ -293,6 +297,7 @@ __all__ = (
     "PrivateLocation",
     "PublicIp",
     "PublicIps",
+    "Region",
     "Repository",
     "RequestDurationOverTimeMetric",
     "RequestDurationOverTimeMetrics",
@@ -320,6 +325,7 @@ __all__ = (
     "RuntimeStartupProbe",
     "Sandbox",
     "SandboxDefinition",
+    "SandboxLifecycle",
     "SandboxSpec",
     "ServerlessConfig",
     "ServerlessConfigConfiguration",

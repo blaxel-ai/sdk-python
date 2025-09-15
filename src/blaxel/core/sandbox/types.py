@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from attrs import define as _attrs_define
 
-from ..client.models import Port, Sandbox, VolumeAttachment
+from ..client.models import Port, Sandbox, SandboxLifecycle, VolumeAttachment
 from ..client.types import UNSET
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
@@ -151,6 +151,7 @@ class SandboxCreateConfiguration:
         ttl: Optional[str] = None,
         expires: Optional[datetime] = None,
         region: Optional[str] = None,
+        lifecycle: Optional[Union[SandboxLifecycle, Dict[str, Any]]] = None,
     ):
         self.name = name
         self.image = image
@@ -161,12 +162,17 @@ class SandboxCreateConfiguration:
         self.ttl = ttl
         self.expires = expires
         self.region = region
+        self.lifecycle = lifecycle
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
         expires = data.get("expires")
         if expires and isinstance(expires, str):
             expires = datetime.fromisoformat(expires.replace("Z", "+00:00"))
+
+        lifecycle = data.get("lifecycle")
+        if lifecycle and isinstance(lifecycle, dict):
+            lifecycle = SandboxLifecycle.from_dict(lifecycle)
 
         return cls(
             name=data.get("name"),
@@ -178,6 +184,7 @@ class SandboxCreateConfiguration:
             ttl=data.get("ttl"),
             expires=expires,
             region=data.get("region"),
+            lifecycle=lifecycle,
         )
 
     def _normalize_ports(self) -> Optional[List[Port]]:

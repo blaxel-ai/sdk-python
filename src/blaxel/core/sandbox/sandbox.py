@@ -87,6 +87,7 @@ class SandboxInstance:
                     or "ttl" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -105,6 +106,7 @@ class SandboxInstance:
             ttl = sandbox.ttl
             expires = sandbox.expires
             region = sandbox.region
+            lifecycle = sandbox.lifecycle
 
             # Create full Sandbox object
             sandbox = Sandbox(
@@ -124,6 +126,8 @@ class SandboxInstance:
                 sandbox.spec.runtime.expires = expires.isoformat()
             if region:
                 sandbox.spec.region = region
+            if lifecycle:
+                sandbox.spec.lifecycle = lifecycle
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
