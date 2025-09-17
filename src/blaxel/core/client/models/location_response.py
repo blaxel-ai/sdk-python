@@ -21,6 +21,7 @@ class LocationResponse:
         country (Union[Unset, str]): Country of the location
         flavors (Union[Unset, list['Flavor']]): Hardware flavors available in the location
         location (Union[Unset, str]): Name of the location
+        region (Union[Unset, str]): Region of the location
         status (Union[Unset, str]): Status of the location
     """
 
@@ -28,6 +29,7 @@ class LocationResponse:
     country: Union[Unset, str] = UNSET
     flavors: Union[Unset, list["Flavor"]] = UNSET
     location: Union[Unset, str] = UNSET
+    region: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -48,6 +50,8 @@ class LocationResponse:
 
         location = self.location
 
+        region = self.region
+
         status = self.status
 
         field_dict: dict[str, Any] = {}
@@ -61,6 +65,8 @@ class LocationResponse:
             field_dict["flavors"] = flavors
         if location is not UNSET:
             field_dict["location"] = location
+        if region is not UNSET:
+            field_dict["region"] = region
         if status is not UNSET:
             field_dict["status"] = status
 
@@ -86,6 +92,8 @@ class LocationResponse:
 
         location = d.pop("location", UNSET)
 
+        region = d.pop("region", UNSET)
+
         status = d.pop("status", UNSET)
 
         location_response = cls(
@@ -93,6 +101,7 @@ class LocationResponse:
             country=country,
             flavors=flavors,
             location=location,
+            region=region,
             status=status,
         )
 

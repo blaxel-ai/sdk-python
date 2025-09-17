@@ -16,11 +16,13 @@ class Configuration:
         continents (Union[Unset, list[Any]]): Continents
         countries (Union[Unset, list[Any]]): Countries
         private_locations (Union[Unset, list[Any]]): Private locations managed with blaxel operator
+        regions (Union[Unset, list[Any]]): Regions
     """
 
     continents: Union[Unset, list[Any]] = UNSET
     countries: Union[Unset, list[Any]] = UNSET
     private_locations: Union[Unset, list[Any]] = UNSET
+    regions: Union[Unset, list[Any]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,6 +38,10 @@ class Configuration:
         if not isinstance(self.private_locations, Unset):
             private_locations = self.private_locations
 
+        regions: Union[Unset, list[Any]] = UNSET
+        if not isinstance(self.regions, Unset):
+            regions = self.regions
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -45,6 +51,8 @@ class Configuration:
             field_dict["countries"] = countries
         if private_locations is not UNSET:
             field_dict["privateLocations"] = private_locations
+        if regions is not UNSET:
+            field_dict["regions"] = regions
 
         return field_dict
 
@@ -59,10 +67,13 @@ class Configuration:
 
         private_locations = cast(list[Any], d.pop("privateLocations", UNSET))
 
+        regions = cast(list[Any], d.pop("regions", UNSET))
+
         configuration = cls(
             continents=continents,
             countries=countries,
             private_locations=private_locations,
+            regions=regions,
         )
 
         configuration.additional_properties = d

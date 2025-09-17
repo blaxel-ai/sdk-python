@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from ..models.model_private_cluster import ModelPrivateCluster
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
+    from ..models.sandbox_lifecycle import SandboxLifecycle
     from ..models.volume_attachment import VolumeAttachment
 
 
@@ -31,6 +32,7 @@ class SandboxSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration for sandbox management
         region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
         volumes (Union[Unset, list['VolumeAttachment']]):
     """
@@ -44,6 +46,7 @@ class SandboxSpec:
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
+    lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
     region: Union[Unset, str] = UNSET
     volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -103,6 +106,12 @@ class SandboxSpec:
 
         sandbox = self.sandbox
 
+        lifecycle: Union[Unset, dict[str, Any]] = UNSET
+        if self.lifecycle and not isinstance(self.lifecycle, Unset) and not isinstance(self.lifecycle, dict):
+            lifecycle = self.lifecycle.to_dict()
+        elif self.lifecycle and isinstance(self.lifecycle, dict):
+            lifecycle = self.lifecycle
+
         region = self.region
 
         volumes: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -136,6 +145,8 @@ class SandboxSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
+        if lifecycle is not UNSET:
+            field_dict["lifecycle"] = lifecycle
         if region is not UNSET:
             field_dict["region"] = region
         if volumes is not UNSET:
@@ -150,6 +161,7 @@ class SandboxSpec:
         from ..models.model_private_cluster import ModelPrivateCluster
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
+        from ..models.sandbox_lifecycle import SandboxLifecycle
         from ..models.volume_attachment import VolumeAttachment
 
         if not src_dict:
@@ -198,6 +210,13 @@ class SandboxSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
+        _lifecycle = d.pop("lifecycle", UNSET)
+        lifecycle: Union[Unset, SandboxLifecycle]
+        if isinstance(_lifecycle, Unset):
+            lifecycle = UNSET
+        else:
+            lifecycle = SandboxLifecycle.from_dict(_lifecycle)
+
         region = d.pop("region", UNSET)
 
         volumes = []
@@ -219,6 +238,7 @@ class SandboxSpec:
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
+            lifecycle=lifecycle,
             region=region,
             volumes=volumes,
         )
