@@ -124,12 +124,12 @@ async def tmp_test_mcp_http_stream():
 
 async def main():
     """Main function for standalone execution."""
-    # await test_mcp_tools_blaxel()
-    # await test_mcp_tools_langgraph()
-    # await test_mcp_tools_llamaindex()
-    # await test_mcp_tools_crewai()
-    # await test_mcp_tools_pydantic()
-    # await test_mcp_tools_google_adk()
+    await test_mcp_tools_blaxel()
+    await test_mcp_tools_langgraph()
+    await test_mcp_tools_llamaindex()
+    await test_mcp_tools_crewai()
+    await test_mcp_tools_pydantic()
+    await test_mcp_tools_google_adk()
     await tmp_test_mcp_http_stream()
 
 if __name__ == "__main__":
