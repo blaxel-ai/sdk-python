@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Model]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Model | None:
     if response.status_code == 200:
         response_200 = Model.from_dict(response.json())
 
@@ -75,7 +75,7 @@ def sync(
     model_name: str,
     *,
     client: Union[Client],
-) -> Optional[Model]:
+) -> Model | None:
     """Get model
 
      Returns a model by name.
@@ -130,7 +130,7 @@ async def asyncio(
     model_name: str,
     *,
     client: Union[Client],
-) -> Optional[Model]:
+) -> Model | None:
     """Get model
 
      Returns a model by name.

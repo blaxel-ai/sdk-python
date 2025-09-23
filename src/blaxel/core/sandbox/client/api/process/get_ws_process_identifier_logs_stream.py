@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, str]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[ErrorResponse, str] | None:
     if response.status_code == 101:
         response_101 = cast(str, response.json())
         return response_101
@@ -86,7 +86,7 @@ def sync(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
+) -> Union[ErrorResponse, str] | None:
     """Stream process logs in real time via WebSocket
 
      Streams the stdout and stderr output of a process in real time as JSON messages.
@@ -141,7 +141,7 @@ async def asyncio(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
+) -> Union[ErrorResponse, str] | None:
     """Stream process logs in real time via WebSocket
 
      Streams the stdout and stderr output of a process in real time as JSON messages.

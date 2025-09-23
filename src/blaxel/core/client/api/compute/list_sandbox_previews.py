@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["Preview"]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> list["Preview"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -80,7 +80,7 @@ def sync(
     sandbox_name: str,
     *,
     client: Union[Client],
-) -> Optional[list["Preview"]]:
+) -> list["Preview"] | None:
     """List Sandboxes
 
      Returns a list of Sandbox Previews in the workspace.
@@ -135,7 +135,7 @@ async def asyncio(
     sandbox_name: str,
     *,
     client: Union[Client],
-) -> Optional[list["Preview"]]:
+) -> list["Preview"] | None:
     """List Sandboxes
 
      Returns a list of Sandbox Previews in the workspace.

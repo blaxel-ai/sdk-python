@@ -3,12 +3,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="FunctionSchemaOrBool")
+T = TypeVar("T", bound="CreateJobExecutionRequestTasksItem")
 
 
 @_attrs_define
-class FunctionSchemaOrBool:
-    """Helper type for AdditionalProperties which can be either a boolean or a schema"""
+class CreateJobExecutionRequestTasksItem:
+    """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -23,10 +23,10 @@ class FunctionSchemaOrBool:
         if not src_dict:
             return None
         d = src_dict.copy()
-        function_schema_or_bool = cls()
+        create_job_execution_request_tasks_item = cls()
 
-        function_schema_or_bool.additional_properties = d
-        return function_schema_or_bool
+        create_job_execution_request_tasks_item.additional_properties = d
+        return create_job_execution_request_tasks_item
 
     @property
     def additional_keys(self) -> list[str]:

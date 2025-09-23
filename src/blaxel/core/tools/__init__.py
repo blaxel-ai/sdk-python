@@ -6,9 +6,13 @@ from logging import getLogger
 from typing import Any, cast
 
 from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
+from ..cache.cache import find_from_cache
+from ..client import client
+from ..client.api.functions import get_function
 from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from ..mcp.client import websocket_client
@@ -22,7 +26,7 @@ if os.getenv("BL_SERVER_PORT"):
 
 
 class PersistentWebSocket:
-    def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
+    def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True, transport: str = None):
         self.name = name
         self.timeout = timeout
         self.type = "function"
@@ -41,6 +45,8 @@ class PersistentWebSocket:
         else:
             self.timeout_enabled = timeout_enabled
         self.use_fallback_url = False
+        self.transport_name = transport
+        self.metas = {}
 
     @property
     def _internal_url(self):
@@ -133,13 +139,63 @@ class PersistentWebSocket:
     def get_tools(self):
         return self.tools_cache
 
+    async def _get_transport_type(self) -> str:
+        """Get the transport type for this function."""
+        if self.transport_name:
+            return self.transport_name
+
+        # Try to get from cache first
+        cached_data = await find_from_cache("Function", self.name)
+        if cached_data and isinstance(cached_data, dict) and "spec" in cached_data:
+            spec = cached_data.get("spec", {})
+            if isinstance(spec, dict):
+                self.transport_name = spec.get("transport", "websocket")
+                return self.transport_name
+
+        # Get from API
+        try:
+            response = await get_function.asyncio(function_name=self.name, client=client)
+            if response and hasattr(response, "spec") and response.spec:
+                # Check if spec has transport in additional_properties
+                if hasattr(response.spec, "additional_properties"):
+                    self.transport_name = response.spec.transport
+                else:
+                    self.transport_name = "websocket"
+            else:
+                self.transport_name = "websocket"
+        except Exception:
+            self.transport_name = "websocket"
+
+        return self.transport_name
+
+    async def _get_transport(self, url: str = None):
+        """Get the appropriate transport for the connection."""
+        if url is None:
+            url = self._url
+
+        transport_type = await self._get_transport_type()
+
+        if transport_type == "http-stream":
+            # Use streamablehttp_client for http-stream
+            result = await self.client_exit_stack.enter_async_context(
+                streamablehttp_client(url + "/mcp", settings.headers)
+            )
+            # streamablehttp_client returns (read_stream, write_stream, get_session_id)
+            # We only need the first two for ClientSession
+            return result[0], result[1]
+        else:
+            # Use websocket transport (default)
+            return await self.client_exit_stack.enter_async_context(
+                websocket_client(url, settings.headers)
+            )
+
     async def initialize(self, fallback: bool = False):
         if not self.session:
             try:
-                logger.debug(f"Initializing websocket client for {self._url}")
-                read, write = await self.client_exit_stack.enter_async_context(
-                    websocket_client(self._url, settings.headers)
-                )
+                logger.debug(f"Initializing client for {self._url}")
+                # Both transports now return a tuple of (read, write)
+                read, write = await self._get_transport()
+
                 self.session = cast(
                     ClientSession,
                     await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
@@ -237,11 +293,13 @@ class BlTools:
         metas: dict[str, Any] = {},
         timeout: int = DEFAULT_TIMEOUT,
         timeout_enabled: bool = True,
+        transport: str = None,
     ):
         self.functions = functions
         self.metas = metas
         self.timeout = timeout
         self.timeout_enabled = timeout_enabled
+        self.transport = transport
 
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
@@ -259,9 +317,9 @@ class BlTools:
         logger.debug("Initializing session and loading tools")
 
         if not toolPersistances.get(name):
-            logger.debug(f"Creating new persistent websocket for {name}")
+            logger.debug(f"Creating new persistent connection for {name}")
             toolPersistances[name] = PersistentWebSocket(
-                name, timeout=self.timeout, timeout_enabled=self.timeout_enabled
+                name, timeout=self.timeout, timeout_enabled=self.timeout_enabled, transport=self.transport
             )
             await toolPersistances[name].list_tools()
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools")
@@ -279,5 +337,6 @@ def bl_tools(
     metas: dict[str, Any] = {},
     timeout: int = DEFAULT_TIMEOUT,
     timeout_enabled: bool = True,
+    transport: str = None,
 ) -> BlTools:
-    return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled)
+    return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled, transport=transport)

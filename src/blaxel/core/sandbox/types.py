@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Union
 
 from attrs import define as _attrs_define
 
@@ -12,9 +12,9 @@ from .client.models.process_response import ProcessResponse
 class SessionCreateOptions:
     def __init__(
         self,
-        expires_at: Optional[datetime] = None,
-        response_headers: Optional[Dict[str, str]] = None,
-        request_headers: Optional[Dict[str, str]] = None,
+        expires_at: datetime | None = None,
+        response_headers: Dict[str, str] | None = None,
+        request_headers: Dict[str, str] | None = None,
     ):
         self.expires_at = expires_at
         self.response_headers = response_headers or {}
@@ -60,7 +60,7 @@ class SessionWithToken:
 class VolumeBinding:
     """Volume binding configuration for sandbox."""
 
-    def __init__(self, name: str, mount_path: str, read_only: Optional[bool] = False):
+    def __init__(self, name: str, mount_path: str, read_only: bool | None = False):
         self.name = name
         self.mount_path = mount_path
         self.read_only = read_only or False
@@ -78,9 +78,9 @@ class SandboxConfiguration:
     def __init__(
         self,
         sandbox: Sandbox,
-        force_url: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, str]] = None,
+        force_url: str | None = None,
+        headers: Dict[str, str] | None = None,
+        params: Dict[str, str] | None = None,
     ):
         self.sandbox = sandbox
         self.force_url = force_url
@@ -101,7 +101,7 @@ class SandboxConfiguration:
 
 
 class WatchEvent:
-    def __init__(self, op: str, path: str, name: str, content: Optional[str] = None):
+    def __init__(self, op: str, path: str, name: str, content: str | None = None):
         self.op = op
         self.path = path
         self.name = name
@@ -130,8 +130,8 @@ class SandboxUpdateMetadata:
 
     def __init__(
         self,
-        labels: Optional[Dict[str, str]] = None,
-        display_name: Optional[str] = None,
+        labels: Dict[str, str] | None = None,
+        display_name: str | None = None,
     ):
         self.labels = labels
         self.display_name = display_name
@@ -142,16 +142,16 @@ class SandboxCreateConfiguration:
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        image: Optional[str] = None,
-        memory: Optional[int] = None,
-        ports: Optional[Union[List[Port], List[Dict[str, Any]]]] = None,
-        envs: Optional[List[Dict[str, str]]] = None,
-        volumes: Optional[Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]]] = None,
-        ttl: Optional[str] = None,
-        expires: Optional[datetime] = None,
-        region: Optional[str] = None,
-        lifecycle: Optional[Union[SandboxLifecycle, Dict[str, Any]]] = None,
+        name: str | None = None,
+        image: str | None = None,
+        memory: int | None = None,
+        ports: Union[List[Port], List[Dict[str, Any]]] | None = None,
+        envs: List[Dict[str, str]] | None = None,
+        volumes: Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]] | None = None,
+        ttl: str | None = None,
+        expires: datetime | None = None,
+        region: str | None = None,
+        lifecycle: Union[SandboxLifecycle, Dict[str, Any]] | None = None,
     ):
         self.name = name
         self.image = image
@@ -187,7 +187,7 @@ class SandboxCreateConfiguration:
             lifecycle=lifecycle,
         )
 
-    def _normalize_ports(self) -> Optional[List[Port]]:
+    def _normalize_ports(self) -> List[Port] | None:
         """Convert ports to Port objects with default protocol HTTP if not specified."""
         if not self.ports:
             return None
@@ -210,7 +210,7 @@ class SandboxCreateConfiguration:
 
         return port_objects
 
-    def _normalize_envs(self) -> Optional[List[Dict[str, str]]]:
+    def _normalize_envs(self) -> List[Dict[str, str]] | None:
         """Convert envs to list of dicts with name and value keys."""
         if not self.envs:
             return None
@@ -231,7 +231,7 @@ class SandboxCreateConfiguration:
 
         return env_objects
 
-    def _normalize_volumes(self) -> Optional[List[VolumeAttachment]]:
+    def _normalize_volumes(self) -> List[VolumeAttachment] | None:
         """Convert volumes to VolumeAttachment objects."""
         if not self.volumes:
             return None

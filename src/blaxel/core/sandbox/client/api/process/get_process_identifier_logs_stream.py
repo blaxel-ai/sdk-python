@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, str]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[ErrorResponse, str] | None:
     if response.status_code == 200:
         response_200 = response.text
         return response_200
@@ -87,7 +87,7 @@ def sync(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
+) -> Union[ErrorResponse, str] | None:
     """Stream process logs in real time
 
      Streams the stdout and stderr output of a process in real time, one line per log, prefixed with
@@ -144,7 +144,7 @@ async def asyncio(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
+) -> Union[ErrorResponse, str] | None:
     """Stream process logs in real time
 
      Streams the stdout and stderr output of a process in real time, one line per log, prefixed with

@@ -3,12 +3,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="FunctionSchemaNot")
+T = TypeVar("T", bound="CreateJobExecutionResponseTasksItem")
 
 
 @_attrs_define
-class FunctionSchemaNot:
-    """Schema that this schema must not be"""
+class CreateJobExecutionResponseTasksItem:
+    """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -23,10 +23,10 @@ class FunctionSchemaNot:
         if not src_dict:
             return None
         d = src_dict.copy()
-        function_schema_not = cls()
+        create_job_execution_response_tasks_item = cls()
 
-        function_schema_not.additional_properties = d
-        return function_schema_not
+        create_job_execution_response_tasks_item.additional_properties = d
+        return create_job_execution_response_tasks_item
 
     @property
     def additional_keys(self) -> list[str]:

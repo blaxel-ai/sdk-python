@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 import httpx
 
@@ -34,7 +34,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[Any, WorkspaceUser]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, WorkspaceUser] | None:
     if response.status_code == 200:
         response_200 = WorkspaceUser.from_dict(response.json())
 
@@ -99,7 +99,7 @@ def sync(
     *,
     client: Union[Client],
     body: UpdateWorkspaceUserRoleBody,
-) -> Optional[Union[Any, WorkspaceUser]]:
+) -> Union[Any, WorkspaceUser] | None:
     """Update user role in workspace
 
      Updates the role of a user in the workspace.
@@ -160,7 +160,7 @@ async def asyncio(
     *,
     client: Union[Client],
     body: UpdateWorkspaceUserRoleBody,
-) -> Optional[Union[Any, WorkspaceUser]]:
+) -> Union[Any, WorkspaceUser] | None:
     """Update user role in workspace
 
      Updates the role of a user in the workspace.

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Union
 
 from ..client import Client
 from ..client import client as default_client
@@ -7,9 +7,9 @@ from ..client import client as default_client
 
 @dataclass
 class OauthTokenData:
-    body: dict[str, Union[str, Optional[str]]] = field(default_factory=dict)
+    body: dict[str, Union[str, str | None]] = field(default_factory=dict)
     headers: dict[str, str] = field(default_factory=dict)
-    authenticated: Optional[bool] = False
+    authenticated: bool | None = False
 
 @dataclass
 class OauthTokenResponse:
@@ -24,7 +24,7 @@ class OauthTokenError:
 
 async def oauth_token(
     options: OauthTokenData,
-    client: Optional[Client] = None,
+    client: Client | None = None,
     throw_on_error: bool = False
 ) -> Union[OauthTokenResponse, OauthTokenError]:
     """

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -35,7 +35,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[CreateWorkspaceServiceAccountResponse200]:
+def _parse_response(*, client: Client, response: httpx.Response) -> CreateWorkspaceServiceAccountResponse200 | None:
     if response.status_code == 200:
         response_200 = CreateWorkspaceServiceAccountResponse200.from_dict(response.json())
 
@@ -90,7 +90,7 @@ def sync(
     *,
     client: Union[Client],
     body: CreateWorkspaceServiceAccountBody,
-) -> Optional[CreateWorkspaceServiceAccountResponse200]:
+) -> CreateWorkspaceServiceAccountResponse200 | None:
     """Create workspace service account
 
      Creates a service account in the workspace.
@@ -145,7 +145,7 @@ async def asyncio(
     *,
     client: Union[Client],
     body: CreateWorkspaceServiceAccountBody,
-) -> Optional[CreateWorkspaceServiceAccountResponse200]:
+) -> CreateWorkspaceServiceAccountResponse200 | None:
     """Create workspace service account
 
      Creates a service account in the workspace.

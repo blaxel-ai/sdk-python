@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -18,7 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[PublicIps]:
+def _parse_response(*, client: Client, response: httpx.Response) -> PublicIps | None:
     if response.status_code == 200:
         response_200 = PublicIps.from_dict(response.json())
 
@@ -66,7 +66,7 @@ def sync_detailed(
 def sync(
     *,
     client: Union[Client],
-) -> Optional[PublicIps]:
+) -> PublicIps | None:
     """List public ips
 
      Returns a list of all public ips used in Blaxel..
@@ -110,7 +110,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Union[Client],
-) -> Optional[PublicIps]:
+) -> PublicIps | None:
     """List public ips
 
      Returns a list of all public ips used in Blaxel..

@@ -25,6 +25,7 @@ class Metadata:
         labels (Union[Unset, MetadataLabels]): Labels
         name (Union[Unset, str]): Model name
         plan (Union[Unset, Any]): Plan
+        url (Union[Unset, str]): URL
         workspace (Union[Unset, str]): Workspace name
     """
 
@@ -36,6 +37,7 @@ class Metadata:
     labels: Union[Unset, "MetadataLabels"] = UNSET
     name: Union[Unset, str] = UNSET
     plan: Union[Unset, Any] = UNSET
+    url: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -60,6 +62,8 @@ class Metadata:
 
         plan = self.plan
 
+        url = self.url
+
         workspace = self.workspace
 
         field_dict: dict[str, Any] = {}
@@ -81,6 +85,8 @@ class Metadata:
             field_dict["name"] = name
         if plan is not UNSET:
             field_dict["plan"] = plan
+        if url is not UNSET:
+            field_dict["url"] = url
         if workspace is not UNSET:
             field_dict["workspace"] = workspace
 
@@ -114,6 +120,8 @@ class Metadata:
 
         plan = d.pop("plan", UNSET)
 
+        url = d.pop("url", UNSET)
+
         workspace = d.pop("workspace", UNSET)
 
         metadata = cls(
@@ -125,6 +133,7 @@ class Metadata:
             labels=labels,
             name=name,
             plan=plan,
+            url=url,
             workspace=workspace,
         )
 

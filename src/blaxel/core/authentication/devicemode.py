@@ -8,7 +8,7 @@ import base64
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Generator, Optional
+from typing import Dict, Generator
 
 from httpx import Request, Response, post
 
@@ -96,7 +96,7 @@ class DeviceMode(BlaxelAuth):
             "X-Blaxel-Workspace": self.workspace_name,
         }
 
-    def refresh_if_needed(self) -> Optional[Exception]:
+    def refresh_if_needed(self) -> Exception | None:
         """
         Checks if the Bearer token needs to be refreshed and performs the refresh if necessary.
 
@@ -142,7 +142,7 @@ class DeviceMode(BlaxelAuth):
         request.headers["X-Blaxel-Workspace"] = self.workspace_name
         yield request
 
-    def do_refresh(self) -> Optional[Exception]:
+    def do_refresh(self) -> Exception | None:
         """
         Performs the token refresh using the refresh token.
 

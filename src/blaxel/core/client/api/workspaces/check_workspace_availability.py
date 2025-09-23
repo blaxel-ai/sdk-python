@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 import httpx
 
@@ -32,7 +32,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[bool]:
+def _parse_response(*, client: Client, response: httpx.Response) -> bool | None:
     if response.status_code == 200:
         response_200 = cast(bool, response.json())
         return response_200
@@ -86,7 +86,7 @@ def sync(
     *,
     client: Union[Client],
     body: CheckWorkspaceAvailabilityBody,
-) -> Optional[bool]:
+) -> bool | None:
     """Check workspace availability
 
      Check if a workspace is available.
@@ -141,7 +141,7 @@ async def asyncio(
     *,
     client: Union[Client],
     body: CheckWorkspaceAvailabilityBody,
-) -> Optional[bool]:
+) -> bool | None:
     """Check workspace availability
 
      Check if a workspace is available.

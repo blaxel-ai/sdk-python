@@ -1,6 +1,6 @@
 """Contains types for authentication credentials"""
 
-from typing import Dict, Optional
+from typing import Dict
 
 from httpx import Auth
 from pydantic import BaseModel, Field
@@ -9,13 +9,13 @@ from pydantic import BaseModel, Field
 class CredentialsType(BaseModel):
     """Represents authentication credentials for the API"""
 
-    api_key: Optional[str] = Field(default=None, description="The API key")
-    client_credentials: Optional[str] = Field(default=None, description="The client credentials")
-    refresh_token: Optional[str] = Field(default=None, description="The refresh token")
-    access_token: Optional[str] = Field(default=None, description="The access token")
-    device_code: Optional[str] = Field(default=None, description="The device code")
-    expires_in: Optional[int] = Field(default=None, description="The expiration time")
-    workspace: Optional[str] = Field(default=None, description="The workspace")
+    api_key: str | None = Field(default=None, description="The API key")
+    client_credentials: str | None = Field(default=None, description="The client credentials")
+    refresh_token: str | None = Field(default=None, description="The refresh token")
+    access_token: str | None = Field(default=None, description="The access token")
+    device_code: str | None = Field(default=None, description="The device code")
+    expires_in: int | None = Field(default=None, description="The expiration time")
+    workspace: str | None = Field(default=None, description="The workspace")
 
 class BlaxelAuth(Auth):
     def __init__(self, credentials: CredentialsType, workspace_name: str, base_url: str):

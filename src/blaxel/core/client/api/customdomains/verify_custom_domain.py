@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[CustomDomain]:
+def _parse_response(*, client: Client, response: httpx.Response) -> CustomDomain | None:
     if response.status_code == 200:
         response_200 = CustomDomain.from_dict(response.json())
 
@@ -73,7 +73,7 @@ def sync(
     domain_name: str,
     *,
     client: Union[Client],
-) -> Optional[CustomDomain]:
+) -> CustomDomain | None:
     """Verify custom domain
 
     Args:
@@ -124,7 +124,7 @@ async def asyncio(
     domain_name: str,
     *,
     client: Union[Client],
-) -> Optional[CustomDomain]:
+) -> CustomDomain | None:
     """Verify custom domain
 
     Args:

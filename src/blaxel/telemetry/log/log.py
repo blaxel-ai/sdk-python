@@ -1,7 +1,6 @@
 import logging
 import queue
 import threading
-from typing import Optional
 
 from opentelemetry.context import attach, create_key, detach, set_value
 from opentelemetry.sdk._logs import LogData, LogRecordProcessor
@@ -19,7 +18,7 @@ class AsyncLogRecordProcessor(LogRecordProcessor):
         self._exporter = exporter
         self._shutdown = False
         self._queue: queue.Queue = queue.Queue()
-        self._worker_thread: Optional[threading.Thread] = None
+        self._worker_thread: threading.Thread | None = None
         self._start_worker()
 
     def _start_worker(self):

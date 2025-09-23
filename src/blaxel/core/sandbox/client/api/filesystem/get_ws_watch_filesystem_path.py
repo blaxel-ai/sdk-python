@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, str]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[ErrorResponse, str] | None:
     if response.status_code == 101:
         response_101 = cast(str, response.json())
         return response_101
@@ -82,7 +82,7 @@ def sync(
     path: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
+) -> Union[ErrorResponse, str] | None:
     """Stream file modification events in a directory via WebSocket
 
      Streams JSON events of modified files in the given directory. Closes when the client disconnects.
@@ -137,7 +137,7 @@ async def asyncio(
     path: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, str]]:
+) -> Union[ErrorResponse, str] | None:
     """Stream file modification events in a directory via WebSocket
 
      Streams JSON events of modified files in the given directory. Closes when the client disconnects.

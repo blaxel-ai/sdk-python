@@ -7,7 +7,7 @@ client credentials and refresh tokens.
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Generator, Optional
+from typing import Generator
 
 import requests
 from httpx import Request, Response
@@ -28,7 +28,7 @@ class ClientCredentials(BlaxelAuth):
     ClientCredentials auth that authenticates requests using client credentials.
     """
 
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
     def get_headers(self):
         """
@@ -48,7 +48,7 @@ class ClientCredentials(BlaxelAuth):
             "X-Blaxel-Workspace": self.workspace_name,
         }
 
-    def _request_token(self, remaining_retries: int = 3) -> Optional[Exception]:
+    def _request_token(self, remaining_retries: int = 3) -> Exception | None:
         """
         Makes the token request with recursive retry logic.
 
@@ -78,7 +78,7 @@ class ClientCredentials(BlaxelAuth):
                 return self._request_token(remaining_retries - 1)
             return e
 
-    def get_token(self) -> Optional[Exception]:
+    def get_token(self) -> Exception | None:
         """
         Checks if the access token needs to be refreshed and performs the refresh if necessary.
         Uses recursive retry logic for up to 3 attempts.
