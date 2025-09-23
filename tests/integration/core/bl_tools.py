@@ -92,7 +92,7 @@ async def test_mcp_tools_google_adk():
 async def test_mcp_tools_blaxel():
     """Test bl_tools native blaxel functionality."""
     print("Testing native Blaxel tools...")
-    tools = await bl_tools(["blaxel-search"], {"test": "test"})
+    tools = bl_tools(["blaxel-search"], {"test": "test"})
     await tools.initialize()
     blaxel_tools = tools.get_tools()
     if len(blaxel_tools) == 0 or not blaxel_tools[0].coroutine:

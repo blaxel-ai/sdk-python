@@ -141,6 +141,9 @@ class SandboxProcess(SandboxAction):
                             buffer = lines.pop()  # Keep incomplete line in buffer
 
                             for line in lines:
+                                # Skip keepalive messages
+                                if line.startswith("[keepalive]"):
+                                    continue
                                 if line.startswith("stdout:"):
                                     content = line[7:]  # Remove 'stdout:' prefix
                                     if options.get("on_stdout"):

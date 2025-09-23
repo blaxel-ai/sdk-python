@@ -187,21 +187,18 @@ class SandboxFileSystem(SandboxAction):
 
         async def start_watching():
             nonlocal closed
-
             params = {}
             if options.get("ignore"):
                 params["ignore"] = ",".join(options["ignore"])
 
-            url = f"{self.url}/filesystem/{path}/watch"
+            url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-
             async with httpx.AsyncClient() as client_instance:
                 async with client_instance.stream(
                     "GET", url, params=params, headers=headers
                 ) as response:
                     if not response.is_success:
                         raise Exception(f"Failed to start watching: {response.status_code}")
-
                     buffer = ""
                     async for chunk in response.aiter_text():
                         if closed:
@@ -214,6 +211,10 @@ class SandboxFileSystem(SandboxAction):
                         for line in lines:
                             line = line.strip()
                             if not line:
+                                continue
+
+                            # Skip keepalive messages
+                            if line.startswith("[keepalive]"):
                                 continue
 
                             try:
@@ -241,7 +242,7 @@ class SandboxFileSystem(SandboxAction):
                                     except:
                                         file_event.content = None
 
-                                await asyncio.create_task(asyncio.coroutine(callback)(file_event))
+                                await callback(file_event)
                             except json.JSONDecodeError:
                                 continue
                             except Exception as e:
