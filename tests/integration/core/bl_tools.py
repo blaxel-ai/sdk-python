@@ -114,13 +114,15 @@ async def test_mcp_tools_blaxel():
 
 async def tmp_test_mcp_http_stream():
     """Test http stream conversion."""
-    tools = await bl_tools_langgraph(["trello-mk2", "blaxel-search"])
+    tools = await bl_tools_langgraph(["trello-mk2", "blaxel-search", "sandboxes/base"])
     if len(tools) == 0:
         raise Exception("No tools found")
     trello_tool = [tool for tool in tools if tool.name == "get_cards_by_list_id"]
     assert len(trello_tool) == 1
     blaxel_search_tool = [tool for tool in tools if tool.name == "web_search_exa"]
     assert len(blaxel_search_tool) == 1
+    sandbox_tool = [tool for tool in tools if tool.name == "fsGetWorkingDirectory"]
+    assert len(sandbox_tool) == 1
 
 async def main():
     """Main function for standalone execution."""

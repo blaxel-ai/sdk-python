@@ -5,6 +5,7 @@ from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
 
+import httpx
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import CallToolResult
@@ -25,7 +26,7 @@ if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
 
 
-class PersistentWebSocket:
+class PersistentMcpClient:
     def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True, transport: str = None):
         self.name = name
         self.timeout = timeout
@@ -140,30 +141,25 @@ class PersistentWebSocket:
         return self.tools_cache
 
     async def _get_transport_type(self) -> str:
-        """Get the transport type for this function."""
+        """Get the transport type for this function by checking the / endpoint."""
         if self.transport_name:
             return self.transport_name
 
-        # Try to get from cache first
-        cached_data = await find_from_cache("Function", self.name)
-        if cached_data and isinstance(cached_data, dict) and "spec" in cached_data:
-            spec = cached_data.get("spec", {})
-            if isinstance(spec, dict):
-                self.transport_name = spec.get("transport", "websocket")
-                return self.transport_name
-
-        # Get from API
+        # Make a request to the / endpoint to determine transport type
         try:
-            response = await get_function.asyncio(function_name=self.name, client=client)
-            if response and hasattr(response, "spec") and response.spec:
-                # Check if spec has transport in additional_properties
-                if hasattr(response.spec, "additional_properties"):
-                    self.transport_name = response.spec.transport
-                else:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as http_client:
+                # Make a GET request to the root endpoint
+                response = await http_client.get(self._url + "/", headers=settings.headers)
+                if "websocket" in response.text.lower():
                     self.transport_name = "websocket"
-            else:
-                self.transport_name = "websocket"
-        except Exception:
+                else:
+                    self.transport_name = "http-stream"
+
+                logger.debug(f"Detected transport type for {self.name}: {self.transport_name}")
+
+        except Exception as e:
+            # Default to websocket if we can't determine the transport type
+            logger.warning(f"Failed to detect transport type for {self.name}: {e}. Defaulting to websocket.")
             self.transport_name = "websocket"
 
         return self.transport_name
@@ -236,7 +232,7 @@ class PersistentWebSocket:
 
 
 def convert_mcp_tool_to_blaxel_tool(
-    websocket_client: PersistentWebSocket,
+    mcp_client: PersistentMcpClient,
     tool: MCPTool,
 ) -> Tool:
     """Convert an MCP tool to a blaxel tool.
@@ -256,7 +252,7 @@ def convert_mcp_tool_to_blaxel_tool(
         **arguments: dict[str, Any],
     ) -> CallToolResult:
         logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
-        call_tool_result = await websocket_client.call_tool(tool.name, arguments)
+        call_tool_result = await mcp_client.call_tool(tool.name, arguments)
         logger.debug(f"Tool {tool.name} returned {call_tool_result}")
         return call_tool_result
 
@@ -283,7 +279,7 @@ def convert_mcp_tool_to_blaxel_tool(
     )
 
 
-toolPersistances: dict[str, PersistentWebSocket] = {}
+toolPersistances: dict[str, PersistentMcpClient] = {}
 
 
 class BlTools:
@@ -318,7 +314,7 @@ class BlTools:
 
         if not toolPersistances.get(name):
             logger.debug(f"Creating new persistent connection for {name}")
-            toolPersistances[name] = PersistentWebSocket(
+            toolPersistances[name] = PersistentMcpClient(
                 name, timeout=self.timeout, timeout_enabled=self.timeout_enabled, transport=self.transport
             )
             await toolPersistances[name].list_tools()
