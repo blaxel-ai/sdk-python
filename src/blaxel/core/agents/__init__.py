@@ -29,7 +29,40 @@ class BlAgent:
 
     @property
     def external_url(self):
+        # Try to get metadata URL asynchronously (this is a sync property so we can't await)
+        # The metadata URL will be used in async methods instead
         return f"{settings.run_url}/{settings.workspace}/agents/{self.name}"
+    
+    async def _get_metadata_url(self):
+        """Get URL from agent metadata if available."""
+        try:
+            metadata = await get_agent_metadata(self.name)
+            if metadata:
+                # Check if URL is directly in metadata (like TypeScript: metadata?.url)
+                if 'url' in metadata and metadata['url']:
+                    return metadata['url']
+                
+                # Check if URL is in nested metadata object
+                if hasattr(metadata, 'metadata') and metadata.metadata and 'url' in metadata.metadata:
+                    return metadata.metadata['url']
+        except Exception:
+            pass
+        return None
+    
+    async def get_effective_url(self):
+        """Get the effective URL to use, checking metadata first."""
+        if self.forced_url:
+            return self.forced_url
+        
+        # Try to get metadata URL
+        metadata_url = await self._get_metadata_url()
+        if metadata_url:
+            return metadata_url
+            
+        if settings.run_internal_hostname:
+            return self.internal_url
+        
+        return self.external_url
 
     @property
     def fallback_url(self):
@@ -87,7 +120,8 @@ class BlAgent:
 
     async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> Awaitable[str]:
         logger.debug(f"Agent Calling: {self.name}")
-        response = await self.acall(self.url, input, headers, params)
+        effective_url = await self.get_effective_url()
+        response = await self.acall(effective_url, input, headers, params)
         if response.status_code >= 400:
             if not self.fallback_url:
                 raise Exception(

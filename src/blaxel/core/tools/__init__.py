@@ -9,6 +9,10 @@ from mcp import ClientSession
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
+from ..cache import find_from_cache
+from ..client import client
+from ..client.api.functions import get_function
+from ..client.models import Function
 from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from ..mcp.client import websocket_client
@@ -55,7 +59,25 @@ class PersistentWebSocket:
 
     @property
     def _external_url(self):
+        # Try to get metadata URL asynchronously (this is a sync property so we can't await)
+        # The metadata URL will be used in the async initialize method instead
         return f"{settings.run_url}/{settings.workspace}/{self.pluralType}/{self.name}"
+    
+    async def _get_metadata_url(self):
+        """Get URL from metadata if available."""
+        try:
+            metadata = await get_function_metadata(self.name)
+            if metadata:
+                # Check if URL is in additional_properties (for forced URLs)
+                if 'url' in metadata.additional_properties:
+                    return metadata.additional_properties['url']
+                
+                # Check if URL is directly in metadata object (like TypeScript: metadata?.url)
+                if hasattr(metadata, 'metadata') and metadata.metadata and 'url' in metadata.metadata:
+                    return metadata.metadata['url']
+        except Exception:
+            pass
+        return None
 
     @property
     def _fallback_url(self):
@@ -82,6 +104,29 @@ class PersistentWebSocket:
             logger.debug(f"Internal hostname found for {self.name}: {self._internal_url}")
             return self._internal_url
         logger.debug(f"No URL found for {self.name}, using external URL")
+        return self._external_url
+    
+    async def _get_effective_url(self):
+        """Get the effective URL to use, checking metadata first."""
+        if self.use_fallback_url:
+            return self._fallback_url
+        
+        logger.debug(f"Getting URL for {self.name}")
+        if self._forced_url:
+            logger.debug(f"Forced URL found for {self.name}: {self._forced_url}")
+            return self._forced_url
+        
+        # Try to get metadata URL
+        metadata_url = await self._get_metadata_url()
+        if metadata_url:
+            logger.debug(f"Metadata URL found for {self.name}: {metadata_url}")
+            return metadata_url
+            
+        if settings.run_internal_hostname:
+            logger.debug(f"Internal hostname found for {self.name}: {self._internal_url}")
+            return self._internal_url
+        
+        logger.debug(f"No special URL found for {self.name}, using external URL")
         return self._external_url
 
     def with_metas(self, metas: dict[str, Any]):
@@ -136,9 +181,10 @@ class PersistentWebSocket:
     async def initialize(self, fallback: bool = False):
         if not self.session:
             try:
-                logger.debug(f"Initializing websocket client for {self._url}")
+                effective_url = await self._get_effective_url()
+                logger.debug(f"Initializing websocket client for {effective_url}")
                 read, write = await self.client_exit_stack.enter_async_context(
-                    websocket_client(self._url, settings.headers)
+                    websocket_client(effective_url, settings.headers)
                 )
                 self.session = cast(
                     ClientSession,
@@ -281,3 +327,36 @@ def bl_tools(
     timeout_enabled: bool = True,
 ) -> BlTools:
     return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled)
+
+
+async def get_function_metadata(function_name: str) -> Function | None:
+    """Get function metadata from cache or API.
+    
+    Args:
+        function_name: Name of the function to get metadata for
+        
+    Returns:
+        Function metadata or None if not found
+    """
+    # Check for forced URL first
+    forced_url = get_forced_url('function', function_name)
+    if forced_url:
+        # Create a simple Function with the forced URL in additional_properties
+        func = Function()
+        func.additional_properties = {
+            "name": function_name,
+            "url": forced_url,
+            "runtime": {"type": "mcp"}
+        }
+        return func
+    
+    # Check cache
+    cache_data = await find_from_cache("Function", function_name)
+    if cache_data:
+        return Function.from_dict(cache_data)
+    
+    # Fetch from API
+    try:
+        return await get_function.asyncio(client=client, function_name=function_name)
+    except Exception:
+        return None
