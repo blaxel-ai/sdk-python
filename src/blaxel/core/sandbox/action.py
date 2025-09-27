@@ -1,4 +1,3 @@
-from typing import Optional
 
 import httpx
 
@@ -39,6 +38,14 @@ class SandboxAction:
 
     @property
     def external_url(self) -> str:
+        # Check if metadata has a URL first (like TypeScript implementation: metadata?.url)
+        if (
+            self.sandbox_config.metadata 
+            and self.sandbox_config.metadata.url is not None 
+            and self.sandbox_config.metadata.url != ""
+        ):
+            return self.sandbox_config.metadata.url
+        
         return f"{settings.run_url}/{settings.workspace}/sandboxes/{self.name}"
 
     @property
@@ -47,7 +54,7 @@ class SandboxAction:
         return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash_value}.{settings.run_internal_hostname}"
 
     @property
-    def forced_url(self) -> Optional[str]:
+    def forced_url(self) -> str | None:
         if self.sandbox_config.force_url:
             return self.sandbox_config.force_url
         return get_forced_url("sandbox", self.name)
@@ -63,7 +70,7 @@ class SandboxAction:
         return self.external_url
 
     @property
-    def fallback_url(self) -> Optional[str]:
+    def fallback_url(self) -> str | None:
         if self.external_url != self.url:
             return self.external_url
         return None

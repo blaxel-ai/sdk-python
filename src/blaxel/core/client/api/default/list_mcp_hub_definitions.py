@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -18,7 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["MCPDefinition"]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> list["MCPDefinition"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -68,7 +68,7 @@ def sync_detailed(
 def sync(
     *,
     client: Union[Client],
-) -> Optional[list["MCPDefinition"]]:
+) -> list["MCPDefinition"] | None:
     """
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -106,7 +106,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Union[Client],
-) -> Optional[list["MCPDefinition"]]:
+) -> list["MCPDefinition"] | None:
     """
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

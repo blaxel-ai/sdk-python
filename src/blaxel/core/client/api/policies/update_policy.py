@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -33,7 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Policy]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Policy | None:
     if response.status_code == 200:
         response_200 = Policy.from_dict(response.json())
 
@@ -93,7 +93,7 @@ def sync(
     *,
     client: Union[Client],
     body: Policy,
-) -> Optional[Policy]:
+) -> Policy | None:
     """Update policy
 
      Updates a policy.
@@ -156,7 +156,7 @@ async def asyncio(
     *,
     client: Union[Client],
     body: Policy,
-) -> Optional[Policy]:
+) -> Policy | None:
     """Update policy
 
      Updates a policy.

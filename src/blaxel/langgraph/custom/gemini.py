@@ -14,7 +14,6 @@ from typing import (
     Iterator,
     List,
     Mapping,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -76,14 +75,14 @@ OutputParserLike = Union[PydanticToolsParser, JsonOutputKeyToolsParser]
 
 # Data classes
 class Part(BaseModel):
-    text: Optional[str] = None
-    inline_data: Optional[Dict[str, Any]] = None
-    file_data: Optional[Dict[str, Any]] = None
-    function_call: Optional[Dict[str, Any]] = None
-    function_response: Optional[Dict[str, Any]] = None
+    text: str | None = None
+    inline_data: Dict[str, Any] | None = None
+    file_data: Dict[str, Any] | None = None
+    function_call: Dict[str, Any] | None = None
+    function_response: Dict[str, Any] | None = None
 
 class Content(BaseModel):
-    role: Optional[str] = None
+    role: str | None = None
     parts: List[Part]
 
 class Blob(BaseModel):
@@ -95,9 +94,9 @@ class FileData(BaseModel):
     mime_type: str
 
 class VideoMetadata(BaseModel):
-    duration: Optional[str] = None
-    start_offset: Optional[str] = None
-    end_offset: Optional[str] = None
+    duration: str | None = None
+    start_offset: str | None = None
+    end_offset: str | None = None
 
 class FunctionCall(BaseModel):
     name: str
@@ -115,13 +114,13 @@ class ToolConfig(BaseModel):
     function_calling_config: Dict[str, Any]
 
 class GenerationConfig(BaseModel):
-    candidate_count: Optional[int] = None
-    temperature: Optional[float] = None
-    stop_sequences: Optional[List[str]] = None
-    max_output_tokens: Optional[int] = None
-    top_k: Optional[int] = None
-    top_p: Optional[float] = None
-    response_modalities: Optional[List[str]] = None
+    candidate_count: int | None = None
+    temperature: float | None = None
+    stop_sequences: List[str] | None = None
+    max_output_tokens: int | None = None
+    top_k: int | None = None
+    top_p: float | None = None
+    response_modalities: List[str] | None = None
 
 class GoogleTool(BaseModel):
     name: str
@@ -358,7 +357,7 @@ def _convert_to_parts(
 
 
 def _convert_tool_message_to_part(
-    message: ToolMessage | FunctionMessage, name: Optional[str] = None
+    message: ToolMessage | FunctionMessage, name: str | None = None
 ) -> Part:
     """Converts a tool or function message to a google part."""
     # Legacy agent stores tool name in message.additional_kwargs instead of message.name
@@ -406,13 +405,13 @@ def _get_ai_message_tool_messages_parts(
 
 def _parse_chat_history(
     input_messages: Sequence[BaseMessage], convert_system_message_to_human: bool = False
-) -> Tuple[Optional[Content], List[Content]]:
+) -> Tuple[Content | None, List[Content]]:
     messages: List[Content] = []
 
     if convert_system_message_to_human:
         warnings.warn("Convert_system_message_to_human will be deprecated!")
 
-    system_instruction: Optional[Content] = None
+    system_instruction: Content | None = None
     messages_without_tool_messages = [
         message for message in input_messages if not isinstance(message, ToolMessage)
     ]
@@ -482,7 +481,7 @@ def _parse_response_candidate(
 
     for part in response_candidate.get("content", {}).get("parts", []):
         try:
-            text: Optional[str] = part.get("text")
+            text: str | None = part.get("text")
             # Remove erroneous newline character if present
             if text is not None:
                 text = text.rstrip("\n")
@@ -577,7 +576,7 @@ def _parse_response_candidate(
 def _response_to_result(
     response: Dict[str, Any],
     stream: bool = False,
-    prev_usage: Optional[UsageMetadata] = None,
+    prev_usage: UsageMetadata | None = None,
 ) -> ChatResult:
     """Converts a Gemini API response into a LangChain ChatResult."""
     llm_output = {"prompt_feedback": response.get("promptFeedback", {})}
@@ -661,8 +660,8 @@ class GeminiRestClient:
         self,
         api_key: str,
         base_url: str,
-        headers: Optional[Dict[str, str]] = None,
-        timeout: Optional[float] = None,
+        headers: Dict[str, str] | None = None,
+        timeout: float | None = None,
     ):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -708,12 +707,12 @@ class GeminiRestClient:
     def _prepare_payload(
         self,
         contents: List[Dict[str, Any]],
-        generation_config: Optional[Dict[str, Any]] = None,
-        safety_settings: Optional[List[Dict[str, Any]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_config: Optional[Dict[str, Any]] = None,
-        system_instruction: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
+        generation_config: Dict[str, Any] | None = None,
+        safety_settings: List[Dict[str, Any]] | None = None,
+        tools: List[Dict[str, Any]] | None = None,
+        tool_config: Dict[str, Any] | None = None,
+        system_instruction: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
     ) -> Dict[str, Any]:
         """Prepare the payload for Gemini API requests."""
         payload = {
@@ -735,12 +734,12 @@ class GeminiRestClient:
         self,
         model: str,
         contents: List[Dict[str, Any]],
-        generation_config: Optional[Dict[str, Any]] = None,
-        safety_settings: Optional[List[Dict[str, Any]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_config: Optional[Dict[str, Any]] = None,
-        system_instruction: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
+        generation_config: Dict[str, Any] | None = None,
+        safety_settings: List[Dict[str, Any]] | None = None,
+        tools: List[Dict[str, Any]] | None = None,
+        tool_config: Dict[str, Any] | None = None,
+        system_instruction: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
     ) -> Dict[str, Any]:
         """Generate content using the Gemini API."""
         payload = self._prepare_payload(
@@ -764,12 +763,12 @@ class GeminiRestClient:
         self,
         model: str,
         contents: List[Dict[str, Any]],
-        generation_config: Optional[Dict[str, Any]] = None,
-        safety_settings: Optional[List[Dict[str, Any]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_config: Optional[Dict[str, Any]] = None,
-        system_instruction: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
+        generation_config: Dict[str, Any] | None = None,
+        safety_settings: List[Dict[str, Any]] | None = None,
+        tools: List[Dict[str, Any]] | None = None,
+        tool_config: Dict[str, Any] | None = None,
+        system_instruction: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
     ) -> Dict[str, Any]:
         """Generate content asynchronously using the Gemini API."""
         payload = self._prepare_payload(
@@ -793,12 +792,12 @@ class GeminiRestClient:
         self,
         model: str,
         contents: List[Dict[str, Any]],
-        generation_config: Optional[Dict[str, Any]] = None,
-        safety_settings: Optional[List[Dict[str, Any]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_config: Optional[Dict[str, Any]] = None,
-        system_instruction: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
+        generation_config: Dict[str, Any] | None = None,
+        safety_settings: List[Dict[str, Any]] | None = None,
+        tools: List[Dict[str, Any]] | None = None,
+        tool_config: Dict[str, Any] | None = None,
+        system_instruction: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
     ) -> Iterator[Dict[str, Any]]:
         """Stream content generation using the Gemini API."""
         payload = self._prepare_payload(
@@ -826,12 +825,12 @@ class GeminiRestClient:
         self,
         model: str,
         contents: List[Dict[str, Any]],
-        generation_config: Optional[Dict[str, Any]] = None,
-        safety_settings: Optional[List[Dict[str, Any]]] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_config: Optional[Dict[str, Any]] = None,
-        system_instruction: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
+        generation_config: Dict[str, Any] | None = None,
+        safety_settings: List[Dict[str, Any]] | None = None,
+        tools: List[Dict[str, Any]] | None = None,
+        tool_config: Dict[str, Any] | None = None,
+        system_instruction: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
     ) -> AsyncIterator[Dict[str, Any]]:
         """Stream content generation asynchronously using the Gemini API."""
         payload = self._prepare_payload(
@@ -873,23 +872,23 @@ class GeminiRestClient:
 class ChatGoogleGenerativeAI(BaseChatModel):
     """`Google AI` chat models integration."""
 
-    client: Optional[GeminiRestClient] = Field(default=None, exclude=True)
-    async_client: Optional[GeminiRestClient] = Field(default=None, exclude=True)
+    client: GeminiRestClient | None = Field(default=None, exclude=True)
+    async_client: GeminiRestClient | None = Field(default=None, exclude=True)
     default_metadata: Sequence[Tuple[str, str]] = Field(default_factory=list)
     convert_system_message_to_human: bool = False
-    cached_content: Optional[str] = None
+    cached_content: str | None = None
     model: str = Field(default="gemini-pro")
-    google_api_key: Optional[SecretStr] = Field(default=None)
-    temperature: Optional[float] = Field(default=None)
-    top_p: Optional[float] = Field(default=None)
-    top_k: Optional[int] = Field(default=None)
+    google_api_key: SecretStr | None = Field(default=None)
+    temperature: float | None = Field(default=None)
+    top_p: float | None = Field(default=None)
+    top_k: int | None = Field(default=None)
     n: int = Field(default=1)
-    max_output_tokens: Optional[int] = Field(default=None)
-    safety_settings: Optional[Dict[str, str]] = Field(default=None)
-    response_modalities: Optional[List[str]] = Field(default=None)
-    client_options: Optional[Dict[str, Any]] = Field(default=None)
-    additional_headers: Optional[Dict[str, str]] = Field(default=None)
-    transport: Optional[str] = Field(default="rest")
+    max_output_tokens: int | None = Field(default=None)
+    safety_settings: Dict[str, str] | None = Field(default=None)
+    response_modalities: List[str] | None = Field(default=None)
+    client_options: Dict[str, Any] | None = Field(default=None)
+    additional_headers: Dict[str, str] | None = Field(default=None)
+    transport: str | None = Field(default="rest")
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -942,7 +941,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         return self
 
     def _get_ls_params(
-        self, stop: Optional[List[str]] = None, **kwargs: Any
+        self, stop: List[str] | None = None, **kwargs: Any
     ) -> LangSmithParams:
         """Get standard params for tracing."""
         params = self._get_invocation_params(stop=stop, **kwargs)
@@ -960,8 +959,8 @@ class ChatGoogleGenerativeAI(BaseChatModel):
 
     def _prepare_params(
         self,
-        stop: Optional[List[str]],
-        generation_config: Optional[Dict[str, Any]] = None,
+        stop: List[str] | None,
+        generation_config: Dict[str, Any] | None = None,
     ) -> GenerationConfig:
         gen_config = {
             k: v
@@ -983,16 +982,16 @@ class ChatGoogleGenerativeAI(BaseChatModel):
     def _generate(
         self,
         messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: List[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
         *,
-        tools: Optional[Sequence[Union[_ToolDict, GoogleTool]]] = None,
-        functions: Optional[Sequence[_FunctionDeclarationType]] = None,
-        safety_settings: Optional[SafetySettingDict] = None,
-        tool_config: Optional[Union[Dict, _ToolConfigDict]] = None,
-        generation_config: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
-        tool_choice: Optional[Union[_ToolChoiceType, bool]] = None,
+        tools: Sequence[Union[_ToolDict, GoogleTool]] | None = None,
+        functions: Sequence[_FunctionDeclarationType] | None = None,
+        safety_settings: SafetySettingDict | None = None,
+        tool_config: Union[Dict, _ToolConfigDict] | None = None,
+        generation_config: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
+        tool_choice: Union[_ToolChoiceType, bool] | None = None,
         **kwargs: Any,
     ) -> ChatResult:
         request = self._prepare_request(
@@ -1017,16 +1016,16 @@ class ChatGoogleGenerativeAI(BaseChatModel):
     async def _agenerate(
         self,
         messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        stop: List[str] | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
         *,
-        tools: Optional[Sequence[Union[_ToolDict, GoogleTool]]] = None,
-        functions: Optional[Sequence[_FunctionDeclarationType]] = None,
-        safety_settings: Optional[SafetySettingDict] = None,
-        tool_config: Optional[Union[Dict, _ToolConfigDict]] = None,
-        generation_config: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
-        tool_choice: Optional[Union[_ToolChoiceType, bool]] = None,
+        tools: Sequence[Union[_ToolDict, GoogleTool]] | None = None,
+        functions: Sequence[_FunctionDeclarationType] | None = None,
+        safety_settings: SafetySettingDict | None = None,
+        tool_config: Union[Dict, _ToolConfigDict] | None = None,
+        generation_config: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
+        tool_choice: Union[_ToolChoiceType, bool] | None = None,
         **kwargs: Any,
     ) -> ChatResult:
         request = self._prepare_request(
@@ -1051,16 +1050,16 @@ class ChatGoogleGenerativeAI(BaseChatModel):
     def _stream(
         self,
         messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: List[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
         *,
-        tools: Optional[Sequence[Union[_ToolDict, GoogleTool]]] = None,
-        functions: Optional[Sequence[_FunctionDeclarationType]] = None,
-        safety_settings: Optional[SafetySettingDict] = None,
-        tool_config: Optional[Union[Dict, _ToolConfigDict]] = None,
-        generation_config: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
-        tool_choice: Optional[Union[_ToolChoiceType, bool]] = None,
+        tools: Sequence[Union[_ToolDict, GoogleTool]] | None = None,
+        functions: Sequence[_FunctionDeclarationType] | None = None,
+        safety_settings: SafetySettingDict | None = None,
+        tool_config: Union[Dict, _ToolConfigDict] | None = None,
+        generation_config: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
+        tool_choice: Union[_ToolChoiceType, bool] | None = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
         request = self._prepare_request(
@@ -1113,16 +1112,16 @@ class ChatGoogleGenerativeAI(BaseChatModel):
     async def _astream(
         self,
         messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        stop: List[str] | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
         *,
-        tools: Optional[Sequence[Union[_ToolDict, GoogleTool]]] = None,
-        functions: Optional[Sequence[_FunctionDeclarationType]] = None,
-        safety_settings: Optional[SafetySettingDict] = None,
-        tool_config: Optional[Union[Dict, _ToolConfigDict]] = None,
-        generation_config: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
-        tool_choice: Optional[Union[_ToolChoiceType, bool]] = None,
+        tools: Sequence[Union[_ToolDict, GoogleTool]] | None = None,
+        functions: Sequence[_FunctionDeclarationType] | None = None,
+        safety_settings: SafetySettingDict | None = None,
+        tool_config: Union[Dict, _ToolConfigDict] | None = None,
+        generation_config: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
+        tool_choice: Union[_ToolChoiceType, bool] | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[ChatGenerationChunk]:
         request = self._prepare_request(
@@ -1174,14 +1173,14 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         self,
         messages: List[BaseMessage],
         *,
-        stop: Optional[List[str]] = None,
-        tools: Optional[Sequence[Union[_ToolDict, GoogleTool]]] = None,
-        functions: Optional[Sequence[_FunctionDeclarationType]] = None,
-        safety_settings: Optional[SafetySettingDict] = None,
-        tool_config: Optional[Union[Dict, _ToolConfigDict]] = None,
-        tool_choice: Optional[Union[_ToolChoiceType, bool]] = None,
-        generation_config: Optional[Dict[str, Any]] = None,
-        cached_content: Optional[str] = None,
+        stop: List[str] | None = None,
+        tools: Sequence[Union[_ToolDict, GoogleTool]] | None = None,
+        functions: Sequence[_FunctionDeclarationType] | None = None,
+        safety_settings: SafetySettingDict | None = None,
+        tool_config: Union[Dict, _ToolConfigDict] | None = None,
+        tool_choice: Union[_ToolChoiceType, bool] | None = None,
+        generation_config: Dict[str, Any] | None = None,
+        cached_content: str | None = None,
     ) -> Dict[str, Any]:
         if tool_choice and tool_config:
             raise ValueError(
@@ -1322,9 +1321,9 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         tools: Sequence[
             dict[str, Any] | type | Callable[..., Any] | BaseTool | GoogleTool
         ],
-        tool_config: Optional[Union[Dict, _ToolConfigDict]] = None,
+        tool_config: Union[Dict, _ToolConfigDict] | None = None,
         *,
-        tool_choice: Optional[Union[_ToolChoiceType, bool]] = None,
+        tool_choice: Union[_ToolChoiceType, bool] | None = None,
         **kwargs: Any,
     ) -> Runnable[LanguageModelInput, BaseMessage]:
         """Bind tool-like objects to this chat model.

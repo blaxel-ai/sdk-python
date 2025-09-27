@@ -1,7 +1,6 @@
 import os
 from logging import getLogger
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -13,7 +12,7 @@ from .types import BlaxelAuth, CredentialsType
 logger = getLogger(__name__)
 
 
-def get_credentials() -> Optional[CredentialsType]:
+def get_credentials() -> CredentialsType | None:
     """
     Get credentials from environment variables or config file.
 

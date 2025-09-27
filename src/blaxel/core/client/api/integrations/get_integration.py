@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Integration]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Integration | None:
     if response.status_code == 200:
         response_200 = Integration.from_dict(response.json())
 
@@ -75,7 +75,7 @@ def sync(
     integration_name: str,
     *,
     client: Union[Client],
-) -> Optional[Integration]:
+) -> Integration | None:
     """List integrations connections
 
      Returns integration information by name.
@@ -130,7 +130,7 @@ async def asyncio(
     integration_name: str,
     *,
     client: Union[Client],
-) -> Optional[Integration]:
+) -> Integration | None:
     """List integrations connections
 
      Returns integration information by name.

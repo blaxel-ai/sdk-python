@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -22,7 +22,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[DeleteSandboxPreviewTokenResponse200]:
+def _parse_response(*, client: Client, response: httpx.Response) -> DeleteSandboxPreviewTokenResponse200 | None:
     if response.status_code == 200:
         response_200 = DeleteSandboxPreviewTokenResponse200.from_dict(response.json())
 
@@ -85,7 +85,7 @@ def sync(
     token_name: str,
     *,
     client: Union[Client],
-) -> Optional[DeleteSandboxPreviewTokenResponse200]:
+) -> DeleteSandboxPreviewTokenResponse200 | None:
     """Delete token for Sandbox Preview
 
      Deletes a token for a Sandbox Preview by name.
@@ -152,7 +152,7 @@ async def asyncio(
     token_name: str,
     *,
     client: Union[Client],
-) -> Optional[DeleteSandboxPreviewTokenResponse200]:
+) -> DeleteSandboxPreviewTokenResponse200 | None:
     """Delete token for Sandbox Preview
 
      Deletes a token for a Sandbox Preview by name.

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -57,6 +57,9 @@ class ResourceMetrics:
             resource globally per code for the previous period
         rps_previous (Union[Unset, float]): Number of requests per second for the resource globally for the previous
             period
+        sandboxes_cpu_usage (Union[Unset, list[Any]]): CPU usage over time for sandboxes
+        sandboxes_ram_usage (Union[Unset, list[Any]]): RAM usage over time for sandboxes with memory, value, and percent
+            metrics
         token_rate (Union[Unset, TokenRateMetrics]): Token rate metrics
         token_total (Union[Unset, TokenTotalMetric]): Token total metric
     """
@@ -81,6 +84,8 @@ class ResourceMetrics:
     rps_per_code: Union[Unset, "ResourceMetricsRpsPerCode"] = UNSET
     rps_per_code_previous: Union[Unset, "ResourceMetricsRpsPerCodePrevious"] = UNSET
     rps_previous: Union[Unset, float] = UNSET
+    sandboxes_cpu_usage: Union[Unset, list[Any]] = UNSET
+    sandboxes_ram_usage: Union[Unset, list[Any]] = UNSET
     token_rate: Union[Unset, "TokenRateMetrics"] = UNSET
     token_total: Union[Unset, "TokenTotalMetric"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -242,6 +247,14 @@ class ResourceMetrics:
 
         rps_previous = self.rps_previous
 
+        sandboxes_cpu_usage: Union[Unset, list[Any]] = UNSET
+        if not isinstance(self.sandboxes_cpu_usage, Unset):
+            sandboxes_cpu_usage = self.sandboxes_cpu_usage
+
+        sandboxes_ram_usage: Union[Unset, list[Any]] = UNSET
+        if not isinstance(self.sandboxes_ram_usage, Unset):
+            sandboxes_ram_usage = self.sandboxes_ram_usage
+
         token_rate: Union[Unset, dict[str, Any]] = UNSET
         if self.token_rate and not isinstance(self.token_rate, Unset) and not isinstance(self.token_rate, dict):
             token_rate = self.token_rate.to_dict()
@@ -297,6 +310,10 @@ class ResourceMetrics:
             field_dict["rpsPerCodePrevious"] = rps_per_code_previous
         if rps_previous is not UNSET:
             field_dict["rpsPrevious"] = rps_previous
+        if sandboxes_cpu_usage is not UNSET:
+            field_dict["sandboxesCpuUsage"] = sandboxes_cpu_usage
+        if sandboxes_ram_usage is not UNSET:
+            field_dict["sandboxesRamUsage"] = sandboxes_ram_usage
         if token_rate is not UNSET:
             field_dict["tokenRate"] = token_rate
         if token_total is not UNSET:
@@ -451,6 +468,10 @@ class ResourceMetrics:
 
         rps_previous = d.pop("rpsPrevious", UNSET)
 
+        sandboxes_cpu_usage = cast(list[Any], d.pop("sandboxesCpuUsage", UNSET))
+
+        sandboxes_ram_usage = cast(list[Any], d.pop("sandboxesRamUsage", UNSET))
+
         _token_rate = d.pop("tokenRate", UNSET)
         token_rate: Union[Unset, TokenRateMetrics]
         if isinstance(_token_rate, Unset):
@@ -486,6 +507,8 @@ class ResourceMetrics:
             rps_per_code=rps_per_code,
             rps_per_code_previous=rps_per_code_previous,
             rps_previous=rps_previous,
+            sandboxes_cpu_usage=sandboxes_cpu_usage,
+            sandboxes_ram_usage=sandboxes_ram_usage,
             token_rate=token_rate,
             token_total=token_total,
         )

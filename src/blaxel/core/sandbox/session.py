@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from ..client.api.compute import (
     create_sandbox_preview,
@@ -23,7 +23,7 @@ class SandboxSessions:
         return self.sandbox_config.metadata.name if self.sandbox_config.metadata else ""
 
     async def create(
-        self, options: Optional[Union[SessionCreateOptions, Dict[str, Any]]] = None
+        self, options: Union[SessionCreateOptions, Dict[str, Any]] | None = None
     ) -> SessionWithToken:
         if options is None:
             options = SessionCreateOptions()
@@ -59,7 +59,7 @@ class SandboxSessions:
 
     async def create_if_expired(
         self,
-        options: Optional[Union[SessionCreateOptions, Dict[str, Any]]] = None,
+        options: Union[SessionCreateOptions, Dict[str, Any]] | None = None,
         delta_seconds: int = 3600,  # 1 hour
     ) -> SessionWithToken:
         if options is None:

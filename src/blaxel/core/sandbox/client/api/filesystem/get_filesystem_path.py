@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -24,7 +24,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Optional[Union[ErrorResponse, Union["Directory", "FileWithContent"]]]:
+) -> Union[ErrorResponse, Union["Directory", "FileWithContent"]] | None:
     if response.status_code == 200:
 
         def _parse_response_200(data: object) -> Union["Directory", "FileWithContent"]:
@@ -109,7 +109,7 @@ def sync(
     path: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, Union["Directory", "FileWithContent"]]]:
+) -> Union[ErrorResponse, Union["Directory", "FileWithContent"]] | None:
     """Get file or directory information
 
      Get content of a file or listing of a directory
@@ -164,7 +164,7 @@ async def asyncio(
     path: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, Union["Directory", "FileWithContent"]]]:
+) -> Union[ErrorResponse, Union["Directory", "FileWithContent"]] | None:
     """Get file or directory information
 
      Get content of a file or listing of a directory

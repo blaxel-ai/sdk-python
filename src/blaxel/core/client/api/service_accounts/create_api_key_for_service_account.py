@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -34,7 +34,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[ApiKey]:
+def _parse_response(*, client: Client, response: httpx.Response) -> ApiKey | None:
     if response.status_code == 200:
         response_200 = ApiKey.from_dict(response.json())
 
@@ -93,7 +93,7 @@ def sync(
     *,
     client: Union[Client],
     body: CreateApiKeyForServiceAccountBody,
-) -> Optional[ApiKey]:
+) -> ApiKey | None:
     """Create API key for service account
 
      Creates an API key for a service account.
@@ -154,7 +154,7 @@ async def asyncio(
     *,
     client: Union[Client],
     body: CreateApiKeyForServiceAccountBody,
-) -> Optional[ApiKey]:
+) -> ApiKey | None:
     """Create API key for service account
 
      Creates an API key for a service account.

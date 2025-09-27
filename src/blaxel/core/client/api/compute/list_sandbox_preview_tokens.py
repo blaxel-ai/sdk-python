@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -21,7 +21,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[list["PreviewToken"]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> list["PreviewToken"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -85,7 +85,7 @@ def sync(
     preview_name: str,
     *,
     client: Union[Client],
-) -> Optional[list["PreviewToken"]]:
+) -> list["PreviewToken"] | None:
     """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
@@ -146,7 +146,7 @@ async def asyncio(
     preview_name: str,
     *,
     client: Union[Client],
-) -> Optional[list["PreviewToken"]]:
+) -> list["PreviewToken"] | None:
     """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
