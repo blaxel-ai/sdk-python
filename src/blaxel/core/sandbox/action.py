@@ -39,6 +39,12 @@ class SandboxAction:
 
     @property
     def external_url(self) -> str:
+        # Check if metadata has a URL first (like TypeScript implementation: metadata?.url)
+        if (self.sandbox_config.metadata and 
+            'url' in self.sandbox_config.metadata and
+            self.sandbox_config.metadata['url']):
+            return self.sandbox_config.metadata['url']
+        
         return f"{settings.run_url}/{settings.workspace}/sandboxes/{self.name}"
 
     @property
