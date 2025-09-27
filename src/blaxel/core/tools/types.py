@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Any, Awaitable, Callable, Dict
 
 from pydantic import BaseModel
 
@@ -16,5 +16,5 @@ class Tool(BaseModel):
     name: str
     description: str
     input_schema: Dict[str, Any]
-    coroutine: Optional[Callable[..., Awaitable[Any]]] = None
-    sync_coroutine: Optional[Callable[..., Any]] = None
+    coroutine: Callable[..., Awaitable[Any]] | None = None
+    sync_coroutine: Callable[..., Any] | None = None

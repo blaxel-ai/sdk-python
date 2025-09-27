@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Type
 
 from pydantic import BaseModel, Field, create_model
 
@@ -36,7 +36,7 @@ def create_model_from_json_schema(
             default_value = ...
         else:
             default_value = None
-            field_type = Optional[field_type]
+            field_type = field_type | None
         fields[field_name] = (
             field_type,
             Field(default_value, description=field_schema.get("description", "")),

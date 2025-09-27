@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 from ..client.api.volumes.create_volume import asyncio as create_volume
 from ..client.api.volumes.delete_volume import asyncio as delete_volume
@@ -15,10 +15,10 @@ class VolumeCreateConfiguration:
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        display_name: Optional[str] = None,
-        size: Optional[int] = None,  # Size in MB
-        region: Optional[str] = None,  # AWS region
+        name: str | None = None,
+        display_name: str | None = None,
+        size: int | None = None,  # Size in MB
+        region: str | None = None,  # AWS region
     ):
         self.name = name
         self.display_name = display_name

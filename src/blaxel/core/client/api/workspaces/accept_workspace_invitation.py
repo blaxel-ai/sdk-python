@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 import httpx
 
@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[Any, PendingInvitationAccept]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, PendingInvitationAccept] | None:
     if response.status_code == 200:
         response_200 = PendingInvitationAccept.from_dict(response.json())
 
@@ -78,7 +78,7 @@ def sync(
     workspace_name: str,
     *,
     client: Union[Client],
-) -> Optional[Union[Any, PendingInvitationAccept]]:
+) -> Union[Any, PendingInvitationAccept] | None:
     """Accept invitation to workspace
 
      Accepts an invitation to a workspace.
@@ -133,7 +133,7 @@ async def asyncio(
     workspace_name: str,
     *,
     client: Union[Client],
-) -> Optional[Union[Any, PendingInvitationAccept]]:
+) -> Union[Any, PendingInvitationAccept] | None:
     """Accept invitation to workspace
 
      Accepts an invitation to a workspace.

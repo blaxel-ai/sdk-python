@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 import httpx
 
@@ -18,7 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[Any, list["PrivateCluster"]]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, list["PrivateCluster"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -78,7 +78,7 @@ def sync_detailed(
 def sync(
     *,
     client: Union[Client],
-) -> Optional[Union[Any, list["PrivateCluster"]]]:
+) -> Union[Any, list["PrivateCluster"]] | None:
     """List all private clusters
 
     Raises:
@@ -118,7 +118,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Union[Client],
-) -> Optional[Union[Any, list["PrivateCluster"]]]:
+) -> Union[Any, list["PrivateCluster"]] | None:
     """List all private clusters
 
     Raises:

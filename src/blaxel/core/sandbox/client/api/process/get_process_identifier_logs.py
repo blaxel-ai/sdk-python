@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -21,7 +21,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, ProcessLogs]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[ErrorResponse, ProcessLogs] | None:
     if response.status_code == 200:
         response_200 = ProcessLogs.from_dict(response.json())
 
@@ -88,7 +88,7 @@ def sync(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, ProcessLogs]]:
+) -> Union[ErrorResponse, ProcessLogs] | None:
     """Get process logs
 
      Get the stdout and stderr output of a process
@@ -143,7 +143,7 @@ async def asyncio(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, ProcessLogs]]:
+) -> Union[ErrorResponse, ProcessLogs] | None:
     """Get process logs
 
      Get the stdout and stderr output of a process

@@ -1,7 +1,7 @@
 import asyncio
 import io
 import json
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Union
 
 import httpx
 
@@ -65,7 +65,7 @@ class SandboxFileSystem(SandboxAction):
     async def write_tree(
         self,
         files: List[Union[SandboxFilesystemFile, Dict[str, Any]]],
-        destination_path: Optional[str] = None,
+        destination_path: str | None = None,
     ) -> Directory:
         """Write multiple files in a tree structure."""
         files_dict = {}
@@ -176,7 +176,7 @@ class SandboxFileSystem(SandboxAction):
         self,
         path: str,
         callback: Callable[[WatchEvent], None],
-        options: Optional[Dict[str, Any]] = None,
+        options: Dict[str, Any] | None = None,
     ) -> Dict[str, Callable]:
         """Watch for file system changes."""
         path = self.format_path(path)

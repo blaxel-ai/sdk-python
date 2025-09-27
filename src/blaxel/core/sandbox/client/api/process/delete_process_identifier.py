@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -21,7 +21,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[ErrorResponse, SuccessResponse]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[ErrorResponse, SuccessResponse] | None:
     if response.status_code == 200:
         response_200 = SuccessResponse.from_dict(response.json())
 
@@ -88,7 +88,7 @@ def sync(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, SuccessResponse]]:
+) -> Union[ErrorResponse, SuccessResponse] | None:
     """Stop a process
 
      Gracefully stop a running process
@@ -143,7 +143,7 @@ async def asyncio(
     identifier: str,
     *,
     client: Union[Client],
-) -> Optional[Union[ErrorResponse, SuccessResponse]]:
+) -> Union[ErrorResponse, SuccessResponse] | None:
     """Stop a process
 
      Gracefully stop a running process
