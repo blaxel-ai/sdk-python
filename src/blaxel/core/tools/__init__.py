@@ -11,9 +11,6 @@ from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
-from ..cache.cache import find_from_cache
-from ..client import client
-from ..client.api.functions import get_function
 from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from ..mcp.client import websocket_client
