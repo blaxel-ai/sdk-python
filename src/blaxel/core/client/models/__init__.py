@@ -156,6 +156,7 @@ from .runtime_startup_probe import RuntimeStartupProbe
 from .sandbox import Sandbox
 from .sandbox_definition import SandboxDefinition
 from .sandbox_lifecycle import SandboxLifecycle
+from .sandbox_metrics import SandboxMetrics
 from .sandbox_spec import SandboxSpec
 from .serverless_config import ServerlessConfig
 from .serverless_config_configuration import ServerlessConfigConfiguration
@@ -340,6 +341,7 @@ __all__ = (
     "Sandbox",
     "SandboxDefinition",
     "SandboxLifecycle",
+    "SandboxMetrics",
     "SandboxSpec",
     "ServerlessConfig",
     "ServerlessConfigConfiguration",
