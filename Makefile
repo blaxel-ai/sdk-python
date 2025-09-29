@@ -81,8 +81,9 @@ tag:
 	git tag -a v$(ARGS) -m "Release v$(ARGS)"
 	git push origin v$(ARGS)
 
-test: install-dev
-	uv run pytest tests/ -v
+test:
+	uv sync --group test
+	uv run pytest tests/ -v --ignore=tests/integration/
 
 test-with-telemetry:
 	uv sync --group test --extra telemetry
