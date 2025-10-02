@@ -101,7 +101,7 @@ class DeviceMode(BlaxelAuth):
         Checks if the Bearer token needs to be refreshed and performs the refresh if necessary.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Exception | None: An exception if refreshing fails, otherwise None.
         """
         # Need to refresh token if expires in less than 10 minutes
         parts = self.credentials.access_token.split(".")
@@ -147,7 +147,7 @@ class DeviceMode(BlaxelAuth):
         Performs the token refresh using the refresh token.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Exception | None: An exception if refreshing fails, otherwise None.
         """
         if not self.credentials.refresh_token:
             return Exception("No refresh token to refresh")
