@@ -17,7 +17,7 @@ def get_credentials() -> CredentialsType | None:
     Get credentials from environment variables or config file.
 
     Returns:
-        Optional[CredentialsType]: The credentials or None if not found
+        CredentialsType | None: The credentials or None if not found
     """
 
     def get_workspace():

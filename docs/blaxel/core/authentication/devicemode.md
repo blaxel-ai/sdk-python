@@ -17,10 +17,10 @@ Classes
     ### Instance variables
 
     `client_id: str`
-    :
+    :   The type of the None singleton.
 
     `scope: str`
-    :
+    :   The type of the None singleton.
 
 `DeviceLoginFinalizeRequest(grant_type: str, client_id: str, device_code: str)`
 :   A dataclass representing a device login finalize request.
@@ -33,13 +33,13 @@ Classes
     ### Instance variables
 
     `client_id: str`
-    :
+    :   The type of the None singleton.
 
     `device_code: str`
-    :
+    :   The type of the None singleton.
 
     `grant_type: str`
-    :
+    :   The type of the None singleton.
 
 `DeviceLoginFinalizeResponse(access_token: str, expires_in: int, refresh_token: str, token_type: str)`
 :   DeviceLoginFinalizeResponse(access_token: str, expires_in: int, refresh_token: str, token_type: str)
@@ -47,16 +47,16 @@ Classes
     ### Instance variables
 
     `access_token: str`
-    :
+    :   The type of the None singleton.
 
     `expires_in: int`
-    :
+    :   The type of the None singleton.
 
     `refresh_token: str`
-    :
+    :   The type of the None singleton.
 
     `token_type: str`
-    :
+    :   The type of the None singleton.
 
 `DeviceLoginResponse(client_id: str, device_code: str, user_code: str, expires_in: int, interval: int, verification_uri: str, verification_uri_complete: str)`
 :   A dataclass representing the response from a device login request.
@@ -73,25 +73,25 @@ Classes
     ### Instance variables
 
     `client_id: str`
-    :
+    :   The type of the None singleton.
 
     `device_code: str`
-    :
+    :   The type of the None singleton.
 
     `expires_in: int`
-    :
+    :   The type of the None singleton.
 
     `interval: int`
-    :
+    :   The type of the None singleton.
 
     `user_code: str`
-    :
+    :   The type of the None singleton.
 
     `verification_uri: str`
-    :
+    :   The type of the None singleton.
 
     `verification_uri_complete: str`
-    :
+    :   The type of the None singleton.
 
 `DeviceMode(credentials: blaxel.core.authentication.types.CredentialsType, workspace_name: str, base_url: str)`
 :   DeviceMode auth that authenticates requests using a device code.
@@ -131,7 +131,7 @@ Classes
     :   Performs the token refresh using the refresh token.
         
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Exception | None: An exception if refreshing fails, otherwise None.
 
     `get_headers(self) ‑> Dict[str, str]`
     :   Retrieves the authentication headers containing the Bearer token and workspace information.
@@ -146,4 +146,4 @@ Classes
     :   Checks if the Bearer token needs to be refreshed and performs the refresh if necessary.
         
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Exception | None: An exception if refreshing fails, otherwise None.

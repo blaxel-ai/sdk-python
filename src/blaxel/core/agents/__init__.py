@@ -49,7 +49,7 @@ class BlAgent:
         body = input_data
         if not isinstance(body, str):
             body = json.dumps(body)
-        
+
         # Merge settings headers with provided headers
         merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
@@ -62,7 +62,7 @@ class BlAgent:
         body = input_data
         if not isinstance(body, str):
             body = json.dumps(body)
-        
+
         # Merge settings headers with provided headers
         merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
@@ -119,3 +119,5 @@ async def get_agent_metadata(name):
         return await get_agent.asyncio(client=client, agent_name=name)
     except Exception:
         return None
+
+__all__ = ["BlAgent", "bl_agent", "get_agent_metadata"]

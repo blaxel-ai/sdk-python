@@ -50,22 +50,22 @@ Classes
     ### Class variables
 
     `coroutine: Callable[..., Awaitable[Any]] | None`
-    :
+    :   The type of the None singleton.
 
     `description: str`
-    :
+    :   The type of the None singleton.
 
     `input_schema: Dict[str, Any]`
-    :
+    :   The type of the None singleton.
 
     `model_config`
-    :
+    :   The type of the None singleton.
 
     `name: str`
-    :
+    :   The type of the None singleton.
 
     `sync_coroutine: Callable[..., Any] | None`
-    :
+    :   The type of the None singleton.
 
 `ToolException(*args, **kwargs)`
 :   Optional exception that tool throws when execution error occurs.

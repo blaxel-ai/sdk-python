@@ -12,6 +12,7 @@ json_type_mapping: Dict[str, Type] = {
     "array": list,
 }
 
+
 def create_model_from_json_schema(
     schema: Dict[str, Any], model_name: str = "DynamicModel"
 ) -> Type[BaseModel]:

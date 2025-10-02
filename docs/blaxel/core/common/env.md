@@ -56,10 +56,10 @@ Classes
     ### Class variables
 
     `config_env: Dict[str, str]`
-    :
+    :   The type of the None singleton.
 
     `model_config`
-    :
+    :   The type of the None singleton.
 
     `secret_env: Dict[str, str]`
-    :
+    :   The type of the None singleton.

@@ -5,7 +5,9 @@ from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
 
+import httpx
 from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import CallToolResult
 from mcp.types import Tool as MCPTool
 
@@ -21,8 +23,8 @@ if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
 
 
-class PersistentWebSocket:
-    def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True):
+class PersistentMcpClient:
+    def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True, transport: str = None):
         self.name = name
         self.timeout = timeout
         self.type = "function"
@@ -41,6 +43,8 @@ class PersistentWebSocket:
         else:
             self.timeout_enabled = timeout_enabled
         self.use_fallback_url = False
+        self.transport_name = transport
+        self.metas = {}
 
     @property
     def _internal_url(self):
@@ -133,13 +137,58 @@ class PersistentWebSocket:
     def get_tools(self):
         return self.tools_cache
 
+    async def _get_transport_type(self) -> str:
+        """Get the transport type for this function by checking the / endpoint."""
+        if self.transport_name:
+            return self.transport_name
+
+        # Make a request to the / endpoint to determine transport type
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as http_client:
+                # Make a GET request to the root endpoint
+                response = await http_client.get(self._url + "/", headers=settings.headers)
+                if "websocket" in response.text.lower():
+                    self.transport_name = "websocket"
+                else:
+                    self.transport_name = "http-stream"
+
+                logger.debug(f"Detected transport type for {self.name}: {self.transport_name}")
+
+        except Exception as e:
+            # Default to websocket if we can't determine the transport type
+            logger.warning(f"Failed to detect transport type for {self.name}: {e}. Defaulting to websocket.")
+            self.transport_name = "websocket"
+
+        return self.transport_name
+
+    async def _get_transport(self, url: str = None):
+        """Get the appropriate transport for the connection."""
+        if url is None:
+            url = self._url
+
+        transport_type = await self._get_transport_type()
+
+        if transport_type == "http-stream":
+            # Use streamablehttp_client for http-stream
+            result = await self.client_exit_stack.enter_async_context(
+                streamablehttp_client(url + "/mcp", settings.headers)
+            )
+            # streamablehttp_client returns (read_stream, write_stream, get_session_id)
+            # We only need the first two for ClientSession
+            return result[0], result[1]
+        else:
+            # Use websocket transport (default)
+            return await self.client_exit_stack.enter_async_context(
+                websocket_client(url, settings.headers)
+            )
+
     async def initialize(self, fallback: bool = False):
         if not self.session:
             try:
-                logger.debug(f"Initializing websocket client for {self._url}")
-                read, write = await self.client_exit_stack.enter_async_context(
-                    websocket_client(self._url, settings.headers)
-                )
+                logger.debug(f"Initializing client for {self._url}")
+                # Both transports now return a tuple of (read, write)
+                read, write = await self._get_transport()
+
                 self.session = cast(
                     ClientSession,
                     await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
@@ -180,7 +229,7 @@ class PersistentWebSocket:
 
 
 def convert_mcp_tool_to_blaxel_tool(
-    websocket_client: PersistentWebSocket,
+    mcp_client: PersistentMcpClient,
     tool: MCPTool,
 ) -> Tool:
     """Convert an MCP tool to a blaxel tool.
@@ -200,7 +249,7 @@ def convert_mcp_tool_to_blaxel_tool(
         **arguments: dict[str, Any],
     ) -> CallToolResult:
         logger.debug(f"Calling tool {tool.name} with arguments {arguments}")
-        call_tool_result = await websocket_client.call_tool(tool.name, arguments)
+        call_tool_result = await mcp_client.call_tool(tool.name, arguments)
         logger.debug(f"Tool {tool.name} returned {call_tool_result}")
         return call_tool_result
 
@@ -227,7 +276,7 @@ def convert_mcp_tool_to_blaxel_tool(
     )
 
 
-toolPersistances: dict[str, PersistentWebSocket] = {}
+toolPersistances: dict[str, PersistentMcpClient] = {}
 
 
 class BlTools:
@@ -237,11 +286,13 @@ class BlTools:
         metas: dict[str, Any] = {},
         timeout: int = DEFAULT_TIMEOUT,
         timeout_enabled: bool = True,
+        transport: str = None,
     ):
         self.functions = functions
         self.metas = metas
         self.timeout = timeout
         self.timeout_enabled = timeout_enabled
+        self.transport = transport
 
     def get_tools(self) -> list[Tool]:
         """Get a list of all tools from all connected servers."""
@@ -259,9 +310,9 @@ class BlTools:
         logger.debug("Initializing session and loading tools")
 
         if not toolPersistances.get(name):
-            logger.debug(f"Creating new persistent websocket for {name}")
-            toolPersistances[name] = PersistentWebSocket(
-                name, timeout=self.timeout, timeout_enabled=self.timeout_enabled
+            logger.debug(f"Creating new persistent connection for {name}")
+            toolPersistances[name] = PersistentMcpClient(
+                name, timeout=self.timeout, timeout_enabled=self.timeout_enabled, transport=self.transport
             )
             await toolPersistances[name].list_tools()
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools")
@@ -279,5 +330,6 @@ def bl_tools(
     metas: dict[str, Any] = {},
     timeout: int = DEFAULT_TIMEOUT,
     timeout_enabled: bool = True,
+    transport: str = None,
 ) -> BlTools:
-    return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled)
+    return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled, transport=transport)

@@ -8,7 +8,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_spec_configurations import CoreSpecConfigurations
     from ..models.flavor import Flavor
-    from ..models.function_schema import FunctionSchema
     from ..models.model_private_cluster import ModelPrivateCluster
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
@@ -33,7 +32,7 @@ class FunctionSpec:
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
         description (Union[Unset, str]): Function description, very important for the agent function to work with an LLM
-        schema (Union[Unset, FunctionSchema]): Function schema
+        transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
@@ -47,7 +46,7 @@ class FunctionSpec:
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
     description: Union[Unset, str] = UNSET
-    schema: Union[Unset, "FunctionSchema"] = UNSET
+    transport: Union[Unset, str] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -108,11 +107,7 @@ class FunctionSpec:
 
         description = self.description
 
-        schema: Union[Unset, dict[str, Any]] = UNSET
-        if self.schema and not isinstance(self.schema, Unset) and not isinstance(self.schema, dict):
-            schema = self.schema.to_dict()
-        elif self.schema and isinstance(self.schema, dict):
-            schema = self.schema
+        transport = self.transport
 
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
@@ -147,8 +142,8 @@ class FunctionSpec:
             field_dict["sandbox"] = sandbox
         if description is not UNSET:
             field_dict["description"] = description
-        if schema is not UNSET:
-            field_dict["schema"] = schema
+        if transport is not UNSET:
+            field_dict["transport"] = transport
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -158,7 +153,6 @@ class FunctionSpec:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
-        from ..models.function_schema import FunctionSchema
         from ..models.model_private_cluster import ModelPrivateCluster
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
@@ -212,12 +206,7 @@ class FunctionSpec:
 
         description = d.pop("description", UNSET)
 
-        _schema = d.pop("schema", UNSET)
-        schema: Union[Unset, FunctionSchema]
-        if isinstance(_schema, Unset):
-            schema = UNSET
-        else:
-            schema = FunctionSchema.from_dict(_schema)
+        transport = d.pop("transport", UNSET)
 
         triggers = []
         _triggers = d.pop("triggers", UNSET)
@@ -237,7 +226,7 @@ class FunctionSpec:
             runtime=runtime,
             sandbox=sandbox,
             description=description,
-            schema=schema,
+            transport=transport,
             triggers=triggers,
         )
 

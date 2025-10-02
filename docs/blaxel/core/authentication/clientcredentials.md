@@ -25,7 +25,7 @@ Classes
     ### Class variables
 
     `expires_at: datetime.datetime | None`
-    :
+    :   The type of the None singleton.
 
     ### Instance variables
 
@@ -60,7 +60,7 @@ Classes
         Uses recursive retry logic for up to 3 attempts.
         
         Returns:
-            Optional[Exception]: An exception if refreshing fails after all retries, otherwise None.
+            Exception | None: An exception if refreshing fails after all retries, otherwise None.
 
     `need_token(self)`
     :
@@ -71,13 +71,13 @@ Classes
     ### Instance variables
 
     `access_token: str`
-    :
+    :   The type of the None singleton.
 
     `expires_in: int`
-    :
+    :   The type of the None singleton.
 
     `refresh_token: str`
-    :
+    :   The type of the None singleton.
 
     `token_type: str`
-    :
+    :   The type of the None singleton.

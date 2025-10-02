@@ -31,6 +31,7 @@ class JobSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        region (Union[Unset, str]): Region where the job should be created (e.g. us-pdx-1, eu-lon-1)
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
@@ -43,6 +44,7 @@ class JobSpec:
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
+    region: Union[Unset, str] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -101,6 +103,8 @@ class JobSpec:
 
         sandbox = self.sandbox
 
+        region = self.region
+
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
@@ -132,6 +136,8 @@ class JobSpec:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
             field_dict["sandbox"] = sandbox
+        if region is not UNSET:
+            field_dict["region"] = region
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -192,6 +198,8 @@ class JobSpec:
 
         sandbox = d.pop("sandbox", UNSET)
 
+        region = d.pop("region", UNSET)
+
         triggers = []
         _triggers = d.pop("triggers", UNSET)
         for componentsschemas_triggers_item_data in _triggers or []:
@@ -209,6 +217,7 @@ class JobSpec:
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,
+            region=region,
             triggers=triggers,
         )
 

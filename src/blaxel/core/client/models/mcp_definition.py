@@ -33,6 +33,7 @@ class MCPDefinition:
         integration (Union[Unset, str]): Integration of the artifact
         long_description (Union[Unset, str]): Long description of the artifact
         name (Union[Unset, str]): Name of the artifact
+        transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
         url (Union[Unset, str]): URL of the artifact
     """
 
@@ -51,6 +52,7 @@ class MCPDefinition:
     integration: Union[Unset, str] = UNSET
     long_description: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
+    transport: Union[Unset, str] = UNSET
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -97,6 +99,8 @@ class MCPDefinition:
 
         name = self.name
 
+        transport = self.transport
+
         url = self.url
 
         field_dict: dict[str, Any] = {}
@@ -132,6 +136,8 @@ class MCPDefinition:
             field_dict["longDescription"] = long_description
         if name is not UNSET:
             field_dict["name"] = name
+        if transport is not UNSET:
+            field_dict["transport"] = transport
         if url is not UNSET:
             field_dict["url"] = url
 
@@ -185,6 +191,8 @@ class MCPDefinition:
 
         name = d.pop("name", UNSET)
 
+        transport = d.pop("transport", UNSET)
+
         url = d.pop("url", UNSET)
 
         mcp_definition = cls(
@@ -203,6 +211,7 @@ class MCPDefinition:
             integration=integration,
             long_description=long_description,
             name=name,
+            transport=transport,
             url=url,
         )
 

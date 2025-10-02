@@ -4,7 +4,7 @@ Module blaxel.core.client.models.runtime
 Classes
 -------
 
-`Runtime(args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, command: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, configuration: blaxel.core.client.types.Unset | ForwardRef('RuntimeConfiguration') = <blaxel.core.client.types.Unset object>, cpu: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, endpoint_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, envs: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, generation: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, image: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, max_concurrent_tasks: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_retries: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, memory: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, metric_port: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, min_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, model: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, organization: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, ports: blaxel.core.client.types.Unset | list['Port'] = <blaxel.core.client.types.Unset object>, startup_probe: blaxel.core.client.types.Unset | ForwardRef('RuntimeStartupProbe') = <blaxel.core.client.types.Unset object>, timeout: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`Runtime(args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, command: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, configuration: blaxel.core.client.types.Unset | ForwardRef('RuntimeConfiguration') = <blaxel.core.client.types.Unset object>, cpu: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, endpoint_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, envs: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, expires: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, generation: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, image: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, max_concurrent_tasks: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_retries: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, memory: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, metric_port: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, min_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, model: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, organization: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, ports: blaxel.core.client.types.Unset | list['Port'] = <blaxel.core.client.types.Unset object>, startup_probe: blaxel.core.client.types.Unset | ForwardRef('RuntimeStartupProbe') = <blaxel.core.client.types.Unset object>, timeout: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, ttl: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Set of configurations for a deployment
     
     Attributes:
@@ -16,6 +16,7 @@ Classes
             endpoint name. In case of hf_public_endpoint, it is not used.
         envs (Union[Unset, list[Any]]): The env variables to set in the deployment. Should be a list of Kubernetes
             EnvVar types
+        expires (Union[Unset, str]): The expiration date for the deployment in ISO 8601 format - 2024-12-31T23:59:59Z
         generation (Union[Unset, str]): The generation of the deployment
         image (Union[Unset, str]): The Docker image for the deployment
         max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
@@ -30,6 +31,7 @@ Classes
         ports (Union[Unset, list['Port']]): Set of ports for a resource
         startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
         timeout (Union[Unset, int]): The timeout for the deployment in seconds
+        ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
         type_ (Union[Unset, str]): The type of origin for the deployment (hf_private_endpoint, hf_public_endpoint)
     
     Method generated by attrs for class Runtime.
@@ -63,6 +65,9 @@ Classes
     :
 
     `envs`
+    :
+
+    `expires`
     :
 
     `generation`
@@ -102,6 +107,9 @@ Classes
     :
 
     `timeout`
+    :
+
+    `ttl`
     :
 
     `type_`

@@ -27,12 +27,30 @@ logger = logging.getLogger(__name__)
 
 
 class SandboxInstance:
-    def __init__(self, sandbox: Sandbox):
-        self.sandbox = sandbox
-        self.config = SandboxConfiguration(sandbox)
+    def __init__(
+        self,
+        sandbox: Union[Sandbox, SandboxConfiguration],
+        force_url: str | None = None,
+        headers: Dict[str, str] | None = None,
+        params: Dict[str, str] | None = None,
+    ):
+        # Handle both Sandbox and SandboxConfiguration inputs
+        if isinstance(sandbox, SandboxConfiguration):
+            self.config = sandbox
+            self.sandbox = sandbox.sandbox
+        else:
+            # Create SandboxConfiguration with optional parameters
+            self.sandbox = sandbox
+            self.config = SandboxConfiguration(
+                sandbox=sandbox,
+                force_url=force_url,
+                headers=headers,
+                params=params,
+            )
+
         self.fs = SandboxFileSystem(self.config)
         self.process = SandboxProcess(self.config)
-        self.previews = SandboxPreviews(sandbox)
+        self.previews = SandboxPreviews(self.sandbox)
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
 
@@ -274,20 +292,11 @@ class SandboxInstance:
         # Create a minimal sandbox configuration for session-based access
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
         sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
-        config = SandboxConfiguration(
+
+        # Use the constructor with force_url, headers, and params
+        return cls(
             sandbox=sandbox,
             force_url=session.url,
             headers={"X-Blaxel-Preview-Token": session.token},
             params={"bl_preview_token": session.token},
         )
-
-        instance = cls.__new__(cls)
-        instance.sandbox = sandbox
-        instance.config = config
-        instance.fs = SandboxFileSystem(config)
-        instance.process = SandboxProcess(config)
-        instance.previews = SandboxPreviews(sandbox)
-        instance.sessions = SandboxSessions(config)
-        instance.network = SandboxNetwork(config)
-
-        return instance

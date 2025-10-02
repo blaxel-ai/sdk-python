@@ -17,7 +17,7 @@ sdk-sandbox:
 		-o ./definition.yml \
 		https://api.github.com/repos/blaxel-ai/sandbox/contents/sandbox-api/docs/openapi.yml?ref=main
 	rm -rf src/blaxel/core/sandbox/client/api src/blaxel/core/sandbox/client/models
-	openapi-python-client generate \
+	.venv/bin/openapi-python-client generate \
 		--path=definition.yml \
 		--output-path=./tmp-sdk-sandbox \
 		--overwrite \
@@ -34,7 +34,7 @@ sdk-controlplane:
 		-o ./definition.yml \
 		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=main
 	rm -rf src/blaxel/core/client/api src/blaxel/core/client/models
-	openapi-python-client generate \
+	.venv/bin/openapi-python-client generate \
 		--path=definition.yml \
 		--output-path=./tmp-sdk-python \
 		--overwrite \
@@ -81,8 +81,9 @@ tag:
 	git tag -a v$(ARGS) -m "Release v$(ARGS)"
 	git push origin v$(ARGS)
 
-test: install-dev
-	uv run pytest tests/ -v
+test:
+	uv sync --group test
+	uv run pytest tests/ -v --ignore=tests/integration/
 
 test-with-telemetry:
 	uv sync --group test --extra telemetry

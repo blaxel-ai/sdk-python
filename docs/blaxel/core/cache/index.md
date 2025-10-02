@@ -8,7 +8,7 @@ Sub-modules
 Functions
 ---------
 
-`find_from_cache(resource: str, name: str) ‑> Any | None`
+`find_from_cache(resource: str, name: str) ‑> typing.Any | None`
 :   Find a resource from the cache by resource type and name.
     
     Args:

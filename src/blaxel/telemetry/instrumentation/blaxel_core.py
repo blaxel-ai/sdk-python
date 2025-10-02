@@ -68,8 +68,8 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
         blaxel.core.jobs.BlJob.run = traced_run
 
     def _patch_tools(self, tracer: Tracer):
-        # Patch PersistentWebSocket.list_tools
-        orig_list_tools = blaxel.core.tools.PersistentWebSocket.list_tools
+        # Patch PersistentMcpClient.list_tools
+        orig_list_tools = blaxel.core.tools.PersistentMcpClient.list_tools
 
         async def traced_list_tools(self, *args, **kwargs):
             span_attributes = {
@@ -83,7 +83,7 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
                 # Optionally: span.set_attribute("tool.list.result", str(result))
                 return result
 
-        blaxel.core.tools.PersistentWebSocket.list_tools = traced_list_tools
+        blaxel.core.tools.PersistentMcpClient.list_tools = traced_list_tools
 
         # Patch convert_mcp_tool_to_blaxel_tool to wrap tool calls
         orig_convert = blaxel.core.tools.convert_mcp_tool_to_blaxel_tool

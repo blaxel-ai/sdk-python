@@ -56,7 +56,7 @@ class ClientCredentials(BlaxelAuth):
             remaining_retries (int): Number of retry attempts remaining.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails after all retries, otherwise None.
+            Exception | None: An exception if refreshing fails after all retries, otherwise None.
         """
         try:
             headers = {
@@ -84,7 +84,7 @@ class ClientCredentials(BlaxelAuth):
         Uses recursive retry logic for up to 3 attempts.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails after all retries, otherwise None.
+            Exception | None: An exception if refreshing fails after all retries, otherwise None.
         """
         if self.need_token():
             return self._request_token()
