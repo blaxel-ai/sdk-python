@@ -19,18 +19,18 @@ Classes
 -------
 
 `OauthTokenData(body: dict[str, str | None] = <factory>, headers: dict[str, str] = <factory>, authenticated: bool | None = False)`
-:   OauthTokenData(body: dict[str, typing.Optional[str]] = <factory>, headers: dict[str, str] = <factory>, authenticated: Optional[bool] = False)
+:   OauthTokenData(body: dict[str, typing.Optional[str]] = <factory>, headers: dict[str, str] = <factory>, authenticated: bool | None = False)
 
     ### Instance variables
 
     `authenticated: bool | None`
-    :
+    :   The type of the None singleton.
 
     `body: dict[str, str | None]`
-    :
+    :   The type of the None singleton.
 
     `headers: dict[str, str]`
-    :
+    :   The type of the None singleton.
 
 `OauthTokenError(error: str)`
 :   OauthTokenError(error: str)
@@ -38,7 +38,7 @@ Classes
     ### Instance variables
 
     `error: str`
-    :
+    :   The type of the None singleton.
 
 `OauthTokenResponse(access_token: str, refresh_token: str, expires_in: int, token_type: str)`
 :   OauthTokenResponse(access_token: str, refresh_token: str, expires_in: int, token_type: str)
@@ -46,13 +46,13 @@ Classes
     ### Instance variables
 
     `access_token: str`
-    :
+    :   The type of the None singleton.
 
     `expires_in: int`
-    :
+    :   The type of the None singleton.
 
     `refresh_token: str`
-    :
+    :   The type of the None singleton.
 
     `token_type: str`
-    :
+    :   The type of the None singleton.
