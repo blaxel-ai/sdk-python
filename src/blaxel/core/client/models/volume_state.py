@@ -10,26 +10,31 @@ T = TypeVar("T", bound="VolumeState")
 
 @_attrs_define
 class VolumeState:
-    """Volume state - mutable runtime state
+    """ Volume state - mutable runtime state
 
-    Attributes:
-        attached_to (Union[Unset, str]): Resource this volume is attached to (e.g. "sandbox:my-sandbox", "model:my-
-            model")
-    """
+        Attributes:
+            attached_to (Union[Unset, str]): Resource this volume is attached to (e.g. "sandbox:my-sandbox", "model:my-
+                model")
+     """
 
     attached_to: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         attached_to = self.attached_to
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if attached_to is not UNSET:
             field_dict["attachedTo"] = attached_to
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -41,6 +46,7 @@ class VolumeState:
         volume_state = cls(
             attached_to=attached_to,
         )
+
 
         volume_state.additional_properties = d
         return volume_state

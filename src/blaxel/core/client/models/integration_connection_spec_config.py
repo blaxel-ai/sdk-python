@@ -8,22 +8,30 @@ T = TypeVar("T", bound="IntegrationConnectionSpecConfig")
 
 @_attrs_define
 class IntegrationConnectionSpecConfig:
-    """Additional configuration for the integration"""
+    """ Additional configuration for the integration
+
+     """
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        integration_connection_spec_config = cls()
+        integration_connection_spec_config = cls(
+        )
+
 
         integration_connection_spec_config.additional_properties = d
         return integration_connection_spec_config

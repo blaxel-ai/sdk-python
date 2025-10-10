@@ -19,11 +19,13 @@ class VolumeCreateConfiguration:
         display_name: str | None = None,
         size: int | None = None,  # Size in MB
         region: str | None = None,  # AWS region
+        template: str | None = None,  # Template
     ):
         self.name = name
         self.display_name = display_name
         self.size = size
         self.region = region
+        self.template = template
 
     @classmethod
     def from_dict(cls, data: Dict[str, any]) -> "VolumeCreateConfiguration":
@@ -32,6 +34,7 @@ class VolumeCreateConfiguration:
             display_name=data.get("display_name"),
             size=data.get("size"),
             region=data.get("region"),
+            template=data.get("template"),
         )
 
 
@@ -67,6 +70,10 @@ class VolumeInstance:
     def region(self):
         return self.volume.spec.region if self.volume.spec else None
 
+    @property
+    def template(self):
+        return self.volume.spec.template if self.volume.spec else None
+
     @classmethod
     async def create(
         cls, config: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
@@ -87,6 +94,7 @@ class VolumeInstance:
                 spec=VolumeSpec(
                     size=config.size or default_size,
                     region=config.region or UNSET,
+                    template=config.template or UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -99,6 +107,7 @@ class VolumeInstance:
                 spec=VolumeSpec(
                     size=volume_config.size or default_size,
                     region=volume_config.region or UNSET,
+                    template=volume_config.template or UNSET,
                 ),
             )
         else:

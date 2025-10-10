@@ -10,31 +10,36 @@ T = TypeVar("T", bound="MemoryAllocationByName")
 
 @_attrs_define
 class MemoryAllocationByName:
-    """Memory allocation by service name
+    """ Memory allocation by service name
 
-    Attributes:
-        allocation (Union[Unset, float]): Memory allocation value
-        name (Union[Unset, str]): Name
-    """
+        Attributes:
+            allocation (Union[Unset, float]): Memory allocation value
+            name (Union[Unset, str]): Name
+     """
 
     allocation: Union[Unset, float] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         allocation = self.allocation
 
         name = self.name
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if allocation is not UNSET:
             field_dict["allocation"] = allocation
         if name is not UNSET:
             field_dict["name"] = name
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -49,6 +54,7 @@ class MemoryAllocationByName:
             allocation=allocation,
             name=name,
         )
+
 
         memory_allocation_by_name.additional_properties = d
         return memory_allocation_by_name

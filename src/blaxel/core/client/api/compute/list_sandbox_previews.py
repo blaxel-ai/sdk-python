@@ -11,21 +11,31 @@ from ...types import Response
 
 def _get_kwargs(
     sandbox_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/sandboxes/{sandbox_name}/previews",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["Preview"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list['Preview'] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = Preview.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
@@ -36,7 +46,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Previe
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Preview"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list['Preview']]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -49,8 +59,9 @@ def sync_detailed(
     sandbox_name: str,
     *,
     client: Union[Client],
-) -> Response[list["Preview"]]:
-    """List Sandboxes
+
+) -> Response[list['Preview']]:
+    """ List Sandboxes
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -63,10 +74,12 @@ def sync_detailed(
 
     Returns:
         Response[list['Preview']]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -75,13 +88,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     sandbox_name: str,
     *,
     client: Union[Client],
-) -> list["Preview"] | None:
-    """List Sandboxes
+
+) -> list['Preview'] | None:
+    """ List Sandboxes
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -94,20 +107,22 @@ def sync(
 
     Returns:
         list['Preview']
-    """
+     """
+
 
     return sync_detailed(
         sandbox_name=sandbox_name,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     sandbox_name: str,
     *,
     client: Union[Client],
-) -> Response[list["Preview"]]:
-    """List Sandboxes
+
+) -> Response[list['Preview']]:
+    """ List Sandboxes
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -120,23 +135,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['Preview']]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     sandbox_name: str,
     *,
     client: Union[Client],
-) -> list["Preview"] | None:
-    """List Sandboxes
+
+) -> list['Preview'] | None:
+    """ List Sandboxes
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -149,11 +168,11 @@ async def asyncio(
 
     Returns:
         list['Preview']
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            sandbox_name=sandbox_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        sandbox_name=sandbox_name,
+client=client,
+
+    )).parsed

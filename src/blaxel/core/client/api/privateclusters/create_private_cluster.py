@@ -9,11 +9,20 @@ from ...models.private_cluster import PrivateCluster
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    
+) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/privateclusters",
     }
+
 
     return _kwargs
 
@@ -21,6 +30,8 @@ def _get_kwargs() -> dict[str, Any]:
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, PrivateCluster] | None:
     if response.status_code == 200:
         response_200 = PrivateCluster.from_dict(response.json())
+
+
 
         return response_200
     if response.status_code == 401:
@@ -47,8 +58,9 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 def sync_detailed(
     *,
     client: Union[Client],
+
 ) -> Response[Union[Any, PrivateCluster]]:
-    """Create private cluster
+    """ Create private cluster
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -56,9 +68,12 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, PrivateCluster]]
-    """
+     """
 
-    kwargs = _get_kwargs()
+
+    kwargs = _get_kwargs(
+        
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -66,12 +81,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: Union[Client],
+
 ) -> Union[Any, PrivateCluster] | None:
-    """Create private cluster
+    """ Create private cluster
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -79,18 +94,20 @@ def sync(
 
     Returns:
         Union[Any, PrivateCluster]
-    """
+     """
+
 
     return sync_detailed(
         client=client,
-    ).parsed
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
+
 ) -> Response[Union[Any, PrivateCluster]]:
-    """Create private cluster
+    """ Create private cluster
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -98,20 +115,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, PrivateCluster]]
-    """
+     """
 
-    kwargs = _get_kwargs()
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    kwargs = _get_kwargs(
+        
+    )
+
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: Union[Client],
+
 ) -> Union[Any, PrivateCluster] | None:
-    """Create private cluster
+    """ Create private cluster
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -119,10 +141,10 @@ async def asyncio(
 
     Returns:
         Union[Any, PrivateCluster]
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+
+    )).parsed

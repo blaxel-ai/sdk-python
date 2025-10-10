@@ -8,22 +8,30 @@ T = TypeVar("T", bound="CustomDomainSpecTxtRecords")
 
 @_attrs_define
 class CustomDomainSpecTxtRecords:
-    """Map of TXT record names to values for domain verification"""
+    """ Map of TXT record names to values for domain verification
+
+     """
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        custom_domain_spec_txt_records = cls()
+        custom_domain_spec_txt_records = cls(
+        )
+
 
         custom_domain_spec_txt_records.additional_properties = d
         return custom_domain_spec_txt_records

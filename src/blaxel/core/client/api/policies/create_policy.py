@@ -12,8 +12,14 @@ from ...types import Response
 def _get_kwargs(
     *,
     body: Policy,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -25,6 +31,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -35,6 +42,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Policy | None:
     if response.status_code == 200:
         response_200 = Policy.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -56,8 +65,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: Policy,
+
 ) -> Response[Policy]:
-    """Create policy
+    """ Create policy
 
      Creates a policy.
 
@@ -71,10 +81,12 @@ def sync_detailed(
 
     Returns:
         Response[Policy]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -83,13 +95,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: Union[Client],
     body: Policy,
+
 ) -> Policy | None:
-    """Create policy
+    """ Create policy
 
      Creates a policy.
 
@@ -103,20 +115,22 @@ def sync(
 
     Returns:
         Policy
-    """
+     """
+
 
     return sync_detailed(
         client=client,
-        body=body,
-    ).parsed
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
     body: Policy,
+
 ) -> Response[Policy]:
-    """Create policy
+    """ Create policy
 
      Creates a policy.
 
@@ -130,23 +144,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[Policy]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: Union[Client],
     body: Policy,
+
 ) -> Policy | None:
-    """Create policy
+    """ Create policy
 
      Creates a policy.
 
@@ -160,11 +178,11 @@ async def asyncio(
 
     Returns:
         Policy
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+body=body,
+
+    )).parsed

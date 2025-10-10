@@ -10,15 +10,15 @@ T = TypeVar("T", bound="CreateWorkspaceServiceAccountResponse200")
 
 @_attrs_define
 class CreateWorkspaceServiceAccountResponse200:
-    """
-    Attributes:
-        client_id (Union[Unset, str]): Service account client ID
-        client_secret (Union[Unset, str]): Service account client secret (only returned on creation)
-        created_at (Union[Unset, str]): Creation timestamp
-        description (Union[Unset, str]): Service account description
-        name (Union[Unset, str]): Service account name
-        updated_at (Union[Unset, str]): Last update timestamp
-    """
+    """ 
+        Attributes:
+            client_id (Union[Unset, str]): Service account client ID
+            client_secret (Union[Unset, str]): Service account client secret (only returned on creation)
+            created_at (Union[Unset, str]): Creation timestamp
+            description (Union[Unset, str]): Service account description
+            name (Union[Unset, str]): Service account name
+            updated_at (Union[Unset, str]): Last update timestamp
+     """
 
     client_id: Union[Unset, str] = UNSET
     client_secret: Union[Unset, str] = UNSET
@@ -27,6 +27,7 @@ class CreateWorkspaceServiceAccountResponse200:
     name: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         client_id = self.client_id
@@ -41,9 +42,11 @@ class CreateWorkspaceServiceAccountResponse200:
 
         updated_at = self.updated_at
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if client_id is not UNSET:
             field_dict["client_id"] = client_id
         if client_secret is not UNSET:
@@ -58,6 +61,8 @@ class CreateWorkspaceServiceAccountResponse200:
             field_dict["updated_at"] = updated_at
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -84,6 +89,7 @@ class CreateWorkspaceServiceAccountResponse200:
             name=name,
             updated_at=updated_at,
         )
+
 
         create_workspace_service_account_response_200.additional_properties = d
         return create_workspace_service_account_response_200

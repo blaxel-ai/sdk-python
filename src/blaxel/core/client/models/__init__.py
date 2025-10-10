@@ -1,4 +1,4 @@
-"""Contains all the data models used in inputs/outputs"""
+""" Contains all the data models used in inputs/outputs """
 
 from .acl import ACL
 from .agent import Agent
@@ -13,10 +13,6 @@ from .core_spec import CoreSpec
 from .core_spec_configurations import CoreSpecConfigurations
 from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
-from .create_job_execution_request import CreateJobExecutionRequest
-from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
-from .create_job_execution_response import CreateJobExecutionResponse
-from .create_job_execution_response_tasks_item import CreateJobExecutionResponseTasksItem
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
@@ -24,6 +20,7 @@ from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
+from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
 from .entrypoint import Entrypoint
 from .entrypoint_env import EntrypointEnv
@@ -56,19 +53,9 @@ from .integration_query_params import IntegrationQueryParams
 from .integration_repository import IntegrationRepository
 from .invite_workspace_user_body import InviteWorkspaceUserBody
 from .job import Job
-from .job_execution import JobExecution
 from .job_execution_config import JobExecutionConfig
-from .job_execution_metadata import JobExecutionMetadata
-from .job_execution_spec import JobExecutionSpec
-from .job_execution_stats import JobExecutionStats
-from .job_execution_task import JobExecutionTask
-from .job_execution_task_condition import JobExecutionTaskCondition
-from .job_execution_task_metadata import JobExecutionTaskMetadata
-from .job_execution_task_spec import JobExecutionTaskSpec
 from .job_metrics import JobMetrics
-from .job_metrics_executions_chart import JobMetricsExecutionsChart
 from .job_metrics_executions_total import JobMetricsExecutionsTotal
-from .job_metrics_tasks_chart import JobMetricsTasksChart
 from .job_metrics_tasks_total import JobMetricsTasksTotal
 from .job_spec import JobSpec
 from .jobs_chart_value import JobsChartValue
@@ -185,6 +172,10 @@ from .volume import Volume
 from .volume_attachment import VolumeAttachment
 from .volume_spec import VolumeSpec
 from .volume_state import VolumeState
+from .volume_template import VolumeTemplate
+from .volume_template_spec import VolumeTemplateSpec
+from .volume_template_state import VolumeTemplateState
+from .volume_template_version import VolumeTemplateVersion
 from .websocket_channel import WebsocketChannel
 from .websocket_message import WebsocketMessage
 from .workspace import Workspace
@@ -206,10 +197,6 @@ __all__ = (
     "CoreSpecConfigurations",
     "Country",
     "CreateApiKeyForServiceAccountBody",
-    "CreateJobExecutionRequest",
-    "CreateJobExecutionRequestTasksItem",
-    "CreateJobExecutionResponse",
-    "CreateJobExecutionResponseTasksItem",
     "CreateWorkspaceServiceAccountBody",
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
@@ -217,6 +204,7 @@ __all__ = (
     "CustomDomainSpec",
     "CustomDomainSpecTxtRecords",
     "DeleteSandboxPreviewTokenResponse200",
+    "DeleteVolumeTemplateVersionResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
     "Entrypoint",
     "EntrypointEnv",
@@ -247,19 +235,9 @@ __all__ = (
     "IntegrationRepository",
     "InviteWorkspaceUserBody",
     "Job",
-    "JobExecution",
     "JobExecutionConfig",
-    "JobExecutionMetadata",
-    "JobExecutionSpec",
-    "JobExecutionStats",
-    "JobExecutionTask",
-    "JobExecutionTaskCondition",
-    "JobExecutionTaskMetadata",
-    "JobExecutionTaskSpec",
     "JobMetrics",
-    "JobMetricsExecutionsChart",
     "JobMetricsExecutionsTotal",
-    "JobMetricsTasksChart",
     "JobMetricsTasksTotal",
     "JobsChartValue",
     "JobsNetworkChart",
@@ -370,6 +348,10 @@ __all__ = (
     "VolumeAttachment",
     "VolumeSpec",
     "VolumeState",
+    "VolumeTemplate",
+    "VolumeTemplateSpec",
+    "VolumeTemplateState",
+    "VolumeTemplateVersion",
     "WebsocketChannel",
     "WebsocketMessage",
     "Workspace",

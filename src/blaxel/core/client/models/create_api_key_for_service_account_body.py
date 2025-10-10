@@ -10,30 +10,35 @@ T = TypeVar("T", bound="CreateApiKeyForServiceAccountBody")
 
 @_attrs_define
 class CreateApiKeyForServiceAccountBody:
-    """
-    Attributes:
-        expires_in (Union[Unset, str]): Expiration period for the API key
-        name (Union[Unset, str]): Name for the API key
-    """
+    """ 
+        Attributes:
+            expires_in (Union[Unset, str]): Expiration period for the API key
+            name (Union[Unset, str]): Name for the API key
+     """
 
     expires_in: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         expires_in = self.expires_in
 
         name = self.name
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if expires_in is not UNSET:
             field_dict["expires_in"] = expires_in
         if name is not UNSET:
             field_dict["name"] = name
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -48,6 +53,7 @@ class CreateApiKeyForServiceAccountBody:
             expires_in=expires_in,
             name=name,
         )
+
 
         create_api_key_for_service_account_body.additional_properties = d
         return create_api_key_for_service_account_body

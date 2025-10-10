@@ -10,15 +10,15 @@ T = TypeVar("T", bound="PreviewTokenMetadata")
 
 @_attrs_define
 class PreviewTokenMetadata:
-    """PreviewTokenMetadata
+    """ PreviewTokenMetadata
 
-    Attributes:
-        name (Union[Unset, str]): Token name
-        preview_name (Union[Unset, str]): Preview name
-        resource_name (Union[Unset, str]): Resource name
-        resource_type (Union[Unset, str]): Resource type
-        workspace (Union[Unset, str]): Workspace name
-    """
+        Attributes:
+            name (Union[Unset, str]): Token name
+            preview_name (Union[Unset, str]): Preview name
+            resource_name (Union[Unset, str]): Resource name
+            resource_type (Union[Unset, str]): Resource type
+            workspace (Union[Unset, str]): Workspace name
+     """
 
     name: Union[Unset, str] = UNSET
     preview_name: Union[Unset, str] = UNSET
@@ -26,6 +26,7 @@ class PreviewTokenMetadata:
     resource_type: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
@@ -38,9 +39,11 @@ class PreviewTokenMetadata:
 
         workspace = self.workspace
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if name is not UNSET:
             field_dict["name"] = name
         if preview_name is not UNSET:
@@ -53,6 +56,8 @@ class PreviewTokenMetadata:
             field_dict["workspace"] = workspace
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -76,6 +81,7 @@ class PreviewTokenMetadata:
             resource_type=resource_type,
             workspace=workspace,
         )
+
 
         preview_token_metadata.additional_properties = d
         return preview_token_metadata

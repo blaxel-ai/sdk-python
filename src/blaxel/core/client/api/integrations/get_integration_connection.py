@@ -11,11 +11,19 @@ from ...types import Response
 
 def _get_kwargs(
     connection_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/integrations/connections/{connection_name}",
     }
+
 
     return _kwargs
 
@@ -23,6 +31,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> IntegrationConnection | None:
     if response.status_code == 200:
         response_200 = IntegrationConnection.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -44,8 +54,9 @@ def sync_detailed(
     connection_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[IntegrationConnection]:
-    """Get integration
+    """ Get integration
 
      Returns an integration connection by integration name and connection name.
 
@@ -58,10 +69,12 @@ def sync_detailed(
 
     Returns:
         Response[IntegrationConnection]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         connection_name=connection_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -70,13 +83,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     connection_name: str,
     *,
     client: Union[Client],
+
 ) -> IntegrationConnection | None:
-    """Get integration
+    """ Get integration
 
      Returns an integration connection by integration name and connection name.
 
@@ -89,20 +102,22 @@ def sync(
 
     Returns:
         IntegrationConnection
-    """
+     """
+
 
     return sync_detailed(
         connection_name=connection_name,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     connection_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[IntegrationConnection]:
-    """Get integration
+    """ Get integration
 
      Returns an integration connection by integration name and connection name.
 
@@ -115,23 +130,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[IntegrationConnection]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         connection_name=connection_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     connection_name: str,
     *,
     client: Union[Client],
+
 ) -> IntegrationConnection | None:
-    """Get integration
+    """ Get integration
 
      Returns an integration connection by integration name and connection name.
 
@@ -144,11 +163,11 @@ async def asyncio(
 
     Returns:
         IntegrationConnection
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            connection_name=connection_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        connection_name=connection_name,
+client=client,
+
+    )).parsed
