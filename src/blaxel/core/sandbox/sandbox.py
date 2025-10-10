@@ -48,8 +48,8 @@ class SandboxInstance:
                 params=params,
             )
 
-        self.fs = SandboxFileSystem(self.config)
         self.process = SandboxProcess(self.config)
+        self.fs = SandboxFileSystem(self.config, self.process)
         self.previews = SandboxPreviews(self.sandbox)
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)

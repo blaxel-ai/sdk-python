@@ -10,16 +10,16 @@ T = TypeVar("T", bound="WebsocketMessage")
 
 @_attrs_define
 class WebsocketMessage:
-    """WebSocket connection details
+    """ WebSocket connection details
 
-    Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        id (Union[Unset, str]): Unique message ID
-        message (Union[Unset, str]): Message
-        ttl (Union[Unset, int]): TTL timestamp for automatic deletion
-        workspace (Union[Unset, str]): Workspace the connection belongs to
-    """
+        Attributes:
+            created_at (Union[Unset, str]): The date and time when the resource was created
+            updated_at (Union[Unset, str]): The date and time when the resource was updated
+            id (Union[Unset, str]): Unique message ID
+            message (Union[Unset, str]): Message
+            ttl (Union[Unset, int]): TTL timestamp for automatic deletion
+            workspace (Union[Unset, str]): Workspace the connection belongs to
+     """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
@@ -28,6 +28,7 @@ class WebsocketMessage:
     ttl: Union[Unset, int] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -42,9 +43,11 @@ class WebsocketMessage:
 
         workspace = self.workspace
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -59,6 +62,8 @@ class WebsocketMessage:
             field_dict["workspace"] = workspace
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -85,6 +90,7 @@ class WebsocketMessage:
             ttl=ttl,
             workspace=workspace,
         )
+
 
         websocket_message.additional_properties = d
         return websocket_message

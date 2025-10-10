@@ -9,21 +9,32 @@ from ...models.location_response import LocationResponse
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    
+) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/locations",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["LocationResponse"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list['LocationResponse'] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = LocationResponse.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
@@ -34,7 +45,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Locati
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["LocationResponse"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list['LocationResponse']]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,8 +57,9 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Union[Client],
-) -> Response[list["LocationResponse"]]:
-    """List locations
+
+) -> Response[list['LocationResponse']]:
+    """ List locations
 
      Returns a list of all locations available with status.
 
@@ -57,9 +69,12 @@ def sync_detailed(
 
     Returns:
         Response[list['LocationResponse']]
-    """
+     """
 
-    kwargs = _get_kwargs()
+
+    kwargs = _get_kwargs(
+        
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -67,12 +82,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: Union[Client],
-) -> list["LocationResponse"] | None:
-    """List locations
+
+) -> list['LocationResponse'] | None:
+    """ List locations
 
      Returns a list of all locations available with status.
 
@@ -82,18 +97,20 @@ def sync(
 
     Returns:
         list['LocationResponse']
-    """
+     """
+
 
     return sync_detailed(
         client=client,
-    ).parsed
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-) -> Response[list["LocationResponse"]]:
-    """List locations
+
+) -> Response[list['LocationResponse']]:
+    """ List locations
 
      Returns a list of all locations available with status.
 
@@ -103,20 +120,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['LocationResponse']]
-    """
+     """
 
-    kwargs = _get_kwargs()
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    kwargs = _get_kwargs(
+        
+    )
+
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: Union[Client],
-) -> list["LocationResponse"] | None:
-    """List locations
+
+) -> list['LocationResponse'] | None:
+    """ List locations
 
      Returns a list of all locations available with status.
 
@@ -126,10 +148,10 @@ async def asyncio(
 
     Returns:
         list['LocationResponse']
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+
+    )).parsed

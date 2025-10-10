@@ -11,11 +11,19 @@ from ...types import Response
 
 def _get_kwargs(
     workspace_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": f"/workspaces/{workspace_name}/join",
     }
+
 
     return _kwargs
 
@@ -23,6 +31,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, PendingInvitationAccept] | None:
     if response.status_code == 200:
         response_200 = PendingInvitationAccept.from_dict(response.json())
+
+
 
         return response_200
     if response.status_code == 404:
@@ -47,8 +57,9 @@ def sync_detailed(
     workspace_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Union[Any, PendingInvitationAccept]]:
-    """Accept invitation to workspace
+    """ Accept invitation to workspace
 
      Accepts an invitation to a workspace.
 
@@ -61,10 +72,12 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, PendingInvitationAccept]]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         workspace_name=workspace_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -73,13 +86,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     workspace_name: str,
     *,
     client: Union[Client],
+
 ) -> Union[Any, PendingInvitationAccept] | None:
-    """Accept invitation to workspace
+    """ Accept invitation to workspace
 
      Accepts an invitation to a workspace.
 
@@ -92,20 +105,22 @@ def sync(
 
     Returns:
         Union[Any, PendingInvitationAccept]
-    """
+     """
+
 
     return sync_detailed(
         workspace_name=workspace_name,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     workspace_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Union[Any, PendingInvitationAccept]]:
-    """Accept invitation to workspace
+    """ Accept invitation to workspace
 
      Accepts an invitation to a workspace.
 
@@ -118,23 +133,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, PendingInvitationAccept]]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         workspace_name=workspace_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     workspace_name: str,
     *,
     client: Union[Client],
+
 ) -> Union[Any, PendingInvitationAccept] | None:
-    """Accept invitation to workspace
+    """ Accept invitation to workspace
 
      Accepts an invitation to a workspace.
 
@@ -147,11 +166,11 @@ async def asyncio(
 
     Returns:
         Union[Any, PendingInvitationAccept]
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            workspace_name=workspace_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        workspace_name=workspace_name,
+client=client,
+
+    )).parsed

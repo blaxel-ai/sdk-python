@@ -8,7 +8,7 @@ from typing import Any, cast
 import httpx
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
-from mcp.types import CallToolResult
+from mcp.types import CallToolRequest, CallToolRequestParams, CallToolResult, ClientRequest
 from mcp.types import Tool as MCPTool
 
 from ..common.internal import get_forced_url, get_global_unique_hash
@@ -97,9 +97,23 @@ class PersistentMcpClient:
             await self.initialize()
             if self.timeout_enabled:
                 self._remove_timer()
-            logger.debug(f"Calling tool {tool_name} with arguments {arguments}")
-            arguments.update(self.metas)
-            call_tool_result = await self.session.call_tool(tool_name, arguments)
+            logger.debug(f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}")
+
+            # Pass meta as a separate field instead of merging into arguments
+            # This matches the TypeScript SDK pattern and MCP protocol specification
+            call_tool_result = await self.session.send_request(
+                ClientRequest(
+                    CallToolRequest(
+                        params=CallToolRequestParams(
+                            name=tool_name,
+                            arguments=arguments,
+                            meta=self.metas if self.metas else None,
+                        ),
+                    )
+                ),
+                CallToolResult,
+            )
+
             logger.debug(f"Tool {tool_name} returned {call_tool_result}")
             if self.timeout_enabled:
                 self._reset_timer()

@@ -10,11 +10,19 @@ from ...types import Response
 
 def _get_kwargs(
     private_cluster_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": f"/privateclusters/{private_cluster_name}/health",
     }
+
 
     return _kwargs
 
@@ -45,8 +53,9 @@ def sync_detailed(
     private_cluster_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Any]:
-    """Update private cluster health
+    """ Update private cluster health
 
     Args:
         private_cluster_name (str):
@@ -57,10 +66,12 @@ def sync_detailed(
 
     Returns:
         Response[Any]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         private_cluster_name=private_cluster_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -74,8 +85,9 @@ async def asyncio_detailed(
     private_cluster_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Any]:
-    """Update private cluster health
+    """ Update private cluster health
 
     Args:
         private_cluster_name (str):
@@ -86,12 +98,17 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         private_cluster_name=private_cluster_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
+

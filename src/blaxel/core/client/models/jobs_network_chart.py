@@ -6,7 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.jobs_chart_value import JobsChartValue
+  from ..models.jobs_chart_value import JobsChartValue
+
+
+
 
 
 T = TypeVar("T", bound="JobsNetworkChart")
@@ -14,33 +17,48 @@ T = TypeVar("T", bound="JobsNetworkChart")
 
 @_attrs_define
 class JobsNetworkChart:
-    """Jobs chart
+    """ Jobs chart
 
-    Attributes:
-        received (Union[Unset, JobsChartValue]): Jobs CPU usage
-        sent (Union[Unset, JobsChartValue]): Jobs CPU usage
-    """
+        Attributes:
+            received (Union[Unset, list['JobsChartValue']]): Received
+            sent (Union[Unset, list['JobsChartValue']]): Sent
+     """
 
-    received: Union[Unset, "JobsChartValue"] = UNSET
-    sent: Union[Unset, "JobsChartValue"] = UNSET
+    received: Union[Unset, list['JobsChartValue']] = UNSET
+    sent: Union[Unset, list['JobsChartValue']] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        received: Union[Unset, dict[str, Any]] = UNSET
-        if self.received and not isinstance(self.received, Unset) and not isinstance(self.received, dict):
-            received = self.received.to_dict()
-        elif self.received and isinstance(self.received, dict):
-            received = self.received
 
-        sent: Union[Unset, dict[str, Any]] = UNSET
-        if self.sent and not isinstance(self.sent, Unset) and not isinstance(self.sent, dict):
-            sent = self.sent.to_dict()
-        elif self.sent and isinstance(self.sent, dict):
-            sent = self.sent
+    def to_dict(self) -> dict[str, Any]:
+        received: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.received, Unset):
+            received = []
+            for received_item_data in self.received:
+                if type(received_item_data) is dict:
+                    received_item = received_item_data
+                else:
+                    received_item = received_item_data.to_dict()
+                received.append(received_item)
+
+
+
+        sent: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.sent, Unset):
+            sent = []
+            for sent_item_data in self.sent:
+                if type(sent_item_data) is dict:
+                    sent_item = sent_item_data
+                else:
+                    sent_item = sent_item_data.to_dict()
+                sent.append(sent_item)
+
+
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if received is not UNSET:
             field_dict["received"] = received
         if sent is not UNSET:
@@ -48,31 +66,39 @@ class JobsNetworkChart:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.jobs_chart_value import JobsChartValue
-
         if not src_dict:
             return None
         d = src_dict.copy()
+        received = []
         _received = d.pop("received", UNSET)
-        received: Union[Unset, JobsChartValue]
-        if isinstance(_received, Unset):
-            received = UNSET
-        else:
-            received = JobsChartValue.from_dict(_received)
+        for received_item_data in (_received or []):
+            received_item = JobsChartValue.from_dict(received_item_data)
 
+
+
+            received.append(received_item)
+
+
+        sent = []
         _sent = d.pop("sent", UNSET)
-        sent: Union[Unset, JobsChartValue]
-        if isinstance(_sent, Unset):
-            sent = UNSET
-        else:
-            sent = JobsChartValue.from_dict(_sent)
+        for sent_item_data in (_sent or []):
+            sent_item = JobsChartValue.from_dict(sent_item_data)
+
+
+
+            sent.append(sent_item)
+
 
         jobs_network_chart = cls(
             received=received,
             sent=sent,
         )
+
 
         jobs_network_chart.additional_properties = d
         return jobs_network_chart

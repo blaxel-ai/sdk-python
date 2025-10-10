@@ -12,8 +12,9 @@ from .types import CopyResponse, SandboxConfiguration, SandboxFilesystemFile, Wa
 
 
 class SandboxFileSystem(SandboxAction):
-    def __init__(self, sandbox_config: SandboxConfiguration):
+    def __init__(self, sandbox_config: SandboxConfiguration, process=None):
         super().__init__(sandbox_config)
+        self.process = process
 
     async def mkdir(self, path: str, permissions: str = "0755") -> SuccessResponse:
         path = self.format_path(path)
@@ -118,59 +119,35 @@ class SandboxFileSystem(SandboxAction):
                 raise Exception('{"error": "Directory not found"}')
             return Directory.from_dict(data)
 
-    async def cp(self, source: str, destination: str) -> CopyResponse:
-        source = self.format_path(source)
-        destination = self.format_path(destination)
+    async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
+        """Copy files or directories using the cp command.
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(f"/filesystem/{source}")
-            self.handle_response_error(response)
+        Args:
+            source: Source path
+            destination: Destination path
+            max_wait: Maximum time to wait for the copy operation in milliseconds (default: 180000)
+        """
+        if not self.process:
+            raise Exception("Process instance not available. Cannot execute cp command.")
 
-            data = response.json()
-            if "files" in data or "subdirectories" in data:
-                # Create destination directory
-                await self.mkdir(destination)
+        # Execute cp -r command
+        process = await self.process.exec({
+            "command": f"cp -r {source} {destination}"
+        })
 
-                # Process subdirectories in batches of 5
-                subdirectories = data.get("subdirectories", [])
-                for i in range(0, len(subdirectories), 5):
-                    batch = subdirectories[i : i + 5]
-                    await asyncio.gather(
-                        *[
-                            self.cp(
-                                subdir.get("path", f"{source}/{subdir.get('path', '')}"),
-                                f"{destination}/{subdir.get('path', '')}",
-                            )
-                            for subdir in batch
-                        ]
-                    )
+        # Wait for process to complete
+        process = await self.process.wait(process.pid, max_wait=max_wait, interval=100)
 
-                # Process files in batches of 10
-                files = data.get("files", [])
-                for i in range(0, len(files), 10):
-                    batch = files[i : i + 10]
-                    tasks = []
-                    for file in batch:
-                        source_path = file.get("path", f"{source}/{file.get('path', '')}")
-                        dest_path = f"{destination}/{file.get('path', '')}"
-                        tasks.append(self._copy_file(source_path, dest_path))
-                    await asyncio.gather(*tasks)
+        # Check if process failed
+        if process.status == "failed":
+            logs = process.logs if hasattr(process, "logs") else "Unknown error"
+            raise Exception(f"Could not copy {source} to {destination} cause: {logs}")
 
-                return CopyResponse(
-                    message="Directory copied successfully", source=source, destination=destination
-                )
-            elif "content" in data:
-                await self.write(destination, data["content"])
-                return CopyResponse(
-                    message="File copied successfully", source=source, destination=destination
-                )
-
-        raise Exception("Unsupported file type")
-
-    async def _copy_file(self, source_path: str, dest_path: str):
-        """Helper method to copy a single file."""
-        content = await self.read(source_path)
-        await self.write(dest_path, content)
+        return CopyResponse(
+            message="Files copied",
+            source=source,
+            destination=destination
+        )
 
     def watch(
         self,
@@ -260,8 +237,8 @@ class SandboxFileSystem(SandboxAction):
         return {"close": close}
 
     def format_path(self, path: str) -> str:
-        if path == "/" or path == "":
-            return "%2F"
-        if path.startswith("/"):
-            path = path[1:]
+        """Format path for filesystem operations.
+
+        Simplified to match TypeScript behavior - returns path as-is.
+        """
         return path

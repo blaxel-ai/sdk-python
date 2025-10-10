@@ -13,8 +13,14 @@ def _get_kwargs(
     function_name: str,
     *,
     body: Function,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -26,6 +32,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -36,6 +43,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Function | None:
     if response.status_code == 200:
         response_200 = Function.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -58,8 +67,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: Function,
+
 ) -> Response[Function]:
-    """Update function by name
+    """ Update function by name
 
     Args:
         function_name (str):
@@ -71,11 +81,13 @@ def sync_detailed(
 
     Returns:
         Response[Function]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         function_name=function_name,
-        body=body,
+body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -84,14 +96,14 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     function_name: str,
     *,
     client: Union[Client],
     body: Function,
+
 ) -> Function | None:
-    """Update function by name
+    """ Update function by name
 
     Args:
         function_name (str):
@@ -103,22 +115,24 @@ def sync(
 
     Returns:
         Function
-    """
+     """
+
 
     return sync_detailed(
         function_name=function_name,
-        client=client,
-        body=body,
-    ).parsed
+client=client,
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     function_name: str,
     *,
     client: Union[Client],
     body: Function,
+
 ) -> Response[Function]:
-    """Update function by name
+    """ Update function by name
 
     Args:
         function_name (str):
@@ -130,25 +144,29 @@ async def asyncio_detailed(
 
     Returns:
         Response[Function]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         function_name=function_name,
-        body=body,
+body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     function_name: str,
     *,
     client: Union[Client],
     body: Function,
+
 ) -> Function | None:
-    """Update function by name
+    """ Update function by name
 
     Args:
         function_name (str):
@@ -160,12 +178,12 @@ async def asyncio(
 
     Returns:
         Function
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            function_name=function_name,
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        function_name=function_name,
+client=client,
+body=body,
+
+    )).parsed

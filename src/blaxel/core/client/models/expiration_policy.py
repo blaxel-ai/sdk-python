@@ -10,18 +10,19 @@ T = TypeVar("T", bound="ExpirationPolicy")
 
 @_attrs_define
 class ExpirationPolicy:
-    """Expiration policy for sandbox lifecycle management
+    """ Expiration policy for sandbox lifecycle management
 
-    Attributes:
-        action (Union[Unset, str]): Action to take when policy is triggered
-        type_ (Union[Unset, str]): Type of expiration policy
-        value (Union[Unset, str]): Duration value (e.g., '1h', '24h', '7d')
-    """
+        Attributes:
+            action (Union[Unset, str]): Action to take when policy is triggered
+            type_ (Union[Unset, str]): Type of expiration policy
+            value (Union[Unset, str]): Duration value (e.g., '1h', '24h', '7d')
+     """
 
     action: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     value: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         action = self.action
@@ -30,9 +31,11 @@ class ExpirationPolicy:
 
         value = self.value
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if action is not UNSET:
             field_dict["action"] = action
         if type_ is not UNSET:
@@ -41,6 +44,8 @@ class ExpirationPolicy:
             field_dict["value"] = value
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -58,6 +63,7 @@ class ExpirationPolicy:
             type_=type_,
             value=value,
         )
+
 
         expiration_policy.additional_properties = d
         return expiration_policy

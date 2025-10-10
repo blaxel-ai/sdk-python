@@ -11,11 +11,19 @@ from ...types import Response
 
 def _get_kwargs(
     agent_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/agents/{agent_name}",
     }
+
 
     return _kwargs
 
@@ -23,6 +31,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Agent | None:
     if response.status_code == 200:
         response_200 = Agent.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -44,8 +54,9 @@ def sync_detailed(
     agent_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Agent]:
-    """Get agent by name
+    """ Get agent by name
 
     Args:
         agent_name (str):
@@ -56,10 +67,12 @@ def sync_detailed(
 
     Returns:
         Response[Agent]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         agent_name=agent_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -68,13 +81,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     agent_name: str,
     *,
     client: Union[Client],
+
 ) -> Agent | None:
-    """Get agent by name
+    """ Get agent by name
 
     Args:
         agent_name (str):
@@ -85,20 +98,22 @@ def sync(
 
     Returns:
         Agent
-    """
+     """
+
 
     return sync_detailed(
         agent_name=agent_name,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     agent_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Agent]:
-    """Get agent by name
+    """ Get agent by name
 
     Args:
         agent_name (str):
@@ -109,23 +124,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[Agent]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         agent_name=agent_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     agent_name: str,
     *,
     client: Union[Client],
+
 ) -> Agent | None:
-    """Get agent by name
+    """ Get agent by name
 
     Args:
         agent_name (str):
@@ -136,11 +155,11 @@ async def asyncio(
 
     Returns:
         Agent
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            agent_name=agent_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        agent_name=agent_name,
+client=client,
+
+    )).parsed

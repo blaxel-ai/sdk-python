@@ -9,21 +9,32 @@ from ...models.workspace_user import WorkspaceUser
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    
+) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/users",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["WorkspaceUser"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list['WorkspaceUser'] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = WorkspaceUser.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
@@ -34,7 +45,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Worksp
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["WorkspaceUser"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list['WorkspaceUser']]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,8 +57,9 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Union[Client],
-) -> Response[list["WorkspaceUser"]]:
-    """List users in workspace
+
+) -> Response[list['WorkspaceUser']]:
+    """ List users in workspace
 
      Returns a list of all users in the workspace.
 
@@ -57,9 +69,12 @@ def sync_detailed(
 
     Returns:
         Response[list['WorkspaceUser']]
-    """
+     """
 
-    kwargs = _get_kwargs()
+
+    kwargs = _get_kwargs(
+        
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -67,12 +82,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: Union[Client],
-) -> list["WorkspaceUser"] | None:
-    """List users in workspace
+
+) -> list['WorkspaceUser'] | None:
+    """ List users in workspace
 
      Returns a list of all users in the workspace.
 
@@ -82,18 +97,20 @@ def sync(
 
     Returns:
         list['WorkspaceUser']
-    """
+     """
+
 
     return sync_detailed(
         client=client,
-    ).parsed
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-) -> Response[list["WorkspaceUser"]]:
-    """List users in workspace
+
+) -> Response[list['WorkspaceUser']]:
+    """ List users in workspace
 
      Returns a list of all users in the workspace.
 
@@ -103,20 +120,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['WorkspaceUser']]
-    """
+     """
 
-    kwargs = _get_kwargs()
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    kwargs = _get_kwargs(
+        
+    )
+
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: Union[Client],
-) -> list["WorkspaceUser"] | None:
-    """List users in workspace
+
+) -> list['WorkspaceUser'] | None:
+    """ List users in workspace
 
      Returns a list of all users in the workspace.
 
@@ -126,10 +148,10 @@ async def asyncio(
 
     Returns:
         list['WorkspaceUser']
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+
+    )).parsed

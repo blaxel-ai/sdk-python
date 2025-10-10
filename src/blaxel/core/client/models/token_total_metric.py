@@ -10,16 +10,16 @@ T = TypeVar("T", bound="TokenTotalMetric")
 
 @_attrs_define
 class TokenTotalMetric:
-    """Token total metric
+    """ Token total metric
 
-    Attributes:
-        average_token_input_per_request (Union[Unset, float]): Average input token per request
-        average_token_output_per_request (Union[Unset, float]): Average output token per request
-        average_token_per_request (Union[Unset, float]): Average token per request
-        token_input (Union[Unset, float]): Total input tokens
-        token_output (Union[Unset, float]): Total output tokens
-        token_total (Union[Unset, float]): Total tokens
-    """
+        Attributes:
+            average_token_input_per_request (Union[Unset, float]): Average input token per request
+            average_token_output_per_request (Union[Unset, float]): Average output token per request
+            average_token_per_request (Union[Unset, float]): Average token per request
+            token_input (Union[Unset, float]): Total input tokens
+            token_output (Union[Unset, float]): Total output tokens
+            token_total (Union[Unset, float]): Total tokens
+     """
 
     average_token_input_per_request: Union[Unset, float] = UNSET
     average_token_output_per_request: Union[Unset, float] = UNSET
@@ -28,6 +28,7 @@ class TokenTotalMetric:
     token_output: Union[Unset, float] = UNSET
     token_total: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         average_token_input_per_request = self.average_token_input_per_request
@@ -42,9 +43,11 @@ class TokenTotalMetric:
 
         token_total = self.token_total
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if average_token_input_per_request is not UNSET:
             field_dict["averageTokenInputPerRequest"] = average_token_input_per_request
         if average_token_output_per_request is not UNSET:
@@ -59,6 +62,8 @@ class TokenTotalMetric:
             field_dict["tokenTotal"] = token_total
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -85,6 +90,7 @@ class TokenTotalMetric:
             token_output=token_output,
             token_total=token_total,
         )
+
 
         token_total_metric.additional_properties = d
         return token_total_metric

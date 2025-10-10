@@ -11,21 +11,31 @@ from ...types import Response
 
 def _get_kwargs(
     function_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/functions/{function_name}/revisions",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["RevisionMetadata"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list['RevisionMetadata'] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = RevisionMetadata.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
@@ -36,7 +46,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Revisi
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["RevisionMetadata"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list['RevisionMetadata']]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -49,8 +59,9 @@ def sync_detailed(
     function_name: str,
     *,
     client: Union[Client],
-) -> Response[list["RevisionMetadata"]]:
-    """List function revisions
+
+) -> Response[list['RevisionMetadata']]:
+    """ List function revisions
 
      Returns revisions for a function by name.
 
@@ -63,10 +74,12 @@ def sync_detailed(
 
     Returns:
         Response[list['RevisionMetadata']]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         function_name=function_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -75,13 +88,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     function_name: str,
     *,
     client: Union[Client],
-) -> list["RevisionMetadata"] | None:
-    """List function revisions
+
+) -> list['RevisionMetadata'] | None:
+    """ List function revisions
 
      Returns revisions for a function by name.
 
@@ -94,20 +107,22 @@ def sync(
 
     Returns:
         list['RevisionMetadata']
-    """
+     """
+
 
     return sync_detailed(
         function_name=function_name,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     function_name: str,
     *,
     client: Union[Client],
-) -> Response[list["RevisionMetadata"]]:
-    """List function revisions
+
+) -> Response[list['RevisionMetadata']]:
+    """ List function revisions
 
      Returns revisions for a function by name.
 
@@ -120,23 +135,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['RevisionMetadata']]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         function_name=function_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     function_name: str,
     *,
     client: Union[Client],
-) -> list["RevisionMetadata"] | None:
-    """List function revisions
+
+) -> list['RevisionMetadata'] | None:
+    """ List function revisions
 
      Returns revisions for a function by name.
 
@@ -149,11 +168,11 @@ async def asyncio(
 
     Returns:
         list['RevisionMetadata']
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            function_name=function_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        function_name=function_name,
+client=client,
+
+    )).parsed

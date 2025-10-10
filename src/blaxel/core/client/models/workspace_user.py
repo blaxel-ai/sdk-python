@@ -10,17 +10,17 @@ T = TypeVar("T", bound="WorkspaceUser")
 
 @_attrs_define
 class WorkspaceUser:
-    """Workspace user
+    """ Workspace user
 
-    Attributes:
-        accepted (Union[Unset, bool]): Whether the user has accepted the workspace invitation
-        email (Union[Unset, str]): Workspace user email
-        email_verified (Union[Unset, bool]): Whether the user's email has been verified
-        family_name (Union[Unset, str]): Workspace user family name
-        given_name (Union[Unset, str]): Workspace user given name
-        role (Union[Unset, str]): Workspace user role
-        sub (Union[Unset, str]): Workspace user identifier
-    """
+        Attributes:
+            accepted (Union[Unset, bool]): Whether the user has accepted the workspace invitation
+            email (Union[Unset, str]): Workspace user email
+            email_verified (Union[Unset, bool]): Whether the user's email has been verified
+            family_name (Union[Unset, str]): Workspace user family name
+            given_name (Union[Unset, str]): Workspace user given name
+            role (Union[Unset, str]): Workspace user role
+            sub (Union[Unset, str]): Workspace user identifier
+     """
 
     accepted: Union[Unset, bool] = UNSET
     email: Union[Unset, str] = UNSET
@@ -30,6 +30,7 @@ class WorkspaceUser:
     role: Union[Unset, str] = UNSET
     sub: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         accepted = self.accepted
@@ -46,9 +47,11 @@ class WorkspaceUser:
 
         sub = self.sub
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if accepted is not UNSET:
             field_dict["accepted"] = accepted
         if email is not UNSET:
@@ -65,6 +68,8 @@ class WorkspaceUser:
             field_dict["sub"] = sub
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -94,6 +99,7 @@ class WorkspaceUser:
             role=role,
             sub=sub,
         )
+
 
         workspace_user.additional_properties = d
         return workspace_user

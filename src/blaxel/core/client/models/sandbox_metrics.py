@@ -10,20 +10,21 @@ T = TypeVar("T", bound="SandboxMetrics")
 
 @_attrs_define
 class SandboxMetrics:
-    """Enhanced sandbox metrics with memory, value, and percent data
+    """ Enhanced sandbox metrics with memory, value, and percent data
 
-    Attributes:
-        memory (Union[Unset, float]): Memory limit in bytes (from query A)
-        percent (Union[Unset, float]): Memory usage percentage (from formula F1)
-        timestamp (Union[Unset, str]): Metric timestamp
-        value (Union[Unset, float]): Memory usage in bytes (from query B)
-    """
+        Attributes:
+            memory (Union[Unset, float]): Memory limit in bytes (from query A)
+            percent (Union[Unset, float]): Memory usage percentage (from formula F1)
+            timestamp (Union[Unset, str]): Metric timestamp
+            value (Union[Unset, float]): Memory usage in bytes (from query B)
+     """
 
     memory: Union[Unset, float] = UNSET
     percent: Union[Unset, float] = UNSET
     timestamp: Union[Unset, str] = UNSET
     value: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         memory = self.memory
@@ -34,9 +35,11 @@ class SandboxMetrics:
 
         value = self.value
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if memory is not UNSET:
             field_dict["memory"] = memory
         if percent is not UNSET:
@@ -47,6 +50,8 @@ class SandboxMetrics:
             field_dict["value"] = value
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -67,6 +72,7 @@ class SandboxMetrics:
             timestamp=timestamp,
             value=value,
         )
+
 
         sandbox_metrics.additional_properties = d
         return sandbox_metrics

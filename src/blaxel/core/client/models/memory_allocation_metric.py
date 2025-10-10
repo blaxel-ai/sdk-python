@@ -10,25 +10,30 @@ T = TypeVar("T", bound="MemoryAllocationMetric")
 
 @_attrs_define
 class MemoryAllocationMetric:
-    """Metrics for memory allocation
+    """ Metrics for memory allocation
 
-    Attributes:
-        total_allocation (Union[Unset, float]): Total memory allocation in GB-seconds
-    """
+        Attributes:
+            total_allocation (Union[Unset, float]): Total memory allocation in GB-seconds
+     """
 
     total_allocation: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         total_allocation = self.total_allocation
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if total_allocation is not UNSET:
             field_dict["totalAllocation"] = total_allocation
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -40,6 +45,7 @@ class MemoryAllocationMetric:
         memory_allocation_metric = cls(
             total_allocation=total_allocation,
         )
+
 
         memory_allocation_metric.additional_properties = d
         return memory_allocation_metric

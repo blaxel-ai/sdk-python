@@ -10,11 +10,19 @@ from ...types import Response
 
 def _get_kwargs(
     sub_or_email: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/users/{sub_or_email}",
     }
+
 
     return _kwargs
 
@@ -43,8 +51,9 @@ def sync_detailed(
     sub_or_email: str,
     *,
     client: Union[Client],
+
 ) -> Response[Any]:
-    """Remove user from workspace or revoke invitation
+    """ Remove user from workspace or revoke invitation
 
      Removes a user from the workspace (or revokes an invitation if the user has not accepted the
     invitation yet).
@@ -58,10 +67,12 @@ def sync_detailed(
 
     Returns:
         Response[Any]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sub_or_email=sub_or_email,
+
     )
 
     response = client.get_httpx_client().request(
@@ -75,8 +86,9 @@ async def asyncio_detailed(
     sub_or_email: str,
     *,
     client: Union[Client],
+
 ) -> Response[Any]:
-    """Remove user from workspace or revoke invitation
+    """ Remove user from workspace or revoke invitation
 
      Removes a user from the workspace (or revokes an invitation if the user has not accepted the
     invitation yet).
@@ -90,12 +102,17 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sub_or_email=sub_or_email,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
+

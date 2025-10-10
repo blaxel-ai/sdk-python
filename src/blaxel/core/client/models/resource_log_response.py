@@ -10,33 +10,40 @@ T = TypeVar("T", bound="ResourceLogResponse")
 
 @_attrs_define
 class ResourceLogResponse:
-    """Response for a resource log
+    """ Response for a resource log
 
-    Attributes:
-        chart (Union[Unset, list[Any]]): Chart
-        logs (Union[Unset, list[Any]]): Logs
-        total_count (Union[Unset, int]): Total count of logs
-    """
+        Attributes:
+            chart (Union[Unset, list[Any]]): Chart
+            logs (Union[Unset, list[Any]]): Logs
+            total_count (Union[Unset, int]): Total count of logs
+     """
 
     chart: Union[Unset, list[Any]] = UNSET
     logs: Union[Unset, list[Any]] = UNSET
     total_count: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         chart: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.chart, Unset):
             chart = self.chart
 
+
+
         logs: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.logs, Unset):
             logs = self.logs
 
+
+
         total_count = self.total_count
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if chart is not UNSET:
             field_dict["chart"] = chart
         if logs is not UNSET:
@@ -46,6 +53,8 @@ class ResourceLogResponse:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
@@ -53,7 +62,9 @@ class ResourceLogResponse:
         d = src_dict.copy()
         chart = cast(list[Any], d.pop("chart", UNSET))
 
+
         logs = cast(list[Any], d.pop("logs", UNSET))
+
 
         total_count = d.pop("totalCount", UNSET)
 
@@ -62,6 +73,7 @@ class ResourceLogResponse:
             logs=logs,
             total_count=total_count,
         )
+
 
         resource_log_response.additional_properties = d
         return resource_log_response
