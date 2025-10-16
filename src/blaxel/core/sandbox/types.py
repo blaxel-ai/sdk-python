@@ -152,6 +152,7 @@ class SandboxCreateConfiguration:
         expires: datetime | None = None,
         region: str | None = None,
         lifecycle: Union[SandboxLifecycle, Dict[str, Any]] | None = None,
+        snapshot_enabled: bool | None = None,
     ):
         self.name = name
         self.image = image
@@ -163,6 +164,7 @@ class SandboxCreateConfiguration:
         self.expires = expires
         self.region = region
         self.lifecycle = lifecycle
+        self.snapshot_enabled = snapshot_enabled
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -185,6 +187,7 @@ class SandboxCreateConfiguration:
             expires=expires,
             region=data.get("region"),
             lifecycle=lifecycle,
+            snapshot_enabled=data.get("snapshot_enabled"),
         )
 
     def _normalize_ports(self) -> List[Port] | None:

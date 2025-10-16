@@ -106,6 +106,7 @@ class SandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "snapshot_enabled" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -125,13 +126,14 @@ class SandboxInstance:
             expires = sandbox.expires
             region = sandbox.region
             lifecycle = sandbox.lifecycle
+            snapshot_enabled = sandbox.snapshot_enabled
 
             # Create full Sandbox object
             sandbox = Sandbox(
                 metadata=Metadata(name=name),
                 spec=SandboxSpec(
                     runtime=Runtime(
-                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3"
+                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3", snapshot_enabled=snapshot_enabled
                     ),
                     volumes=volumes,
                 ),

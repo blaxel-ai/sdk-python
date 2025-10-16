@@ -43,6 +43,7 @@ class Runtime:
             model (Union[Unset, str]): The slug name of the origin model at HuggingFace.
             organization (Union[Unset, str]): The organization of the model
             ports (Union[Unset, list['Port']]): Set of ports for a resource
+            snapshot_enabled (Union[Unset, bool]): Enable snapshot feature on your deployment, default to true
             startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
             timeout (Union[Unset, int]): The timeout for the deployment in seconds
             ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
@@ -67,6 +68,7 @@ class Runtime:
     model: Union[Unset, str] = UNSET
     organization: Union[Unset, str] = UNSET
     ports: Union[Unset, list['Port']] = UNSET
+    snapshot_enabled: Union[Unset, bool] = UNSET
     startup_probe: Union[Unset, 'RuntimeStartupProbe'] = UNSET
     timeout: Union[Unset, int] = UNSET
     ttl: Union[Unset, str] = UNSET
@@ -137,6 +139,8 @@ class Runtime:
 
 
 
+        snapshot_enabled = self.snapshot_enabled
+
         startup_probe: Union[Unset, dict[str, Any]] = UNSET
         if self.startup_probe and not isinstance(self.startup_probe, Unset) and not isinstance(self.startup_probe, dict):
             startup_probe = self.startup_probe.to_dict()
@@ -190,6 +194,8 @@ class Runtime:
             field_dict["organization"] = organization
         if ports is not UNSET:
             field_dict["ports"] = ports
+        if snapshot_enabled is not UNSET:
+            field_dict["snapshotEnabled"] = snapshot_enabled
         if startup_probe is not UNSET:
             field_dict["startupProbe"] = startup_probe
         if timeout is not UNSET:
@@ -266,6 +272,8 @@ class Runtime:
             ports.append(componentsschemas_ports_item)
 
 
+        snapshot_enabled = d.pop("snapshotEnabled", UNSET)
+
         _startup_probe = d.pop("startupProbe", UNSET)
         startup_probe: Union[Unset, RuntimeStartupProbe]
         if isinstance(_startup_probe,  Unset):
@@ -301,6 +309,7 @@ class Runtime:
             model=model,
             organization=organization,
             ports=ports,
+            snapshot_enabled=snapshot_enabled,
             startup_probe=startup_probe,
             timeout=timeout,
             ttl=ttl,
