@@ -12,6 +12,7 @@ async def main():
         sandbox = await SandboxInstance.create({"snapshot_enabled": False})
         print(f"✅ Created sandbox with snapshot disabled: {sandbox.metadata.name}")
         print(f"   Snapshot enabled: {sandbox.spec.runtime.snapshot_enabled}")
+        await asyncio.sleep(2)
         await sandbox.fs.ls("/")
         print("Waiting 20 seconds...")
         await asyncio.sleep(20)
@@ -24,9 +25,11 @@ async def main():
         print(f"✅ Created sandbox with default settings: {sandbox2.metadata.name}")
         print(f"   Snapshot enabled: {sandbox2.spec.runtime.snapshot_enabled}")
         await sandbox2.fs.ls("/")
-        print("Waiting 20 seconds...")
-        await asyncio.sleep(20)
-        result = await sandbox2.fs.ls("/")
+        await sandbox2.fs.write("/test.txt", "Hello, world!")
+        print("Waiting 30 seconds...")
+        await asyncio.sleep(30)
+        result = await sandbox2.fs.read("/test.txt")
+        assert result == "Hello, world!", "File content mismatch"
         print(f"✅ Sandbox with default settings completed operations")
         print(f"   Directory contents: {result}")
 
