@@ -1,30 +1,20 @@
 import asyncio
-import os
-from logging import getLogger
 
-logger = getLogger(__name__)
+from mcp.client.session import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
 
-os.environ["BL_FUNCTION_ADD_URL"] = "http://localhost:8080"
-
-from blaxel.langgraph.tools import bl_tools
+from blaxel import settings
 
 
-async def main():
-    """Main function for standalone execution."""
-    print("Testing MCP client functionality...")
+async def run():
+    """Run the completion client example."""
+    url = f"{settings.run_url}/{settings.workspace}/functions/blaxel-search/mcp"
 
-    # Get langchain tools directly
-    tools = await bl_tools(["add"])
-    if len(tools) == 0:
-        raise Exception("No tools found")
+    async with streamablehttp_client(url, settings.headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            # Initialize the connection
+            await session.initialize()
+            tools = await session.list_tools()
+            print(f"Tools retrieved, number of tools: {len(tools.tools)}")
 
-    # Test the tool
-    result = await tools[0].ainvoke({"a": 1, "b": 2})
-    logger.info(f"MCP client result: {result}")
-    print(f"MCP client result: {result}")
-
-    print("✅ MCP client test completed!")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(run())
