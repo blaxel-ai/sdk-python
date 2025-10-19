@@ -8,7 +8,7 @@ from blaxel.core.client.models import ExpirationPolicy, SandboxLifecycle
 
 # Determine the base image based on environment
 BL_ENV = os.environ.get("BL_ENV", "prod")
-BASE_IMAGE = "blaxel/dev-base:latest" if BL_ENV == "dev" else "blaxel/prod-base:latest"
+BASE_IMAGE = "blaxel/base:latest"
 print(f"Using base image: {BASE_IMAGE} (BL_ENV={BL_ENV})\n")
 
 

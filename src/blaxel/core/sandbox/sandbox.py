@@ -82,10 +82,8 @@ class SandboxInstance:
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = True,
     ) -> "SandboxInstance":
-        # Generate default values
-        env = settings.env
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
-        default_image = f"blaxel/{env}-base:latest"
+        default_image = f"blaxel/base:latest"
         default_memory = 4096
 
         # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs/volumes keys
