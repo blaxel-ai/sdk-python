@@ -8,26 +8,28 @@ T = TypeVar("T", bound="CheckWorkspaceAvailabilityBody")
 
 @_attrs_define
 class CheckWorkspaceAvailabilityBody:
-    """
-    Attributes:
-        name (str):
-    """
+    """ 
+        Attributes:
+            name (str):
+     """
 
     name: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "name": name,
-            }
-        )
+        field_dict.update({
+            "name": name,
+        })
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -39,6 +41,7 @@ class CheckWorkspaceAvailabilityBody:
         check_workspace_availability_body = cls(
             name=name,
         )
+
 
         check_workspace_availability_body.additional_properties = d
         return check_workspace_availability_body

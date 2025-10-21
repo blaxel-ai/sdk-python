@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from anthropic import AsyncAnthropic
 from cohere import AsyncClientV2
@@ -138,7 +138,7 @@ class TokenRefreshingModel(Model):
         return model.model_name
 
     @property
-    def system(self) -> Optional[Any]:
+    def system(self) -> Any | None:
         """Return the system property from the wrapped model."""
         model = self._get_fresh_model()
         return model.system if hasattr(model, "system") else None

@@ -60,25 +60,25 @@ Classes
     ### Class variables
 
     `access_token: str | None`
-    :
+    :   The type of the None singleton.
 
     `api_key: str | None`
-    :
+    :   The type of the None singleton.
 
     `client_credentials: str | None`
-    :
+    :   The type of the None singleton.
 
     `device_code: str | None`
-    :
+    :   The type of the None singleton.
 
     `expires_in: int | None`
-    :
+    :   The type of the None singleton.
 
     `model_config`
-    :
+    :   The type of the None singleton.
 
     `refresh_token: str | None`
-    :
+    :   The type of the None singleton.
 
     `workspace: str | None`
-    :
+    :   The type of the None singleton.

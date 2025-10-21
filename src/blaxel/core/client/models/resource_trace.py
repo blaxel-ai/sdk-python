@@ -10,15 +10,15 @@ T = TypeVar("T", bound="ResourceTrace")
 
 @_attrs_define
 class ResourceTrace:
-    """Log for a resource deployment (eg. model deployment, function deployment)
+    """ Log for a resource deployment (eg. model deployment, function deployment)
 
-    Attributes:
-        duration (Union[Unset, int]): Duration in nanoseconds
-        has_error (Union[Unset, bool]): Has error
-        start_time (Union[Unset, str]): The timestamp of the log
-        status_code (Union[Unset, int]): Status code
-        trace_id (Union[Unset, str]): Trace ID of the log
-    """
+        Attributes:
+            duration (Union[Unset, int]): Duration in nanoseconds
+            has_error (Union[Unset, bool]): Has error
+            start_time (Union[Unset, str]): The timestamp of the log
+            status_code (Union[Unset, int]): Status code
+            trace_id (Union[Unset, str]): Trace ID of the log
+     """
 
     duration: Union[Unset, int] = UNSET
     has_error: Union[Unset, bool] = UNSET
@@ -26,6 +26,7 @@ class ResourceTrace:
     status_code: Union[Unset, int] = UNSET
     trace_id: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         duration = self.duration
@@ -38,9 +39,11 @@ class ResourceTrace:
 
         trace_id = self.trace_id
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if duration is not UNSET:
             field_dict["duration"] = duration
         if has_error is not UNSET:
@@ -53,6 +56,8 @@ class ResourceTrace:
             field_dict["traceID"] = trace_id
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -76,6 +81,7 @@ class ResourceTrace:
             status_code=status_code,
             trace_id=trace_id,
         )
+
 
         resource_trace.additional_properties = d
         return resource_trace

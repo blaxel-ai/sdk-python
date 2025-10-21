@@ -8,22 +8,30 @@ T = TypeVar("T", bound="FormOauth")
 
 @_attrs_define
 class FormOauth:
-    """OAuth of the artifact"""
+    """ OAuth of the artifact
+
+     """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        form_oauth = cls()
+        form_oauth = cls(
+        )
+
 
         form_oauth.additional_properties = d
         return form_oauth

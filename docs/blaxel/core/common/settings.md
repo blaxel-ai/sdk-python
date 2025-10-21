@@ -10,7 +10,7 @@ Classes
     ### Class variables
 
     `auth: blaxel.core.authentication.types.BlaxelAuth`
-    :
+    :   The type of the None singleton.
 
     ### Instance variables
 
@@ -49,6 +49,9 @@ Classes
 
     `type: str`
     :   Get the type.
+
+    `version: str`
+    :   Get the package version.
 
     `workspace: str`
     :   Get the workspace.

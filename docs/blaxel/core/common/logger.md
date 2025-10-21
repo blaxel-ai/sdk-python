@@ -48,7 +48,7 @@ Classes
     ### Class variables
 
     `COLORS`
-    :
+    :   The type of the None singleton.
 
     ### Methods
 

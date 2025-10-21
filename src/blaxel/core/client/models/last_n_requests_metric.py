@@ -10,15 +10,15 @@ T = TypeVar("T", bound="LastNRequestsMetric")
 
 @_attrs_define
 class LastNRequestsMetric:
-    """Last N requests
+    """ Last N requests
 
-    Attributes:
-        date (Union[Unset, str]): Timestamp
-        status_code (Union[Unset, str]): Status code
-        workload_id (Union[Unset, str]): Workload ID
-        workload_type (Union[Unset, str]): Workload type
-        workspace (Union[Unset, str]): Workspace
-    """
+        Attributes:
+            date (Union[Unset, str]): Timestamp
+            status_code (Union[Unset, str]): Status code
+            workload_id (Union[Unset, str]): Workload ID
+            workload_type (Union[Unset, str]): Workload type
+            workspace (Union[Unset, str]): Workspace
+     """
 
     date: Union[Unset, str] = UNSET
     status_code: Union[Unset, str] = UNSET
@@ -26,6 +26,7 @@ class LastNRequestsMetric:
     workload_type: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         date = self.date
@@ -38,9 +39,11 @@ class LastNRequestsMetric:
 
         workspace = self.workspace
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if date is not UNSET:
             field_dict["date"] = date
         if status_code is not UNSET:
@@ -53,6 +56,8 @@ class LastNRequestsMetric:
             field_dict["workspace"] = workspace
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -76,6 +81,7 @@ class LastNRequestsMetric:
             workload_type=workload_type,
             workspace=workspace,
         )
+
 
         last_n_requests_metric.additional_properties = d
         return last_n_requests_metric

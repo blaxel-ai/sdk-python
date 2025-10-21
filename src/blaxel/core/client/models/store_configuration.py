@@ -6,7 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.store_configuration_option import StoreConfigurationOption
+  from ..models.store_configuration_option import StoreConfigurationOption
+
+
+
 
 
 T = TypeVar("T", bound="StoreConfiguration")
@@ -14,35 +17,38 @@ T = TypeVar("T", bound="StoreConfiguration")
 
 @_attrs_define
 class StoreConfiguration:
-    """Store configuration for resources (eg: agent, function, etc)
+    """ Store configuration for resources (eg: agent, function, etc)
 
-    Attributes:
-        available_models (Union[Unset, list[str]]): Available models for the configuration
-        description (Union[Unset, str]): Store configuration description
-        display_name (Union[Unset, str]): Store configuration display name
-        if_ (Union[Unset, str]): Conditional rendering for the configuration, example: provider === 'openai'
-        name (Union[Unset, str]): Store configuration name
-        options (Union[Unset, list['StoreConfigurationOption']]):
-        required (Union[Unset, bool]): Store configuration required
-        secret (Union[Unset, bool]): Store configuration secret
-        type_ (Union[Unset, str]): Store configuration type
-    """
+        Attributes:
+            available_models (Union[Unset, list[str]]): Available models for the configuration
+            description (Union[Unset, str]): Store configuration description
+            display_name (Union[Unset, str]): Store configuration display name
+            if_ (Union[Unset, str]): Conditional rendering for the configuration, example: provider === 'openai'
+            name (Union[Unset, str]): Store configuration name
+            options (Union[Unset, list['StoreConfigurationOption']]):
+            required (Union[Unset, bool]): Store configuration required
+            secret (Union[Unset, bool]): Store configuration secret
+            type_ (Union[Unset, str]): Store configuration type
+     """
 
     available_models: Union[Unset, list[str]] = UNSET
     description: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     if_: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
-    options: Union[Unset, list["StoreConfigurationOption"]] = UNSET
+    options: Union[Unset, list['StoreConfigurationOption']] = UNSET
     required: Union[Unset, bool] = UNSET
     secret: Union[Unset, bool] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         available_models: Union[Unset, list[str]] = UNSET
         if not isinstance(self.available_models, Unset):
             available_models = self.available_models
+
+
 
         description = self.description
 
@@ -62,15 +68,19 @@ class StoreConfiguration:
                     options_item = options_item_data.to_dict()
                 options.append(options_item)
 
+
+
         required = self.required
 
         secret = self.secret
 
         type_ = self.type_
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if available_models is not UNSET:
             field_dict["availableModels"] = available_models
         if description is not UNSET:
@@ -92,14 +102,16 @@ class StoreConfiguration:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.store_configuration_option import StoreConfigurationOption
-
         if not src_dict:
             return None
         d = src_dict.copy()
         available_models = cast(list[str], d.pop("availableModels", UNSET))
+
 
         description = d.pop("description", UNSET)
 
@@ -111,10 +123,13 @@ class StoreConfiguration:
 
         options = []
         _options = d.pop("options", UNSET)
-        for options_item_data in _options or []:
+        for options_item_data in (_options or []):
             options_item = StoreConfigurationOption.from_dict(options_item_data)
 
+
+
             options.append(options_item)
+
 
         required = d.pop("required", UNSET)
 
@@ -133,6 +148,7 @@ class StoreConfiguration:
             secret=secret,
             type_=type_,
         )
+
 
         store_configuration.additional_properties = d
         return store_configuration

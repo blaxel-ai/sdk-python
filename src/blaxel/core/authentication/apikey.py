@@ -22,7 +22,7 @@ class ApiKey(BlaxelAuth):
             dict: A dictionary of headers with API key and workspace.
         """
         return {
-            "X-Blaxel-Api-Key": self.credentials.api_key,
+            "X-Blaxel-Authorization": f"Bearer {self.credentials.api_key}",
             "X-Blaxel-Workspace": self.workspace_name,
         }
 
@@ -36,7 +36,7 @@ class ApiKey(BlaxelAuth):
         Yields:
             Request: The authenticated request.
         """
-        request.headers["X-Blaxel-Api-Key"] = self.credentials.api_key
+        request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.api_key}"
         request.headers["X-Blaxel-Workspace"] = self.workspace_name
         yield request
 

@@ -8,25 +8,31 @@ T = TypeVar("T", bound="PreviewSpecRequestHeaders")
 
 @_attrs_define
 class PreviewSpecRequestHeaders:
-    """Those headers will be set in all requests to your preview. This is especially useful to set the Authorization
+    """ Those headers will be set in all requests to your preview. This is especially useful to set the Authorization
     header.
 
-    """
+     """
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        preview_spec_request_headers = cls()
+        preview_spec_request_headers = cls(
+        )
+
 
         preview_spec_request_headers.additional_properties = d
         return preview_spec_request_headers

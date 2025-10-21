@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 import tomli
 from pydantic import BaseModel
@@ -9,14 +9,14 @@ class EnvConfig(BaseModel):
     secret_env: Dict[str, str] = {}
     config_env: Dict[str, str] = {}
 
-    def __getattr__(self, name: str) -> Optional[str]:
+    def __getattr__(self, name: str) -> str | None:
         if name in self.secret_env:
             return self.secret_env[name]
         if name in self.config_env:
             return self.config_env[name]
         return os.environ.get(name)
 
-    def __getitem__(self, name: str) -> Optional[str]:
+    def __getitem__(self, name: str) -> str | None:
         return self.__getattr__(name)
 
 def load_env() -> EnvConfig:

@@ -8,22 +8,30 @@ T = TypeVar("T", bound="IntegrationConnectionSpecSecret")
 
 @_attrs_define
 class IntegrationConnectionSpecSecret:
-    """Integration secret"""
+    """ Integration secret
+
+     """
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        integration_connection_spec_secret = cls()
+        integration_connection_spec_secret = cls(
+        )
+
 
         integration_connection_spec_secret.additional_properties = d
         return integration_connection_spec_secret

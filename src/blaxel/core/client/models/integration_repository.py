@@ -10,15 +10,15 @@ T = TypeVar("T", bound="IntegrationRepository")
 
 @_attrs_define
 class IntegrationRepository:
-    """Integration repository
+    """ Integration repository
 
-    Attributes:
-        id (Union[Unset, str]): Repository ID
-        is_bl (Union[Unset, bool]): Whether the repository has Blaxel imports
-        name (Union[Unset, str]): Repository name
-        organization (Union[Unset, str]): Repository owner
-        url (Union[Unset, str]): Repository URL
-    """
+        Attributes:
+            id (Union[Unset, str]): Repository ID
+            is_bl (Union[Unset, bool]): Whether the repository has Blaxel imports
+            name (Union[Unset, str]): Repository name
+            organization (Union[Unset, str]): Repository owner
+            url (Union[Unset, str]): Repository URL
+     """
 
     id: Union[Unset, str] = UNSET
     is_bl: Union[Unset, bool] = UNSET
@@ -26,6 +26,7 @@ class IntegrationRepository:
     organization: Union[Unset, str] = UNSET
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
@@ -38,9 +39,11 @@ class IntegrationRepository:
 
         url = self.url
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if id is not UNSET:
             field_dict["id"] = id
         if is_bl is not UNSET:
@@ -53,6 +56,8 @@ class IntegrationRepository:
             field_dict["url"] = url
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -76,6 +81,7 @@ class IntegrationRepository:
             organization=organization,
             url=url,
         )
+
 
         integration_repository.additional_properties = d
         return integration_repository

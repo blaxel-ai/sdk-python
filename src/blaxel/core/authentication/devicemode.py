@@ -8,7 +8,7 @@ import base64
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Generator, Optional
+from typing import Dict, Generator
 
 from httpx import Request, Response, post
 
@@ -96,12 +96,12 @@ class DeviceMode(BlaxelAuth):
             "X-Blaxel-Workspace": self.workspace_name,
         }
 
-    def refresh_if_needed(self) -> Optional[Exception]:
+    def refresh_if_needed(self) -> Exception | None:
         """
         Checks if the Bearer token needs to be refreshed and performs the refresh if necessary.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Exception | None: An exception if refreshing fails, otherwise None.
         """
         # Need to refresh token if expires in less than 10 minutes
         parts = self.credentials.access_token.split(".")
@@ -142,12 +142,12 @@ class DeviceMode(BlaxelAuth):
         request.headers["X-Blaxel-Workspace"] = self.workspace_name
         yield request
 
-    def do_refresh(self) -> Optional[Exception]:
+    def do_refresh(self) -> Exception | None:
         """
         Performs the token refresh using the refresh token.
 
         Returns:
-            Optional[Exception]: An exception if refreshing fails, otherwise None.
+            Exception | None: An exception if refreshing fails, otherwise None.
         """
         if not self.credentials.refresh_token:
             return Exception("No refresh token to refresh")

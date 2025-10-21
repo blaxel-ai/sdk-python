@@ -10,20 +10,21 @@ T = TypeVar("T", bound="ResourceLog")
 
 @_attrs_define
 class ResourceLog:
-    """Log for a resource deployment (eg. model deployment, function deployment)
+    """ Log for a resource deployment (eg. model deployment, function deployment)
 
-    Attributes:
-        message (Union[Unset, str]): Content of the log
-        severity (Union[Unset, int]): Severity of the log
-        timestamp (Union[Unset, str]): The timestamp of the log
-        trace_id (Union[Unset, str]): Trace ID of the log
-    """
+        Attributes:
+            message (Union[Unset, str]): Content of the log
+            severity (Union[Unset, int]): Severity of the log
+            timestamp (Union[Unset, str]): The timestamp of the log
+            trace_id (Union[Unset, str]): Trace ID of the log
+     """
 
     message: Union[Unset, str] = UNSET
     severity: Union[Unset, int] = UNSET
     timestamp: Union[Unset, str] = UNSET
     trace_id: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         message = self.message
@@ -34,9 +35,11 @@ class ResourceLog:
 
         trace_id = self.trace_id
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if message is not UNSET:
             field_dict["message"] = message
         if severity is not UNSET:
@@ -47,6 +50,8 @@ class ResourceLog:
             field_dict["trace_id"] = trace_id
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -67,6 +72,7 @@ class ResourceLog:
             timestamp=timestamp,
             trace_id=trace_id,
         )
+
 
         resource_log.additional_properties = d
         return resource_log

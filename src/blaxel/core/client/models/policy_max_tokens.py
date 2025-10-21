@@ -10,16 +10,16 @@ T = TypeVar("T", bound="PolicyMaxTokens")
 
 @_attrs_define
 class PolicyMaxTokens:
-    """PolicyMaxTokens is a local type that wraps a slice of PolicyMaxTokens
+    """ PolicyMaxTokens is a local type that wraps a slice of PolicyMaxTokens
 
-    Attributes:
-        granularity (Union[Unset, str]): Granularity
-        input_ (Union[Unset, int]): Input
-        output (Union[Unset, int]): Output
-        ratio_input_over_output (Union[Unset, int]): RatioInputOverOutput
-        step (Union[Unset, int]): Step
-        total (Union[Unset, int]): Total
-    """
+        Attributes:
+            granularity (Union[Unset, str]): Granularity
+            input_ (Union[Unset, int]): Input
+            output (Union[Unset, int]): Output
+            ratio_input_over_output (Union[Unset, int]): RatioInputOverOutput
+            step (Union[Unset, int]): Step
+            total (Union[Unset, int]): Total
+     """
 
     granularity: Union[Unset, str] = UNSET
     input_: Union[Unset, int] = UNSET
@@ -28,6 +28,7 @@ class PolicyMaxTokens:
     step: Union[Unset, int] = UNSET
     total: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         granularity = self.granularity
@@ -42,9 +43,11 @@ class PolicyMaxTokens:
 
         total = self.total
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if granularity is not UNSET:
             field_dict["granularity"] = granularity
         if input_ is not UNSET:
@@ -59,6 +62,8 @@ class PolicyMaxTokens:
             field_dict["total"] = total
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -85,6 +90,7 @@ class PolicyMaxTokens:
             step=step,
             total=total,
         )
+
 
         policy_max_tokens.additional_properties = d
         return policy_max_tokens

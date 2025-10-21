@@ -21,12 +21,12 @@ REGION_CONFIG = {
     "prod": {
         "regions": ["us-pdx-1", "eu-lon-1", "us-was-1"],
         "default_region": "us-pdx-1",
-        "image": "blaxel/prod-base:latest"
+        "image": "blaxel/base:latest"
     },
     "dev": {
         "regions": ["eu-dub-1"],
-        "default_region": "eu-dub-1", 
-        "image": "blaxel/dev-base:latest"
+        "default_region": "eu-dub-1",
+        "image": "blaxel/base:latest"
     }
 }
 
@@ -47,7 +47,7 @@ async def test_preview_in_region(sandbox_name: str, region: str):
     """Test public preview in the specified region."""
     sandbox = await SandboxInstance.get(sandbox_name)
     sandbox_instance = SandboxInstance(sandbox)
-    
+
     try:
         preview = await sandbox_instance.previews.create({
             "metadata": {
@@ -59,11 +59,11 @@ async def test_preview_in_region(sandbox_name: str, region: str):
                 "public": True
             }
         })
-        
+
         url = preview.spec.url if preview.spec else None
         if not url:
             raise Exception("Preview URL not returned")
-        
+
         # The URL format includes the region when it's not the default region
         if settings.env == "dev":
             expected_domain = (
@@ -77,12 +77,12 @@ async def test_preview_in_region(sandbox_name: str, region: str):
                 if region == default_region
                 else f"https://region-test-{settings.workspace}.{region}.preview.bl.run"
             )
-        
+
         if url != expected_domain:
             print(f"   ℹ️ Preview URL: {url} (expected format confirmed)")
         else:
             print(f"   ℹ️ Preview URL: {url}")
-        
+
         # Test the preview endpoint
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{url}/health") as response:
@@ -90,7 +90,7 @@ async def test_preview_in_region(sandbox_name: str, region: str):
                     print(f"   ✓ Public preview working in {region}")
                 else:
                     raise Exception(f"Preview health check failed: {response.status}")
-        
+
         await sandbox_instance.previews.delete("preview-region-test")
     except Exception as e:
         print(f"   ✗ Preview test failed in {region}: {e}")
@@ -107,16 +107,16 @@ async def main():
             "image": test_image,
             "memory": 1024
         })
-        
+
         retrieved = await SandboxInstance.get(sandbox.metadata.name)
         actual_region = retrieved.spec.region if retrieved.spec and hasattr(retrieved.spec, 'region') else None
         print(f"   Default region set: {actual_region}")
-        
+
         if actual_region != default_region:
             print(f"   ⚠️ Expected default {default_region}, got {actual_region}")
         else:
             print("   ✓ Default region correctly set")
-        
+
         await SandboxInstance.delete(sandbox.metadata.name)
         print()
 
@@ -129,16 +129,16 @@ async def main():
                 "memory": 1024,
                 "region": test_region
             })
-            
+
             retrieved = await SandboxInstance.get(sandbox.metadata.name)
             actual_region = retrieved.spec.region if retrieved.spec and hasattr(retrieved.spec, 'region') else None
-            
+
             if actual_region == test_region:
                 print(f"   ✓ {test_region}: Correctly set")
             else:
                 print(f"   ✗ {test_region}: Expected {test_region}, got {actual_region}")
                 raise Exception("Region verification failed")
-            
+
             await SandboxInstance.delete(sandbox.metadata.name)
 
         # Test 3: Test public preview in each region
@@ -151,7 +151,7 @@ async def main():
                 "memory": 1024,
                 "region": test_region
             })
-            
+
             try:
                 await test_preview_in_region(sandbox_name, test_region)
             finally:

@@ -8,22 +8,30 @@ T = TypeVar("T", bound="FormSecrets")
 
 @_attrs_define
 class FormSecrets:
-    """Secrets of the artifact"""
+    """ Secrets of the artifact
+
+     """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        form_secrets = cls()
+        form_secrets = cls(
+        )
+
 
         form_secrets.additional_properties = d
         return form_secrets

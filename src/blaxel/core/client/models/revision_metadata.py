@@ -10,18 +10,18 @@ T = TypeVar("T", bound="RevisionMetadata")
 
 @_attrs_define
 class RevisionMetadata:
-    """Revision metadata
+    """ Revision metadata
 
-    Attributes:
-        active (Union[Unset, bool]): Is the revision active
-        canary (Union[Unset, bool]): Is the revision canary
-        created_at (Union[Unset, str]): Revision created at
-        created_by (Union[Unset, str]): Revision created by
-        id (Union[Unset, str]): Revision ID
-        previous_active (Union[Unset, bool]): Is the revision previous active
-        status (Union[Unset, str]): Status of the revision
-        traffic_percent (Union[Unset, int]): Percent of traffic to the revision
-    """
+        Attributes:
+            active (Union[Unset, bool]): Is the revision active
+            canary (Union[Unset, bool]): Is the revision canary
+            created_at (Union[Unset, str]): Revision created at
+            created_by (Union[Unset, str]): Revision created by
+            id (Union[Unset, str]): Revision ID
+            previous_active (Union[Unset, bool]): Is the revision previous active
+            status (Union[Unset, str]): Status of the revision
+            traffic_percent (Union[Unset, int]): Percent of traffic to the revision
+     """
 
     active: Union[Unset, bool] = UNSET
     canary: Union[Unset, bool] = UNSET
@@ -32,6 +32,7 @@ class RevisionMetadata:
     status: Union[Unset, str] = UNSET
     traffic_percent: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         active = self.active
@@ -50,9 +51,11 @@ class RevisionMetadata:
 
         traffic_percent = self.traffic_percent
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if active is not UNSET:
             field_dict["active"] = active
         if canary is not UNSET:
@@ -71,6 +74,8 @@ class RevisionMetadata:
             field_dict["trafficPercent"] = traffic_percent
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -103,6 +108,7 @@ class RevisionMetadata:
             status=status,
             traffic_percent=traffic_percent,
         )
+
 
         revision_metadata.additional_properties = d
         return revision_metadata

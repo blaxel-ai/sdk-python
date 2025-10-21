@@ -6,7 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.metadata_labels import MetadataLabels
+  from ..models.metadata_labels import MetadataLabels
+
+
+
 
 
 T = TypeVar("T", bound="Metadata")
@@ -14,30 +17,33 @@ T = TypeVar("T", bound="Metadata")
 
 @_attrs_define
 class Metadata:
-    """Metadata
+    """ Metadata
 
-    Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Model display name
-        labels (Union[Unset, MetadataLabels]): Labels
-        name (Union[Unset, str]): Model name
-        plan (Union[Unset, Any]): Plan
-        workspace (Union[Unset, str]): Workspace name
-    """
+        Attributes:
+            created_at (Union[Unset, str]): The date and time when the resource was created
+            updated_at (Union[Unset, str]): The date and time when the resource was updated
+            created_by (Union[Unset, str]): The user or service account who created the resource
+            updated_by (Union[Unset, str]): The user or service account who updated the resource
+            display_name (Union[Unset, str]): Model display name
+            labels (Union[Unset, MetadataLabels]): Labels
+            name (Union[Unset, str]): Model name
+            plan (Union[Unset, Any]): Plan
+            url (Union[Unset, str]): URL
+            workspace (Union[Unset, str]): Workspace name
+     """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     created_by: Union[Unset, str] = UNSET
     updated_by: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
-    labels: Union[Unset, "MetadataLabels"] = UNSET
+    labels: Union[Unset, 'MetadataLabels'] = UNSET
     name: Union[Unset, str] = UNSET
     plan: Union[Unset, Any] = UNSET
+    url: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -60,11 +66,15 @@ class Metadata:
 
         plan = self.plan
 
+        url = self.url
+
         workspace = self.workspace
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -81,15 +91,18 @@ class Metadata:
             field_dict["name"] = name
         if plan is not UNSET:
             field_dict["plan"] = plan
+        if url is not UNSET:
+            field_dict["url"] = url
         if workspace is not UNSET:
             field_dict["workspace"] = workspace
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.metadata_labels import MetadataLabels
-
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -105,14 +118,19 @@ class Metadata:
 
         _labels = d.pop("labels", UNSET)
         labels: Union[Unset, MetadataLabels]
-        if isinstance(_labels, Unset):
+        if isinstance(_labels,  Unset):
             labels = UNSET
         else:
             labels = MetadataLabels.from_dict(_labels)
 
+
+
+
         name = d.pop("name", UNSET)
 
         plan = d.pop("plan", UNSET)
+
+        url = d.pop("url", UNSET)
 
         workspace = d.pop("workspace", UNSET)
 
@@ -125,8 +143,10 @@ class Metadata:
             labels=labels,
             name=name,
             plan=plan,
+            url=url,
             workspace=workspace,
         )
+
 
         metadata.additional_properties = d
         return metadata

@@ -1,7 +1,7 @@
 """Cache module for storing and retrieving resources."""
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import yaml
 
@@ -31,7 +31,7 @@ def _load_cache() -> None:
 _load_cache()
 
 
-async def find_from_cache(resource: str, name: str) -> Optional[Any]:
+async def find_from_cache(resource: str, name: str) -> Any | None:
     """
     Find a resource from the cache by resource type and name.
 

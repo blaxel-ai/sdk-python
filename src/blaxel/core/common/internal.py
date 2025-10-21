@@ -1,6 +1,5 @@
 import hashlib
 from logging import getLogger
-from typing import Optional
 
 from .env import env
 
@@ -90,7 +89,7 @@ def pluralize(type_str: str) -> str:
     return type_str + "s"
 
 
-def get_forced_url(type_str: str, name: str) -> Optional[str]:
+def get_forced_url(type_str: str, name: str) -> str | None:
     """
     Check for forced URLs in environment variables using both plural and singular forms.
 

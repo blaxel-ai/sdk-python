@@ -6,9 +6,14 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.metrics_models import MetricsModels
-    from ..models.metrics_request_total_per_code import MetricsRequestTotalPerCode
-    from ..models.metrics_rps_per_code import MetricsRpsPerCode
+  from ..models.last_n_requests_metric import LastNRequestsMetric
+  from ..models.metrics_models import MetricsModels
+  from ..models.metrics_request_total_per_code import MetricsRequestTotalPerCode
+  from ..models.metrics_rps_per_code import MetricsRpsPerCode
+  from ..models.request_total_response_data import RequestTotalResponseData
+
+
+
 
 
 T = TypeVar("T", bound="Metrics")
@@ -16,36 +21,37 @@ T = TypeVar("T", bound="Metrics")
 
 @_attrs_define
 class Metrics:
-    """Metrics for resources
+    """ Metrics for resources
 
-    Attributes:
-        agents (Union[Unset, Any]): Metrics for agents
-        functions (Union[Unset, Any]): Metrics for functions
-        inference_global (Union[Unset, list[Any]]): Historical requests for all resources globally
-        items (Union[Unset, list[Any]]): Historical requests for all resources globally
-        last_n_requests (Union[Unset, int]): Metric value
-        models (Union[Unset, MetricsModels]): Metrics for models
-        request_total (Union[Unset, float]): Number of requests for all resources globally
-        request_total_per_code (Union[Unset, MetricsRequestTotalPerCode]): Number of requests for all resources globally
-            per code
-        rps (Union[Unset, float]): Number of requests per second for all resources globally
-        rps_per_code (Union[Unset, MetricsRpsPerCode]): Number of requests per second for all resources globally per
-            code
-        sandboxes (Union[Unset, Any]): Metrics for sandboxes
-    """
+        Attributes:
+            agents (Union[Unset, Any]): Metrics for agents
+            functions (Union[Unset, Any]): Metrics for functions
+            inference_global (Union[Unset, list[Any]]): Historical requests for all resources globally
+            items (Union[Unset, list['RequestTotalResponseData']]): Historical requests for all resources globally
+            last_n_requests (Union[Unset, list['LastNRequestsMetric']]): Metric value
+            models (Union[Unset, MetricsModels]): Metrics for models
+            request_total (Union[Unset, float]): Number of requests for all resources globally
+            request_total_per_code (Union[Unset, MetricsRequestTotalPerCode]): Number of requests for all resources globally
+                per code
+            rps (Union[Unset, float]): Number of requests per second for all resources globally
+            rps_per_code (Union[Unset, MetricsRpsPerCode]): Number of requests per second for all resources globally per
+                code
+            sandboxes (Union[Unset, Any]): Metrics for sandboxes
+     """
 
     agents: Union[Unset, Any] = UNSET
     functions: Union[Unset, Any] = UNSET
     inference_global: Union[Unset, list[Any]] = UNSET
-    items: Union[Unset, list[Any]] = UNSET
-    last_n_requests: Union[Unset, int] = UNSET
-    models: Union[Unset, "MetricsModels"] = UNSET
+    items: Union[Unset, list['RequestTotalResponseData']] = UNSET
+    last_n_requests: Union[Unset, list['LastNRequestsMetric']] = UNSET
+    models: Union[Unset, 'MetricsModels'] = UNSET
     request_total: Union[Unset, float] = UNSET
-    request_total_per_code: Union[Unset, "MetricsRequestTotalPerCode"] = UNSET
+    request_total_per_code: Union[Unset, 'MetricsRequestTotalPerCode'] = UNSET
     rps: Union[Unset, float] = UNSET
-    rps_per_code: Union[Unset, "MetricsRpsPerCode"] = UNSET
+    rps_per_code: Union[Unset, 'MetricsRpsPerCode'] = UNSET
     sandboxes: Union[Unset, Any] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         agents = self.agents
@@ -56,11 +62,31 @@ class Metrics:
         if not isinstance(self.inference_global, Unset):
             inference_global = self.inference_global
 
-        items: Union[Unset, list[Any]] = UNSET
-        if not isinstance(self.items, Unset):
-            items = self.items
 
-        last_n_requests = self.last_n_requests
+
+        items: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.items, Unset):
+            items = []
+            for items_item_data in self.items:
+                if type(items_item_data) is dict:
+                    items_item = items_item_data
+                else:
+                    items_item = items_item_data.to_dict()
+                items.append(items_item)
+
+
+
+        last_n_requests: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.last_n_requests, Unset):
+            last_n_requests = []
+            for last_n_requests_item_data in self.last_n_requests:
+                if type(last_n_requests_item_data) is dict:
+                    last_n_requests_item = last_n_requests_item_data
+                else:
+                    last_n_requests_item = last_n_requests_item_data.to_dict()
+                last_n_requests.append(last_n_requests_item)
+
+
 
         models: Union[Unset, dict[str, Any]] = UNSET
         if self.models and not isinstance(self.models, Unset) and not isinstance(self.models, dict):
@@ -71,11 +97,7 @@ class Metrics:
         request_total = self.request_total
 
         request_total_per_code: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.request_total_per_code
-            and not isinstance(self.request_total_per_code, Unset)
-            and not isinstance(self.request_total_per_code, dict)
-        ):
+        if self.request_total_per_code and not isinstance(self.request_total_per_code, Unset) and not isinstance(self.request_total_per_code, dict):
             request_total_per_code = self.request_total_per_code.to_dict()
         elif self.request_total_per_code and isinstance(self.request_total_per_code, dict):
             request_total_per_code = self.request_total_per_code
@@ -90,9 +112,11 @@ class Metrics:
 
         sandboxes = self.sandboxes
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if agents is not UNSET:
             field_dict["agents"] = agents
         if functions is not UNSET:
@@ -118,12 +142,15 @@ class Metrics:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+        from ..models.last_n_requests_metric import LastNRequestsMetric
         from ..models.metrics_models import MetricsModels
         from ..models.metrics_request_total_per_code import MetricsRequestTotalPerCode
         from ..models.metrics_rps_per_code import MetricsRpsPerCode
-
+        from ..models.request_total_response_data import RequestTotalResponseData
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -133,34 +160,60 @@ class Metrics:
 
         inference_global = cast(list[Any], d.pop("inferenceGlobal", UNSET))
 
-        items = cast(list[Any], d.pop("items", UNSET))
 
-        last_n_requests = d.pop("lastNRequests", UNSET)
+        items = []
+        _items = d.pop("items", UNSET)
+        for items_item_data in (_items or []):
+            items_item = RequestTotalResponseData.from_dict(items_item_data)
+
+
+
+            items.append(items_item)
+
+
+        last_n_requests = []
+        _last_n_requests = d.pop("lastNRequests", UNSET)
+        for last_n_requests_item_data in (_last_n_requests or []):
+            last_n_requests_item = LastNRequestsMetric.from_dict(last_n_requests_item_data)
+
+
+
+            last_n_requests.append(last_n_requests_item)
+
 
         _models = d.pop("models", UNSET)
         models: Union[Unset, MetricsModels]
-        if isinstance(_models, Unset):
+        if isinstance(_models,  Unset):
             models = UNSET
         else:
             models = MetricsModels.from_dict(_models)
+
+
+
 
         request_total = d.pop("requestTotal", UNSET)
 
         _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
         request_total_per_code: Union[Unset, MetricsRequestTotalPerCode]
-        if isinstance(_request_total_per_code, Unset):
+        if isinstance(_request_total_per_code,  Unset):
             request_total_per_code = UNSET
         else:
             request_total_per_code = MetricsRequestTotalPerCode.from_dict(_request_total_per_code)
+
+
+
 
         rps = d.pop("rps", UNSET)
 
         _rps_per_code = d.pop("rpsPerCode", UNSET)
         rps_per_code: Union[Unset, MetricsRpsPerCode]
-        if isinstance(_rps_per_code, Unset):
+        if isinstance(_rps_per_code,  Unset):
             rps_per_code = UNSET
         else:
             rps_per_code = MetricsRpsPerCode.from_dict(_rps_per_code)
+
+
+
 
         sandboxes = d.pop("sandboxes", UNSET)
 
@@ -177,6 +230,7 @@ class Metrics:
             rps_per_code=rps_per_code,
             sandboxes=sandboxes,
         )
+
 
         metrics.additional_properties = d
         return metrics

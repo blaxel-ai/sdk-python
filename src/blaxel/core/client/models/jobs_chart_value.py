@@ -10,31 +10,36 @@ T = TypeVar("T", bound="JobsChartValue")
 
 @_attrs_define
 class JobsChartValue:
-    """Jobs CPU usage
+    """ Jobs CPU usage
 
-    Attributes:
-        timestamp (Union[Unset, str]): Metric timestamp
-        value (Union[Unset, float]): Metric value
-    """
+        Attributes:
+            timestamp (Union[Unset, str]): Metric timestamp
+            value (Union[Unset, float]): Metric value
+     """
 
     timestamp: Union[Unset, str] = UNSET
     value: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         timestamp = self.timestamp
 
         value = self.value
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if timestamp is not UNSET:
             field_dict["timestamp"] = timestamp
         if value is not UNSET:
             field_dict["value"] = value
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -49,6 +54,7 @@ class JobsChartValue:
             timestamp=timestamp,
             value=value,
         )
+
 
         jobs_chart_value.additional_properties = d
         return jobs_chart_value

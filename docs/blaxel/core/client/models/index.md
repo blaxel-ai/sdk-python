@@ -17,23 +17,27 @@ Sub-modules
 * blaxel.core.client.models.core_spec_configurations
 * blaxel.core.client.models.country
 * blaxel.core.client.models.create_api_key_for_service_account_body
+* blaxel.core.client.models.create_job_execution_request
+* blaxel.core.client.models.create_job_execution_request_tasks_item
+* blaxel.core.client.models.create_job_execution_response
+* blaxel.core.client.models.create_job_execution_response_tasks_item
 * blaxel.core.client.models.create_workspace_service_account_body
 * blaxel.core.client.models.create_workspace_service_account_response_200
+* blaxel.core.client.models.custom_domain
+* blaxel.core.client.models.custom_domain_metadata
+* blaxel.core.client.models.custom_domain_spec
+* blaxel.core.client.models.custom_domain_spec_txt_records
 * blaxel.core.client.models.delete_sandbox_preview_token_response_200
 * blaxel.core.client.models.delete_workspace_service_account_response_200
 * blaxel.core.client.models.entrypoint
 * blaxel.core.client.models.entrypoint_env
+* blaxel.core.client.models.expiration_policy
 * blaxel.core.client.models.flavor
 * blaxel.core.client.models.form
 * blaxel.core.client.models.form_config
 * blaxel.core.client.models.form_oauth
 * blaxel.core.client.models.form_secrets
 * blaxel.core.client.models.function
-* blaxel.core.client.models.function_kit
-* blaxel.core.client.models.function_schema
-* blaxel.core.client.models.function_schema_not
-* blaxel.core.client.models.function_schema_or_bool
-* blaxel.core.client.models.function_schema_properties
 * blaxel.core.client.models.function_spec
 * blaxel.core.client.models.get_workspace_service_accounts_response_200_item
 * blaxel.core.client.models.histogram_bucket
@@ -54,23 +58,25 @@ Sub-modules
 * blaxel.core.client.models.integration_repository
 * blaxel.core.client.models.invite_workspace_user_body
 * blaxel.core.client.models.job
+* blaxel.core.client.models.job_execution
 * blaxel.core.client.models.job_execution_config
+* blaxel.core.client.models.job_execution_metadata
+* blaxel.core.client.models.job_execution_spec
+* blaxel.core.client.models.job_execution_stats
+* blaxel.core.client.models.job_execution_task
+* blaxel.core.client.models.job_execution_task_condition
+* blaxel.core.client.models.job_execution_task_metadata
+* blaxel.core.client.models.job_execution_task_spec
 * blaxel.core.client.models.job_metrics
 * blaxel.core.client.models.job_metrics_executions_chart
 * blaxel.core.client.models.job_metrics_executions_total
 * blaxel.core.client.models.job_metrics_tasks_chart
 * blaxel.core.client.models.job_metrics_tasks_total
 * blaxel.core.client.models.job_spec
-* blaxel.core.client.models.jobs_chart
 * blaxel.core.client.models.jobs_chart_value
-* blaxel.core.client.models.jobs_executions
 * blaxel.core.client.models.jobs_network_chart
 * blaxel.core.client.models.jobs_success_failed_chart
-* blaxel.core.client.models.jobs_tasks
 * blaxel.core.client.models.jobs_total
-* blaxel.core.client.models.knowledgebase
-* blaxel.core.client.models.knowledgebase_spec
-* blaxel.core.client.models.knowledgebase_spec_options
 * blaxel.core.client.models.last_n_requests_metric
 * blaxel.core.client.models.latency_metric
 * blaxel.core.client.models.location_response
@@ -115,6 +121,9 @@ Sub-modules
 * blaxel.core.client.models.preview_token_spec
 * blaxel.core.client.models.private_cluster
 * blaxel.core.client.models.private_location
+* blaxel.core.client.models.public_ip
+* blaxel.core.client.models.public_ips
+* blaxel.core.client.models.region
 * blaxel.core.client.models.repository
 * blaxel.core.client.models.request_duration_over_time_metric
 * blaxel.core.client.models.request_duration_over_time_metrics
@@ -142,6 +151,8 @@ Sub-modules
 * blaxel.core.client.models.runtime_startup_probe
 * blaxel.core.client.models.sandbox
 * blaxel.core.client.models.sandbox_definition
+* blaxel.core.client.models.sandbox_lifecycle
+* blaxel.core.client.models.sandbox_metrics
 * blaxel.core.client.models.sandbox_spec
 * blaxel.core.client.models.serverless_config
 * blaxel.core.client.models.serverless_config_configuration
@@ -162,9 +173,14 @@ Sub-modules
 * blaxel.core.client.models.trace_ids_response
 * blaxel.core.client.models.trigger
 * blaxel.core.client.models.trigger_configuration
+* blaxel.core.client.models.trigger_configuration_task
 * blaxel.core.client.models.update_workspace_service_account_body
 * blaxel.core.client.models.update_workspace_service_account_response_200
 * blaxel.core.client.models.update_workspace_user_role_body
+* blaxel.core.client.models.volume
+* blaxel.core.client.models.volume_attachment
+* blaxel.core.client.models.volume_spec
+* blaxel.core.client.models.volume_state
 * blaxel.core.client.models.websocket_channel
 * blaxel.core.client.models.websocket_message
 * blaxel.core.client.models.workspace
@@ -277,7 +293,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`AgentSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, functions: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, knowledgebase: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, model: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, prompt: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, repository: blaxel.core.client.types.Unset | ForwardRef('Repository') = <blaxel.core.client.types.Unset object>, store_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, triggers: blaxel.core.client.types.Unset | list['Trigger'] = <blaxel.core.client.types.Unset object>)`
+`AgentSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, repository: blaxel.core.client.types.Unset | ForwardRef('Repository') = <blaxel.core.client.types.Unset object>, triggers: blaxel.core.client.types.Unset | list['Trigger'] = <blaxel.core.client.types.Unset object>)`
 :   Agent specification
     
     Attributes:
@@ -291,12 +307,7 @@ Classes
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
         description (Union[Unset, str]): Description, small description computed from the prompt
-        functions (Union[Unset, list[str]]):
-        knowledgebase (Union[Unset, str]): Knowledgebase Name
-        model (Union[Unset, str]): Model name
-        prompt (Union[Unset, str]): Prompt, describe what your agent does
         repository (Union[Unset, Repository]): Repository
-        store_id (Union[Unset, str]): Store id
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     
     Method generated by attrs for class AgentSpec.
@@ -326,25 +337,13 @@ Classes
     `flavors`
     :
 
-    `functions`
-    :
-
     `integration_connections`
-    :
-
-    `knowledgebase`
-    :
-
-    `model`
     :
 
     `policies`
     :
 
     `private_clusters`
-    :
-
-    `prompt`
     :
 
     `repository`
@@ -357,9 +356,6 @@ Classes
     :
 
     `sandbox`
-    :
-
-    `store_id`
     :
 
     `triggers`
@@ -495,13 +491,14 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Configuration(continents: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, countries: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, private_locations: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>)`
+`Configuration(continents: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, countries: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, private_locations: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, regions: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>)`
 :   Configuration
     
     Attributes:
         continents (Union[Unset, list[Any]]): Continents
         countries (Union[Unset, list[Any]]): Countries
         private_locations (Union[Unset, list[Any]]): Private locations managed with blaxel operator
+        regions (Union[Unset, list[Any]]): Regions
     
     Method generated by attrs for class Configuration.
 
@@ -525,6 +522,9 @@ Classes
     :
 
     `private_locations: blaxel.core.client.types.Unset | list[typing.Any]`
+    :
+
+    `regions: blaxel.core.client.types.Unset | list[typing.Any]`
     :
 
     ### Methods
@@ -765,6 +765,140 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
+`CreateJobExecutionRequest(execution_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, job_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, tasks: blaxel.core.client.types.Unset | list['CreateJobExecutionRequestTasksItem'] = <blaxel.core.client.types.Unset object>, workspace_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Request to create a job execution
+    
+    Attributes:
+        execution_id (Union[Unset, str]): Execution ID (optional, will be generated if not provided)
+        id (Union[Unset, str]): Unique message ID
+        job_id (Union[Unset, str]): Job ID
+        tasks (Union[Unset, list['CreateJobExecutionRequestTasksItem']]): Array of task parameters for parallel
+            execution
+        workspace_id (Union[Unset, str]): Workspace ID
+    
+    Method generated by attrs for class CreateJobExecutionRequest.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `execution_id`
+    :
+
+    `id`
+    :
+
+    `job_id`
+    :
+
+    `tasks`
+    :
+
+    `workspace_id`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`CreateJobExecutionRequestTasksItem()`
+:   Method generated by attrs for class CreateJobExecutionRequestTasksItem.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`CreateJobExecutionResponse(execution_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, job_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, tasks: blaxel.core.client.types.Unset | list['CreateJobExecutionResponseTasksItem'] = <blaxel.core.client.types.Unset object>, workspace_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Response for creating a job execution
+    
+    Attributes:
+        execution_id (Union[Unset, str]): Execution ID
+        id (Union[Unset, str]): Unique message ID
+        job_id (Union[Unset, str]): Job ID
+        tasks (Union[Unset, list['CreateJobExecutionResponseTasksItem']]): Array of task parameters for parallel
+            execution
+        workspace_id (Union[Unset, str]): Workspace ID
+    
+    Method generated by attrs for class CreateJobExecutionResponse.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `execution_id`
+    :
+
+    `id`
+    :
+
+    `job_id`
+    :
+
+    `tasks`
+    :
+
+    `workspace_id`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`CreateJobExecutionResponseTasksItem()`
+:   Method generated by attrs for class CreateJobExecutionResponseTasksItem.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
 `CreateWorkspaceServiceAccountBody(name: str, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Attributes:
         name (str): Service account name
@@ -843,6 +977,172 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
+`CustomDomain(metadata: blaxel.core.client.types.Unset | ForwardRef('CustomDomainMetadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('CustomDomainSpec') = <blaxel.core.client.types.Unset object>)`
+:   Custom domain for preview deployments
+    The custom domain represents a base domain (e.g., example.com) that will be used
+    to serve preview deployments. Each preview will be accessible at a subdomain:
+    <preview-id>.preview.<base-domain> (e.g., abc123.preview.example.com)
+    
+        Attributes:
+            metadata (Union[Unset, CustomDomainMetadata]): Custom domain metadata
+            spec (Union[Unset, CustomDomainSpec]): Custom domain specification
+    
+    Method generated by attrs for class CustomDomain.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `metadata`
+    :
+
+    `spec`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`CustomDomainMetadata(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, labels: blaxel.core.client.types.Unset | ForwardRef('MetadataLabels') = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Custom domain metadata
+    
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the resource was created
+        updated_at (Union[Unset, str]): The date and time when the resource was updated
+        created_by (Union[Unset, str]): The user or service account who created the resource
+        updated_by (Union[Unset, str]): The user or service account who updated the resource
+        display_name (Union[Unset, str]): Display name for the custom domain
+        labels (Union[Unset, MetadataLabels]): Labels
+        name (Union[Unset, str]): Domain name (e.g., "example.com")
+        workspace (Union[Unset, str]): Workspace name
+    
+    Method generated by attrs for class CustomDomainMetadata.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `created_at`
+    :
+
+    `created_by`
+    :
+
+    `display_name`
+    :
+
+    `labels`
+    :
+
+    `name`
+    :
+
+    `updated_at`
+    :
+
+    `updated_by`
+    :
+
+    `workspace`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`CustomDomainSpec(cname_records: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, last_verified_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, txt_records: blaxel.core.client.types.Unset | ForwardRef('CustomDomainSpecTxtRecords') = <blaxel.core.client.types.Unset object>, verification_error: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Custom domain specification
+    
+    Attributes:
+        cname_records (Union[Unset, str]): CNAME target for the domain
+        last_verified_at (Union[Unset, str]): Last verification attempt timestamp
+        region (Union[Unset, str]): Region that the custom domain is associated with
+        status (Union[Unset, str]): Current status of the domain (pending, verified, failed)
+        txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
+            verification
+        verification_error (Union[Unset, str]): Error message if verification failed
+    
+    Method generated by attrs for class CustomDomainSpec.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `cname_records`
+    :
+
+    `last_verified_at`
+    :
+
+    `region`
+    :
+
+    `status`
+    :
+
+    `txt_records`
+    :
+
+    `verification_error`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`CustomDomainSpecTxtRecords()`
+:   Map of TXT record names to values for domain verification
+    
+    Method generated by attrs for class CustomDomainSpecTxtRecords.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, str]`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
 `DeleteSandboxPreviewTokenResponse200(message: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Attributes:
         message (Union[Unset, str]): Success message
@@ -913,13 +1213,14 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Entrypoint(args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, command: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, env: blaxel.core.client.types.Unset | ForwardRef('EntrypointEnv') = <blaxel.core.client.types.Unset object>)`
+`Entrypoint(args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, command: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, env: blaxel.core.client.types.Unset | ForwardRef('EntrypointEnv') = <blaxel.core.client.types.Unset object>, super_gateway_args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>)`
 :   Entrypoint of the artifact
     
     Attributes:
         args (Union[Unset, list[Any]]): Args of the entrypoint
         command (Union[Unset, str]): Command of the entrypoint
         env (Union[Unset, EntrypointEnv]): Env of the entrypoint
+        super_gateway_args (Union[Unset, list[Any]]): Super Gateway args of the entrypoint
     
     Method generated by attrs for class Entrypoint.
 
@@ -945,6 +1246,9 @@ Classes
     `env`
     :
 
+    `super_gateway_args`
+    :
+
     ### Methods
 
     `to_dict(self) ‑> dict[str, typing.Any]`
@@ -966,6 +1270,43 @@ Classes
     :
 
     `additional_properties: dict[str, typing.Any]`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`ExpirationPolicy(action: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, value: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Expiration policy for sandbox lifecycle management
+    
+    Attributes:
+        action (Union[Unset, str]): Action to take when policy is triggered
+        type_ (Union[Unset, str]): Type of expiration policy
+        value (Union[Unset, str]): Duration value (e.g., '1h', '24h', '7d')
+    
+    Method generated by attrs for class ExpirationPolicy.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `action: blaxel.core.client.types.Unset | str`
+    :
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `type_: blaxel.core.client.types.Unset | str`
+    :
+
+    `value: blaxel.core.client.types.Unset | str`
     :
 
     ### Methods
@@ -1153,207 +1494,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`FunctionKit(description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, schema: blaxel.core.client.types.Unset | ForwardRef('FunctionSchema') = <blaxel.core.client.types.Unset object>)`
-:   Function kit
-    
-    Attributes:
-        description (Union[Unset, str]): Description of the function kit, very important for the agent to work with your
-            kit
-        name (Union[Unset, str]): The kit name, very important for the agent to work with your kit
-        schema (Union[Unset, FunctionSchema]): Function schema
-    
-    Method generated by attrs for class FunctionKit.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties`
-    :
-
-    `description`
-    :
-
-    `name`
-    :
-
-    `schema`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`FunctionSchema(all_of: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, any_of: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, enum: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, format_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, items: blaxel.core.client.types.Unset | ForwardRef('FunctionSchema') = <blaxel.core.client.types.Unset object>, max_length: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, maximum: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, min_length: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, minimum: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, not_: blaxel.core.client.types.Unset | ForwardRef('FunctionSchemaNot') = <blaxel.core.client.types.Unset object>, one_of: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, pattern: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, properties: blaxel.core.client.types.Unset | ForwardRef('FunctionSchemaProperties') = <blaxel.core.client.types.Unset object>, required: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, title: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
-:   Function schema
-    
-    Attributes:
-        all_of (Union[Unset, list[Any]]): List of schemas that this schema extends
-        any_of (Union[Unset, list[Any]]): List of possible schemas, any of which this schema could be
-        description (Union[Unset, str]): Description of the schema
-        enum (Union[Unset, list[str]]): Enum values
-        format_ (Union[Unset, str]): Format of the schema
-        items (Union[Unset, FunctionSchema]): Function schema
-        max_length (Union[Unset, float]): Maximum length for string types
-        maximum (Union[Unset, float]): Maximum value for number types
-        min_length (Union[Unset, float]): Minimum length for string types
-        minimum (Union[Unset, float]): Minimum value for number types
-        not_ (Union[Unset, FunctionSchemaNot]): Schema that this schema must not be
-        one_of (Union[Unset, list[Any]]): List of schemas, one of which this schema must be
-        pattern (Union[Unset, str]): Pattern for string types
-        properties (Union[Unset, FunctionSchemaProperties]): Properties of the schema
-        required (Union[Unset, list[str]]): Required properties of the schema
-        title (Union[Unset, str]): Title of the schema
-        type_ (Union[Unset, str]): Type of the schema
-    
-    Method generated by attrs for class FunctionSchema.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties`
-    :
-
-    `all_of`
-    :
-
-    `any_of`
-    :
-
-    `description`
-    :
-
-    `enum`
-    :
-
-    `format_`
-    :
-
-    `items`
-    :
-
-    `max_length`
-    :
-
-    `maximum`
-    :
-
-    `min_length`
-    :
-
-    `minimum`
-    :
-
-    `not_`
-    :
-
-    `one_of`
-    :
-
-    `pattern`
-    :
-
-    `properties`
-    :
-
-    `required`
-    :
-
-    `title`
-    :
-
-    `type_`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`FunctionSchemaNot()`
-:   Schema that this schema must not be
-    
-    Method generated by attrs for class FunctionSchemaNot.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties: dict[str, typing.Any]`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`FunctionSchemaOrBool()`
-:   Helper type for AdditionalProperties which can be either a boolean or a schema
-    
-    Method generated by attrs for class FunctionSchemaOrBool.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties: dict[str, typing.Any]`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`FunctionSchemaProperties()`
-:   Properties of the schema
-    
-    Method generated by attrs for class FunctionSchemaProperties.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`FunctionSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, kit: blaxel.core.client.types.Unset | list['FunctionKit'] = <blaxel.core.client.types.Unset object>, schema: blaxel.core.client.types.Unset | ForwardRef('FunctionSchema') = <blaxel.core.client.types.Unset object>)`
+`FunctionSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, transport: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, triggers: blaxel.core.client.types.Unset | list['Trigger'] = <blaxel.core.client.types.Unset object>)`
 :   Function specification
     
     Attributes:
@@ -1367,8 +1508,8 @@ Classes
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
         description (Union[Unset, str]): Function description, very important for the agent function to work with an LLM
-        kit (Union[Unset, list['FunctionKit']]): Function kits
-        schema (Union[Unset, FunctionSchema]): Function schema
+        transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
+        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     
     Method generated by attrs for class FunctionSpec.
 
@@ -1400,9 +1541,6 @@ Classes
     `integration_connections`
     :
 
-    `kit`
-    :
-
     `policies`
     :
 
@@ -1418,7 +1556,10 @@ Classes
     `sandbox`
     :
 
-    `schema`
+    `transport`
+    :
+
+    `triggers`
     :
 
     ### Methods
@@ -2129,6 +2270,51 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
+`JobExecution(metadata: blaxel.core.client.types.Unset | ForwardRef('JobExecutionMetadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('JobExecutionSpec') = <blaxel.core.client.types.Unset object>, stats: blaxel.core.client.types.Unset | ForwardRef('JobExecutionStats') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, tasks: blaxel.core.client.types.Unset | list['JobExecutionTask'] = <blaxel.core.client.types.Unset object>)`
+:   Job execution
+    
+    Attributes:
+        metadata (Union[Unset, JobExecutionMetadata]): Job execution metadata
+        spec (Union[Unset, JobExecutionSpec]): Job execution specification
+        stats (Union[Unset, JobExecutionStats]): Job execution statistics
+        status (Union[Unset, str]): Job execution status
+        tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
+    
+    Method generated by attrs for class JobExecution.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `metadata`
+    :
+
+    `spec`
+    :
+
+    `stats`
+    :
+
+    `status`
+    :
+
+    `tasks`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
 `JobExecutionConfig(max_concurrent_tasks: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_retries: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, timeout: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
 :   Configuration for a job execution
     
@@ -2159,6 +2345,325 @@ Classes
     :
 
     `timeout: blaxel.core.client.types.Unset | int`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionMetadata(cluster: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, completed_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, deleted_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, expired_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, job: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, started_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Job execution metadata
+    
+    Attributes:
+        cluster (Union[Unset, str]): Cluster ID
+        completed_at (Union[Unset, str]): Completion timestamp
+        created_at (Union[Unset, str]): Creation timestamp
+        deleted_at (Union[Unset, str]): Deletion timestamp
+        expired_at (Union[Unset, str]): Expiration timestamp
+        id (Union[Unset, str]): Execution ID
+        job (Union[Unset, str]): Job name
+        started_at (Union[Unset, str]): Start timestamp
+        updated_at (Union[Unset, str]): Last update timestamp
+        workspace (Union[Unset, str]): Workspace ID
+    
+    Method generated by attrs for class JobExecutionMetadata.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `cluster: blaxel.core.client.types.Unset | str`
+    :
+
+    `completed_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `created_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `deleted_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `expired_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `id: blaxel.core.client.types.Unset | str`
+    :
+
+    `job: blaxel.core.client.types.Unset | str`
+    :
+
+    `started_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `updated_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `workspace: blaxel.core.client.types.Unset | str`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionSpec(parallelism: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, tasks: blaxel.core.client.types.Unset | list['JobExecutionTask'] = <blaxel.core.client.types.Unset object>)`
+:   Job execution specification
+    
+    Attributes:
+        parallelism (Union[Unset, int]): Number of parallel tasks
+        tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
+    
+    Method generated by attrs for class JobExecutionSpec.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `parallelism`
+    :
+
+    `tasks`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionStats(cancelled: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, failure: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, retried: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, running: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, success: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, total: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
+:   Job execution statistics
+    
+    Attributes:
+        cancelled (Union[Unset, int]): Number of cancelled tasks
+        failure (Union[Unset, int]): Number of failed tasks
+        retried (Union[Unset, int]): Number of retried tasks
+        running (Union[Unset, int]): Number of running tasks
+        success (Union[Unset, int]): Number of successful tasks
+        total (Union[Unset, int]): Total number of tasks
+    
+    Method generated by attrs for class JobExecutionStats.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `cancelled: blaxel.core.client.types.Unset | int`
+    :
+
+    `failure: blaxel.core.client.types.Unset | int`
+    :
+
+    `retried: blaxel.core.client.types.Unset | int`
+    :
+
+    `running: blaxel.core.client.types.Unset | int`
+    :
+
+    `success: blaxel.core.client.types.Unset | int`
+    :
+
+    `total: blaxel.core.client.types.Unset | int`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionTask(conditions: blaxel.core.client.types.Unset | list['JobExecutionTaskCondition'] = <blaxel.core.client.types.Unset object>, metadata: blaxel.core.client.types.Unset | ForwardRef('JobExecutionTaskMetadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('JobExecutionTaskSpec') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Job execution task
+    
+    Attributes:
+        conditions (Union[Unset, list['JobExecutionTaskCondition']]): Task conditions
+        metadata (Union[Unset, JobExecutionTaskMetadata]): Job execution task metadata
+        spec (Union[Unset, JobExecutionTaskSpec]): Job execution task specification
+        status (Union[Unset, str]): Job execution task status
+    
+    Method generated by attrs for class JobExecutionTask.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `conditions`
+    :
+
+    `metadata`
+    :
+
+    `spec`
+    :
+
+    `status`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionTaskCondition(execution_reason: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, message: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, reason: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, severity: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, state: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Job execution task condition
+    
+    Attributes:
+        execution_reason (Union[Unset, str]): Execution reason
+        message (Union[Unset, str]): Condition message
+        reason (Union[Unset, str]): Condition reason
+        severity (Union[Unset, str]): Condition severity
+        state (Union[Unset, str]): Condition state
+        type_ (Union[Unset, str]): Condition type
+    
+    Method generated by attrs for class JobExecutionTaskCondition.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `execution_reason: blaxel.core.client.types.Unset | str`
+    :
+
+    `message: blaxel.core.client.types.Unset | str`
+    :
+
+    `reason: blaxel.core.client.types.Unset | str`
+    :
+
+    `severity: blaxel.core.client.types.Unset | str`
+    :
+
+    `state: blaxel.core.client.types.Unset | str`
+    :
+
+    `type_: blaxel.core.client.types.Unset | str`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionTaskMetadata(completed_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, scheduled_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, started_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Job execution task metadata
+    
+    Attributes:
+        completed_at (Union[Unset, str]): Completion timestamp
+        created_at (Union[Unset, str]): Creation timestamp
+        name (Union[Unset, str]): Task name
+        scheduled_at (Union[Unset, str]): Scheduled timestamp
+        started_at (Union[Unset, str]): Start timestamp
+        updated_at (Union[Unset, str]): Last update timestamp
+    
+    Method generated by attrs for class JobExecutionTaskMetadata.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `completed_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `created_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `name: blaxel.core.client.types.Unset | str`
+    :
+
+    `scheduled_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `started_at: blaxel.core.client.types.Unset | str`
+    :
+
+    `updated_at: blaxel.core.client.types.Unset | str`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`JobExecutionTaskSpec(max_retries: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, timeout: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Job execution task specification
+    
+    Attributes:
+        max_retries (Union[Unset, int]): Maximum number of retries
+        timeout (Union[Unset, str]): Task timeout duration
+    
+    Method generated by attrs for class JobExecutionTaskSpec.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `max_retries: blaxel.core.client.types.Unset | int`
+    :
+
+    `timeout: blaxel.core.client.types.Unset | str`
     :
 
     ### Methods
@@ -2319,7 +2824,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`JobSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>)`
+`JobSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, triggers: blaxel.core.client.types.Unset | list['Trigger'] = <blaxel.core.client.types.Unset object>)`
 :   Job specification
     
     Attributes:
@@ -2332,6 +2837,8 @@ Classes
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        region (Union[Unset, str]): Region where the job should be created (e.g. us-pdx-1, eu-lon-1)
+        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     
     Method generated by attrs for class JobSpec.
 
@@ -2366,6 +2873,9 @@ Classes
     `private_clusters`
     :
 
+    `region`
+    :
+
     `revision`
     :
 
@@ -2375,37 +2885,7 @@ Classes
     `sandbox`
     :
 
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`JobsChart(failed: blaxel.core.client.types.Unset | ForwardRef('JobsChartValue') = <blaxel.core.client.types.Unset object>, success: blaxel.core.client.types.Unset | ForwardRef('JobsChartValue') = <blaxel.core.client.types.Unset object>)`
-:   Jobs chart
-    
-    Attributes:
-        failed (Union[Unset, JobsChartValue]): Jobs CPU usage
-        success (Union[Unset, JobsChartValue]): Jobs CPU usage
-    
-    Method generated by attrs for class JobsChart.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties`
-    :
-
-    `failed`
-    :
-
-    `success`
+    `triggers`
     :
 
     ### Methods
@@ -2439,47 +2919,6 @@ Classes
     :
 
     `value: blaxel.core.client.types.Unset | float`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`JobsExecutions(failed: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, running: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, success: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, total: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
-:   Jobs executions
-    
-    Attributes:
-        failed (Union[Unset, int]): Failed executions
-        running (Union[Unset, int]): Running executions
-        success (Union[Unset, int]): Success executions
-        total (Union[Unset, int]): Total executions
-    
-    Method generated by attrs for class JobsExecutions.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties: dict[str, typing.Any]`
-    :
-
-    `failed: blaxel.core.client.types.Unset | int`
-    :
-
-    `running: blaxel.core.client.types.Unset | int`
-    :
-
-    `success: blaxel.core.client.types.Unset | int`
-    :
-
-    `total: blaxel.core.client.types.Unset | int`
     :
 
     ### Methods
@@ -2565,47 +3004,6 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`JobsTasks(failed: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, running: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, success: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, total: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
-:   Jobs tasks
-    
-    Attributes:
-        failed (Union[Unset, int]): Failed executions
-        running (Union[Unset, int]): Running executions
-        success (Union[Unset, int]): Success executions
-        total (Union[Unset, int]): Total executions
-    
-    Method generated by attrs for class JobsTasks.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties: dict[str, typing.Any]`
-    :
-
-    `failed: blaxel.core.client.types.Unset | int`
-    :
-
-    `running: blaxel.core.client.types.Unset | int`
-    :
-
-    `success: blaxel.core.client.types.Unset | int`
-    :
-
-    `total: blaxel.core.client.types.Unset | int`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
 `JobsTotal(failed: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, retried: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, running: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, success: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, total: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
 :   Jobs executions
     
@@ -2644,131 +3042,6 @@ Classes
     :
 
     `total: blaxel.core.client.types.Unset | int`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`Knowledgebase(events: blaxel.core.client.types.Unset | list['CoreEvent'] = <blaxel.core.client.types.Unset object>, metadata: blaxel.core.client.types.Unset | ForwardRef('Metadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('KnowledgebaseSpec') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
-:   Knowledgebase
-    
-    Attributes:
-        events (Union[Unset, list['CoreEvent']]): Core events
-        metadata (Union[Unset, Metadata]): Metadata
-        spec (Union[Unset, KnowledgebaseSpec]): Knowledgebase specification
-        status (Union[Unset, str]): Knowledgebase status
-    
-    Method generated by attrs for class Knowledgebase.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties`
-    :
-
-    `events`
-    :
-
-    `metadata`
-    :
-
-    `spec`
-    :
-
-    `status`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`KnowledgebaseSpec(collection_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, embedding_model: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, embedding_model_type: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, options: blaxel.core.client.types.Unset | ForwardRef('KnowledgebaseSpecOptions') = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>)`
-:   Knowledgebase specification
-    
-    Attributes:
-        collection_name (Union[Unset, str]): Collection name
-        embedding_model (Union[Unset, str]): Embedding model
-        embedding_model_type (Union[Unset, str]): Embedding model type
-        enabled (Union[Unset, bool]): Enable or disable the agent
-        integration_connections (Union[Unset, list[str]]):
-        options (Union[Unset, KnowledgebaseSpecOptions]): Options specific to the knowledge base
-        policies (Union[Unset, list[str]]):
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        sandbox (Union[Unset, bool]): Sandbox mode
-    
-    Method generated by attrs for class KnowledgebaseSpec.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties`
-    :
-
-    `collection_name`
-    :
-
-    `embedding_model`
-    :
-
-    `embedding_model_type`
-    :
-
-    `enabled`
-    :
-
-    `integration_connections`
-    :
-
-    `options`
-    :
-
-    `policies`
-    :
-
-    `revision`
-    :
-
-    `sandbox`
-    :
-
-    ### Methods
-
-    `to_dict(self) ‑> dict[str, typing.Any]`
-    :
-
-`KnowledgebaseSpecOptions()`
-:   Options specific to the knowledge base
-    
-    Method generated by attrs for class KnowledgebaseSpecOptions.
-
-    ### Static methods
-
-    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
-    :
-
-    ### Instance variables
-
-    `additional_keys: list[str]`
-    :
-
-    `additional_properties: dict[str, str]`
     :
 
     ### Methods
@@ -2862,7 +3135,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`LocationResponse(continent: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, country: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, location: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`LocationResponse(continent: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, country: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, location: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Location availability for policies
     
     Attributes:
@@ -2870,6 +3143,7 @@ Classes
         country (Union[Unset, str]): Country of the location
         flavors (Union[Unset, list['Flavor']]): Hardware flavors available in the location
         location (Union[Unset, str]): Name of the location
+        region (Union[Unset, str]): Region of the location
         status (Union[Unset, str]): Status of the location
     
     Method generated by attrs for class LocationResponse.
@@ -2897,6 +3171,9 @@ Classes
     :
 
     `location`
+    :
+
+    `region`
     :
 
     `status`
@@ -2981,7 +3258,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`MCPDefinition(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, categories: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, coming_soon: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, enterprise: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, entrypoint: blaxel.core.client.types.Unset | ForwardRef('MCPDefinitionEntrypoint') = <blaxel.core.client.types.Unset object>, form: blaxel.core.client.types.Unset | ForwardRef('MCPDefinitionForm') = <blaxel.core.client.types.Unset object>, hidden_secrets: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, icon: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, image: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, integration: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, long_description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`MCPDefinition(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, categories: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, coming_soon: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, enterprise: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, entrypoint: blaxel.core.client.types.Unset | ForwardRef('MCPDefinitionEntrypoint') = <blaxel.core.client.types.Unset object>, form: blaxel.core.client.types.Unset | ForwardRef('MCPDefinitionForm') = <blaxel.core.client.types.Unset object>, hidden_secrets: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, icon: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, image: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, integration: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, long_description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, transport: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Definition of an MCP from the MCP Hub
     
     Attributes:
@@ -3000,6 +3277,7 @@ Classes
         integration (Union[Unset, str]): Integration of the artifact
         long_description (Union[Unset, str]): Long description of the artifact
         name (Union[Unset, str]): Name of the artifact
+        transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
         url (Union[Unset, str]): URL of the artifact
     
     Method generated by attrs for class MCPDefinition.
@@ -3057,6 +3335,9 @@ Classes
     :
 
     `name`
+    :
+
+    `transport`
     :
 
     `updated_at`
@@ -3178,7 +3459,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Metadata(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, labels: blaxel.core.client.types.Unset | ForwardRef('MetadataLabels') = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, plan: blaxel.core.client.types.Unset | Any = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`Metadata(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, labels: blaxel.core.client.types.Unset | ForwardRef('MetadataLabels') = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, plan: blaxel.core.client.types.Unset | Any = <blaxel.core.client.types.Unset object>, url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Metadata
     
     Attributes:
@@ -3190,6 +3471,7 @@ Classes
         labels (Union[Unset, MetadataLabels]): Labels
         name (Union[Unset, str]): Model name
         plan (Union[Unset, Any]): Plan
+        url (Union[Unset, str]): URL
         workspace (Union[Unset, str]): Workspace name
     
     Method generated by attrs for class Metadata.
@@ -3229,6 +3511,9 @@ Classes
     :
 
     `updated_by`
+    :
+
+    `url`
     :
 
     `workspace`
@@ -4210,17 +4495,22 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`PreviewSpec(port: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, prefix_url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, public: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, request_headers: blaxel.core.client.types.Unset | ForwardRef('PreviewSpecRequestHeaders') = <blaxel.core.client.types.Unset object>, response_headers: blaxel.core.client.types.Unset | ForwardRef('PreviewSpecResponseHeaders') = <blaxel.core.client.types.Unset object>, url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`PreviewSpec(custom_domain: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, expires: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, port: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, prefix_url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, public: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, request_headers: blaxel.core.client.types.Unset | ForwardRef('PreviewSpecRequestHeaders') = <blaxel.core.client.types.Unset object>, response_headers: blaxel.core.client.types.Unset | ForwardRef('PreviewSpecResponseHeaders') = <blaxel.core.client.types.Unset object>, ttl: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, url: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Preview of a Resource
     
     Attributes:
+        custom_domain (Union[Unset, str]): Custom domain bound to this preview
+        expires (Union[Unset, str]): The expiration date for the preview in ISO 8601 format - 2024-12-31T23:59:59Z
         port (Union[Unset, int]): Port of the preview
         prefix_url (Union[Unset, str]): Prefix URL
         public (Union[Unset, bool]): Whether the preview is public
+        region (Union[Unset, str]): Region where the preview is deployed, this is readonly
         request_headers (Union[Unset, PreviewSpecRequestHeaders]): Those headers will be set in all requests to your
             preview. This is especially useful to set the Authorization header.
         response_headers (Union[Unset, PreviewSpecResponseHeaders]): Those headers will be set in all responses of your
             preview. This is especially useful to set the CORS headers.
+        ttl (Union[Unset, str]): Time to live for the preview (e.g., "1h", "24h", "7d"). After this duration, the
+            preview will be automatically deleted.
         url (Union[Unset, str]): URL of the preview
     
     Method generated by attrs for class PreviewSpec.
@@ -4238,6 +4528,12 @@ Classes
     `additional_properties`
     :
 
+    `custom_domain`
+    :
+
+    `expires`
+    :
+
     `port`
     :
 
@@ -4247,10 +4543,16 @@ Classes
     `public`
     :
 
+    `region`
+    :
+
     `request_headers`
     :
 
     `response_headers`
+    :
+
+    `ttl`
     :
 
     `url`
@@ -4528,6 +4830,111 @@ Classes
     :
 
     `additional_properties: dict[str, typing.Any]`
+    :
+
+    `name: blaxel.core.client.types.Unset | str`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`PublicIp(description: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, ipv_4_cidrs: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, ipv_6_cidrs: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>)`
+:   Attributes:
+        description (Union[Unset, str]): Description of the region/location
+        ipv_4_cidrs (Union[Unset, list[str]]): List of public ipv4 addresses
+        ipv_6_cidrs (Union[Unset, list[str]]): List of public ipv6 addresses
+    
+    Method generated by attrs for class PublicIp.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `description: blaxel.core.client.types.Unset | str`
+    :
+
+    `ipv_4_cidrs: blaxel.core.client.types.Unset | list[str]`
+    :
+
+    `ipv_6_cidrs: blaxel.core.client.types.Unset | list[str]`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`PublicIps()`
+:   Method generated by attrs for class PublicIps.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`Region(allowed: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, continent: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, country: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, info_generation: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, location: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Region
+    
+    Attributes:
+        allowed (Union[Unset, str]): Region display name
+        continent (Union[Unset, str]): Region display name
+        country (Union[Unset, str]): Region display name
+        info_generation (Union[Unset, str]): Region display name
+        location (Union[Unset, str]): Region display name
+        name (Union[Unset, str]): Region name
+    
+    Method generated by attrs for class Region.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `allowed: blaxel.core.client.types.Unset | str`
+    :
+
+    `continent: blaxel.core.client.types.Unset | str`
+    :
+
+    `country: blaxel.core.client.types.Unset | str`
+    :
+
+    `info_generation: blaxel.core.client.types.Unset | str`
+    :
+
+    `location: blaxel.core.client.types.Unset | str`
     :
 
     `name: blaxel.core.client.types.Unset | str`
@@ -4862,13 +5269,15 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Resource(name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`Resource(infrastructure_generation: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Resource
     
     Attributes:
+        infrastructure_generation (Union[Unset, str]): Region of the resource
         name (Union[Unset, str]): Name of the resource
         type_ (Union[Unset, str]): Type of the resource
         workspace (Union[Unset, str]): Workspace of the resource
+        workspace_id (Union[Unset, str]): Workspace ID of the resource
     
     Method generated by attrs for class Resource.
 
@@ -4885,6 +5294,9 @@ Classes
     `additional_properties: dict[str, typing.Any]`
     :
 
+    `infrastructure_generation: blaxel.core.client.types.Unset | str`
+    :
+
     `name: blaxel.core.client.types.Unset | str`
     :
 
@@ -4892,6 +5304,9 @@ Classes
     :
 
     `workspace: blaxel.core.client.types.Unset | str`
+    :
+
+    `workspace_id: blaxel.core.client.types.Unset | str`
     :
 
     ### Methods
@@ -5038,7 +5453,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`ResourceMetrics(billable_time: blaxel.core.client.types.Unset | ForwardRef('BillableTimeMetric') = <blaxel.core.client.types.Unset object>, inference_errors_global: blaxel.core.client.types.Unset | list['Metric'] = <blaxel.core.client.types.Unset object>, inference_global: blaxel.core.client.types.Unset | list['Metric'] = <blaxel.core.client.types.Unset object>, last_n_requests: blaxel.core.client.types.Unset | list['Metric'] = <blaxel.core.client.types.Unset object>, latency: blaxel.core.client.types.Unset | ForwardRef('LatencyMetric') = <blaxel.core.client.types.Unset object>, latency_previous: blaxel.core.client.types.Unset | ForwardRef('LatencyMetric') = <blaxel.core.client.types.Unset object>, memory_allocation: blaxel.core.client.types.Unset | ForwardRef('MemoryAllocationMetric') = <blaxel.core.client.types.Unset object>, model_ttft: blaxel.core.client.types.Unset | ForwardRef('LatencyMetric') = <blaxel.core.client.types.Unset object>, model_ttft_over_time: blaxel.core.client.types.Unset | ForwardRef('TimeToFirstTokenOverTimeMetrics') = <blaxel.core.client.types.Unset object>, request_duration_over_time: blaxel.core.client.types.Unset | ForwardRef('RequestDurationOverTimeMetrics') = <blaxel.core.client.types.Unset object>, request_total: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, request_total_by_origin: blaxel.core.client.types.Unset | ForwardRef('RequestTotalByOriginMetric') = <blaxel.core.client.types.Unset object>, request_total_by_origin_previous: blaxel.core.client.types.Unset | ForwardRef('RequestTotalByOriginMetric') = <blaxel.core.client.types.Unset object>, request_total_per_code: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRequestTotalPerCode') = <blaxel.core.client.types.Unset object>, request_total_per_code_previous: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRequestTotalPerCodePrevious') = <blaxel.core.client.types.Unset object>, request_total_previous: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, rps: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, rps_per_code: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRpsPerCode') = <blaxel.core.client.types.Unset object>, rps_per_code_previous: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRpsPerCodePrevious') = <blaxel.core.client.types.Unset object>, rps_previous: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, token_rate: blaxel.core.client.types.Unset | ForwardRef('TokenRateMetrics') = <blaxel.core.client.types.Unset object>, token_total: blaxel.core.client.types.Unset | ForwardRef('TokenTotalMetric') = <blaxel.core.client.types.Unset object>)`
+`ResourceMetrics(billable_time: blaxel.core.client.types.Unset | ForwardRef('BillableTimeMetric') = <blaxel.core.client.types.Unset object>, inference_errors_global: blaxel.core.client.types.Unset | list['Metric'] = <blaxel.core.client.types.Unset object>, inference_global: blaxel.core.client.types.Unset | list['Metric'] = <blaxel.core.client.types.Unset object>, last_n_requests: blaxel.core.client.types.Unset | list['Metric'] = <blaxel.core.client.types.Unset object>, latency: blaxel.core.client.types.Unset | ForwardRef('LatencyMetric') = <blaxel.core.client.types.Unset object>, latency_previous: blaxel.core.client.types.Unset | ForwardRef('LatencyMetric') = <blaxel.core.client.types.Unset object>, memory_allocation: blaxel.core.client.types.Unset | ForwardRef('MemoryAllocationMetric') = <blaxel.core.client.types.Unset object>, model_ttft: blaxel.core.client.types.Unset | ForwardRef('LatencyMetric') = <blaxel.core.client.types.Unset object>, model_ttft_over_time: blaxel.core.client.types.Unset | ForwardRef('TimeToFirstTokenOverTimeMetrics') = <blaxel.core.client.types.Unset object>, request_duration_over_time: blaxel.core.client.types.Unset | ForwardRef('RequestDurationOverTimeMetrics') = <blaxel.core.client.types.Unset object>, request_total: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, request_total_by_origin: blaxel.core.client.types.Unset | ForwardRef('RequestTotalByOriginMetric') = <blaxel.core.client.types.Unset object>, request_total_by_origin_previous: blaxel.core.client.types.Unset | ForwardRef('RequestTotalByOriginMetric') = <blaxel.core.client.types.Unset object>, request_total_per_code: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRequestTotalPerCode') = <blaxel.core.client.types.Unset object>, request_total_per_code_previous: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRequestTotalPerCodePrevious') = <blaxel.core.client.types.Unset object>, request_total_previous: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, rps: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, rps_per_code: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRpsPerCode') = <blaxel.core.client.types.Unset object>, rps_per_code_previous: blaxel.core.client.types.Unset | ForwardRef('ResourceMetricsRpsPerCodePrevious') = <blaxel.core.client.types.Unset object>, rps_previous: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, sandboxes_cpu_usage: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, sandboxes_ram_usage: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, token_rate: blaxel.core.client.types.Unset | ForwardRef('TokenRateMetrics') = <blaxel.core.client.types.Unset object>, token_total: blaxel.core.client.types.Unset | ForwardRef('TokenTotalMetric') = <blaxel.core.client.types.Unset object>)`
 :   Metrics for a single resource deployment (eg. model deployment, function deployment)
     
     Attributes:
@@ -5068,6 +5483,9 @@ Classes
             resource globally per code for the previous period
         rps_previous (Union[Unset, float]): Number of requests per second for the resource globally for the previous
             period
+        sandboxes_cpu_usage (Union[Unset, list[Any]]): CPU usage over time for sandboxes
+        sandboxes_ram_usage (Union[Unset, list[Any]]): RAM usage over time for sandboxes with memory, value, and percent
+            metrics
         token_rate (Union[Unset, TokenRateMetrics]): Token rate metrics
         token_total (Union[Unset, TokenTotalMetric]): Token total metric
     
@@ -5144,6 +5562,12 @@ Classes
     :
 
     `rps_previous`
+    :
+
+    `sandboxes_cpu_usage`
+    :
+
+    `sandboxes_ram_usage`
     :
 
     `token_rate`
@@ -5392,7 +5816,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Runtime(args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, command: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, configuration: blaxel.core.client.types.Unset | ForwardRef('RuntimeConfiguration') = <blaxel.core.client.types.Unset object>, cpu: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, endpoint_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, envs: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, generation: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, image: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, max_concurrent_tasks: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_retries: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, memory: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, metric_port: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, min_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, model: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, organization: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, ports: blaxel.core.client.types.Unset | list['Port'] = <blaxel.core.client.types.Unset object>, startup_probe: blaxel.core.client.types.Unset | ForwardRef('RuntimeStartupProbe') = <blaxel.core.client.types.Unset object>, timeout: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`Runtime(args: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, command: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, configuration: blaxel.core.client.types.Unset | ForwardRef('RuntimeConfiguration') = <blaxel.core.client.types.Unset object>, cpu: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, endpoint_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, envs: blaxel.core.client.types.Unset | list[typing.Any] = <blaxel.core.client.types.Unset object>, expires: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, generation: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, image: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, max_concurrent_tasks: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_retries: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, max_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, memory: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, metric_port: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, min_scale: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, model: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, organization: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, ports: blaxel.core.client.types.Unset | list['Port'] = <blaxel.core.client.types.Unset object>, startup_probe: blaxel.core.client.types.Unset | ForwardRef('RuntimeStartupProbe') = <blaxel.core.client.types.Unset object>, timeout: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, ttl: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, type_: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   Set of configurations for a deployment
     
     Attributes:
@@ -5404,6 +5828,7 @@ Classes
             endpoint name. In case of hf_public_endpoint, it is not used.
         envs (Union[Unset, list[Any]]): The env variables to set in the deployment. Should be a list of Kubernetes
             EnvVar types
+        expires (Union[Unset, str]): The expiration date for the deployment in ISO 8601 format - 2024-12-31T23:59:59Z
         generation (Union[Unset, str]): The generation of the deployment
         image (Union[Unset, str]): The Docker image for the deployment
         max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
@@ -5418,6 +5843,7 @@ Classes
         ports (Union[Unset, list['Port']]): Set of ports for a resource
         startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
         timeout (Union[Unset, int]): The timeout for the deployment in seconds
+        ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
         type_ (Union[Unset, str]): The type of origin for the deployment (hf_private_endpoint, hf_public_endpoint)
     
     Method generated by attrs for class Runtime.
@@ -5451,6 +5877,9 @@ Classes
     :
 
     `envs`
+    :
+
+    `expires`
     :
 
     `generation`
@@ -5490,6 +5919,9 @@ Classes
     :
 
     `timeout`
+    :
+
+    `ttl`
     :
 
     `type_`
@@ -5546,14 +5978,16 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Sandbox(events: blaxel.core.client.types.Unset | list['CoreEvent'] = <blaxel.core.client.types.Unset object>, metadata: blaxel.core.client.types.Unset | ForwardRef('Metadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('SandboxSpec') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+`Sandbox(events: blaxel.core.client.types.Unset | list['CoreEvent'] = <blaxel.core.client.types.Unset object>, last_used_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, metadata: blaxel.core.client.types.Unset | ForwardRef('Metadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('SandboxSpec') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, ttl: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
 :   Micro VM for running agentic tasks
     
     Attributes:
         events (Union[Unset, list['CoreEvent']]): Core events
+        last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
         metadata (Union[Unset, Metadata]): Metadata
         spec (Union[Unset, SandboxSpec]): Sandbox specification
         status (Union[Unset, str]): Sandbox status
+        ttl (Union[Unset, int]): TTL timestamp for automatic deletion (optional, nil means no auto-deletion)
     
     Method generated by attrs for class Sandbox.
 
@@ -5573,6 +6007,9 @@ Classes
     `events`
     :
 
+    `last_used_at`
+    :
+
     `metadata`
     :
 
@@ -5580,6 +6017,9 @@ Classes
     :
 
     `status`
+    :
+
+    `ttl`
     :
 
     ### Methods
@@ -5660,7 +6100,77 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`SandboxSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>)`
+`SandboxLifecycle(expiration_policies: blaxel.core.client.types.Unset | list['ExpirationPolicy'] = <blaxel.core.client.types.Unset object>)`
+:   Lifecycle configuration for sandbox management
+    
+    Attributes:
+        expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies
+    
+    Method generated by attrs for class SandboxLifecycle.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `expiration_policies`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`SandboxMetrics(memory: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, percent: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>, timestamp: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, value: blaxel.core.client.types.Unset | float = <blaxel.core.client.types.Unset object>)`
+:   Enhanced sandbox metrics with memory, value, and percent data
+    
+    Attributes:
+        memory (Union[Unset, float]): Memory limit in bytes (from query A)
+        percent (Union[Unset, float]): Memory usage percentage (from formula F1)
+        timestamp (Union[Unset, str]): Metric timestamp
+        value (Union[Unset, float]): Memory usage in bytes (from query B)
+    
+    Method generated by attrs for class SandboxMetrics.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `memory: blaxel.core.client.types.Unset | float`
+    :
+
+    `percent: blaxel.core.client.types.Unset | float`
+    :
+
+    `timestamp: blaxel.core.client.types.Unset | str`
+    :
+
+    `value: blaxel.core.client.types.Unset | float`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`SandboxSpec(configurations: blaxel.core.client.types.Unset | ForwardRef('CoreSpecConfigurations') = <blaxel.core.client.types.Unset object>, enabled: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, flavors: blaxel.core.client.types.Unset | list['Flavor'] = <blaxel.core.client.types.Unset object>, integration_connections: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, policies: blaxel.core.client.types.Unset | list[str] = <blaxel.core.client.types.Unset object>, private_clusters: blaxel.core.client.types.Unset | ForwardRef('ModelPrivateCluster') = <blaxel.core.client.types.Unset object>, revision: blaxel.core.client.types.Unset | ForwardRef('RevisionConfiguration') = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('Runtime') = <blaxel.core.client.types.Unset object>, sandbox: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>, lifecycle: blaxel.core.client.types.Unset | ForwardRef('SandboxLifecycle') = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, volumes: blaxel.core.client.types.Unset | list['VolumeAttachment'] = <blaxel.core.client.types.Unset object>)`
 :   Sandbox specification
     
     Attributes:
@@ -5673,6 +6183,9 @@ Classes
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
+        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration for sandbox management
+        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
+        volumes (Union[Unset, list['VolumeAttachment']]):
     
     Method generated by attrs for class SandboxSpec.
 
@@ -5701,10 +6214,16 @@ Classes
     `integration_connections`
     :
 
+    `lifecycle`
+    :
+
     `policies`
     :
 
     `private_clusters`
+    :
+
+    `region`
     :
 
     `revision`
@@ -5714,6 +6233,9 @@ Classes
     :
 
     `sandbox`
+    :
+
+    `volumes`
     :
 
     ### Methods
@@ -6429,7 +6951,7 @@ Classes
 :   Trigger configuration
     
     Attributes:
-        configuration (Union[Unset, TriggerConfiguration]): The configuration of the trigger
+        configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
         id (Union[Unset, str]): The id of the trigger
         type_ (Union[Unset, str]): The type of trigger, can be http or http-async
     
@@ -6462,10 +6984,55 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`TriggerConfiguration()`
-:   The configuration of the trigger
+`TriggerConfiguration(authentication_type: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, path: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, retry: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>, schedule: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, tasks: blaxel.core.client.types.Unset | list['TriggerConfigurationTask'] = <blaxel.core.client.types.Unset object>)`
+:   Trigger configuration
+    
+    Attributes:
+        authentication_type (Union[Unset, str]): The authentication type of the trigger
+        path (Union[Unset, str]): The path of the trigger
+        retry (Union[Unset, int]): The retry of the trigger
+        schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * *
+        tasks (Union[Unset, list['TriggerConfigurationTask']]): The tasks configuration of the cronjob
     
     Method generated by attrs for class TriggerConfiguration.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `authentication_type`
+    :
+
+    `path`
+    :
+
+    `retry`
+    :
+
+    `schedule`
+    :
+
+    `tasks`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`TriggerConfigurationTask()`
+:   The tasks configuration of the cronjob
+    
+    Method generated by attrs for class TriggerConfigurationTask.
 
     ### Static methods
 
@@ -6586,6 +7153,155 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
+`Volume(events: blaxel.core.client.types.Unset | list['CoreEvent'] = <blaxel.core.client.types.Unset object>, metadata: blaxel.core.client.types.Unset | ForwardRef('Metadata') = <blaxel.core.client.types.Unset object>, spec: blaxel.core.client.types.Unset | ForwardRef('VolumeSpec') = <blaxel.core.client.types.Unset object>, state: blaxel.core.client.types.Unset | ForwardRef('VolumeState') = <blaxel.core.client.types.Unset object>, status: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, terminated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Volume resource for persistent storage
+    
+    Attributes:
+        events (Union[Unset, list['CoreEvent']]): Core events
+        metadata (Union[Unset, Metadata]): Metadata
+        spec (Union[Unset, VolumeSpec]): Volume specification - immutable configuration
+        state (Union[Unset, VolumeState]): Volume state - mutable runtime state
+        status (Union[Unset, str]): Volume status computed from events
+        terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
+    
+    Method generated by attrs for class Volume.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties`
+    :
+
+    `events`
+    :
+
+    `metadata`
+    :
+
+    `spec`
+    :
+
+    `state`
+    :
+
+    `status`
+    :
+
+    `terminated_at`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`VolumeAttachment(mount_path: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, read_only: blaxel.core.client.types.Unset | bool = <blaxel.core.client.types.Unset object>)`
+:   Volume attachment configuration for sandbox
+    
+    Attributes:
+        mount_path (Union[Unset, str]): Mount path in the container
+        name (Union[Unset, str]): Name of the volume to attach
+        read_only (Union[Unset, bool]): Whether the volume is mounted as read-only
+    
+    Method generated by attrs for class VolumeAttachment.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `mount_path: blaxel.core.client.types.Unset | str`
+    :
+
+    `name: blaxel.core.client.types.Unset | str`
+    :
+
+    `read_only: blaxel.core.client.types.Unset | bool`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`VolumeSpec(region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, size: blaxel.core.client.types.Unset | int = <blaxel.core.client.types.Unset object>)`
+:   Volume specification - immutable configuration
+    
+    Attributes:
+        region (Union[Unset, str]): Region where the volume should be created (e.g. us-pdx-1, eu-lon-1)
+        size (Union[Unset, int]): Size of the volume in MB
+    
+    Method generated by attrs for class VolumeSpec.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `region: blaxel.core.client.types.Unset | str`
+    :
+
+    `size: blaxel.core.client.types.Unset | int`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
+`VolumeState(attached_to: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
+:   Volume state - mutable runtime state
+    
+    Attributes:
+        attached_to (Union[Unset, str]): Resource this volume is attached to (e.g. "sandbox:my-sandbox", "model:my-
+            model")
+    
+    Method generated by attrs for class VolumeState.
+
+    ### Static methods
+
+    `from_dict(src_dict: dict[str, typing.Any]) ‑> ~T`
+    :
+
+    ### Instance variables
+
+    `additional_keys: list[str]`
+    :
+
+    `additional_properties: dict[str, typing.Any]`
+    :
+
+    `attached_to: blaxel.core.client.types.Unset | str`
+    :
+
+    ### Methods
+
+    `to_dict(self) ‑> dict[str, typing.Any]`
+    :
+
 `WebsocketChannel(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, connection_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, workspace: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>)`
 :   WebSocket connection details
     
@@ -6676,7 +7392,7 @@ Classes
     `to_dict(self) ‑> dict[str, typing.Any]`
     :
 
-`Workspace(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, account_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, labels: blaxel.core.client.types.Unset | ForwardRef('WorkspaceLabels') = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('WorkspaceRuntime') = <blaxel.core.client.types.Unset object>)`
+`Workspace(created_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_at: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, created_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, updated_by: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, account_id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, display_name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, id: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, labels: blaxel.core.client.types.Unset | ForwardRef('WorkspaceLabels') = <blaxel.core.client.types.Unset object>, name: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, region: blaxel.core.client.types.Unset | str = <blaxel.core.client.types.Unset object>, runtime: blaxel.core.client.types.Unset | ForwardRef('WorkspaceRuntime') = <blaxel.core.client.types.Unset object>)`
 :   Workspace
     
     Attributes:
@@ -6686,6 +7402,7 @@ Classes
         updated_by (Union[Unset, str]): The user or service account who updated the resource
         account_id (Union[Unset, str]): Workspace account id
         display_name (Union[Unset, str]): Workspace display name
+        id (Union[Unset, str]): Autogenerated unique workspace id
         labels (Union[Unset, WorkspaceLabels]): Workspace labels
         name (Union[Unset, str]): Workspace name
         region (Union[Unset, str]): Workspace write region
@@ -6716,6 +7433,9 @@ Classes
     :
 
     `display_name`
+    :
+
+    `id`
     :
 
     `labels`

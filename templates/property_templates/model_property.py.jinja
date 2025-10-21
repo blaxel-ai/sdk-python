@@ -30,7 +30,7 @@ elif {{source}} and isinstance({{source}}, dict):
 
 {% macro transform_multipart_body(property, source, destination) %}
 {% set transformed = source + ".to_multipart()" %}
-{% set type_string = property.get_type_string(multipart=True) %}
+{% set type_string = property.get_type_string() %}
 {% if property.required %}
 {{ destination }} = {{ transformed }}
 {%- else %}
@@ -42,7 +42,7 @@ if not isinstance({{ source }}, Unset):
 
 {% macro transform_multipart(property, source, destination) %}
 {% set transformed = "(None, json.dumps(" + source + ".to_dict()" + ").encode(), 'application/json')" %}
-{% set type_string = property.get_type_string(multipart=True) %}
+{% set type_string = property.get_type_string() %}
 {% if property.required %}
 {{ destination }} = {{ transformed }}
 {%- else %}

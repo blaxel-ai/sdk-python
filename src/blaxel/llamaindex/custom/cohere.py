@@ -1,6 +1,6 @@
 import uuid
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Sequence, Union
 
 import cohere
 from cohere.types import ToolCall
@@ -51,7 +51,7 @@ class Cohere(FunctionCallingLLM):
     """
 
     model: str = Field(description="The cohere model to use.")
-    temperature: Optional[float] = Field(
+    temperature: float | None = Field(
         description="The temperature to use for sampling.", default=None
     )
     max_retries: int = Field(default=10, description="The maximum number of API retries.")
@@ -66,19 +66,19 @@ class Cohere(FunctionCallingLLM):
     def __init__(
         self,
         model: str = "command-r",
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = 8192,
-        timeout: Optional[float] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = 8192,
+        timeout: float | None = None,
         max_retries: int = 10,
-        api_key: Optional[str] = None,
-        api_base: Optional[str] = None,
-        additional_kwargs: Optional[Dict[str, Any]] = None,
-        callback_manager: Optional[CallbackManager] = None,
-        system_prompt: Optional[str] = None,
-        messages_to_prompt: Optional[Callable[[Sequence[ChatMessage]], str]] = None,
-        completion_to_prompt: Optional[Callable[[str], str]] = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
+        additional_kwargs: Dict[str, Any] | None = None,
+        callback_manager: CallbackManager | None = None,
+        system_prompt: str | None = None,
+        messages_to_prompt: Callable[[Sequence[ChatMessage]], str] | None = None,
+        completion_to_prompt: Callable[[str], str] | None = None,
         pydantic_program_mode: PydanticProgramMode = PydanticProgramMode.DEFAULT,
-        output_parser: Optional[BaseOutputParser] = None,
+        output_parser: BaseOutputParser | None = None,
     ) -> None:
         additional_kwargs = additional_kwargs or {}
         callback_manager = callback_manager or CallbackManager([])
@@ -136,8 +136,8 @@ class Cohere(FunctionCallingLLM):
     def _prepare_chat_with_tools(
         self,
         tools: List["BaseTool"],
-        user_msg: Optional[Union[str, ChatMessage]] = None,
-        chat_history: Optional[List[ChatMessage]] = None,
+        user_msg: Union[str, ChatMessage] | None = None,
+        chat_history: List[ChatMessage] | None = None,
         verbose: bool = False,
         allow_parallel_tool_calls: bool = False,
         **kwargs: Any,
@@ -189,8 +189,8 @@ class Cohere(FunctionCallingLLM):
         self,
         messages: List[ChatMessage],
         *,
-        connectors: Optional[List[Dict[str, str]]] = None,
-        stop_sequences: Optional[List[str]] = None,
+        connectors: List[Dict[str, str]] | None = None,
+        stop_sequences: List[str] | None = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """Get the request for the Cohere chat API.
@@ -213,7 +213,7 @@ class Cohere(FunctionCallingLLM):
 
         messages, documents = remove_documents_from_messages(messages)
 
-        tool_results: Optional[List[Dict[str, Any]]] = (
+        tool_results: List[Dict[str, Any]] | None = (
             _messages_to_cohere_tool_results_curr_chat_turn(messages) or kwargs.get("tool_results")
         )
         if not tool_results:

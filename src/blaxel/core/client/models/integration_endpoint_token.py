@@ -10,18 +10,19 @@ T = TypeVar("T", bound="IntegrationEndpointToken")
 
 @_attrs_define
 class IntegrationEndpointToken:
-    """Integration endpoint token
+    """ Integration endpoint token
 
-    Attributes:
-        received (Union[Unset, str]): Integration endpoint token received
-        sent (Union[Unset, str]): Integration endpoint token sent
-        total (Union[Unset, str]): Integration endpoint token total
-    """
+        Attributes:
+            received (Union[Unset, str]): Integration endpoint token received
+            sent (Union[Unset, str]): Integration endpoint token sent
+            total (Union[Unset, str]): Integration endpoint token total
+     """
 
     received: Union[Unset, str] = UNSET
     sent: Union[Unset, str] = UNSET
     total: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         received = self.received
@@ -30,9 +31,11 @@ class IntegrationEndpointToken:
 
         total = self.total
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if received is not UNSET:
             field_dict["received"] = received
         if sent is not UNSET:
@@ -41,6 +44,8 @@ class IntegrationEndpointToken:
             field_dict["total"] = total
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -58,6 +63,7 @@ class IntegrationEndpointToken:
             sent=sent,
             total=total,
         )
+
 
         integration_endpoint_token.additional_properties = d
         return integration_endpoint_token

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -13,8 +13,14 @@ def _get_kwargs(
     agent_name: str,
     *,
     body: Agent,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -26,6 +32,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -33,9 +40,11 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Agent]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Agent | None:
     if response.status_code == 200:
         response_200 = Agent.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -58,8 +67,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: Agent,
+
 ) -> Response[Agent]:
-    """Update agent by name
+    """ Update agent by name
 
     Args:
         agent_name (str):
@@ -71,11 +81,13 @@ def sync_detailed(
 
     Returns:
         Response[Agent]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         agent_name=agent_name,
-        body=body,
+body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -84,14 +96,14 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     agent_name: str,
     *,
     client: Union[Client],
     body: Agent,
-) -> Optional[Agent]:
-    """Update agent by name
+
+) -> Agent | None:
+    """ Update agent by name
 
     Args:
         agent_name (str):
@@ -103,22 +115,24 @@ def sync(
 
     Returns:
         Agent
-    """
+     """
+
 
     return sync_detailed(
         agent_name=agent_name,
-        client=client,
-        body=body,
-    ).parsed
+client=client,
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     agent_name: str,
     *,
     client: Union[Client],
     body: Agent,
+
 ) -> Response[Agent]:
-    """Update agent by name
+    """ Update agent by name
 
     Args:
         agent_name (str):
@@ -130,25 +144,29 @@ async def asyncio_detailed(
 
     Returns:
         Response[Agent]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         agent_name=agent_name,
-        body=body,
+body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     agent_name: str,
     *,
     client: Union[Client],
     body: Agent,
-) -> Optional[Agent]:
-    """Update agent by name
+
+) -> Agent | None:
+    """ Update agent by name
 
     Args:
         agent_name (str):
@@ -160,12 +178,12 @@ async def asyncio(
 
     Returns:
         Agent
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            agent_name=agent_name,
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        agent_name=agent_name,
+client=client,
+body=body,
+
+    )).parsed

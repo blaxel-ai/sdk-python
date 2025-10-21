@@ -18,7 +18,7 @@ async def main():
         # Test 2: Create sandbox with spec containing runtime image
         print("\nTest 2: Create sandbox with spec runtime...")
         sandbox = await SandboxInstance.create(
-            {"spec": {"runtime": {"image": "blaxel/prod-base:latest"}}}
+            {"spec": {"runtime": {"image": "blaxel/base:latest"}}}
         )
         print(f"✅ Created sandbox with spec: {sandbox.metadata.name}")
         print(await sandbox.fs.ls("/blaxel"))
@@ -64,7 +64,7 @@ async def main():
         print("\nTest 7: Create sandbox with custom image and memory...")
         custom_config = SandboxCreateConfiguration(
             name="sandbox-custom",
-            image="blaxel/prod-base:latest",
+            image="blaxel/base:latest",
             memory=2048,
         )
         sandbox = await SandboxInstance.create(custom_config)
@@ -79,7 +79,7 @@ async def main():
         print("\nTest 8: Create sandbox with ports...")
         ports_config = SandboxCreateConfiguration(
             name="sandbox-with-ports",
-            image="blaxel/prod-base:latest",
+            image="blaxel/base:latest",
             memory=2048,
             ports=[
                 {"name": "web", "target": 3000},  # Will default to HTTP
@@ -103,7 +103,7 @@ async def main():
         print("\nTest 9: Create sandbox with environment variables...")
         envs_config = SandboxCreateConfiguration(
             name="sandbox-with-envs",
-            image="blaxel/prod-base:latest",
+            image="blaxel/base:latest",
             memory=2048,
             envs=[
                 {"name": "NODE_ENV", "value": "development"},
@@ -130,7 +130,7 @@ async def main():
         sandbox = await SandboxInstance.create(
             {
                 "name": "sandbox-with-envs-dict",
-                "image": "blaxel/prod-base:latest",
+                "image": "blaxel/base:latest",
                 "memory": 2048,
                 "envs": [
                     {"name": "ENVIRONMENT", "value": "test"},

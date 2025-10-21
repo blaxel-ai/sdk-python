@@ -10,18 +10,19 @@ T = TypeVar("T", bound="PreviewTokenSpec")
 
 @_attrs_define
 class PreviewTokenSpec:
-    """Spec for a Preview Token
+    """ Spec for a Preview Token
 
-    Attributes:
-        expired (Union[Unset, bool]): Whether the token is expired
-        expires_at (Union[Unset, str]): Expiration time of the token
-        token (Union[Unset, str]): Token
-    """
+        Attributes:
+            expired (Union[Unset, bool]): Whether the token is expired
+            expires_at (Union[Unset, str]): Expiration time of the token
+            token (Union[Unset, str]): Token
+     """
 
     expired: Union[Unset, bool] = UNSET
     expires_at: Union[Unset, str] = UNSET
     token: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         expired = self.expired
@@ -30,9 +31,11 @@ class PreviewTokenSpec:
 
         token = self.token
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if expired is not UNSET:
             field_dict["expired"] = expired
         if expires_at is not UNSET:
@@ -41,6 +44,8 @@ class PreviewTokenSpec:
             field_dict["token"] = token
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -58,6 +63,7 @@ class PreviewTokenSpec:
             expires_at=expires_at,
             token=token,
         )
+
 
         preview_token_spec.additional_properties = d
         return preview_token_spec

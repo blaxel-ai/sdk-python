@@ -5,7 +5,7 @@ Sub-modules
 -----------
 * blaxel.core.client.api.workspaces.accept_workspace_invitation
 * blaxel.core.client.api.workspaces.check_workspace_availability
-* blaxel.core.client.api.workspaces.create_worspace
+* blaxel.core.client.api.workspaces.create_workspace
 * blaxel.core.client.api.workspaces.decline_workspace_invitation
 * blaxel.core.client.api.workspaces.delete_workspace
 * blaxel.core.client.api.workspaces.get_workspace

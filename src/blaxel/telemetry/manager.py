@@ -8,7 +8,7 @@ import logging
 import os
 import signal
 import time
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
@@ -37,9 +37,9 @@ logger = logging.getLogger(__name__)
 
 class TelemetryManager:
     def __init__(self):
-        self.tracer: Optional[trace.Tracer] = None
-        self.meter: Optional[metrics.Meter] = None
-        self.logger_provider: Optional[LoggerProvider] = None
+        self.tracer: trace.Tracer | None = None
+        self.meter: metrics.Meter | None = None
+        self.logger_provider: LoggerProvider | None = None
         self.initialized: bool = False
         self.configured: bool = False
         self.settings: Settings = None
@@ -81,22 +81,22 @@ class TelemetryManager:
             resources_dict["workload.type"] = self.resource_type
         return resources_dict
 
-    def get_metrics_exporter(self) -> Optional[DynamicHeadersMetricExporter]:
+    def get_metrics_exporter(self) -> DynamicHeadersMetricExporter | None:
         if not self.enabled:
             return None
         return DynamicHeadersMetricExporter(get_headers=lambda: self.auth_headers)
 
-    def get_span_exporter(self) -> Optional[DynamicHeadersSpanExporter]:
+    def get_span_exporter(self) -> DynamicHeadersSpanExporter | None:
         if not self.enabled:
             return None
         return DynamicHeadersSpanExporter(get_headers=lambda: self.auth_headers)
 
-    def get_log_exporter(self) -> Optional[DynamicHeadersLogExporter]:
+    def get_log_exporter(self) -> DynamicHeadersLogExporter | None:
         if not self.enabled:
             return None
         return DynamicHeadersLogExporter(get_headers=lambda: self.auth_headers)
 
-    def _import_class(self, module_path: str, class_name: str) -> Optional[Type]:
+    def _import_class(self, module_path: str, class_name: str) -> Type | None:
         """Dynamically import a class from a module path."""
         try:
             module = importlib.import_module(module_path)

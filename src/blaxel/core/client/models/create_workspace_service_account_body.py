@@ -10,32 +10,34 @@ T = TypeVar("T", bound="CreateWorkspaceServiceAccountBody")
 
 @_attrs_define
 class CreateWorkspaceServiceAccountBody:
-    """
-    Attributes:
-        name (str): Service account name
-        description (Union[Unset, str]): Service account description
-    """
+    """ 
+        Attributes:
+            name (str): Service account name
+            description (Union[Unset, str]): Service account description
+     """
 
     name: str
     description: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
         description = self.description
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "name": name,
-            }
-        )
+        field_dict.update({
+            "name": name,
+        })
         if description is not UNSET:
             field_dict["description"] = description
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -50,6 +52,7 @@ class CreateWorkspaceServiceAccountBody:
             name=name,
             description=description,
         )
+
 
         create_workspace_service_account_body.additional_properties = d
         return create_workspace_service_account_body

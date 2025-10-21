@@ -4,7 +4,7 @@ Module blaxel.core.sandbox.action
 Classes
 -------
 
-`ResponseError(response: httpx.Response, data: Any = None, error: Any = None)`
+`ResponseError(response: httpx.Response)`
 :   Common base class for all non-exit exceptions.
 
     ### Ancestors (in MRO)
@@ -46,5 +46,5 @@ Classes
     `get_client(self) ‑> httpx.AsyncClient`
     :
 
-    `handle_response_error(self, response: httpx.Response, data: Any, error: Any)`
+    `handle_response_error(self, response: httpx.Response)`
     :

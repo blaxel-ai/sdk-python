@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Type
 
 from pydantic import BaseModel, Field, create_model
 
@@ -11,6 +11,7 @@ json_type_mapping: Dict[str, Type] = {
     "object": dict,
     "array": list,
 }
+
 
 def create_model_from_json_schema(
     schema: Dict[str, Any], model_name: str = "DynamicModel"
@@ -36,7 +37,7 @@ def create_model_from_json_schema(
             default_value = ...
         else:
             default_value = None
-            field_type = Optional[field_type]
+            field_type = field_type | None
         fields[field_name] = (
             field_type,
             Field(default_value, description=field_schema.get("description", "")),

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Dict, Literal, Optional, Union
+from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
 
@@ -15,7 +15,7 @@ class SandboxProcess(SandboxAction):
         super().__init__(sandbox_config)
 
     def stream_logs(
-        self, process_name: str, options: Optional[Dict[str, Callable[[str], None]]] = None
+        self, process_name: str, options: Dict[str, Callable[[str], None]] | None = None
     ) -> Dict[str, Callable[[], None]]:
         """Stream logs from a process with automatic reconnection and deduplication."""
         if options is None:
@@ -111,7 +111,7 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     def _stream_logs(
-        self, identifier: str, options: Optional[Dict[str, Callable[[str], None]]] = None
+        self, identifier: str, options: Dict[str, Callable[[str], None]] | None = None
     ) -> Dict[str, Callable[[], None]]:
         """Private method to stream logs from a process with callbacks for different output types."""
         if options is None:
@@ -141,6 +141,9 @@ class SandboxProcess(SandboxAction):
                             buffer = lines.pop()  # Keep incomplete line in buffer
 
                             for line in lines:
+                                # Skip keepalive messages
+                                if line.startswith("[keepalive]"):
+                                    continue
                                 if line.startswith("stdout:"):
                                     content = line[7:]  # Remove 'stdout:' prefix
                                     if options.get("on_stdout"):

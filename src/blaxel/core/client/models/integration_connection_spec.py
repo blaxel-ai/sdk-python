@@ -6,8 +6,11 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.integration_connection_spec_config import IntegrationConnectionSpecConfig
-    from ..models.integration_connection_spec_secret import IntegrationConnectionSpecSecret
+  from ..models.integration_connection_spec_config import IntegrationConnectionSpecConfig
+  from ..models.integration_connection_spec_secret import IntegrationConnectionSpecSecret
+
+
+
 
 
 T = TypeVar("T", bound="IntegrationConnectionSpec")
@@ -15,20 +18,21 @@ T = TypeVar("T", bound="IntegrationConnectionSpec")
 
 @_attrs_define
 class IntegrationConnectionSpec:
-    """Integration connection specification
+    """ Integration connection specification
 
-    Attributes:
-        config (Union[Unset, IntegrationConnectionSpecConfig]): Additional configuration for the integration
-        integration (Union[Unset, str]): Integration type
-        sandbox (Union[Unset, bool]): Sandbox mode
-        secret (Union[Unset, IntegrationConnectionSpecSecret]): Integration secret
-    """
+        Attributes:
+            config (Union[Unset, IntegrationConnectionSpecConfig]): Additional configuration for the integration
+            integration (Union[Unset, str]): Integration type
+            sandbox (Union[Unset, bool]): Sandbox mode
+            secret (Union[Unset, IntegrationConnectionSpecSecret]): Integration secret
+     """
 
-    config: Union[Unset, "IntegrationConnectionSpecConfig"] = UNSET
+    config: Union[Unset, 'IntegrationConnectionSpecConfig'] = UNSET
     integration: Union[Unset, str] = UNSET
     sandbox: Union[Unset, bool] = UNSET
-    secret: Union[Unset, "IntegrationConnectionSpecSecret"] = UNSET
+    secret: Union[Unset, 'IntegrationConnectionSpecSecret'] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         config: Union[Unset, dict[str, Any]] = UNSET
@@ -47,9 +51,11 @@ class IntegrationConnectionSpec:
         elif self.secret and isinstance(self.secret, dict):
             secret = self.secret
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if config is not UNSET:
             field_dict["config"] = config
         if integration is not UNSET:
@@ -61,20 +67,24 @@ class IntegrationConnectionSpec:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.integration_connection_spec_config import IntegrationConnectionSpecConfig
         from ..models.integration_connection_spec_secret import IntegrationConnectionSpecSecret
-
         if not src_dict:
             return None
         d = src_dict.copy()
         _config = d.pop("config", UNSET)
         config: Union[Unset, IntegrationConnectionSpecConfig]
-        if isinstance(_config, Unset):
+        if isinstance(_config,  Unset):
             config = UNSET
         else:
             config = IntegrationConnectionSpecConfig.from_dict(_config)
+
+
+
 
         integration = d.pop("integration", UNSET)
 
@@ -82,10 +92,13 @@ class IntegrationConnectionSpec:
 
         _secret = d.pop("secret", UNSET)
         secret: Union[Unset, IntegrationConnectionSpecSecret]
-        if isinstance(_secret, Unset):
+        if isinstance(_secret,  Unset):
             secret = UNSET
         else:
             secret = IntegrationConnectionSpecSecret.from_dict(_secret)
+
+
+
 
         integration_connection_spec = cls(
             config=config,
@@ -93,6 +106,7 @@ class IntegrationConnectionSpec:
             sandbox=sandbox,
             secret=secret,
         )
+
 
         integration_connection_spec.additional_properties = d
         return integration_connection_spec

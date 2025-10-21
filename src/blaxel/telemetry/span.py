@@ -3,7 +3,7 @@ This module provides utilities for creating and managing OpenTelemetry spans wit
 It includes classes for adding default attributes to spans and managing span creation.
 """
 
-from typing import Any, ContextManager, Dict, Optional, TypeVar
+from typing import Any, ContextManager, Dict, TypeVar
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import Span as SdkSpan
@@ -55,7 +55,7 @@ class SpanManager:
             "workspace": settings.workspace
         }
 
-    def create_active_span(self, name: str, attributes: Dict[str, Any], parent: Optional[Span] = None) -> ContextManager[Span]:
+    def create_active_span(self, name: str, attributes: Dict[str, Any], parent: Span | None = None) -> ContextManager[Span]:
         """
         Creates an active span and executes the provided function within its context.
 
@@ -77,7 +77,7 @@ class SpanManager:
             context = trace.set_span_in_context(parent)
         return self.tracer.start_as_current_span(name, attributes=attributes, context=context)
 
-    def create_span(self, name: str, attributes: Dict[str, Any], parent: Optional[Span] = None) -> Span:
+    def create_span(self, name: str, attributes: Dict[str, Any], parent: Span | None = None) -> Span:
         """
         Creates a new span without making it active.
 

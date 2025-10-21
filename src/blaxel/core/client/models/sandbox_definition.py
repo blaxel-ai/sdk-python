@@ -6,7 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.port import Port
+  from ..models.port import Port
+
+
+
 
 
 T = TypeVar("T", bound="SandboxDefinition")
@@ -14,22 +17,22 @@ T = TypeVar("T", bound="SandboxDefinition")
 
 @_attrs_define
 class SandboxDefinition:
-    """Sandbox definition for admin store operations
+    """ Sandbox definition for admin store operations
 
-    Attributes:
-        categories (Union[Unset, list[Any]]): Categories of the defintion
-        coming_soon (Union[Unset, bool]): If the definition is coming soon
-        description (Union[Unset, str]): Description of the defintion
-        display_name (Union[Unset, str]): Display name of the definition
-        enterprise (Union[Unset, bool]): If the definition is enterprise
-        icon (Union[Unset, str]): Icon of the definition
-        image (Union[Unset, str]): Image of the Sandbox definition
-        long_description (Union[Unset, str]): Long description of the defintion
-        memory (Union[Unset, int]): Memory of the Sandbox definition in MB
-        name (Union[Unset, str]): Name of the artifact
-        ports (Union[Unset, list['Port']]): Set of ports for a resource
-        url (Union[Unset, str]): URL of the definition
-    """
+        Attributes:
+            categories (Union[Unset, list[Any]]): Categories of the defintion
+            coming_soon (Union[Unset, bool]): If the definition is coming soon
+            description (Union[Unset, str]): Description of the defintion
+            display_name (Union[Unset, str]): Display name of the definition
+            enterprise (Union[Unset, bool]): If the definition is enterprise
+            icon (Union[Unset, str]): Icon of the definition
+            image (Union[Unset, str]): Image of the Sandbox definition
+            long_description (Union[Unset, str]): Long description of the defintion
+            memory (Union[Unset, int]): Memory of the Sandbox definition in MB
+            name (Union[Unset, str]): Name of the artifact
+            ports (Union[Unset, list['Port']]): Set of ports for a resource
+            url (Union[Unset, str]): URL of the definition
+     """
 
     categories: Union[Unset, list[Any]] = UNSET
     coming_soon: Union[Unset, bool] = UNSET
@@ -41,14 +44,17 @@ class SandboxDefinition:
     long_description: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
     name: Union[Unset, str] = UNSET
-    ports: Union[Unset, list["Port"]] = UNSET
+    ports: Union[Unset, list['Port']] = UNSET
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         categories: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.categories, Unset):
             categories = self.categories
+
+
 
         coming_soon = self.coming_soon
 
@@ -78,11 +84,15 @@ class SandboxDefinition:
                     componentsschemas_ports_item = componentsschemas_ports_item_data.to_dict()
                 ports.append(componentsschemas_ports_item)
 
+
+
         url = self.url
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if categories is not UNSET:
             field_dict["categories"] = categories
         if coming_soon is not UNSET:
@@ -110,14 +120,16 @@ class SandboxDefinition:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.port import Port
-
         if not src_dict:
             return None
         d = src_dict.copy()
         categories = cast(list[Any], d.pop("categories", UNSET))
+
 
         coming_soon = d.pop("coming_soon", UNSET)
 
@@ -139,10 +151,13 @@ class SandboxDefinition:
 
         ports = []
         _ports = d.pop("ports", UNSET)
-        for componentsschemas_ports_item_data in _ports or []:
+        for componentsschemas_ports_item_data in (_ports or []):
             componentsschemas_ports_item = Port.from_dict(componentsschemas_ports_item_data)
 
+
+
             ports.append(componentsschemas_ports_item)
+
 
         url = d.pop("url", UNSET)
 
@@ -160,6 +175,7 @@ class SandboxDefinition:
             ports=ports,
             url=url,
         )
+
 
         sandbox_definition.additional_properties = d
         return sandbox_definition

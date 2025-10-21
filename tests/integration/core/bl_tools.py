@@ -95,7 +95,7 @@ async def test_mcp_tools_blaxel():
     tools = bl_tools(["blaxel-search"], {"test": "test"})
     await tools.initialize()
     blaxel_tools = tools.get_tools()
-    if len(blaxel_tools) == 0:
+    if len(blaxel_tools) == 0 or not blaxel_tools[0].coroutine:
         raise Exception("No tools found")
     result = await blaxel_tools[0].coroutine(query="What is the capital of France?")
     logger.info(f"Blaxel tools result: {result}")
@@ -112,15 +112,27 @@ async def test_mcp_tools_blaxel():
     print(f"Blaxel tools result: {result}")
 
 
+async def tmp_test_mcp_http_stream():
+    """Test http stream conversion."""
+    tools = await bl_tools_langgraph(["trello-mk2", "blaxel-search", "sandboxes/base"])
+    if len(tools) == 0:
+        raise Exception("No tools found")
+    trello_tool = [tool for tool in tools if tool.name == "get_cards_by_list_id"]
+    assert len(trello_tool) == 1
+    blaxel_search_tool = [tool for tool in tools if tool.name == "web_search_exa"]
+    assert len(blaxel_search_tool) == 1
+    sandbox_tool = [tool for tool in tools if tool.name == "fsGetWorkingDirectory"]
+    assert len(sandbox_tool) == 1
+
 async def main():
     """Main function for standalone execution."""
-    # await test_mcp_tools_blaxel()
+    await test_mcp_tools_blaxel()
     await test_mcp_tools_langgraph()
     await test_mcp_tools_llamaindex()
     await test_mcp_tools_crewai()
     await test_mcp_tools_pydantic()
     await test_mcp_tools_google_adk()
-
+    await tmp_test_mcp_http_stream()
 
 if __name__ == "__main__":
     asyncio.run(main())

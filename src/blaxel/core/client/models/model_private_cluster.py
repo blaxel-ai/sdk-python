@@ -10,18 +10,19 @@ T = TypeVar("T", bound="ModelPrivateCluster")
 
 @_attrs_define
 class ModelPrivateCluster:
-    """Private cluster where the model deployment is deployed
+    """ Private cluster where the model deployment is deployed
 
-    Attributes:
-        base_url (Union[Unset, str]): The base url of the model in the private cluster
-        enabled (Union[Unset, bool]): If true, the private cluster is available
-        name (Union[Unset, str]): The name of the private cluster
-    """
+        Attributes:
+            base_url (Union[Unset, str]): The base url of the model in the private cluster
+            enabled (Union[Unset, bool]): If true, the private cluster is available
+            name (Union[Unset, str]): The name of the private cluster
+     """
 
     base_url: Union[Unset, str] = UNSET
     enabled: Union[Unset, bool] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         base_url = self.base_url
@@ -30,9 +31,11 @@ class ModelPrivateCluster:
 
         name = self.name
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if base_url is not UNSET:
             field_dict["baseUrl"] = base_url
         if enabled is not UNSET:
@@ -41,6 +44,8 @@ class ModelPrivateCluster:
             field_dict["name"] = name
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -58,6 +63,7 @@ class ModelPrivateCluster:
             enabled=enabled,
             name=name,
         )
+
 
         model_private_cluster.additional_properties = d
         return model_private_cluster

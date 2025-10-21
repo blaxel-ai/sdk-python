@@ -1,7 +1,7 @@
 import os
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from blaxel.core.client.models import Metadata, Port, Runtime, Sandbox, SandboxSpec
 from blaxel.core.sandbox import SandboxInstance
@@ -20,17 +20,18 @@ async def local_sandbox(sandbox_name: str) -> SandboxInstance:
     """Create a local sandbox instance for testing."""
     info(f"Using local sandbox {sandbox_name}")
     sandbox = SandboxInstance(
-        Sandbox(metadata=Metadata(name=sandbox_name)), force_url="http://localhost:8080"
+        Sandbox(metadata=Metadata(name=sandbox_name)),
+        force_url="http://localhost:8080"
     )
     return sandbox
 
 
 async def create_or_get_sandbox(
     sandbox_name: str,
-    image: str = f"blaxel/{env}-nextjs:latest",
-    ports: Optional[List[Dict[str, Any]]] = None,
+    image: str = f"blaxel/base",
+    ports: List[Dict[str, Any]] | None = None,
     memory: int = 4096,
-    envs: Optional[List[Dict[str, str]]] = None,
+    envs: List[Dict[str, str]] | None = None,
 ) -> SandboxInstance:
     """Create or get existing sandbox with specified configuration."""
     # Uncomment the line below to use local sandbox instead
@@ -74,9 +75,9 @@ async def create_or_get_sandbox(
 async def run_command(
     sandbox: SandboxInstance,
     command: str,
-    name: Optional[str] = None,
-    max_wait: Optional[int] = None,
-    working_dir: Optional[str] = None,
+    name: str | None = None,
+    max_wait: int | None = None,
+    working_dir: str | None = None,
     wait_for_completion: bool = True,
 ) -> None:
     """Run a command in the sandbox and handle logging."""

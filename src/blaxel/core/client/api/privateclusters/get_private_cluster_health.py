@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import httpx
 
@@ -10,16 +10,24 @@ from ...types import Response
 
 def _get_kwargs(
     private_cluster_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/privateclusters/{private_cluster_name}/health",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Any]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | None:
     if response.status_code == 200:
         return None
     if response.status_code == 401:
@@ -45,8 +53,9 @@ def sync_detailed(
     private_cluster_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Any]:
-    """Get private cluster health
+    """ Get private cluster health
 
     Args:
         private_cluster_name (str):
@@ -57,10 +66,12 @@ def sync_detailed(
 
     Returns:
         Response[Any]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         private_cluster_name=private_cluster_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -74,8 +85,9 @@ async def asyncio_detailed(
     private_cluster_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Any]:
-    """Get private cluster health
+    """ Get private cluster health
 
     Args:
         private_cluster_name (str):
@@ -86,12 +98,17 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         private_cluster_name=private_cluster_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
+

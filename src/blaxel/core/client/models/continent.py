@@ -10,31 +10,36 @@ T = TypeVar("T", bound="Continent")
 
 @_attrs_define
 class Continent:
-    """Continent
+    """ Continent
 
-    Attributes:
-        display_name (Union[Unset, str]): Continent display name
-        name (Union[Unset, str]): Continent code
-    """
+        Attributes:
+            display_name (Union[Unset, str]): Continent display name
+            name (Union[Unset, str]): Continent code
+     """
 
     display_name: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         display_name = self.display_name
 
         name = self.name
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if display_name is not UNSET:
             field_dict["displayName"] = display_name
         if name is not UNSET:
             field_dict["name"] = name
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -49,6 +54,7 @@ class Continent:
             display_name=display_name,
             name=name,
         )
+
 
         continent.additional_properties = d
         return continent

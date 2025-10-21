@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, AsyncIterator, Iterator, List, Optional
+from typing import Any, AsyncIterator, Iterator, List
 
 from langchain_anthropic import ChatAnthropic
 from langchain_cerebras import ChatCerebras
@@ -124,9 +124,9 @@ class TokenRefreshingChatModel(TokenRefreshingWrapper):
     async def ainvoke(
         self,
         input: LanguageModelInput,
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
         *,
-        stop: Optional[List[str]] = None,
+        stop: List[str] | None = None,
         **kwargs: Any,
     ) -> BaseMessage:
         """Async invoke with token refresh."""
@@ -136,9 +136,9 @@ class TokenRefreshingChatModel(TokenRefreshingWrapper):
     def invoke(
         self,
         input: LanguageModelInput,
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
         *,
-        stop: Optional[List[str]] = None,
+        stop: List[str] | None = None,
         **kwargs: Any,
     ) -> BaseMessage:
         """Sync invoke with token refresh."""
@@ -148,9 +148,9 @@ class TokenRefreshingChatModel(TokenRefreshingWrapper):
     async def astream(
         self,
         input: LanguageModelInput,
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
         *,
-        stop: Optional[List[str]] = None,
+        stop: List[str] | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[BaseMessage]:
         """Async stream with token refresh."""
@@ -161,9 +161,9 @@ class TokenRefreshingChatModel(TokenRefreshingWrapper):
     def stream(
         self,
         input: LanguageModelInput,
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
         *,
-        stop: Optional[List[str]] = None,
+        stop: List[str] | None = None,
         **kwargs: Any,
     ) -> Iterator[BaseMessage]:
         """Sync stream with token refresh."""
@@ -174,12 +174,12 @@ class TokenRefreshingChatModel(TokenRefreshingWrapper):
     async def agenerate(
         self,
         messages: List[List[BaseMessage]],
-        stop: Optional[List[str]] = None,
+        stop: List[str] | None = None,
         callbacks: Callbacks = None,
         *,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        run_name: Optional[str] = None,
+        tags: List[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        run_name: str | None = None,
         **kwargs: Any,
     ) -> LLMResult:
         """Async generate with token refresh."""
@@ -192,12 +192,12 @@ class TokenRefreshingChatModel(TokenRefreshingWrapper):
     def generate(
         self,
         messages: List[List[BaseMessage]],
-        stop: Optional[List[str]] = None,
+        stop: List[str] | None = None,
         callbacks: Callbacks = None,
         *,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        run_name: Optional[str] = None,
+        tags: List[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        run_name: str | None = None,
         **kwargs: Any,
     ) -> LLMResult:
         """Sync generate with token refresh."""

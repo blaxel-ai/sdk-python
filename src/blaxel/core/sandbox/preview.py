@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from ..client import errors
 from ..client.api.compute.create_sandbox_preview import (
@@ -105,11 +105,11 @@ class SandboxPreview:
         return self.preview.metadata.name if self.preview.metadata else ""
 
     @property
-    def metadata(self) -> Optional[dict]:
+    def metadata(self) -> dict | None:
         return self.preview.metadata
 
     @property
-    def spec(self) -> Optional[PreviewSpec]:
+    def spec(self) -> PreviewSpec | None:
         return self.preview.spec
 
 

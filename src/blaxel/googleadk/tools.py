@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Optional, override
+from typing import Any, override
 
 from google.adk.tools import BaseTool, ToolContext
 from google.genai import types
@@ -40,7 +40,7 @@ class GoogleADKTool(BaseTool):
         return cleaned_schema
 
     @override
-    def _get_declaration(self) -> Optional[types.FunctionDeclaration]:
+    def _get_declaration(self) -> types.FunctionDeclaration | None:
         # Clean the schema recursively
         schema = self._clean_schema(self._tool.input_schema)
 

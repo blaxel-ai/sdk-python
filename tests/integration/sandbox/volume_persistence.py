@@ -20,11 +20,11 @@ from blaxel.core.volume import VolumeInstance
 async def wait_for_sandbox_deletion(sandbox_name: str, max_attempts: int = 30) -> bool:
     """
     Waits for a sandbox deletion to fully complete by polling until the sandbox no longer exists.
-    
+
     Args:
         sandbox_name: The name of the sandbox to wait for deletion
         max_attempts: Maximum number of attempts to wait (default: 30 seconds)
-        
+
     Returns:
         bool: True if deletion completed, False if timeout
     """
@@ -49,7 +49,7 @@ async def wait_for_sandbox_deletion(sandbox_name: str, max_attempts: int = 30) -
 
 async def main():
     """Main test function for volume persistence."""
-    
+
     # Cleanup function
     async def cleanup():
         try:
@@ -73,8 +73,7 @@ async def main():
 
         # Choose image based on BL_ENV
         bl_env = os.getenv("BL_ENV", "prod")
-        is_dev = bl_env == "dev"
-        image_base = "dev-base" if is_dev else "prod-base"
+        image_base = "base"
         image = f"blaxel/{image_base}:latest"
         file_content = "Hello from sandbox!"
 

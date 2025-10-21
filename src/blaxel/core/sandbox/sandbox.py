@@ -27,12 +27,30 @@ logger = logging.getLogger(__name__)
 
 
 class SandboxInstance:
-    def __init__(self, sandbox: Sandbox):
-        self.sandbox = sandbox
-        self.config = SandboxConfiguration(sandbox)
-        self.fs = SandboxFileSystem(self.config)
+    def __init__(
+        self,
+        sandbox: Union[Sandbox, SandboxConfiguration],
+        force_url: str | None = None,
+        headers: Dict[str, str] | None = None,
+        params: Dict[str, str] | None = None,
+    ):
+        # Handle both Sandbox and SandboxConfiguration inputs
+        if isinstance(sandbox, SandboxConfiguration):
+            self.config = sandbox
+            self.sandbox = sandbox.sandbox
+        else:
+            # Create SandboxConfiguration with optional parameters
+            self.sandbox = sandbox
+            self.config = SandboxConfiguration(
+                sandbox=sandbox,
+                force_url=force_url,
+                headers=headers,
+                params=params,
+            )
+
         self.process = SandboxProcess(self.config)
-        self.previews = SandboxPreviews(sandbox)
+        self.fs = SandboxFileSystem(self.config, self.process)
+        self.previews = SandboxPreviews(self.sandbox)
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
 
@@ -64,10 +82,8 @@ class SandboxInstance:
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = True,
     ) -> "SandboxInstance":
-        # Generate default values
-        env = settings.env
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
-        default_image = f"blaxel/{env}-base:latest"
+        default_image = f"blaxel/base:latest"
         default_memory = 4096
 
         # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs/volumes keys
@@ -87,6 +103,8 @@ class SandboxInstance:
                     or "ttl" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "snapshot_enabled" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -105,13 +123,15 @@ class SandboxInstance:
             ttl = sandbox.ttl
             expires = sandbox.expires
             region = sandbox.region
+            lifecycle = sandbox.lifecycle
+            snapshot_enabled = sandbox.snapshot_enabled
 
             # Create full Sandbox object
             sandbox = Sandbox(
                 metadata=Metadata(name=name),
                 spec=SandboxSpec(
                     runtime=Runtime(
-                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3"
+                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3", snapshot_enabled=snapshot_enabled
                     ),
                     volumes=volumes,
                 ),
@@ -124,6 +144,8 @@ class SandboxInstance:
                 sandbox.spec.runtime.expires = expires.isoformat()
             if region:
                 sandbox.spec.region = region
+            if lifecycle:
+                sandbox.spec.lifecycle = lifecycle
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
@@ -255,7 +277,15 @@ class SandboxInstance:
                 if not name:
                     raise ValueError("Sandbox name is required")
 
+                # Get the existing sandbox to check its status
                 sandbox_instance = await cls.get(name)
+
+                # If the sandbox is TERMINATED, treat it as not existing
+                if sandbox_instance.status == "TERMINATED":
+                    # Create a new sandbox - backend will handle cleanup of the terminated one
+                    return await cls.create(sandbox)
+
+                # Otherwise return the existing active sandbox
                 return sandbox_instance
             raise e
 
@@ -270,20 +300,11 @@ class SandboxInstance:
         # Create a minimal sandbox configuration for session-based access
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
         sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
-        config = SandboxConfiguration(
+
+        # Use the constructor with force_url, headers, and params
+        return cls(
             sandbox=sandbox,
             force_url=session.url,
             headers={"X-Blaxel-Preview-Token": session.token},
             params={"bl_preview_token": session.token},
         )
-
-        instance = cls.__new__(cls)
-        instance.sandbox = sandbox
-        instance.config = config
-        instance.fs = SandboxFileSystem(config)
-        instance.process = SandboxProcess(config)
-        instance.previews = SandboxPreviews(sandbox)
-        instance.sessions = SandboxSessions(config)
-        instance.network = SandboxNetwork(config)
-
-        return instance

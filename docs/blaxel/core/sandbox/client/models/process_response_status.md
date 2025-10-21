@@ -13,7 +13,7 @@ Classes
     that will be decoded using the given encoding and error handler.
     Otherwise, returns the result of object.__str__() (if defined)
     or repr(object).
-    encoding defaults to sys.getdefaultencoding().
+    encoding defaults to 'utf-8'.
     errors defaults to 'strict'.
 
     ### Ancestors (in MRO)
@@ -24,16 +24,16 @@ Classes
     ### Class variables
 
     `COMPLETED`
-    :
+    :   The type of the None singleton.
 
     `FAILED`
-    :
+    :   The type of the None singleton.
 
     `KILLED`
-    :
+    :   The type of the None singleton.
 
     `RUNNING`
-    :
+    :   The type of the None singleton.
 
     `STOPPED`
-    :
+    :   The type of the None singleton.
