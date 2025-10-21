@@ -5,7 +5,7 @@ import sys
 from blaxel.core.sandbox import SandboxInstance
 
 # Determine base image based on environment
-base_image = "blaxel/vite:latest" if os.getenv("BL_ENV") == "dev" else "blaxel/prod-base:latest"
+base_image = "blaxel/base:latest"
 print(f"Using base image: {base_image} (BL_ENV={os.getenv('BL_ENV', 'not set')})\n")
 
 
