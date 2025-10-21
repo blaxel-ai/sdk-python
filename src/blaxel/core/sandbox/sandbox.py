@@ -277,7 +277,15 @@ class SandboxInstance:
                 if not name:
                     raise ValueError("Sandbox name is required")
 
+                # Get the existing sandbox to check its status
                 sandbox_instance = await cls.get(name)
+
+                # If the sandbox is TERMINATED, treat it as not existing
+                if sandbox_instance.status == "TERMINATED":
+                    # Create a new sandbox - backend will handle cleanup of the terminated one
+                    return await cls.create(sandbox)
+
+                # Otherwise return the existing active sandbox
                 return sandbox_instance
             raise e
 
