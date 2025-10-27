@@ -32,7 +32,7 @@ sdk-controlplane:
 	@curl -H "Authorization: token $$(gh auth token)" \
 		-H "Accept: application/vnd.github.v3.raw" \
 		-o ./definition.yml \
-		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=cdrappier/cheaper-jobs
+		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=main
 	rm -rf src/blaxel/core/client/api src/blaxel/core/client/models
 	.venv/bin/openapi-python-client generate \
 		--path=definition.yml \
