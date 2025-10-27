@@ -11,19 +11,11 @@ from ...types import Response
 
 def _get_kwargs(
     private_cluster_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/privateclusters/{private_cluster_name}",
     }
-
 
     return _kwargs
 
@@ -31,8 +23,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, PrivateCluster] | None:
     if response.status_code == 200:
         response_200 = PrivateCluster.from_dict(response.json())
-
-
 
         return response_200
     if response.status_code == 401:
@@ -60,9 +50,8 @@ def sync_detailed(
     private_cluster_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, PrivateCluster]]:
-    """ Delete private cluster
+    """Delete private cluster
 
     Args:
         private_cluster_name (str):
@@ -73,12 +62,10 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, PrivateCluster]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         private_cluster_name=private_cluster_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -87,13 +74,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     private_cluster_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, PrivateCluster] | None:
-    """ Delete private cluster
+    """Delete private cluster
 
     Args:
         private_cluster_name (str):
@@ -104,22 +91,20 @@ def sync(
 
     Returns:
         Union[Any, PrivateCluster]
-     """
-
+    """
 
     return sync_detailed(
         private_cluster_name=private_cluster_name,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     private_cluster_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, PrivateCluster]]:
-    """ Delete private cluster
+    """Delete private cluster
 
     Args:
         private_cluster_name (str):
@@ -130,27 +115,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, PrivateCluster]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         private_cluster_name=private_cluster_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     private_cluster_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, PrivateCluster] | None:
-    """ Delete private cluster
+    """Delete private cluster
 
     Args:
         private_cluster_name (str):
@@ -161,11 +142,11 @@ async def asyncio(
 
     Returns:
         Union[Any, PrivateCluster]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        private_cluster_name=private_cluster_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            private_cluster_name=private_cluster_name,
+            client=client,
+        )
+    ).parsed

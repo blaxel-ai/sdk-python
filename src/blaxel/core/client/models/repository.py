@@ -10,36 +10,31 @@ T = TypeVar("T", bound="Repository")
 
 @_attrs_define
 class Repository:
-    """ Repository
+    """Repository
 
-        Attributes:
-            type_ (Union[Unset, str]): Repository type
-            url (Union[Unset, str]): Repository URL
-     """
+    Attributes:
+        type_ (Union[Unset, str]): Repository type
+        url (Union[Unset, str]): Repository URL
+    """
 
     type_: Union[Unset, str] = UNSET
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         type_ = self.type_
 
         url = self.url
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if type_ is not UNSET:
             field_dict["type"] = type_
         if url is not UNSET:
             field_dict["url"] = url
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -54,7 +49,6 @@ class Repository:
             type_=type_,
             url=url,
         )
-
 
         repository.additional_properties = d
         return repository

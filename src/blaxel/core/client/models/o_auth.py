@@ -10,40 +10,33 @@ T = TypeVar("T", bound="OAuth")
 
 @_attrs_define
 class OAuth:
-    """ OAuth of the artifact
+    """OAuth of the artifact
 
-        Attributes:
-            scope (Union[Unset, list[Any]]): Scope of the OAuth
-            type_ (Union[Unset, str]): Type of the OAuth
-     """
+    Attributes:
+        scope (Union[Unset, list[Any]]): Scope of the OAuth
+        type_ (Union[Unset, str]): Type of the OAuth
+    """
 
     scope: Union[Unset, list[Any]] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         scope: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.scope, Unset):
             scope = self.scope
 
-
-
         type_ = self.type_
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if scope is not UNSET:
             field_dict["scope"] = scope
         if type_ is not UNSET:
             field_dict["type"] = type_
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -52,14 +45,12 @@ class OAuth:
         d = src_dict.copy()
         scope = cast(list[Any], d.pop("scope", UNSET))
 
-
         type_ = d.pop("type", UNSET)
 
         o_auth = cls(
             scope=scope,
             type_=type_,
         )
-
 
         o_auth.additional_properties = d
         return o_auth

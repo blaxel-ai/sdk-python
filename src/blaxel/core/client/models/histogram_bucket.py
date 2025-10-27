@@ -10,19 +10,18 @@ T = TypeVar("T", bound="HistogramBucket")
 
 @_attrs_define
 class HistogramBucket:
-    """ Histogram bucket
+    """Histogram bucket
 
-        Attributes:
-            count (Union[Unset, int]): Count
-            end (Union[Unset, float]): End
-            start (Union[Unset, float]): Start
-     """
+    Attributes:
+        count (Union[Unset, int]): Count
+        end (Union[Unset, float]): End
+        start (Union[Unset, float]): Start
+    """
 
     count: Union[Unset, int] = UNSET
     end: Union[Unset, float] = UNSET
     start: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         count = self.count
@@ -31,11 +30,9 @@ class HistogramBucket:
 
         start = self.start
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if count is not UNSET:
             field_dict["count"] = count
         if end is not UNSET:
@@ -44,8 +41,6 @@ class HistogramBucket:
             field_dict["start"] = start
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -63,7 +58,6 @@ class HistogramBucket:
             end=end,
             start=start,
         )
-
 
         histogram_bucket.additional_properties = d
         return histogram_bucket

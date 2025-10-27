@@ -1,4 +1,4 @@
-""" Contains all the data models used in inputs/outputs """
+"""Contains all the data models used in inputs/outputs"""
 
 from .acl import ACL
 from .agent import Agent
@@ -13,6 +13,10 @@ from .core_spec import CoreSpec
 from .core_spec_configurations import CoreSpecConfigurations
 from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
+from .create_job_execution_request import CreateJobExecutionRequest
+from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
+from .create_job_execution_response import CreateJobExecutionResponse
+from .create_job_execution_response_tasks_item import CreateJobExecutionResponseTasksItem
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
@@ -53,7 +57,15 @@ from .integration_query_params import IntegrationQueryParams
 from .integration_repository import IntegrationRepository
 from .invite_workspace_user_body import InviteWorkspaceUserBody
 from .job import Job
+from .job_execution import JobExecution
 from .job_execution_config import JobExecutionConfig
+from .job_execution_metadata import JobExecutionMetadata
+from .job_execution_spec import JobExecutionSpec
+from .job_execution_stats import JobExecutionStats
+from .job_execution_task import JobExecutionTask
+from .job_execution_task_condition import JobExecutionTaskCondition
+from .job_execution_task_metadata import JobExecutionTaskMetadata
+from .job_execution_task_spec import JobExecutionTaskSpec
 from .job_metrics import JobMetrics
 from .job_metrics_executions_total import JobMetricsExecutionsTotal
 from .job_metrics_tasks_total import JobMetricsTasksTotal
@@ -197,6 +209,10 @@ __all__ = (
     "CoreSpecConfigurations",
     "Country",
     "CreateApiKeyForServiceAccountBody",
+    "CreateJobExecutionRequest",
+    "CreateJobExecutionRequestTasksItem",
+    "CreateJobExecutionResponse",
+    "CreateJobExecutionResponseTasksItem",
     "CreateWorkspaceServiceAccountBody",
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
@@ -235,7 +251,15 @@ __all__ = (
     "IntegrationRepository",
     "InviteWorkspaceUserBody",
     "Job",
+    "JobExecution",
     "JobExecutionConfig",
+    "JobExecutionMetadata",
+    "JobExecutionSpec",
+    "JobExecutionStats",
+    "JobExecutionTask",
+    "JobExecutionTaskCondition",
+    "JobExecutionTaskMetadata",
+    "JobExecutionTaskSpec",
     "JobMetrics",
     "JobMetricsExecutionsTotal",
     "JobMetricsTasksTotal",

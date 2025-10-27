@@ -10,21 +10,20 @@ T = TypeVar("T", bound="PendingInvitationRenderInvitedBy")
 
 @_attrs_define
 class PendingInvitationRenderInvitedBy:
-    """ Invited by
+    """Invited by
 
-        Attributes:
-            email (Union[Unset, str]): User email
-            family_name (Union[Unset, str]): User family name
-            given_name (Union[Unset, str]): User given name
-            sub (Union[Unset, str]): User sub
-     """
+    Attributes:
+        email (Union[Unset, str]): User email
+        family_name (Union[Unset, str]): User family name
+        given_name (Union[Unset, str]): User given name
+        sub (Union[Unset, str]): User sub
+    """
 
     email: Union[Unset, str] = UNSET
     family_name: Union[Unset, str] = UNSET
     given_name: Union[Unset, str] = UNSET
     sub: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         email = self.email
@@ -35,11 +34,9 @@ class PendingInvitationRenderInvitedBy:
 
         sub = self.sub
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if email is not UNSET:
             field_dict["email"] = email
         if family_name is not UNSET:
@@ -50,8 +47,6 @@ class PendingInvitationRenderInvitedBy:
             field_dict["sub"] = sub
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -72,7 +67,6 @@ class PendingInvitationRenderInvitedBy:
             given_name=given_name,
             sub=sub,
         )
-
 
         pending_invitation_render_invited_by.additional_properties = d
         return pending_invitation_render_invited_by

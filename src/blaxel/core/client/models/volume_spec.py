@@ -10,19 +10,18 @@ T = TypeVar("T", bound="VolumeSpec")
 
 @_attrs_define
 class VolumeSpec:
-    """ Volume specification - immutable configuration
+    """Volume specification - immutable configuration
 
-        Attributes:
-            region (Union[Unset, str]): Region where the volume should be created (e.g. us-pdx-1, eu-lon-1)
-            size (Union[Unset, int]): Size of the volume in MB
-            template (Union[Unset, str]): Volume template with revision (e.g. "mytemplate:1" or "mytemplate:latest")
-     """
+    Attributes:
+        region (Union[Unset, str]): Region where the volume should be created (e.g. us-pdx-1, eu-lon-1)
+        size (Union[Unset, int]): Size of the volume in MB
+        template (Union[Unset, str]): Volume template with revision (e.g. "mytemplate:1" or "mytemplate:latest")
+    """
 
     region: Union[Unset, str] = UNSET
     size: Union[Unset, int] = UNSET
     template: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         region = self.region
@@ -31,11 +30,9 @@ class VolumeSpec:
 
         template = self.template
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if region is not UNSET:
             field_dict["region"] = region
         if size is not UNSET:
@@ -44,8 +41,6 @@ class VolumeSpec:
             field_dict["template"] = template
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -63,7 +58,6 @@ class VolumeSpec:
             size=size,
             template=template,
         )
-
 
         volume_spec.additional_properties = d
         return volume_spec

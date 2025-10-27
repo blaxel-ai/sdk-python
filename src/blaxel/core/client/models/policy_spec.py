@@ -6,12 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.flavor import Flavor
-  from ..models.policy_location import PolicyLocation
-  from ..models.policy_max_tokens import PolicyMaxTokens
-
-
-
+    from ..models.flavor import Flavor
+    from ..models.policy_location import PolicyLocation
+    from ..models.policy_max_tokens import PolicyMaxTokens
 
 
 T = TypeVar("T", bound="PolicySpec")
@@ -19,27 +16,26 @@ T = TypeVar("T", bound="PolicySpec")
 
 @_attrs_define
 class PolicySpec:
-    """ Policy specification
+    """Policy specification
 
-        Attributes:
-            flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
-            locations (Union[Unset, list['PolicyLocation']]): PolicyLocations is a local type that wraps a slice of Location
-            max_tokens (Union[Unset, PolicyMaxTokens]): PolicyMaxTokens is a local type that wraps a slice of
-                PolicyMaxTokens
-            resource_types (Union[Unset, list[str]]): PolicyResourceTypes is a local type that wraps a slice of
-                PolicyResourceType
-            sandbox (Union[Unset, bool]): Sandbox mode
-            type_ (Union[Unset, str]): Policy type, can be location or flavor
-     """
+    Attributes:
+        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
+        locations (Union[Unset, list['PolicyLocation']]): PolicyLocations is a local type that wraps a slice of Location
+        max_tokens (Union[Unset, PolicyMaxTokens]): PolicyMaxTokens is a local type that wraps a slice of
+            PolicyMaxTokens
+        resource_types (Union[Unset, list[str]]): PolicyResourceTypes is a local type that wraps a slice of
+            PolicyResourceType
+        sandbox (Union[Unset, bool]): Sandbox mode
+        type_ (Union[Unset, str]): Policy type, can be location or flavor
+    """
 
-    flavors: Union[Unset, list['Flavor']] = UNSET
-    locations: Union[Unset, list['PolicyLocation']] = UNSET
-    max_tokens: Union[Unset, 'PolicyMaxTokens'] = UNSET
+    flavors: Union[Unset, list["Flavor"]] = UNSET
+    locations: Union[Unset, list["PolicyLocation"]] = UNSET
+    max_tokens: Union[Unset, "PolicyMaxTokens"] = UNSET
     resource_types: Union[Unset, list[str]] = UNSET
     sandbox: Union[Unset, bool] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         flavors: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -52,8 +48,6 @@ class PolicySpec:
                     componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
                 flavors.append(componentsschemas_flavors_item)
 
-
-
         locations: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.locations, Unset):
             locations = []
@@ -63,8 +57,6 @@ class PolicySpec:
                 else:
                     componentsschemas_policy_locations_item = componentsschemas_policy_locations_item_data.to_dict()
                 locations.append(componentsschemas_policy_locations_item)
-
-
 
         max_tokens: Union[Unset, dict[str, Any]] = UNSET
         if self.max_tokens and not isinstance(self.max_tokens, Unset) and not isinstance(self.max_tokens, dict):
@@ -76,17 +68,13 @@ class PolicySpec:
         if not isinstance(self.resource_types, Unset):
             resource_types = self.resource_types
 
-
-
         sandbox = self.sandbox
 
         type_ = self.type_
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if flavors is not UNSET:
             field_dict["flavors"] = flavors
         if locations is not UNSET:
@@ -102,48 +90,39 @@ class PolicySpec:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.flavor import Flavor
         from ..models.policy_location import PolicyLocation
         from ..models.policy_max_tokens import PolicyMaxTokens
+
         if not src_dict:
             return None
         d = src_dict.copy()
         flavors = []
         _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in (_flavors or []):
+        for componentsschemas_flavors_item_data in _flavors or []:
             componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
-
-
 
             flavors.append(componentsschemas_flavors_item)
 
-
         locations = []
         _locations = d.pop("locations", UNSET)
-        for componentsschemas_policy_locations_item_data in (_locations or []):
-            componentsschemas_policy_locations_item = PolicyLocation.from_dict(componentsschemas_policy_locations_item_data)
-
-
+        for componentsschemas_policy_locations_item_data in _locations or []:
+            componentsschemas_policy_locations_item = PolicyLocation.from_dict(
+                componentsschemas_policy_locations_item_data
+            )
 
             locations.append(componentsschemas_policy_locations_item)
 
-
         _max_tokens = d.pop("maxTokens", UNSET)
         max_tokens: Union[Unset, PolicyMaxTokens]
-        if isinstance(_max_tokens,  Unset):
+        if isinstance(_max_tokens, Unset):
             max_tokens = UNSET
         else:
             max_tokens = PolicyMaxTokens.from_dict(_max_tokens)
 
-
-
-
         resource_types = cast(list[str], d.pop("resourceTypes", UNSET))
-
 
         sandbox = d.pop("sandbox", UNSET)
 
@@ -157,7 +136,6 @@ class PolicySpec:
             sandbox=sandbox,
             type_=type_,
         )
-
 
         policy_spec.additional_properties = d
         return policy_spec

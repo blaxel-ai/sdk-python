@@ -12,31 +12,21 @@ from ...types import Response
 def _get_kwargs(
     sandbox_name: str,
     preview_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/sandboxes/{sandbox_name}/previews/{preview_name}/tokens",
     }
 
-
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list['PreviewToken'] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list["PreviewToken"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in (_response_200):
+        for response_200_item_data in _response_200:
             response_200_item = PreviewToken.from_dict(response_200_item_data)
-
-
 
             response_200.append(response_200_item)
 
@@ -47,7 +37,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list['Previe
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list['PreviewToken']]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list["PreviewToken"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -61,9 +51,8 @@ def sync_detailed(
     preview_name: str,
     *,
     client: Union[Client],
-
-) -> Response[list['PreviewToken']]:
-    """ Get tokens for Sandbox Preview
+) -> Response[list["PreviewToken"]]:
+    """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
 
@@ -77,13 +66,11 @@ def sync_detailed(
 
     Returns:
         Response[list['PreviewToken']]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-
+        preview_name=preview_name,
     )
 
     response = client.get_httpx_client().request(
@@ -92,14 +79,14 @@ preview_name=preview_name,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     sandbox_name: str,
     preview_name: str,
     *,
     client: Union[Client],
-
-) -> list['PreviewToken'] | None:
-    """ Get tokens for Sandbox Preview
+) -> list["PreviewToken"] | None:
+    """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
 
@@ -113,24 +100,22 @@ def sync(
 
     Returns:
         list['PreviewToken']
-     """
-
+    """
 
     return sync_detailed(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-client=client,
-
+        preview_name=preview_name,
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     sandbox_name: str,
     preview_name: str,
     *,
     client: Union[Client],
-
-) -> Response[list['PreviewToken']]:
-    """ Get tokens for Sandbox Preview
+) -> Response[list["PreviewToken"]]:
+    """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
 
@@ -144,29 +129,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['PreviewToken']]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-
+        preview_name=preview_name,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     sandbox_name: str,
     preview_name: str,
     *,
     client: Union[Client],
-
-) -> list['PreviewToken'] | None:
-    """ Get tokens for Sandbox Preview
+) -> list["PreviewToken"] | None:
+    """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
 
@@ -180,12 +161,12 @@ async def asyncio(
 
     Returns:
         list['PreviewToken']
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        sandbox_name=sandbox_name,
-preview_name=preview_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            sandbox_name=sandbox_name,
+            preview_name=preview_name,
+            client=client,
+        )
+    ).parsed

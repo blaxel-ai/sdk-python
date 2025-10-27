@@ -10,21 +10,20 @@ T = TypeVar("T", bound="RevisionConfiguration")
 
 @_attrs_define
 class RevisionConfiguration:
-    """ Revision configuration
+    """Revision configuration
 
-        Attributes:
-            active (Union[Unset, str]): Active revision id
-            canary (Union[Unset, str]): Canary revision id
-            canary_percent (Union[Unset, int]): Canary revision percent
-            traffic (Union[Unset, int]): Traffic percentage
-     """
+    Attributes:
+        active (Union[Unset, str]): Active revision id
+        canary (Union[Unset, str]): Canary revision id
+        canary_percent (Union[Unset, int]): Canary revision percent
+        traffic (Union[Unset, int]): Traffic percentage
+    """
 
     active: Union[Unset, str] = UNSET
     canary: Union[Unset, str] = UNSET
     canary_percent: Union[Unset, int] = UNSET
     traffic: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         active = self.active
@@ -35,11 +34,9 @@ class RevisionConfiguration:
 
         traffic = self.traffic
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if active is not UNSET:
             field_dict["active"] = active
         if canary is not UNSET:
@@ -50,8 +47,6 @@ class RevisionConfiguration:
             field_dict["traffic"] = traffic
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -72,7 +67,6 @@ class RevisionConfiguration:
             canary_percent=canary_percent,
             traffic=traffic,
         )
-
 
         revision_configuration.additional_properties = d
         return revision_configuration

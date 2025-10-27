@@ -10,36 +10,31 @@ T = TypeVar("T", bound="SpecConfiguration")
 
 @_attrs_define
 class SpecConfiguration:
-    """ Configuration, this is a key value storage. In your object you can retrieve the value with config[key]
+    """Configuration, this is a key value storage. In your object you can retrieve the value with config[key]
 
-        Attributes:
-            secret (Union[Unset, bool]): ACconfiguration secret
-            value (Union[Unset, str]): Configuration value
-     """
+    Attributes:
+        secret (Union[Unset, bool]): ACconfiguration secret
+        value (Union[Unset, str]): Configuration value
+    """
 
     secret: Union[Unset, bool] = UNSET
     value: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         secret = self.secret
 
         value = self.value
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if secret is not UNSET:
             field_dict["secret"] = secret
         if value is not UNSET:
             field_dict["value"] = value
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -54,7 +49,6 @@ class SpecConfiguration:
             secret=secret,
             value=value,
         )
-
 
         spec_configuration.additional_properties = d
         return spec_configuration

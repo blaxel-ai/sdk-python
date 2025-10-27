@@ -10,14 +10,14 @@ T = TypeVar("T", bound="UpdateWorkspaceServiceAccountResponse200")
 
 @_attrs_define
 class UpdateWorkspaceServiceAccountResponse200:
-    """ 
-        Attributes:
-            client_id (Union[Unset, str]): Service account client ID
-            created_at (Union[Unset, str]): Creation timestamp
-            description (Union[Unset, str]): Service account description
-            name (Union[Unset, str]): Service account name
-            updated_at (Union[Unset, str]): Last update timestamp
-     """
+    """
+    Attributes:
+        client_id (Union[Unset, str]): Service account client ID
+        created_at (Union[Unset, str]): Creation timestamp
+        description (Union[Unset, str]): Service account description
+        name (Union[Unset, str]): Service account name
+        updated_at (Union[Unset, str]): Last update timestamp
+    """
 
     client_id: Union[Unset, str] = UNSET
     created_at: Union[Unset, str] = UNSET
@@ -25,7 +25,6 @@ class UpdateWorkspaceServiceAccountResponse200:
     name: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         client_id = self.client_id
@@ -38,11 +37,9 @@ class UpdateWorkspaceServiceAccountResponse200:
 
         updated_at = self.updated_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if client_id is not UNSET:
             field_dict["client_id"] = client_id
         if created_at is not UNSET:
@@ -55,8 +52,6 @@ class UpdateWorkspaceServiceAccountResponse200:
             field_dict["updated_at"] = updated_at
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -80,7 +75,6 @@ class UpdateWorkspaceServiceAccountResponse200:
             name=name,
             updated_at=updated_at,
         )
-
 
         update_workspace_service_account_response_200.additional_properties = d
         return update_workspace_service_account_response_200

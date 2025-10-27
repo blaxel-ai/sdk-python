@@ -14,12 +14,8 @@ def _get_kwargs(
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
 
     params: dict[str, Any] = {}
 
@@ -27,9 +23,7 @@ def _get_kwargs(
 
     params["version"] = version
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -42,7 +36,6 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
-
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -53,8 +46,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> VolumeTemplate | None:
     if response.status_code == 200:
         response_200 = VolumeTemplate.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -78,9 +69,8 @@ def sync_detailed(
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
-
 ) -> Response[VolumeTemplate]:
-    """ Create volume template
+    """Create volume template
 
      Creates a volume template.
 
@@ -95,14 +85,12 @@ def sync_detailed(
 
     Returns:
         Response[VolumeTemplate]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         body=body,
-upload=upload,
-version=version,
-
+        upload=upload,
+        version=version,
     )
 
     response = client.get_httpx_client().request(
@@ -111,15 +99,15 @@ version=version,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: Union[Client],
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
-
 ) -> VolumeTemplate | None:
-    """ Create volume template
+    """Create volume template
 
      Creates a volume template.
 
@@ -134,16 +122,15 @@ def sync(
 
     Returns:
         VolumeTemplate
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-body=body,
-upload=upload,
-version=version,
-
+        body=body,
+        upload=upload,
+        version=version,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
@@ -151,9 +138,8 @@ async def asyncio_detailed(
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
-
 ) -> Response[VolumeTemplate]:
-    """ Create volume template
+    """Create volume template
 
      Creates a volume template.
 
@@ -168,21 +154,18 @@ async def asyncio_detailed(
 
     Returns:
         Response[VolumeTemplate]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         body=body,
-upload=upload,
-version=version,
-
+        upload=upload,
+        version=version,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
@@ -190,9 +173,8 @@ async def asyncio(
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
-
 ) -> VolumeTemplate | None:
-    """ Create volume template
+    """Create volume template
 
      Creates a volume template.
 
@@ -207,13 +189,13 @@ async def asyncio(
 
     Returns:
         VolumeTemplate
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-body=body,
-upload=upload,
-version=version,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            body=body,
+            upload=upload,
+            version=version,
+        )
+    ).parsed

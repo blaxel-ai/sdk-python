@@ -6,10 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.flavor import Flavor
-
-
-
+    from ..models.flavor import Flavor
 
 
 T = TypeVar("T", bound="LocationResponse")
@@ -17,25 +14,24 @@ T = TypeVar("T", bound="LocationResponse")
 
 @_attrs_define
 class LocationResponse:
-    """ Location availability for policies
+    """Location availability for policies
 
-        Attributes:
-            continent (Union[Unset, str]): Continent of the location
-            country (Union[Unset, str]): Country of the location
-            flavors (Union[Unset, list['Flavor']]): Hardware flavors available in the location
-            location (Union[Unset, str]): Name of the location
-            region (Union[Unset, str]): Region of the location
-            status (Union[Unset, str]): Status of the location
-     """
+    Attributes:
+        continent (Union[Unset, str]): Continent of the location
+        country (Union[Unset, str]): Country of the location
+        flavors (Union[Unset, list['Flavor']]): Hardware flavors available in the location
+        location (Union[Unset, str]): Name of the location
+        region (Union[Unset, str]): Region of the location
+        status (Union[Unset, str]): Status of the location
+    """
 
     continent: Union[Unset, str] = UNSET
     country: Union[Unset, str] = UNSET
-    flavors: Union[Unset, list['Flavor']] = UNSET
+    flavors: Union[Unset, list["Flavor"]] = UNSET
     location: Union[Unset, str] = UNSET
     region: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         continent = self.continent
@@ -52,19 +48,15 @@ class LocationResponse:
                     flavors_item = flavors_item_data.to_dict()
                 flavors.append(flavors_item)
 
-
-
         location = self.location
 
         region = self.region
 
         status = self.status
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if continent is not UNSET:
             field_dict["continent"] = continent
         if country is not UNSET:
@@ -80,11 +72,10 @@ class LocationResponse:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.flavor import Flavor
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -94,13 +85,10 @@ class LocationResponse:
 
         flavors = []
         _flavors = d.pop("flavors", UNSET)
-        for flavors_item_data in (_flavors or []):
+        for flavors_item_data in _flavors or []:
             flavors_item = Flavor.from_dict(flavors_item_data)
 
-
-
             flavors.append(flavors_item)
-
 
         location = d.pop("location", UNSET)
 
@@ -116,7 +104,6 @@ class LocationResponse:
             region=region,
             status=status,
         )
-
 
         location_response.additional_properties = d
         return location_response

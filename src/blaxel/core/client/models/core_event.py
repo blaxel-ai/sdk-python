@@ -10,15 +10,15 @@ T = TypeVar("T", bound="CoreEvent")
 
 @_attrs_define
 class CoreEvent:
-    """ Core event
+    """Core event
 
-        Attributes:
-            message (Union[Unset, str]): Event message
-            revision (Union[Unset, str]): RevisionID link to the event
-            status (Union[Unset, str]): Event status
-            time (Union[Unset, str]): Event time
-            type_ (Union[Unset, str]): Event type
-     """
+    Attributes:
+        message (Union[Unset, str]): Event message
+        revision (Union[Unset, str]): RevisionID link to the event
+        status (Union[Unset, str]): Event status
+        time (Union[Unset, str]): Event time
+        type_ (Union[Unset, str]): Event type
+    """
 
     message: Union[Unset, str] = UNSET
     revision: Union[Unset, str] = UNSET
@@ -26,7 +26,6 @@ class CoreEvent:
     time: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         message = self.message
@@ -39,11 +38,9 @@ class CoreEvent:
 
         type_ = self.type_
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if message is not UNSET:
             field_dict["message"] = message
         if revision is not UNSET:
@@ -56,8 +53,6 @@ class CoreEvent:
             field_dict["type"] = type_
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -81,7 +76,6 @@ class CoreEvent:
             time=time,
             type_=type_,
         )
-
 
         core_event.additional_properties = d
         return core_event

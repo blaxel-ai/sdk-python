@@ -8,30 +8,22 @@ T = TypeVar("T", bound="FormConfig")
 
 @_attrs_define
 class FormConfig:
-    """ Config of the artifact
-
-     """
+    """Config of the artifact"""
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        form_config = cls(
-        )
-
+        form_config = cls()
 
         form_config.additional_properties = d
         return form_config
