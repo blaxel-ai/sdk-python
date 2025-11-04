@@ -10,6 +10,7 @@ from ..client.api.compute.update_sandbox import asyncio as update_sandbox
 from ..client.client import client
 from ..client.models import Metadata, Runtime, Sandbox, SandboxSpec
 from ..client.types import UNSET
+from .codegen import SandboxCodegen
 from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
@@ -52,6 +53,7 @@ class SandboxInstance:
         self.previews = SandboxPreviews(self.sandbox)
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
+        self.codegen = SandboxCodegen(self.config)
 
     @property
     def metadata(self):
@@ -82,7 +84,7 @@ class SandboxInstance:
         safe: bool = True,
     ) -> "SandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
-        default_image = "blaxel/base:latest"
+        default_image = "blaxel/base-image:latest"
         default_memory = 4096
 
         # Handle SandboxCreateConfiguration or simple dict with name/image/memory/ports/envs/volumes keys
@@ -130,7 +132,7 @@ class SandboxInstance:
                 metadata=Metadata(name=name),
                 spec=SandboxSpec(
                     runtime=Runtime(
-                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3", snapshot_enabled=snapshot_enabled
+                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3"
                     ),
                     volumes=volumes,
                 ),

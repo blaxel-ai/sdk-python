@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
 
 import httpx
@@ -34,12 +35,24 @@ class SandboxFileSystem(SandboxAction):
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
-    async def write_binary(self, path: str, content: Union[bytes, bytearray]) -> SuccessResponse:
-        """Write binary content to a file."""
+    async def write_binary(self, path: str, content: Union[bytes, bytearray, str]) -> SuccessResponse:
+        """Write binary content to a file.
+
+        Args:
+            path: The path in the sandbox to write to
+            content: Binary content as bytes, bytearray, or string path to a local file
+
+        Returns:
+            SuccessResponse indicating success
+        """
         path = self.format_path(path)
 
+        # If content is a string, treat it as a file path and read it
+        if isinstance(content, str):
+            local_path = Path(content)
+            content = local_path.read_bytes()
         # Convert bytearray to bytes if necessary
-        if isinstance(content, bytearray):
+        elif isinstance(content, bytearray):
             content = bytes(content)
 
         # Wrap binary content in BytesIO to provide file-like interface
@@ -97,6 +110,42 @@ class SandboxFileSystem(SandboxAction):
             if "content" in data:
                 return data["content"]
             raise Exception("Unsupported file type")
+
+    async def read_binary(self, path: str) -> bytes:
+        """Read binary content from a file.
+
+        Args:
+            path: The path in the sandbox to read from
+
+        Returns:
+            Binary content as bytes
+        """
+        path = self.format_path(path)
+
+        url = f"{self.url}/filesystem/{path}"
+        headers = {
+            **settings.headers,
+            **self.sandbox_config.headers,
+            "Accept": "application/octet-stream",
+        }
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.get(url, headers=headers)
+            self.handle_response_error(response)
+            return response.content
+
+    async def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
+        """Download a file from the sandbox to the local filesystem.
+
+        Args:
+            src: The path in the sandbox to download from
+            destination_path: The local path to save to
+            mode: File permissions mode (default: 0o644)
+        """
+        content = await self.read_binary(src)
+        local_path = Path(destination_path)
+        local_path.write_bytes(content)
+        local_path.chmod(mode)
 
     async def rm(self, path: str, recursive: bool = False) -> SuccessResponse:
         path = self.format_path(path)
