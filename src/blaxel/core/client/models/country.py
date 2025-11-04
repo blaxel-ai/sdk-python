@@ -10,36 +10,31 @@ T = TypeVar("T", bound="Country")
 
 @_attrs_define
 class Country:
-    """ Configuration
+    """Configuration
 
-        Attributes:
-            display_name (Union[Unset, str]): Country display name
-            name (Union[Unset, str]): Country code
-     """
+    Attributes:
+        display_name (Union[Unset, str]): Country display name
+        name (Union[Unset, str]): Country code
+    """
 
     display_name: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         display_name = self.display_name
 
         name = self.name
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if display_name is not UNSET:
             field_dict["displayName"] = display_name
         if name is not UNSET:
             field_dict["name"] = name
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -54,7 +49,6 @@ class Country:
             display_name=display_name,
             name=name,
         )
-
 
         country.additional_properties = d
         return country

@@ -10,29 +10,29 @@ T = TypeVar("T", bound="PrivateCluster")
 
 @_attrs_define
 class PrivateCluster:
-    """ A private cluster where models can be located on.
+    """A private cluster where models can be located on.
 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the resource was created
-            updated_at (Union[Unset, str]): The date and time when the resource was updated
-            created_by (Union[Unset, str]): The user or service account who created the resource
-            updated_by (Union[Unset, str]): The user or service account who updated the resource
-            continent (Union[Unset, str]): The private cluster's continent, used to determine the closest private cluster to
-                serve inference requests based on the user's location
-            country (Union[Unset, str]): The country where the private cluster is located, used to determine the closest
-                private cluster to serve inference requests based on the user's location
-            display_name (Union[Unset, str]): The private cluster's display Name
-            healthy (Union[Unset, bool]): Whether the private cluster is healthy or not, used to determine if the private
-                cluster is ready to run inference
-            last_health_check_time (Union[Unset, str]): The private cluster's unique name
-            latitude (Union[Unset, str]): The private cluster's latitude, used to determine the closest private cluster to
-                serve inference requests based on the user's location
-            longitude (Union[Unset, str]): The private cluster's longitude, used to determine the closest private cluster to
-                serve inference requests based on the user's location
-            name (Union[Unset, str]): The name of the private cluster, it must be unique
-            owned_by (Union[Unset, str]): The service account (operator) that owns the cluster
-            workspace (Union[Unset, str]): The workspace the private cluster belongs to
-     """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the resource was created
+        updated_at (Union[Unset, str]): The date and time when the resource was updated
+        created_by (Union[Unset, str]): The user or service account who created the resource
+        updated_by (Union[Unset, str]): The user or service account who updated the resource
+        continent (Union[Unset, str]): The private cluster's continent, used to determine the closest private cluster to
+            serve inference requests based on the user's location
+        country (Union[Unset, str]): The country where the private cluster is located, used to determine the closest
+            private cluster to serve inference requests based on the user's location
+        display_name (Union[Unset, str]): The private cluster's display Name
+        healthy (Union[Unset, bool]): Whether the private cluster is healthy or not, used to determine if the private
+            cluster is ready to run inference
+        last_health_check_time (Union[Unset, str]): The private cluster's unique name
+        latitude (Union[Unset, str]): The private cluster's latitude, used to determine the closest private cluster to
+            serve inference requests based on the user's location
+        longitude (Union[Unset, str]): The private cluster's longitude, used to determine the closest private cluster to
+            serve inference requests based on the user's location
+        name (Union[Unset, str]): The name of the private cluster, it must be unique
+        owned_by (Union[Unset, str]): The service account (operator) that owns the cluster
+        workspace (Union[Unset, str]): The workspace the private cluster belongs to
+    """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
@@ -49,7 +49,6 @@ class PrivateCluster:
     owned_by: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -80,11 +79,9 @@ class PrivateCluster:
 
         workspace = self.workspace
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -115,8 +112,6 @@ class PrivateCluster:
             field_dict["workspace"] = workspace
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -167,7 +162,6 @@ class PrivateCluster:
             owned_by=owned_by,
             workspace=workspace,
         )
-
 
         private_cluster.additional_properties = d
         return private_cluster

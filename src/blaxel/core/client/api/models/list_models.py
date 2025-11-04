@@ -9,32 +9,21 @@ from ...models.model import Model
 from ...types import Response
 
 
-def _get_kwargs(
-    
-) -> dict[str, Any]:
-    
-
-    
-
-    
-
+def _get_kwargs() -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/models",
     }
 
-
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list['Model'] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list["Model"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in (_response_200):
+        for response_200_item_data in _response_200:
             response_200_item = Model.from_dict(response_200_item_data)
-
-
 
             response_200.append(response_200_item)
 
@@ -45,7 +34,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list['Model'
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list['Model']]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Model"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -57,9 +46,8 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Union[Client],
-
-) -> Response[list['Model']]:
-    """ List models
+) -> Response[list["Model"]]:
+    """List models
 
      Returns a list of all models in the workspace.
 
@@ -69,12 +57,9 @@ def sync_detailed(
 
     Returns:
         Response[list['Model']]
-     """
+    """
 
-
-    kwargs = _get_kwargs(
-        
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -82,12 +67,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: Union[Client],
-
-) -> list['Model'] | None:
-    """ List models
+) -> list["Model"] | None:
+    """List models
 
      Returns a list of all models in the workspace.
 
@@ -97,20 +82,18 @@ def sync(
 
     Returns:
         list['Model']
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-
-) -> Response[list['Model']]:
-    """ List models
+) -> Response[list["Model"]]:
+    """List models
 
      Returns a list of all models in the workspace.
 
@@ -120,25 +103,20 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['Model']]
-     """
+    """
 
+    kwargs = _get_kwargs()
 
-    kwargs = _get_kwargs(
-        
-    )
-
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: Union[Client],
-
-) -> list['Model'] | None:
-    """ List models
+) -> list["Model"] | None:
+    """List models
 
      Returns a list of all models in the workspace.
 
@@ -148,10 +126,10 @@ async def asyncio(
 
     Returns:
         list['Model']
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+        )
+    ).parsed

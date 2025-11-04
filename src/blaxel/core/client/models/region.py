@@ -10,16 +10,16 @@ T = TypeVar("T", bound="Region")
 
 @_attrs_define
 class Region:
-    """ Region
+    """Region
 
-        Attributes:
-            allowed (Union[Unset, str]): Region display name
-            continent (Union[Unset, str]): Region display name
-            country (Union[Unset, str]): Region display name
-            info_generation (Union[Unset, str]): Region display name
-            location (Union[Unset, str]): Region display name
-            name (Union[Unset, str]): Region name
-     """
+    Attributes:
+        allowed (Union[Unset, str]): Region display name
+        continent (Union[Unset, str]): Region display name
+        country (Union[Unset, str]): Region display name
+        info_generation (Union[Unset, str]): Region display name
+        location (Union[Unset, str]): Region display name
+        name (Union[Unset, str]): Region name
+    """
 
     allowed: Union[Unset, str] = UNSET
     continent: Union[Unset, str] = UNSET
@@ -28,7 +28,6 @@ class Region:
     location: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         allowed = self.allowed
@@ -43,11 +42,9 @@ class Region:
 
         name = self.name
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if allowed is not UNSET:
             field_dict["allowed"] = allowed
         if continent is not UNSET:
@@ -62,8 +59,6 @@ class Region:
             field_dict["name"] = name
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -90,7 +85,6 @@ class Region:
             location=location,
             name=name,
         )
-
 
         region.additional_properties = d
         return region

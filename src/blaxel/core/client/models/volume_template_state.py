@@ -10,21 +10,20 @@ T = TypeVar("T", bound="VolumeTemplateState")
 
 @_attrs_define
 class VolumeTemplateState:
-    """ Volume template state
+    """Volume template state
 
-        Attributes:
-            last_version_uploaded_at (Union[Unset, str]): Timestamp of last version upload
-            latest_version (Union[Unset, str]): Current/latest S3 version ID
-            status (Union[Unset, str]): Status of the volume template (created, ready, error)
-            version_count (Union[Unset, int]): Total number of versions for this template
-     """
+    Attributes:
+        last_version_uploaded_at (Union[Unset, str]): Timestamp of last version upload
+        latest_version (Union[Unset, str]): Current/latest S3 version ID
+        status (Union[Unset, str]): Status of the volume template (created, ready, error)
+        version_count (Union[Unset, int]): Total number of versions for this template
+    """
 
     last_version_uploaded_at: Union[Unset, str] = UNSET
     latest_version: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
     version_count: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         last_version_uploaded_at = self.last_version_uploaded_at
@@ -35,11 +34,9 @@ class VolumeTemplateState:
 
         version_count = self.version_count
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if last_version_uploaded_at is not UNSET:
             field_dict["lastVersionUploadedAt"] = last_version_uploaded_at
         if latest_version is not UNSET:
@@ -50,8 +47,6 @@ class VolumeTemplateState:
             field_dict["versionCount"] = version_count
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -72,7 +67,6 @@ class VolumeTemplateState:
             status=status,
             version_count=version_count,
         )
-
 
         volume_template_state.additional_properties = d
         return volume_template_state

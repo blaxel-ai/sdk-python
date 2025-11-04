@@ -10,36 +10,31 @@ T = TypeVar("T", bound="PolicyLocation")
 
 @_attrs_define
 class PolicyLocation:
-    """ Policy location
+    """Policy location
 
-        Attributes:
-            name (Union[Unset, str]): Policy location name
-            type_ (Union[Unset, str]): Policy location type
-     """
+    Attributes:
+        name (Union[Unset, str]): Policy location name
+        type_ (Union[Unset, str]): Policy location type
+    """
 
     name: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
         type_ = self.type_
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if name is not UNSET:
             field_dict["name"] = name
         if type_ is not UNSET:
             field_dict["type"] = type_
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -54,7 +49,6 @@ class PolicyLocation:
             name=name,
             type_=type_,
         )
-
 
         policy_location.additional_properties = d
         return policy_location

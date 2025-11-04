@@ -13,14 +13,8 @@ def _get_kwargs(
     domain_name: str,
     *,
     body: CustomDomain,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
-
-    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -32,7 +26,6 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
-
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -43,8 +36,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> CustomDomain | None:
     if response.status_code == 200:
         response_200 = CustomDomain.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -67,9 +58,8 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: CustomDomain,
-
 ) -> Response[CustomDomain]:
-    """ Update custom domain
+    """Update custom domain
 
     Args:
         domain_name (str):
@@ -84,13 +74,11 @@ def sync_detailed(
 
     Returns:
         Response[CustomDomain]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         domain_name=domain_name,
-body=body,
-
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -99,14 +87,14 @@ body=body,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     domain_name: str,
     *,
     client: Union[Client],
     body: CustomDomain,
-
 ) -> CustomDomain | None:
-    """ Update custom domain
+    """Update custom domain
 
     Args:
         domain_name (str):
@@ -121,24 +109,22 @@ def sync(
 
     Returns:
         CustomDomain
-     """
-
+    """
 
     return sync_detailed(
         domain_name=domain_name,
-client=client,
-body=body,
-
+        client=client,
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     domain_name: str,
     *,
     client: Union[Client],
     body: CustomDomain,
-
 ) -> Response[CustomDomain]:
-    """ Update custom domain
+    """Update custom domain
 
     Args:
         domain_name (str):
@@ -153,29 +139,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[CustomDomain]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         domain_name=domain_name,
-body=body,
-
+        body=body,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     domain_name: str,
     *,
     client: Union[Client],
     body: CustomDomain,
-
 ) -> CustomDomain | None:
-    """ Update custom domain
+    """Update custom domain
 
     Args:
         domain_name (str):
@@ -190,12 +172,12 @@ async def asyncio(
 
     Returns:
         CustomDomain
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        domain_name=domain_name,
-client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            domain_name=domain_name,
+            client=client,
+            body=body,
+        )
+    ).parsed

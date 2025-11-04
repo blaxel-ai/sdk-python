@@ -11,19 +11,11 @@ from ...types import Response
 
 def _get_kwargs(
     sandbox_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "put",
         "url": f"/sandboxes/{sandbox_name}/start",
     }
-
 
     return _kwargs
 
@@ -31,8 +23,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, StartSandbox] | None:
     if response.status_code == 200:
         response_200 = StartSandbox.from_dict(response.json())
-
-
 
         return response_200
     if response.status_code == 409:
@@ -57,9 +47,8 @@ def sync_detailed(
     sandbox_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, StartSandbox]]:
-    """ Start Sandbox
+    """Start Sandbox
 
      Starts a Sandbox by name.
 
@@ -72,12 +61,10 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, StartSandbox]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -86,13 +73,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     sandbox_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, StartSandbox] | None:
-    """ Start Sandbox
+    """Start Sandbox
 
      Starts a Sandbox by name.
 
@@ -105,22 +92,20 @@ def sync(
 
     Returns:
         Union[Any, StartSandbox]
-     """
-
+    """
 
     return sync_detailed(
         sandbox_name=sandbox_name,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     sandbox_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, StartSandbox]]:
-    """ Start Sandbox
+    """Start Sandbox
 
      Starts a Sandbox by name.
 
@@ -133,27 +118,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, StartSandbox]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     sandbox_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, StartSandbox] | None:
-    """ Start Sandbox
+    """Start Sandbox
 
      Starts a Sandbox by name.
 
@@ -166,11 +147,11 @@ async def asyncio(
 
     Returns:
         Union[Any, StartSandbox]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        sandbox_name=sandbox_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            sandbox_name=sandbox_name,
+            client=client,
+        )
+    ).parsed

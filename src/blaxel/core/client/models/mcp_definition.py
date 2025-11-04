@@ -6,11 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.mcp_definition_entrypoint import MCPDefinitionEntrypoint
-  from ..models.mcp_definition_form import MCPDefinitionForm
-
-
-
+    from ..models.mcp_definition_entrypoint import MCPDefinitionEntrypoint
+    from ..models.mcp_definition_form import MCPDefinitionForm
 
 
 T = TypeVar("T", bound="MCPDefinition")
@@ -18,27 +15,28 @@ T = TypeVar("T", bound="MCPDefinition")
 
 @_attrs_define
 class MCPDefinition:
-    """ Definition of an MCP from the MCP Hub
+    """Definition of an MCP from the MCP Hub
 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the resource was created
-            updated_at (Union[Unset, str]): The date and time when the resource was updated
-            categories (Union[Unset, list[Any]]): Categories of the artifact
-            coming_soon (Union[Unset, bool]): If the artifact is coming soon
-            description (Union[Unset, str]): Description of the artifact
-            display_name (Union[Unset, str]): Display name of the artifact
-            enterprise (Union[Unset, bool]): If the artifact is enterprise
-            entrypoint (Union[Unset, MCPDefinitionEntrypoint]): Entrypoint of the artifact
-            form (Union[Unset, MCPDefinitionForm]): Form of the artifact
-            hidden_secrets (Union[Unset, list[str]]): Hidden secrets of the artifact
-            icon (Union[Unset, str]): Icon of the artifact
-            image (Union[Unset, str]): Image of the artifact
-            integration (Union[Unset, str]): Integration of the artifact
-            long_description (Union[Unset, str]): Long description of the artifact
-            name (Union[Unset, str]): Name of the artifact
-            transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
-            url (Union[Unset, str]): URL of the artifact
-     """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the resource was created
+        updated_at (Union[Unset, str]): The date and time when the resource was updated
+        categories (Union[Unset, list[Any]]): Categories of the artifact
+        coming_soon (Union[Unset, bool]): If the artifact is coming soon
+        description (Union[Unset, str]): Description of the artifact
+        display_name (Union[Unset, str]): Display name of the artifact
+        enterprise (Union[Unset, bool]): If the artifact is enterprise
+        entrypoint (Union[Unset, MCPDefinitionEntrypoint]): Entrypoint of the artifact
+        form (Union[Unset, MCPDefinitionForm]): Form of the artifact
+        hidden (Union[Unset, bool]): If the artifact is hidden
+        hidden_secrets (Union[Unset, list[str]]): Hidden secrets of the artifact
+        icon (Union[Unset, str]): Icon of the artifact
+        image (Union[Unset, str]): Image of the artifact
+        integration (Union[Unset, str]): Integration of the artifact
+        long_description (Union[Unset, str]): Long description of the artifact
+        name (Union[Unset, str]): Name of the artifact
+        transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
+        url (Union[Unset, str]): URL of the artifact
+    """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
@@ -47,8 +45,9 @@ class MCPDefinition:
     description: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     enterprise: Union[Unset, bool] = UNSET
-    entrypoint: Union[Unset, 'MCPDefinitionEntrypoint'] = UNSET
-    form: Union[Unset, 'MCPDefinitionForm'] = UNSET
+    entrypoint: Union[Unset, "MCPDefinitionEntrypoint"] = UNSET
+    form: Union[Unset, "MCPDefinitionForm"] = UNSET
+    hidden: Union[Unset, bool] = UNSET
     hidden_secrets: Union[Unset, list[str]] = UNSET
     icon: Union[Unset, str] = UNSET
     image: Union[Unset, str] = UNSET
@@ -59,7 +58,6 @@ class MCPDefinition:
     url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
 
@@ -68,8 +66,6 @@ class MCPDefinition:
         categories: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.categories, Unset):
             categories = self.categories
-
-
 
         coming_soon = self.coming_soon
 
@@ -91,11 +87,11 @@ class MCPDefinition:
         elif self.form and isinstance(self.form, dict):
             form = self.form
 
+        hidden = self.hidden
+
         hidden_secrets: Union[Unset, list[str]] = UNSET
         if not isinstance(self.hidden_secrets, Unset):
             hidden_secrets = self.hidden_secrets
-
-
 
         icon = self.icon
 
@@ -111,11 +107,9 @@ class MCPDefinition:
 
         url = self.url
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -134,6 +128,8 @@ class MCPDefinition:
             field_dict["entrypoint"] = entrypoint
         if form is not UNSET:
             field_dict["form"] = form
+        if hidden is not UNSET:
+            field_dict["hidden"] = hidden
         if hidden_secrets is not UNSET:
             field_dict["hiddenSecrets"] = hidden_secrets
         if icon is not UNSET:
@@ -153,12 +149,11 @@ class MCPDefinition:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.mcp_definition_entrypoint import MCPDefinitionEntrypoint
         from ..models.mcp_definition_form import MCPDefinitionForm
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -167,7 +162,6 @@ class MCPDefinition:
         updated_at = d.pop("updatedAt", UNSET)
 
         categories = cast(list[Any], d.pop("categories", UNSET))
-
 
         coming_soon = d.pop("coming_soon", UNSET)
 
@@ -179,26 +173,21 @@ class MCPDefinition:
 
         _entrypoint = d.pop("entrypoint", UNSET)
         entrypoint: Union[Unset, MCPDefinitionEntrypoint]
-        if isinstance(_entrypoint,  Unset):
+        if isinstance(_entrypoint, Unset):
             entrypoint = UNSET
         else:
             entrypoint = MCPDefinitionEntrypoint.from_dict(_entrypoint)
 
-
-
-
         _form = d.pop("form", UNSET)
         form: Union[Unset, MCPDefinitionForm]
-        if isinstance(_form,  Unset):
+        if isinstance(_form, Unset):
             form = UNSET
         else:
             form = MCPDefinitionForm.from_dict(_form)
 
-
-
+        hidden = d.pop("hidden", UNSET)
 
         hidden_secrets = cast(list[str], d.pop("hiddenSecrets", UNSET))
-
 
         icon = d.pop("icon", UNSET)
 
@@ -224,6 +213,7 @@ class MCPDefinition:
             enterprise=enterprise,
             entrypoint=entrypoint,
             form=form,
+            hidden=hidden,
             hidden_secrets=hidden_secrets,
             icon=icon,
             image=image,
@@ -233,7 +223,6 @@ class MCPDefinition:
             transport=transport,
             url=url,
         )
-
 
         mcp_definition.additional_properties = d
         return mcp_definition

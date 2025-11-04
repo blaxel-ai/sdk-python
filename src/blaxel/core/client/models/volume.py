@@ -6,13 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.core_event import CoreEvent
-  from ..models.metadata import Metadata
-  from ..models.volume_spec import VolumeSpec
-  from ..models.volume_state import VolumeState
-
-
-
+    from ..models.core_event import CoreEvent
+    from ..models.metadata import Metadata
+    from ..models.volume_spec import VolumeSpec
+    from ..models.volume_state import VolumeState
 
 
 T = TypeVar("T", bound="Volume")
@@ -20,25 +17,24 @@ T = TypeVar("T", bound="Volume")
 
 @_attrs_define
 class Volume:
-    """ Volume resource for persistent storage
+    """Volume resource for persistent storage
 
-        Attributes:
-            events (Union[Unset, list['CoreEvent']]): Core events
-            metadata (Union[Unset, Metadata]): Metadata
-            spec (Union[Unset, VolumeSpec]): Volume specification - immutable configuration
-            state (Union[Unset, VolumeState]): Volume state - mutable runtime state
-            status (Union[Unset, str]): Volume status computed from events
-            terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
-     """
+    Attributes:
+        events (Union[Unset, list['CoreEvent']]): Core events
+        metadata (Union[Unset, Metadata]): Metadata
+        spec (Union[Unset, VolumeSpec]): Volume specification - immutable configuration
+        state (Union[Unset, VolumeState]): Volume state - mutable runtime state
+        status (Union[Unset, str]): Volume status computed from events
+        terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
+    """
 
-    events: Union[Unset, list['CoreEvent']] = UNSET
-    metadata: Union[Unset, 'Metadata'] = UNSET
-    spec: Union[Unset, 'VolumeSpec'] = UNSET
-    state: Union[Unset, 'VolumeState'] = UNSET
+    events: Union[Unset, list["CoreEvent"]] = UNSET
+    metadata: Union[Unset, "Metadata"] = UNSET
+    spec: Union[Unset, "VolumeSpec"] = UNSET
+    state: Union[Unset, "VolumeState"] = UNSET
     status: Union[Unset, str] = UNSET
     terminated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         events: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -50,8 +46,6 @@ class Volume:
                 else:
                     componentsschemas_core_events_item = componentsschemas_core_events_item_data.to_dict()
                 events.append(componentsschemas_core_events_item)
-
-
 
         metadata: Union[Unset, dict[str, Any]] = UNSET
         if self.metadata and not isinstance(self.metadata, Unset) and not isinstance(self.metadata, dict):
@@ -75,11 +69,9 @@ class Volume:
 
         terminated_at = self.terminated_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if events is not UNSET:
             field_dict["events"] = events
         if metadata is not UNSET:
@@ -95,56 +87,43 @@ class Volume:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
         from ..models.volume_spec import VolumeSpec
         from ..models.volume_state import VolumeState
+
         if not src_dict:
             return None
         d = src_dict.copy()
         events = []
         _events = d.pop("events", UNSET)
-        for componentsschemas_core_events_item_data in (_events or []):
+        for componentsschemas_core_events_item_data in _events or []:
             componentsschemas_core_events_item = CoreEvent.from_dict(componentsschemas_core_events_item_data)
-
-
 
             events.append(componentsschemas_core_events_item)
 
-
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, Metadata]
-        if isinstance(_metadata,  Unset):
+        if isinstance(_metadata, Unset):
             metadata = UNSET
         else:
             metadata = Metadata.from_dict(_metadata)
 
-
-
-
         _spec = d.pop("spec", UNSET)
         spec: Union[Unset, VolumeSpec]
-        if isinstance(_spec,  Unset):
+        if isinstance(_spec, Unset):
             spec = UNSET
         else:
             spec = VolumeSpec.from_dict(_spec)
 
-
-
-
         _state = d.pop("state", UNSET)
         state: Union[Unset, VolumeState]
-        if isinstance(_state,  Unset):
+        if isinstance(_state, Unset):
             state = UNSET
         else:
             state = VolumeState.from_dict(_state)
-
-
-
 
         status = d.pop("status", UNSET)
 
@@ -158,7 +137,6 @@ class Volume:
             status=status,
             terminated_at=terminated_at,
         )
-
 
         volume.additional_properties = d
         return volume

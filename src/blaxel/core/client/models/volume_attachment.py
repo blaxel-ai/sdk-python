@@ -10,19 +10,18 @@ T = TypeVar("T", bound="VolumeAttachment")
 
 @_attrs_define
 class VolumeAttachment:
-    """ Volume attachment configuration for sandbox
+    """Volume attachment configuration for sandbox
 
-        Attributes:
-            mount_path (Union[Unset, str]): Mount path in the container
-            name (Union[Unset, str]): Name of the volume to attach
-            read_only (Union[Unset, bool]): Whether the volume is mounted as read-only
-     """
+    Attributes:
+        mount_path (Union[Unset, str]): Mount path in the container
+        name (Union[Unset, str]): Name of the volume to attach
+        read_only (Union[Unset, bool]): Whether the volume is mounted as read-only
+    """
 
     mount_path: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     read_only: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         mount_path = self.mount_path
@@ -31,11 +30,9 @@ class VolumeAttachment:
 
         read_only = self.read_only
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if mount_path is not UNSET:
             field_dict["mountPath"] = mount_path
         if name is not UNSET:
@@ -44,8 +41,6 @@ class VolumeAttachment:
             field_dict["readOnly"] = read_only
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -63,7 +58,6 @@ class VolumeAttachment:
             name=name,
             read_only=read_only,
         )
-
 
         volume_attachment.additional_properties = d
         return volume_attachment

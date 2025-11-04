@@ -11,19 +11,11 @@ from ...types import Response
 
 def _get_kwargs(
     domain_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/customdomains/{domain_name}",
     }
-
 
     return _kwargs
 
@@ -31,8 +23,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> CustomDomain | None:
     if response.status_code == 200:
         response_200 = CustomDomain.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -54,9 +44,8 @@ def sync_detailed(
     domain_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[CustomDomain]:
-    """ Delete custom domain
+    """Delete custom domain
 
     Args:
         domain_name (str):
@@ -67,12 +56,10 @@ def sync_detailed(
 
     Returns:
         Response[CustomDomain]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         domain_name=domain_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -81,13 +68,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     domain_name: str,
     *,
     client: Union[Client],
-
 ) -> CustomDomain | None:
-    """ Delete custom domain
+    """Delete custom domain
 
     Args:
         domain_name (str):
@@ -98,22 +85,20 @@ def sync(
 
     Returns:
         CustomDomain
-     """
-
+    """
 
     return sync_detailed(
         domain_name=domain_name,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     domain_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[CustomDomain]:
-    """ Delete custom domain
+    """Delete custom domain
 
     Args:
         domain_name (str):
@@ -124,27 +109,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[CustomDomain]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         domain_name=domain_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     domain_name: str,
     *,
     client: Union[Client],
-
 ) -> CustomDomain | None:
-    """ Delete custom domain
+    """Delete custom domain
 
     Args:
         domain_name (str):
@@ -155,11 +136,11 @@ async def asyncio(
 
     Returns:
         CustomDomain
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        domain_name=domain_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            domain_name=domain_name,
+            client=client,
+        )
+    ).parsed

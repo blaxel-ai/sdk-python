@@ -10,15 +10,15 @@ T = TypeVar("T", bound="RequestDurationOverTimeMetric")
 
 @_attrs_define
 class RequestDurationOverTimeMetric:
-    """ Request duration over time metric
+    """Request duration over time metric
 
-        Attributes:
-            average (Union[Unset, float]): Average request duration
-            p50 (Union[Unset, float]): P50 request duration
-            p90 (Union[Unset, float]): P90 request duration
-            p99 (Union[Unset, float]): P99 request duration
-            timestamp (Union[Unset, str]): Timestamp
-     """
+    Attributes:
+        average (Union[Unset, float]): Average request duration
+        p50 (Union[Unset, float]): P50 request duration
+        p90 (Union[Unset, float]): P90 request duration
+        p99 (Union[Unset, float]): P99 request duration
+        timestamp (Union[Unset, str]): Timestamp
+    """
 
     average: Union[Unset, float] = UNSET
     p50: Union[Unset, float] = UNSET
@@ -26,7 +26,6 @@ class RequestDurationOverTimeMetric:
     p99: Union[Unset, float] = UNSET
     timestamp: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         average = self.average
@@ -39,11 +38,9 @@ class RequestDurationOverTimeMetric:
 
         timestamp = self.timestamp
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if average is not UNSET:
             field_dict["average"] = average
         if p50 is not UNSET:
@@ -56,8 +53,6 @@ class RequestDurationOverTimeMetric:
             field_dict["timestamp"] = timestamp
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -81,7 +76,6 @@ class RequestDurationOverTimeMetric:
             p99=p99,
             timestamp=timestamp,
         )
-
 
         request_duration_over_time_metric.additional_properties = d
         return request_duration_over_time_metric

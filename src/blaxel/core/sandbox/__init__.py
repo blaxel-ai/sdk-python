@@ -1,3 +1,10 @@
+from .client.models import (
+    ApplyEditRequest,
+    ApplyEditResponse,
+    RankedFile,
+    RerankingResponse,
+)
+from .codegen import SandboxCodegen
 from .sandbox import (
     Sandbox,
     SandboxFileSystem,
@@ -30,6 +37,11 @@ __all__ = [
     "SandboxFileSystem",
     "SandboxPreviews",
     "SandboxProcess",
+    "SandboxCodegen",
     "ProcessRequestWithLog",
     "ProcessResponseWithLog",
+    "ApplyEditRequest",
+    "ApplyEditResponse",
+    "RerankingResponse",
+    "RankedFile",
 ]

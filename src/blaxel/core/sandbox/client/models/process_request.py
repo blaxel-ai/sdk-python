@@ -18,7 +18,9 @@ class ProcessRequest:
     Attributes:
         command (str):  Example: ls -la.
         env (Union[Unset, ProcessRequestEnv]):  Example: {'{"PORT"': ' "3000"}'}.
+        max_restarts (Union[Unset, int]):  Example: 3.
         name (Union[Unset, str]):  Example: my-process.
+        restart_on_failure (Union[Unset, bool]):  Example: True.
         timeout (Union[Unset, int]):  Example: 30.
         wait_for_completion (Union[Unset, bool]):
         wait_for_ports (Union[Unset, list[int]]):  Example: [3000, 8080].
@@ -27,7 +29,9 @@ class ProcessRequest:
 
     command: str
     env: Union[Unset, "ProcessRequestEnv"] = UNSET
+    max_restarts: Union[Unset, int] = UNSET
     name: Union[Unset, str] = UNSET
+    restart_on_failure: Union[Unset, bool] = UNSET
     timeout: Union[Unset, int] = UNSET
     wait_for_completion: Union[Unset, bool] = UNSET
     wait_for_ports: Union[Unset, list[int]] = UNSET
@@ -43,7 +47,11 @@ class ProcessRequest:
         elif self.env and isinstance(self.env, dict):
             env = self.env
 
+        max_restarts = self.max_restarts
+
         name = self.name
+
+        restart_on_failure = self.restart_on_failure
 
         timeout = self.timeout
 
@@ -64,8 +72,12 @@ class ProcessRequest:
         )
         if env is not UNSET:
             field_dict["env"] = env
+        if max_restarts is not UNSET:
+            field_dict["maxRestarts"] = max_restarts
         if name is not UNSET:
             field_dict["name"] = name
+        if restart_on_failure is not UNSET:
+            field_dict["restartOnFailure"] = restart_on_failure
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
         if wait_for_completion is not UNSET:
@@ -93,7 +105,11 @@ class ProcessRequest:
         else:
             env = ProcessRequestEnv.from_dict(_env)
 
+        max_restarts = d.pop("maxRestarts", UNSET)
+
         name = d.pop("name", UNSET)
+
+        restart_on_failure = d.pop("restartOnFailure", UNSET)
 
         timeout = d.pop("timeout", UNSET)
 
@@ -106,7 +122,9 @@ class ProcessRequest:
         process_request = cls(
             command=command,
             env=env,
+            max_restarts=max_restarts,
             name=name,
+            restart_on_failure=restart_on_failure,
             timeout=timeout,
             wait_for_completion=wait_for_completion,
             wait_for_ports=wait_for_ports,

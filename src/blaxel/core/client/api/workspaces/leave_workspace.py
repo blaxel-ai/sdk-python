@@ -11,19 +11,11 @@ from ...types import Response
 
 def _get_kwargs(
     workspace_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/workspaces/{workspace_name}/leave",
     }
-
 
     return _kwargs
 
@@ -31,8 +23,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Workspace] | None:
     if response.status_code == 200:
         response_200 = Workspace.from_dict(response.json())
-
-
 
         return response_200
     if response.status_code == 404:
@@ -57,9 +47,8 @@ def sync_detailed(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, Workspace]]:
-    """ Leave workspace
+    """Leave workspace
 
      Leaves a workspace.
 
@@ -72,12 +61,10 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, Workspace]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         workspace_name=workspace_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -86,13 +73,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, Workspace] | None:
-    """ Leave workspace
+    """Leave workspace
 
      Leaves a workspace.
 
@@ -105,22 +92,20 @@ def sync(
 
     Returns:
         Union[Any, Workspace]
-     """
-
+    """
 
     return sync_detailed(
         workspace_name=workspace_name,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, Workspace]]:
-    """ Leave workspace
+    """Leave workspace
 
      Leaves a workspace.
 
@@ -133,27 +118,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, Workspace]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         workspace_name=workspace_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, Workspace] | None:
-    """ Leave workspace
+    """Leave workspace
 
      Leaves a workspace.
 
@@ -166,11 +147,11 @@ async def asyncio(
 
     Returns:
         Union[Any, Workspace]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        workspace_name=workspace_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            workspace_name=workspace_name,
+            client=client,
+        )
+    ).parsed

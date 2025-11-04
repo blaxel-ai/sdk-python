@@ -13,19 +13,11 @@ def _get_kwargs(
     sandbox_name: str,
     preview_name: str,
     token_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/sandboxes/{sandbox_name}/previews/{preview_name}/tokens/{token_name}",
     }
-
 
     return _kwargs
 
@@ -33,8 +25,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> DeleteSandboxPreviewTokenResponse200 | None:
     if response.status_code == 200:
         response_200 = DeleteSandboxPreviewTokenResponse200.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -58,9 +48,8 @@ def sync_detailed(
     token_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[DeleteSandboxPreviewTokenResponse200]:
-    """ Delete token for Sandbox Preview
+    """Delete token for Sandbox Preview
 
      Deletes a token for a Sandbox Preview by name.
 
@@ -75,14 +64,12 @@ def sync_detailed(
 
     Returns:
         Response[DeleteSandboxPreviewTokenResponse200]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-token_name=token_name,
-
+        preview_name=preview_name,
+        token_name=token_name,
     )
 
     response = client.get_httpx_client().request(
@@ -91,15 +78,15 @@ token_name=token_name,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     sandbox_name: str,
     preview_name: str,
     token_name: str,
     *,
     client: Union[Client],
-
 ) -> DeleteSandboxPreviewTokenResponse200 | None:
-    """ Delete token for Sandbox Preview
+    """Delete token for Sandbox Preview
 
      Deletes a token for a Sandbox Preview by name.
 
@@ -114,16 +101,15 @@ def sync(
 
     Returns:
         DeleteSandboxPreviewTokenResponse200
-     """
-
+    """
 
     return sync_detailed(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-token_name=token_name,
-client=client,
-
+        preview_name=preview_name,
+        token_name=token_name,
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     sandbox_name: str,
@@ -131,9 +117,8 @@ async def asyncio_detailed(
     token_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[DeleteSandboxPreviewTokenResponse200]:
-    """ Delete token for Sandbox Preview
+    """Delete token for Sandbox Preview
 
      Deletes a token for a Sandbox Preview by name.
 
@@ -148,21 +133,18 @@ async def asyncio_detailed(
 
     Returns:
         Response[DeleteSandboxPreviewTokenResponse200]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-token_name=token_name,
-
+        preview_name=preview_name,
+        token_name=token_name,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     sandbox_name: str,
@@ -170,9 +152,8 @@ async def asyncio(
     token_name: str,
     *,
     client: Union[Client],
-
 ) -> DeleteSandboxPreviewTokenResponse200 | None:
-    """ Delete token for Sandbox Preview
+    """Delete token for Sandbox Preview
 
      Deletes a token for a Sandbox Preview by name.
 
@@ -187,13 +168,13 @@ async def asyncio(
 
     Returns:
         DeleteSandboxPreviewTokenResponse200
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        sandbox_name=sandbox_name,
-preview_name=preview_name,
-token_name=token_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            sandbox_name=sandbox_name,
+            preview_name=preview_name,
+            token_name=token_name,
+            client=client,
+        )
+    ).parsed

@@ -6,10 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
-
-
-
+    from ..models.custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
 
 
 T = TypeVar("T", bound="CustomDomainSpec")
@@ -17,26 +14,25 @@ T = TypeVar("T", bound="CustomDomainSpec")
 
 @_attrs_define
 class CustomDomainSpec:
-    """ Custom domain specification
+    """Custom domain specification
 
-        Attributes:
-            cname_records (Union[Unset, str]): CNAME target for the domain
-            last_verified_at (Union[Unset, str]): Last verification attempt timestamp
-            region (Union[Unset, str]): Region that the custom domain is associated with
-            status (Union[Unset, str]): Current status of the domain (pending, verified, failed)
-            txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
-                verification
-            verification_error (Union[Unset, str]): Error message if verification failed
-     """
+    Attributes:
+        cname_records (Union[Unset, str]): CNAME target for the domain
+        last_verified_at (Union[Unset, str]): Last verification attempt timestamp
+        region (Union[Unset, str]): Region that the custom domain is associated with
+        status (Union[Unset, str]): Current status of the domain (pending, verified, failed)
+        txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
+            verification
+        verification_error (Union[Unset, str]): Error message if verification failed
+    """
 
     cname_records: Union[Unset, str] = UNSET
     last_verified_at: Union[Unset, str] = UNSET
     region: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
-    txt_records: Union[Unset, 'CustomDomainSpecTxtRecords'] = UNSET
+    txt_records: Union[Unset, "CustomDomainSpecTxtRecords"] = UNSET
     verification_error: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         cname_records = self.cname_records
@@ -55,11 +51,9 @@ class CustomDomainSpec:
 
         verification_error = self.verification_error
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if cname_records is not UNSET:
             field_dict["cnameRecords"] = cname_records
         if last_verified_at is not UNSET:
@@ -75,11 +69,10 @@ class CustomDomainSpec:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -93,13 +86,10 @@ class CustomDomainSpec:
 
         _txt_records = d.pop("txtRecords", UNSET)
         txt_records: Union[Unset, CustomDomainSpecTxtRecords]
-        if isinstance(_txt_records,  Unset):
+        if isinstance(_txt_records, Unset):
             txt_records = UNSET
         else:
             txt_records = CustomDomainSpecTxtRecords.from_dict(_txt_records)
-
-
-
 
         verification_error = d.pop("verificationError", UNSET)
 
@@ -111,7 +101,6 @@ class CustomDomainSpec:
             txt_records=txt_records,
             verification_error=verification_error,
         )
-
 
         custom_domain_spec.additional_properties = d
         return custom_domain_spec

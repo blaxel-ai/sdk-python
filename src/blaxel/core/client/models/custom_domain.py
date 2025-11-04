@@ -6,11 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.custom_domain_metadata import CustomDomainMetadata
-  from ..models.custom_domain_spec import CustomDomainSpec
-
-
-
+    from ..models.custom_domain_metadata import CustomDomainMetadata
+    from ..models.custom_domain_spec import CustomDomainSpec
 
 
 T = TypeVar("T", bound="CustomDomain")
@@ -18,7 +15,7 @@ T = TypeVar("T", bound="CustomDomain")
 
 @_attrs_define
 class CustomDomain:
-    """ Custom domain for preview deployments
+    """Custom domain for preview deployments
     The custom domain represents a base domain (e.g., example.com) that will be used
     to serve preview deployments. Each preview will be accessible at a subdomain:
     <preview-id>.preview.<base-domain> (e.g., abc123.preview.example.com)
@@ -26,12 +23,11 @@ class CustomDomain:
         Attributes:
             metadata (Union[Unset, CustomDomainMetadata]): Custom domain metadata
             spec (Union[Unset, CustomDomainSpec]): Custom domain specification
-     """
+    """
 
-    metadata: Union[Unset, 'CustomDomainMetadata'] = UNSET
-    spec: Union[Unset, 'CustomDomainSpec'] = UNSET
+    metadata: Union[Unset, "CustomDomainMetadata"] = UNSET
+    spec: Union[Unset, "CustomDomainSpec"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         metadata: Union[Unset, dict[str, Any]] = UNSET
@@ -46,11 +42,9 @@ class CustomDomain:
         elif self.spec and isinstance(self.spec, dict):
             spec = self.spec
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
         if spec is not UNSET:
@@ -58,40 +52,32 @@ class CustomDomain:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.custom_domain_metadata import CustomDomainMetadata
         from ..models.custom_domain_spec import CustomDomainSpec
+
         if not src_dict:
             return None
         d = src_dict.copy()
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, CustomDomainMetadata]
-        if isinstance(_metadata,  Unset):
+        if isinstance(_metadata, Unset):
             metadata = UNSET
         else:
             metadata = CustomDomainMetadata.from_dict(_metadata)
 
-
-
-
         _spec = d.pop("spec", UNSET)
         spec: Union[Unset, CustomDomainSpec]
-        if isinstance(_spec,  Unset):
+        if isinstance(_spec, Unset):
             spec = UNSET
         else:
             spec = CustomDomainSpec.from_dict(_spec)
-
-
-
 
         custom_domain = cls(
             metadata=metadata,
             spec=spec,
         )
-
 
         custom_domain.additional_properties = d
         return custom_domain
