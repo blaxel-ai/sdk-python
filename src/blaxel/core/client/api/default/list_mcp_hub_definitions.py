@@ -9,32 +9,21 @@ from ...models.mcp_definition import MCPDefinition
 from ...types import Response
 
 
-def _get_kwargs(
-    
-) -> dict[str, Any]:
-    
-
-    
-
-    
-
+def _get_kwargs() -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/mcp/hub",
     }
 
-
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list['MCPDefinition'] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list["MCPDefinition"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in (_response_200):
+        for response_200_item_data in _response_200:
             response_200_item = MCPDefinition.from_dict(response_200_item_data)
-
-
 
             response_200.append(response_200_item)
 
@@ -45,7 +34,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list['MCPDef
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list['MCPDefinition']]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list["MCPDefinition"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -57,21 +46,17 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Union[Client],
-
-) -> Response[list['MCPDefinition']]:
-    """ 
+) -> Response[list["MCPDefinition"]]:
+    """
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         Response[list['MCPDefinition']]
-     """
+    """
 
-
-    kwargs = _get_kwargs(
-        
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -79,67 +64,60 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: Union[Client],
-
-) -> list['MCPDefinition'] | None:
-    """ 
+) -> list["MCPDefinition"] | None:
+    """
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         list['MCPDefinition']
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-
-) -> Response[list['MCPDefinition']]:
-    """ 
+) -> Response[list["MCPDefinition"]]:
+    """
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         Response[list['MCPDefinition']]
-     """
+    """
 
+    kwargs = _get_kwargs()
 
-    kwargs = _get_kwargs(
-        
-    )
-
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: Union[Client],
-
-) -> list['MCPDefinition'] | None:
-    """ 
+) -> list["MCPDefinition"] | None:
+    """
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         list['MCPDefinition']
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+        )
+    ).parsed

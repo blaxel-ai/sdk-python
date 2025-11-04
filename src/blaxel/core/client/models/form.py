@@ -6,12 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.form_config import FormConfig
-  from ..models.form_oauth import FormOauth
-  from ..models.form_secrets import FormSecrets
-
-
-
+    from ..models.form_config import FormConfig
+    from ..models.form_oauth import FormOauth
+    from ..models.form_secrets import FormSecrets
 
 
 T = TypeVar("T", bound="Form")
@@ -19,19 +16,18 @@ T = TypeVar("T", bound="Form")
 
 @_attrs_define
 class Form:
-    """ Form of the artifact
+    """Form of the artifact
 
-        Attributes:
-            config (Union[Unset, FormConfig]): Config of the artifact
-            oauth (Union[Unset, FormOauth]): OAuth of the artifact
-            secrets (Union[Unset, FormSecrets]): Secrets of the artifact
-     """
+    Attributes:
+        config (Union[Unset, FormConfig]): Config of the artifact
+        oauth (Union[Unset, FormOauth]): OAuth of the artifact
+        secrets (Union[Unset, FormSecrets]): Secrets of the artifact
+    """
 
-    config: Union[Unset, 'FormConfig'] = UNSET
-    oauth: Union[Unset, 'FormOauth'] = UNSET
-    secrets: Union[Unset, 'FormSecrets'] = UNSET
+    config: Union[Unset, "FormConfig"] = UNSET
+    oauth: Union[Unset, "FormOauth"] = UNSET
+    secrets: Union[Unset, "FormSecrets"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         config: Union[Unset, dict[str, Any]] = UNSET
@@ -52,11 +48,9 @@ class Form:
         elif self.secrets and isinstance(self.secrets, dict):
             secrets = self.secrets
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if config is not UNSET:
             field_dict["config"] = config
         if oauth is not UNSET:
@@ -66,52 +60,41 @@ class Form:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.form_config import FormConfig
         from ..models.form_oauth import FormOauth
         from ..models.form_secrets import FormSecrets
+
         if not src_dict:
             return None
         d = src_dict.copy()
         _config = d.pop("config", UNSET)
         config: Union[Unset, FormConfig]
-        if isinstance(_config,  Unset):
+        if isinstance(_config, Unset):
             config = UNSET
         else:
             config = FormConfig.from_dict(_config)
 
-
-
-
         _oauth = d.pop("oauth", UNSET)
         oauth: Union[Unset, FormOauth]
-        if isinstance(_oauth,  Unset):
+        if isinstance(_oauth, Unset):
             oauth = UNSET
         else:
             oauth = FormOauth.from_dict(_oauth)
 
-
-
-
         _secrets = d.pop("secrets", UNSET)
         secrets: Union[Unset, FormSecrets]
-        if isinstance(_secrets,  Unset):
+        if isinstance(_secrets, Unset):
             secrets = UNSET
         else:
             secrets = FormSecrets.from_dict(_secrets)
-
-
-
 
         form = cls(
             config=config,
             oauth=oauth,
             secrets=secrets,
         )
-
 
         form.additional_properties = d
         return form

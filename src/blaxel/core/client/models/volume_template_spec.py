@@ -10,36 +10,31 @@ T = TypeVar("T", bound="VolumeTemplateSpec")
 
 @_attrs_define
 class VolumeTemplateSpec:
-    """ Volume template specification
+    """Volume template specification
 
-        Attributes:
-            default_size (Union[Unset, int]): Default size of the volume in MB
-            description (Union[Unset, str]): Description of the volume template
-     """
+    Attributes:
+        default_size (Union[Unset, int]): Default size of the volume in MB
+        description (Union[Unset, str]): Description of the volume template
+    """
 
     default_size: Union[Unset, int] = UNSET
     description: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         default_size = self.default_size
 
         description = self.description
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if default_size is not UNSET:
             field_dict["defaultSize"] = default_size
         if description is not UNSET:
             field_dict["description"] = description
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -54,7 +49,6 @@ class VolumeTemplateSpec:
             default_size=default_size,
             description=description,
         )
-
 
         volume_template_spec.additional_properties = d
         return volume_template_spec

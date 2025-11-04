@@ -10,36 +10,31 @@ T = TypeVar("T", bound="TimeFields")
 
 @_attrs_define
 class TimeFields:
-    """ Time fields for Persistance
+    """Time fields for Persistance
 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the resource was created
-            updated_at (Union[Unset, str]): The date and time when the resource was updated
-     """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the resource was created
+        updated_at (Union[Unset, str]): The date and time when the resource was updated
+    """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
 
         updated_at = self.updated_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
             field_dict["updatedAt"] = updated_at
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -54,7 +49,6 @@ class TimeFields:
             created_at=created_at,
             updated_at=updated_at,
         )
-
 
         time_fields.additional_properties = d
         return time_fields

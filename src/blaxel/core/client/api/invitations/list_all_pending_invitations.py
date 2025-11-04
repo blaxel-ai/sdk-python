@@ -9,32 +9,21 @@ from ...models.pending_invitation_render import PendingInvitationRender
 from ...types import Response
 
 
-def _get_kwargs(
-    
-) -> dict[str, Any]:
-    
-
-    
-
-    
-
+def _get_kwargs() -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/profile/invitations",
     }
 
-
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, list['PendingInvitationRender']] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, list["PendingInvitationRender"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in (_response_200):
+        for response_200_item_data in _response_200:
             response_200_item = PendingInvitationRender.from_dict(response_200_item_data)
-
-
 
             response_200.append(response_200_item)
 
@@ -48,7 +37,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, l
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, list['PendingInvitationRender']]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Any, list["PendingInvitationRender"]]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -60,9 +51,8 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 def sync_detailed(
     *,
     client: Union[Client],
-
-) -> Response[Union[Any, list['PendingInvitationRender']]]:
-    """ List pending invitations
+) -> Response[Union[Any, list["PendingInvitationRender"]]]:
+    """List pending invitations
 
      Returns a list of all pending invitations in the workspace.
 
@@ -72,12 +62,9 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, list['PendingInvitationRender']]]
-     """
+    """
 
-
-    kwargs = _get_kwargs(
-        
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -85,12 +72,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: Union[Client],
-
-) -> Union[Any, list['PendingInvitationRender']] | None:
-    """ List pending invitations
+) -> Union[Any, list["PendingInvitationRender"]] | None:
+    """List pending invitations
 
      Returns a list of all pending invitations in the workspace.
 
@@ -100,20 +87,18 @@ def sync(
 
     Returns:
         Union[Any, list['PendingInvitationRender']]
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-
-) -> Response[Union[Any, list['PendingInvitationRender']]]:
-    """ List pending invitations
+) -> Response[Union[Any, list["PendingInvitationRender"]]]:
+    """List pending invitations
 
      Returns a list of all pending invitations in the workspace.
 
@@ -123,25 +108,20 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, list['PendingInvitationRender']]]
-     """
+    """
 
+    kwargs = _get_kwargs()
 
-    kwargs = _get_kwargs(
-        
-    )
-
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: Union[Client],
-
-) -> Union[Any, list['PendingInvitationRender']] | None:
-    """ List pending invitations
+) -> Union[Any, list["PendingInvitationRender"]] | None:
+    """List pending invitations
 
      Returns a list of all pending invitations in the workspace.
 
@@ -151,10 +131,10 @@ async def asyncio(
 
     Returns:
         Union[Any, list['PendingInvitationRender']]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+        )
+    ).parsed

@@ -11,19 +11,11 @@ from ...types import Response
 
 def _get_kwargs(
     template_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/templates/{template_name}",
     }
-
 
     return _kwargs
 
@@ -31,8 +23,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Template | None:
     if response.status_code == 200:
         response_200 = Template.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -54,9 +44,8 @@ def sync_detailed(
     template_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Template]:
-    """ Get template
+    """Get template
 
      Returns a template by name.
 
@@ -69,12 +58,10 @@ def sync_detailed(
 
     Returns:
         Response[Template]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         template_name=template_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -83,13 +70,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     template_name: str,
     *,
     client: Union[Client],
-
 ) -> Template | None:
-    """ Get template
+    """Get template
 
      Returns a template by name.
 
@@ -102,22 +89,20 @@ def sync(
 
     Returns:
         Template
-     """
-
+    """
 
     return sync_detailed(
         template_name=template_name,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     template_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Template]:
-    """ Get template
+    """Get template
 
      Returns a template by name.
 
@@ -130,27 +115,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[Template]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         template_name=template_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     template_name: str,
     *,
     client: Union[Client],
-
 ) -> Template | None:
-    """ Get template
+    """Get template
 
      Returns a template by name.
 
@@ -163,11 +144,11 @@ async def asyncio(
 
     Returns:
         Template
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        template_name=template_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            template_name=template_name,
+            client=client,
+        )
+    ).parsed

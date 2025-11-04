@@ -30,7 +30,7 @@ async def main():
         await asyncio.sleep(30)
         result = await sandbox2.fs.read("/test.txt")
         assert result == "Hello, world!", "File content mismatch"
-        print(f"✅ Sandbox with default settings completed operations")
+        print("✅ Sandbox with default settings completed operations")
         print(f"   Directory contents: {result}")
 
         # Test 3: Create sandbox with snapshot disabled using SandboxCreateConfiguration

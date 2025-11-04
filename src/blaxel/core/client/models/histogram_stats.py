@@ -10,21 +10,20 @@ T = TypeVar("T", bound="HistogramStats")
 
 @_attrs_define
 class HistogramStats:
-    """ Histogram stats
+    """Histogram stats
 
-        Attributes:
-            average (Union[Unset, float]): Average request duration
-            p50 (Union[Unset, float]): P50 request duration
-            p90 (Union[Unset, float]): P90 request duration
-            p99 (Union[Unset, float]): P99 request duration
-     """
+    Attributes:
+        average (Union[Unset, float]): Average request duration
+        p50 (Union[Unset, float]): P50 request duration
+        p90 (Union[Unset, float]): P90 request duration
+        p99 (Union[Unset, float]): P99 request duration
+    """
 
     average: Union[Unset, float] = UNSET
     p50: Union[Unset, float] = UNSET
     p90: Union[Unset, float] = UNSET
     p99: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         average = self.average
@@ -35,11 +34,9 @@ class HistogramStats:
 
         p99 = self.p99
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if average is not UNSET:
             field_dict["average"] = average
         if p50 is not UNSET:
@@ -50,8 +47,6 @@ class HistogramStats:
             field_dict["p99"] = p99
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -72,7 +67,6 @@ class HistogramStats:
             p90=p90,
             p99=p99,
         )
-
 
         histogram_stats.additional_properties = d
         return histogram_stats

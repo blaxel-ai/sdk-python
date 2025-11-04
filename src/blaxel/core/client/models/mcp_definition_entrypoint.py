@@ -8,30 +8,22 @@ T = TypeVar("T", bound="MCPDefinitionEntrypoint")
 
 @_attrs_define
 class MCPDefinitionEntrypoint:
-    """ Entrypoint of the artifact
-
-     """
+    """Entrypoint of the artifact"""
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        mcp_definition_entrypoint = cls(
-        )
-
+        mcp_definition_entrypoint = cls()
 
         mcp_definition_entrypoint.additional_properties = d
         return mcp_definition_entrypoint

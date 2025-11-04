@@ -6,11 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.store_agent_labels import StoreAgentLabels
-  from ..models.store_configuration import StoreConfiguration
-
-
-
+    from ..models.store_agent_labels import StoreAgentLabels
+    from ..models.store_configuration import StoreConfiguration
 
 
 T = TypeVar("T", bound="StoreAgent")
@@ -18,35 +15,34 @@ T = TypeVar("T", bound="StoreAgent")
 
 @_attrs_define
 class StoreAgent:
-    """ Store agent
+    """Store agent
 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the resource was created
-            updated_at (Union[Unset, str]): The date and time when the resource was updated
-            created_by (Union[Unset, str]): The user or service account who created the resource
-            updated_by (Union[Unset, str]): The user or service account who updated the resource
-            configuration (Union[Unset, list['StoreConfiguration']]): Store agent configuration
-            description (Union[Unset, str]): Store agent description
-            display_name (Union[Unset, str]): Store agent display name
-            image (Union[Unset, str]): Store agent image
-            labels (Union[Unset, StoreAgentLabels]): Store agent labels
-            name (Union[Unset, str]): Store agent name
-            prompt (Union[Unset, str]): Store agent prompt, this is to define what the agent does
-     """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the resource was created
+        updated_at (Union[Unset, str]): The date and time when the resource was updated
+        created_by (Union[Unset, str]): The user or service account who created the resource
+        updated_by (Union[Unset, str]): The user or service account who updated the resource
+        configuration (Union[Unset, list['StoreConfiguration']]): Store agent configuration
+        description (Union[Unset, str]): Store agent description
+        display_name (Union[Unset, str]): Store agent display name
+        image (Union[Unset, str]): Store agent image
+        labels (Union[Unset, StoreAgentLabels]): Store agent labels
+        name (Union[Unset, str]): Store agent name
+        prompt (Union[Unset, str]): Store agent prompt, this is to define what the agent does
+    """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     created_by: Union[Unset, str] = UNSET
     updated_by: Union[Unset, str] = UNSET
-    configuration: Union[Unset, list['StoreConfiguration']] = UNSET
+    configuration: Union[Unset, list["StoreConfiguration"]] = UNSET
     description: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     image: Union[Unset, str] = UNSET
-    labels: Union[Unset, 'StoreAgentLabels'] = UNSET
+    labels: Union[Unset, "StoreAgentLabels"] = UNSET
     name: Union[Unset, str] = UNSET
     prompt: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -67,8 +63,6 @@ class StoreAgent:
                     configuration_item = configuration_item_data.to_dict()
                 configuration.append(configuration_item)
 
-
-
         description = self.description
 
         display_name = self.display_name
@@ -85,11 +79,9 @@ class StoreAgent:
 
         prompt = self.prompt
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -115,12 +107,11 @@ class StoreAgent:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.store_agent_labels import StoreAgentLabels
         from ..models.store_configuration import StoreConfiguration
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -134,13 +125,10 @@ class StoreAgent:
 
         configuration = []
         _configuration = d.pop("configuration", UNSET)
-        for configuration_item_data in (_configuration or []):
+        for configuration_item_data in _configuration or []:
             configuration_item = StoreConfiguration.from_dict(configuration_item_data)
 
-
-
             configuration.append(configuration_item)
-
 
         description = d.pop("description", UNSET)
 
@@ -150,13 +138,10 @@ class StoreAgent:
 
         _labels = d.pop("labels", UNSET)
         labels: Union[Unset, StoreAgentLabels]
-        if isinstance(_labels,  Unset):
+        if isinstance(_labels, Unset):
             labels = UNSET
         else:
             labels = StoreAgentLabels.from_dict(_labels)
-
-
-
 
         name = d.pop("name", UNSET)
 
@@ -175,7 +160,6 @@ class StoreAgent:
             name=name,
             prompt=prompt,
         )
-
 
         store_agent.additional_properties = d
         return store_agent

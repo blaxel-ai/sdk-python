@@ -6,12 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.core_event import CoreEvent
-  from ..models.metadata import Metadata
-  from ..models.sandbox_spec import SandboxSpec
-
-
-
+    from ..models.core_event import CoreEvent
+    from ..models.metadata import Metadata
+    from ..models.sandbox_spec import SandboxSpec
 
 
 T = TypeVar("T", bound="Sandbox")
@@ -19,25 +16,24 @@ T = TypeVar("T", bound="Sandbox")
 
 @_attrs_define
 class Sandbox:
-    """ Micro VM for running agentic tasks
+    """Micro VM for running agentic tasks
 
-        Attributes:
-            events (Union[Unset, list['CoreEvent']]): Core events
-            last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
-            metadata (Union[Unset, Metadata]): Metadata
-            spec (Union[Unset, SandboxSpec]): Sandbox specification
-            status (Union[Unset, str]): Sandbox status
-            ttl (Union[Unset, int]): TTL timestamp for automatic deletion (optional, nil means no auto-deletion)
-     """
+    Attributes:
+        events (Union[Unset, list['CoreEvent']]): Core events
+        last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
+        metadata (Union[Unset, Metadata]): Metadata
+        spec (Union[Unset, SandboxSpec]): Sandbox specification
+        status (Union[Unset, str]): Sandbox status
+        ttl (Union[Unset, int]): TTL timestamp for automatic deletion (optional, nil means no auto-deletion)
+    """
 
-    events: Union[Unset, list['CoreEvent']] = UNSET
+    events: Union[Unset, list["CoreEvent"]] = UNSET
     last_used_at: Union[Unset, str] = UNSET
-    metadata: Union[Unset, 'Metadata'] = UNSET
-    spec: Union[Unset, 'SandboxSpec'] = UNSET
+    metadata: Union[Unset, "Metadata"] = UNSET
+    spec: Union[Unset, "SandboxSpec"] = UNSET
     status: Union[Unset, str] = UNSET
     ttl: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         events: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -49,8 +45,6 @@ class Sandbox:
                 else:
                     componentsschemas_core_events_item = componentsschemas_core_events_item_data.to_dict()
                 events.append(componentsschemas_core_events_item)
-
-
 
         last_used_at = self.last_used_at
 
@@ -70,11 +64,9 @@ class Sandbox:
 
         ttl = self.ttl
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if events is not UNSET:
             field_dict["events"] = events
         if last_used_at is not UNSET:
@@ -90,47 +82,37 @@ class Sandbox:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
         from ..models.sandbox_spec import SandboxSpec
+
         if not src_dict:
             return None
         d = src_dict.copy()
         events = []
         _events = d.pop("events", UNSET)
-        for componentsschemas_core_events_item_data in (_events or []):
+        for componentsschemas_core_events_item_data in _events or []:
             componentsschemas_core_events_item = CoreEvent.from_dict(componentsschemas_core_events_item_data)
 
-
-
             events.append(componentsschemas_core_events_item)
-
 
         last_used_at = d.pop("lastUsedAt", UNSET)
 
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, Metadata]
-        if isinstance(_metadata,  Unset):
+        if isinstance(_metadata, Unset):
             metadata = UNSET
         else:
             metadata = Metadata.from_dict(_metadata)
 
-
-
-
         _spec = d.pop("spec", UNSET)
         spec: Union[Unset, SandboxSpec]
-        if isinstance(_spec,  Unset):
+        if isinstance(_spec, Unset):
             spec = UNSET
         else:
             spec = SandboxSpec.from_dict(_spec)
-
-
-
 
         status = d.pop("status", UNSET)
 
@@ -144,7 +126,6 @@ class Sandbox:
             status=status,
             ttl=ttl,
         )
-
 
         sandbox.additional_properties = d
         return sandbox

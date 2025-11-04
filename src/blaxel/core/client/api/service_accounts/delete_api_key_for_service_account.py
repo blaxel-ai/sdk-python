@@ -11,19 +11,11 @@ from ...types import Response
 def _get_kwargs(
     client_id: str,
     api_key_id: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/service_accounts/{client_id}/api_keys/{api_key_id}",
     }
-
 
     return _kwargs
 
@@ -51,9 +43,8 @@ def sync_detailed(
     api_key_id: str,
     *,
     client: Union[Client],
-
 ) -> Response[Any]:
-    """ Delete API key for service account
+    """Delete API key for service account
 
      Deletes an API key for a service account.
 
@@ -67,13 +58,11 @@ def sync_detailed(
 
     Returns:
         Response[Any]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         client_id=client_id,
-api_key_id=api_key_id,
-
+        api_key_id=api_key_id,
     )
 
     response = client.get_httpx_client().request(
@@ -88,9 +77,8 @@ async def asyncio_detailed(
     api_key_id: str,
     *,
     client: Union[Client],
-
 ) -> Response[Any]:
-    """ Delete API key for service account
+    """Delete API key for service account
 
      Deletes an API key for a service account.
 
@@ -104,18 +92,13 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         client_id=client_id,
-api_key_id=api_key_id,
-
+        api_key_id=api_key_id,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
-

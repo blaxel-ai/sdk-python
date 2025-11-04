@@ -10,19 +10,19 @@ T = TypeVar("T", bound="ResourceLogChart")
 
 @_attrs_define
 class ResourceLogChart:
-    """ Chart for a resource log
+    """Chart for a resource log
 
-        Attributes:
-            count (Union[Unset, int]): Count of the log
-            debug (Union[Unset, int]): Debug count of the log
-            error (Union[Unset, int]): Error count of the log
-            fatal (Union[Unset, int]): Fatal count of the log
-            info (Union[Unset, int]): Info count of the log
-            timestamp (Union[Unset, str]): Timestamp of the log
-            trace (Union[Unset, int]): Trace count of the log
-            unknown (Union[Unset, int]): Unknown count of the log
-            warning (Union[Unset, int]): Warning count of the log
-     """
+    Attributes:
+        count (Union[Unset, int]): Count of the log
+        debug (Union[Unset, int]): Debug count of the log
+        error (Union[Unset, int]): Error count of the log
+        fatal (Union[Unset, int]): Fatal count of the log
+        info (Union[Unset, int]): Info count of the log
+        timestamp (Union[Unset, str]): Timestamp of the log
+        trace (Union[Unset, int]): Trace count of the log
+        unknown (Union[Unset, int]): Unknown count of the log
+        warning (Union[Unset, int]): Warning count of the log
+    """
 
     count: Union[Unset, int] = UNSET
     debug: Union[Unset, int] = UNSET
@@ -34,7 +34,6 @@ class ResourceLogChart:
     unknown: Union[Unset, int] = UNSET
     warning: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         count = self.count
@@ -55,11 +54,9 @@ class ResourceLogChart:
 
         warning = self.warning
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if count is not UNSET:
             field_dict["count"] = count
         if debug is not UNSET:
@@ -80,8 +77,6 @@ class ResourceLogChart:
             field_dict["warning"] = warning
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -117,7 +112,6 @@ class ResourceLogChart:
             unknown=unknown,
             warning=warning,
         )
-
 
         resource_log_chart.additional_properties = d
         return resource_log_chart

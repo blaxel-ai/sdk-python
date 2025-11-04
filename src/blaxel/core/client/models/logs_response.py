@@ -10,34 +10,27 @@ T = TypeVar("T", bound="LogsResponse")
 
 @_attrs_define
 class LogsResponse:
-    """ Response for logs
+    """Response for logs
 
-        Attributes:
-            data (Union[Unset, list[Any]]): Data
-     """
+    Attributes:
+        data (Union[Unset, list[Any]]): Data
+    """
 
     data: Union[Unset, list[Any]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         data: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.data, Unset):
             data = self.data
 
-
-
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if data is not UNSET:
             field_dict["data"] = data
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -46,11 +39,9 @@ class LogsResponse:
         d = src_dict.copy()
         data = cast(list[Any], d.pop("data", UNSET))
 
-
         logs_response = cls(
             data=data,
         )
-
 
         logs_response.additional_properties = d
         return logs_response

@@ -10,15 +10,15 @@ T = TypeVar("T", bound="TemplateVariable")
 
 @_attrs_define
 class TemplateVariable:
-    """ Blaxel template variable
+    """Blaxel template variable
 
-        Attributes:
-            description (Union[Unset, str]): Description of the variable
-            integration (Union[Unset, str]): Integration of the variable
-            name (Union[Unset, str]): Name of the variable
-            path (Union[Unset, str]): Path of the variable
-            secret (Union[Unset, bool]): Whether the variable is secret
-     """
+    Attributes:
+        description (Union[Unset, str]): Description of the variable
+        integration (Union[Unset, str]): Integration of the variable
+        name (Union[Unset, str]): Name of the variable
+        path (Union[Unset, str]): Path of the variable
+        secret (Union[Unset, bool]): Whether the variable is secret
+    """
 
     description: Union[Unset, str] = UNSET
     integration: Union[Unset, str] = UNSET
@@ -26,7 +26,6 @@ class TemplateVariable:
     path: Union[Unset, str] = UNSET
     secret: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         description = self.description
@@ -39,11 +38,9 @@ class TemplateVariable:
 
         secret = self.secret
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if description is not UNSET:
             field_dict["description"] = description
         if integration is not UNSET:
@@ -56,8 +53,6 @@ class TemplateVariable:
             field_dict["secret"] = secret
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -81,7 +76,6 @@ class TemplateVariable:
             path=path,
             secret=secret,
         )
-
 
         template_variable.additional_properties = d
         return template_variable

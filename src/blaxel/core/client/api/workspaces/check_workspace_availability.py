@@ -12,14 +12,8 @@ from ...types import Response
 def _get_kwargs(
     *,
     body: CheckWorkspaceAvailabilityBody,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
-
-    
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -30,7 +24,6 @@ def _get_kwargs(
         _body = body
     else:
         _body = body.to_dict()
-
 
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
@@ -62,9 +55,8 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: CheckWorkspaceAvailabilityBody,
-
 ) -> Response[bool]:
-    """ Check workspace availability
+    """Check workspace availability
 
      Check if a workspace is available.
 
@@ -77,12 +69,10 @@ def sync_detailed(
 
     Returns:
         Response[bool]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         body=body,
-
     )
 
     response = client.get_httpx_client().request(
@@ -91,13 +81,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     *,
     client: Union[Client],
     body: CheckWorkspaceAvailabilityBody,
-
 ) -> bool | None:
-    """ Check workspace availability
+    """Check workspace availability
 
      Check if a workspace is available.
 
@@ -110,22 +100,20 @@ def sync(
 
     Returns:
         bool
-     """
-
+    """
 
     return sync_detailed(
         client=client,
-body=body,
-
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
     body: CheckWorkspaceAvailabilityBody,
-
 ) -> Response[bool]:
-    """ Check workspace availability
+    """Check workspace availability
 
      Check if a workspace is available.
 
@@ -138,27 +126,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[bool]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         body=body,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     *,
     client: Union[Client],
     body: CheckWorkspaceAvailabilityBody,
-
 ) -> bool | None:
-    """ Check workspace availability
+    """Check workspace availability
 
      Check if a workspace is available.
 
@@ -171,11 +155,11 @@ async def asyncio(
 
     Returns:
         bool
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            client=client,
+            body=body,
+        )
+    ).parsed

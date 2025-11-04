@@ -10,19 +10,18 @@ T = TypeVar("T", bound="Metric")
 
 @_attrs_define
 class Metric:
-    """ Metric
+    """Metric
 
-        Attributes:
-            rate (Union[Unset, int]): Metric value
-            request_total (Union[Unset, int]): Metric value
-            timestamp (Union[Unset, str]): Metric timestamp
-     """
+    Attributes:
+        rate (Union[Unset, int]): Metric value
+        request_total (Union[Unset, int]): Metric value
+        timestamp (Union[Unset, str]): Metric timestamp
+    """
 
     rate: Union[Unset, int] = UNSET
     request_total: Union[Unset, int] = UNSET
     timestamp: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         rate = self.rate
@@ -31,11 +30,9 @@ class Metric:
 
         timestamp = self.timestamp
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if rate is not UNSET:
             field_dict["rate"] = rate
         if request_total is not UNSET:
@@ -44,8 +41,6 @@ class Metric:
             field_dict["timestamp"] = timestamp
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -63,7 +58,6 @@ class Metric:
             request_total=request_total,
             timestamp=timestamp,
         )
-
 
         metric.additional_properties = d
         return metric

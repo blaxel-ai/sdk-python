@@ -16,8 +16,11 @@ class ProcessResponse:
         completed_at (str):  Example: Wed, 01 Jan 2023 12:01:00 GMT.
         exit_code (int):
         logs (str):  Example: logs output.
+        max_restarts (int):  Example: 3.
         name (str):  Example: my-process.
         pid (str):  Example: 1234.
+        restart_count (int):  Example: 2.
+        restart_on_failure (bool):  Example: True.
         started_at (str):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
         status (ProcessResponseStatus):  Example: running.
         working_dir (str):  Example: /home/user.
@@ -27,8 +30,11 @@ class ProcessResponse:
     completed_at: str
     exit_code: int
     logs: str
+    max_restarts: int
     name: str
     pid: str
+    restart_count: int
+    restart_on_failure: bool
     started_at: str
     status: ProcessResponseStatus
     working_dir: str
@@ -43,9 +49,15 @@ class ProcessResponse:
 
         logs = self.logs
 
+        max_restarts = self.max_restarts
+
         name = self.name
 
         pid = self.pid
+
+        restart_count = self.restart_count
+
+        restart_on_failure = self.restart_on_failure
 
         started_at = self.started_at
 
@@ -61,8 +73,11 @@ class ProcessResponse:
                 "completedAt": completed_at,
                 "exitCode": exit_code,
                 "logs": logs,
+                "maxRestarts": max_restarts,
                 "name": name,
                 "pid": pid,
+                "restartCount": restart_count,
+                "restartOnFailure": restart_on_failure,
                 "startedAt": started_at,
                 "status": status,
                 "workingDir": working_dir,
@@ -84,9 +99,15 @@ class ProcessResponse:
 
         logs = d.pop("logs")
 
+        max_restarts = d.pop("maxRestarts")
+
         name = d.pop("name")
 
         pid = d.pop("pid")
+
+        restart_count = d.pop("restartCount")
+
+        restart_on_failure = d.pop("restartOnFailure")
 
         started_at = d.pop("startedAt")
 
@@ -99,8 +120,11 @@ class ProcessResponse:
             completed_at=completed_at,
             exit_code=exit_code,
             logs=logs,
+            max_restarts=max_restarts,
             name=name,
             pid=pid,
+            restart_count=restart_count,
+            restart_on_failure=restart_on_failure,
             started_at=started_at,
             status=status,
             working_dir=working_dir,
