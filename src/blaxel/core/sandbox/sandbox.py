@@ -125,7 +125,7 @@ class SandboxInstance:
             expires = sandbox.expires
             region = sandbox.region
             lifecycle = sandbox.lifecycle
-            snapshot_enabled = sandbox.snapshot_enabled
+            # snapshot_enabled = sandbox.snapshot_enabled
 
             # Create full Sandbox object
             sandbox = Sandbox(
