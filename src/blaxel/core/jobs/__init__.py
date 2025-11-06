@@ -3,7 +3,7 @@ import asyncio
 import os
 import sys
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict
+from typing import Any, Awaitable, Callable, Dict, List
 
 import requests
 
