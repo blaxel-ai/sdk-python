@@ -28,7 +28,7 @@ async def local_sandbox(sandbox_name: str) -> SandboxInstance:
 
 async def create_or_get_sandbox(
     sandbox_name: str,
-    image: str = "blaxel/base",
+    image: str = "blaxel/base-image",
     ports: List[Dict[str, Any]] | None = None,
     memory: int = 4096,
     envs: List[Dict[str, str]] | None = None,
