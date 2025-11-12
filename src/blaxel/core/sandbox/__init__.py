@@ -4,6 +4,13 @@ from .client.models import (
     RankedFile,
     RerankingResponse,
 )
+from .default import (
+    SandboxCodegen,
+    SandboxFileSystem,
+    SandboxInstance,
+    SandboxPreviews,
+    SandboxProcess,
+)
 from .sync import (
     SyncSandboxCodegen,
     SyncSandboxFileSystem,
@@ -43,4 +50,9 @@ __all__ = [
     "ApplyEditResponse",
     "RerankingResponse",
     "RankedFile",
+    "SyncSandboxCodegen",
+    "SyncSandboxFileSystem",
+    "SyncSandboxInstance",
+    "SyncSandboxPreviews",
+    "SyncSandboxProcess",
 ]

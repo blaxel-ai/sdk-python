@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 import httpx
 from attrs import define as _attrs_define
@@ -280,7 +280,7 @@ class SandboxCreateConfiguration:
 
 @_attrs_define
 class ProcessRequestWithLog(ProcessRequest):
-    on_log: Callable[[str], None] = None
+    on_log: Callable[[str], None] | None = None
 
 
 class ProcessResponseWithLog:
@@ -326,3 +326,56 @@ class ResponseError(Exception):
         self.response = response
         self.data = data
         self.error = None
+
+
+# -----------------------------
+# Code Interpreter shared types
+# -----------------------------
+
+T = TypeVar("T")
+
+# Generic output handler type
+OutputHandler = Callable[[T], Any]
+
+
+class OutputMessage:
+    def __init__(self, text: str, timestamp: Optional[float], is_stderr: bool):
+        self.text = text
+        self.timestamp = timestamp
+        self.is_stderr = is_stderr
+
+
+class Result:
+    def __init__(self, **kwargs: Any):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
+class ExecutionError:
+    def __init__(self, name: str, value: Any, traceback: Any):
+        self.name = name
+        self.value = value
+        self.traceback = traceback
+
+
+class Logs:
+    def __init__(self):
+        self.stdout: List[str] = []
+        self.stderr: List[str] = []
+
+
+class Execution:
+    def __init__(self):
+        self.results: List[Result] = []
+        self.logs: Logs = Logs()
+        self.error: Optional[ExecutionError] = None
+        self.execution_count: Optional[int] = None
+
+
+class Context:
+    def __init__(self, id: str):
+        self.id = id
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "Context":
+        return cls(id=str(data.get("id") or data.get("context_id") or ""))
