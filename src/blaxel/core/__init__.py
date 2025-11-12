@@ -8,8 +8,7 @@ from .common import autoload, env, settings
 from .jobs import BlJobWrapper
 from .mcp import BlaxelMcpServerTransport, websocket_client
 from .models import BLModel, bl_model
-from .sandbox import (
-    Sandbox,
+from .sandbox.default import (
     SandboxFileSystem,
     SandboxInstance,
     SandboxPreviews,

@@ -4,13 +4,12 @@ from .client.models import (
     RankedFile,
     RerankingResponse,
 )
-from .codegen import SandboxCodegen
-from .sandbox import (
-    Sandbox,
-    SandboxFileSystem,
-    SandboxInstance,
-    SandboxPreviews,
-    SandboxProcess,
+from .sync import (
+    SyncSandboxCodegen,
+    SyncSandboxFileSystem,
+    SyncSandboxInstance,
+    SyncSandboxPreviews,
+    SyncSandboxProcess,
 )
 from .types import (
     CopyResponse,

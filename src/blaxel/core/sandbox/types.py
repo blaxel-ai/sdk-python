@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Union
 
+import httpx
 from attrs import define as _attrs_define
 
 from ..client.models import Port, Sandbox, SandboxLifecycle, VolumeAttachment
@@ -303,3 +304,25 @@ class ProcessResponseWithLog:
             super().__setattr__(name, value)
         else:
             setattr(self._process_response, name, value)
+
+
+class ResponseError(Exception):
+    def __init__(self, response: httpx.Response):
+        data_error = {}
+        data = None
+        if response.content:
+            try:
+                data = response.json()
+                data_error = data
+            except Exception:
+                data = response.text
+                data_error["response"] = data
+        if response.status_code:
+            data_error["status"] = response.status_code
+        if response.reason_phrase:
+            data_error["statusText"] = response.reason_phrase
+
+        super().__init__(str(data_error))
+        self.response = response
+        self.data = data
+        self.error = None

@@ -6,10 +6,15 @@ from typing import Any, Callable, Dict, List, Union
 
 import httpx
 
-from ..common.settings import settings
+from ...common.settings import settings
+from ..client.models import Directory, FileRequest, SuccessResponse
+from ..types import (
+    CopyResponse,
+    SandboxConfiguration,
+    SandboxFilesystemFile,
+    WatchEvent,
+)
 from .action import SandboxAction
-from .client.models import Directory, FileRequest, SuccessResponse
-from .types import CopyResponse, SandboxConfiguration, SandboxFilesystemFile, WatchEvent
 
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
