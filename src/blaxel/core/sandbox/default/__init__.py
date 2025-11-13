@@ -1,4 +1,5 @@
 
+from .interpreter import CodeInterpreter
 from .sandbox import (
     SandboxCodegen,
     SandboxFileSystem,
@@ -13,4 +14,5 @@ __all__ = [
     "SandboxPreviews",
     "SandboxProcess",
     "SandboxCodegen",
+    "CodeInterpreter",
 ]

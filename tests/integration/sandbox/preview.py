@@ -109,8 +109,8 @@ async def main():
         try:
             md = getattr(sandbox, "metadata", None)
             sbx_name = getattr(md, "name", None) if md else None
-            # if sbx_name:
-            #     await SandboxInstance.delete(sbx_name)
+            if sbx_name:
+                await SandboxInstance.delete(sbx_name)
         except Exception:
             pass
     print("🎉 [previews] done")
