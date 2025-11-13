@@ -223,7 +223,7 @@ class SyncCodeInterpreter(SyncSandboxInstance):
             )
             with client.stream(
                 "POST",
-                f"/execute",
+                f"/port/8888/execute",
                 json=body,
                 timeout=timeout_cfg,
             ) as response:
