@@ -16,7 +16,7 @@ def _get_package_version() -> str:
         current_file = Path(__file__)
         project_root = current_file.parent.parent.parent.parent.parent
         pyproject_path = project_root / "pyproject.toml"
-        
+
         if pyproject_path.exists():
             with open(pyproject_path, "rb") as f:
                 pyproject_data = tomli.load(f)
@@ -35,12 +35,12 @@ def _get_os_arch() -> str:
         if system == "windows":
             os_name = "windows"
         elif system == "darwin":
-            os_name = "darwin"  
+            os_name = "darwin"
         elif system == "linux":
             os_name = "linux"
         else:
             os_name = system
-            
+
         machine = platform.machine().lower()
         if machine in ["x86_64", "amd64"]:
             arch = "amd64"
@@ -50,7 +50,7 @@ def _get_os_arch() -> str:
             arch = "386"
         else:
             arch = machine
-            
+
         return f"{os_name}/{arch}"
     except Exception:
         return "unknown/unknown"
@@ -63,7 +63,7 @@ def _get_commit_hash() -> str:
         current_file = Path(__file__)
         project_root = current_file.parent.parent.parent.parent.parent
         pyproject_path = project_root / "pyproject.toml"
-        
+
         if pyproject_path.exists():
             with open(pyproject_path, "rb") as f:
                 pyproject_data = tomli.load(f)
@@ -75,12 +75,12 @@ def _get_commit_hash() -> str:
                     commit = pyproject_data["project"].get("commit")
                 if not commit and "build" in pyproject_data:
                     commit = pyproject_data["build"].get("commit")
-                    
+
                 if commit:
                     return commit[:7] if len(commit) > 7 else commit
     except Exception:
         pass
-    
+
     return "unknown"
 
 class Settings:
@@ -155,7 +155,7 @@ class Settings:
         if self.generation == "":
             return ""
         return os.environ.get("BL_RUN_INTERNAL_HOST", "")
-    
+
     @property
     def generation(self) -> str:
         """Get the generation."""
