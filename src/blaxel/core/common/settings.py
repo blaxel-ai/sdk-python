@@ -105,7 +105,6 @@ class Settings:
     @property
     def base_url(self) -> str:
         """Get the base URL for the API."""
-        return "http://localhost:8080/v0"
         if self.env == "prod":
             return "https://api.blaxel.ai/v0"
         return "https://api.blaxel.dev/v0"
