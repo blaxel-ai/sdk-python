@@ -5,6 +5,7 @@ from .client.models import (
     RerankingResponse,
 )
 from .default import (
+    CodeInterpreter,
     SandboxCodegen,
     SandboxFileSystem,
     SandboxInstance,
@@ -12,6 +13,7 @@ from .default import (
     SandboxProcess,
 )
 from .sync import (
+    SyncCodeInterpreter,
     SyncSandboxCodegen,
     SyncSandboxFileSystem,
     SyncSandboxInstance,
@@ -55,4 +57,6 @@ __all__ = [
     "SyncSandboxInstance",
     "SyncSandboxPreviews",
     "SyncSandboxProcess",
+    "SyncCodeInterpreter",
+    "CodeInterpreter",
 ]

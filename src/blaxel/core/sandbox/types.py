@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, TypeVar, Union
 
 import httpx
 from attrs import define as _attrs_define
@@ -339,7 +339,7 @@ OutputHandler = Callable[[T], Any]
 
 
 class OutputMessage:
-    def __init__(self, text: str, timestamp: Optional[float], is_stderr: bool):
+    def __init__(self, text: str, timestamp: float | None, is_stderr: bool):
         self.text = text
         self.timestamp = timestamp
         self.is_stderr = is_stderr
@@ -368,8 +368,8 @@ class Execution:
     def __init__(self):
         self.results: List[Result] = []
         self.logs: Logs = Logs()
-        self.error: Optional[ExecutionError] = None
-        self.execution_count: Optional[int] = None
+        self.error: ExecutionError | None = None
+        self.execution_count: int | None = None
 
 
 class Context:
