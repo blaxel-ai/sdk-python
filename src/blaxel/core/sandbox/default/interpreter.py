@@ -123,8 +123,6 @@ class CodeInterpreter(SandboxInstance):
         def from_json(cls, data: Dict[str, Any]) -> "CodeInterpreter.Context":
             return cls(id=str(data.get("id") or data.get("context_id") or ""))
 
-    _envd_access_token: str | None = None
-
     @property
     def _jupyter_url(self) -> str:
         # Use the same base as other async actions
