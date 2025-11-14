@@ -4,13 +4,21 @@ from .client.models import (
     RankedFile,
     RerankingResponse,
 )
-from .codegen import SandboxCodegen
-from .sandbox import (
-    Sandbox,
+from .default import (
+    CodeInterpreter,
+    SandboxCodegen,
     SandboxFileSystem,
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+)
+from .sync import (
+    SyncCodeInterpreter,
+    SyncSandboxCodegen,
+    SyncSandboxFileSystem,
+    SyncSandboxInstance,
+    SyncSandboxPreviews,
+    SyncSandboxProcess,
 )
 from .types import (
     CopyResponse,
@@ -44,4 +52,11 @@ __all__ = [
     "ApplyEditResponse",
     "RerankingResponse",
     "RankedFile",
+    "SyncSandboxCodegen",
+    "SyncSandboxFileSystem",
+    "SyncSandboxInstance",
+    "SyncSandboxPreviews",
+    "SyncSandboxProcess",
+    "SyncCodeInterpreter",
+    "CodeInterpreter",
 ]
