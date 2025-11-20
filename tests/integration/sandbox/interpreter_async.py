@@ -2,8 +2,7 @@ import asyncio
 import time
 from typing import List
 
-from blaxel.core import CodeInterpreter, Sandbox
-from blaxel.core.client.models import Metadata
+from blaxel.core import CodeInterpreter
 
 
 async def main():
