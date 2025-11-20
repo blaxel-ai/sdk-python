@@ -3,7 +3,6 @@ import time
 from typing import List
 
 from blaxel.core import SyncCodeInterpreter
-from blaxel.core.client.models import Metadata, Sandbox
 
 
 def main():

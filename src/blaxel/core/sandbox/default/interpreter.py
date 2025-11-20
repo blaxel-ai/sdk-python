@@ -20,7 +20,7 @@ class CodeInterpreter(SandboxInstance):
     DEFAULT_LIFECYCLE = {"expirationPolicies": [{"type": "ttl-idle", "value": "30m", "action": "delete"}]}
 
     @classmethod
-    async def get(cls, sandbox_name: str) -> "CodeInterpreter":
+    async def get(cls, sandbox_name: str) -> CodeInterpreter:
         base = await SandboxInstance.get(sandbox_name)
         return cls(
             sandbox=base.sandbox,
@@ -34,7 +34,7 @@ class CodeInterpreter(SandboxInstance):
         cls,
         sandbox: Sandbox | SandboxCreateConfiguration | Dict[str, Any] | None = None,
         safe: bool = True,
-    ) -> "CodeInterpreter":
+    ) -> CodeInterpreter:
         """
         Create a sandbox instance using the jupyter-server image.
         Constraints:
@@ -110,8 +110,8 @@ class CodeInterpreter(SandboxInstance):
 
     class Execution:
         def __init__(self):
-            self.results: list["CodeInterpreter.Result"] = []
-            self.logs: "CodeInterpreter.Logs" = CodeInterpreter.Logs()
+            self.results: list[CodeInterpreter.Result] = []
+            self.logs: CodeInterpreter.Logs = CodeInterpreter.Logs()
             self.error: CodeInterpreter.ExecutionError | None = None
             self.execution_count: int | None = None
 
@@ -120,7 +120,7 @@ class CodeInterpreter(SandboxInstance):
             self.id = id
 
         @classmethod
-        def from_json(cls, data: Dict[str, Any]) -> "CodeInterpreter.Context":
+        def from_json(cls, data: Dict[str, Any]) -> CodeInterpreter.Context:
             return cls(id=str(data.get("id") or data.get("context_id") or ""))
 
     @property
@@ -130,7 +130,7 @@ class CodeInterpreter(SandboxInstance):
 
     def _parse_output(
         self,
-        execution: "CodeInterpreter.Execution",
+        execution: CodeInterpreter.Execution,
         output: str,
         on_stdout: Callable[[Any], Any] | None = None,
         on_stderr: Callable[[Any], Any] | None = None,
@@ -176,7 +176,7 @@ class CodeInterpreter(SandboxInstance):
         envs: Dict[str, str] | None = None,
         timeout: float | None = None,
         request_timeout: float | None = None,
-    ) -> "CodeInterpreter.Execution":
+    ) -> CodeInterpreter.Execution:
         # Defaults: treat 0 as no read timeout
         DEFAULT_TIMEOUT = 60.0
         if language and context:
@@ -255,7 +255,7 @@ class CodeInterpreter(SandboxInstance):
         cwd: str | None = None,
         language: str | None = None,
         request_timeout: float | None = None,
-    ) -> "CodeInterpreter.Context":
+    ) -> CodeInterpreter.Context:
         data: Dict[str, Any] = {}
         if language:
             data["language"] = language
