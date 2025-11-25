@@ -239,6 +239,54 @@ class SandboxFileSystem(SandboxAction):
             from ..client.models.find_response import FindResponse
             return FindResponse.from_dict(response.json())
 
+    async def grep(
+        self,
+        query: str,
+        path: str = "/",
+        case_sensitive: bool | None = None,
+        context_lines: int | None = None,
+        max_results: int | None = None,
+        file_pattern: str | None = None,
+        exclude_dirs: List[str] | None = None,
+    ):
+        """Search for text content inside files using ripgrep.
+
+        Args:
+            query: Text to search for
+            path: Directory path to search in
+            case_sensitive: Case sensitive search (default: false)
+            context_lines: Number of context lines to include (default: 0)
+            max_results: Maximum number of results to return (default: 100)
+            file_pattern: File pattern to include (e.g., '*.py')
+            exclude_dirs: Directory names to skip
+
+        Returns:
+            ContentSearchResponse with matching lines
+        """
+        path = self.format_path(path)
+        
+        params = {'query': query}
+        if case_sensitive is not None:
+            params['caseSensitive'] = case_sensitive
+        if context_lines is not None:
+            params['contextLines'] = context_lines
+        if max_results is not None:
+            params['maxResults'] = max_results
+        if file_pattern is not None:
+            params['filePattern'] = file_pattern
+        if exclude_dirs is not None and len(exclude_dirs) > 0:
+            params['excludeDirs'] = ','.join(exclude_dirs)
+
+        url = f"{self.url}/filesystem-content-search/{path}"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.get(url, params=params, headers=headers)
+            self.handle_response_error(response)
+            
+            from ..client.models.content_search_response import ContentSearchResponse
+            return ContentSearchResponse.from_dict(response.json())
+
     async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         """Copy files or directories using the cp command.
 

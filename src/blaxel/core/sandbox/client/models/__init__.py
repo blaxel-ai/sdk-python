@@ -2,6 +2,8 @@
 
 from .apply_edit_request import ApplyEditRequest
 from .apply_edit_response import ApplyEditResponse
+from .content_search_match import ContentSearchMatch
+from .content_search_response import ContentSearchResponse
 from .delete_network_process_pid_monitor_response_200 import (
     DeleteNetworkProcessPidMonitorResponse200,
 )
@@ -44,6 +46,8 @@ from .welcome_response import WelcomeResponse
 __all__ = (
     "ApplyEditRequest",
     "ApplyEditResponse",
+    "ContentSearchMatch",
+    "ContentSearchResponse",
     "DeleteNetworkProcessPidMonitorResponse200",
     "Directory",
     "ErrorResponse",
