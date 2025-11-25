@@ -7,8 +7,8 @@ import pytest
 
 from blaxel.core.client.models import Metadata, Sandbox
 from blaxel.core.sandbox import SandboxInstance
-from blaxel.core.sandbox.action import ResponseError, SandboxAction
-from blaxel.core.sandbox.types import SandboxConfiguration
+from blaxel.core.sandbox.default.action import SandboxAction
+from blaxel.core.sandbox.types import ResponseError, SandboxConfiguration
 
 
 @pytest.mark.asyncio
