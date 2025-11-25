@@ -198,55 +198,55 @@ class CodeInterpreter(SandboxInstance):
 
         execution = CodeInterpreter.Execution()
 
-        async with self.process.get_client() as client:
-            timeout_cfg = httpx.Timeout(
-                connect=connect_timeout, read=read_timeout, write=write_timeout, pool=pool_timeout
-            )
-            async with client.stream(
-                "POST",
-                "/port/8888/execute",
-                json=body,
-                timeout=timeout_cfg,
-            ) as response:
-                if response.status_code >= 400:
-                    try:
-                        body_text = await response.aread()
-                        body_text = body_text.decode(errors="ignore")
-                    except Exception:
-                        body_text = "<unavailable>"
-                    req = getattr(response, "request", None)
-                    method = getattr(req, "method", "UNKNOWN") if req else "UNKNOWN"
-                    url = str(getattr(req, "url", "UNKNOWN")) if req else "UNKNOWN"
-                    reason = getattr(response, "reason_phrase", "")
-                    details = (
-                        "Execution failed\n"
-                        f"- method: {method}\n- url: {url}\n- status: {response.status_code} {reason}\n"
-                        f"- response-headers: {dict(response.headers)}\n- body:\n{body_text}"
-                    )
-                    self.logger.debug(details)
-                    raise RuntimeError(details)
+        client = self.process.get_client()
+        timeout_cfg = httpx.Timeout(
+            connect=connect_timeout, read=read_timeout, write=write_timeout, pool=pool_timeout
+        )
+        async with client.stream(
+            "POST",
+            "/port/8888/execute",
+            json=body,
+            timeout=timeout_cfg,
+        ) as response:
+            if response.status_code >= 400:
+                try:
+                    body_text = await response.aread()
+                    body_text = body_text.decode(errors="ignore")
+                except Exception:
+                    body_text = "<unavailable>"
+                req = getattr(response, "request", None)
+                method = getattr(req, "method", "UNKNOWN") if req else "UNKNOWN"
+                url = str(getattr(req, "url", "UNKNOWN")) if req else "UNKNOWN"
+                reason = getattr(response, "reason_phrase", "")
+                details = (
+                    "Execution failed\n"
+                    f"- method: {method}\n- url: {url}\n- status: {response.status_code} {reason}\n"
+                    f"- response-headers: {dict(response.headers)}\n- body:\n{body_text}"
+                )
+                self.logger.debug(details)
+                raise RuntimeError(details)
 
-                async for line in response.aiter_lines():
-                    if not line:
-                        continue
-                    try:
-                        decoded = line
-                    except Exception:
-                        decoded = str(line)
-                    try:
-                        self._parse_output(
-                            execution,
-                            decoded,
-                            on_stdout=on_stdout,
-                            on_stderr=on_stderr,
-                            on_result=on_result,
-                            on_error=on_error,
-                        )
-                    except json.JSONDecodeError:
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
+                try:
+                    decoded = line
+                except Exception:
+                    decoded = str(line)
+                try:
+                    self._parse_output(
+                        execution,
+                        decoded,
+                        on_stdout=on_stdout,
+                        on_stderr=on_stderr,
+                        on_result=on_result,
+                        on_error=on_error,
+                    )
+                except json.JSONDecodeError:
                         # Fallback: treat as stdout text-only message
-                        execution.logs.stdout.append(decoded)
-                        if on_stdout:
-                            on_stdout(CodeInterpreter.OutputMessage(decoded, None, False))
+                    execution.logs.stdout.append(decoded)
+                    if on_stdout:
+                        on_stdout(CodeInterpreter.OutputMessage(decoded, None, False))
 
         return execution
 
@@ -262,15 +262,19 @@ class CodeInterpreter(SandboxInstance):
         if cwd:
             data["cwd"] = cwd
 
-        async with self.process.get_client() as client:
-            response = await client.post(
-                "/port/8888/contexts",
-                json=data,
-                timeout=request_timeout or 10.0,
-            )
+        client = self.process.get_client()
+        response = await client.post(
+            "/port/8888/contexts",
+            json=data,
+            timeout=request_timeout or 10.0,
+        )
+        try:
+            # Always read response body first
+            body_bytes = await response.aread()
+            
             if response.status_code >= 400:
                 try:
-                    body_text = response.text
+                    body_text = body_bytes.decode('utf-8', errors='ignore')
                 except Exception:
                     body_text = "<unavailable>"
                 method = getattr(response.request, "method", "UNKNOWN")
@@ -283,7 +287,10 @@ class CodeInterpreter(SandboxInstance):
                 )
                 self.logger.debug(details)
                 raise RuntimeError(details)
-            data = response.json()
+            
+            data = json.loads(body_bytes)
             return CodeInterpreter.Context.from_json(data)
+        finally:
+            await response.aclose()
 
 

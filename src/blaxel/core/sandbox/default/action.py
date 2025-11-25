@@ -8,10 +8,9 @@ from ..types import ResponseError, SandboxConfiguration
 
 
 class SandboxAction:
-    _clients: dict[str, httpx.AsyncClient] = {}
-    
     def __init__(self, sandbox_config: SandboxConfiguration):
         self.sandbox_config = sandbox_config
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def name(self) -> str:
@@ -56,22 +55,18 @@ class SandboxAction:
             return self.external_url
         return None
 
-    @asynccontextmanager
-    async def get_client(self):
-        # Use persistent client per base URL for connection reuse
-        base_url = self.sandbox_config.force_url or self.url
-        
-        if base_url not in SandboxAction._clients:
-            # Simple connection pooling - let httpx use its defaults with higher limits
-            limits = httpx.Limits(max_keepalive_connections=50, max_connections=100)
-            
-            SandboxAction._clients[base_url] = httpx.AsyncClient(
+    def get_client(self) -> httpx.AsyncClient:
+        """Get persistent HTTP client for this sandbox instance."""
+        if self._client is None:
+            base_url = self.sandbox_config.force_url or self.url
+            self._client = httpx.AsyncClient(
                 base_url=base_url,
                 headers=self.sandbox_config.headers if self.sandbox_config.force_url else {**settings.headers, **self.sandbox_config.headers},
-                limits=limits,
+                http2=False,
+                limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+                timeout=httpx.Timeout(300.0, connect=10.0),
             )
-
-        yield SandboxAction._clients[base_url]
+        return self._client
 
     def handle_response_error(self, response: httpx.Response):
         if not response.is_success:
