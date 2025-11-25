@@ -62,34 +62,16 @@ class SandboxAction:
         base_url = self.sandbox_config.force_url or self.url
         
         if base_url not in SandboxAction._clients:
-            limits = httpx.Limits(
-                max_keepalive_connections=10,
-                max_connections=20,
-                keepalive_expiry=60.0,
-            )
-
-            timeout = httpx.Timeout(
-                connect=10.0,
-                read=60.0,
-                write=10.0,
-                pool=5.0,
-            )
-
+            # Simple connection pooling - let httpx use its defaults with higher limits
+            limits = httpx.Limits(max_keepalive_connections=50, max_connections=100)
+            
             SandboxAction._clients[base_url] = httpx.AsyncClient(
                 base_url=base_url,
                 headers=self.sandbox_config.headers if self.sandbox_config.force_url else {**settings.headers, **self.sandbox_config.headers},
                 limits=limits,
-                timeout=timeout,
-                http2=True,
             )
 
         yield SandboxAction._clients[base_url]
-
-    @classmethod
-    async def close_all_clients(cls):
-        for client in cls._clients.values():
-            await client.aclose()
-        cls._clients.clear()
 
     def handle_response_error(self, response: httpx.Response):
         if not response.is_success:
