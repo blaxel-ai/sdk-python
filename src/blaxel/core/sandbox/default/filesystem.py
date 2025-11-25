@@ -193,6 +193,52 @@ class SandboxFileSystem(SandboxAction):
                 raise Exception('{"error": "Directory not found"}')
             return Directory.from_dict(data)
 
+    async def find(
+        self,
+        path: str,
+        type: str | None = None,
+        patterns: List[str] | None = None,
+        max_results: int | None = None,
+        exclude_dirs: List[str] | None = None,
+        exclude_hidden: bool | None = None,
+    ):
+        """Find files and directories.
+
+        Args:
+            path: Path to search in
+            type: Type of search ('file' or 'directory')
+            patterns: File patterns to include (e.g., ['*.py', '*.json'])
+            max_results: Maximum number of results to return
+            exclude_dirs: Directory names to skip
+            exclude_hidden: Exclude hidden files and directories
+
+        Returns:
+            FindResponse with matching files/directories
+        """
+        path = self.format_path(path)
+        
+        params = {}
+        if type is not None:
+            params['type'] = type
+        if patterns is not None and len(patterns) > 0:
+            params['patterns'] = ','.join(patterns)
+        if max_results is not None:
+            params['maxResults'] = max_results
+        if exclude_dirs is not None and len(exclude_dirs) > 0:
+            params['excludeDirs'] = ','.join(exclude_dirs)
+        if exclude_hidden is not None:
+            params['excludeHidden'] = exclude_hidden
+
+        url = f"{self.url}/filesystem-find/{path}"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.get(url, params=params, headers=headers)
+            self.handle_response_error(response)
+            
+            from ..client.models.find_response import FindResponse
+            return FindResponse.from_dict(response.json())
+
     async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         """Copy files or directories using the cp command.
 
