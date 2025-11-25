@@ -9,7 +9,6 @@ from ..types import ResponseError, SandboxConfiguration
 
 class SandboxAction:
     _clients: dict[str, httpx.AsyncClient] = {}
-    _clients_opened: dict[str, bool] = {}
     
     def __init__(self, sandbox_config: SandboxConfiguration):
         self.sandbox_config = sandbox_config
@@ -63,35 +62,34 @@ class SandboxAction:
         base_url = self.sandbox_config.force_url or self.url
         
         if base_url not in SandboxAction._clients:
-            # Optimized limits for bulk requests
             limits = httpx.Limits(
-                max_keepalive_connections=10,  # Keep more connections alive
-                max_connections=20,             # Allow more total connections
-                keepalive_expiry=60.0,          # Keep connections alive longer
+                max_keepalive_connections=10,
+                max_connections=20,
+                keepalive_expiry=60.0,
             )
-            
-            # Optimized timeouts for bulk operations
+
             timeout = httpx.Timeout(
-                connect=10.0,   # Connection timeout
-                read=60.0,      # Read timeout
-                write=10.0,     # Write timeout  
-                pool=5.0,       # Pool timeout (time to get connection from pool)
+                connect=10.0,
+                read=60.0,
+                write=10.0,
+                pool=5.0,
             )
-            
-            client = httpx.AsyncClient(
+
+            SandboxAction._clients[base_url] = httpx.AsyncClient(
                 base_url=base_url,
                 headers=self.sandbox_config.headers if self.sandbox_config.force_url else {**settings.headers, **self.sandbox_config.headers},
                 limits=limits,
                 timeout=timeout,
                 http2=True,
             )
-            # Open the client once
-            await client.__aenter__()
-            SandboxAction._clients[base_url] = client
-            SandboxAction._clients_opened[base_url] = True
-        
-        # Yield the client without closing it
+
         yield SandboxAction._clients[base_url]
+
+    @classmethod
+    async def close_all_clients(cls):
+        for client in cls._clients.values():
+            await client.aclose()
+        cls._clients.clear()
 
     def handle_response_error(self, response: httpx.Response):
         if not response.is_success:
