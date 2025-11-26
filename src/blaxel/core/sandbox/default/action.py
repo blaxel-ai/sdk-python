@@ -1,4 +1,5 @@
 
+import os
 import httpx
 from contextlib import asynccontextmanager
 
@@ -59,9 +60,21 @@ class SandboxAction:
         """Get persistent HTTP client for this sandbox instance."""
         if self._client is None:
             base_url = self.sandbox_config.force_url or self.url
+            
+            # Build headers
+            if self.sandbox_config.force_url:
+                headers = self.sandbox_config.headers.copy()
+            else:
+                headers = {**settings.headers, **self.sandbox_config.headers}
+            
+            # Add X-Blaxel-Workspace header if BL_WORKSPACE env var is present
+            bl_workspace = os.environ.get("BL_WORKSPACE")
+            if bl_workspace:
+                headers["X-Blaxel-Workspace"] = bl_workspace
+            
             self._client = httpx.AsyncClient(
                 base_url=base_url,
-                headers=self.sandbox_config.headers if self.sandbox_config.force_url else {**settings.headers, **self.sandbox_config.headers},
+                headers=headers,
                 http2=False,
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
                 timeout=httpx.Timeout(300.0, connect=10.0),
