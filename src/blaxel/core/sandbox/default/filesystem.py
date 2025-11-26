@@ -256,11 +256,8 @@ class SandboxFileSystem(SandboxAction):
         if exclude_hidden is not None:
             params['excludeHidden'] = exclude_hidden
 
-        url = f"{self.url}/filesystem-find/{path}"
-        headers = {**settings.headers, **self.sandbox_config.headers}
-
         client = self.get_client()
-        response = await client.get(url, params=params, headers=headers)
+        response = await client.get(f"/filesystem-find/{path}", params=params)
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
@@ -308,11 +305,8 @@ class SandboxFileSystem(SandboxAction):
         if exclude_dirs is not None and len(exclude_dirs) > 0:
             params['excludeDirs'] = ','.join(exclude_dirs)
 
-        url = f"{self.url}/filesystem-content-search/{path}"
-        headers = {**settings.headers, **self.sandbox_config.headers}
-
         client = self.get_client()
-        response = await client.get(url, params=params, headers=headers)
+        response = await client.get(f"/filesystem-content-search/{path}", params=params)
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
@@ -321,100 +315,6 @@ class SandboxFileSystem(SandboxAction):
             return ContentSearchResponse.from_dict(data)
         finally:
             await response.aclose()
-
-    async def find(
-        self,
-        path: str,
-        type: str | None = None,
-        patterns: List[str] | None = None,
-        max_results: int | None = None,
-        exclude_dirs: List[str] | None = None,
-        exclude_hidden: bool | None = None,
-    ):
-        """Find files and directories.
-
-        Args:
-            path: Path to search in
-            type: Type of search ('file' or 'directory')
-            patterns: File patterns to include (e.g., ['*.py', '*.json'])
-            max_results: Maximum number of results to return
-            exclude_dirs: Directory names to skip
-            exclude_hidden: Exclude hidden files and directories
-
-        Returns:
-            FindResponse with matching files/directories
-        """
-        path = self.format_path(path)
-        
-        params = {}
-        if type is not None:
-            params['type'] = type
-        if patterns is not None and len(patterns) > 0:
-            params['patterns'] = ','.join(patterns)
-        if max_results is not None:
-            params['maxResults'] = max_results
-        if exclude_dirs is not None and len(exclude_dirs) > 0:
-            params['excludeDirs'] = ','.join(exclude_dirs)
-        if exclude_hidden is not None:
-            params['excludeHidden'] = exclude_hidden
-
-        url = f"{self.url}/filesystem-find/{path}"
-        headers = {**settings.headers, **self.sandbox_config.headers}
-
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(url, params=params, headers=headers)
-            self.handle_response_error(response)
-            
-            from ..client.models.find_response import FindResponse
-            return FindResponse.from_dict(response.json())
-
-    async def grep(
-        self,
-        query: str,
-        path: str = "/",
-        case_sensitive: bool | None = None,
-        context_lines: int | None = None,
-        max_results: int | None = None,
-        file_pattern: str | None = None,
-        exclude_dirs: List[str] | None = None,
-    ):
-        """Search for text content inside files using ripgrep.
-
-        Args:
-            query: Text to search for
-            path: Directory path to search in
-            case_sensitive: Case sensitive search (default: false)
-            context_lines: Number of context lines to include (default: 0)
-            max_results: Maximum number of results to return (default: 100)
-            file_pattern: File pattern to include (e.g., '*.py')
-            exclude_dirs: Directory names to skip
-
-        Returns:
-            ContentSearchResponse with matching lines
-        """
-        path = self.format_path(path)
-        
-        params = {'query': query}
-        if case_sensitive is not None:
-            params['caseSensitive'] = case_sensitive
-        if context_lines is not None:
-            params['contextLines'] = context_lines
-        if max_results is not None:
-            params['maxResults'] = max_results
-        if file_pattern is not None:
-            params['filePattern'] = file_pattern
-        if exclude_dirs is not None and len(exclude_dirs) > 0:
-            params['excludeDirs'] = ','.join(exclude_dirs)
-
-        url = f"{self.url}/filesystem-content-search/{path}"
-        headers = {**settings.headers, **self.sandbox_config.headers}
-
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(url, params=params, headers=headers)
-            self.handle_response_error(response)
-            
-            from ..client.models.content_search_response import ContentSearchResponse
-            return ContentSearchResponse.from_dict(response.json())
 
     async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         """Copy files or directories using the cp command.
