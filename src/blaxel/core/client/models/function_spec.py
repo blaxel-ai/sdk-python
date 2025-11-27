@@ -32,7 +32,6 @@ class FunctionSpec:
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
         description (Union[Unset, str]): Function description, very important for the agent function to work with an LLM
-        transport (Union[Unset, str]): Transport compatibility for the MCP, can be "websocket" or "http-stream"
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
@@ -46,7 +45,6 @@ class FunctionSpec:
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
     description: Union[Unset, str] = UNSET
-    transport: Union[Unset, str] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -107,8 +105,6 @@ class FunctionSpec:
 
         description = self.description
 
-        transport = self.transport
-
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
@@ -142,8 +138,6 @@ class FunctionSpec:
             field_dict["sandbox"] = sandbox
         if description is not UNSET:
             field_dict["description"] = description
-        if transport is not UNSET:
-            field_dict["transport"] = transport
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -206,8 +200,6 @@ class FunctionSpec:
 
         description = d.pop("description", UNSET)
 
-        transport = d.pop("transport", UNSET)
-
         triggers = []
         _triggers = d.pop("triggers", UNSET)
         for componentsschemas_triggers_item_data in _triggers or []:
@@ -226,7 +218,6 @@ class FunctionSpec:
             runtime=runtime,
             sandbox=sandbox,
             description=description,
-            transport=transport,
             triggers=triggers,
         )
 

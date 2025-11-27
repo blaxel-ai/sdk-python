@@ -1,14 +1,25 @@
 import asyncio
 import io
 import json
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
 
 import httpx
 
-from ..common.settings import settings
+from ...common.settings import settings
+from ..client.models import Directory, FileRequest, SuccessResponse
+from ..types import (
+    CopyResponse,
+    SandboxConfiguration,
+    SandboxFilesystemFile,
+    WatchEvent,
+)
 from .action import SandboxAction
-from .client.models import Directory, FileRequest, SuccessResponse
-from .types import CopyResponse, SandboxConfiguration, SandboxFilesystemFile, WatchEvent
+
+# Multipart upload constants
+MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
+CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
+MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
 
 
 class SandboxFileSystem(SandboxAction):
@@ -27,6 +38,16 @@ class SandboxFileSystem(SandboxAction):
 
     async def write(self, path: str, content: str) -> SuccessResponse:
         path = self.format_path(path)
+
+        # Calculate content size in bytes
+        content_size = len(content.encode('utf-8'))
+
+        # Use multipart upload for large files
+        if content_size > MULTIPART_THRESHOLD:
+            content_bytes = content.encode('utf-8')
+            return await self._upload_with_multipart(path, content_bytes, "0644")
+
+        # Use regular upload for small files
         body = FileRequest(content=content)
 
         async with self.get_client() as client_instance:
@@ -34,14 +55,31 @@ class SandboxFileSystem(SandboxAction):
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
-    async def write_binary(self, path: str, content: Union[bytes, bytearray]) -> SuccessResponse:
-        """Write binary content to a file."""
+    async def write_binary(self, path: str, content: Union[bytes, bytearray, str]) -> SuccessResponse:
+        """Write binary content to a file.
+
+        Args:
+            path: The path in the sandbox to write to
+            content: Binary content as bytes, bytearray, or string path to a local file
+
+        Returns:
+            SuccessResponse indicating success
+        """
         path = self.format_path(path)
 
+        # If content is a string, treat it as a file path and read it
+        if isinstance(content, str):
+            local_path = Path(content)
+            content = local_path.read_bytes()
         # Convert bytearray to bytes if necessary
-        if isinstance(content, bytearray):
+        elif isinstance(content, bytearray):
             content = bytes(content)
 
+        # Use multipart upload for large files
+        if len(content) > MULTIPART_THRESHOLD:
+            return await self._upload_with_multipart(path, content, "0644")
+
+        # Use regular upload for small files
         # Wrap binary content in BytesIO to provide file-like interface
         binary_file = io.BytesIO(content)
 
@@ -97,6 +135,42 @@ class SandboxFileSystem(SandboxAction):
             if "content" in data:
                 return data["content"]
             raise Exception("Unsupported file type")
+
+    async def read_binary(self, path: str) -> bytes:
+        """Read binary content from a file.
+
+        Args:
+            path: The path in the sandbox to read from
+
+        Returns:
+            Binary content as bytes
+        """
+        path = self.format_path(path)
+
+        url = f"{self.url}/filesystem/{path}"
+        headers = {
+            **settings.headers,
+            **self.sandbox_config.headers,
+            "Accept": "application/octet-stream",
+        }
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.get(url, headers=headers)
+            self.handle_response_error(response)
+            return response.content
+
+    async def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
+        """Download a file from the sandbox to the local filesystem.
+
+        Args:
+            src: The path in the sandbox to download from
+            destination_path: The local path to save to
+            mode: File permissions mode (default: 0o644)
+        """
+        content = await self.read_binary(src)
+        local_path = Path(destination_path)
+        local_path.write_bytes(content)
+        local_path.chmod(mode)
 
     async def rm(self, path: str, recursive: bool = False) -> SuccessResponse:
         path = self.format_path(path)
@@ -242,3 +316,115 @@ class SandboxFileSystem(SandboxAction):
         Simplified to match TypeScript behavior - returns path as-is.
         """
         return path
+
+    # Multipart upload helper methods
+    async def _initiate_multipart_upload(self, path: str, permissions: str = "0644") -> Dict[str, Any]:
+        """Initiate a multipart upload session."""
+        path = self.format_path(path)
+        url = f"{self.url}/filesystem-multipart/initiate/{path}"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+        body = {"permissions": permissions}
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.post(url, json=body, headers=headers)
+            self.handle_response_error(response)
+            return response.json()
+
+    async def _upload_part(
+        self, upload_id: str, part_number: int, data: bytes
+    ) -> Dict[str, Any]:
+        """Upload a single part of a multipart upload."""
+        url = f"{self.url}/filesystem-multipart/{upload_id}/part"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+        params = {"partNumber": part_number}
+
+        # Prepare multipart form data with the file chunk
+        files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.put(
+                url, files=files, params=params, headers=headers
+            )
+            self.handle_response_error(response)
+            return response.json()
+
+    async def _complete_multipart_upload(
+        self, upload_id: str, parts: List[Dict[str, Any]]
+    ) -> SuccessResponse:
+        """Complete a multipart upload by assembling all parts."""
+        url = f"{self.url}/filesystem-multipart/{upload_id}/complete"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+        body = {"parts": parts}
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.post(url, json=body, headers=headers)
+            self.handle_response_error(response)
+            return SuccessResponse.from_dict(response.json())
+
+    async def _abort_multipart_upload(self, upload_id: str) -> None:
+        """Abort a multipart upload and clean up all parts."""
+        url = f"{self.url}/filesystem-multipart/{upload_id}/abort"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+
+        async with self.get_client() as client_instance:
+            response = await client_instance.delete(url, headers=headers)
+            # Don't raise error if abort fails - we want to throw the original error
+            if not response.is_success:
+                print(f"Warning: Failed to abort multipart upload: {response.status_code}")
+
+    async def _upload_with_multipart(
+        self, path: str, data: bytes, permissions: str = "0644"
+    ) -> SuccessResponse:
+        """Upload a file using multipart upload for large files."""
+        # Initiate multipart upload
+        init_response = await self._initiate_multipart_upload(path, permissions)
+        upload_id = init_response.get("uploadId")
+
+        if not upload_id:
+            raise Exception("Failed to get upload ID from initiate response")
+
+        try:
+            size = len(data)
+            num_parts = (size + CHUNK_SIZE - 1) // CHUNK_SIZE  # Ceiling division
+            parts: List[Dict[str, Any]] = []
+
+            # Upload parts in batches for parallel processing
+            for i in range(0, num_parts, MAX_PARALLEL_UPLOADS):
+                batch_tasks = []
+
+                for j in range(MAX_PARALLEL_UPLOADS):
+                    if i + j >= num_parts:
+                        break
+
+                    part_number = i + j + 1
+                    start = (part_number - 1) * CHUNK_SIZE
+                    end = min(start + CHUNK_SIZE, size)
+                    chunk = data[start:end]
+
+                    batch_tasks.append(self._upload_part(upload_id, part_number, chunk))
+
+                # Wait for batch to complete
+                batch_results = await asyncio.gather(*batch_tasks)
+                parts.extend(
+                    [
+                        {
+                            "partNumber": r.get("partNumber"),
+                            "etag": r.get("etag"),
+                        }
+                        for r in batch_results
+                    ]
+                )
+
+            # Sort parts by partNumber to ensure correct order
+            parts.sort(key=lambda p: p.get("partNumber", 0))
+
+            # Complete the upload
+            return await self._complete_multipart_upload(upload_id, parts)
+        except Exception as error:
+            # Abort the upload on failure
+            try:
+                await self._abort_multipart_upload(upload_id)
+            except Exception as abort_error:
+                # Log but don't throw - we want to throw the original error
+                print(f"Failed to abort multipart upload: {abort_error}")
+            raise error

@@ -42,6 +42,7 @@ class Runtime:
         ports (Union[Unset, list['Port']]): Set of ports for a resource
         startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
         timeout (Union[Unset, int]): The timeout for the deployment in seconds
+        transport (Union[Unset, str]): The transport for the deployment, used by MCPs: "websocket" or "http-stream"
         ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
         type_ (Union[Unset, str]): The type of origin for the deployment (hf_private_endpoint, hf_public_endpoint)
     """
@@ -66,6 +67,7 @@ class Runtime:
     ports: Union[Unset, list["Port"]] = UNSET
     startup_probe: Union[Unset, "RuntimeStartupProbe"] = UNSET
     timeout: Union[Unset, int] = UNSET
+    transport: Union[Unset, str] = UNSET
     ttl: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -141,6 +143,8 @@ class Runtime:
 
         timeout = self.timeout
 
+        transport = self.transport
+
         ttl = self.ttl
 
         type_ = self.type_
@@ -188,6 +192,8 @@ class Runtime:
             field_dict["startupProbe"] = startup_probe
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
+        if transport is not UNSET:
+            field_dict["transport"] = transport
         if ttl is not UNSET:
             field_dict["ttl"] = ttl
         if type_ is not UNSET:
@@ -259,6 +265,8 @@ class Runtime:
 
         timeout = d.pop("timeout", UNSET)
 
+        transport = d.pop("transport", UNSET)
+
         ttl = d.pop("ttl", UNSET)
 
         type_ = d.pop("type", UNSET)
@@ -284,6 +292,7 @@ class Runtime:
             ports=ports,
             startup_probe=startup_probe,
             timeout=timeout,
+            transport=transport,
             ttl=ttl,
             type_=type_,
         )

@@ -14,14 +14,12 @@ class JobsTotal:
 
     Attributes:
         failed (Union[Unset, int]): Failed executions
-        retried (Union[Unset, int]): Retried executions
         running (Union[Unset, int]): Running executions
         success (Union[Unset, int]): Success executions
         total (Union[Unset, int]): Total executions
     """
 
     failed: Union[Unset, int] = UNSET
-    retried: Union[Unset, int] = UNSET
     running: Union[Unset, int] = UNSET
     success: Union[Unset, int] = UNSET
     total: Union[Unset, int] = UNSET
@@ -29,8 +27,6 @@ class JobsTotal:
 
     def to_dict(self) -> dict[str, Any]:
         failed = self.failed
-
-        retried = self.retried
 
         running = self.running
 
@@ -43,8 +39,6 @@ class JobsTotal:
         field_dict.update({})
         if failed is not UNSET:
             field_dict["failed"] = failed
-        if retried is not UNSET:
-            field_dict["retried"] = retried
         if running is not UNSET:
             field_dict["running"] = running
         if success is not UNSET:
@@ -61,8 +55,6 @@ class JobsTotal:
         d = src_dict.copy()
         failed = d.pop("failed", UNSET)
 
-        retried = d.pop("retried", UNSET)
-
         running = d.pop("running", UNSET)
 
         success = d.pop("success", UNSET)
@@ -71,7 +63,6 @@ class JobsTotal:
 
         jobs_total = cls(
             failed=failed,
-            retried=retried,
             running=running,
             success=success,
             total=total,

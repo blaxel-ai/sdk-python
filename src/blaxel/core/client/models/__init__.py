@@ -41,6 +41,10 @@ from .get_workspace_service_accounts_response_200_item import (
 )
 from .histogram_bucket import HistogramBucket
 from .histogram_stats import HistogramStats
+from .image import Image
+from .image_metadata import ImageMetadata
+from .image_spec import ImageSpec
+from .image_tag import ImageTag
 from .integration import Integration
 from .integration_additional_infos import IntegrationAdditionalInfos
 from .integration_connection import IntegrationConnection
@@ -235,6 +239,10 @@ __all__ = (
     "GetWorkspaceServiceAccountsResponse200Item",
     "HistogramBucket",
     "HistogramStats",
+    "Image",
+    "ImageMetadata",
+    "ImageSpec",
+    "ImageTag",
     "Integration",
     "IntegrationAdditionalInfos",
     "IntegrationConnection",

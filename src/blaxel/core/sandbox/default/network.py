@@ -1,5 +1,5 @@
+from ..types import SandboxConfiguration
 from .action import SandboxAction
-from .types import SandboxConfiguration
 
 
 class SandboxNetwork(SandboxAction):

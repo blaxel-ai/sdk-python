@@ -1,9 +1,10 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.process_response_status import ProcessResponseStatus
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ProcessResponse")
 
@@ -21,6 +22,9 @@ class ProcessResponse:
         started_at (str):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
         status (ProcessResponseStatus):  Example: running.
         working_dir (str):  Example: /home/user.
+        max_restarts (Union[Unset, int]):  Example: 3.
+        restart_count (Union[Unset, int]):  Example: 2.
+        restart_on_failure (Union[Unset, bool]):  Example: True.
     """
 
     command: str
@@ -32,6 +36,9 @@ class ProcessResponse:
     started_at: str
     status: ProcessResponseStatus
     working_dir: str
+    max_restarts: Union[Unset, int] = UNSET
+    restart_count: Union[Unset, int] = UNSET
+    restart_on_failure: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -53,6 +60,12 @@ class ProcessResponse:
 
         working_dir = self.working_dir
 
+        max_restarts = self.max_restarts
+
+        restart_count = self.restart_count
+
+        restart_on_failure = self.restart_on_failure
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -68,6 +81,12 @@ class ProcessResponse:
                 "workingDir": working_dir,
             }
         )
+        if max_restarts is not UNSET:
+            field_dict["maxRestarts"] = max_restarts
+        if restart_count is not UNSET:
+            field_dict["restartCount"] = restart_count
+        if restart_on_failure is not UNSET:
+            field_dict["restartOnFailure"] = restart_on_failure
 
         return field_dict
 
@@ -94,6 +113,12 @@ class ProcessResponse:
 
         working_dir = d.pop("workingDir")
 
+        max_restarts = d.pop("maxRestarts", UNSET)
+
+        restart_count = d.pop("restartCount", UNSET)
+
+        restart_on_failure = d.pop("restartOnFailure", UNSET)
+
         process_response = cls(
             command=command,
             completed_at=completed_at,
@@ -104,6 +129,9 @@ class ProcessResponse:
             started_at=started_at,
             status=status,
             working_dir=working_dir,
+            max_restarts=max_restarts,
+            restart_count=restart_count,
+            restart_on_failure=restart_on_failure,
         )
 
         process_response.additional_properties = d
