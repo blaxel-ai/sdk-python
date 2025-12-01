@@ -22,7 +22,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          COMMIT=$(git rev-parse --short HEAD)
+          COMMIT=$(git rev-parse HEAD)
           echo "Setting version to $VERSION"
           echo "Setting commit to $COMMIT"
           sed -i -E "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml

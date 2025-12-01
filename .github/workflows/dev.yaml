@@ -30,7 +30,7 @@ jobs:
           IFS='.' read -r major minor patch <<< "$VERSION"
           patch=$((patch + 1))
           VERSION="${major}.${minor}.${patch}.pre-${{ github.run_number }}"
-          COMMIT=$(git rev-parse --short HEAD)
+          COMMIT=$(git rev-parse HEAD)
           echo "Current version: $VERSION"
           echo "Current commit: $COMMIT"
           sed -i -E "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
