@@ -147,7 +147,3 @@ test = [
   "coverage>=7.0.0",
   "aiohttp>=3.11.16",
 ]
-
-[tool.blaxel]
-commit = "7933c01ade7c069572a6040b48e9a2a462a25d66"
-sentry_dsn = ""
