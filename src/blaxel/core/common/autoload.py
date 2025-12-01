@@ -1,6 +1,7 @@
 import atexit
 import logging
 import sys
+import threading
 
 from sentry_sdk import Client, Hub
 
@@ -16,37 +17,32 @@ logger = logging.getLogger(__name__)
 
 # Isolated Sentry hub for SDK-only error tracking (doesn't interfere with user's Sentry)
 _sentry_hub: Hub | None = None
-_original_excepthook = None
+_captured_exceptions: set = set()  # Track already captured exceptions to avoid duplicates
 
 
-def _is_from_blaxel_sdk(tb) -> bool:
-    """Check if any frame in the traceback is from the blaxel SDK (installed package)."""
-    while tb is not None:
-        frame = tb.tb_frame
+def _trace_blaxel_exceptions(frame, event, arg):
+    """Trace function that captures exceptions from blaxel SDK code."""
+    if event == 'exception':
+        exc_type, exc_value, exc_tb = arg
         filename = frame.f_code.co_filename
-        # Check if it's from blaxel package
-        if "blaxel" in filename and "site-packages" in filename:
-            return True
-        tb = tb.tb_next
-    return False
 
+        # Only capture if it's from blaxel in site-packages
+        if 'site-packages/blaxel' in filename:
+            # Avoid capturing the same exception multiple times
+            exc_id = id(exc_value)
+            if exc_id not in _captured_exceptions:
+                _captured_exceptions.add(exc_id)
+                capture_exception(exc_value)
+                # Clean up old exception IDs to prevent memory leak
+                if len(_captured_exceptions) > 1000:
+                    _captured_exceptions.clear()
 
-def _sentry_excepthook(exc_type, exc_value, exc_tb):
-    """Custom excepthook that captures SDK exceptions to our isolated Sentry hub."""
-    # Always call the original excepthook first (to preserve normal behavior)
-    if _original_excepthook:
-        _original_excepthook(exc_type, exc_value, exc_tb)
+    return _trace_blaxel_exceptions
 
-    # Capture to our isolated hub if it's from the SDK
-    if _sentry_hub is not None and _sentry_hub.client is not None and exc_tb is not None:
-        if _is_from_blaxel_sdk(exc_tb):
-            _sentry_hub.capture_exception((exc_type, exc_value, exc_tb))
-            # Flush immediately to ensure the event is sent before program exits
-            _sentry_hub.client.flush(timeout=2)
 
 def sentry() -> None:
     """Initialize an isolated Sentry client for SDK error tracking."""
-    global _sentry_hub, _original_excepthook
+    global _sentry_hub
     try:
         dsn = settings.sentry_dsn
         if not dsn:
@@ -57,7 +53,7 @@ def sentry() -> None:
             dsn=dsn,
             environment=settings.env,
             release=f"sdk-python@{settings.version}",
-            default_integrations=False,  # No integrations - we only want manual capture
+            default_integrations=False,
             auto_enabling_integrations=False,
         )
         _sentry_hub = Hub(sentry_client)
@@ -68,9 +64,9 @@ def sentry() -> None:
             scope.set_tag("blaxel.version", settings.version)
             scope.set_tag("blaxel.commit", settings.commit)
 
-        # Install custom excepthook to automatically capture SDK exceptions
-        _original_excepthook = sys.excepthook
-        sys.excepthook = _sentry_excepthook
+        # Install trace function to automatically capture SDK exceptions
+        sys.settrace(_trace_blaxel_exceptions)
+        threading.settrace(_trace_blaxel_exceptions)
 
         # Register atexit handler to flush pending events
         atexit.register(_flush_sentry)
@@ -80,10 +76,9 @@ def sentry() -> None:
 
 
 def capture_exception(exception: Exception | None = None) -> None:
-    """Capture an exception in the SDK's isolated Sentry hub."""
+    """Capture an exception to the SDK's isolated Sentry hub."""
     if _sentry_hub is not None and _sentry_hub.client is not None:
         _sentry_hub.capture_exception(exception)
-        _sentry_hub.client.flush(timeout=2)
 
 
 def _flush_sentry():
