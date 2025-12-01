@@ -20,7 +20,9 @@ jobs:
           fetch-depth: 0
       - name: "Install uv"
         uses: astral-sh/setup-uv@v4
-      - name: Set version
+      - name: Set version and build config
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           VERSION=$(git describe --tags --abbrev=0)
           VERSION="${VERSION#v}"
@@ -30,6 +32,8 @@ jobs:
           VERSION="${major}.${minor}.${patch}"
           echo "Current version: $VERSION"
           sed -i -E "s/^version = .*/version = \"${VERSION}.pre-${{ github.run_number }}\"/" pyproject.toml
+          # Inject Sentry DSN at build time
+          sed -i -E "s|^sentry_dsn = .*|sentry_dsn = \"${SENTRY_DSN}\"|" pyproject.toml
       - name: Test package installation
         run: |
           uv venv

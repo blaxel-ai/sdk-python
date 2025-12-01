@@ -83,6 +83,24 @@ def _get_commit_hash() -> str:
 
     return "unknown"
 
+
+def _get_sentry_dsn() -> str:
+    """Get Sentry DSN from pyproject.toml (build-time injection)."""
+    try:
+        current_file = Path(__file__)
+        project_root = current_file.parent.parent.parent.parent.parent
+        pyproject_path = project_root / "pyproject.toml"
+
+        if pyproject_path.exists():
+            with open(pyproject_path, "rb") as f:
+                pyproject_data = tomli.load(f)
+                if "tool" in pyproject_data and "blaxel" in pyproject_data["tool"]:
+                    return pyproject_data["tool"]["blaxel"].get("sentry_dsn", "")
+    except Exception:
+        pass
+
+    return ""
+
 class Settings:
     auth: BlaxelAuth
 
@@ -116,6 +134,11 @@ class Settings:
             return "https://run.blaxel.ai"
         return "https://run.blaxel.dev"
 
+
+    @property
+    def sentry_dsn(self) -> str:
+        """Get the Sentry DSN (injected at build time)."""
+        return _get_sentry_dsn()
 
     @property
     def version(self) -> str:
