@@ -22,7 +22,6 @@ class DynamicHeadersHTTPClient(httpx.AsyncClient):
         auth_headers = settings.auth.get_headers()
         for key, value in auth_headers.items():
             request.headers[key] = value
-        print(request.__dict__)
         return await super().send(request, *args, **kwargs)
 
 

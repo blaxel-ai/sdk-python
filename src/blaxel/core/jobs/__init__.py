@@ -27,7 +27,7 @@ class BlJobWrapper:
                     args_dict[key] = unknown[i + 1]
             return args_dict
 
-        response = requests.get(os.getenv("BL_EXECUTION_DATA_URL"))
+        response = requests.get(os.getenv("BL_EXECUTION_DATA_URL") or "")
         data = response.json()
         tasks = data.get("tasks", [])
         return tasks[self.index] if self.index < len(tasks) else {}
@@ -54,8 +54,7 @@ class BlJobWrapper:
             else:
                 func(**parsed_args)
         except Exception as error:
-            print("Job execution failed:", error, file=sys.stderr)
-            sys.exit(1)
+            logger.error(f"Job execution failed: {error}")
 
 
 logger = getLogger(__name__)
@@ -96,7 +95,7 @@ class BlJob:
 
     def call(self, url, input_data, headers: dict = {}, params: dict = {}):
         body = {"tasks": input_data}
-        
+
         # Merge settings headers with provided headers
         merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 
@@ -110,7 +109,7 @@ class BlJob:
     async def acall(self, url, input_data, headers: dict = {}, params: dict = {}):
         logger.debug(f"Job Calling: {self.name}")
         body = {"tasks": input_data}
-        
+
         # Merge settings headers with provided headers
         merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
 

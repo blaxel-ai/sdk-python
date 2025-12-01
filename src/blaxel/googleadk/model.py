@@ -55,7 +55,6 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
 
 
 async def get_google_adk_model(url: str, type: str, model: str, **kwargs):
-    print("HEER TWO")
     llm_client = AuthenticatedLiteLLMClient()
     if type == "mistral":
         return LiteLlm(
