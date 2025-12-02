@@ -145,7 +145,9 @@ test = [
   "pytest-mock>=3.14.0",
   "coverage>=7.0.0",
   "aiohttp>=3.11.16",
+  "flask>=3.0.0",
+  "requests>=2.32.0",
 ]
 
 [tool.blaxel]
-commit = "7933c01ade7c069572a6040b48e9a2a462a25d66"
+commit = "01d868d9b1e77ea2965c9487b10316432d111fa0"
