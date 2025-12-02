@@ -11,19 +11,11 @@ from ...types import Response
 
 def _get_kwargs(
     workspace_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": f"/workspaces/{workspace_name}/decline",
     }
-
 
     return _kwargs
 
@@ -31,8 +23,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> PendingInvitation | None:
     if response.status_code == 200:
         response_200 = PendingInvitation.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -54,9 +44,8 @@ def sync_detailed(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[PendingInvitation]:
-    """ Decline invitation to workspace
+    """Decline invitation to workspace
 
      Declines an invitation to a workspace.
 
@@ -69,12 +58,10 @@ def sync_detailed(
 
     Returns:
         Response[PendingInvitation]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         workspace_name=workspace_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -83,13 +70,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> PendingInvitation | None:
-    """ Decline invitation to workspace
+    """Decline invitation to workspace
 
      Declines an invitation to a workspace.
 
@@ -102,22 +89,20 @@ def sync(
 
     Returns:
         PendingInvitation
-     """
-
+    """
 
     return sync_detailed(
         workspace_name=workspace_name,
-client=client,
-
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[PendingInvitation]:
-    """ Decline invitation to workspace
+    """Decline invitation to workspace
 
      Declines an invitation to a workspace.
 
@@ -130,27 +115,23 @@ async def asyncio_detailed(
 
     Returns:
         Response[PendingInvitation]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         workspace_name=workspace_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     workspace_name: str,
     *,
     client: Union[Client],
-
 ) -> PendingInvitation | None:
-    """ Decline invitation to workspace
+    """Decline invitation to workspace
 
      Declines an invitation to a workspace.
 
@@ -163,11 +144,11 @@ async def asyncio(
 
     Returns:
         PendingInvitation
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        workspace_name=workspace_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            workspace_name=workspace_name,
+            client=client,
+        )
+    ).parsed

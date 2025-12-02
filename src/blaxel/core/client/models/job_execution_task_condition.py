@@ -10,16 +10,16 @@ T = TypeVar("T", bound="JobExecutionTaskCondition")
 
 @_attrs_define
 class JobExecutionTaskCondition:
-    """ Job execution task condition
+    """Job execution task condition
 
-        Attributes:
-            execution_reason (Union[Unset, str]): Execution reason
-            message (Union[Unset, str]): Condition message
-            reason (Union[Unset, str]): Condition reason
-            severity (Union[Unset, str]): Condition severity
-            state (Union[Unset, str]): Condition state
-            type_ (Union[Unset, str]): Condition type
-     """
+    Attributes:
+        execution_reason (Union[Unset, str]): Execution reason
+        message (Union[Unset, str]): Condition message
+        reason (Union[Unset, str]): Condition reason
+        severity (Union[Unset, str]): Condition severity
+        state (Union[Unset, str]): Condition state
+        type_ (Union[Unset, str]): Condition type
+    """
 
     execution_reason: Union[Unset, str] = UNSET
     message: Union[Unset, str] = UNSET
@@ -28,7 +28,6 @@ class JobExecutionTaskCondition:
     state: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         execution_reason = self.execution_reason
@@ -43,11 +42,9 @@ class JobExecutionTaskCondition:
 
         type_ = self.type_
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if execution_reason is not UNSET:
             field_dict["executionReason"] = execution_reason
         if message is not UNSET:
@@ -62,8 +59,6 @@ class JobExecutionTaskCondition:
             field_dict["type"] = type_
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -90,7 +85,6 @@ class JobExecutionTaskCondition:
             state=state,
             type_=type_,
         )
-
 
         job_execution_task_condition.additional_properties = d
         return job_execution_task_condition

@@ -8,30 +8,22 @@ T = TypeVar("T", bound="StoreAgentLabels")
 
 @_attrs_define
 class StoreAgentLabels:
-    """ Store agent labels
-
-     """
+    """Store agent labels"""
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        store_agent_labels = cls(
-        )
-
+        store_agent_labels = cls()
 
         store_agent_labels.additional_properties = d
         return store_agent_labels

@@ -10,21 +10,20 @@ T = TypeVar("T", bound="IntegrationOrganization")
 
 @_attrs_define
 class IntegrationOrganization:
-    """ Integration organization
+    """Integration organization
 
-        Attributes:
-            avatar_url (Union[Unset, str]): Provider organization avatar URL
-            display_name (Union[Unset, str]): Provider organization display name
-            id (Union[Unset, str]): Provider organization ID
-            name (Union[Unset, str]): Provider organization name
-     """
+    Attributes:
+        avatar_url (Union[Unset, str]): Provider organization avatar URL
+        display_name (Union[Unset, str]): Provider organization display name
+        id (Union[Unset, str]): Provider organization ID
+        name (Union[Unset, str]): Provider organization name
+    """
 
     avatar_url: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     id: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         avatar_url = self.avatar_url
@@ -35,11 +34,9 @@ class IntegrationOrganization:
 
         name = self.name
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if avatar_url is not UNSET:
             field_dict["avatar_url"] = avatar_url
         if display_name is not UNSET:
@@ -50,8 +47,6 @@ class IntegrationOrganization:
             field_dict["name"] = name
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -72,7 +67,6 @@ class IntegrationOrganization:
             id=id,
             name=name,
         )
-
 
         integration_organization.additional_properties = d
         return integration_organization

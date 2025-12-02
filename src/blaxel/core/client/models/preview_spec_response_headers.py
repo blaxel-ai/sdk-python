@@ -8,30 +8,22 @@ T = TypeVar("T", bound="PreviewSpecResponseHeaders")
 
 @_attrs_define
 class PreviewSpecResponseHeaders:
-    """ Those headers will be set in all responses of your preview. This is especially useful to set the CORS headers.
-
-     """
+    """Those headers will be set in all responses of your preview. This is especially useful to set the CORS headers."""
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        preview_spec_response_headers = cls(
-        )
-
+        preview_spec_response_headers = cls()
 
         preview_spec_response_headers.additional_properties = d
         return preview_spec_response_headers

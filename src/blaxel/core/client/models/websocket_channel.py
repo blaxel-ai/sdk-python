@@ -10,15 +10,15 @@ T = TypeVar("T", bound="WebsocketChannel")
 
 @_attrs_define
 class WebsocketChannel:
-    """ WebSocket connection details
+    """WebSocket connection details
 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the resource was created
-            updated_at (Union[Unset, str]): The date and time when the resource was updated
-            connection_id (Union[Unset, str]): Unique connection ID
-            source_region (Union[Unset, str]): Source region the connection belongs to
-            workspace (Union[Unset, str]): Workspace the connection belongs to
-     """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the resource was created
+        updated_at (Union[Unset, str]): The date and time when the resource was updated
+        connection_id (Union[Unset, str]): Unique connection ID
+        source_region (Union[Unset, str]): Source region the connection belongs to
+        workspace (Union[Unset, str]): Workspace the connection belongs to
+    """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
@@ -26,7 +26,6 @@ class WebsocketChannel:
     source_region: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -39,11 +38,9 @@ class WebsocketChannel:
 
         workspace = self.workspace
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -56,8 +53,6 @@ class WebsocketChannel:
             field_dict["workspace"] = workspace
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -81,7 +76,6 @@ class WebsocketChannel:
             source_region=source_region,
             workspace=workspace,
         )
-
 
         websocket_channel.additional_properties = d
         return websocket_channel

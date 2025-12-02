@@ -10,16 +10,16 @@ T = TypeVar("T", bound="JobExecutionStats")
 
 @_attrs_define
 class JobExecutionStats:
-    """ Job execution statistics
+    """Job execution statistics
 
-        Attributes:
-            cancelled (Union[Unset, int]): Number of cancelled tasks
-            failure (Union[Unset, int]): Number of failed tasks
-            retried (Union[Unset, int]): Number of retried tasks
-            running (Union[Unset, int]): Number of running tasks
-            success (Union[Unset, int]): Number of successful tasks
-            total (Union[Unset, int]): Total number of tasks
-     """
+    Attributes:
+        cancelled (Union[Unset, int]): Number of cancelled tasks
+        failure (Union[Unset, int]): Number of failed tasks
+        retried (Union[Unset, int]): Number of retried tasks
+        running (Union[Unset, int]): Number of running tasks
+        success (Union[Unset, int]): Number of successful tasks
+        total (Union[Unset, int]): Total number of tasks
+    """
 
     cancelled: Union[Unset, int] = UNSET
     failure: Union[Unset, int] = UNSET
@@ -28,7 +28,6 @@ class JobExecutionStats:
     success: Union[Unset, int] = UNSET
     total: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         cancelled = self.cancelled
@@ -43,11 +42,9 @@ class JobExecutionStats:
 
         total = self.total
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if cancelled is not UNSET:
             field_dict["cancelled"] = cancelled
         if failure is not UNSET:
@@ -62,8 +59,6 @@ class JobExecutionStats:
             field_dict["total"] = total
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -90,7 +85,6 @@ class JobExecutionStats:
             success=success,
             total=total,
         )
-
 
         job_execution_stats.additional_properties = d
         return job_execution_stats

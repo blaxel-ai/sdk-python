@@ -10,19 +10,11 @@ from ...types import Response
 
 def _get_kwargs(
     connection_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/integrations/connections/{connection_name}/models",
     }
-
 
     return _kwargs
 
@@ -49,9 +41,8 @@ def sync_detailed(
     connection_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Any]:
-    """ List integration connection models
+    """List integration connection models
 
      Returns a list of all models for an integration connection.
 
@@ -64,12 +55,10 @@ def sync_detailed(
 
     Returns:
         Response[Any]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         connection_name=connection_name,
-
     )
 
     response = client.get_httpx_client().request(
@@ -83,9 +72,8 @@ async def asyncio_detailed(
     connection_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Any]:
-    """ List integration connection models
+    """List integration connection models
 
      Returns a list of all models for an integration connection.
 
@@ -98,17 +86,12 @@ async def asyncio_detailed(
 
     Returns:
         Response[Any]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         connection_name=connection_name,
-
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
-

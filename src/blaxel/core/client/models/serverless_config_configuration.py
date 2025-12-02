@@ -8,30 +8,22 @@ T = TypeVar("T", bound="ServerlessConfigConfiguration")
 
 @_attrs_define
 class ServerlessConfigConfiguration:
-    """ The configuration for the deployment
-
-     """
+    """The configuration for the deployment"""
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        serverless_config_configuration = cls(
-        )
-
+        serverless_config_configuration = cls()
 
         serverless_config_configuration.additional_properties = d
         return serverless_config_configuration

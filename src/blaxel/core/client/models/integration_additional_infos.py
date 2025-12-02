@@ -8,30 +8,22 @@ T = TypeVar("T", bound="IntegrationAdditionalInfos")
 
 @_attrs_define
 class IntegrationAdditionalInfos:
-    """ Integration additional infos
-
-     """
+    """Integration additional infos"""
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        integration_additional_infos = cls(
-        )
-
+        integration_additional_infos = cls()
 
         integration_additional_infos.additional_properties = d
         return integration_additional_infos

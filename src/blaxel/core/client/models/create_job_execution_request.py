@@ -6,10 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
-
-
-
+    from ..models.create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
 
 
 T = TypeVar("T", bound="CreateJobExecutionRequest")
@@ -17,26 +14,26 @@ T = TypeVar("T", bound="CreateJobExecutionRequest")
 
 @_attrs_define
 class CreateJobExecutionRequest:
-    """ Request to create a job execution
+    """Request to create a job execution
 
-        Attributes:
-            execution_id (Union[Unset, str]): Execution ID (optional, will be generated if not provided)
-            id (Union[Unset, str]): Unique message ID
-            job_id (Union[Unset, str]): Job ID
-            tasks (Union[Unset, list['CreateJobExecutionRequestTasksItem']]): Array of task parameters for parallel
-                execution
-            workspace_id (Union[Unset, str]): Workspace ID
-     """
+    Attributes:
+        execution_id (Union[Unset, str]): Execution ID (optional, will be generated if not provided)
+        id (Union[Unset, str]): Unique message ID
+        job_id (Union[Unset, str]): Job ID
+        tasks (Union[Unset, list['CreateJobExecutionRequestTasksItem']]): Array of task parameters for parallel
+            execution
+        workspace_id (Union[Unset, str]): Workspace ID
+    """
 
     execution_id: Union[Unset, str] = UNSET
     id: Union[Unset, str] = UNSET
     job_id: Union[Unset, str] = UNSET
-    tasks: Union[Unset, list['CreateJobExecutionRequestTasksItem']] = UNSET
+    tasks: Union[Unset, list["CreateJobExecutionRequestTasksItem"]] = UNSET
     workspace_id: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
+
         execution_id = self.execution_id
 
         id = self.id
@@ -53,15 +50,11 @@ class CreateJobExecutionRequest:
                     tasks_item = tasks_item_data.to_dict()
                 tasks.append(tasks_item)
 
-
-
         workspace_id = self.workspace_id
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if execution_id is not UNSET:
             field_dict["executionId"] = execution_id
         if id is not UNSET:
@@ -75,13 +68,12 @@ class CreateJobExecutionRequest:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.create_job_execution_request_tasks_item import (
-          CreateJobExecutionRequestTasksItem,
+            CreateJobExecutionRequestTasksItem,
         )
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -93,13 +85,10 @@ class CreateJobExecutionRequest:
 
         tasks = []
         _tasks = d.pop("tasks", UNSET)
-        for tasks_item_data in (_tasks or []):
+        for tasks_item_data in _tasks or []:
             tasks_item = CreateJobExecutionRequestTasksItem.from_dict(tasks_item_data)
 
-
-
             tasks.append(tasks_item)
-
 
         workspace_id = d.pop("workspaceId", UNSET)
 
@@ -110,7 +99,6 @@ class CreateJobExecutionRequest:
             tasks=tasks,
             workspace_id=workspace_id,
         )
-
 
         create_job_execution_request.additional_properties = d
         return create_job_execution_request

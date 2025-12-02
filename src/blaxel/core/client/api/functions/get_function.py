@@ -13,19 +13,12 @@ def _get_kwargs(
     function_name: str,
     *,
     show_secrets: Union[Unset, bool] = UNSET,
-
 ) -> dict[str, Any]:
-    
-
-    
-
     params: dict[str, Any] = {}
 
     params["show_secrets"] = show_secrets
 
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -33,15 +26,12 @@ def _get_kwargs(
         "params": params,
     }
 
-
     return _kwargs
 
 
 def _parse_response(*, client: Client, response: httpx.Response) -> Function | None:
     if response.status_code == 200:
         response_200 = Function.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -64,9 +54,8 @@ def sync_detailed(
     *,
     client: Union[Client],
     show_secrets: Union[Unset, bool] = UNSET,
-
 ) -> Response[Function]:
-    """ Get function by name
+    """Get function by name
 
     Args:
         function_name (str):
@@ -78,13 +67,11 @@ def sync_detailed(
 
     Returns:
         Response[Function]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         function_name=function_name,
-show_secrets=show_secrets,
-
+        show_secrets=show_secrets,
     )
 
     response = client.get_httpx_client().request(
@@ -93,14 +80,14 @@ show_secrets=show_secrets,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     function_name: str,
     *,
     client: Union[Client],
     show_secrets: Union[Unset, bool] = UNSET,
-
 ) -> Function | None:
-    """ Get function by name
+    """Get function by name
 
     Args:
         function_name (str):
@@ -112,24 +99,22 @@ def sync(
 
     Returns:
         Function
-     """
-
+    """
 
     return sync_detailed(
         function_name=function_name,
-client=client,
-show_secrets=show_secrets,
-
+        client=client,
+        show_secrets=show_secrets,
     ).parsed
+
 
 async def asyncio_detailed(
     function_name: str,
     *,
     client: Union[Client],
     show_secrets: Union[Unset, bool] = UNSET,
-
 ) -> Response[Function]:
-    """ Get function by name
+    """Get function by name
 
     Args:
         function_name (str):
@@ -141,29 +126,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[Function]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         function_name=function_name,
-show_secrets=show_secrets,
-
+        show_secrets=show_secrets,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     function_name: str,
     *,
     client: Union[Client],
     show_secrets: Union[Unset, bool] = UNSET,
-
 ) -> Function | None:
-    """ Get function by name
+    """Get function by name
 
     Args:
         function_name (str):
@@ -175,12 +156,12 @@ async def asyncio(
 
     Returns:
         Function
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        function_name=function_name,
-client=client,
-show_secrets=show_secrets,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            function_name=function_name,
+            client=client,
+            show_secrets=show_secrets,
+        )
+    ).parsed

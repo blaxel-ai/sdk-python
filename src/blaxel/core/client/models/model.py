@@ -6,12 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.core_event import CoreEvent
-  from ..models.metadata import Metadata
-  from ..models.model_spec import ModelSpec
-
-
-
+    from ..models.core_event import CoreEvent
+    from ..models.metadata import Metadata
+    from ..models.model_spec import ModelSpec
 
 
 T = TypeVar("T", bound="Model")
@@ -19,23 +16,23 @@ T = TypeVar("T", bound="Model")
 
 @_attrs_define
 class Model:
-    """ Logical object representing a model
+    """Logical object representing a model
 
-        Attributes:
-            events (Union[Unset, list['CoreEvent']]): Core events
-            metadata (Union[Unset, Metadata]): Metadata
-            spec (Union[Unset, ModelSpec]): Model specification
-            status (Union[Unset, str]): Model status
-     """
+    Attributes:
+        events (Union[Unset, list['CoreEvent']]): Core events
+        metadata (Union[Unset, Metadata]): Metadata
+        spec (Union[Unset, ModelSpec]): Model specification
+        status (Union[Unset, str]): Model status
+    """
 
-    events: Union[Unset, list['CoreEvent']] = UNSET
-    metadata: Union[Unset, 'Metadata'] = UNSET
-    spec: Union[Unset, 'ModelSpec'] = UNSET
+    events: Union[Unset, list["CoreEvent"]] = UNSET
+    metadata: Union[Unset, "Metadata"] = UNSET
+    spec: Union[Unset, "ModelSpec"] = UNSET
     status: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
+
         events: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.events, Unset):
             events = []
@@ -45,8 +42,6 @@ class Model:
                 else:
                     componentsschemas_core_events_item = componentsschemas_core_events_item_data.to_dict()
                 events.append(componentsschemas_core_events_item)
-
-
 
         metadata: Union[Unset, dict[str, Any]] = UNSET
         if self.metadata and not isinstance(self.metadata, Unset) and not isinstance(self.metadata, dict):
@@ -62,11 +57,9 @@ class Model:
 
         status = self.status
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if events is not UNSET:
             field_dict["events"] = events
         if metadata is not UNSET:
@@ -78,45 +71,35 @@ class Model:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
         from ..models.model_spec import ModelSpec
+
         if not src_dict:
             return None
         d = src_dict.copy()
         events = []
         _events = d.pop("events", UNSET)
-        for componentsschemas_core_events_item_data in (_events or []):
+        for componentsschemas_core_events_item_data in _events or []:
             componentsschemas_core_events_item = CoreEvent.from_dict(componentsschemas_core_events_item_data)
-
-
 
             events.append(componentsschemas_core_events_item)
 
-
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, Metadata]
-        if isinstance(_metadata,  Unset):
+        if isinstance(_metadata, Unset):
             metadata = UNSET
         else:
             metadata = Metadata.from_dict(_metadata)
 
-
-
-
         _spec = d.pop("spec", UNSET)
         spec: Union[Unset, ModelSpec]
-        if isinstance(_spec,  Unset):
+        if isinstance(_spec, Unset):
             spec = UNSET
         else:
             spec = ModelSpec.from_dict(_spec)
-
-
-
 
         status = d.pop("status", UNSET)
 
@@ -126,7 +109,6 @@ class Model:
             spec=spec,
             status=status,
         )
-
 
         model.additional_properties = d
         return model

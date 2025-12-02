@@ -10,15 +10,15 @@ T = TypeVar("T", bound="LogsResponseData")
 
 @_attrs_define
 class LogsResponseData:
-    """ Response data for logs
+    """Response data for logs
 
-        Attributes:
-            body (Union[Unset, str]): Body of the log
-            log_attributes (Union[Unset, list[Any]]): Log attributes
-            severity_number (Union[Unset, int]): Severity number of the log
-            timestamp (Union[Unset, str]): Timestamp of the log
-            trace_id (Union[Unset, str]): Trace ID of the log
-     """
+    Attributes:
+        body (Union[Unset, str]): Body of the log
+        log_attributes (Union[Unset, list[Any]]): Log attributes
+        severity_number (Union[Unset, int]): Severity number of the log
+        timestamp (Union[Unset, str]): Timestamp of the log
+        trace_id (Union[Unset, str]): Trace ID of the log
+    """
 
     body: Union[Unset, str] = UNSET
     log_attributes: Union[Unset, list[Any]] = UNSET
@@ -27,7 +27,6 @@ class LogsResponseData:
     trace_id: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
         body = self.body
 
@@ -35,19 +34,15 @@ class LogsResponseData:
         if not isinstance(self.log_attributes, Unset):
             log_attributes = self.log_attributes
 
-
-
         severity_number = self.severity_number
 
         timestamp = self.timestamp
 
         trace_id = self.trace_id
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if body is not UNSET:
             field_dict["body"] = body
         if log_attributes is not UNSET:
@@ -61,8 +56,6 @@ class LogsResponseData:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
@@ -71,7 +64,6 @@ class LogsResponseData:
         body = d.pop("body", UNSET)
 
         log_attributes = cast(list[Any], d.pop("logAttributes", UNSET))
-
 
         severity_number = d.pop("severityNumber", UNSET)
 
@@ -86,7 +78,6 @@ class LogsResponseData:
             timestamp=timestamp,
             trace_id=trace_id,
         )
-
 
         logs_response_data.additional_properties = d
         return logs_response_data

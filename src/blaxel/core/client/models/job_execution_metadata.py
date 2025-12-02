@@ -10,20 +10,20 @@ T = TypeVar("T", bound="JobExecutionMetadata")
 
 @_attrs_define
 class JobExecutionMetadata:
-    """ Job execution metadata
+    """Job execution metadata
 
-        Attributes:
-            cluster (Union[Unset, str]): Cluster ID
-            completed_at (Union[Unset, str]): Completion timestamp
-            created_at (Union[Unset, str]): Creation timestamp
-            deleted_at (Union[Unset, str]): Deletion timestamp
-            expired_at (Union[Unset, str]): Expiration timestamp
-            id (Union[Unset, str]): Execution ID
-            job (Union[Unset, str]): Job name
-            started_at (Union[Unset, str]): Start timestamp
-            updated_at (Union[Unset, str]): Last update timestamp
-            workspace (Union[Unset, str]): Workspace ID
-     """
+    Attributes:
+        cluster (Union[Unset, str]): Cluster ID
+        completed_at (Union[Unset, str]): Completion timestamp
+        created_at (Union[Unset, str]): Creation timestamp
+        deleted_at (Union[Unset, str]): Deletion timestamp
+        expired_at (Union[Unset, str]): Expiration timestamp
+        id (Union[Unset, str]): Execution ID
+        job (Union[Unset, str]): Job name
+        started_at (Union[Unset, str]): Start timestamp
+        updated_at (Union[Unset, str]): Last update timestamp
+        workspace (Union[Unset, str]): Workspace ID
+    """
 
     cluster: Union[Unset, str] = UNSET
     completed_at: Union[Unset, str] = UNSET
@@ -36,7 +36,6 @@ class JobExecutionMetadata:
     updated_at: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         cluster = self.cluster
@@ -59,11 +58,9 @@ class JobExecutionMetadata:
 
         workspace = self.workspace
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if cluster is not UNSET:
             field_dict["cluster"] = cluster
         if completed_at is not UNSET:
@@ -86,8 +83,6 @@ class JobExecutionMetadata:
             field_dict["workspace"] = workspace
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -126,7 +121,6 @@ class JobExecutionMetadata:
             updated_at=updated_at,
             workspace=workspace,
         )
-
 
         job_execution_metadata.additional_properties = d
         return job_execution_metadata

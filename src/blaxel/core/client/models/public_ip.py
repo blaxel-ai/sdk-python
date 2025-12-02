@@ -10,18 +10,17 @@ T = TypeVar("T", bound="PublicIp")
 
 @_attrs_define
 class PublicIp:
-    """ 
-        Attributes:
-            description (Union[Unset, str]): Description of the region/location
-            ipv_4_cidrs (Union[Unset, list[str]]): List of public ipv4 addresses
-            ipv_6_cidrs (Union[Unset, list[str]]): List of public ipv6 addresses
-     """
+    """
+    Attributes:
+        description (Union[Unset, str]): Description of the region/location
+        ipv_4_cidrs (Union[Unset, list[str]]): List of public ipv4 addresses
+        ipv_6_cidrs (Union[Unset, list[str]]): List of public ipv6 addresses
+    """
 
     description: Union[Unset, str] = UNSET
     ipv_4_cidrs: Union[Unset, list[str]] = UNSET
     ipv_6_cidrs: Union[Unset, list[str]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         description = self.description
@@ -30,19 +29,13 @@ class PublicIp:
         if not isinstance(self.ipv_4_cidrs, Unset):
             ipv_4_cidrs = self.ipv_4_cidrs
 
-
-
         ipv_6_cidrs: Union[Unset, list[str]] = UNSET
         if not isinstance(self.ipv_6_cidrs, Unset):
             ipv_6_cidrs = self.ipv_6_cidrs
 
-
-
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if description is not UNSET:
             field_dict["description"] = description
         if ipv_4_cidrs is not UNSET:
@@ -51,8 +44,6 @@ class PublicIp:
             field_dict["ipv6Cidrs"] = ipv_6_cidrs
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -63,16 +54,13 @@ class PublicIp:
 
         ipv_4_cidrs = cast(list[str], d.pop("ipv4Cidrs", UNSET))
 
-
         ipv_6_cidrs = cast(list[str], d.pop("ipv6Cidrs", UNSET))
-
 
         public_ip = cls(
             description=description,
             ipv_4_cidrs=ipv_4_cidrs,
             ipv_6_cidrs=ipv_6_cidrs,
         )
-
 
         public_ip.additional_properties = d
         return public_ip

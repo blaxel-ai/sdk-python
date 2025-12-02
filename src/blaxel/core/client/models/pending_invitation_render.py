@@ -6,12 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.pending_invitation_render_invited_by import PendingInvitationRenderInvitedBy
-  from ..models.pending_invitation_render_workspace import PendingInvitationRenderWorkspace
-  from ..models.pending_invitation_workspace_details import PendingInvitationWorkspaceDetails
-
-
-
+    from ..models.pending_invitation_render_invited_by import PendingInvitationRenderInvitedBy
+    from ..models.pending_invitation_render_workspace import PendingInvitationRenderWorkspace
+    from ..models.pending_invitation_workspace_details import PendingInvitationWorkspaceDetails
 
 
 T = TypeVar("T", bound="PendingInvitationRender")
@@ -19,27 +16,27 @@ T = TypeVar("T", bound="PendingInvitationRender")
 
 @_attrs_define
 class PendingInvitationRender:
-    """ Pending invitation in workspace
+    """Pending invitation in workspace
 
-        Attributes:
-            email (Union[Unset, str]): User email
-            invited_at (Union[Unset, str]): Invitation date
-            invited_by (Union[Unset, PendingInvitationRenderInvitedBy]): Invited by
-            role (Union[Unset, str]): ACL role
-            workspace (Union[Unset, PendingInvitationRenderWorkspace]): Workspace
-            workspace_details (Union[Unset, PendingInvitationWorkspaceDetails]): Workspace details
-     """
+    Attributes:
+        email (Union[Unset, str]): User email
+        invited_at (Union[Unset, str]): Invitation date
+        invited_by (Union[Unset, PendingInvitationRenderInvitedBy]): Invited by
+        role (Union[Unset, str]): ACL role
+        workspace (Union[Unset, PendingInvitationRenderWorkspace]): Workspace
+        workspace_details (Union[Unset, PendingInvitationWorkspaceDetails]): Workspace details
+    """
 
     email: Union[Unset, str] = UNSET
     invited_at: Union[Unset, str] = UNSET
-    invited_by: Union[Unset, 'PendingInvitationRenderInvitedBy'] = UNSET
+    invited_by: Union[Unset, "PendingInvitationRenderInvitedBy"] = UNSET
     role: Union[Unset, str] = UNSET
-    workspace: Union[Unset, 'PendingInvitationRenderWorkspace'] = UNSET
-    workspace_details: Union[Unset, 'PendingInvitationWorkspaceDetails'] = UNSET
+    workspace: Union[Unset, "PendingInvitationRenderWorkspace"] = UNSET
+    workspace_details: Union[Unset, "PendingInvitationWorkspaceDetails"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
+
         email = self.email
 
         invited_at = self.invited_at
@@ -59,16 +56,18 @@ class PendingInvitationRender:
             workspace = self.workspace
 
         workspace_details: Union[Unset, dict[str, Any]] = UNSET
-        if self.workspace_details and not isinstance(self.workspace_details, Unset) and not isinstance(self.workspace_details, dict):
+        if (
+            self.workspace_details
+            and not isinstance(self.workspace_details, Unset)
+            and not isinstance(self.workspace_details, dict)
+        ):
             workspace_details = self.workspace_details.to_dict()
         elif self.workspace_details and isinstance(self.workspace_details, dict):
             workspace_details = self.workspace_details
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if email is not UNSET:
             field_dict["email"] = email
         if invited_at is not UNSET:
@@ -84,13 +83,12 @@ class PendingInvitationRender:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.pending_invitation_render_invited_by import PendingInvitationRenderInvitedBy
         from ..models.pending_invitation_render_workspace import PendingInvitationRenderWorkspace
         from ..models.pending_invitation_workspace_details import PendingInvitationWorkspaceDetails
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -100,35 +98,26 @@ class PendingInvitationRender:
 
         _invited_by = d.pop("invitedBy", UNSET)
         invited_by: Union[Unset, PendingInvitationRenderInvitedBy]
-        if isinstance(_invited_by,  Unset):
+        if isinstance(_invited_by, Unset):
             invited_by = UNSET
         else:
             invited_by = PendingInvitationRenderInvitedBy.from_dict(_invited_by)
-
-
-
 
         role = d.pop("role", UNSET)
 
         _workspace = d.pop("workspace", UNSET)
         workspace: Union[Unset, PendingInvitationRenderWorkspace]
-        if isinstance(_workspace,  Unset):
+        if isinstance(_workspace, Unset):
             workspace = UNSET
         else:
             workspace = PendingInvitationRenderWorkspace.from_dict(_workspace)
 
-
-
-
         _workspace_details = d.pop("workspaceDetails", UNSET)
         workspace_details: Union[Unset, PendingInvitationWorkspaceDetails]
-        if isinstance(_workspace_details,  Unset):
+        if isinstance(_workspace_details, Unset):
             workspace_details = UNSET
         else:
             workspace_details = PendingInvitationWorkspaceDetails.from_dict(_workspace_details)
-
-
-
 
         pending_invitation_render = cls(
             email=email,
@@ -138,7 +127,6 @@ class PendingInvitationRender:
             workspace=workspace,
             workspace_details=workspace_details,
         )
-
 
         pending_invitation_render.additional_properties = d
         return pending_invitation_render

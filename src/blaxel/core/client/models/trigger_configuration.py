@@ -6,10 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.trigger_configuration_task import TriggerConfigurationTask
-
-
-
+    from ..models.trigger_configuration_task import TriggerConfigurationTask
 
 
 T = TypeVar("T", bound="TriggerConfiguration")
@@ -17,18 +14,18 @@ T = TypeVar("T", bound="TriggerConfiguration")
 
 @_attrs_define
 class TriggerConfiguration:
-    """ Trigger configuration
+    """Trigger configuration
 
-        Attributes:
-            authentication_type (Union[Unset, str]): The authentication type of the trigger
-            callback_secret (Union[Unset, str]): The callback secret for async triggers (auto-generated, encrypted)
-            callback_url (Union[Unset, str]): The callback URL for async triggers (optional)
-            path (Union[Unset, str]): The path of the trigger
-            retry (Union[Unset, int]): The retry of the trigger
-            schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * *
-            tasks (Union[Unset, list['TriggerConfigurationTask']]): The tasks configuration of the cronjob
-            timeout (Union[Unset, int]): The timeout in seconds for async triggers (max 900s, MK3 only)
-     """
+    Attributes:
+        authentication_type (Union[Unset, str]): The authentication type of the trigger
+        callback_secret (Union[Unset, str]): The callback secret for async triggers (auto-generated, encrypted)
+        callback_url (Union[Unset, str]): The callback URL for async triggers (optional)
+        path (Union[Unset, str]): The path of the trigger
+        retry (Union[Unset, int]): The retry of the trigger
+        schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * *
+        tasks (Union[Unset, list['TriggerConfigurationTask']]): The tasks configuration of the cronjob
+        timeout (Union[Unset, int]): The timeout in seconds for async triggers (max 900s, MK3 only)
+    """
 
     authentication_type: Union[Unset, str] = UNSET
     callback_secret: Union[Unset, str] = UNSET
@@ -36,12 +33,12 @@ class TriggerConfiguration:
     path: Union[Unset, str] = UNSET
     retry: Union[Unset, int] = UNSET
     schedule: Union[Unset, str] = UNSET
-    tasks: Union[Unset, list['TriggerConfigurationTask']] = UNSET
+    tasks: Union[Unset, list["TriggerConfigurationTask"]] = UNSET
     timeout: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
+
         authentication_type = self.authentication_type
 
         callback_secret = self.callback_secret
@@ -64,15 +61,11 @@ class TriggerConfiguration:
                     tasks_item = tasks_item_data.to_dict()
                 tasks.append(tasks_item)
 
-
-
         timeout = self.timeout
-
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if authentication_type is not UNSET:
             field_dict["authenticationType"] = authentication_type
         if callback_secret is not UNSET:
@@ -92,11 +85,10 @@ class TriggerConfiguration:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.trigger_configuration_task import TriggerConfigurationTask
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -114,13 +106,10 @@ class TriggerConfiguration:
 
         tasks = []
         _tasks = d.pop("tasks", UNSET)
-        for tasks_item_data in (_tasks or []):
+        for tasks_item_data in _tasks or []:
             tasks_item = TriggerConfigurationTask.from_dict(tasks_item_data)
 
-
-
             tasks.append(tasks_item)
-
 
         timeout = d.pop("timeout", UNSET)
 
@@ -134,7 +123,6 @@ class TriggerConfiguration:
             tasks=tasks,
             timeout=timeout,
         )
-
 
         trigger_configuration.additional_properties = d
         return trigger_configuration

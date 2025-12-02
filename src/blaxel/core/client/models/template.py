@@ -6,10 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.template_variable import TemplateVariable
-
-
-
+    from ..models.template_variable import TemplateVariable
 
 
 T = TypeVar("T", bound="Template")
@@ -17,22 +14,22 @@ T = TypeVar("T", bound="Template")
 
 @_attrs_define
 class Template:
-    """ Blaxel template
+    """Blaxel template
 
-        Attributes:
-            default_branch (Union[Unset, str]): Default branch of the template
-            description (Union[Unset, str]): Description of the template
-            download_count (Union[Unset, int]): Number of downloads/clones of the repository
-            forks_count (Union[Unset, int]): Number of forks the repository has
-            icon (Union[Unset, str]): URL to the template's icon
-            icon_dark (Union[Unset, str]): URL to the template's icon in dark mode
-            name (Union[Unset, str]): Name of the template
-            sha (Union[Unset, str]): SHA of the variable
-            star_count (Union[Unset, int]): Number of stars the repository has
-            topics (Union[Unset, list[str]]): Topic of the template
-            url (Union[Unset, str]): URL of the template
-            variables (Union[Unset, list['TemplateVariable']]): Variables of the template
-     """
+    Attributes:
+        default_branch (Union[Unset, str]): Default branch of the template
+        description (Union[Unset, str]): Description of the template
+        download_count (Union[Unset, int]): Number of downloads/clones of the repository
+        forks_count (Union[Unset, int]): Number of forks the repository has
+        icon (Union[Unset, str]): URL to the template's icon
+        icon_dark (Union[Unset, str]): URL to the template's icon in dark mode
+        name (Union[Unset, str]): Name of the template
+        sha (Union[Unset, str]): SHA of the variable
+        star_count (Union[Unset, int]): Number of stars the repository has
+        topics (Union[Unset, list[str]]): Topic of the template
+        url (Union[Unset, str]): URL of the template
+        variables (Union[Unset, list['TemplateVariable']]): Variables of the template
+    """
 
     default_branch: Union[Unset, str] = UNSET
     description: Union[Unset, str] = UNSET
@@ -45,11 +42,11 @@ class Template:
     star_count: Union[Unset, int] = UNSET
     topics: Union[Unset, list[str]] = UNSET
     url: Union[Unset, str] = UNSET
-    variables: Union[Unset, list['TemplateVariable']] = UNSET
+    variables: Union[Unset, list["TemplateVariable"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
+
         default_branch = self.default_branch
 
         description = self.description
@@ -72,8 +69,6 @@ class Template:
         if not isinstance(self.topics, Unset):
             topics = self.topics
 
-
-
         url = self.url
 
         variables: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -86,13 +81,9 @@ class Template:
                     variables_item = variables_item_data.to_dict()
                 variables.append(variables_item)
 
-
-
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if default_branch is not UNSET:
             field_dict["defaultBranch"] = default_branch
         if description is not UNSET:
@@ -120,11 +111,10 @@ class Template:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.template_variable import TemplateVariable
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -148,18 +138,14 @@ class Template:
 
         topics = cast(list[str], d.pop("topics", UNSET))
 
-
         url = d.pop("url", UNSET)
 
         variables = []
         _variables = d.pop("variables", UNSET)
-        for variables_item_data in (_variables or []):
+        for variables_item_data in _variables or []:
             variables_item = TemplateVariable.from_dict(variables_item_data)
 
-
-
             variables.append(variables_item)
-
 
         template = cls(
             default_branch=default_branch,
@@ -175,7 +161,6 @@ class Template:
             url=url,
             variables=variables,
         )
-
 
         template.additional_properties = d
         return template

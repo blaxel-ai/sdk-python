@@ -8,29 +8,22 @@ T = TypeVar("T", bound="CreateJobExecutionRequestTasksItem")
 
 @_attrs_define
 class CreateJobExecutionRequestTasksItem:
-    """ 
-     """
+    """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        create_job_execution_request_tasks_item = cls(
-        )
-
+        create_job_execution_request_tasks_item = cls()
 
         create_job_execution_request_tasks_item.additional_properties = d
         return create_job_execution_request_tasks_item

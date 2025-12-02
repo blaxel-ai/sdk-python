@@ -10,16 +10,16 @@ T = TypeVar("T", bound="JobExecutionTaskMetadata")
 
 @_attrs_define
 class JobExecutionTaskMetadata:
-    """ Job execution task metadata
+    """Job execution task metadata
 
-        Attributes:
-            completed_at (Union[Unset, str]): Completion timestamp
-            created_at (Union[Unset, str]): Creation timestamp
-            name (Union[Unset, str]): Task name
-            scheduled_at (Union[Unset, str]): Scheduled timestamp
-            started_at (Union[Unset, str]): Start timestamp
-            updated_at (Union[Unset, str]): Last update timestamp
-     """
+    Attributes:
+        completed_at (Union[Unset, str]): Completion timestamp
+        created_at (Union[Unset, str]): Creation timestamp
+        name (Union[Unset, str]): Task name
+        scheduled_at (Union[Unset, str]): Scheduled timestamp
+        started_at (Union[Unset, str]): Start timestamp
+        updated_at (Union[Unset, str]): Last update timestamp
+    """
 
     completed_at: Union[Unset, str] = UNSET
     created_at: Union[Unset, str] = UNSET
@@ -28,7 +28,6 @@ class JobExecutionTaskMetadata:
     started_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         completed_at = self.completed_at
@@ -43,11 +42,9 @@ class JobExecutionTaskMetadata:
 
         updated_at = self.updated_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if completed_at is not UNSET:
             field_dict["completedAt"] = completed_at
         if created_at is not UNSET:
@@ -62,8 +59,6 @@ class JobExecutionTaskMetadata:
             field_dict["updatedAt"] = updated_at
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -90,7 +85,6 @@ class JobExecutionTaskMetadata:
             started_at=started_at,
             updated_at=updated_at,
         )
-
 
         job_execution_task_metadata.additional_properties = d
         return job_execution_task_metadata

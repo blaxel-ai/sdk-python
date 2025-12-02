@@ -13,19 +13,11 @@ def _get_kwargs(
     resource_type: str,
     image_name: str,
     tag_name: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/images/{resource_type}/{image_name}/tags/{tag_name}",
     }
-
 
     return _kwargs
 
@@ -33,8 +25,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Image] | None:
     if response.status_code == 200:
         response_200 = Image.from_dict(response.json())
-
-
 
         return response_200
     if response.status_code == 400:
@@ -64,9 +54,8 @@ def sync_detailed(
     tag_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, Image]]:
-    """ Delete image tag
+    """Delete image tag
 
      Deletes a specific tag from an image.
 
@@ -81,14 +70,12 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, Image]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         resource_type=resource_type,
-image_name=image_name,
-tag_name=tag_name,
-
+        image_name=image_name,
+        tag_name=tag_name,
     )
 
     response = client.get_httpx_client().request(
@@ -97,15 +84,15 @@ tag_name=tag_name,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     resource_type: str,
     image_name: str,
     tag_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, Image] | None:
-    """ Delete image tag
+    """Delete image tag
 
      Deletes a specific tag from an image.
 
@@ -120,16 +107,15 @@ def sync(
 
     Returns:
         Union[Any, Image]
-     """
-
+    """
 
     return sync_detailed(
         resource_type=resource_type,
-image_name=image_name,
-tag_name=tag_name,
-client=client,
-
+        image_name=image_name,
+        tag_name=tag_name,
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     resource_type: str,
@@ -137,9 +123,8 @@ async def asyncio_detailed(
     tag_name: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, Image]]:
-    """ Delete image tag
+    """Delete image tag
 
      Deletes a specific tag from an image.
 
@@ -154,21 +139,18 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, Image]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         resource_type=resource_type,
-image_name=image_name,
-tag_name=tag_name,
-
+        image_name=image_name,
+        tag_name=tag_name,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     resource_type: str,
@@ -176,9 +158,8 @@ async def asyncio(
     tag_name: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, Image] | None:
-    """ Delete image tag
+    """Delete image tag
 
      Deletes a specific tag from an image.
 
@@ -193,13 +174,13 @@ async def asyncio(
 
     Returns:
         Union[Any, Image]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        resource_type=resource_type,
-image_name=image_name,
-tag_name=tag_name,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            resource_type=resource_type,
+            image_name=image_name,
+            tag_name=tag_name,
+            client=client,
+        )
+    ).parsed

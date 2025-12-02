@@ -13,14 +13,8 @@ def _get_kwargs(
     job_id: str,
     *,
     body: Job,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
-
-    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -32,7 +26,6 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
-
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -43,8 +36,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Job | None:
     if response.status_code == 200:
         response_200 = Job.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -67,9 +58,8 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: Job,
-
 ) -> Response[Job]:
-    """ Create or update job
+    """Create or update job
 
      Update a job by name.
 
@@ -83,13 +73,11 @@ def sync_detailed(
 
     Returns:
         Response[Job]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         job_id=job_id,
-body=body,
-
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -98,14 +86,14 @@ body=body,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     job_id: str,
     *,
     client: Union[Client],
     body: Job,
-
 ) -> Job | None:
-    """ Create or update job
+    """Create or update job
 
      Update a job by name.
 
@@ -119,24 +107,22 @@ def sync(
 
     Returns:
         Job
-     """
-
+    """
 
     return sync_detailed(
         job_id=job_id,
-client=client,
-body=body,
-
+        client=client,
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     job_id: str,
     *,
     client: Union[Client],
     body: Job,
-
 ) -> Response[Job]:
-    """ Create or update job
+    """Create or update job
 
      Update a job by name.
 
@@ -150,29 +136,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[Job]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         job_id=job_id,
-body=body,
-
+        body=body,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     job_id: str,
     *,
     client: Union[Client],
     body: Job,
-
 ) -> Job | None:
-    """ Create or update job
+    """Create or update job
 
      Update a job by name.
 
@@ -186,12 +168,12 @@ async def asyncio(
 
     Returns:
         Job
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        job_id=job_id,
-client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            job_id=job_id,
+            client=client,
+            body=body,
+        )
+    ).parsed

@@ -12,19 +12,11 @@ from ...types import Response
 def _get_kwargs(
     job_id: str,
     execution_id: str,
-
 ) -> dict[str, Any]:
-    
-
-    
-
-    
-
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/jobs/{job_id}/executions/{execution_id}",
     }
-
 
     return _kwargs
 
@@ -32,8 +24,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, JobExecution] | None:
     if response.status_code == 200:
         response_200 = JobExecution.from_dict(response.json())
-
-
 
         return response_200
     if response.status_code == 400:
@@ -65,9 +55,8 @@ def sync_detailed(
     execution_id: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, JobExecution]]:
-    """ Get job execution
+    """Get job execution
 
      Returns an execution for a job by name.
 
@@ -81,13 +70,11 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, JobExecution]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         job_id=job_id,
-execution_id=execution_id,
-
+        execution_id=execution_id,
     )
 
     response = client.get_httpx_client().request(
@@ -96,14 +83,14 @@ execution_id=execution_id,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     job_id: str,
     execution_id: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, JobExecution] | None:
-    """ Get job execution
+    """Get job execution
 
      Returns an execution for a job by name.
 
@@ -117,24 +104,22 @@ def sync(
 
     Returns:
         Union[Any, JobExecution]
-     """
-
+    """
 
     return sync_detailed(
         job_id=job_id,
-execution_id=execution_id,
-client=client,
-
+        execution_id=execution_id,
+        client=client,
     ).parsed
+
 
 async def asyncio_detailed(
     job_id: str,
     execution_id: str,
     *,
     client: Union[Client],
-
 ) -> Response[Union[Any, JobExecution]]:
-    """ Get job execution
+    """Get job execution
 
      Returns an execution for a job by name.
 
@@ -148,29 +133,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, JobExecution]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         job_id=job_id,
-execution_id=execution_id,
-
+        execution_id=execution_id,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     job_id: str,
     execution_id: str,
     *,
     client: Union[Client],
-
 ) -> Union[Any, JobExecution] | None:
-    """ Get job execution
+    """Get job execution
 
      Returns an execution for a job by name.
 
@@ -184,12 +165,12 @@ async def asyncio(
 
     Returns:
         Union[Any, JobExecution]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        job_id=job_id,
-execution_id=execution_id,
-client=client,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            job_id=job_id,
+            execution_id=execution_id,
+            client=client,
+        )
+    ).parsed

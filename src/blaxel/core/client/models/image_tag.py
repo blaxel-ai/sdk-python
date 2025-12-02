@@ -10,20 +10,19 @@ T = TypeVar("T", bound="ImageTag")
 
 @_attrs_define
 class ImageTag:
-    """ 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the tag was created.
-            name (Union[Unset, str]): The name of the tag.
-            size (Union[Unset, int]): The size of the image in bytes.
-            updated_at (Union[Unset, str]): The date and time when the tag was last updated.
-     """
+    """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the tag was created.
+        name (Union[Unset, str]): The name of the tag.
+        size (Union[Unset, int]): The size of the image in bytes.
+        updated_at (Union[Unset, str]): The date and time when the tag was last updated.
+    """
 
     created_at: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     size: Union[Unset, int] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -34,11 +33,9 @@ class ImageTag:
 
         updated_at = self.updated_at
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if name is not UNSET:
@@ -49,8 +46,6 @@ class ImageTag:
             field_dict["updatedAt"] = updated_at
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -71,7 +66,6 @@ class ImageTag:
             size=size,
             updated_at=updated_at,
         )
-
 
         image_tag.additional_properties = d
         return image_tag

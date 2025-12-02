@@ -14,14 +14,8 @@ def _get_kwargs(
     preview_name: str,
     *,
     body: PreviewToken,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
-
-    
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -33,7 +27,6 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
-
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -44,8 +37,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> PreviewToken | None:
     if response.status_code == 200:
         response_200 = PreviewToken.from_dict(response.json())
-
-
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -69,9 +60,8 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: PreviewToken,
-
 ) -> Response[PreviewToken]:
-    """ Create token for Sandbox Preview
+    """Create token for Sandbox Preview
 
      Creates a token for a Sandbox Preview.
 
@@ -86,14 +76,12 @@ def sync_detailed(
 
     Returns:
         Response[PreviewToken]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-body=body,
-
+        preview_name=preview_name,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -102,15 +90,15 @@ body=body,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     sandbox_name: str,
     preview_name: str,
     *,
     client: Union[Client],
     body: PreviewToken,
-
 ) -> PreviewToken | None:
-    """ Create token for Sandbox Preview
+    """Create token for Sandbox Preview
 
      Creates a token for a Sandbox Preview.
 
@@ -125,16 +113,15 @@ def sync(
 
     Returns:
         PreviewToken
-     """
-
+    """
 
     return sync_detailed(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-client=client,
-body=body,
-
+        preview_name=preview_name,
+        client=client,
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     sandbox_name: str,
@@ -142,9 +129,8 @@ async def asyncio_detailed(
     *,
     client: Union[Client],
     body: PreviewToken,
-
 ) -> Response[PreviewToken]:
-    """ Create token for Sandbox Preview
+    """Create token for Sandbox Preview
 
      Creates a token for a Sandbox Preview.
 
@@ -159,21 +145,18 @@ async def asyncio_detailed(
 
     Returns:
         Response[PreviewToken]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-preview_name=preview_name,
-body=body,
-
+        preview_name=preview_name,
+        body=body,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     sandbox_name: str,
@@ -181,9 +164,8 @@ async def asyncio(
     *,
     client: Union[Client],
     body: PreviewToken,
-
 ) -> PreviewToken | None:
-    """ Create token for Sandbox Preview
+    """Create token for Sandbox Preview
 
      Creates a token for a Sandbox Preview.
 
@@ -198,13 +180,13 @@ async def asyncio(
 
     Returns:
         PreviewToken
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        sandbox_name=sandbox_name,
-preview_name=preview_name,
-client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            sandbox_name=sandbox_name,
+            preview_name=preview_name,
+            client=client,
+            body=body,
+        )
+    ).parsed

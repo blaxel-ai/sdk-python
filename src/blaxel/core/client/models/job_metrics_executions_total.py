@@ -8,30 +8,22 @@ T = TypeVar("T", bound="JobMetricsExecutionsTotal")
 
 @_attrs_define
 class JobMetricsExecutionsTotal:
-    """ Total executions
-
-     """
+    """Total executions"""
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
-        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        job_metrics_executions_total = cls(
-        )
-
+        job_metrics_executions_total = cls()
 
         job_metrics_executions_total.additional_properties = d
         return job_metrics_executions_total

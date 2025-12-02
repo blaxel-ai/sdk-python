@@ -10,21 +10,20 @@ T = TypeVar("T", bound="JobsTotal")
 
 @_attrs_define
 class JobsTotal:
-    """ Jobs executions
+    """Jobs executions
 
-        Attributes:
-            failed (Union[Unset, int]): Failed executions
-            running (Union[Unset, int]): Running executions
-            success (Union[Unset, int]): Success executions
-            total (Union[Unset, int]): Total executions
-     """
+    Attributes:
+        failed (Union[Unset, int]): Failed executions
+        running (Union[Unset, int]): Running executions
+        success (Union[Unset, int]): Success executions
+        total (Union[Unset, int]): Total executions
+    """
 
     failed: Union[Unset, int] = UNSET
     running: Union[Unset, int] = UNSET
     success: Union[Unset, int] = UNSET
     total: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         failed = self.failed
@@ -35,11 +34,9 @@ class JobsTotal:
 
         total = self.total
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if failed is not UNSET:
             field_dict["failed"] = failed
         if running is not UNSET:
@@ -50,8 +47,6 @@ class JobsTotal:
             field_dict["total"] = total
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -72,7 +67,6 @@ class JobsTotal:
             success=success,
             total=total,
         )
-
 
         jobs_total.additional_properties = d
         return jobs_total

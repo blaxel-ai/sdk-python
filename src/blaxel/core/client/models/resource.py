@@ -10,15 +10,15 @@ T = TypeVar("T", bound="Resource")
 
 @_attrs_define
 class Resource:
-    """ Resource
+    """Resource
 
-        Attributes:
-            infrastructure_generation (Union[Unset, str]): Region of the resource
-            name (Union[Unset, str]): Name of the resource
-            type_ (Union[Unset, str]): Type of the resource
-            workspace (Union[Unset, str]): Workspace of the resource
-            workspace_id (Union[Unset, str]): Workspace ID of the resource
-     """
+    Attributes:
+        infrastructure_generation (Union[Unset, str]): Region of the resource
+        name (Union[Unset, str]): Name of the resource
+        type_ (Union[Unset, str]): Type of the resource
+        workspace (Union[Unset, str]): Workspace of the resource
+        workspace_id (Union[Unset, str]): Workspace ID of the resource
+    """
 
     infrastructure_generation: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
@@ -26,7 +26,6 @@ class Resource:
     workspace: Union[Unset, str] = UNSET
     workspace_id: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         infrastructure_generation = self.infrastructure_generation
@@ -39,11 +38,9 @@ class Resource:
 
         workspace_id = self.workspace_id
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if infrastructure_generation is not UNSET:
             field_dict["infrastructureGeneration"] = infrastructure_generation
         if name is not UNSET:
@@ -56,8 +53,6 @@ class Resource:
             field_dict["workspaceId"] = workspace_id
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -81,7 +76,6 @@ class Resource:
             workspace=workspace,
             workspace_id=workspace_id,
         )
-
 
         resource.additional_properties = d
         return resource

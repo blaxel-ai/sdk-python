@@ -6,10 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.serverless_config_configuration import ServerlessConfigConfiguration
-
-
-
+    from ..models.serverless_config_configuration import ServerlessConfigConfiguration
 
 
 T = TypeVar("T", bound="ServerlessConfig")
@@ -17,28 +14,32 @@ T = TypeVar("T", bound="ServerlessConfig")
 
 @_attrs_define
 class ServerlessConfig:
-    """ Configuration for a serverless deployment
+    """Configuration for a serverless deployment
 
-        Attributes:
-            configuration (Union[Unset, ServerlessConfigConfiguration]): The configuration for the deployment
-            max_retries (Union[Unset, int]): The maximum number of retries for the deployment
-            max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
-                the deployment is always running in at least one location).
-            min_scale (Union[Unset, int]): The maximum number of replicas for the deployment.
-            timeout (Union[Unset, int]): The timeout for the deployment in seconds
-     """
+    Attributes:
+        configuration (Union[Unset, ServerlessConfigConfiguration]): The configuration for the deployment
+        max_retries (Union[Unset, int]): The maximum number of retries for the deployment
+        max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
+            the deployment is always running in at least one location).
+        min_scale (Union[Unset, int]): The maximum number of replicas for the deployment.
+        timeout (Union[Unset, int]): The timeout for the deployment in seconds
+    """
 
-    configuration: Union[Unset, 'ServerlessConfigConfiguration'] = UNSET
+    configuration: Union[Unset, "ServerlessConfigConfiguration"] = UNSET
     max_retries: Union[Unset, int] = UNSET
     max_scale: Union[Unset, int] = UNSET
     min_scale: Union[Unset, int] = UNSET
     timeout: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-
     def to_dict(self) -> dict[str, Any]:
+
         configuration: Union[Unset, dict[str, Any]] = UNSET
-        if self.configuration and not isinstance(self.configuration, Unset) and not isinstance(self.configuration, dict):
+        if (
+            self.configuration
+            and not isinstance(self.configuration, Unset)
+            and not isinstance(self.configuration, dict)
+        ):
             configuration = self.configuration.to_dict()
         elif self.configuration and isinstance(self.configuration, dict):
             configuration = self.configuration
@@ -51,11 +52,9 @@ class ServerlessConfig:
 
         timeout = self.timeout
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if configuration is not UNSET:
             field_dict["configuration"] = configuration
         if max_retries is not UNSET:
@@ -69,23 +68,19 @@ class ServerlessConfig:
 
         return field_dict
 
-
-
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.serverless_config_configuration import ServerlessConfigConfiguration
+
         if not src_dict:
             return None
         d = src_dict.copy()
         _configuration = d.pop("configuration", UNSET)
         configuration: Union[Unset, ServerlessConfigConfiguration]
-        if isinstance(_configuration,  Unset):
+        if isinstance(_configuration, Unset):
             configuration = UNSET
         else:
             configuration = ServerlessConfigConfiguration.from_dict(_configuration)
-
-
-
 
         max_retries = d.pop("maxRetries", UNSET)
 
@@ -102,7 +97,6 @@ class ServerlessConfig:
             min_scale=min_scale,
             timeout=timeout,
         )
-
 
         serverless_config.additional_properties = d
         return serverless_config

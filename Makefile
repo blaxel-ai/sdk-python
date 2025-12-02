@@ -25,7 +25,8 @@ sdk-sandbox:
 		--config=./openapi-python-client.yml
 	cp -r ./tmp-sdk-sandbox/blaxel/* ./src/blaxel/core/sandbox/client
 	rm -rf ./tmp-sdk-sandbox
-	uv run ruff check --fix
+	uv run ruff format src/blaxel/core/sandbox/client --line-length 120
+	uv run ruff check --fix src/blaxel/core/sandbox/client
 
 sdk-controlplane:
 	@echo "Downloading controlplane definition from blaxel-ai/controlplane"
@@ -42,7 +43,8 @@ sdk-controlplane:
 		--config=./openapi-python-client.yml
 	cp -r ./tmp-sdk-python/blaxel/* ./src/blaxel/core/client
 	rm -rf ./tmp-sdk-python
-	uv run ruff check --fix
+	uv run ruff format src/blaxel/core/client --line-length 120
+	uv run ruff check --fix src/blaxel/core/client
 
 sdk: sdk-sandbox sdk-controlplane
 

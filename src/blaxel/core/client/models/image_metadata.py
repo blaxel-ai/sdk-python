@@ -10,17 +10,17 @@ T = TypeVar("T", bound="ImageMetadata")
 
 @_attrs_define
 class ImageMetadata:
-    """ 
-        Attributes:
-            created_at (Union[Unset, str]): The date and time when the image was created.
-            display_name (Union[Unset, str]): The display name of the image (registry/workspace/repository).
-            last_deployed_at (Union[Unset, str]): The date and time when the image was last deployed (most recent across all
-                tags).
-            name (Union[Unset, str]): The name of the image (repository name).
-            resource_type (Union[Unset, str]): The resource type of the image.
-            updated_at (Union[Unset, str]): The date and time when the image was last updated.
-            workspace (Union[Unset, str]): The workspace of the image.
-     """
+    """
+    Attributes:
+        created_at (Union[Unset, str]): The date and time when the image was created.
+        display_name (Union[Unset, str]): The display name of the image (registry/workspace/repository).
+        last_deployed_at (Union[Unset, str]): The date and time when the image was last deployed (most recent across all
+            tags).
+        name (Union[Unset, str]): The name of the image (repository name).
+        resource_type (Union[Unset, str]): The resource type of the image.
+        updated_at (Union[Unset, str]): The date and time when the image was last updated.
+        workspace (Union[Unset, str]): The workspace of the image.
+    """
 
     created_at: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
@@ -30,7 +30,6 @@ class ImageMetadata:
     updated_at: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
-
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -47,11 +46,9 @@ class ImageMetadata:
 
         workspace = self.workspace
 
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({
-        })
+        field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if display_name is not UNSET:
@@ -68,8 +65,6 @@ class ImageMetadata:
             field_dict["workspace"] = workspace
 
         return field_dict
-
-
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -99,7 +94,6 @@ class ImageMetadata:
             updated_at=updated_at,
             workspace=workspace,
         )
-
 
         image_metadata.additional_properties = d
         return image_metadata

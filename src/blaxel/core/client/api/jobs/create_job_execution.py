@@ -14,14 +14,8 @@ def _get_kwargs(
     job_id: str,
     *,
     body: CreateJobExecutionRequest,
-
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-
-
-    
-
-    
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -33,7 +27,6 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
-
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -44,8 +37,6 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, JobExecution] | None:
     if response.status_code == 200:
         response_200 = JobExecution.from_dict(response.json())
-
-
 
         return response_200
     if response.status_code == 400:
@@ -74,9 +65,8 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: CreateJobExecutionRequest,
-
 ) -> Response[Union[Any, JobExecution]]:
-    """ Create job execution
+    """Create job execution
 
      Creates a new execution for a job by name.
 
@@ -90,13 +80,11 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, JobExecution]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         job_id=job_id,
-body=body,
-
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -105,14 +93,14 @@ body=body,
 
     return _build_response(client=client, response=response)
 
+
 def sync(
     job_id: str,
     *,
     client: Union[Client],
     body: CreateJobExecutionRequest,
-
 ) -> Union[Any, JobExecution] | None:
-    """ Create job execution
+    """Create job execution
 
      Creates a new execution for a job by name.
 
@@ -126,24 +114,22 @@ def sync(
 
     Returns:
         Union[Any, JobExecution]
-     """
-
+    """
 
     return sync_detailed(
         job_id=job_id,
-client=client,
-body=body,
-
+        client=client,
+        body=body,
     ).parsed
+
 
 async def asyncio_detailed(
     job_id: str,
     *,
     client: Union[Client],
     body: CreateJobExecutionRequest,
-
 ) -> Response[Union[Any, JobExecution]]:
-    """ Create job execution
+    """Create job execution
 
      Creates a new execution for a job by name.
 
@@ -157,29 +143,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, JobExecution]]
-     """
-
+    """
 
     kwargs = _get_kwargs(
         job_id=job_id,
-body=body,
-
+        body=body,
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
-    )
+    response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
 
 async def asyncio(
     job_id: str,
     *,
     client: Union[Client],
     body: CreateJobExecutionRequest,
-
 ) -> Union[Any, JobExecution] | None:
-    """ Create job execution
+    """Create job execution
 
      Creates a new execution for a job by name.
 
@@ -193,12 +175,12 @@ async def asyncio(
 
     Returns:
         Union[Any, JobExecution]
-     """
+    """
 
-
-    return (await asyncio_detailed(
-        job_id=job_id,
-client=client,
-body=body,
-
-    )).parsed
+    return (
+        await asyncio_detailed(
+            job_id=job_id,
+            client=client,
+            body=body,
+        )
+    ).parsed
