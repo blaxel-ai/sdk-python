@@ -8,7 +8,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_spec_configurations import CoreSpecConfigurations
     from ..models.flavor import Flavor
-    from ..models.model_private_cluster import ModelPrivateCluster
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.runtime import Runtime
 
@@ -26,7 +25,6 @@ class ModelSpec:
         flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
         integration_connections (Union[Unset, list[str]]):
         policies (Union[Unset, list[str]]):
-        private_clusters (Union[Unset, ModelPrivateCluster]): Private cluster where the model deployment is deployed
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, Runtime]): Set of configurations for a deployment
         sandbox (Union[Unset, bool]): Sandbox mode
@@ -37,7 +35,6 @@ class ModelSpec:
     flavors: Union[Unset, list["Flavor"]] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
-    private_clusters: Union[Unset, "ModelPrivateCluster"] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "Runtime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
@@ -74,16 +71,6 @@ class ModelSpec:
         if not isinstance(self.policies, Unset):
             policies = self.policies
 
-        private_clusters: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.private_clusters
-            and not isinstance(self.private_clusters, Unset)
-            and not isinstance(self.private_clusters, dict)
-        ):
-            private_clusters = self.private_clusters.to_dict()
-        elif self.private_clusters and isinstance(self.private_clusters, dict):
-            private_clusters = self.private_clusters
-
         revision: Union[Unset, dict[str, Any]] = UNSET
         if self.revision and not isinstance(self.revision, Unset) and not isinstance(self.revision, dict):
             revision = self.revision.to_dict()
@@ -111,8 +98,6 @@ class ModelSpec:
             field_dict["integrationConnections"] = integration_connections
         if policies is not UNSET:
             field_dict["policies"] = policies
-        if private_clusters is not UNSET:
-            field_dict["privateClusters"] = private_clusters
         if revision is not UNSET:
             field_dict["revision"] = revision
         if runtime is not UNSET:
@@ -126,7 +111,6 @@ class ModelSpec:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
-        from ..models.model_private_cluster import ModelPrivateCluster
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
 
@@ -153,13 +137,6 @@ class ModelSpec:
 
         policies = cast(list[str], d.pop("policies", UNSET))
 
-        _private_clusters = d.pop("privateClusters", UNSET)
-        private_clusters: Union[Unset, ModelPrivateCluster]
-        if isinstance(_private_clusters, Unset):
-            private_clusters = UNSET
-        else:
-            private_clusters = ModelPrivateCluster.from_dict(_private_clusters)
-
         _revision = d.pop("revision", UNSET)
         revision: Union[Unset, RevisionConfiguration]
         if isinstance(_revision, Unset):
@@ -182,7 +159,6 @@ class ModelSpec:
             flavors=flavors,
             integration_connections=integration_connections,
             policies=policies,
-            private_clusters=private_clusters,
             revision=revision,
             runtime=runtime,
             sandbox=sandbox,

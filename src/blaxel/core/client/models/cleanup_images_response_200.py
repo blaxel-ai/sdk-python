@@ -5,40 +5,33 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ModelPrivateCluster")
+T = TypeVar("T", bound="CleanupImagesResponse200")
 
 
 @_attrs_define
-class ModelPrivateCluster:
-    """Private cluster where the model deployment is deployed
-
+class CleanupImagesResponse200:
+    """
     Attributes:
-        base_url (Union[Unset, str]): The base url of the model in the private cluster
-        enabled (Union[Unset, bool]): If true, the private cluster is available
-        name (Union[Unset, str]): The name of the private cluster
+        deleted (Union[Unset, int]): Number of images deleted
+        message (Union[Unset, str]): Result message
     """
 
-    base_url: Union[Unset, str] = UNSET
-    enabled: Union[Unset, bool] = UNSET
-    name: Union[Unset, str] = UNSET
+    deleted: Union[Unset, int] = UNSET
+    message: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        base_url = self.base_url
+        deleted = self.deleted
 
-        enabled = self.enabled
-
-        name = self.name
+        message = self.message
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if base_url is not UNSET:
-            field_dict["baseUrl"] = base_url
-        if enabled is not UNSET:
-            field_dict["enabled"] = enabled
-        if name is not UNSET:
-            field_dict["name"] = name
+        if deleted is not UNSET:
+            field_dict["deleted"] = deleted
+        if message is not UNSET:
+            field_dict["message"] = message
 
         return field_dict
 
@@ -47,20 +40,17 @@ class ModelPrivateCluster:
         if not src_dict:
             return None
         d = src_dict.copy()
-        base_url = d.pop("baseUrl", UNSET)
+        deleted = d.pop("deleted", UNSET)
 
-        enabled = d.pop("enabled", UNSET)
+        message = d.pop("message", UNSET)
 
-        name = d.pop("name", UNSET)
-
-        model_private_cluster = cls(
-            base_url=base_url,
-            enabled=enabled,
-            name=name,
+        cleanup_images_response_200 = cls(
+            deleted=deleted,
+            message=message,
         )
 
-        model_private_cluster.additional_properties = d
-        return model_private_cluster
+        cleanup_images_response_200.additional_properties = d
+        return cleanup_images_response_200
 
     @property
     def additional_keys(self) -> list[str]:
