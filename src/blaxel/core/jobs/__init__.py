@@ -4,7 +4,7 @@ import os
 import sys
 import time
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List
 
 import requests
 
