@@ -15,12 +15,20 @@ from .jobs import BlJobWrapper
 from .mcp import BlaxelMcpServerTransport, websocket_client
 from .models import BLModel, bl_model
 from .sandbox import (
-    Sandbox,
+    CodeInterpreter,
+    SandboxCodegen,
     SandboxFileSystem,
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+    SyncCodeInterpreter,
+    SyncSandboxCodegen,
+    SyncSandboxFileSystem,
+    SyncSandboxInstance,
+    SyncSandboxPreviews,
+    SyncSandboxProcess,
 )
+from .sandbox.types import Sandbox
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
 from .volume import VolumeCreateConfiguration, VolumeInstance
 
@@ -44,6 +52,14 @@ __all__ = [
     "SandboxInstance",
     "SandboxPreviews",
     "SandboxProcess",
+    "SandboxCodegen",
+    "SyncSandboxCodegen",
+    "SyncSandboxFileSystem",
+    "SyncSandboxInstance",
+    "SyncSandboxPreviews",
+    "SyncSandboxProcess",
+    "CodeInterpreter",
+    "SyncCodeInterpreter",
     "BlTools",
     "bl_tools",
     "convert_mcp_tool_to_blaxel_tool",

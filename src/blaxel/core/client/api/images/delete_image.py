@@ -5,37 +5,40 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.private_cluster import PrivateCluster
+from ...models.image import Image
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    resource_type: str,
+    image_name: str,
+) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": "/privateclusters",
+        "method": "delete",
+        "url": f"/images/{resource_type}/{image_name}",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, PrivateCluster] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Image] | None:
     if response.status_code == 200:
-        response_200 = PrivateCluster.from_dict(response.json())
+        response_200 = Image.from_dict(response.json())
 
         return response_200
-    if response.status_code == 401:
-        response_401 = cast(Any, None)
-        return response_401
-    if response.status_code == 403:
-        response_403 = cast(Any, None)
-        return response_403
+    if response.status_code == 400:
+        response_400 = cast(Any, None)
+        return response_400
+    if response.status_code == 404:
+        response_404 = cast(Any, None)
+        return response_404
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, PrivateCluster]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Image]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -45,20 +48,31 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 
 
 def sync_detailed(
+    resource_type: str,
+    image_name: str,
     *,
     client: Union[Client],
-) -> Response[Union[Any, PrivateCluster]]:
-    """Create private cluster
+) -> Response[Union[Any, Image]]:
+    """Delete image by name
+
+     Deletes an image by name.
+
+    Args:
+        resource_type (str):
+        image_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PrivateCluster]]
+        Response[Union[Any, Image]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        resource_type=resource_type,
+        image_name=image_name,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -68,39 +82,60 @@ def sync_detailed(
 
 
 def sync(
+    resource_type: str,
+    image_name: str,
     *,
     client: Union[Client],
-) -> Union[Any, PrivateCluster] | None:
-    """Create private cluster
+) -> Union[Any, Image] | None:
+    """Delete image by name
+
+     Deletes an image by name.
+
+    Args:
+        resource_type (str):
+        image_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PrivateCluster]
+        Union[Any, Image]
     """
 
     return sync_detailed(
+        resource_type=resource_type,
+        image_name=image_name,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
+    resource_type: str,
+    image_name: str,
     *,
     client: Union[Client],
-) -> Response[Union[Any, PrivateCluster]]:
-    """Create private cluster
+) -> Response[Union[Any, Image]]:
+    """Delete image by name
+
+     Deletes an image by name.
+
+    Args:
+        resource_type (str):
+        image_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PrivateCluster]]
+        Response[Union[Any, Image]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        resource_type=resource_type,
+        image_name=image_name,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -108,21 +143,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    resource_type: str,
+    image_name: str,
     *,
     client: Union[Client],
-) -> Union[Any, PrivateCluster] | None:
-    """Create private cluster
+) -> Union[Any, Image] | None:
+    """Delete image by name
+
+     Deletes an image by name.
+
+    Args:
+        resource_type (str):
+        image_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PrivateCluster]
+        Union[Any, Image]
     """
 
     return (
         await asyncio_detailed(
+            resource_type=resource_type,
+            image_name=image_name,
             client=client,
         )
     ).parsed

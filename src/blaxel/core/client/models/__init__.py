@@ -6,6 +6,7 @@ from .agent_spec import AgentSpec
 from .api_key import ApiKey
 from .billable_time_metric import BillableTimeMetric
 from .check_workspace_availability_body import CheckWorkspaceAvailabilityBody
+from .cleanup_images_response_200 import CleanupImagesResponse200
 from .configuration import Configuration
 from .continent import Continent
 from .core_event import CoreEvent
@@ -41,6 +42,10 @@ from .get_workspace_service_accounts_response_200_item import (
 )
 from .histogram_bucket import HistogramBucket
 from .histogram_stats import HistogramStats
+from .image import Image
+from .image_metadata import ImageMetadata
+from .image_spec import ImageSpec
+from .image_tag import ImageTag
 from .integration import Integration
 from .integration_additional_infos import IntegrationAdditionalInfos
 from .integration_connection import IntegrationConnection
@@ -92,7 +97,6 @@ from .metrics_models import MetricsModels
 from .metrics_request_total_per_code import MetricsRequestTotalPerCode
 from .metrics_rps_per_code import MetricsRpsPerCode
 from .model import Model
-from .model_private_cluster import ModelPrivateCluster
 from .model_spec import ModelSpec
 from .o_auth import OAuth
 from .owner_fields import OwnerFields
@@ -116,7 +120,6 @@ from .preview_spec_response_headers import PreviewSpecResponseHeaders
 from .preview_token import PreviewToken
 from .preview_token_metadata import PreviewTokenMetadata
 from .preview_token_spec import PreviewTokenSpec
-from .private_cluster import PrivateCluster
 from .private_location import PrivateLocation
 from .public_ip import PublicIp
 from .public_ips import PublicIps
@@ -202,6 +205,7 @@ __all__ = (
     "ApiKey",
     "BillableTimeMetric",
     "CheckWorkspaceAvailabilityBody",
+    "CleanupImagesResponse200",
     "Configuration",
     "Continent",
     "CoreEvent",
@@ -235,6 +239,10 @@ __all__ = (
     "GetWorkspaceServiceAccountsResponse200Item",
     "HistogramBucket",
     "HistogramStats",
+    "Image",
+    "ImageMetadata",
+    "ImageSpec",
+    "ImageTag",
     "Integration",
     "IntegrationAdditionalInfos",
     "IntegrationConnection",
@@ -286,7 +294,6 @@ __all__ = (
     "MetricsRequestTotalPerCode",
     "MetricsRpsPerCode",
     "Model",
-    "ModelPrivateCluster",
     "ModelSpec",
     "OAuth",
     "OwnerFields",
@@ -310,7 +317,6 @@ __all__ = (
     "PreviewToken",
     "PreviewTokenMetadata",
     "PreviewTokenSpec",
-    "PrivateCluster",
     "PrivateLocation",
     "PublicIp",
     "PublicIps",

@@ -5,52 +5,45 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="WebsocketChannel")
+T = TypeVar("T", bound="ImageTag")
 
 
 @_attrs_define
-class WebsocketChannel:
-    """WebSocket connection details
-
+class ImageTag:
+    """
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        connection_id (Union[Unset, str]): Unique connection ID
-        source_region (Union[Unset, str]): Source region the connection belongs to
-        workspace (Union[Unset, str]): Workspace the connection belongs to
+        created_at (Union[Unset, str]): The date and time when the tag was created.
+        name (Union[Unset, str]): The name of the tag.
+        size (Union[Unset, int]): The size of the image in bytes.
+        updated_at (Union[Unset, str]): The date and time when the tag was last updated.
     """
 
     created_at: Union[Unset, str] = UNSET
+    name: Union[Unset, str] = UNSET
+    size: Union[Unset, int] = UNSET
     updated_at: Union[Unset, str] = UNSET
-    connection_id: Union[Unset, str] = UNSET
-    source_region: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
 
+        name = self.name
+
+        size = self.size
+
         updated_at = self.updated_at
-
-        connection_id = self.connection_id
-
-        source_region = self.source_region
-
-        workspace = self.workspace
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
+        if name is not UNSET:
+            field_dict["name"] = name
+        if size is not UNSET:
+            field_dict["size"] = size
         if updated_at is not UNSET:
             field_dict["updatedAt"] = updated_at
-        if connection_id is not UNSET:
-            field_dict["connection_id"] = connection_id
-        if source_region is not UNSET:
-            field_dict["sourceRegion"] = source_region
-        if workspace is not UNSET:
-            field_dict["workspace"] = workspace
 
         return field_dict
 
@@ -61,24 +54,21 @@ class WebsocketChannel:
         d = src_dict.copy()
         created_at = d.pop("createdAt", UNSET)
 
+        name = d.pop("name", UNSET)
+
+        size = d.pop("size", UNSET)
+
         updated_at = d.pop("updatedAt", UNSET)
 
-        connection_id = d.pop("connection_id", UNSET)
-
-        source_region = d.pop("sourceRegion", UNSET)
-
-        workspace = d.pop("workspace", UNSET)
-
-        websocket_channel = cls(
+        image_tag = cls(
             created_at=created_at,
+            name=name,
+            size=size,
             updated_at=updated_at,
-            connection_id=connection_id,
-            source_region=source_region,
-            workspace=workspace,
         )
 
-        websocket_channel.additional_properties = d
-        return websocket_channel
+        image_tag.additional_properties = d
+        return image_tag
 
     @property
     def additional_keys(self) -> list[str]:
