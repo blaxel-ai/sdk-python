@@ -10,18 +10,18 @@ T = TypeVar("T", bound="VolumeTemplateVersion")
 
 @_attrs_define
 class VolumeTemplateVersion:
-    """Volume template version tracking individual versions of template content
+    """ Volume template version tracking individual versions of template content
 
-    Attributes:
-        bucket (Union[Unset, str]): S3 bucket name where this version is stored
-        content_size (Union[Unset, int]): Size of the template content in bytes
-        name (Union[Unset, str]): Name of the template version
-        region (Union[Unset, str]): AWS region where this version is stored
-        status (Union[Unset, str]): Status of the version (CREATED, READY, FAILED)
-        template_name (Union[Unset, str]): Template name this version belongs to
-        version_id (Union[Unset, str]): S3 version ID for this template version
-        workspace (Union[Unset, str]): Workspace name
-    """
+        Attributes:
+            bucket (Union[Unset, str]): S3 bucket name where this version is stored
+            content_size (Union[Unset, int]): Size of the template content in bytes
+            name (Union[Unset, str]): Name of the template version
+            region (Union[Unset, str]): AWS region where this version is stored
+            status (Union[Unset, str]): Status of the version (CREATED, READY, FAILED)
+            template_name (Union[Unset, str]): Template name this version belongs to
+            version_id (Union[Unset, str]): S3 version ID for this template version
+            workspace (Union[Unset, str]): Workspace name
+     """
 
     bucket: Union[Unset, str] = UNSET
     content_size: Union[Unset, int] = UNSET
@@ -32,6 +32,7 @@ class VolumeTemplateVersion:
     version_id: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         bucket = self.bucket
@@ -50,9 +51,11 @@ class VolumeTemplateVersion:
 
         workspace = self.workspace
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if bucket is not UNSET:
             field_dict["bucket"] = bucket
         if content_size is not UNSET:
@@ -71,6 +74,8 @@ class VolumeTemplateVersion:
             field_dict["workspace"] = workspace
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -103,6 +108,7 @@ class VolumeTemplateVersion:
             version_id=version_id,
             workspace=workspace,
         )
+
 
         volume_template_version.additional_properties = d
         return volume_template_version

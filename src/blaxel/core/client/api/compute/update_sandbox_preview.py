@@ -14,8 +14,14 @@ def _get_kwargs(
     preview_name: str,
     *,
     body: Preview,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -27,6 +33,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -37,6 +44,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Preview | None:
     if response.status_code == 200:
         response_200 = Preview.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -60,8 +69,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: Preview,
+
 ) -> Response[Preview]:
-    """Update Sandbox Preview
+    """ Update Sandbox Preview
 
      Updates a Sandbox Preview by name.
 
@@ -76,12 +86,14 @@ def sync_detailed(
 
     Returns:
         Response[Preview]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-        preview_name=preview_name,
-        body=body,
+preview_name=preview_name,
+body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -90,15 +102,15 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     sandbox_name: str,
     preview_name: str,
     *,
     client: Union[Client],
     body: Preview,
+
 ) -> Preview | None:
-    """Update Sandbox Preview
+    """ Update Sandbox Preview
 
      Updates a Sandbox Preview by name.
 
@@ -113,15 +125,16 @@ def sync(
 
     Returns:
         Preview
-    """
+     """
+
 
     return sync_detailed(
         sandbox_name=sandbox_name,
-        preview_name=preview_name,
-        client=client,
-        body=body,
-    ).parsed
+preview_name=preview_name,
+client=client,
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     sandbox_name: str,
@@ -129,8 +142,9 @@ async def asyncio_detailed(
     *,
     client: Union[Client],
     body: Preview,
+
 ) -> Response[Preview]:
-    """Update Sandbox Preview
+    """ Update Sandbox Preview
 
      Updates a Sandbox Preview by name.
 
@@ -145,18 +159,21 @@ async def asyncio_detailed(
 
     Returns:
         Response[Preview]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
-        preview_name=preview_name,
-        body=body,
+preview_name=preview_name,
+body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     sandbox_name: str,
@@ -164,8 +181,9 @@ async def asyncio(
     *,
     client: Union[Client],
     body: Preview,
+
 ) -> Preview | None:
-    """Update Sandbox Preview
+    """ Update Sandbox Preview
 
      Updates a Sandbox Preview by name.
 
@@ -180,13 +198,13 @@ async def asyncio(
 
     Returns:
         Preview
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            sandbox_name=sandbox_name,
-            preview_name=preview_name,
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        sandbox_name=sandbox_name,
+preview_name=preview_name,
+client=client,
+body=body,
+
+    )).parsed

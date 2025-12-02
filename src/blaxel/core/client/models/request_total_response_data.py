@@ -10,15 +10,15 @@ T = TypeVar("T", bound="RequestTotalResponseData")
 
 @_attrs_define
 class RequestTotalResponseData:
-    """Request total response data
+    """ Request total response data
 
-    Attributes:
-        request_total (Union[Unset, float]): Request total
-        status_code (Union[Unset, str]): Status code
-        workload_id (Union[Unset, str]): Workload ID
-        workload_type (Union[Unset, str]): Workload type
-        workspace (Union[Unset, str]): Workspace
-    """
+        Attributes:
+            request_total (Union[Unset, float]): Request total
+            status_code (Union[Unset, str]): Status code
+            workload_id (Union[Unset, str]): Workload ID
+            workload_type (Union[Unset, str]): Workload type
+            workspace (Union[Unset, str]): Workspace
+     """
 
     request_total: Union[Unset, float] = UNSET
     status_code: Union[Unset, str] = UNSET
@@ -26,6 +26,7 @@ class RequestTotalResponseData:
     workload_type: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         request_total = self.request_total
@@ -38,9 +39,11 @@ class RequestTotalResponseData:
 
         workspace = self.workspace
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if request_total is not UNSET:
             field_dict["requestTotal"] = request_total
         if status_code is not UNSET:
@@ -53,6 +56,8 @@ class RequestTotalResponseData:
             field_dict["workspace"] = workspace
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -76,6 +81,7 @@ class RequestTotalResponseData:
             workload_type=workload_type,
             workspace=workspace,
         )
+
 
         request_total_response_data.additional_properties = d
         return request_total_response_data

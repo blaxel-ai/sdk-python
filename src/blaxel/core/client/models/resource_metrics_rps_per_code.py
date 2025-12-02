@@ -8,22 +8,30 @@ T = TypeVar("T", bound="ResourceMetricsRpsPerCode")
 
 @_attrs_define
 class ResourceMetricsRpsPerCode:
-    """Number of requests per second for the resource globally per code"""
+    """ Number of requests per second for the resource globally per code
+
+     """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
+        
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         if not src_dict:
             return None
         d = src_dict.copy()
-        resource_metrics_rps_per_code = cls()
+        resource_metrics_rps_per_code = cls(
+        )
+
 
         resource_metrics_rps_per_code.additional_properties = d
         return resource_metrics_rps_per_code

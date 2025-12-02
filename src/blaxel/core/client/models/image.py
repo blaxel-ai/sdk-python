@@ -6,8 +6,11 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.image_metadata import ImageMetadata
-    from ..models.image_spec import ImageSpec
+  from ..models.image_metadata import ImageMetadata
+  from ..models.image_spec import ImageSpec
+
+
+
 
 
 T = TypeVar("T", bound="Image")
@@ -15,15 +18,16 @@ T = TypeVar("T", bound="Image")
 
 @_attrs_define
 class Image:
-    """
-    Attributes:
-        metadata (Union[Unset, ImageMetadata]):
-        spec (Union[Unset, ImageSpec]):
-    """
+    """ 
+        Attributes:
+            metadata (Union[Unset, ImageMetadata]):
+            spec (Union[Unset, ImageSpec]):
+     """
 
-    metadata: Union[Unset, "ImageMetadata"] = UNSET
-    spec: Union[Unset, "ImageSpec"] = UNSET
+    metadata: Union[Unset, 'ImageMetadata'] = UNSET
+    spec: Union[Unset, 'ImageSpec'] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         metadata: Union[Unset, dict[str, Any]] = UNSET
@@ -38,9 +42,11 @@ class Image:
         elif self.spec and isinstance(self.spec, dict):
             spec = self.spec
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
         if spec is not UNSET:
@@ -48,32 +54,40 @@ class Image:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.image_metadata import ImageMetadata
         from ..models.image_spec import ImageSpec
-
         if not src_dict:
             return None
         d = src_dict.copy()
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, ImageMetadata]
-        if isinstance(_metadata, Unset):
+        if isinstance(_metadata,  Unset):
             metadata = UNSET
         else:
             metadata = ImageMetadata.from_dict(_metadata)
 
+
+
+
         _spec = d.pop("spec", UNSET)
         spec: Union[Unset, ImageSpec]
-        if isinstance(_spec, Unset):
+        if isinstance(_spec,  Unset):
             spec = UNSET
         else:
             spec = ImageSpec.from_dict(_spec)
+
+
+
 
         image = cls(
             metadata=metadata,
             spec=spec,
         )
+
 
         image.additional_properties = d
         return image

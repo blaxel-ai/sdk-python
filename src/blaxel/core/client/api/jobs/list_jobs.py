@@ -9,21 +9,32 @@ from ...models.job import Job
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    
+) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/jobs",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["Job"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list['Job'] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = Job.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
@@ -34,7 +45,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Job"] 
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Job"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list['Job']]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,8 +57,9 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Union[Client],
-) -> Response[list["Job"]]:
-    """List jobs
+
+) -> Response[list['Job']]:
+    """ List jobs
 
      Returns a list of all jobs in the workspace.
 
@@ -57,9 +69,12 @@ def sync_detailed(
 
     Returns:
         Response[list['Job']]
-    """
+     """
 
-    kwargs = _get_kwargs()
+
+    kwargs = _get_kwargs(
+        
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -67,12 +82,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: Union[Client],
-) -> list["Job"] | None:
-    """List jobs
+
+) -> list['Job'] | None:
+    """ List jobs
 
      Returns a list of all jobs in the workspace.
 
@@ -82,18 +97,20 @@ def sync(
 
     Returns:
         list['Job']
-    """
+     """
+
 
     return sync_detailed(
         client=client,
-    ).parsed
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-) -> Response[list["Job"]]:
-    """List jobs
+
+) -> Response[list['Job']]:
+    """ List jobs
 
      Returns a list of all jobs in the workspace.
 
@@ -103,20 +120,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['Job']]
-    """
+     """
 
-    kwargs = _get_kwargs()
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    kwargs = _get_kwargs(
+        
+    )
+
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: Union[Client],
-) -> list["Job"] | None:
-    """List jobs
+
+) -> list['Job'] | None:
+    """ List jobs
 
      Returns a list of all jobs in the workspace.
 
@@ -126,10 +148,10 @@ async def asyncio(
 
     Returns:
         list['Job']
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+
+    )).parsed

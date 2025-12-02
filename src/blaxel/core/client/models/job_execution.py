@@ -6,10 +6,13 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.job_execution_metadata import JobExecutionMetadata
-    from ..models.job_execution_spec import JobExecutionSpec
-    from ..models.job_execution_stats import JobExecutionStats
-    from ..models.job_execution_task import JobExecutionTask
+  from ..models.job_execution_metadata import JobExecutionMetadata
+  from ..models.job_execution_spec import JobExecutionSpec
+  from ..models.job_execution_stats import JobExecutionStats
+  from ..models.job_execution_task import JobExecutionTask
+
+
+
 
 
 T = TypeVar("T", bound="JobExecution")
@@ -17,22 +20,23 @@ T = TypeVar("T", bound="JobExecution")
 
 @_attrs_define
 class JobExecution:
-    """Job execution
+    """ Job execution
 
-    Attributes:
-        metadata (Union[Unset, JobExecutionMetadata]): Job execution metadata
-        spec (Union[Unset, JobExecutionSpec]): Job execution specification
-        stats (Union[Unset, JobExecutionStats]): Job execution statistics
-        status (Union[Unset, str]): Job execution status
-        tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
-    """
+        Attributes:
+            metadata (Union[Unset, JobExecutionMetadata]): Job execution metadata
+            spec (Union[Unset, JobExecutionSpec]): Job execution specification
+            stats (Union[Unset, JobExecutionStats]): Job execution statistics
+            status (Union[Unset, str]): Job execution status
+            tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
+     """
 
-    metadata: Union[Unset, "JobExecutionMetadata"] = UNSET
-    spec: Union[Unset, "JobExecutionSpec"] = UNSET
-    stats: Union[Unset, "JobExecutionStats"] = UNSET
+    metadata: Union[Unset, 'JobExecutionMetadata'] = UNSET
+    spec: Union[Unset, 'JobExecutionSpec'] = UNSET
+    stats: Union[Unset, 'JobExecutionStats'] = UNSET
     status: Union[Unset, str] = UNSET
-    tasks: Union[Unset, list["JobExecutionTask"]] = UNSET
+    tasks: Union[Unset, list['JobExecutionTask']] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         metadata: Union[Unset, dict[str, Any]] = UNSET
@@ -65,9 +69,13 @@ class JobExecution:
                     tasks_item = tasks_item_data.to_dict()
                 tasks.append(tasks_item)
 
+
+
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
         if spec is not UNSET:
@@ -81,45 +89,58 @@ class JobExecution:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.job_execution_metadata import JobExecutionMetadata
         from ..models.job_execution_spec import JobExecutionSpec
         from ..models.job_execution_stats import JobExecutionStats
         from ..models.job_execution_task import JobExecutionTask
-
         if not src_dict:
             return None
         d = src_dict.copy()
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, JobExecutionMetadata]
-        if isinstance(_metadata, Unset):
+        if isinstance(_metadata,  Unset):
             metadata = UNSET
         else:
             metadata = JobExecutionMetadata.from_dict(_metadata)
 
+
+
+
         _spec = d.pop("spec", UNSET)
         spec: Union[Unset, JobExecutionSpec]
-        if isinstance(_spec, Unset):
+        if isinstance(_spec,  Unset):
             spec = UNSET
         else:
             spec = JobExecutionSpec.from_dict(_spec)
 
+
+
+
         _stats = d.pop("stats", UNSET)
         stats: Union[Unset, JobExecutionStats]
-        if isinstance(_stats, Unset):
+        if isinstance(_stats,  Unset):
             stats = UNSET
         else:
             stats = JobExecutionStats.from_dict(_stats)
+
+
+
 
         status = d.pop("status", UNSET)
 
         tasks = []
         _tasks = d.pop("tasks", UNSET)
-        for tasks_item_data in _tasks or []:
+        for tasks_item_data in (_tasks or []):
             tasks_item = JobExecutionTask.from_dict(tasks_item_data)
 
+
+
             tasks.append(tasks_item)
+
 
         job_execution = cls(
             metadata=metadata,
@@ -128,6 +149,7 @@ class JobExecution:
             status=status,
             tasks=tasks,
         )
+
 
         job_execution.additional_properties = d
         return job_execution

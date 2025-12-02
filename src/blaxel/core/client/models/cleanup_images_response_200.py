@@ -10,30 +10,35 @@ T = TypeVar("T", bound="CleanupImagesResponse200")
 
 @_attrs_define
 class CleanupImagesResponse200:
-    """
-    Attributes:
-        deleted (Union[Unset, int]): Number of images deleted
-        message (Union[Unset, str]): Result message
-    """
+    """ 
+        Attributes:
+            deleted (Union[Unset, int]): Number of images deleted
+            message (Union[Unset, str]): Result message
+     """
 
     deleted: Union[Unset, int] = UNSET
     message: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         deleted = self.deleted
 
         message = self.message
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if deleted is not UNSET:
             field_dict["deleted"] = deleted
         if message is not UNSET:
             field_dict["message"] = message
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -48,6 +53,7 @@ class CleanupImagesResponse200:
             deleted=deleted,
             message=message,
         )
+
 
         cleanup_images_response_200.additional_properties = d
         return cleanup_images_response_200

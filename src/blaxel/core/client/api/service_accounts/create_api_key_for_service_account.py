@@ -14,8 +14,14 @@ def _get_kwargs(
     client_id: str,
     *,
     body: CreateApiKeyForServiceAccountBody,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -27,6 +33,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -37,6 +44,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> ApiKey | None:
     if response.status_code == 200:
         response_200 = ApiKey.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -59,8 +68,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: CreateApiKeyForServiceAccountBody,
+
 ) -> Response[ApiKey]:
-    """Create API key for service account
+    """ Create API key for service account
 
      Creates an API key for a service account.
 
@@ -74,11 +84,13 @@ def sync_detailed(
 
     Returns:
         Response[ApiKey]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         client_id=client_id,
-        body=body,
+body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -87,14 +99,14 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     client_id: str,
     *,
     client: Union[Client],
     body: CreateApiKeyForServiceAccountBody,
+
 ) -> ApiKey | None:
-    """Create API key for service account
+    """ Create API key for service account
 
      Creates an API key for a service account.
 
@@ -108,22 +120,24 @@ def sync(
 
     Returns:
         ApiKey
-    """
+     """
+
 
     return sync_detailed(
         client_id=client_id,
-        client=client,
-        body=body,
-    ).parsed
+client=client,
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     client_id: str,
     *,
     client: Union[Client],
     body: CreateApiKeyForServiceAccountBody,
+
 ) -> Response[ApiKey]:
-    """Create API key for service account
+    """ Create API key for service account
 
      Creates an API key for a service account.
 
@@ -137,25 +151,29 @@ async def asyncio_detailed(
 
     Returns:
         Response[ApiKey]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         client_id=client_id,
-        body=body,
+body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     client_id: str,
     *,
     client: Union[Client],
     body: CreateApiKeyForServiceAccountBody,
+
 ) -> ApiKey | None:
-    """Create API key for service account
+    """ Create API key for service account
 
      Creates an API key for a service account.
 
@@ -169,12 +187,12 @@ async def asyncio(
 
     Returns:
         ApiKey
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client_id=client_id,
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client_id=client_id,
+client=client,
+body=body,
+
+    )).parsed

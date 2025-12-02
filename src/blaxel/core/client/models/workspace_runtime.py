@@ -10,25 +10,30 @@ T = TypeVar("T", bound="WorkspaceRuntime")
 
 @_attrs_define
 class WorkspaceRuntime:
-    """Workspace runtime
+    """ Workspace runtime
 
-    Attributes:
-        generation (Union[Unset, str]): Workspace generation
-    """
+        Attributes:
+            generation (Union[Unset, str]): Workspace generation
+     """
 
     generation: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         generation = self.generation
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if generation is not UNSET:
             field_dict["generation"] = generation
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -40,6 +45,7 @@ class WorkspaceRuntime:
         workspace_runtime = cls(
             generation=generation,
         )
+
 
         workspace_runtime.additional_properties = d
         return workspace_runtime

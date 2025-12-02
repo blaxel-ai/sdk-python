@@ -11,11 +11,19 @@ from ...types import Response
 
 def _get_kwargs(
     volume_template_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/volume_templates/{volume_template_name}",
     }
+
 
     return _kwargs
 
@@ -23,6 +31,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> VolumeTemplate | None:
     if response.status_code == 200:
         response_200 = VolumeTemplate.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -44,8 +54,9 @@ def sync_detailed(
     volume_template_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[VolumeTemplate]:
-    """Get volume template
+    """ Get volume template
 
      Returns a volume template by name.
 
@@ -58,10 +69,12 @@ def sync_detailed(
 
     Returns:
         Response[VolumeTemplate]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         volume_template_name=volume_template_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -70,13 +83,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     volume_template_name: str,
     *,
     client: Union[Client],
+
 ) -> VolumeTemplate | None:
-    """Get volume template
+    """ Get volume template
 
      Returns a volume template by name.
 
@@ -89,20 +102,22 @@ def sync(
 
     Returns:
         VolumeTemplate
-    """
+     """
+
 
     return sync_detailed(
         volume_template_name=volume_template_name,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     volume_template_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[VolumeTemplate]:
-    """Get volume template
+    """ Get volume template
 
      Returns a volume template by name.
 
@@ -115,23 +130,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[VolumeTemplate]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         volume_template_name=volume_template_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     volume_template_name: str,
     *,
     client: Union[Client],
+
 ) -> VolumeTemplate | None:
-    """Get volume template
+    """ Get volume template
 
      Returns a volume template by name.
 
@@ -144,11 +163,11 @@ async def asyncio(
 
     Returns:
         VolumeTemplate
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            volume_template_name=volume_template_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        volume_template_name=volume_template_name,
+client=client,
+
+    )).parsed

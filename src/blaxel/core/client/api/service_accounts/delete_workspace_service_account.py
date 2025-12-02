@@ -13,11 +13,19 @@ from ...types import Response
 
 def _get_kwargs(
     client_id: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/service_accounts/{client_id}",
     }
+
 
     return _kwargs
 
@@ -25,6 +33,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> DeleteWorkspaceServiceAccountResponse200 | None:
     if response.status_code == 200:
         response_200 = DeleteWorkspaceServiceAccountResponse200.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -46,8 +56,9 @@ def sync_detailed(
     client_id: str,
     *,
     client: Union[Client],
+
 ) -> Response[DeleteWorkspaceServiceAccountResponse200]:
-    """Delete workspace service account
+    """ Delete workspace service account
 
      Deletes a service account.
 
@@ -60,10 +71,12 @@ def sync_detailed(
 
     Returns:
         Response[DeleteWorkspaceServiceAccountResponse200]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         client_id=client_id,
+
     )
 
     response = client.get_httpx_client().request(
@@ -72,13 +85,13 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     client_id: str,
     *,
     client: Union[Client],
+
 ) -> DeleteWorkspaceServiceAccountResponse200 | None:
-    """Delete workspace service account
+    """ Delete workspace service account
 
      Deletes a service account.
 
@@ -91,20 +104,22 @@ def sync(
 
     Returns:
         DeleteWorkspaceServiceAccountResponse200
-    """
+     """
+
 
     return sync_detailed(
         client_id=client_id,
-        client=client,
-    ).parsed
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     client_id: str,
     *,
     client: Union[Client],
+
 ) -> Response[DeleteWorkspaceServiceAccountResponse200]:
-    """Delete workspace service account
+    """ Delete workspace service account
 
      Deletes a service account.
 
@@ -117,23 +132,27 @@ async def asyncio_detailed(
 
     Returns:
         Response[DeleteWorkspaceServiceAccountResponse200]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         client_id=client_id,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     client_id: str,
     *,
     client: Union[Client],
+
 ) -> DeleteWorkspaceServiceAccountResponse200 | None:
-    """Delete workspace service account
+    """ Delete workspace service account
 
      Deletes a service account.
 
@@ -146,11 +165,11 @@ async def asyncio(
 
     Returns:
         DeleteWorkspaceServiceAccountResponse200
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client_id=client_id,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client_id=client_id,
+client=client,
+
+    )).parsed

@@ -14,8 +14,14 @@ def _get_kwargs(
     sub_or_email: str,
     *,
     body: UpdateWorkspaceUserRoleBody,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -27,6 +33,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -37,6 +44,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, WorkspaceUser] | None:
     if response.status_code == 200:
         response_200 = WorkspaceUser.from_dict(response.json())
+
+
 
         return response_200
     if response.status_code == 400:
@@ -65,8 +74,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: UpdateWorkspaceUserRoleBody,
+
 ) -> Response[Union[Any, WorkspaceUser]]:
-    """Update user role in workspace
+    """ Update user role in workspace
 
      Updates the role of a user in the workspace.
 
@@ -80,11 +90,13 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, WorkspaceUser]]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sub_or_email=sub_or_email,
-        body=body,
+body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -93,14 +105,14 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     sub_or_email: str,
     *,
     client: Union[Client],
     body: UpdateWorkspaceUserRoleBody,
+
 ) -> Union[Any, WorkspaceUser] | None:
-    """Update user role in workspace
+    """ Update user role in workspace
 
      Updates the role of a user in the workspace.
 
@@ -114,22 +126,24 @@ def sync(
 
     Returns:
         Union[Any, WorkspaceUser]
-    """
+     """
+
 
     return sync_detailed(
         sub_or_email=sub_or_email,
-        client=client,
-        body=body,
-    ).parsed
+client=client,
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     sub_or_email: str,
     *,
     client: Union[Client],
     body: UpdateWorkspaceUserRoleBody,
+
 ) -> Response[Union[Any, WorkspaceUser]]:
-    """Update user role in workspace
+    """ Update user role in workspace
 
      Updates the role of a user in the workspace.
 
@@ -143,25 +157,29 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, WorkspaceUser]]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         sub_or_email=sub_or_email,
-        body=body,
+body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     sub_or_email: str,
     *,
     client: Union[Client],
     body: UpdateWorkspaceUserRoleBody,
+
 ) -> Union[Any, WorkspaceUser] | None:
-    """Update user role in workspace
+    """ Update user role in workspace
 
      Updates the role of a user in the workspace.
 
@@ -175,12 +193,12 @@ async def asyncio(
 
     Returns:
         Union[Any, WorkspaceUser]
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            sub_or_email=sub_or_email,
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        sub_or_email=sub_or_email,
+client=client,
+body=body,
+
+    )).parsed

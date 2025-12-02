@@ -6,10 +6,13 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
-    from ..models.flavor import Flavor
-    from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
+  from ..models.core_spec_configurations import CoreSpecConfigurations
+  from ..models.flavor import Flavor
+  from ..models.revision_configuration import RevisionConfiguration
+  from ..models.runtime import Runtime
+
+
+
 
 
 T = TypeVar("T", bound="CoreSpec")
@@ -17,36 +20,33 @@ T = TypeVar("T", bound="CoreSpec")
 
 @_attrs_define
 class CoreSpec:
-    """Core specification
+    """ Core specification
 
-    Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the resource
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
-        integration_connections (Union[Unset, list[str]]):
-        policies (Union[Unset, list[str]]):
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
-    """
+        Attributes:
+            configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
+            enabled (Union[Unset, bool]): Enable or disable the resource
+            flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
+            integration_connections (Union[Unset, list[str]]):
+            policies (Union[Unset, list[str]]):
+            revision (Union[Unset, RevisionConfiguration]): Revision configuration
+            runtime (Union[Unset, Runtime]): Set of configurations for a deployment
+            sandbox (Union[Unset, bool]): Sandbox mode
+     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
+    configurations: Union[Unset, 'CoreSpecConfigurations'] = UNSET
     enabled: Union[Unset, bool] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
+    flavors: Union[Unset, list['Flavor']] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
+    revision: Union[Unset, 'RevisionConfiguration'] = UNSET
+    runtime: Union[Unset, 'Runtime'] = UNSET
     sandbox: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
+        if self.configurations and not isinstance(self.configurations, Unset) and not isinstance(self.configurations, dict):
             configurations = self.configurations.to_dict()
         elif self.configurations and isinstance(self.configurations, dict):
             configurations = self.configurations
@@ -63,13 +63,19 @@ class CoreSpec:
                     componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
                 flavors.append(componentsschemas_flavors_item)
 
+
+
         integration_connections: Union[Unset, list[str]] = UNSET
         if not isinstance(self.integration_connections, Unset):
             integration_connections = self.integration_connections
 
+
+
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
+
+
 
         revision: Union[Unset, dict[str, Any]] = UNSET
         if self.revision and not isinstance(self.revision, Unset) and not isinstance(self.revision, dict):
@@ -85,9 +91,11 @@ class CoreSpec:
 
         sandbox = self.sandbox
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if configurations is not UNSET:
             field_dict["configurations"] = configurations
         if enabled is not UNSET:
@@ -107,49 +115,64 @@ class CoreSpec:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.runtime import Runtime
-
         if not src_dict:
             return None
         d = src_dict.copy()
         _configurations = d.pop("configurations", UNSET)
         configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
+        if isinstance(_configurations,  Unset):
             configurations = UNSET
         else:
             configurations = CoreSpecConfigurations.from_dict(_configurations)
+
+
+
 
         enabled = d.pop("enabled", UNSET)
 
         flavors = []
         _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in _flavors or []:
+        for componentsschemas_flavors_item_data in (_flavors or []):
             componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
+
+
 
             flavors.append(componentsschemas_flavors_item)
 
+
         integration_connections = cast(list[str], d.pop("integrationConnections", UNSET))
+
 
         policies = cast(list[str], d.pop("policies", UNSET))
 
+
         _revision = d.pop("revision", UNSET)
         revision: Union[Unset, RevisionConfiguration]
-        if isinstance(_revision, Unset):
+        if isinstance(_revision,  Unset):
             revision = UNSET
         else:
             revision = RevisionConfiguration.from_dict(_revision)
 
+
+
+
         _runtime = d.pop("runtime", UNSET)
         runtime: Union[Unset, Runtime]
-        if isinstance(_runtime, Unset):
+        if isinstance(_runtime,  Unset):
             runtime = UNSET
         else:
             runtime = Runtime.from_dict(_runtime)
+
+
+
 
         sandbox = d.pop("sandbox", UNSET)
 
@@ -163,6 +186,7 @@ class CoreSpec:
             runtime=runtime,
             sandbox=sandbox,
         )
+
 
         core_spec.additional_properties = d
         return core_spec

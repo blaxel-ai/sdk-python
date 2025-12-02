@@ -16,8 +16,14 @@ def _get_kwargs(
     client_id: str,
     *,
     body: UpdateWorkspaceServiceAccountBody,
+
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+
+    
+
+    
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -29,6 +35,7 @@ def _get_kwargs(
     else:
         _body = body.to_dict()
 
+
     _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
@@ -39,6 +46,8 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> UpdateWorkspaceServiceAccountResponse200 | None:
     if response.status_code == 200:
         response_200 = UpdateWorkspaceServiceAccountResponse200.from_dict(response.json())
+
+
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -61,8 +70,9 @@ def sync_detailed(
     *,
     client: Union[Client],
     body: UpdateWorkspaceServiceAccountBody,
+
 ) -> Response[UpdateWorkspaceServiceAccountResponse200]:
-    """Update workspace service account
+    """ Update workspace service account
 
      Updates a service account.
 
@@ -76,11 +86,13 @@ def sync_detailed(
 
     Returns:
         Response[UpdateWorkspaceServiceAccountResponse200]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         client_id=client_id,
-        body=body,
+body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -89,14 +101,14 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     client_id: str,
     *,
     client: Union[Client],
     body: UpdateWorkspaceServiceAccountBody,
+
 ) -> UpdateWorkspaceServiceAccountResponse200 | None:
-    """Update workspace service account
+    """ Update workspace service account
 
      Updates a service account.
 
@@ -110,22 +122,24 @@ def sync(
 
     Returns:
         UpdateWorkspaceServiceAccountResponse200
-    """
+     """
+
 
     return sync_detailed(
         client_id=client_id,
-        client=client,
-        body=body,
-    ).parsed
+client=client,
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     client_id: str,
     *,
     client: Union[Client],
     body: UpdateWorkspaceServiceAccountBody,
+
 ) -> Response[UpdateWorkspaceServiceAccountResponse200]:
-    """Update workspace service account
+    """ Update workspace service account
 
      Updates a service account.
 
@@ -139,25 +153,29 @@ async def asyncio_detailed(
 
     Returns:
         Response[UpdateWorkspaceServiceAccountResponse200]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         client_id=client_id,
-        body=body,
+body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     client_id: str,
     *,
     client: Union[Client],
     body: UpdateWorkspaceServiceAccountBody,
+
 ) -> UpdateWorkspaceServiceAccountResponse200 | None:
-    """Update workspace service account
+    """ Update workspace service account
 
      Updates a service account.
 
@@ -171,12 +189,12 @@ async def asyncio(
 
     Returns:
         UpdateWorkspaceServiceAccountResponse200
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client_id=client_id,
-            client=client,
-            body=body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client_id=client_id,
+client=client,
+body=body,
+
+    )).parsed

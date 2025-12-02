@@ -6,12 +6,15 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
-    from ..models.flavor import Flavor
-    from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
-    from ..models.sandbox_lifecycle import SandboxLifecycle
-    from ..models.volume_attachment import VolumeAttachment
+  from ..models.core_spec_configurations import CoreSpecConfigurations
+  from ..models.flavor import Flavor
+  from ..models.revision_configuration import RevisionConfiguration
+  from ..models.runtime import Runtime
+  from ..models.sandbox_lifecycle import SandboxLifecycle
+  from ..models.volume_attachment import VolumeAttachment
+
+
+
 
 
 T = TypeVar("T", bound="SandboxSpec")
@@ -19,42 +22,39 @@ T = TypeVar("T", bound="SandboxSpec")
 
 @_attrs_define
 class SandboxSpec:
-    """Sandbox specification
+    """ Sandbox specification
 
-    Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the resource
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
-        integration_connections (Union[Unset, list[str]]):
-        policies (Union[Unset, list[str]]):
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
-        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration for sandbox management
-        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
-        volumes (Union[Unset, list['VolumeAttachment']]):
-    """
+        Attributes:
+            configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
+            enabled (Union[Unset, bool]): Enable or disable the resource
+            flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
+            integration_connections (Union[Unset, list[str]]):
+            policies (Union[Unset, list[str]]):
+            revision (Union[Unset, RevisionConfiguration]): Revision configuration
+            runtime (Union[Unset, Runtime]): Set of configurations for a deployment
+            sandbox (Union[Unset, bool]): Sandbox mode
+            lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration for sandbox management
+            region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
+            volumes (Union[Unset, list['VolumeAttachment']]):
+     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
+    configurations: Union[Unset, 'CoreSpecConfigurations'] = UNSET
     enabled: Union[Unset, bool] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
+    flavors: Union[Unset, list['Flavor']] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
+    revision: Union[Unset, 'RevisionConfiguration'] = UNSET
+    runtime: Union[Unset, 'Runtime'] = UNSET
     sandbox: Union[Unset, bool] = UNSET
-    lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
+    lifecycle: Union[Unset, 'SandboxLifecycle'] = UNSET
     region: Union[Unset, str] = UNSET
-    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
+    volumes: Union[Unset, list['VolumeAttachment']] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
+        if self.configurations and not isinstance(self.configurations, Unset) and not isinstance(self.configurations, dict):
             configurations = self.configurations.to_dict()
         elif self.configurations and isinstance(self.configurations, dict):
             configurations = self.configurations
@@ -71,13 +71,19 @@ class SandboxSpec:
                     componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
                 flavors.append(componentsschemas_flavors_item)
 
+
+
         integration_connections: Union[Unset, list[str]] = UNSET
         if not isinstance(self.integration_connections, Unset):
             integration_connections = self.integration_connections
 
+
+
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
+
+
 
         revision: Union[Unset, dict[str, Any]] = UNSET
         if self.revision and not isinstance(self.revision, Unset) and not isinstance(self.revision, dict):
@@ -111,9 +117,13 @@ class SandboxSpec:
                     componentsschemas_volume_attachments_item = componentsschemas_volume_attachments_item_data.to_dict()
                 volumes.append(componentsschemas_volume_attachments_item)
 
+
+
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if configurations is not UNSET:
             field_dict["configurations"] = configurations
         if enabled is not UNSET:
@@ -139,6 +149,8 @@ class SandboxSpec:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.core_spec_configurations import CoreSpecConfigurations
@@ -147,63 +159,80 @@ class SandboxSpec:
         from ..models.runtime import Runtime
         from ..models.sandbox_lifecycle import SandboxLifecycle
         from ..models.volume_attachment import VolumeAttachment
-
         if not src_dict:
             return None
         d = src_dict.copy()
         _configurations = d.pop("configurations", UNSET)
         configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
+        if isinstance(_configurations,  Unset):
             configurations = UNSET
         else:
             configurations = CoreSpecConfigurations.from_dict(_configurations)
+
+
+
 
         enabled = d.pop("enabled", UNSET)
 
         flavors = []
         _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in _flavors or []:
+        for componentsschemas_flavors_item_data in (_flavors or []):
             componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
+
+
 
             flavors.append(componentsschemas_flavors_item)
 
+
         integration_connections = cast(list[str], d.pop("integrationConnections", UNSET))
+
 
         policies = cast(list[str], d.pop("policies", UNSET))
 
+
         _revision = d.pop("revision", UNSET)
         revision: Union[Unset, RevisionConfiguration]
-        if isinstance(_revision, Unset):
+        if isinstance(_revision,  Unset):
             revision = UNSET
         else:
             revision = RevisionConfiguration.from_dict(_revision)
 
+
+
+
         _runtime = d.pop("runtime", UNSET)
         runtime: Union[Unset, Runtime]
-        if isinstance(_runtime, Unset):
+        if isinstance(_runtime,  Unset):
             runtime = UNSET
         else:
             runtime = Runtime.from_dict(_runtime)
+
+
+
 
         sandbox = d.pop("sandbox", UNSET)
 
         _lifecycle = d.pop("lifecycle", UNSET)
         lifecycle: Union[Unset, SandboxLifecycle]
-        if isinstance(_lifecycle, Unset):
+        if isinstance(_lifecycle,  Unset):
             lifecycle = UNSET
         else:
             lifecycle = SandboxLifecycle.from_dict(_lifecycle)
+
+
+
 
         region = d.pop("region", UNSET)
 
         volumes = []
         _volumes = d.pop("volumes", UNSET)
-        for componentsschemas_volume_attachments_item_data in _volumes or []:
-            componentsschemas_volume_attachments_item = VolumeAttachment.from_dict(
-                componentsschemas_volume_attachments_item_data
-            )
+        for componentsschemas_volume_attachments_item_data in (_volumes or []):
+            componentsschemas_volume_attachments_item = VolumeAttachment.from_dict(componentsschemas_volume_attachments_item_data)
+
+
 
             volumes.append(componentsschemas_volume_attachments_item)
+
 
         sandbox_spec = cls(
             configurations=configurations,
@@ -218,6 +247,7 @@ class SandboxSpec:
             region=region,
             volumes=volumes,
         )
+
 
         sandbox_spec.additional_properties = d
         return sandbox_spec

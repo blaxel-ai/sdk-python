@@ -10,19 +10,19 @@ T = TypeVar("T", bound="PreviewMetadata")
 
 @_attrs_define
 class PreviewMetadata:
-    """PreviewMetadata
+    """ PreviewMetadata
 
-    Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Model display name
-        name (Union[Unset, str]): Preview name
-        resource_name (Union[Unset, str]): Resource name
-        resource_type (Union[Unset, str]): Resource type
-        workspace (Union[Unset, str]): Workspace name
-    """
+        Attributes:
+            created_at (Union[Unset, str]): The date and time when the resource was created
+            updated_at (Union[Unset, str]): The date and time when the resource was updated
+            created_by (Union[Unset, str]): The user or service account who created the resource
+            updated_by (Union[Unset, str]): The user or service account who updated the resource
+            display_name (Union[Unset, str]): Model display name
+            name (Union[Unset, str]): Preview name
+            resource_name (Union[Unset, str]): Resource name
+            resource_type (Union[Unset, str]): Resource type
+            workspace (Union[Unset, str]): Workspace name
+     """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
@@ -34,6 +34,7 @@ class PreviewMetadata:
     resource_type: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
@@ -54,9 +55,11 @@ class PreviewMetadata:
 
         workspace = self.workspace
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if created_at is not UNSET:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
@@ -77,6 +80,8 @@ class PreviewMetadata:
             field_dict["workspace"] = workspace
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -112,6 +117,7 @@ class PreviewMetadata:
             resource_type=resource_type,
             workspace=workspace,
         )
+
 
         preview_metadata.additional_properties = d
         return preview_metadata

@@ -10,22 +10,22 @@ T = TypeVar("T", bound="IntegrationModel")
 
 @_attrs_define
 class IntegrationModel:
-    """Model obtained from an external authentication provider, such as HuggingFace, OpenAI, etc...
+    """ Model obtained from an external authentication provider, such as HuggingFace, OpenAI, etc...
 
-    Attributes:
-        author (Union[Unset, str]): Provider model author
-        created_at (Union[Unset, str]): Provider model created at
-        downloads (Union[Unset, int]): Provider model downloads
-        endpoint (Union[Unset, str]): Model endpoint URL
-        id (Union[Unset, str]): Provider model ID
-        library_name (Union[Unset, str]): Provider model library name
-        likes (Union[Unset, int]): Provider model likes
-        model_private (Union[Unset, str]): Is the model private
-        name (Union[Unset, str]): Provider model name
-        pipeline_tag (Union[Unset, str]): Provider model pipeline tag
-        tags (Union[Unset, list[str]]): Provider model tags
-        trending_score (Union[Unset, int]): Provider model trending score
-    """
+        Attributes:
+            author (Union[Unset, str]): Provider model author
+            created_at (Union[Unset, str]): Provider model created at
+            downloads (Union[Unset, int]): Provider model downloads
+            endpoint (Union[Unset, str]): Model endpoint URL
+            id (Union[Unset, str]): Provider model ID
+            library_name (Union[Unset, str]): Provider model library name
+            likes (Union[Unset, int]): Provider model likes
+            model_private (Union[Unset, str]): Is the model private
+            name (Union[Unset, str]): Provider model name
+            pipeline_tag (Union[Unset, str]): Provider model pipeline tag
+            tags (Union[Unset, list[str]]): Provider model tags
+            trending_score (Union[Unset, int]): Provider model trending score
+     """
 
     author: Union[Unset, str] = UNSET
     created_at: Union[Unset, str] = UNSET
@@ -40,6 +40,7 @@ class IntegrationModel:
     tags: Union[Unset, list[str]] = UNSET
     trending_score: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         author = self.author
@@ -66,11 +67,15 @@ class IntegrationModel:
         if not isinstance(self.tags, Unset):
             tags = self.tags
 
+
+
         trending_score = self.trending_score
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if author is not UNSET:
             field_dict["author"] = author
         if created_at is not UNSET:
@@ -97,6 +102,8 @@ class IntegrationModel:
             field_dict["trending_score"] = trending_score
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -125,6 +132,7 @@ class IntegrationModel:
 
         tags = cast(list[str], d.pop("tags", UNSET))
 
+
         trending_score = d.pop("trending_score", UNSET)
 
         integration_model = cls(
@@ -141,6 +149,7 @@ class IntegrationModel:
             tags=tags,
             trending_score=trending_score,
         )
+
 
         integration_model.additional_properties = d
         return integration_model

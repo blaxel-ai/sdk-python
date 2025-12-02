@@ -10,31 +10,36 @@ T = TypeVar("T", bound="JobExecutionTaskSpec")
 
 @_attrs_define
 class JobExecutionTaskSpec:
-    """Job execution task specification
+    """ Job execution task specification
 
-    Attributes:
-        max_retries (Union[Unset, int]): Maximum number of retries
-        timeout (Union[Unset, str]): Task timeout duration
-    """
+        Attributes:
+            max_retries (Union[Unset, int]): Maximum number of retries
+            timeout (Union[Unset, str]): Task timeout duration
+     """
 
     max_retries: Union[Unset, int] = UNSET
     timeout: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         max_retries = self.max_retries
 
         timeout = self.timeout
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if max_retries is not UNSET:
             field_dict["maxRetries"] = max_retries
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
 
         return field_dict
+
+
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
@@ -49,6 +54,7 @@ class JobExecutionTaskSpec:
             max_retries=max_retries,
             timeout=timeout,
         )
+
 
         job_execution_task_spec.additional_properties = d
         return job_execution_task_spec

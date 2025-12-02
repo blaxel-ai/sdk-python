@@ -6,7 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.metadata import Metadata
+  from ..models.metadata import Metadata
+
+
+
 
 
 T = TypeVar("T", bound="StopSandbox")
@@ -14,18 +17,19 @@ T = TypeVar("T", bound="StopSandbox")
 
 @_attrs_define
 class StopSandbox:
-    """Response when stopping a Sandbox
+    """ Response when stopping a Sandbox
 
-    Attributes:
-        message (Union[Unset, str]): Human readable message about the stop operation
-        metadata (Union[Unset, Metadata]): Metadata
-        status (Union[Unset, str]): Status of the Sandbox stop operation
-    """
+        Attributes:
+            message (Union[Unset, str]): Human readable message about the stop operation
+            metadata (Union[Unset, Metadata]): Metadata
+            status (Union[Unset, str]): Status of the Sandbox stop operation
+     """
 
     message: Union[Unset, str] = UNSET
-    metadata: Union[Unset, "Metadata"] = UNSET
+    metadata: Union[Unset, 'Metadata'] = UNSET
     status: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         message = self.message
@@ -38,9 +42,11 @@ class StopSandbox:
 
         status = self.status
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if message is not UNSET:
             field_dict["message"] = message
         if metadata is not UNSET:
@@ -50,10 +56,11 @@ class StopSandbox:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.metadata import Metadata
-
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -61,10 +68,13 @@ class StopSandbox:
 
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, Metadata]
-        if isinstance(_metadata, Unset):
+        if isinstance(_metadata,  Unset):
             metadata = UNSET
         else:
             metadata = Metadata.from_dict(_metadata)
+
+
+
 
         status = d.pop("status", UNSET)
 
@@ -73,6 +83,7 @@ class StopSandbox:
             metadata=metadata,
             status=status,
         )
+
 
         stop_sandbox.additional_properties = d
         return stop_sandbox

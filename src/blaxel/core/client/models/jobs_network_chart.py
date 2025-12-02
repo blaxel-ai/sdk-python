@@ -6,7 +6,10 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.jobs_chart_value import JobsChartValue
+  from ..models.jobs_chart_value import JobsChartValue
+
+
+
 
 
 T = TypeVar("T", bound="JobsNetworkChart")
@@ -14,16 +17,17 @@ T = TypeVar("T", bound="JobsNetworkChart")
 
 @_attrs_define
 class JobsNetworkChart:
-    """Jobs chart
+    """ Jobs chart
 
-    Attributes:
-        received (Union[Unset, list['JobsChartValue']]): Received
-        sent (Union[Unset, list['JobsChartValue']]): Sent
-    """
+        Attributes:
+            received (Union[Unset, list['JobsChartValue']]): Received
+            sent (Union[Unset, list['JobsChartValue']]): Sent
+     """
 
-    received: Union[Unset, list["JobsChartValue"]] = UNSET
-    sent: Union[Unset, list["JobsChartValue"]] = UNSET
+    received: Union[Unset, list['JobsChartValue']] = UNSET
+    sent: Union[Unset, list['JobsChartValue']] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
 
     def to_dict(self) -> dict[str, Any]:
         received: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -36,6 +40,8 @@ class JobsNetworkChart:
                     received_item = received_item_data.to_dict()
                 received.append(received_item)
 
+
+
         sent: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.sent, Unset):
             sent = []
@@ -46,9 +52,13 @@ class JobsNetworkChart:
                     sent_item = sent_item_data.to_dict()
                 sent.append(sent_item)
 
+
+
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if received is not UNSET:
             field_dict["received"] = received
         if sent is not UNSET:
@@ -56,31 +66,39 @@ class JobsNetworkChart:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.jobs_chart_value import JobsChartValue
-
         if not src_dict:
             return None
         d = src_dict.copy()
         received = []
         _received = d.pop("received", UNSET)
-        for received_item_data in _received or []:
+        for received_item_data in (_received or []):
             received_item = JobsChartValue.from_dict(received_item_data)
+
+
 
             received.append(received_item)
 
+
         sent = []
         _sent = d.pop("sent", UNSET)
-        for sent_item_data in _sent or []:
+        for sent_item_data in (_sent or []):
             sent_item = JobsChartValue.from_dict(sent_item_data)
 
+
+
             sent.append(sent_item)
+
 
         jobs_network_chart = cls(
             received=received,
             sent=sent,
         )
+
 
         jobs_network_chart.additional_properties = d
         return jobs_network_chart

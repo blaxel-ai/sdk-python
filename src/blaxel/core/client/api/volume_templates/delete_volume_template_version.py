@@ -14,20 +14,28 @@ from ...types import Response
 def _get_kwargs(
     volume_template_name: str,
     version_name: str,
+
 ) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "delete",
         "url": f"/volume_templates/{volume_template_name}/versions/{version_name}",
     }
 
+
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
     if response.status_code == 200:
         response_200 = DeleteVolumeTemplateVersionResponse200.from_dict(response.json())
+
+
 
         return response_200
     if response.status_code == 400:
@@ -42,9 +50,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,8 +64,9 @@ def sync_detailed(
     version_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
-    """Delete volume template version
+    """ Delete volume template version
 
      Deletes a specific version of a volume template.
 
@@ -73,11 +80,13 @@ def sync_detailed(
 
     Returns:
         Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         volume_template_name=volume_template_name,
-        version_name=version_name,
+version_name=version_name,
+
     )
 
     response = client.get_httpx_client().request(
@@ -86,14 +95,14 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     volume_template_name: str,
     version_name: str,
     *,
     client: Union[Client],
+
 ) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
-    """Delete volume template version
+    """ Delete volume template version
 
      Deletes a specific version of a volume template.
 
@@ -107,22 +116,24 @@ def sync(
 
     Returns:
         Union[Any, DeleteVolumeTemplateVersionResponse200]
-    """
+     """
+
 
     return sync_detailed(
         volume_template_name=volume_template_name,
-        version_name=version_name,
-        client=client,
-    ).parsed
+version_name=version_name,
+client=client,
 
+    ).parsed
 
 async def asyncio_detailed(
     volume_template_name: str,
     version_name: str,
     *,
     client: Union[Client],
+
 ) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
-    """Delete volume template version
+    """ Delete volume template version
 
      Deletes a specific version of a volume template.
 
@@ -136,25 +147,29 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]
-    """
+     """
+
 
     kwargs = _get_kwargs(
         volume_template_name=volume_template_name,
-        version_name=version_name,
+version_name=version_name,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     volume_template_name: str,
     version_name: str,
     *,
     client: Union[Client],
+
 ) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
-    """Delete volume template version
+    """ Delete volume template version
 
      Deletes a specific version of a volume template.
 
@@ -168,12 +183,12 @@ async def asyncio(
 
     Returns:
         Union[Any, DeleteVolumeTemplateVersionResponse200]
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            volume_template_name=volume_template_name,
-            version_name=version_name,
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        volume_template_name=volume_template_name,
+version_name=version_name,
+client=client,
+
+    )).parsed

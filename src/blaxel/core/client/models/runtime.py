@@ -6,9 +6,12 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.port import Port
-    from ..models.runtime_configuration import RuntimeConfiguration
-    from ..models.runtime_startup_probe import RuntimeStartupProbe
+  from ..models.port import Port
+  from ..models.runtime_configuration import RuntimeConfiguration
+  from ..models.runtime_startup_probe import RuntimeStartupProbe
+
+
+
 
 
 T = TypeVar("T", bound="Runtime")
@@ -16,40 +19,40 @@ T = TypeVar("T", bound="Runtime")
 
 @_attrs_define
 class Runtime:
-    """Set of configurations for a deployment
+    """ Set of configurations for a deployment
 
-    Attributes:
-        args (Union[Unset, list[Any]]): The arguments to pass to the deployment runtime
-        command (Union[Unset, list[Any]]): The command to run the deployment
-        configuration (Union[Unset, RuntimeConfiguration]): The configuration for the deployment
-        cpu (Union[Unset, int]): The CPU for the deployment in cores, only available for private cluster
-        endpoint_name (Union[Unset, str]): Endpoint Name of the model. In case of hf_private_endpoint, it is the
-            endpoint name. In case of hf_public_endpoint, it is not used.
-        envs (Union[Unset, list[Any]]): The env variables to set in the deployment. Should be a list of Kubernetes
-            EnvVar types
-        expires (Union[Unset, str]): The expiration date for the deployment in ISO 8601 format - 2024-12-31T23:59:59Z
-        generation (Union[Unset, str]): The generation of the deployment
-        image (Union[Unset, str]): The Docker image for the deployment
-        max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
-        max_retries (Union[Unset, int]): The maximum number of retries for the deployment
-        max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
-            the deployment is always running in at least one location).
-        memory (Union[Unset, int]): The memory for the deployment in MB
-        metric_port (Union[Unset, int]): The port to serve the metrics on
-        min_scale (Union[Unset, int]): The maximum number of replicas for the deployment.
-        model (Union[Unset, str]): The slug name of the origin model at HuggingFace.
-        organization (Union[Unset, str]): The organization of the model
-        ports (Union[Unset, list['Port']]): Set of ports for a resource
-        startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
-        timeout (Union[Unset, int]): The timeout for the deployment in seconds
-        transport (Union[Unset, str]): The transport for the deployment, used by MCPs: "websocket" or "http-stream"
-        ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
-        type_ (Union[Unset, str]): The type of origin for the deployment (hf_private_endpoint, hf_public_endpoint)
-    """
+        Attributes:
+            args (Union[Unset, list[Any]]): The arguments to pass to the deployment runtime
+            command (Union[Unset, list[Any]]): The command to run the deployment
+            configuration (Union[Unset, RuntimeConfiguration]): The configuration for the deployment
+            cpu (Union[Unset, int]): The CPU for the deployment in cores, only available for private cluster
+            endpoint_name (Union[Unset, str]): Endpoint Name of the model. In case of hf_private_endpoint, it is the
+                endpoint name. In case of hf_public_endpoint, it is not used.
+            envs (Union[Unset, list[Any]]): The env variables to set in the deployment. Should be a list of Kubernetes
+                EnvVar types
+            expires (Union[Unset, str]): The expiration date for the deployment in ISO 8601 format - 2024-12-31T23:59:59Z
+            generation (Union[Unset, str]): The generation of the deployment
+            image (Union[Unset, str]): The Docker image for the deployment
+            max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
+            max_retries (Union[Unset, int]): The maximum number of retries for the deployment
+            max_scale (Union[Unset, int]): The minimum number of replicas for the deployment. Can be 0 or 1 (in which case
+                the deployment is always running in at least one location).
+            memory (Union[Unset, int]): The memory for the deployment in MB
+            metric_port (Union[Unset, int]): The port to serve the metrics on
+            min_scale (Union[Unset, int]): The maximum number of replicas for the deployment.
+            model (Union[Unset, str]): The slug name of the origin model at HuggingFace.
+            organization (Union[Unset, str]): The organization of the model
+            ports (Union[Unset, list['Port']]): Set of ports for a resource
+            startup_probe (Union[Unset, RuntimeStartupProbe]): The readiness probe. Should be a Kubernetes Probe type
+            timeout (Union[Unset, int]): The timeout for the deployment in seconds
+            transport (Union[Unset, str]): The transport for the deployment, used by MCPs: "websocket" or "http-stream"
+            ttl (Union[Unset, str]): The TTL for the deployment in seconds - 30m, 24h, 7d
+            type_ (Union[Unset, str]): The type of origin for the deployment (hf_private_endpoint, hf_public_endpoint)
+     """
 
     args: Union[Unset, list[Any]] = UNSET
     command: Union[Unset, list[Any]] = UNSET
-    configuration: Union[Unset, "RuntimeConfiguration"] = UNSET
+    configuration: Union[Unset, 'RuntimeConfiguration'] = UNSET
     cpu: Union[Unset, int] = UNSET
     endpoint_name: Union[Unset, str] = UNSET
     envs: Union[Unset, list[Any]] = UNSET
@@ -64,29 +67,30 @@ class Runtime:
     min_scale: Union[Unset, int] = UNSET
     model: Union[Unset, str] = UNSET
     organization: Union[Unset, str] = UNSET
-    ports: Union[Unset, list["Port"]] = UNSET
-    startup_probe: Union[Unset, "RuntimeStartupProbe"] = UNSET
+    ports: Union[Unset, list['Port']] = UNSET
+    startup_probe: Union[Unset, 'RuntimeStartupProbe'] = UNSET
     timeout: Union[Unset, int] = UNSET
     transport: Union[Unset, str] = UNSET
     ttl: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
+
     def to_dict(self) -> dict[str, Any]:
         args: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.args, Unset):
             args = self.args
 
+
+
         command: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.command, Unset):
             command = self.command
 
+
+
         configuration: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configuration
-            and not isinstance(self.configuration, Unset)
-            and not isinstance(self.configuration, dict)
-        ):
+        if self.configuration and not isinstance(self.configuration, Unset) and not isinstance(self.configuration, dict):
             configuration = self.configuration.to_dict()
         elif self.configuration and isinstance(self.configuration, dict):
             configuration = self.configuration
@@ -98,6 +102,8 @@ class Runtime:
         envs: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = self.envs
+
+
 
         expires = self.expires
 
@@ -131,12 +137,10 @@ class Runtime:
                     componentsschemas_ports_item = componentsschemas_ports_item_data.to_dict()
                 ports.append(componentsschemas_ports_item)
 
+
+
         startup_probe: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.startup_probe
-            and not isinstance(self.startup_probe, Unset)
-            and not isinstance(self.startup_probe, dict)
-        ):
+        if self.startup_probe and not isinstance(self.startup_probe, Unset) and not isinstance(self.startup_probe, dict):
             startup_probe = self.startup_probe.to_dict()
         elif self.startup_probe and isinstance(self.startup_probe, dict):
             startup_probe = self.startup_probe
@@ -149,9 +153,11 @@ class Runtime:
 
         type_ = self.type_
 
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update({
+        })
         if args is not UNSET:
             field_dict["args"] = args
         if command is not UNSET:
@@ -201,31 +207,38 @@ class Runtime:
 
         return field_dict
 
+
+
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.port import Port
         from ..models.runtime_configuration import RuntimeConfiguration
         from ..models.runtime_startup_probe import RuntimeStartupProbe
-
         if not src_dict:
             return None
         d = src_dict.copy()
         args = cast(list[Any], d.pop("args", UNSET))
 
+
         command = cast(list[Any], d.pop("command", UNSET))
+
 
         _configuration = d.pop("configuration", UNSET)
         configuration: Union[Unset, RuntimeConfiguration]
-        if isinstance(_configuration, Unset):
+        if isinstance(_configuration,  Unset):
             configuration = UNSET
         else:
             configuration = RuntimeConfiguration.from_dict(_configuration)
+
+
+
 
         cpu = d.pop("cpu", UNSET)
 
         endpoint_name = d.pop("endpointName", UNSET)
 
         envs = cast(list[Any], d.pop("envs", UNSET))
+
 
         expires = d.pop("expires", UNSET)
 
@@ -251,17 +264,23 @@ class Runtime:
 
         ports = []
         _ports = d.pop("ports", UNSET)
-        for componentsschemas_ports_item_data in _ports or []:
+        for componentsschemas_ports_item_data in (_ports or []):
             componentsschemas_ports_item = Port.from_dict(componentsschemas_ports_item_data)
+
+
 
             ports.append(componentsschemas_ports_item)
 
+
         _startup_probe = d.pop("startupProbe", UNSET)
         startup_probe: Union[Unset, RuntimeStartupProbe]
-        if isinstance(_startup_probe, Unset):
+        if isinstance(_startup_probe,  Unset):
             startup_probe = UNSET
         else:
             startup_probe = RuntimeStartupProbe.from_dict(_startup_probe)
+
+
+
 
         timeout = d.pop("timeout", UNSET)
 
@@ -296,6 +315,7 @@ class Runtime:
             ttl=ttl,
             type_=type_,
         )
+
 
         runtime.additional_properties = d
         return runtime

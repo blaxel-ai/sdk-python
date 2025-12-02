@@ -9,21 +9,32 @@ from ...models.image import Image
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    
+) -> dict[str, Any]:
+    
+
+    
+
+    
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/images",
     }
 
+
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["Image"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list['Image'] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = Image.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
@@ -34,7 +45,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Image"
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Image"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list['Image']]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,8 +57,9 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Union[Client],
-) -> Response[list["Image"]]:
-    """List images
+
+) -> Response[list['Image']]:
+    """ List images
 
      Returns a list of all images in the workspace grouped by repository with tags.
 
@@ -57,9 +69,12 @@ def sync_detailed(
 
     Returns:
         Response[list['Image']]
-    """
+     """
 
-    kwargs = _get_kwargs()
+
+    kwargs = _get_kwargs(
+        
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -67,12 +82,12 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: Union[Client],
-) -> list["Image"] | None:
-    """List images
+
+) -> list['Image'] | None:
+    """ List images
 
      Returns a list of all images in the workspace grouped by repository with tags.
 
@@ -82,18 +97,20 @@ def sync(
 
     Returns:
         list['Image']
-    """
+     """
+
 
     return sync_detailed(
         client=client,
-    ).parsed
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: Union[Client],
-) -> Response[list["Image"]]:
-    """List images
+
+) -> Response[list['Image']]:
+    """ List images
 
      Returns a list of all images in the workspace grouped by repository with tags.
 
@@ -103,20 +120,25 @@ async def asyncio_detailed(
 
     Returns:
         Response[list['Image']]
-    """
+     """
 
-    kwargs = _get_kwargs()
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    kwargs = _get_kwargs(
+        
+    )
+
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: Union[Client],
-) -> list["Image"] | None:
-    """List images
+
+) -> list['Image'] | None:
+    """ List images
 
      Returns a list of all images in the workspace grouped by repository with tags.
 
@@ -126,10 +148,10 @@ async def asyncio(
 
     Returns:
         list['Image']
-    """
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+
+    )).parsed
