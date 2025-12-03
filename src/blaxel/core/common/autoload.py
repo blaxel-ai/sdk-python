@@ -112,10 +112,11 @@ def autoload() -> None:
     httpx_sandbox_async_client = client_sandbox.get_async_httpx_client()
     httpx_sandbox_async_client.event_hooks["response"] = response_interceptors_async
 
-    try:
-        sentry()
-    except Exception:
-        pass
+    if settings.tracking:
+        try:
+            sentry()
+        except Exception:
+            pass
 
     try:
         telemetry()

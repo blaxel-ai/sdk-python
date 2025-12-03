@@ -1,6 +1,9 @@
 import os
 import platform
+from pathlib import Path
 from typing import Dict
+
+import yaml
 
 from ..authentication import BlaxelAuth, auth
 from .logger import init_logger
@@ -135,5 +138,31 @@ class Settings:
     def enable_opentelemetry(self) -> bool:
         """Get the enable opentelemetry."""
         return os.getenv("BL_ENABLE_OPENTELEMETRY", "false").lower() == "true"
+
+    @property
+    def tracking(self) -> bool:
+        """
+        Get the tracking setting.
+
+        Priority:
+        1. Environment variable BL_TRACKING (true/false)
+        2. config.yaml tracking field
+        3. Default: true
+        """
+        env_value = os.environ.get("BL_TRACKING")
+        if env_value is not None:
+            return env_value.lower() == "true"
+
+        try:
+            home_dir = Path.home()
+            config_path = home_dir / ".blaxel" / "config.yaml"
+            with open(config_path, encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            if config and "tracking" in config:
+                return bool(config["tracking"])
+        except Exception:
+            pass
+
+        return True
 
 settings = Settings()
