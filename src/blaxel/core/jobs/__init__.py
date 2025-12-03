@@ -1,10 +1,9 @@
 import argparse
 import asyncio
 import os
-import sys
 import time
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import requests
 
@@ -144,7 +143,7 @@ class BlJob:
                 )
         return response.text
 
-    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> Awaitable[str]:
+    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
         logger.debug(f"Job Calling: {self.name}")
         response = await self.acall(self.url, input, headers, params)
         if response.status_code >= 400:

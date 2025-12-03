@@ -19,7 +19,6 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from typing import Optional
 
 import requests
 from flask import Flask, request
@@ -28,7 +27,7 @@ from blaxel.core import verify_webhook_from_request
 
 app = Flask(__name__)
 PORT = 3456
-CALLBACK_SECRET: Optional[str] = None
+CALLBACK_SECRET: str | None = None
 
 
 @app.route("/webhook", methods=["POST"])
@@ -103,7 +102,7 @@ def health():
     return {"status": "ok"}
 
 
-def start_ngrok() -> Optional[str]:
+def start_ngrok() -> str | None:
     """Start ngrok tunnel and return the public URL."""
     print("🌐 Starting ngrok tunnel...")
 
