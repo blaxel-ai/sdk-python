@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.last_n_requests_metric import LastNRequestsMetric
+    from ..models.metric import Metric
     from ..models.metrics_models import MetricsModels
     from ..models.metrics_request_total_per_code import MetricsRequestTotalPerCode
     from ..models.metrics_rps_per_code import MetricsRpsPerCode
@@ -23,8 +24,10 @@ class Metrics:
     Attributes:
         agents (Union[Unset, Any]): Metrics for agents
         functions (Union[Unset, Any]): Metrics for functions
+        inference_error_global (Union[Unset, list['Metric']]): Array of metrics
         inference_global (Union[Unset, list[Any]]): Historical requests for all resources globally
         items (Union[Unset, list['RequestTotalResponseData']]): Historical requests for all resources globally
+        jobs (Union[Unset, Any]): Metrics for jobs
         last_n_requests (Union[Unset, list['LastNRequestsMetric']]): Metric value
         models (Union[Unset, MetricsModels]): Metrics for models
         request_total (Union[Unset, float]): Number of requests for all resources globally
@@ -38,8 +41,10 @@ class Metrics:
 
     agents: Union[Unset, Any] = UNSET
     functions: Union[Unset, Any] = UNSET
+    inference_error_global: Union[Unset, list["Metric"]] = UNSET
     inference_global: Union[Unset, list[Any]] = UNSET
     items: Union[Unset, list["RequestTotalResponseData"]] = UNSET
+    jobs: Union[Unset, Any] = UNSET
     last_n_requests: Union[Unset, list["LastNRequestsMetric"]] = UNSET
     models: Union[Unset, "MetricsModels"] = UNSET
     request_total: Union[Unset, float] = UNSET
@@ -50,9 +55,20 @@ class Metrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         agents = self.agents
 
         functions = self.functions
+
+        inference_error_global: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.inference_error_global, Unset):
+            inference_error_global = []
+            for componentsschemas_array_metric_item_data in self.inference_error_global:
+                if type(componentsschemas_array_metric_item_data) is dict:
+                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data
+                else:
+                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data.to_dict()
+                inference_error_global.append(componentsschemas_array_metric_item)
 
         inference_global: Union[Unset, list[Any]] = UNSET
         if not isinstance(self.inference_global, Unset):
@@ -67,6 +83,8 @@ class Metrics:
                 else:
                     items_item = items_item_data.to_dict()
                 items.append(items_item)
+
+        jobs = self.jobs
 
         last_n_requests: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.last_n_requests, Unset):
@@ -113,10 +131,14 @@ class Metrics:
             field_dict["agents"] = agents
         if functions is not UNSET:
             field_dict["functions"] = functions
+        if inference_error_global is not UNSET:
+            field_dict["inferenceErrorGlobal"] = inference_error_global
         if inference_global is not UNSET:
             field_dict["inferenceGlobal"] = inference_global
         if items is not UNSET:
             field_dict["items"] = items
+        if jobs is not UNSET:
+            field_dict["jobs"] = jobs
         if last_n_requests is not UNSET:
             field_dict["lastNRequests"] = last_n_requests
         if models is not UNSET:
@@ -137,6 +159,7 @@ class Metrics:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
         from ..models.last_n_requests_metric import LastNRequestsMetric
+        from ..models.metric import Metric
         from ..models.metrics_models import MetricsModels
         from ..models.metrics_request_total_per_code import MetricsRequestTotalPerCode
         from ..models.metrics_rps_per_code import MetricsRpsPerCode
@@ -149,6 +172,13 @@ class Metrics:
 
         functions = d.pop("functions", UNSET)
 
+        inference_error_global = []
+        _inference_error_global = d.pop("inferenceErrorGlobal", UNSET)
+        for componentsschemas_array_metric_item_data in _inference_error_global or []:
+            componentsschemas_array_metric_item = Metric.from_dict(componentsschemas_array_metric_item_data)
+
+            inference_error_global.append(componentsschemas_array_metric_item)
+
         inference_global = cast(list[Any], d.pop("inferenceGlobal", UNSET))
 
         items = []
@@ -157,6 +187,8 @@ class Metrics:
             items_item = RequestTotalResponseData.from_dict(items_item_data)
 
             items.append(items_item)
+
+        jobs = d.pop("jobs", UNSET)
 
         last_n_requests = []
         _last_n_requests = d.pop("lastNRequests", UNSET)
@@ -195,8 +227,10 @@ class Metrics:
         metrics = cls(
             agents=agents,
             functions=functions,
+            inference_error_global=inference_error_global,
             inference_global=inference_global,
             items=items,
+            jobs=jobs,
             last_n_requests=last_n_requests,
             models=models,
             request_total=request_total,

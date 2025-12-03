@@ -13,6 +13,7 @@ class CoreEvent:
     """Core event
 
     Attributes:
+        canary_revision (Union[Unset, str]): Canary revisionID link to the event
         message (Union[Unset, str]): Event message
         revision (Union[Unset, str]): RevisionID link to the event
         status (Union[Unset, str]): Event status
@@ -20,6 +21,7 @@ class CoreEvent:
         type_ (Union[Unset, str]): Event type
     """
 
+    canary_revision: Union[Unset, str] = UNSET
     message: Union[Unset, str] = UNSET
     revision: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
@@ -28,6 +30,8 @@ class CoreEvent:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        canary_revision = self.canary_revision
+
         message = self.message
 
         revision = self.revision
@@ -41,6 +45,8 @@ class CoreEvent:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if canary_revision is not UNSET:
+            field_dict["canaryRevision"] = canary_revision
         if message is not UNSET:
             field_dict["message"] = message
         if revision is not UNSET:
@@ -59,6 +65,8 @@ class CoreEvent:
         if not src_dict:
             return None
         d = src_dict.copy()
+        canary_revision = d.pop("canaryRevision", UNSET)
+
         message = d.pop("message", UNSET)
 
         revision = d.pop("revision", UNSET)
@@ -70,6 +78,7 @@ class CoreEvent:
         type_ = d.pop("type", UNSET)
 
         core_event = cls(
+            canary_revision=canary_revision,
             message=message,
             revision=revision,
             status=status,

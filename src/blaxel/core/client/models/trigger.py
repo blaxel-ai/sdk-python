@@ -18,16 +18,19 @@ class Trigger:
 
     Attributes:
         configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
+        enabled (Union[Unset, bool]): Enable or disable the trigger (default: true)
         id (Union[Unset, str]): The id of the trigger
         type_ (Union[Unset, str]): The type of trigger, can be http or http-async
     """
 
     configuration: Union[Unset, "TriggerConfiguration"] = UNSET
+    enabled: Union[Unset, bool] = UNSET
     id: Union[Unset, str] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         configuration: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.configuration
@@ -38,6 +41,8 @@ class Trigger:
         elif self.configuration and isinstance(self.configuration, dict):
             configuration = self.configuration
 
+        enabled = self.enabled
+
         id = self.id
 
         type_ = self.type_
@@ -47,6 +52,8 @@ class Trigger:
         field_dict.update({})
         if configuration is not UNSET:
             field_dict["configuration"] = configuration
+        if enabled is not UNSET:
+            field_dict["enabled"] = enabled
         if id is not UNSET:
             field_dict["id"] = id
         if type_ is not UNSET:
@@ -68,12 +75,15 @@ class Trigger:
         else:
             configuration = TriggerConfiguration.from_dict(_configuration)
 
+        enabled = d.pop("enabled", UNSET)
+
         id = d.pop("id", UNSET)
 
         type_ = d.pop("type", UNSET)
 
         trigger = cls(
             configuration=configuration,
+            enabled=enabled,
             id=id,
             type_=type_,
         )
