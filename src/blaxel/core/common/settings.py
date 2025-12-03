@@ -3,29 +3,10 @@ import platform
 from pathlib import Path
 from typing import Dict
 
-import tomli
+import yaml
 
 from ..authentication import BlaxelAuth, auth
 from .logger import init_logger
-
-
-def _get_package_version() -> str:
-    """Get the package version from pyproject.toml."""
-    try:
-        # Navigate up from this file to the project root
-        current_file = Path(__file__)
-        project_root = current_file.parent.parent.parent.parent.parent
-        pyproject_path = project_root / "pyproject.toml"
-
-        if pyproject_path.exists():
-            with open(pyproject_path, "rb") as f:
-                pyproject_data = tomli.load(f)
-                return pyproject_data.get("project", {}).get("version", "unknown")
-        else:
-            return "unknown"
-    except Exception as e:
-        print(f"Warning: Failed to read package version: {e}")
-        return "unknown"
 
 
 def _get_os_arch() -> str:
@@ -56,33 +37,6 @@ def _get_os_arch() -> str:
         return "unknown/unknown"
 
 
-def _get_commit_hash() -> str:
-    """Get commit hash from pyproject.toml."""
-    try:
-        # Try to read from pyproject.toml (build-time injection)
-        current_file = Path(__file__)
-        project_root = current_file.parent.parent.parent.parent.parent
-        pyproject_path = project_root / "pyproject.toml"
-
-        if pyproject_path.exists():
-            with open(pyproject_path, "rb") as f:
-                pyproject_data = tomli.load(f)
-                # Check multiple possible locations for commit
-                commit = None
-                if "tool" in pyproject_data and "blaxel" in pyproject_data["tool"]:
-                    commit = pyproject_data["tool"]["blaxel"].get("commit")
-                if not commit and "project" in pyproject_data:
-                    commit = pyproject_data["project"].get("commit")
-                if not commit and "build" in pyproject_data:
-                    commit = pyproject_data["build"].get("commit")
-
-                if commit:
-                    return commit[:7] if len(commit) > 7 else commit
-    except Exception:
-        pass
-
-    return "unknown"
-
 class Settings:
     auth: BlaxelAuth
 
@@ -90,7 +44,6 @@ class Settings:
         init_logger(self.log_level)
         self.auth = auth(self.env, self.base_url)
         self._headers = None
-        self._version = None
 
     @property
     def env(self) -> str:
@@ -118,19 +71,29 @@ class Settings:
 
 
     @property
+    def sentry_dsn(self) -> str:
+        """Get the Sentry DSN (injected at build time)."""
+        import blaxel
+        return blaxel.__sentry_dsn__
+
+    @property
     def version(self) -> str:
-        """Get the package version."""
-        if self._version is None:
-            self._version = _get_package_version()
-        return self._version
+        """Get the package version (injected at build time)."""
+        import blaxel
+        return blaxel.__version__ or "unknown"
+
+    @property
+    def commit(self) -> str:
+        """Get the commit hash (injected at build time)."""
+        import blaxel
+        return blaxel.__commit__ or "unknown"
 
     @property
     def headers(self) -> Dict[str, str]:
         """Get the headers for API requests."""
         headers = self.auth.get_headers()
         os_arch = _get_os_arch()
-        commit_hash = _get_commit_hash()
-        headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{commit_hash}"
+        headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
         return headers
 
 
@@ -175,5 +138,31 @@ class Settings:
     def enable_opentelemetry(self) -> bool:
         """Get the enable opentelemetry."""
         return os.getenv("BL_ENABLE_OPENTELEMETRY", "false").lower() == "true"
+
+    @property
+    def tracking(self) -> bool:
+        """
+        Get the tracking setting.
+
+        Priority:
+        1. Environment variable BL_TRACKING (true/false)
+        2. config.yaml tracking field
+        3. Default: true
+        """
+        env_value = os.environ.get("BL_TRACKING")
+        if env_value is not None:
+            return env_value.lower() == "true"
+
+        try:
+            home_dir = Path.home()
+            config_path = home_dir / ".blaxel" / "config.yaml"
+            with open(config_path, encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            if config and "tracking" in config:
+                return bool(config["tracking"])
+        except Exception:
+            pass
+
+        return True
 
 settings = Settings()

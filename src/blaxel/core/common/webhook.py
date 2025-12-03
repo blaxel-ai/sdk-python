@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 import time
-from typing import Optional, Protocol
+from typing import Protocol
 
 
 class RequestLike(Protocol):
@@ -40,7 +40,7 @@ def verify_webhook_signature(
     body: bytes | str,
     signature: str,
     secret: str,
-    timestamp: Optional[str] = None,
+    timestamp: str | None = None,
     max_age: int = 300,
 ) -> bool:
     """

@@ -1,10 +1,9 @@
 import argparse
 import asyncio
 import os
-import sys
 import time
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import requests
 
@@ -36,7 +35,7 @@ class BlJobWrapper:
                     args_dict[key] = unknown[i + 1]
             return args_dict
 
-        response = requests.get(os.getenv("BL_EXECUTION_DATA_URL"))
+        response = requests.get(os.getenv("BL_EXECUTION_DATA_URL") or "")
         data = response.json()
         tasks = data.get("tasks", [])
         return tasks[self.index] if self.index < len(tasks) else {}
@@ -63,8 +62,7 @@ class BlJobWrapper:
             else:
                 func(**parsed_args)
         except Exception as error:
-            print("Job execution failed:", error, file=sys.stderr)
-            sys.exit(1)
+            logger.error(f"Job execution failed: {error}")
 
 
 logger = getLogger(__name__)
@@ -145,7 +143,7 @@ class BlJob:
                 )
         return response.text
 
-    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> Awaitable[str]:
+    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
         logger.debug(f"Job Calling: {self.name}")
         response = await self.acall(self.url, input, headers, params)
         if response.status_code >= 400:
