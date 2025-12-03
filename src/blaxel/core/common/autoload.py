@@ -20,6 +20,24 @@ _sentry_hub: Hub | None = None
 _captured_exceptions: set = set()  # Track already captured exceptions to avoid duplicates
 
 
+def _get_exception_key(exc_type, exc_value, frame) -> str:
+    """Generate a unique key for an exception based on type, message, and origin."""
+    # Use type name + message + original file/line where exception was raised
+    # This ensures the same logical exception is only captured once
+    exc_name = exc_type.__name__ if exc_type else "Unknown"
+    exc_msg = str(exc_value) if exc_value else ""
+    # Get the original traceback location (where exception was first raised)
+    tb = getattr(exc_value, '__traceback__', None)
+    if tb:
+        # Walk to the deepest frame (origin of exception)
+        while tb.tb_next:
+            tb = tb.tb_next
+        origin = f"{tb.tb_frame.f_code.co_filename}:{tb.tb_lineno}"
+    else:
+        origin = f"{frame.f_code.co_filename}:{frame.f_lineno}"
+    return f"{exc_name}:{exc_msg}:{origin}"
+
+
 def _trace_blaxel_exceptions(frame, event, arg):
     """Trace function that captures exceptions from blaxel SDK code."""
     if event == 'exception':
@@ -28,12 +46,12 @@ def _trace_blaxel_exceptions(frame, event, arg):
 
         # Only capture if it's from blaxel in site-packages
         if 'site-packages/blaxel' in filename:
-            # Avoid capturing the same exception multiple times
-            exc_id = id(exc_value)
-            if exc_id not in _captured_exceptions:
-                _captured_exceptions.add(exc_id)
+            # Avoid capturing the same exception multiple times using a content-based key
+            exc_key = _get_exception_key(exc_type, exc_value, frame)
+            if exc_key not in _captured_exceptions:
+                _captured_exceptions.add(exc_key)
                 capture_exception(exc_value)
-                # Clean up old exception IDs to prevent memory leak
+                # Clean up old exception keys to prevent memory leak
                 if len(_captured_exceptions) > 1000:
                     _captured_exceptions.clear()
 
