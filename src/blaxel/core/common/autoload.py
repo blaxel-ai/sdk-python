@@ -2,6 +2,7 @@ import atexit
 import logging
 import sys
 import threading
+from asyncio import CancelledError
 
 from sentry_sdk import Client, Hub
 
@@ -18,6 +19,21 @@ logger = logging.getLogger(__name__)
 # Isolated Sentry hub for SDK-only error tracking (doesn't interfere with user's Sentry)
 _sentry_hub: Hub | None = None
 _captured_exceptions: set = set()  # Track already captured exceptions to avoid duplicates
+
+# Exceptions that are part of normal control flow and should not be captured
+_IGNORED_EXCEPTIONS = (
+    StopIteration,       # Iterator exhaustion
+    StopAsyncIteration,  # Async iterator exhaustion
+    GeneratorExit,       # Generator cleanup
+    KeyboardInterrupt,   # User interrupt (Ctrl+C)
+    SystemExit,          # Program exit
+    CancelledError,      # Async task cancellation
+)
+
+# Optional dependencies that may not be installed - import errors for these are expected
+_OPTIONAL_DEPENDENCIES = (
+    'opentelemetry',
+)
 
 
 def _get_exception_key(exc_type, exc_value, frame) -> str:
@@ -38,10 +54,28 @@ def _get_exception_key(exc_type, exc_value, frame) -> str:
     return f"{exc_name}:{exc_msg}:{origin}"
 
 
+def _is_optional_dependency_error(exc_type, exc_value) -> bool:
+    """Check if the exception is an import error for an optional dependency."""
+    # ModuleNotFoundError is a subclass of ImportError, so checking ImportError covers both
+    if exc_type and issubclass(exc_type, ImportError):
+        msg = str(exc_value).lower()
+        return any(dep in msg for dep in _OPTIONAL_DEPENDENCIES)
+    return False
+
+
 def _trace_blaxel_exceptions(frame, event, arg):
     """Trace function that captures exceptions from blaxel SDK code."""
     if event == 'exception':
         exc_type, exc_value, exc_tb = arg
+
+        # Skip control flow exceptions (not actual errors)
+        if exc_type and issubclass(exc_type, _IGNORED_EXCEPTIONS):
+            return _trace_blaxel_exceptions
+
+        # Skip import errors for optional dependencies (expected when not installed)
+        if _is_optional_dependency_error(exc_type, exc_value):
+            return _trace_blaxel_exceptions
+
         filename = frame.f_code.co_filename
 
         # Only capture if it's from blaxel in site-packages
