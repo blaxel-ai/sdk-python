@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
@@ -15,6 +16,8 @@ from ..types import (
     WatchEvent,
 )
 from .action import SyncSandboxAction
+
+logger = logging.getLogger(__name__)
 
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
@@ -256,7 +259,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         with self.get_client() as client_instance:
             response = client_instance.delete(url, headers=headers)
             if not response.is_success:
-                print(f"Warning: Failed to abort multipart upload: {response.status_code}")
+                logger.warning(f"Failed to abort multipart upload: {response.status_code}")
 
     def _upload_with_multipart(self, path: str, data: bytes, permissions: str = "0644") -> SuccessResponse:
         init_response = self._initiate_multipart_upload(path, permissions)
@@ -293,7 +296,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             try:
                 self._abort_multipart_upload(upload_id)
             except Exception as abort_error:
-                print(f"Failed to abort multipart upload: {abort_error}")
+                logger.warning(f"Failed to abort multipart upload: {abort_error}")
             raise error
 
 

@@ -35,6 +35,7 @@ class JobExecution:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         metadata: Union[Unset, dict[str, Any]] = UNSET
         if self.metadata and not isinstance(self.metadata, Unset) and not isinstance(self.metadata, dict):
             metadata = self.metadata.to_dict()

@@ -16,12 +16,14 @@ class WebsocketChannel:
         created_at (Union[Unset, str]): The date and time when the resource was created
         updated_at (Union[Unset, str]): The date and time when the resource was updated
         connection_id (Union[Unset, str]): Unique connection ID
+        source_region (Union[Unset, str]): Source region the connection belongs to
         workspace (Union[Unset, str]): Workspace the connection belongs to
     """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     connection_id: Union[Unset, str] = UNSET
+    source_region: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -31,6 +33,8 @@ class WebsocketChannel:
         updated_at = self.updated_at
 
         connection_id = self.connection_id
+
+        source_region = self.source_region
 
         workspace = self.workspace
 
@@ -43,6 +47,8 @@ class WebsocketChannel:
             field_dict["updatedAt"] = updated_at
         if connection_id is not UNSET:
             field_dict["connection_id"] = connection_id
+        if source_region is not UNSET:
+            field_dict["sourceRegion"] = source_region
         if workspace is not UNSET:
             field_dict["workspace"] = workspace
 
@@ -59,12 +65,15 @@ class WebsocketChannel:
 
         connection_id = d.pop("connection_id", UNSET)
 
+        source_region = d.pop("sourceRegion", UNSET)
+
         workspace = d.pop("workspace", UNSET)
 
         websocket_channel = cls(
             created_at=created_at,
             updated_at=updated_at,
             connection_id=connection_id,
+            source_region=source_region,
             workspace=workspace,
         )
 

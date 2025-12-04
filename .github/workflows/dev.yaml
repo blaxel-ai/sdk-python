@@ -20,16 +20,24 @@ jobs:
           fetch-depth: 0
       - name: "Install uv"
         uses: astral-sh/setup-uv@v4
-      - name: Set version
+      - name: Set version and build config
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           VERSION=$(git describe --tags --abbrev=0)
           VERSION="${VERSION#v}"
           # Split version into parts and increment minor version
           IFS='.' read -r major minor patch <<< "$VERSION"
           patch=$((patch + 1))
-          VERSION="${major}.${minor}.${patch}"
+          VERSION="${major}.${minor}.${patch}.pre-${{ github.run_number }}"
+          COMMIT=$(git rev-parse HEAD)
           echo "Current version: $VERSION"
-          sed -i -E "s/^version = .*/version = \"${VERSION}.pre-${{ github.run_number }}\"/" pyproject.toml
+          echo "Current commit: $COMMIT"
+          sed -i -E "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
+          # Inject build-time values into __init__.py
+          sed -i -E "s|^__version__ = .*|__version__ = \"${VERSION}\"|" src/blaxel/__init__.py
+          sed -i -E "s|^__commit__ = .*|__commit__ = \"${COMMIT}\"|" src/blaxel/__init__.py
+          sed -i -E "s|^__sentry_dsn__ = .*|__sentry_dsn__ = \"${SENTRY_DSN}\"|" src/blaxel/__init__.py
       - name: Test package installation
         run: |
           uv venv

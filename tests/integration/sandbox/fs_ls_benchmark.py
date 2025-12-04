@@ -93,7 +93,7 @@ async def benchmark_fs_ls(sandbox: SandboxInstance, num_iterations: int = NUM_IT
 async def benchmark_concurrent_fs_ls(sandbox: SandboxInstance, num_concurrent: int = 10, num_batches: int = 10):
     """Benchmark concurrent fs.ls requests."""
     print(f"\n{'='*60}")
-    print(f"Benchmarking CONCURRENT fs.ls")
+    print("Benchmarking CONCURRENT fs.ls")
     print(f"  {num_concurrent} concurrent requests x {num_batches} batches = {num_concurrent * num_batches} total")
     print(f"{'='*60}\n")
 
@@ -152,7 +152,7 @@ async def main():
         print(f"  - {sequential_results['requests_per_second']:.2f} req/s")
         print(f"  - {sequential_results['avg_ms']:.2f}ms avg latency")
         print()
-        print(f"Concurrent (10 concurrent x 10 batches = 100 requests):")
+        print("Concurrent (10 concurrent x 10 batches = 100 requests):")
         print(f"  - {concurrent_results['requests_per_second']:.2f} req/s")
         print(f"  - {concurrent_results['effective_per_request_ms']:.2f}ms effective latency")
         print(f"{'='*60}")

@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
 
@@ -20,6 +21,8 @@ from .action import SandboxAction
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
 MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
+
+logger = logging.getLogger(__name__)
 
 
 class SandboxFileSystem(SandboxAction):
@@ -570,5 +573,5 @@ class SandboxFileSystem(SandboxAction):
                 await self._abort_multipart_upload(upload_id)
             except Exception as abort_error:
                 # Log but don't throw - we want to throw the original error
-                print(f"Failed to abort multipart upload: {abort_error}")
+                logger.warning(f"Failed to abort multipart upload: {abort_error}")
             raise error

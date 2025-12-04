@@ -36,6 +36,7 @@ class IntegrationEndpoint:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         body = self.body
 
         ignore_models: Union[Unset, list[Any]] = UNSET

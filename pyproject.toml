@@ -17,6 +17,7 @@ dependencies = [
   "attrs>=21.3.0",
   "httpx>=0.27.0",
   "mcp>=1.9.4",
+  "sentry-sdk>=2.46.0",
 ]
 
 [project.optional-dependencies]
@@ -145,7 +146,6 @@ test = [
   "pytest-mock>=3.14.0",
   "coverage>=7.0.0",
   "aiohttp>=3.11.16",
+  "flask>=3.0.0",
+  "requests>=2.32.0",
 ]
-
-[tool.blaxel]
-commit = "7933c01ade7c069572a6040b48e9a2a462a25d66"

@@ -3,6 +3,8 @@ This module provides utilities for setting up and managing OpenTelemetry instrum
 It includes classes and functions for configuring tracers, meters, loggers, and integrating with FastAPI applications.
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
 import os
@@ -10,27 +12,52 @@ import signal
 import time
 from typing import Any, Dict, List, Type
 
-from opentelemetry import metrics, trace
-from opentelemetry._logs import set_logger_provider
-from opentelemetry.metrics import NoOpMeterProvider
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import NoOpTracerProvider
+try:
+    from opentelemetry import metrics, trace
+    from opentelemetry._logs import set_logger_provider
+    from opentelemetry.metrics import NoOpMeterProvider
+    from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.trace import NoOpTracerProvider
+
+    _OPENTELEMETRY_AVAILABLE = True
+except ImportError:
+    _OPENTELEMETRY_AVAILABLE = False
+    metrics = None
+    trace = None
+    set_logger_provider = None
+    NoOpMeterProvider = None
+    LoggerProvider = None
+    LoggingHandler = None
+    MeterProvider = None
+    PeriodicExportingMetricReader = None
+    Resource = None
+    TracerProvider = None
+    BatchSpanProcessor = None
+    NoOpTracerProvider = None
 
 from blaxel.core.common import Settings
 
-from .exporters import (
-    DynamicHeadersLogExporter,
-    DynamicHeadersMetricExporter,
-    DynamicHeadersSpanExporter,
-)
-from .instrumentation.map import MAPPINGS
-from .log.log import AsyncLogRecordProcessor
-from .span import DefaultAttributesSpanProcessor
+if _OPENTELEMETRY_AVAILABLE:
+    from .exporters import (
+        DynamicHeadersLogExporter,
+        DynamicHeadersMetricExporter,
+        DynamicHeadersSpanExporter,
+    )
+    from .instrumentation.map import MAPPINGS
+    from .log.log import AsyncLogRecordProcessor
+    from .span import DefaultAttributesSpanProcessor
+else:
+    DynamicHeadersLogExporter = None
+    DynamicHeadersMetricExporter = None
+    DynamicHeadersSpanExporter = None
+    MAPPINGS = {}
+    AsyncLogRecordProcessor = None
+    DefaultAttributesSpanProcessor = None
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +73,8 @@ class TelemetryManager:
 
     @property
     def enabled(self) -> bool:
+        if not _OPENTELEMETRY_AVAILABLE:
+            return False
         return (self.settings and self.settings.enable_opentelemetry) or False
 
     @property
@@ -127,6 +156,9 @@ class TelemetryManager:
     def initialize(self, settings: Settings):
         """Initialize the telemetry system."""
         self.settings = settings
+        if not _OPENTELEMETRY_AVAILABLE:
+            logger.debug("OpenTelemetry not available, telemetry disabled")
+            return
         if not self.enabled or self.initialized:
             return
 

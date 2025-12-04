@@ -4,7 +4,9 @@ from .core.common.autoload import autoload
 from .core.common.env import env
 from .core.common.settings import settings
 
-autoload()
-
-__version__ = "0.2.0"
+__version__ = ""
+__commit__ = ""
+__sentry_dsn__ = ""
 __all__ = ["autoload", "settings", "env"]
+
+autoload()
