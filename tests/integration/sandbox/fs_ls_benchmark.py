@@ -2,10 +2,10 @@ import asyncio
 import statistics
 import time
 
-from utils import create_or_get_sandbox
-
 from blaxel.core.sandbox.default import SandboxInstance
 from blaxel.core.sandbox.default.action import SandboxAction
+
+from utils import create_or_get_sandbox
 
 SANDBOX_NAME = "fs-ls-benchmark"
 NUM_ITERATIONS = 100
