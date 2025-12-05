@@ -105,6 +105,12 @@ class Client:
     def get_httpx_client(self) -> httpx.Client:
         """Get the underlying httpx.Client, constructing a new one if not previously set"""
         if self._client is None:
+            # Set default limits if not provided in httpx_args to prevent TLS handshake issues
+            limits = self._httpx_args.get("limits")
+            if limits is None:
+                limits = httpx.Limits(max_connections=100, max_keepalive_connections=20)
+            # Disable HTTP/2 to prevent TLS handshake issues in certain environments
+            http2 = self._httpx_args.get("http2", False)
             self._client = httpx.Client(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -113,7 +119,9 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
-                **self._httpx_args,
+                limits=limits,
+                http2=http2,
+                **{k: v for k, v in self._httpx_args.items() if k not in ("limits", "http2")},
             )
         return self._client
 
@@ -137,6 +145,12 @@ class Client:
     def get_async_httpx_client(self) -> httpx.AsyncClient:
         """Get the underlying httpx.AsyncClient, constructing a new one if not previously set"""
         if self._async_client is None:
+            # Set default limits if not provided in httpx_args to prevent TLS handshake issues
+            limits = self._httpx_args.get("limits")
+            if limits is None:
+                limits = httpx.Limits(max_connections=100, max_keepalive_connections=20)
+            # Disable HTTP/2 to prevent TLS handshake issues in certain environments
+            http2 = self._httpx_args.get("http2", False)
             self._async_client = httpx.AsyncClient(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -145,7 +159,9 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
-                **self._httpx_args,
+                limits=limits,
+                http2=http2,
+                **{k: v for k, v in self._httpx_args.items() if k not in ("limits", "http2")},
             )
         return self._async_client
 
