@@ -81,7 +81,8 @@ async def main():
 
         # Create files with specific content
         await sandbox.fs.write(
-            f"{test_dir}/content1.txt", "This is the first file with some content"
+            f"{test_dir}/content1.txt",
+            "This is the first file with some content",
         )
         await asyncio.sleep(1)
 
@@ -90,7 +91,8 @@ async def main():
 
         # Modify with new content
         await sandbox.fs.write(
-            f"{test_dir}/content1.txt", "This is the modified content of the first file"
+            f"{test_dir}/content1.txt",
+            "This is the modified content of the first file",
         )
         await asyncio.sleep(1)
 

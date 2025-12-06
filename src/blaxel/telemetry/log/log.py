@@ -8,6 +8,7 @@ from opentelemetry.sdk._logs._internal.export import LogExporter
 
 _logger = logging.getLogger(__name__)
 
+
 class AsyncLogRecordProcessor(LogRecordProcessor):
     """This is an implementation of LogRecordProcessor which passes
     received logs in the export-friendly LogData representation to the
@@ -24,9 +25,7 @@ class AsyncLogRecordProcessor(LogRecordProcessor):
     def _start_worker(self):
         """Start the background worker thread."""
         self._worker_thread = threading.Thread(
-            target=self._process_logs,
-            daemon=True,
-            name="LogExporterWorker"
+            target=self._process_logs, daemon=True, name="LogExporterWorker"
         )
         self._worker_thread.start()
 

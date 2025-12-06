@@ -1,6 +1,9 @@
 """Tests for hash functions."""
 
-from blaxel.core.common.internal import get_alphanumeric_limited_hash, get_global_unique_hash
+from blaxel.core.common.internal import (
+    get_alphanumeric_limited_hash,
+    get_global_unique_hash,
+)
 
 
 def test_get_alphanumeric_limited_hash():

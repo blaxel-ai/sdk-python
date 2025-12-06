@@ -34,31 +34,41 @@ class SandboxFileSystem(SandboxAction):
         path = self.format_path(path)
         body = FileRequest(is_directory=True, permissions=permissions)
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+        client = self.get_client()
+        response = await client.put(f"/filesystem/{path}", json=body.to_dict())
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+            return SuccessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def write(self, path: str, content: str) -> SuccessResponse:
         path = self.format_path(path)
 
         # Calculate content size in bytes
-        content_size = len(content.encode('utf-8'))
+        content_size = len(content.encode("utf-8"))
 
         # Use multipart upload for large files
         if content_size > MULTIPART_THRESHOLD:
-            content_bytes = content.encode('utf-8')
+            content_bytes = content.encode("utf-8")
             return await self._upload_with_multipart(path, content_bytes, "0644")
 
         # Use regular upload for small files
         body = FileRequest(content=content)
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+        client = self.get_client()
+        response = await client.put(f"/filesystem/{path}", json=body.to_dict())
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+            return SuccessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
-    async def write_binary(self, path: str, content: Union[bytes, bytearray, str]) -> SuccessResponse:
+    async def write_binary(
+        self, path: str, content: Union[bytes, bytearray, str]
+    ) -> SuccessResponse:
         """Write binary content to a file.
 
         Args:
@@ -88,7 +98,11 @@ class SandboxFileSystem(SandboxAction):
 
         # Prepare multipart form data
         files = {
-            "file": ("binary-file.bin", binary_file, "application/octet-stream"),
+            "file": (
+                "binary-file.bin",
+                binary_file,
+                "application/octet-stream",
+            ),
         }
         data = {"permissions": "0644", "path": path}
 
@@ -96,13 +110,16 @@ class SandboxFileSystem(SandboxAction):
         url = f"{self.url}/filesystem/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.put(url, files=files, data=data, headers=headers)
-
+        client = self.get_client()
+        response = await client.put(url, files=files, data=data, headers=headers)
+        try:
+            content_bytes = await response.aread()
             if not response.is_success:
-                raise Exception(f"Failed to write binary: {response.status_code} {response.text}")
-
-            return SuccessResponse.from_dict(response.json())
+                error_text = content_bytes.decode("utf-8", errors="ignore")
+                raise Exception(f"Failed to write binary: {response.status_code} {error_text}")
+            return SuccessResponse.from_dict(json.loads(content_bytes))
+        finally:
+            await response.aclose()
 
     async def write_tree(
         self,
@@ -118,26 +135,32 @@ class SandboxFileSystem(SandboxAction):
 
         path = destination_path or ""
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.put(
-                f"/filesystem/tree/{path}",
-                json={"files": files_dict},
-                headers={"Content-Type": "application/json"},
-            )
+        client = self.get_client()
+        response = await client.put(
+            f"/filesystem/tree/{path}",
+            json={"files": files_dict},
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return Directory.from_dict(response.json())
+            return Directory.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def read(self, path: str) -> str:
         path = self.format_path(path)
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(f"/filesystem/{path}")
+        client = self.get_client()
+        response = await client.get(f"/filesystem/{path}")
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-
-            data = response.json()
             if "content" in data:
                 return data["content"]
             raise Exception("Unsupported file type")
+        finally:
+            await response.aclose()
 
     async def read_binary(self, path: str) -> bytes:
         """Read binary content from a file.
@@ -157,10 +180,14 @@ class SandboxFileSystem(SandboxAction):
             "Accept": "application/octet-stream",
         }
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(url, headers=headers)
+        client = self.get_client()
+        response = await client.get(url, headers=headers)
+        try:
+            content = await response.aread()
             self.handle_response_error(response)
-            return response.content
+            return content
+        finally:
+            await response.aclose()
 
     async def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
         """Download a file from the sandbox to the local filesystem.
@@ -178,23 +205,135 @@ class SandboxFileSystem(SandboxAction):
     async def rm(self, path: str, recursive: bool = False) -> SuccessResponse:
         path = self.format_path(path)
 
-        async with self.get_client() as client_instance:
-            params = {"recursive": "true"} if recursive else {}
-            response = await client_instance.delete(f"/filesystem/{path}", params=params)
+        client = self.get_client()
+        params = {"recursive": "true"} if recursive else {}
+        response = await client.delete(f"/filesystem/{path}", params=params)
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+            return SuccessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def ls(self, path: str) -> Directory:
         path = self.format_path(path)
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(f"/filesystem/{path}")
+        client = self.get_client()
+        response = await client.get(f"/filesystem/{path}")
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-
-            data = response.json()
             if not ("files" in data or "subdirectories" in data):
                 raise Exception('{"error": "Directory not found"}')
             return Directory.from_dict(data)
+        finally:
+            await response.aclose()
+
+    async def find(
+        self,
+        path: str,
+        type: str | None = None,
+        patterns: List[str] | None = None,
+        max_results: int | None = None,
+        exclude_dirs: List[str] | None = None,
+        exclude_hidden: bool | None = None,
+    ):
+        """Find files and directories.
+
+        Args:
+            path: Path to search in
+            type: Type of search ('file' or 'directory')
+            patterns: File patterns to include (e.g., ['*.py', '*.json'])
+            max_results: Maximum number of results to return
+            exclude_dirs: Directory names to skip
+            exclude_hidden: Exclude hidden files and directories
+
+        Returns:
+            FindResponse with matching files/directories
+        """
+        path = self.format_path(path)
+
+        params = {}
+        if type is not None:
+            params["type"] = type
+        if patterns is not None and len(patterns) > 0:
+            params["patterns"] = ",".join(patterns)
+        if max_results is not None:
+            params["maxResults"] = max_results
+        if exclude_dirs is not None and len(exclude_dirs) > 0:
+            params["excludeDirs"] = ",".join(exclude_dirs)
+        if exclude_hidden is not None:
+            params["excludeHidden"] = exclude_hidden
+
+        url = f"{self.url}/filesystem-find/{path}"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+
+        client = self.get_client()
+        response = await client.get(url, params=params, headers=headers)
+        try:
+            data = json.loads(await response.aread())
+            self.handle_response_error(response)
+
+            from ..client.models.find_response import FindResponse
+
+            return FindResponse.from_dict(data)
+        finally:
+            await response.aclose()
+
+    async def grep(
+        self,
+        query: str,
+        path: str = "/",
+        case_sensitive: bool | None = None,
+        context_lines: int | None = None,
+        max_results: int | None = None,
+        file_pattern: str | None = None,
+        exclude_dirs: List[str] | None = None,
+    ):
+        """Search for text content inside files using ripgrep.
+
+        Args:
+            query: Text to search for
+            path: Directory path to search in
+            case_sensitive: Case sensitive search (default: false)
+            context_lines: Number of context lines to include (default: 0)
+            max_results: Maximum number of results to return (default: 100)
+            file_pattern: File pattern to include (e.g., '*.py')
+            exclude_dirs: Directory names to skip
+
+        Returns:
+            ContentSearchResponse with matching lines
+        """
+        path = self.format_path(path)
+
+        params = {"query": query}
+        if case_sensitive is not None:
+            params["caseSensitive"] = case_sensitive
+        if context_lines is not None:
+            params["contextLines"] = context_lines
+        if max_results is not None:
+            params["maxResults"] = max_results
+        if file_pattern is not None:
+            params["filePattern"] = file_pattern
+        if exclude_dirs is not None and len(exclude_dirs) > 0:
+            params["excludeDirs"] = ",".join(exclude_dirs)
+
+        url = f"{self.url}/filesystem-content-search/{path}"
+        headers = {**settings.headers, **self.sandbox_config.headers}
+
+        client = self.get_client()
+        response = await client.get(url, params=params, headers=headers)
+        try:
+            data = json.loads(await response.aread())
+            self.handle_response_error(response)
+
+            from ..client.models.content_search_response import (
+                ContentSearchResponse,
+            )
+
+            return ContentSearchResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         """Copy files or directories using the cp command.
@@ -208,9 +347,7 @@ class SandboxFileSystem(SandboxAction):
             raise Exception("Process instance not available. Cannot execute cp command.")
 
         # Execute cp -r command
-        process = await self.process.exec({
-            "command": f"cp -r {source} {destination}"
-        })
+        process = await self.process.exec({"command": f"cp -r {source} {destination}"})
 
         # Wait for process to complete
         process = await self.process.wait(process.pid, max_wait=max_wait, interval=100)
@@ -220,11 +357,7 @@ class SandboxFileSystem(SandboxAction):
             logs = process.logs if hasattr(process, "logs") else "Unknown error"
             raise Exception(f"Could not copy {source} to {destination} cause: {logs}")
 
-        return CopyResponse(
-            message="Files copied",
-            source=source,
-            destination=destination
-        )
+        return CopyResponse(message="Files copied", source=source, destination=destination)
 
     def watch(
         self,
@@ -321,21 +454,25 @@ class SandboxFileSystem(SandboxAction):
         return path
 
     # Multipart upload helper methods
-    async def _initiate_multipart_upload(self, path: str, permissions: str = "0644") -> Dict[str, Any]:
+    async def _initiate_multipart_upload(
+        self, path: str, permissions: str = "0644"
+    ) -> Dict[str, Any]:
         """Initiate a multipart upload session."""
         path = self.format_path(path)
         url = f"{self.url}/filesystem-multipart/initiate/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"permissions": permissions}
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.post(url, json=body, headers=headers)
+        client = self.get_client()
+        response = await client.post(url, json=body, headers=headers)
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return response.json()
+            return data
+        finally:
+            await response.aclose()
 
-    async def _upload_part(
-        self, upload_id: str, part_number: int, data: bytes
-    ) -> Dict[str, Any]:
+    async def _upload_part(self, upload_id: str, part_number: int, data: bytes) -> Dict[str, Any]:
         """Upload a single part of a multipart upload."""
         url = f"{self.url}/filesystem-multipart/{upload_id}/part"
         headers = {**settings.headers, **self.sandbox_config.headers}
@@ -344,12 +481,14 @@ class SandboxFileSystem(SandboxAction):
         # Prepare multipart form data with the file chunk
         files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.put(
-                url, files=files, params=params, headers=headers
-            )
+        client = self.get_client()
+        response = await client.put(url, files=files, params=params, headers=headers)
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return response.json()
+            return data
+        finally:
+            await response.aclose()
 
     async def _complete_multipart_upload(
         self, upload_id: str, parts: List[Dict[str, Any]]
@@ -359,21 +498,28 @@ class SandboxFileSystem(SandboxAction):
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"parts": parts}
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.post(url, json=body, headers=headers)
+        client = self.get_client()
+        response = await client.post(url, json=body, headers=headers)
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+            return SuccessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def _abort_multipart_upload(self, upload_id: str) -> None:
         """Abort a multipart upload and clean up all parts."""
         url = f"{self.url}/filesystem-multipart/{upload_id}/abort"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
-        async with self.get_client() as client_instance:
-            response = await client_instance.delete(url, headers=headers)
+        client = self.get_client()
+        response = await client.delete(url, headers=headers)
+        try:
             # Don't raise error if abort fails - we want to throw the original error
             if not response.is_success:
-                logger.warning(f"Warning: Failed to abort multipart upload: {response.status_code}")
+                print(f"Warning: Failed to abort multipart upload: {response.status_code}")
+        finally:
+            await response.aclose()
 
     async def _upload_with_multipart(
         self, path: str, data: bytes, permissions: str = "0644"

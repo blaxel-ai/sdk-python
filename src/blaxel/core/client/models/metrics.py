@@ -55,7 +55,6 @@ class Metrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         agents = self.agents
 
         functions = self.functions
@@ -67,7 +66,9 @@ class Metrics:
                 if type(componentsschemas_array_metric_item_data) is dict:
                     componentsschemas_array_metric_item = componentsschemas_array_metric_item_data
                 else:
-                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data.to_dict()
+                    componentsschemas_array_metric_item = (
+                        componentsschemas_array_metric_item_data.to_dict()
+                    )
                 inference_error_global.append(componentsschemas_array_metric_item)
 
         inference_global: Union[Unset, list[Any]] = UNSET
@@ -117,7 +118,11 @@ class Metrics:
         rps = self.rps
 
         rps_per_code: Union[Unset, dict[str, Any]] = UNSET
-        if self.rps_per_code and not isinstance(self.rps_per_code, Unset) and not isinstance(self.rps_per_code, dict):
+        if (
+            self.rps_per_code
+            and not isinstance(self.rps_per_code, Unset)
+            and not isinstance(self.rps_per_code, dict)
+        ):
             rps_per_code = self.rps_per_code.to_dict()
         elif self.rps_per_code and isinstance(self.rps_per_code, dict):
             rps_per_code = self.rps_per_code
@@ -175,7 +180,9 @@ class Metrics:
         inference_error_global = []
         _inference_error_global = d.pop("inferenceErrorGlobal", UNSET)
         for componentsschemas_array_metric_item_data in _inference_error_global or []:
-            componentsschemas_array_metric_item = Metric.from_dict(componentsschemas_array_metric_item_data)
+            componentsschemas_array_metric_item = Metric.from_dict(
+                componentsschemas_array_metric_item_data
+            )
 
             inference_error_global.append(componentsschemas_array_metric_item)
 

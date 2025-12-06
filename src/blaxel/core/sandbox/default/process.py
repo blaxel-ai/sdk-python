@@ -6,7 +6,11 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
+from ..types import (
+    ProcessRequestWithLog,
+    ProcessResponseWithLog,
+    SandboxConfiguration,
+)
 from .action import SandboxAction
 
 
@@ -15,7 +19,9 @@ class SandboxProcess(SandboxAction):
         super().__init__(sandbox_config)
 
     def stream_logs(
-        self, process_name: str, options: Dict[str, Callable[[str], None]] | None = None
+        self,
+        process_name: str,
+        options: Dict[str, Callable[[str], None]] | None = None,
     ) -> Dict[str, Callable[[], None]]:
         """Stream logs from a process with automatic reconnection and deduplication."""
         if options is None:
@@ -111,7 +117,9 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     def _stream_logs(
-        self, identifier: str, options: Dict[str, Callable[[str], None]] | None = None
+        self,
+        identifier: str,
+        options: Dict[str, Callable[[str], None]] | None = None,
     ) -> Dict[str, Callable[[], None]]:
         """Private method to stream logs from a process with callbacks for different output types."""
         if options is None:
@@ -175,7 +183,8 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     async def exec(
-        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
+        self,
+        process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]],
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
         """Execute a process in the sandbox."""
         on_log = None
@@ -200,40 +209,39 @@ class SandboxProcess(SandboxAction):
         # Always start process without wait_for_completion to avoid server-side blocking
         if should_wait_for_completion and on_log is not None:
             process.wait_for_completion = False
-        async with self.get_client() as client_instance:
-            response = await client_instance.post("/process", json=process.to_dict())
-            # Parse JSON response only once, with better error handling
-            response_data = None
-            if response.content:
-                try:
-                    response_data = response.json()
-                except Exception:
-                    # If JSON parsing fails, check the response first
-                    self.handle_response_error(response)
-                    raise
 
+        client = self.get_client()
+        response = await client.post("/process", json=process.to_dict())
+        try:
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            import json
+
+            response_data = json.loads(content_bytes) if content_bytes else None
             result = ProcessResponse.from_dict(response_data)
+        finally:
+            await response.aclose()
 
-            # Handle wait_for_completion with parallel log streaming
-            if should_wait_for_completion and on_log is not None:
+        # Handle wait_for_completion with parallel log streaming
+        if should_wait_for_completion and on_log is not None:
+            stream_control = self._stream_logs(result.pid, {"on_log": on_log})
+            try:
+                # Wait for process completion
+                result = await self.wait(result.pid, interval=500, max_wait=1000 * 60 * 60)
+            finally:
+                # Clean up log streaming
+                if stream_control:
+                    stream_control["close"]()
+        else:
+            # For non-blocking execution, set up log streaming immediately if requested
+            if on_log is not None:
                 stream_control = self._stream_logs(result.pid, {"on_log": on_log})
-                try:
-                    # Wait for process completion
-                    result = await self.wait(result.pid, interval=500, max_wait=1000 * 60 * 60)
-                finally:
-                    # Clean up log streaming
-                    if stream_control:
-                        stream_control["close"]()
-            else:
-                # For non-blocking execution, set up log streaming immediately if requested
-                if on_log is not None:
-                    stream_control = self._stream_logs(result.pid, {"on_log": on_log})
-                    return ProcessResponseWithLog(
-                        result, lambda: stream_control["close"]() if stream_control else None
-                    )
+                return ProcessResponseWithLog(
+                    result,
+                    lambda: stream_control["close"]() if stream_control else None,
+                )
 
-            return result
+        return result
 
     async def wait(
         self, identifier: str, max_wait: int = 60000, interval: int = 1000
@@ -257,37 +265,65 @@ class SandboxProcess(SandboxAction):
         return data
 
     async def get(self, identifier: str) -> ProcessResponse:
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(f"/process/{identifier}")
+        import json
+
+        client = self.get_client()
+        response = await client.get(f"/process/{identifier}")
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return ProcessResponse.from_dict(response.json())
+            return ProcessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def list(self) -> list[ProcessResponse]:
-        async with self.get_client() as client_instance:
-            response = await client_instance.get("/process")
+        import json
+
+        client = self.get_client()
+        response = await client.get("/process")
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return [ProcessResponse.from_dict(item) for item in response.json()]
+            return [ProcessResponse.from_dict(item) for item in data]
+        finally:
+            await response.aclose()
 
     async def stop(self, identifier: str) -> SuccessResponse:
-        async with self.get_client() as client_instance:
-            response = await client_instance.delete(f"/process/{identifier}")
+        import json
+
+        client = self.get_client()
+        response = await client.delete(f"/process/{identifier}")
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+            return SuccessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def kill(self, identifier: str) -> SuccessResponse:
-        async with self.get_client() as client_instance:
-            response = await client_instance.delete(f"/process/{identifier}/kill")
+        import json
+
+        client = self.get_client()
+        response = await client.delete(f"/process/{identifier}/kill")
+        try:
+            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+            return SuccessResponse.from_dict(data)
+        finally:
+            await response.aclose()
 
     async def logs(
-        self, identifier: str, log_type: Literal["stdout", "stderr", "all"] = "all"
+        self,
+        identifier: str,
+        log_type: Literal["stdout", "stderr", "all"] = "all",
     ) -> str:
-        async with self.get_client() as client_instance:
-            response = await client_instance.get(f"/process/{identifier}/logs")
-            self.handle_response_error(response)
+        import json
 
-            data = response.json()
+        client = self.get_client()
+        response = await client.get(f"/process/{identifier}/logs")
+        try:
+            data = json.loads(await response.aread())
+            self.handle_response_error(response)
             if log_type == "all":
                 return data.get("logs", "")
             elif log_type == "stdout":
@@ -296,3 +332,5 @@ class SandboxProcess(SandboxAction):
                 return data.get("stderr", "")
 
             raise Exception("Unsupported log type")
+        finally:
+            await response.aclose()

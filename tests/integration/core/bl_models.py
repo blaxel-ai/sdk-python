@@ -101,7 +101,15 @@ async def test_openai() -> None:
 
         model = await bl_model_openai(MODEL)
         result = await model.get_response(
-            None, "Hello, world!", ModelSettings(), [], None, [], ModelTracing(0), None, None
+            None,
+            "Hello, world!",
+            ModelSettings(),
+            [],
+            None,
+            [],
+            ModelTracing(0),
+            None,
+            None,
         )
         print(f"openai: {result.output[0].content[0].text}")
     except Exception as e:

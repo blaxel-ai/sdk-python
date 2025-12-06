@@ -26,11 +26,14 @@ class PendingInvitationAccept:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         email = self.email
 
         workspace: Union[Unset, dict[str, Any]] = UNSET
-        if self.workspace and not isinstance(self.workspace, Unset) and not isinstance(self.workspace, dict):
+        if (
+            self.workspace
+            and not isinstance(self.workspace, Unset)
+            and not isinstance(self.workspace, dict)
+        ):
             workspace = self.workspace.to_dict()
         elif self.workspace and isinstance(self.workspace, dict):
             workspace = self.workspace

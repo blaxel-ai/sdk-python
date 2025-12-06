@@ -32,7 +32,9 @@ async def main():
         # Test ls
         listing = await sandbox.fs.ls("/tmp")
         assert any(f.name == "test.txt" for f in listing.files), "test.txt should exist in /tmp"
-        assert any(f.name == "archive.zip" for f in listing.files), "archive.zip should exist in /tmp"
+        assert any(f.name == "archive.zip" for f in listing.files), (
+            "archive.zip should exist in /tmp"
+        )
         print("✓ Files listed correctly")
 
         # Test read text file
@@ -76,10 +78,10 @@ async def main():
     except Exception as e:
         print(f"\n❌ Test failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-

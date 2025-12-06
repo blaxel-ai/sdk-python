@@ -6,7 +6,10 @@ from urllib.parse import urljoin, urlparse
 import anyio
 import mcp.types as types
 from anyio.abc import TaskStatus
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+from anyio.streams.memory import (
+    MemoryObjectReceiveStream,
+    MemoryObjectSendStream,
+)
 from mcp.shared.message import SessionMessage
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.client import connect as ws_connect
@@ -47,7 +50,10 @@ async def websocket_client(
                 logger.debug(f"Connecting to WebSocket endpoint: {remove_request_params(ws_url)}")
 
                 # Use different parameters based on websockets version
-                connection_kwargs = {"additional_headers": headers, "open_timeout": timeout}
+                connection_kwargs = {
+                    "additional_headers": headers,
+                    "open_timeout": timeout,
+                }
 
                 async with ws_connect(ws_url, **connection_kwargs) as websocket:
                     logger.debug("WebSocket connection established")

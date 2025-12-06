@@ -32,7 +32,6 @@ class JobsSuccessFailedChart:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         failed: Union[Unset, dict[str, Any]] = UNSET
         if self.failed and not isinstance(self.failed, Unset) and not isinstance(self.failed, dict):
             failed = self.failed.to_dict()
@@ -40,13 +39,21 @@ class JobsSuccessFailedChart:
             failed = self.failed
 
         retried: Union[Unset, dict[str, Any]] = UNSET
-        if self.retried and not isinstance(self.retried, Unset) and not isinstance(self.retried, dict):
+        if (
+            self.retried
+            and not isinstance(self.retried, Unset)
+            and not isinstance(self.retried, dict)
+        ):
             retried = self.retried.to_dict()
         elif self.retried and isinstance(self.retried, dict):
             retried = self.retried
 
         success: Union[Unset, dict[str, Any]] = UNSET
-        if self.success and not isinstance(self.success, Unset) and not isinstance(self.success, dict):
+        if (
+            self.success
+            and not isinstance(self.success, Unset)
+            and not isinstance(self.success, dict)
+        ):
             success = self.success.to_dict()
         elif self.success and isinstance(self.success, dict):
             success = self.success

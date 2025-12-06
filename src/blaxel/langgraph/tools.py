@@ -1,16 +1,22 @@
 from typing import Any
 
 from langchain_core.tools import StructuredTool
-from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
+from mcp.types import (
+    CallToolResult,
+    EmbeddedResource,
+    ImageContent,
+    TextContent,
+)
 
 from blaxel.core.tools import bl_tools as bl_tools_core
 from blaxel.core.tools.types import Tool, ToolException
 
 NonTextContent = ImageContent | EmbeddedResource
 
+
 def get_langchain_tool(tool: Tool) -> StructuredTool:
     async def langchain_coroutine(
-       **arguments: dict[str, Any],
+        **arguments: dict[str, Any],
     ) -> tuple[str | list[str], list[NonTextContent] | None]:
         result: CallToolResult = await tool.coroutine(**arguments)
         text_contents: list[TextContent] = []

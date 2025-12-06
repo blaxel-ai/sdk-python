@@ -35,7 +35,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[ApplyEditResponse, ErrorResponse] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[ApplyEditResponse, ErrorResponse] | None:
     if response.status_code == 200:
         response_200 = ApplyEditResponse.from_dict(response.json())
 
@@ -58,7 +60,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[ApplyE
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[ApplyEditResponse, ErrorResponse]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[ApplyEditResponse, ErrorResponse]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

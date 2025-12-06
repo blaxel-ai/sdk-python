@@ -23,9 +23,7 @@ def get_pydantic_tool(tool: Tool) -> PydanticTool:
 
     # Define the prepare function dynamically to capture the 'tool' object
     # Assuming RunContext and ToolDefinition types based on the pydantic_ai example
-    async def prepare_tool(
-        ctx: RunContext, tool_def: ToolDefinition
-    ) -> ToolDefinition | None:
+    async def prepare_tool(ctx: RunContext, tool_def: ToolDefinition) -> ToolDefinition | None:
         """Dynamically prepares the ToolDefinition using the custom Tool's attributes."""
         tool_def.name = tool.name  # Override inferred name
         tool_def.description = tool.description  # Override inferred description

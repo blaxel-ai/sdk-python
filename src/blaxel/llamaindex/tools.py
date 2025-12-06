@@ -1,5 +1,3 @@
-
-
 from llama_index.core.tools import FunctionTool
 from llama_index.core.tools.types import ToolMetadata
 
@@ -21,6 +19,7 @@ def get_llamaindex_tool(tool: Tool) -> FunctionTool:
             fn_schema=model_schema,
         ),
     )
+
 
 async def bl_tools(tools_names: list[str], **kwargs) -> list[FunctionTool]:
     tools = bl_tools_core(tools_names, **kwargs)

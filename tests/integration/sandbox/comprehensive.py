@@ -150,7 +150,11 @@ async def test_previews_public(sandbox: SandboxInstance):
         await sandbox.previews.create(
             {
                 "metadata": {"name": "preview-test-public"},
-                "spec": {"port": 443, "prefix_url": "small-prefix-python", "public": True},
+                "spec": {
+                    "port": 443,
+                    "prefix_url": "small-prefix-python",
+                    "public": True,
+                },
             }
         )
 
@@ -198,7 +202,11 @@ async def test_previews_private(sandbox: SandboxInstance):
         await sandbox.previews.create(
             {
                 "metadata": {"name": "preview-test-private"},
-                "spec": {"port": 443, "prefix_url": "private-prefix-python", "public": False},
+                "spec": {
+                    "port": 443,
+                    "prefix_url": "private-prefix-python",
+                    "public": False,
+                },
             }
         )
 

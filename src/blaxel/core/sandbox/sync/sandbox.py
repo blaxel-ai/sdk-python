@@ -100,7 +100,8 @@ class SyncSandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
-                    or "snapshot_enabled" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "snapshot_enabled"
+                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -122,7 +123,11 @@ class SyncSandboxInstance:
                 metadata=Metadata(name=name),
                 spec=SandboxSpec(
                     runtime=Runtime(
-                        image=image, memory=memory, ports=ports, envs=envs, generation="mk3"
+                        image=image,
+                        memory=memory,
+                        ports=ports,
+                        envs=envs,
+                        generation="mk3",
                     ),
                     volumes=volumes,
                 ),
@@ -183,7 +188,9 @@ class SyncSandboxInstance:
         return response
 
     @classmethod
-    def update_metadata(cls, sandbox_name: str, metadata: SandboxUpdateMetadata) -> "SyncSandboxInstance":
+    def update_metadata(
+        cls, sandbox_name: str, metadata: SandboxUpdateMetadata
+    ) -> "SyncSandboxInstance":
         sandbox_instance = cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
@@ -236,7 +243,9 @@ class SyncSandboxInstance:
             raise e
 
     @classmethod
-    def from_session(cls, session: Union[SessionWithToken, Dict[str, Any]]) -> "SyncSandboxInstance":
+    def from_session(
+        cls, session: Union[SessionWithToken, Dict[str, Any]]
+    ) -> "SyncSandboxInstance":
         if isinstance(session, dict):
             session = SessionWithToken.from_dict(session)
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
@@ -247,5 +256,3 @@ class SyncSandboxInstance:
             headers={"X-Blaxel-Preview-Token": session.token},
             params={"bl_preview_token": session.token},
         )
-
-

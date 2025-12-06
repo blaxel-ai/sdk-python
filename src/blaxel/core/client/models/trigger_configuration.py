@@ -38,7 +38,6 @@ class TriggerConfiguration:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         authentication_type = self.authentication_type
 
         callback_secret = self.callback_secret

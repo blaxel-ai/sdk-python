@@ -55,13 +55,11 @@ class GoogleADKTool(BaseTool):
         return function_decl
 
     @override
-    async def run_async(
-        self, *, args: dict[str, Any], tool_context: ToolContext
-    ) -> Any:
+    async def run_async(self, *, args: dict[str, Any], tool_context: ToolContext) -> Any:
         args_to_call = args.copy()
         signature = inspect.signature(self._tool.coroutine)
-        if 'tool_context' in signature.parameters:
-            args_to_call['tool_context'] = tool_context
+        if "tool_context" in signature.parameters:
+            args_to_call["tool_context"] = tool_context
         return await self._tool.coroutine(**args_to_call) or {}
 
 

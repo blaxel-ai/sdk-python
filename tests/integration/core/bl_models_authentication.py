@@ -157,7 +157,15 @@ async def test_openai(model: Any, model_name: str, request_num: int) -> None:
         from agents import ModelSettings, ModelTracing
 
         result = await model.get_response(
-            None, "Hello, world!", ModelSettings(), [], None, [], ModelTracing(0), None, None
+            None,
+            "Hello, world!",
+            ModelSettings(),
+            [],
+            None,
+            [],
+            ModelTracing(0),
+            None,
+            None,
         )
         print(f"openai, {model_name} (request {request_num}): {result.output[0].content[0].text}")
     except Exception as e:

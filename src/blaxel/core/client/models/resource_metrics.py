@@ -82,7 +82,9 @@ class ResourceMetrics:
     request_total_by_origin: Union[Unset, "RequestTotalByOriginMetric"] = UNSET
     request_total_by_origin_previous: Union[Unset, "RequestTotalByOriginMetric"] = UNSET
     request_total_per_code: Union[Unset, "ResourceMetricsRequestTotalPerCode"] = UNSET
-    request_total_per_code_previous: Union[Unset, "ResourceMetricsRequestTotalPerCodePrevious"] = UNSET
+    request_total_per_code_previous: Union[Unset, "ResourceMetricsRequestTotalPerCodePrevious"] = (
+        UNSET
+    )
     request_total_previous: Union[Unset, float] = UNSET
     rps: Union[Unset, float] = UNSET
     rps_per_code: Union[Unset, "ResourceMetricsRpsPerCode"] = UNSET
@@ -95,7 +97,6 @@ class ResourceMetrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         billable_time: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.billable_time
@@ -113,7 +114,9 @@ class ResourceMetrics:
                 if type(componentsschemas_array_metric_item_data) is dict:
                     componentsschemas_array_metric_item = componentsschemas_array_metric_item_data
                 else:
-                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data.to_dict()
+                    componentsschemas_array_metric_item = (
+                        componentsschemas_array_metric_item_data.to_dict()
+                    )
                 inference_errors_global.append(componentsschemas_array_metric_item)
 
         inference_global: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -123,7 +126,9 @@ class ResourceMetrics:
                 if type(componentsschemas_array_metric_item_data) is dict:
                     componentsschemas_array_metric_item = componentsschemas_array_metric_item_data
                 else:
-                    componentsschemas_array_metric_item = componentsschemas_array_metric_item_data.to_dict()
+                    componentsschemas_array_metric_item = (
+                        componentsschemas_array_metric_item_data.to_dict()
+                    )
                 inference_global.append(componentsschemas_array_metric_item)
 
         last_n_requests: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -137,7 +142,11 @@ class ResourceMetrics:
                 last_n_requests.append(last_n_requests_item)
 
         latency: Union[Unset, dict[str, Any]] = UNSET
-        if self.latency and not isinstance(self.latency, Unset) and not isinstance(self.latency, dict):
+        if (
+            self.latency
+            and not isinstance(self.latency, Unset)
+            and not isinstance(self.latency, dict)
+        ):
             latency = self.latency.to_dict()
         elif self.latency and isinstance(self.latency, dict):
             latency = self.latency
@@ -163,7 +172,11 @@ class ResourceMetrics:
             memory_allocation = self.memory_allocation
 
         model_ttft: Union[Unset, dict[str, Any]] = UNSET
-        if self.model_ttft and not isinstance(self.model_ttft, Unset) and not isinstance(self.model_ttft, dict):
+        if (
+            self.model_ttft
+            and not isinstance(self.model_ttft, Unset)
+            and not isinstance(self.model_ttft, dict)
+        ):
             model_ttft = self.model_ttft.to_dict()
         elif self.model_ttft and isinstance(self.model_ttft, dict):
             model_ttft = self.model_ttft
@@ -207,7 +220,9 @@ class ResourceMetrics:
             and not isinstance(self.request_total_by_origin_previous, dict)
         ):
             request_total_by_origin_previous = self.request_total_by_origin_previous.to_dict()
-        elif self.request_total_by_origin_previous and isinstance(self.request_total_by_origin_previous, dict):
+        elif self.request_total_by_origin_previous and isinstance(
+            self.request_total_by_origin_previous, dict
+        ):
             request_total_by_origin_previous = self.request_total_by_origin_previous
 
         request_total_per_code: Union[Unset, dict[str, Any]] = UNSET
@@ -227,7 +242,9 @@ class ResourceMetrics:
             and not isinstance(self.request_total_per_code_previous, dict)
         ):
             request_total_per_code_previous = self.request_total_per_code_previous.to_dict()
-        elif self.request_total_per_code_previous and isinstance(self.request_total_per_code_previous, dict):
+        elif self.request_total_per_code_previous and isinstance(
+            self.request_total_per_code_previous, dict
+        ):
             request_total_per_code_previous = self.request_total_per_code_previous
 
         request_total_previous = self.request_total_previous
@@ -235,7 +252,11 @@ class ResourceMetrics:
         rps = self.rps
 
         rps_per_code: Union[Unset, dict[str, Any]] = UNSET
-        if self.rps_per_code and not isinstance(self.rps_per_code, Unset) and not isinstance(self.rps_per_code, dict):
+        if (
+            self.rps_per_code
+            and not isinstance(self.rps_per_code, Unset)
+            and not isinstance(self.rps_per_code, dict)
+        ):
             rps_per_code = self.rps_per_code.to_dict()
         elif self.rps_per_code and isinstance(self.rps_per_code, dict):
             rps_per_code = self.rps_per_code
@@ -273,13 +294,21 @@ class ResourceMetrics:
                 sandboxes_ram_usage.append(sandboxes_ram_usage_item)
 
         token_rate: Union[Unset, dict[str, Any]] = UNSET
-        if self.token_rate and not isinstance(self.token_rate, Unset) and not isinstance(self.token_rate, dict):
+        if (
+            self.token_rate
+            and not isinstance(self.token_rate, Unset)
+            and not isinstance(self.token_rate, dict)
+        ):
             token_rate = self.token_rate.to_dict()
         elif self.token_rate and isinstance(self.token_rate, dict):
             token_rate = self.token_rate
 
         token_total: Union[Unset, dict[str, Any]] = UNSET
-        if self.token_total and not isinstance(self.token_total, Unset) and not isinstance(self.token_total, dict):
+        if (
+            self.token_total
+            and not isinstance(self.token_total, Unset)
+            and not isinstance(self.token_total, dict)
+        ):
             token_total = self.token_total.to_dict()
         elif self.token_total and isinstance(self.token_total, dict):
             token_total = self.token_total
@@ -376,14 +405,18 @@ class ResourceMetrics:
         inference_errors_global = []
         _inference_errors_global = d.pop("inferenceErrorsGlobal", UNSET)
         for componentsschemas_array_metric_item_data in _inference_errors_global or []:
-            componentsschemas_array_metric_item = Metric.from_dict(componentsschemas_array_metric_item_data)
+            componentsschemas_array_metric_item = Metric.from_dict(
+                componentsschemas_array_metric_item_data
+            )
 
             inference_errors_global.append(componentsschemas_array_metric_item)
 
         inference_global = []
         _inference_global = d.pop("inferenceGlobal", UNSET)
         for componentsschemas_array_metric_item_data in _inference_global or []:
-            componentsschemas_array_metric_item = Metric.from_dict(componentsschemas_array_metric_item_data)
+            componentsschemas_array_metric_item = Metric.from_dict(
+                componentsschemas_array_metric_item_data
+            )
 
             inference_global.append(componentsschemas_array_metric_item)
 
@@ -434,7 +467,9 @@ class ResourceMetrics:
         if isinstance(_request_duration_over_time, Unset):
             request_duration_over_time = UNSET
         else:
-            request_duration_over_time = RequestDurationOverTimeMetrics.from_dict(_request_duration_over_time)
+            request_duration_over_time = RequestDurationOverTimeMetrics.from_dict(
+                _request_duration_over_time
+            )
 
         request_total = d.pop("requestTotal", UNSET)
 
@@ -450,14 +485,18 @@ class ResourceMetrics:
         if isinstance(_request_total_by_origin_previous, Unset):
             request_total_by_origin_previous = UNSET
         else:
-            request_total_by_origin_previous = RequestTotalByOriginMetric.from_dict(_request_total_by_origin_previous)
+            request_total_by_origin_previous = RequestTotalByOriginMetric.from_dict(
+                _request_total_by_origin_previous
+            )
 
         _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
         request_total_per_code: Union[Unset, ResourceMetricsRequestTotalPerCode]
         if isinstance(_request_total_per_code, Unset):
             request_total_per_code = UNSET
         else:
-            request_total_per_code = ResourceMetricsRequestTotalPerCode.from_dict(_request_total_per_code)
+            request_total_per_code = ResourceMetricsRequestTotalPerCode.from_dict(
+                _request_total_per_code
+            )
 
         _request_total_per_code_previous = d.pop("requestTotalPerCodePrevious", UNSET)
         request_total_per_code_previous: Union[Unset, ResourceMetricsRequestTotalPerCodePrevious]
@@ -484,7 +523,9 @@ class ResourceMetrics:
         if isinstance(_rps_per_code_previous, Unset):
             rps_per_code_previous = UNSET
         else:
-            rps_per_code_previous = ResourceMetricsRpsPerCodePrevious.from_dict(_rps_per_code_previous)
+            rps_per_code_previous = ResourceMetricsRpsPerCodePrevious.from_dict(
+                _rps_per_code_previous
+            )
 
         rps_previous = d.pop("rpsPrevious", UNSET)
 

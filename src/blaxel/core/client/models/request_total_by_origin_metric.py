@@ -28,11 +28,12 @@ class RequestTotalByOriginMetric:
     """
 
     request_total_by_origin: Union[Unset, "RequestTotalByOriginMetricRequestTotalByOrigin"] = UNSET
-    request_total_by_origin_and_code: Union[Unset, "RequestTotalByOriginMetricRequestTotalByOriginAndCode"] = UNSET
+    request_total_by_origin_and_code: Union[
+        Unset, "RequestTotalByOriginMetricRequestTotalByOriginAndCode"
+    ] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         request_total_by_origin: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.request_total_by_origin
@@ -50,7 +51,9 @@ class RequestTotalByOriginMetric:
             and not isinstance(self.request_total_by_origin_and_code, dict)
         ):
             request_total_by_origin_and_code = self.request_total_by_origin_and_code.to_dict()
-        elif self.request_total_by_origin_and_code and isinstance(self.request_total_by_origin_and_code, dict):
+        elif self.request_total_by_origin_and_code and isinstance(
+            self.request_total_by_origin_and_code, dict
+        ):
             request_total_by_origin_and_code = self.request_total_by_origin_and_code
 
         field_dict: dict[str, Any] = {}
@@ -80,15 +83,21 @@ class RequestTotalByOriginMetric:
         if isinstance(_request_total_by_origin, Unset):
             request_total_by_origin = UNSET
         else:
-            request_total_by_origin = RequestTotalByOriginMetricRequestTotalByOrigin.from_dict(_request_total_by_origin)
+            request_total_by_origin = RequestTotalByOriginMetricRequestTotalByOrigin.from_dict(
+                _request_total_by_origin
+            )
 
         _request_total_by_origin_and_code = d.pop("requestTotalByOriginAndCode", UNSET)
-        request_total_by_origin_and_code: Union[Unset, RequestTotalByOriginMetricRequestTotalByOriginAndCode]
+        request_total_by_origin_and_code: Union[
+            Unset, RequestTotalByOriginMetricRequestTotalByOriginAndCode
+        ]
         if isinstance(_request_total_by_origin_and_code, Unset):
             request_total_by_origin_and_code = UNSET
         else:
-            request_total_by_origin_and_code = RequestTotalByOriginMetricRequestTotalByOriginAndCode.from_dict(
-                _request_total_by_origin_and_code
+            request_total_by_origin_and_code = (
+                RequestTotalByOriginMetricRequestTotalByOriginAndCode.from_dict(
+                    _request_total_by_origin_and_code
+                )
             )
 
         request_total_by_origin_metric = cls(

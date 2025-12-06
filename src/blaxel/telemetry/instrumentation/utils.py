@@ -40,6 +40,7 @@ async def start_as_current_span_async(tracer, *args, **kwargs):
     with tracer.start_as_current_span(*args, **kwargs) as span:
         yield span
 
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):
@@ -52,9 +53,8 @@ class JSONEncoder(json.JSONEncoder):
 
 
 def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true"
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
+
 
 @dont_throw
 def process_request(span, args, kwargs):

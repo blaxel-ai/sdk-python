@@ -34,7 +34,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Proces
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["ProcessResponse"]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[list["ProcessResponse"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

@@ -59,7 +59,6 @@ class MCPDefinition:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         updated_at = self.updated_at
@@ -77,7 +76,11 @@ class MCPDefinition:
         enterprise = self.enterprise
 
         entrypoint: Union[Unset, dict[str, Any]] = UNSET
-        if self.entrypoint and not isinstance(self.entrypoint, Unset) and not isinstance(self.entrypoint, dict):
+        if (
+            self.entrypoint
+            and not isinstance(self.entrypoint, Unset)
+            and not isinstance(self.entrypoint, dict)
+        ):
             entrypoint = self.entrypoint.to_dict()
         elif self.entrypoint and isinstance(self.entrypoint, dict):
             entrypoint = self.entrypoint

@@ -29,7 +29,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> CleanupImage
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[CleanupImagesResponse200]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[CleanupImagesResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

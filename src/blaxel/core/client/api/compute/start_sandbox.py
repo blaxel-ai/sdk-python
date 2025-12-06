@@ -34,7 +34,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, S
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, StartSandbox]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Any, StartSandbox]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

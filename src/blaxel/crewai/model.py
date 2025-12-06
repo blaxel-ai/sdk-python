@@ -18,15 +18,24 @@ async def bl_model(name: str, **kwargs):
     url, type, model = await bl_model_core(name).get_parameters()
     if type == "mistral":
         return AuthenticatedLLM(
-            model=f"mistral/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
+            model=f"mistral/{model}",
+            api_key="replaced",
+            base_url=f"{url}/v1",
+            **kwargs,
         )
     elif type == "xai":
         return AuthenticatedLLM(
-            model=f"groq/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
+            model=f"groq/{model}",
+            api_key="replaced",
+            base_url=f"{url}/v1",
+            **kwargs,
         )
     elif type == "deepseek":
         return AuthenticatedLLM(
-            model=f"openai/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
+            model=f"openai/{model}",
+            api_key="replaced",
+            base_url=f"{url}/v1",
+            **kwargs,
         )
     elif type == "anthropic":
         return AuthenticatedLLM(
@@ -44,11 +53,17 @@ async def bl_model(name: str, **kwargs):
         )
     elif type == "cerebras":
         return AuthenticatedLLM(
-            model=f"cerebras/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
+            model=f"cerebras/{model}",
+            api_key="replaced",
+            base_url=f"{url}/v1",
+            **kwargs,
         )
     else:
         if type != "openai":
             logger.warning(f"Model {model} is not supported by CrewAI, defaulting to OpenAI")
         return AuthenticatedLLM(
-            model=f"openai/{model}", api_key="replaced", base_url=f"{url}/v1", **kwargs
+            model=f"openai/{model}",
+            api_key="replaced",
+            base_url=f"{url}/v1",
+            **kwargs,
         )

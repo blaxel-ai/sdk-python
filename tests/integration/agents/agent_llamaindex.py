@@ -7,7 +7,11 @@ load_dotenv()
 
 from logging import getLogger
 
-from llama_index.core.agent.workflow import AgentOutput, ReActAgent, ToolCallResult
+from llama_index.core.agent.workflow import (
+    AgentOutput,
+    ReActAgent,
+    ToolCallResult,
+)
 from llama_index.core.workflow import Context
 
 from blaxel.llamaindex import bl_model, bl_tools

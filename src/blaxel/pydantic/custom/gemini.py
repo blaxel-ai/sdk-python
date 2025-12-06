@@ -8,11 +8,11 @@ class GoogleGLAProvider(Provider[AsyncClient]):
 
     @property
     def name(self):
-        return 'google-gla'
+        return "google-gla"
 
     @property
     def base_url(self) -> str:
-        return 'https://generativelanguage.googleapis.com/v1beta/models/'
+        return "https://generativelanguage.googleapis.com/v1beta/models/"
 
     @property
     def client(self) -> httpx.AsyncClient:
@@ -28,4 +28,4 @@ class GoogleGLAProvider(Provider[AsyncClient]):
         """
         self._client = http_client
         # https://cloud.google.com/docs/authentication/api-keys-use#using-with-rest
-        self._client.headers['X-Goog-Api-Key'] = api_key
+        self._client.headers["X-Goog-Api-Key"] = api_key

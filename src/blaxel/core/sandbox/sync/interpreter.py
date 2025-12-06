@@ -15,7 +15,9 @@ class SyncCodeInterpreter(SyncSandboxInstance):
     DEFAULT_PORTS = [
         {"name": "jupyter", "target": 8888, "protocol": "HTTP"},
     ]
-    DEFAULT_LIFECYCLE = {"expirationPolicies": [{ "type": "ttl-idle", "value": "30m", "action": "delete" }]}
+    DEFAULT_LIFECYCLE = {
+        "expirationPolicies": [{"type": "ttl-idle", "value": "30m", "action": "delete"}]
+    }
 
     @classmethod
     def get(cls, sandbox_name: str) -> "SyncCodeInterpreter":
@@ -221,7 +223,10 @@ class SyncCodeInterpreter(SyncSandboxInstance):
         # Use the process client to inherit base_url and headers
         with self.process.get_client() as client:
             timeout_cfg = httpx.Timeout(
-                connect=connect_timeout, read=read_timeout, write=write_timeout, pool=pool_timeout
+                connect=connect_timeout,
+                read=read_timeout,
+                write=write_timeout,
+                pool=pool_timeout,
             )
             with client.stream(
                 "POST",
@@ -238,7 +243,9 @@ class SyncCodeInterpreter(SyncSandboxInstance):
                     if not line:
                         continue
                     try:
-                        decoded = line.decode() if isinstance(line, bytes | bytearray) else str(line)
+                        decoded = (
+                            line.decode() if isinstance(line, bytes | bytearray) else str(line)
+                        )
                     except Exception:
                         decoded = str(line)
                     try:
@@ -270,7 +277,6 @@ class SyncCodeInterpreter(SyncSandboxInstance):
         if cwd:
             data["cwd"] = cwd
 
-
         with self.process.get_client() as client:
             response = client.post(
                 "/port/8888/contexts",
@@ -283,5 +289,3 @@ class SyncCodeInterpreter(SyncSandboxInstance):
                 raise RuntimeError(details)
             data = response.json()
             return SyncCodeInterpreter.Context.from_json(data)
-
-

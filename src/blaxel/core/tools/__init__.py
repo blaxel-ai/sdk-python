@@ -8,7 +8,12 @@ from typing import Any, cast
 import httpx
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
-from mcp.types import CallToolRequest, CallToolRequestParams, CallToolResult, ClientRequest
+from mcp.types import (
+    CallToolRequest,
+    CallToolRequestParams,
+    CallToolResult,
+    ClientRequest,
+)
 from mcp.types import Tool as MCPTool
 
 from ..common.internal import get_forced_url, get_global_unique_hash
@@ -24,7 +29,13 @@ if os.getenv("BL_SERVER_PORT"):
 
 
 class PersistentMcpClient:
-    def __init__(self, name: str, timeout: int = DEFAULT_TIMEOUT, timeout_enabled: bool = True, transport: str = None):
+    def __init__(
+        self,
+        name: str,
+        timeout: int = DEFAULT_TIMEOUT,
+        timeout_enabled: bool = True,
+        transport: str = None,
+    ):
         self.name = name
         self.timeout = timeout
         self.type = "function"
@@ -97,7 +108,9 @@ class PersistentMcpClient:
             await self.initialize()
             if self.timeout_enabled:
                 self._remove_timer()
-            logger.debug(f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}")
+            logger.debug(
+                f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}"
+            )
 
             # Pass meta as a separate field instead of merging into arguments
             # This matches the TypeScript SDK pattern and MCP protocol specification
@@ -170,7 +183,9 @@ class PersistentMcpClient:
 
         except Exception as e:
             # Default to websocket if we can't determine the transport type
-            logger.warning(f"Failed to detect transport type for {self.name}: {e}. Defaulting to websocket.")
+            logger.warning(
+                f"Failed to detect transport type for {self.name}: {e}. Defaulting to websocket."
+            )
             self.transport_name = "websocket"
 
         return self.transport_name
@@ -326,7 +341,10 @@ class BlTools:
         if not toolPersistances.get(name):
             logger.debug(f"Creating new persistent connection for {name}")
             toolPersistances[name] = PersistentMcpClient(
-                name, timeout=self.timeout, timeout_enabled=self.timeout_enabled, transport=self.transport
+                name,
+                timeout=self.timeout,
+                timeout_enabled=self.timeout_enabled,
+                transport=self.transport,
             )
             await toolPersistances[name].list_tools()
         logger.debug(f"Loaded {len(toolPersistances[name].get_tools())} tools")
@@ -346,4 +364,10 @@ def bl_tools(
     timeout_enabled: bool = True,
     transport: str = None,
 ) -> BlTools:
-    return BlTools(functions, metas=metas, timeout=timeout, timeout_enabled=timeout_enabled, transport=transport)
+    return BlTools(
+        functions,
+        metas=metas,
+        timeout=timeout,
+        timeout_enabled=timeout_enabled,
+        transport=transport,
+    )

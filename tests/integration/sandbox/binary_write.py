@@ -80,7 +80,11 @@ async def main():
         final_directory = await sandbox.fs.ls("/blaxel")
         file_names = [file.name for file in final_directory.files]
 
-        expected_files = ["test-binary.bin", "test-bytearray.bin", "test-bytes.bin"]
+        expected_files = [
+            "test-binary.bin",
+            "test-bytearray.bin",
+            "test-bytes.bin",
+        ]
         for expected_file in expected_files:
             if expected_file in file_names:
                 print(f"✅ {expected_file} found")

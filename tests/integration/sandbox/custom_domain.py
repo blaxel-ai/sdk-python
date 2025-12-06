@@ -10,7 +10,11 @@ async def main():
     preview = await sandbox.previews.create(
         {
             "metadata": {"name": "preview-test-public"},
-            "spec": {"port": 443, "public": True, "customDomain": "prod-3.mathis.beamlit.dev"},
+            "spec": {
+                "port": 443,
+                "public": True,
+                "customDomain": "prod-3.mathis.beamlit.dev",
+            },
         }
     )
     print(preview.spec.url)

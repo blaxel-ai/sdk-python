@@ -14,7 +14,9 @@ from ..client.api.jobs import (
     get_job_execution,
     list_job_executions,
 )
-from ..client.models.create_job_execution_request import CreateJobExecutionRequest
+from ..client.models.create_job_execution_request import (
+    CreateJobExecutionRequest,
+)
 from ..client.models.job_execution import JobExecution
 from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
@@ -105,7 +107,11 @@ class BlJob:
         body = {"tasks": input_data}
 
         # Merge settings headers with provided headers
-        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
+        merged_headers = {
+            **settings.headers,
+            "Content-Type": "application/json",
+            **headers,
+        }
 
         return client.get_httpx_client().post(
             url + "/executions",
@@ -119,7 +125,11 @@ class BlJob:
         body = {"tasks": input_data}
 
         # Merge settings headers with provided headers
-        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
+        merged_headers = {
+            **settings.headers,
+            "Content-Type": "application/json",
+            **headers,
+        }
 
         return await client.get_async_httpx_client().post(
             url + "/executions",

@@ -2,6 +2,7 @@
 This module provides a custom colored formatter for logging and an initialization function
 to set up logging configurations for Blaxel applications.
 """
+
 import json
 import logging
 import os
@@ -13,26 +14,27 @@ class JsonFormatter(logging.Formatter):
     """
     A logger compatible with standard json logging.
     """
+
     def __init__(self):
         super().__init__()
-        self.trace_id_name = os.environ.get('BL_LOGGER_TRACE_ID', 'trace_id')
-        self.span_id_name = os.environ.get('BL_LOGGER_SPAN_ID', 'span_id')
-        self.labels_name = os.environ.get('BL_LOGGER_LABELS', 'labels')
-        self.trace_id_prefix = os.environ.get('BL_LOGGER_TRACE_ID_PREFIX', '')
-        self.span_id_prefix = os.environ.get('BL_LOGGER_SPAN_ID_PREFIX', '')
-        self.task_index = os.environ.get('BL_TASK_KEY', 'TASK_INDEX')
-        self.task_prefix = os.environ.get('BL_TASK_PREFIX', '')
-        self.execution_key = os.environ.get('BL_EXECUTION_KEY', 'BL_EXECUTION_ID')
-        self.execution_prefix = os.environ.get('BL_EXECUTION_PREFIX', '')
+        self.trace_id_name = os.environ.get("BL_LOGGER_TRACE_ID", "trace_id")
+        self.span_id_name = os.environ.get("BL_LOGGER_SPAN_ID", "span_id")
+        self.labels_name = os.environ.get("BL_LOGGER_LABELS", "labels")
+        self.trace_id_prefix = os.environ.get("BL_LOGGER_TRACE_ID_PREFIX", "")
+        self.span_id_prefix = os.environ.get("BL_LOGGER_SPAN_ID_PREFIX", "")
+        self.task_index = os.environ.get("BL_TASK_KEY", "TASK_INDEX")
+        self.task_prefix = os.environ.get("BL_TASK_PREFIX", "")
+        self.execution_key = os.environ.get("BL_EXECUTION_KEY", "BL_EXECUTION_ID")
+        self.execution_prefix = os.environ.get("BL_EXECUTION_PREFIX", "")
 
     def format(self, record):
         """
         Formats the log record by converting it to a JSON object with trace context and environment variables.
         """
         log_entry = {
-            'message': record.getMessage(),
-            'severity': record.levelname,
-            self.labels_name: {}
+            "message": record.getMessage(),
+            "severity": record.levelname,
+            self.labels_name: {},
         }
 
         # Add trace context if available
@@ -45,12 +47,14 @@ class JsonFormatter(logging.Formatter):
         # Add task ID if available
         task_id = os.environ.get(self.task_index)
         if task_id:
-            log_entry[self.labels_name]['blaxel-task'] = f"{self.task_prefix}{task_id}"
+            log_entry[self.labels_name]["blaxel-task"] = f"{self.task_prefix}{task_id}"
 
         # Add execution ID if available
         execution_id = os.environ.get(self.execution_key)
         if execution_id:
-            log_entry[self.labels_name]['blaxel-execution'] = f"{self.execution_prefix}{execution_id.split('-')[-1]}"
+            log_entry[self.labels_name]["blaxel-execution"] = (
+                f"{self.execution_prefix}{execution_id.split('-')[-1]}"
+            )
 
         return json.dumps(log_entry)
 
@@ -62,6 +66,7 @@ class ColoredFormatter(logging.Formatter):
     Attributes:
         COLORS (dict): A mapping of log level names to their corresponding ANSI color codes.
     """
+
     COLORS = {
         "DEBUG": "\033[1;36m",  # Cyan
         "INFO": "\033[1;32m",  # Green
@@ -86,6 +91,7 @@ class ColoredFormatter(logging.Formatter):
         record.levelname = f"{color}{record.levelname}\033[0m:{tab}"
         return super().format(record)
 
+
 def init_logger(log_level: str):
     """
     Initializes the logging configuration for Blaxel.
@@ -97,7 +103,7 @@ def init_logger(log_level: str):
         log_level (str): The logging level to set (e.g., "DEBUG", "INFO").
     """
     # Disable urllib3 logging
-    logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
     logging.getLogger("httpx").setLevel(logging.CRITICAL)
     handler = logging.StreamHandler()
 

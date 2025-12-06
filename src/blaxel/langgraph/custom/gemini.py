@@ -23,9 +23,15 @@ from typing import (
 
 import httpx
 import requests
-from langchain_core.callbacks.manager import AsyncCallbackManagerForLLMRun, CallbackManagerForLLMRun
+from langchain_core.callbacks.manager import (
+    AsyncCallbackManagerForLLMRun,
+    CallbackManagerForLLMRun,
+)
 from langchain_core.language_models import LanguageModelInput
-from langchain_core.language_models.chat_models import BaseChatModel, LangSmithParams
+from langchain_core.language_models.chat_models import (
+    BaseChatModel,
+    LangSmithParams,
+)
 from langchain_core.messages import (
     AIMessage,
     AIMessageChunk,
@@ -36,13 +42,21 @@ from langchain_core.messages import (
     ToolMessage,
 )
 from langchain_core.messages.ai import UsageMetadata
-from langchain_core.messages.tool import invalid_tool_call, tool_call, tool_call_chunk
+from langchain_core.messages.tool import (
+    invalid_tool_call,
+    tool_call,
+    tool_call_chunk,
+)
 from langchain_core.output_parsers.openai_tools import (
     JsonOutputKeyToolsParser,
     PydanticToolsParser,
     parse_tool_calls,
 )
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.outputs import (
+    ChatGeneration,
+    ChatGenerationChunk,
+    ChatResult,
+)
 from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.tools import BaseTool
 from langchain_core.utils.function_calling import convert_to_openai_tool
@@ -73,6 +87,7 @@ _ToolDict = Dict[str, Any]
 SafetySettingDict = Dict[str, str]
 OutputParserLike = Union[PydanticToolsParser, JsonOutputKeyToolsParser]
 
+
 # Data classes
 class Part(BaseModel):
     text: str | None = None
@@ -81,37 +96,46 @@ class Part(BaseModel):
     function_call: Dict[str, Any] | None = None
     function_response: Dict[str, Any] | None = None
 
+
 class Content(BaseModel):
     role: str | None = None
     parts: List[Part]
+
 
 class Blob(BaseModel):
     data: str
     mime_type: str
 
+
 class FileData(BaseModel):
     file_uri: str
     mime_type: str
+
 
 class VideoMetadata(BaseModel):
     duration: str | None = None
     start_offset: str | None = None
     end_offset: str | None = None
 
+
 class FunctionCall(BaseModel):
     name: str
     args: Dict[str, Any]
+
 
 class FunctionResponse(BaseModel):
     name: str
     response: Dict[str, Any]
 
+
 class SafetySetting(BaseModel):
     category: str
     threshold: str
 
+
 class ToolConfig(BaseModel):
     function_calling_config: Dict[str, Any]
+
 
 class GenerationConfig(BaseModel):
     candidate_count: int | None = None
@@ -122,10 +146,12 @@ class GenerationConfig(BaseModel):
     top_p: float | None = None
     response_modalities: List[str] | None = None
 
+
 class GoogleTool(BaseModel):
     name: str
     description: str
     parameters: Dict[str, Any]
+
 
 class ImageBytesLoader:
     def load_part(self, image_url: str) -> Part:
@@ -138,15 +164,16 @@ class ImageBytesLoader:
         # Convert to JPEG format
         img = Image.open(io.BytesIO(response.content))
         img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='JPEG')
+        img.save(img_byte_arr, format="JPEG")
         img_byte_arr = img_byte_arr.getvalue()
 
         return Part(
             inline_data={
                 "mime_type": "image/jpeg",
-                "data": img_byte_arr.decode('utf-8')
+                "data": img_byte_arr.decode("utf-8"),
             }
         )
+
 
 class ChatGoogleGenerativeAIError(Exception):
     """
@@ -156,6 +183,7 @@ class ChatGoogleGenerativeAIError(Exception):
     Google genai API usage in the ChatGoogleGenerativeAI class, such as unsupported
     message types or roles.
     """
+
     pass
 
 
@@ -210,8 +238,8 @@ def _chat_with_retry(generation_method: Callable, **kwargs: Any) -> Any:
     def _chat_with_retry(**kwargs: Any) -> Any:
         try:
             # Extract request parameters and other kwargs
-            request = kwargs.pop('request', {})
-            kwargs.pop('metadata', None)
+            request = kwargs.pop("request", {})
+            kwargs.pop("metadata", None)
 
             # Unpack request parameters into kwargs
             kwargs.update(request)
@@ -224,14 +252,10 @@ def _chat_with_retry(generation_method: Callable, **kwargs: Any) -> Any:
                 )
                 raise ValueError(error_msg)
             elif e.response.status_code == 403:  # Forbidden
-                error_msg = (
-                    "Access forbidden. Please check your API key and permissions."
-                )
+                error_msg = "Access forbidden. Please check your API key and permissions."
                 raise ValueError(error_msg)
             else:
-                raise ChatGoogleGenerativeAIError(
-                    f"HTTP error occurred: {e.response.text}"
-                ) from e
+                raise ChatGoogleGenerativeAIError(f"HTTP error occurred: {e.response.text}") from e
         except Exception as e:
             raise e
 
@@ -259,8 +283,8 @@ async def _achat_with_retry(generation_method: Callable, **kwargs: Any) -> Any:
     async def _achat_with_retry(**kwargs: Any) -> Any:
         try:
             # Extract request parameters and other kwargs
-            request = kwargs.pop('request', {})
-            kwargs.pop('metadata', None)
+            request = kwargs.pop("request", {})
+            kwargs.pop("metadata", None)
 
             # Unpack request parameters into kwargs
             kwargs.update(request)
@@ -273,14 +297,10 @@ async def _achat_with_retry(generation_method: Callable, **kwargs: Any) -> Any:
                 )
                 raise ValueError(error_msg)
             elif e.response.status_code == 403:  # Forbidden
-                error_msg = (
-                    "Access forbidden. Please check your API key and permissions."
-                )
+                error_msg = "Access forbidden. Please check your API key and permissions."
                 raise ValueError(error_msg)
             else:
-                raise ChatGoogleGenerativeAIError(
-                    f"HTTP error occurred: {e.response.text}"
-                ) from e
+                raise ChatGoogleGenerativeAIError(f"HTTP error occurred: {e.response.text}") from e
         except Exception as e:
             raise e
 
@@ -310,9 +330,7 @@ def _convert_to_parts(
                     img_url = part["image_url"]
                     if isinstance(img_url, dict):
                         if "url" not in img_url:
-                            raise ValueError(
-                                f"Unrecognized message image format: {img_url}"
-                            )
+                            raise ValueError(f"Unrecognized message image format: {img_url}")
                         img_url = img_url["url"]
                     parts.append(image_loader.load_part(img_url))
                 # Handle media type like LangChain.js
@@ -324,17 +342,13 @@ def _convert_to_parts(
                     media_part = Part()
 
                     if "data" in part:
-                        media_part.inline_data = Blob(
-                            data=part["data"], mime_type=mime_type
-                        )
+                        media_part.inline_data = Blob(data=part["data"], mime_type=mime_type)
                     elif "file_uri" in part:
                         media_part.file_data = FileData(
                             file_uri=part["file_uri"], mime_type=mime_type
                         )
                     else:
-                        raise ValueError(
-                            f"Media part must have either data or file_uri: {part}"
-                        )
+                        raise ValueError(f"Media part must have either data or file_uri: {part}")
                     parts.append(media_part)
                 else:
                     raise ValueError(
@@ -343,16 +357,12 @@ def _convert_to_parts(
                     )
             else:
                 # Yolo
-                logger.warning(
-                    "Unrecognized message part format. Assuming it's a text part."
-                )
+                logger.warning("Unrecognized message part format. Assuming it's a text part.")
                 parts.append(Part(text=str(part)))
         else:
             # TODO: Maybe some of Google's native stuff
             # would hit this branch.
-            raise ChatGoogleGenerativeAIError(
-                "Gemini only supports text and inline_data parts."
-            )
+            raise ChatGoogleGenerativeAIError("Gemini only supports text and inline_data parts.")
     return parts
 
 
@@ -404,7 +414,8 @@ def _get_ai_message_tool_messages_parts(
 
 
 def _parse_chat_history(
-    input_messages: Sequence[BaseMessage], convert_system_message_to_human: bool = False
+    input_messages: Sequence[BaseMessage],
+    convert_system_message_to_human: bool = False,
 ) -> Tuple[Content | None, List[Content]]:
     messages: List[Content] = []
 
@@ -415,9 +426,7 @@ def _parse_chat_history(
     messages_without_tool_messages = [
         message for message in input_messages if not isinstance(message, ToolMessage)
     ]
-    tool_messages = [
-        message for message in input_messages if isinstance(message, ToolMessage)
-    ]
+    tool_messages = [message for message in input_messages if isinstance(message, ToolMessage)]
     for i, message in enumerate(messages_without_tool_messages):
         if isinstance(message, SystemMessage):
             system_parts = _convert_to_parts(message.content)
@@ -462,9 +471,7 @@ def _parse_chat_history(
             role = "user"
             parts = [_convert_tool_message_to_part(message)]
         else:
-            raise ValueError(
-                f"Unexpected message with type {type(message)} at the position {i}."
-            )
+            raise ValueError(f"Unexpected message with type {type(message)} at the position {i}.")
 
         messages.append(Content(role=role, parts=parts))
     return system_instruction, messages
@@ -623,9 +630,7 @@ def _response_to_result(
                 )
             )
         else:
-            generations.append(
-                ChatGeneration(message=message, generation_info=generation_info)
-            )
+            generations.append(ChatGeneration(message=message, generation_info=generation_info))
     if not response.get("candidates"):
         # Likely a "prompt feedback" violation (e.g., toxic input)
         # Raising an error would be different than how OpenAI handles it,
@@ -636,9 +641,7 @@ def _response_to_result(
         )
         if stream:
             generations = [
-                ChatGenerationChunk(
-                    message=AIMessageChunk(content=""), generation_info={}
-                )
+                ChatGenerationChunk(message=AIMessageChunk(content=""), generation_info={})
             ]
         else:
             generations = [ChatGeneration(message=AIMessage(""), generation_info={})]
@@ -696,7 +699,7 @@ class GeminiRestClient:
 
     def _convert_to_dict(self, obj: Any) -> Any:
         """Convert Pydantic models and other objects to dictionaries."""
-        if hasattr(obj, 'model_dump'):
+        if hasattr(obj, "model_dump"):
             return obj.model_dump()
         elif isinstance(obj, list):
             return [self._convert_to_dict(item) for item in obj]
@@ -809,7 +812,6 @@ class GeminiRestClient:
             system_instruction=system_instruction,
             cached_content=cached_content,
         )
-
 
         with self._get_client().stream(
             "POST",
@@ -927,7 +929,9 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         else:
             google_api_key = self.google_api_key
 
-        base_url = self.client_options.get("api_endpoint", "https://generativelanguage.googleapis.com")
+        base_url = self.client_options.get(
+            "api_endpoint", "https://generativelanguage.googleapis.com"
+        )
         self.client = GeminiRestClient(
             api_key=google_api_key,
             base_url=base_url,
@@ -940,9 +944,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         )
         return self
 
-    def _get_ls_params(
-        self, stop: List[str] | None = None, **kwargs: Any
-    ) -> LangSmithParams:
+    def _get_ls_params(self, stop: List[str] | None = None, **kwargs: Any) -> LangSmithParams:
         """Get standard params for tracing."""
         params = self._get_invocation_params(stop=stop, **kwargs)
         ls_params = LangSmithParams(
@@ -1082,15 +1084,11 @@ class ChatGoogleGenerativeAI(BaseChatModel):
 
         prev_usage_metadata: UsageMetadata | None = None
         for chunk in response:
-            _chat_result = _response_to_result(
-                chunk, stream=True, prev_usage=prev_usage_metadata
-            )
+            _chat_result = _response_to_result(chunk, stream=True, prev_usage=prev_usage_metadata)
             gen = cast(ChatGenerationChunk, _chat_result.generations[0])
             message = cast(AIMessageChunk, gen.message)
 
-            curr_usage_metadata: UsageMetadata | dict[str, int] = (
-                message.usage_metadata or {}
-            )
+            curr_usage_metadata: UsageMetadata | dict[str, int] = message.usage_metadata or {}
 
             prev_usage_metadata = (
                 message.usage_metadata
@@ -1142,15 +1140,11 @@ class ChatGoogleGenerativeAI(BaseChatModel):
             **kwargs,
             metadata=self.default_metadata,
         ):
-            _chat_result = _response_to_result(
-                chunk, stream=True, prev_usage=prev_usage_metadata
-            )
+            _chat_result = _response_to_result(chunk, stream=True, prev_usage=prev_usage_metadata)
             gen = cast(ChatGenerationChunk, _chat_result.generations[0])
             message = cast(AIMessageChunk, gen.message)
 
-            curr_usage_metadata: UsageMetadata | dict[str, int] = (
-                message.usage_metadata or {}
-            )
+            curr_usage_metadata: UsageMetadata | dict[str, int] = message.usage_metadata or {}
 
             prev_usage_metadata = (
                 message.usage_metadata
@@ -1196,9 +1190,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         filtered_messages = []
         for message in messages:
             if isinstance(message, HumanMessage) and not message.content:
-                warnings.warn(
-                    "HumanMessage with empty content was removed to prevent API error"
-                )
+                warnings.warn("HumanMessage with empty content was removed to prevent API error")
             else:
                 filtered_messages.append(message)
         messages = filtered_messages
@@ -1214,9 +1206,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
                     f"be specified if 'tools' is specified."
                 )
                 raise ValueError(msg)
-            all_names = [
-                f.name for t in formatted_tools for f in t.function_declarations
-            ]
+            all_names = [f.name for t in formatted_tools for f in t.function_declarations]
             tool_config = _tool_choice_to_tool_config(tool_choice, all_names)
 
         formatted_tool_config = None
@@ -1227,8 +1217,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         formatted_safety_settings = []
         if safety_settings:
             formatted_safety_settings = [
-                SafetySetting(category=c, threshold=t)
-                for c, t in safety_settings.items()
+                SafetySetting(category=c, threshold=t) for c, t in safety_settings.items()
             ]
 
         # Construct the full model path
@@ -1240,9 +1229,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
             "tools": formatted_tools,
             "tool_config": formatted_tool_config,
             "safety_settings": formatted_safety_settings,
-            "generation_config": self._prepare_params(
-                stop, generation_config=generation_config
-            ),
+            "generation_config": self._prepare_params(stop, generation_config=generation_config),
             "cached_content": cached_content,
         }
         if system_instruction:
@@ -1280,9 +1267,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
             raise ValueError(f"Received unsupported arguments {kwargs}")
         tool_name = _get_tool_name(schema)  # type: ignore[arg-type]
         if isinstance(schema, type) and is_basemodel_subclass_safe(schema):
-            parser: OutputParserLike = PydanticToolsParser(
-                tools=[schema], first_tool_only=True
-            )
+            parser: OutputParserLike = PydanticToolsParser(tools=[schema], first_tool_only=True)
         else:
             global WARNED_STRUCTURED_OUTPUT_JSON_MODE
             warnings.warn(
@@ -1318,9 +1303,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
 
     def bind_tools(
         self,
-        tools: Sequence[
-            dict[str, Any] | type | Callable[..., Any] | BaseTool | GoogleTool
-        ],
+        tools: Sequence[dict[str, Any] | type | Callable[..., Any] | BaseTool | GoogleTool],
         tool_config: Union[Dict, _ToolConfigDict] | None = None,
         *,
         tool_choice: Union[_ToolChoiceType, bool] | None = None,
@@ -1346,9 +1329,7 @@ class ChatGoogleGenerativeAI(BaseChatModel):
         try:
             formatted_tools: list = [convert_to_openai_tool(tool) for tool in tools]  # type: ignore[arg-type]
         except Exception:
-            formatted_tools = [
-                tool_to_dict(convert_to_genai_function_declarations(tools))
-            ]
+            formatted_tools = [tool_to_dict(convert_to_genai_function_declarations(tools))]
         if tool_choice:
             kwargs["tool_choice"] = tool_choice
         elif tool_config:
@@ -1378,6 +1359,7 @@ def _get_tool_name(
         else:
             raise e
 
+
 def _tool_choice_to_tool_config(
     tool_choice: Union[str, bool, Dict[str, Any]], all_names: List[str]
 ) -> Dict[str, Any]:
@@ -1390,9 +1372,7 @@ def _tool_choice_to_tool_config(
         }
     elif isinstance(tool_choice, str):
         if tool_choice not in all_names:
-            raise ValueError(
-                f"Tool choice {tool_choice} not found in available tools: {all_names}"
-            )
+            raise ValueError(f"Tool choice {tool_choice} not found in available tools: {all_names}")
         return {
             "function_calling_config": {
                 "mode": "ANY",
@@ -1402,8 +1382,9 @@ def _tool_choice_to_tool_config(
     else:
         return tool_choice
 
+
 def convert_to_genai_function_declarations(
-    tools: Sequence[Union[Dict[str, Any], Type[BaseModel], Callable[..., Any], BaseTool]]
+    tools: Sequence[Union[Dict[str, Any], Type[BaseModel], Callable[..., Any], BaseTool]],
 ) -> Dict[str, Any]:
     """Convert tools to Gemini function declarations format."""
     function_declarations = []
@@ -1411,54 +1392,63 @@ def convert_to_genai_function_declarations(
         if isinstance(tool, dict):
             fn = tool.get("function", {})
             fn_parameters = fn.get("parameters", {})
-            function_declarations.append({
-                "name": fn.get("name", ""),
-                "description": fn.get("description", ""),
-                "parameters": {
-                    "type": "object",
-                    "properties": fn_parameters.get("properties", {}),
-                    "required": fn_parameters.get("required", []),
-                },
-            })
+            function_declarations.append(
+                {
+                    "name": fn.get("name", ""),
+                    "description": fn.get("description", ""),
+                    "parameters": {
+                        "type": "object",
+                        "properties": fn_parameters.get("properties", {}),
+                        "required": fn_parameters.get("required", []),
+                    },
+                }
+            )
         elif isinstance(tool, type) and issubclass(tool, BaseModel):
             schema = tool.model_json_schema()
-            function_declarations.append({
-                "name": schema.get("title", ""),
-                "description": schema.get("description", ""),
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        name: {
-                            "type": prop.get("type", "string"),
-                            "description": prop.get("description", ""),
-                        }
-                        for name, prop in schema.get("properties", {}).items()
+            function_declarations.append(
+                {
+                    "name": schema.get("title", ""),
+                    "description": schema.get("description", ""),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            name: {
+                                "type": prop.get("type", "string"),
+                                "description": prop.get("description", ""),
+                            }
+                            for name, prop in schema.get("properties", {}).items()
+                        },
+                        "required": schema.get("required", []),
                     },
-                    "required": schema.get("required", []),
-                },
-            })
+                }
+            )
         elif callable(tool):
             # For callables, we'll create a basic function declaration
-            function_declarations.append({
-                "name": tool.__name__,
-                "description": tool.__doc__ or "",
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                },
-            })
+            function_declarations.append(
+                {
+                    "name": tool.__name__,
+                    "description": tool.__doc__ or "",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                }
+            )
         elif isinstance(tool, BaseTool):
-            function_declarations.append({
-                "name": tool.name,
-                "description": tool.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                },
-            })
+            function_declarations.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                }
+            )
     return {"functionDeclarations": function_declarations}
+
 
 def is_basemodel_subclass_safe(cls: Type[Any]) -> bool:
     """Check if a class is a safe subclass of BaseModel."""
@@ -1467,11 +1457,14 @@ def is_basemodel_subclass_safe(cls: Type[Any]) -> bool:
     except TypeError:
         return False
 
+
 def tool_to_dict(tool: Dict[str, Any]) -> Dict[str, Any]:
     """Convert a tool to a dictionary format."""
     return tool
 
+
 def image_bytes_to_b64_string(image_bytes: bytes, image_format: str = "jpeg") -> str:
     """Convert image bytes to base64 string."""
     import base64
+
     return f"data:image/{image_format};base64,{base64.b64encode(image_bytes).decode('utf-8')}"

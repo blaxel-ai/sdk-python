@@ -33,7 +33,6 @@ class CreateJobExecutionRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         execution_id = self.execution_id
 
         id = self.id

@@ -36,19 +36,21 @@ async def main():
         print("=== Test 1: Create sandbox with ttl-idle expiration policy ===")
 
         # Create sandbox with ttl-idle expiration policy of 20 seconds
-        sandbox = await SandboxInstance.create_if_not_exists({
-            "name": sandbox_name,
-            "image": base_image,
-            "lifecycle": {
-                "expirationPolicies": [
-                    {
-                        "type": "ttl-idle",
-                        "value": "20s",
-                        "action": "delete",
-                    },
-                ],
-            },
-        })
+        sandbox = await SandboxInstance.create_if_not_exists(
+            {
+                "name": sandbox_name,
+                "image": base_image,
+                "lifecycle": {
+                    "expirationPolicies": [
+                        {
+                            "type": "ttl-idle",
+                            "value": "20s",
+                            "action": "delete",
+                        },
+                    ],
+                },
+            }
+        )
 
         print(f"✅ Created sandbox with ttl-idle policy: {sandbox.metadata.name}")
 
@@ -59,28 +61,41 @@ async def main():
 
         # Test 1.5: Try to create_if_not_exists with same name while running
         print("\n=== Test 1.5: Attempt to create_if_not_exists with same name while running ===")
-        print("Attempting to create_if_not_exists with duplicate name (should return existing sandbox)...")
+        print(
+            "Attempting to create_if_not_exists with duplicate name (should return existing sandbox)..."
+        )
 
-        duplicate_sandbox = await SandboxInstance.create_if_not_exists({
-            "name": sandbox_name,
-            "image": base_image,
-            "lifecycle": {
-                "expirationPolicies": [
-                    {
-                        "type": "ttl-idle",
-                        "value": "20s",
-                        "action": "delete",
-                    },
-                ],
-            },
-        })
+        duplicate_sandbox = await SandboxInstance.create_if_not_exists(
+            {
+                "name": sandbox_name,
+                "image": base_image,
+                "lifecycle": {
+                    "expirationPolicies": [
+                        {
+                            "type": "ttl-idle",
+                            "value": "20s",
+                            "action": "delete",
+                        },
+                    ],
+                },
+            }
+        )
 
         # With create_if_not_exists, we should get the existing active sandbox
-        if duplicate_sandbox.metadata.name == sandbox_name and duplicate_sandbox.status in ["RUNNING", "DEPLOYED"]:
-            print("✅ Test 1.5 PASSED: create_if_not_exists correctly returned the existing active sandbox")
-            print(f"  Returned sandbox: {duplicate_sandbox.metadata.name}, Status: {duplicate_sandbox.status}")
+        if duplicate_sandbox.metadata.name == sandbox_name and duplicate_sandbox.status in [
+            "RUNNING",
+            "DEPLOYED",
+        ]:
+            print(
+                "✅ Test 1.5 PASSED: create_if_not_exists correctly returned the existing active sandbox"
+            )
+            print(
+                f"  Returned sandbox: {duplicate_sandbox.metadata.name}, Status: {duplicate_sandbox.status}"
+            )
         else:
-            print("❌ Test 1.5 FAILED: create_if_not_exists did not return the expected active sandbox")
+            print(
+                "❌ Test 1.5 FAILED: create_if_not_exists did not return the expected active sandbox"
+            )
             print(f"  Got: {duplicate_sandbox.metadata.name}, Status: {duplicate_sandbox.status}")
             sys.exit(1)
 
@@ -102,28 +117,34 @@ async def main():
             sys.exit(1)
 
         print("\n=== Test 2: Use create_if_not_exists with same name after termination ===")
-        print("Using create_if_not_exists with the same name - should automatically recreate since previous is TERMINATED...")
+        print(
+            "Using create_if_not_exists with the same name - should automatically recreate since previous is TERMINATED..."
+        )
 
         # Create another sandbox with the same name
-        sandbox = await SandboxInstance.create_if_not_exists({
-            "name": sandbox_name,
-            "image": base_image,
-            "lifecycle": {
-                "expirationPolicies": [
-                    {
-                        "type": "ttl-idle",
-                        "value": "20s",
-                        "action": "delete",
-                    },
-                ],
-            },
-        })
+        sandbox = await SandboxInstance.create_if_not_exists(
+            {
+                "name": sandbox_name,
+                "image": base_image,
+                "lifecycle": {
+                    "expirationPolicies": [
+                        {
+                            "type": "ttl-idle",
+                            "value": "20s",
+                            "action": "delete",
+                        },
+                    ],
+                },
+            }
+        )
 
         print(f"✅ Successfully created new sandbox with same name: {sandbox.metadata.name}")
 
         # Activate idle monitoring again
         print("Making sandbox API call to activate idle monitoring...")
-        exec_result = await sandbox.process.exec({"command": "echo 'activate idle timer for second sandbox'"})
+        exec_result = await sandbox.process.exec(
+            {"command": "echo 'activate idle timer for second sandbox'"}
+        )
         print(f"Process exec successful (pid: {exec_result.pid}) - Idle timer activated")
 
         # Wait for second sandbox termination
@@ -145,6 +166,7 @@ async def main():
     except Exception as e:
         print(f"❌ There was an error => {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -156,4 +178,3 @@ if __name__ == "__main__":
     except Exception as err:
         print(f"❌ There was an error => {err}")
         sys.exit(1)
-

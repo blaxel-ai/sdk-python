@@ -24,7 +24,6 @@ class RequestDurationOverTimeMetrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         request_duration_over_time: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.request_duration_over_time, Unset):
             request_duration_over_time = []

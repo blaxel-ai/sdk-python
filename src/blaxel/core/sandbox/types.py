@@ -148,7 +148,8 @@ class SandboxCreateConfiguration:
         memory: int | None = None,
         ports: Union[List[Port], List[Dict[str, Any]]] | None = None,
         envs: List[Dict[str, str]] | None = None,
-        volumes: Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]] | None = None,
+        volumes: Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]]
+        | None = None,
         ttl: str | None = None,
         expires: datetime | None = None,
         region: str | None = None,

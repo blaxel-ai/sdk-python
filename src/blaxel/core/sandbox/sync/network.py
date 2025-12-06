@@ -7,5 +7,3 @@ class SyncSandboxNetwork(SyncSandboxAction):
         super().__init__(sandbox_config)
 
     # Placeholder for future sync network operations
-
-

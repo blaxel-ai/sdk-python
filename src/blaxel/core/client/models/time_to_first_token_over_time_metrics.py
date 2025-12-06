@@ -25,7 +25,6 @@ class TimeToFirstTokenOverTimeMetrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         time_to_first_token_over_time: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.time_to_first_token_over_time, Unset):
             time_to_first_token_over_time = []
@@ -33,7 +32,9 @@ class TimeToFirstTokenOverTimeMetrics:
                 if type(time_to_first_token_over_time_item_data) is dict:
                     time_to_first_token_over_time_item = time_to_first_token_over_time_item_data
                 else:
-                    time_to_first_token_over_time_item = time_to_first_token_over_time_item_data.to_dict()
+                    time_to_first_token_over_time_item = (
+                        time_to_first_token_over_time_item_data.to_dict()
+                    )
                 time_to_first_token_over_time.append(time_to_first_token_over_time_item)
 
         field_dict: dict[str, Any] = {}

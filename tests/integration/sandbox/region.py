@@ -13,7 +13,9 @@ from blaxel.core.sandbox import SandboxInstance
 
 def get_unique_id():
     """Generate a unique ID for each sandbox."""
-    return f"{int(time.time())}{''.join(random.choices(string.ascii_lowercase + string.digits, k=5))}"
+    return (
+        f"{int(time.time())}{''.join(random.choices(string.ascii_lowercase + string.digits, k=5))}"
+    )
 
 
 # Configuration map for available regions per environment
@@ -21,13 +23,13 @@ REGION_CONFIG = {
     "prod": {
         "regions": ["us-pdx-1", "eu-lon-1", "us-was-1"],
         "default_region": "us-pdx-1",
-        "image": "blaxel/base:latest"
+        "image": "blaxel/base:latest",
     },
     "dev": {
         "regions": ["eu-dub-1"],
         "default_region": "eu-dub-1",
-        "image": "blaxel/base:latest"
-    }
+        "image": "blaxel/base:latest",
+    },
 }
 
 # Determine environment from BL_ENV variable (default to prod)
@@ -49,16 +51,16 @@ async def test_preview_in_region(sandbox_name: str, region: str):
     sandbox_instance = SandboxInstance(sandbox)
 
     try:
-        preview = await sandbox_instance.previews.create({
-            "metadata": {
-                "name": "preview-region-test"
-            },
-            "spec": {
-                "port": 443,
-                "prefixUrl": "region-test",
-                "public": True
+        preview = await sandbox_instance.previews.create(
+            {
+                "metadata": {"name": "preview-region-test"},
+                "spec": {
+                    "port": 443,
+                    "prefixUrl": "region-test",
+                    "public": True,
+                },
             }
-        })
+        )
 
         url = preview.spec.url if preview.spec else None
         if not url:
@@ -102,14 +104,18 @@ async def main():
     try:
         # Test 1: Create sandbox without region (should get default)
         print("📋 Test 1: Create sandbox without region")
-        sandbox = await SandboxInstance.create({
-            "name": f"test-no-region-{get_unique_id()}",
-            "image": test_image,
-            "memory": 1024
-        })
+        sandbox = await SandboxInstance.create(
+            {
+                "name": f"test-no-region-{get_unique_id()}",
+                "image": test_image,
+                "memory": 1024,
+            }
+        )
 
         retrieved = await SandboxInstance.get(sandbox.metadata.name)
-        actual_region = retrieved.spec.region if retrieved.spec and hasattr(retrieved.spec, 'region') else None
+        actual_region = (
+            retrieved.spec.region if retrieved.spec and hasattr(retrieved.spec, "region") else None
+        )
         print(f"   Default region set: {actual_region}")
 
         if actual_region != default_region:
@@ -123,15 +129,21 @@ async def main():
         # Test 2: Create sandbox with each available region
         print("📋 Test 2: Create sandbox with explicit regions")
         for test_region in test_regions:
-            sandbox = await SandboxInstance.create({
-                "name": f"test-region-{test_region}-{get_unique_id()}",
-                "image": test_image,
-                "memory": 1024,
-                "region": test_region
-            })
+            sandbox = await SandboxInstance.create(
+                {
+                    "name": f"test-region-{test_region}-{get_unique_id()}",
+                    "image": test_image,
+                    "memory": 1024,
+                    "region": test_region,
+                }
+            )
 
             retrieved = await SandboxInstance.get(sandbox.metadata.name)
-            actual_region = retrieved.spec.region if retrieved.spec and hasattr(retrieved.spec, 'region') else None
+            actual_region = (
+                retrieved.spec.region
+                if retrieved.spec and hasattr(retrieved.spec, "region")
+                else None
+            )
 
             if actual_region == test_region:
                 print(f"   ✓ {test_region}: Correctly set")
@@ -145,12 +157,14 @@ async def main():
         print("\n📋 Test 3: Test public preview in each region")
         for test_region in test_regions:
             sandbox_name = f"test-preview-{test_region}-{get_unique_id()}"
-            sandbox = await SandboxInstance.create({
-                "name": sandbox_name,
-                "image": test_image,
-                "memory": 1024,
-                "region": test_region
-            })
+            sandbox = await SandboxInstance.create(
+                {
+                    "name": sandbox_name,
+                    "image": test_image,
+                    "memory": 1024,
+                    "region": test_region,
+                }
+            )
 
             try:
                 await test_preview_in_region(sandbox_name, test_region)

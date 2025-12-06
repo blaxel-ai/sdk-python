@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "Blaxel - AI development platform SDK"
 readme = "README.md"
 authors = [{ name = "cploujoux", email = "cploujoux@blaxel.ai" }]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 dependencies = [
   # Core dependencies that are always needed
   "pydantic>=2.0.0",

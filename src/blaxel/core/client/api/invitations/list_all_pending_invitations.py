@@ -18,7 +18,9 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, list["PendingInvitationRender"]] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Any, list["PendingInvitationRender"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()

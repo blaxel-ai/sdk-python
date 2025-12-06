@@ -36,13 +36,16 @@ class PendingInvitationRender:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         email = self.email
 
         invited_at = self.invited_at
 
         invited_by: Union[Unset, dict[str, Any]] = UNSET
-        if self.invited_by and not isinstance(self.invited_by, Unset) and not isinstance(self.invited_by, dict):
+        if (
+            self.invited_by
+            and not isinstance(self.invited_by, Unset)
+            and not isinstance(self.invited_by, dict)
+        ):
             invited_by = self.invited_by.to_dict()
         elif self.invited_by and isinstance(self.invited_by, dict):
             invited_by = self.invited_by
@@ -50,7 +53,11 @@ class PendingInvitationRender:
         role = self.role
 
         workspace: Union[Unset, dict[str, Any]] = UNSET
-        if self.workspace and not isinstance(self.workspace, Unset) and not isinstance(self.workspace, dict):
+        if (
+            self.workspace
+            and not isinstance(self.workspace, Unset)
+            and not isinstance(self.workspace, dict)
+        ):
             workspace = self.workspace.to_dict()
         elif self.workspace and isinstance(self.workspace, dict):
             workspace = self.workspace

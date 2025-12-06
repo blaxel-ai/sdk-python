@@ -32,7 +32,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, list["JobExecution"]] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Any, list["JobExecution"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -54,7 +56,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, l
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, list["JobExecution"]]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Any, list["JobExecution"]]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

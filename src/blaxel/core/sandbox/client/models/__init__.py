@@ -2,6 +2,8 @@
 
 from .apply_edit_request import ApplyEditRequest
 from .apply_edit_response import ApplyEditResponse
+from .content_search_match import ContentSearchMatch
+from .content_search_response import ContentSearchResponse
 from .delete_network_process_pid_monitor_response_200 import (
     DeleteNetworkProcessPidMonitorResponse200,
 )
@@ -13,6 +15,10 @@ from .file_with_content import FileWithContent
 from .filesystem_multipart_upload import FilesystemMultipartUpload
 from .filesystem_multipart_upload_parts import FilesystemMultipartUploadParts
 from .filesystem_uploaded_part import FilesystemUploadedPart
+from .find_match import FindMatch
+from .find_response import FindResponse
+from .fuzzy_search_match import FuzzySearchMatch
+from .fuzzy_search_response import FuzzySearchResponse
 from .get_network_process_pid_ports_response_200 import GetNetworkProcessPidPortsResponse200
 from .multipart_complete_request import MultipartCompleteRequest
 from .multipart_initiate_request import MultipartInitiateRequest
@@ -33,11 +39,15 @@ from .ranked_file import RankedFile
 from .reranking_response import RerankingResponse
 from .subdirectory import Subdirectory
 from .success_response import SuccessResponse
+from .tree_request import TreeRequest
+from .tree_request_files import TreeRequestFiles
 from .welcome_response import WelcomeResponse
 
 __all__ = (
     "ApplyEditRequest",
     "ApplyEditResponse",
+    "ContentSearchMatch",
+    "ContentSearchResponse",
     "DeleteNetworkProcessPidMonitorResponse200",
     "Directory",
     "ErrorResponse",
@@ -47,6 +57,10 @@ __all__ = (
     "FilesystemMultipartUploadParts",
     "FilesystemUploadedPart",
     "FileWithContent",
+    "FindMatch",
+    "FindResponse",
+    "FuzzySearchMatch",
+    "FuzzySearchResponse",
     "GetNetworkProcessPidPortsResponse200",
     "MultipartCompleteRequest",
     "MultipartInitiateRequest",
@@ -67,5 +81,7 @@ __all__ = (
     "RerankingResponse",
     "Subdirectory",
     "SuccessResponse",
+    "TreeRequest",
+    "TreeRequestFiles",
     "WelcomeResponse",
 )

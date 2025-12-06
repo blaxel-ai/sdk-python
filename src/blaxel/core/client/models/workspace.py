@@ -50,7 +50,6 @@ class Workspace:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         updated_at = self.updated_at
@@ -76,7 +75,11 @@ class Workspace:
         region = self.region
 
         runtime: Union[Unset, dict[str, Any]] = UNSET
-        if self.runtime and not isinstance(self.runtime, Unset) and not isinstance(self.runtime, dict):
+        if (
+            self.runtime
+            and not isinstance(self.runtime, Unset)
+            and not isinstance(self.runtime, dict)
+        ):
             runtime = self.runtime.to_dict()
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
