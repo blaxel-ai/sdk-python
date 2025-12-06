@@ -22,7 +22,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> DeleteWorkspaceServiceAccountResponse200 | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> DeleteWorkspaceServiceAccountResponse200 | None:
     if response.status_code == 200:
         response_200 = DeleteWorkspaceServiceAccountResponse200.from_dict(response.json())
 
@@ -33,7 +35,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> DeleteWorksp
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[DeleteWorkspaceServiceAccountResponse200]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[DeleteWorkspaceServiceAccountResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

@@ -14,7 +14,9 @@ T = TypeVar("T", bound="FilesystemMultipartUploadParts")
 class FilesystemMultipartUploadParts:
     """ """
 
-    additional_properties: dict[str, "FilesystemUploadedPart"] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, "FilesystemUploadedPart"] = _attrs_field(
+        init=False, factory=dict
+    )
 
     def to_dict(self) -> dict[str, Any]:
         field_dict: dict[str, Any] = {}

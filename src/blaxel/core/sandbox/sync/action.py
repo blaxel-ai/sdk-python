@@ -51,7 +51,8 @@ class SyncSandboxAction:
     def get_client(self) -> httpx.Client:
         if self.sandbox_config.force_url:
             return httpx.Client(
-                base_url=self.sandbox_config.force_url, headers=self.sandbox_config.headers
+                base_url=self.sandbox_config.force_url,
+                headers=self.sandbox_config.headers,
             )
         return httpx.Client(
             base_url=self.url,
@@ -61,5 +62,3 @@ class SyncSandboxAction:
     def handle_response_error(self, response: httpx.Response):
         if not response.is_success:
             raise ResponseError(response)
-
-

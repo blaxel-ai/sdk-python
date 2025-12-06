@@ -2,10 +2,10 @@ import asyncio
 import statistics
 import time
 
+from utils import create_or_get_sandbox
+
 from blaxel.core.sandbox.default import SandboxInstance
 from blaxel.core.sandbox.default.action import SandboxAction
-
-from utils import create_or_get_sandbox
 
 SANDBOX_NAME = "fs-ls-benchmark"
 NUM_ITERATIONS = 100
@@ -13,9 +13,9 @@ NUM_ITERATIONS = 100
 
 async def benchmark_fs_ls(sandbox: SandboxInstance, num_iterations: int = NUM_ITERATIONS):
     """Benchmark fs.ls performance with connection reuse."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Benchmarking fs.ls with {num_iterations} iterations")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Warm up - first request may be slower due to connection setup
     print("Warming up (first request)...")
@@ -53,11 +53,11 @@ async def benchmark_fs_ls(sandbox: SandboxInstance, num_iterations: int = NUM_IT
     p95 = sorted_times[int(len(sorted_times) * 0.95)]
     p99 = sorted_times[int(len(sorted_times) * 0.99)]
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("RESULTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Total requests:     {num_iterations}")
-    print(f"Total time:         {total_time:.2f}ms ({total_time/1000:.2f}s)")
+    print(f"Total time:         {total_time:.2f}ms ({total_time / 1000:.2f}s)")
     print(f"Requests/second:    {num_iterations / (total_time / 1000):.2f}")
     print()
     print(f"Average:            {avg_time:.2f}ms")
@@ -71,7 +71,7 @@ async def benchmark_fs_ls(sandbox: SandboxInstance, num_iterations: int = NUM_IT
     print(f"  p90:              {p90:.2f}ms")
     print(f"  p95:              {p95:.2f}ms")
     print(f"  p99:              {p99:.2f}ms")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return {
         "total_requests": num_iterations,
@@ -90,12 +90,16 @@ async def benchmark_fs_ls(sandbox: SandboxInstance, num_iterations: int = NUM_IT
     }
 
 
-async def benchmark_concurrent_fs_ls(sandbox: SandboxInstance, num_concurrent: int = 10, num_batches: int = 10):
+async def benchmark_concurrent_fs_ls(
+    sandbox: SandboxInstance, num_concurrent: int = 10, num_batches: int = 10
+):
     """Benchmark concurrent fs.ls requests."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Benchmarking CONCURRENT fs.ls")
-    print(f"  {num_concurrent} concurrent requests x {num_batches} batches = {num_concurrent * num_batches} total")
-    print(f"{'='*60}\n")
+    print(
+        f"  {num_concurrent} concurrent requests x {num_batches} batches = {num_concurrent * num_batches} total"
+    )
+    print(f"{'=' * 60}\n")
 
     all_times_ms = []
 
@@ -105,21 +109,23 @@ async def benchmark_concurrent_fs_ls(sandbox: SandboxInstance, num_concurrent: i
         await asyncio.gather(*[sandbox.fs.ls("/") for _ in range(num_concurrent)])
         batch_time_ms = (time.perf_counter() - start) * 1000
         all_times_ms.append(batch_time_ms)
-        print(f"  Batch {batch + 1}/{num_batches}: {batch_time_ms:.2f}ms for {num_concurrent} concurrent requests")
+        print(
+            f"  Batch {batch + 1}/{num_batches}: {batch_time_ms:.2f}ms for {num_concurrent} concurrent requests"
+        )
 
     total_requests = num_concurrent * num_batches
     total_time = sum(all_times_ms)
     avg_batch_time = statistics.mean(all_times_ms)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("CONCURRENT RESULTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Total requests:     {total_requests}")
-    print(f"Total time:         {total_time:.2f}ms ({total_time/1000:.2f}s)")
+    print(f"Total time:         {total_time:.2f}ms ({total_time / 1000:.2f}s)")
     print(f"Requests/second:    {total_requests / (total_time / 1000):.2f}")
     print(f"Avg batch time:     {avg_batch_time:.2f}ms (for {num_concurrent} concurrent)")
     print(f"Avg per request:    {avg_batch_time / num_concurrent:.2f}ms (effective)")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return {
         "total_requests": total_requests,
@@ -142,12 +148,14 @@ async def main():
         sequential_results = await benchmark_fs_ls(sandbox, NUM_ITERATIONS)
 
         # Concurrent benchmark
-        concurrent_results = await benchmark_concurrent_fs_ls(sandbox, num_concurrent=10, num_batches=10)
+        concurrent_results = await benchmark_concurrent_fs_ls(
+            sandbox, num_concurrent=10, num_batches=10
+        )
 
         # Summary
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Sequential ({NUM_ITERATIONS} requests):")
         print(f"  - {sequential_results['requests_per_second']:.2f} req/s")
         print(f"  - {sequential_results['avg_ms']:.2f}ms avg latency")
@@ -155,7 +163,7 @@ async def main():
         print("Concurrent (10 concurrent x 10 batches = 100 requests):")
         print(f"  - {concurrent_results['requests_per_second']:.2f} req/s")
         print(f"  - {concurrent_results['effective_per_request_ms']:.2f}ms effective latency")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
     finally:
         # Cleanup clients

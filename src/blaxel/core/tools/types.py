@@ -12,6 +12,7 @@ class ToolException(Exception):  # noqa: N818
     to the agent as observation, and printed in red on the console.
     """
 
+
 class Tool(BaseModel):
     name: str
     description: str

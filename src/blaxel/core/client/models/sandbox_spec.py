@@ -49,7 +49,6 @@ class SandboxSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         configurations: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.configurations
@@ -81,13 +80,21 @@ class SandboxSpec:
             policies = self.policies
 
         revision: Union[Unset, dict[str, Any]] = UNSET
-        if self.revision and not isinstance(self.revision, Unset) and not isinstance(self.revision, dict):
+        if (
+            self.revision
+            and not isinstance(self.revision, Unset)
+            and not isinstance(self.revision, dict)
+        ):
             revision = self.revision.to_dict()
         elif self.revision and isinstance(self.revision, dict):
             revision = self.revision
 
         runtime: Union[Unset, dict[str, Any]] = UNSET
-        if self.runtime and not isinstance(self.runtime, Unset) and not isinstance(self.runtime, dict):
+        if (
+            self.runtime
+            and not isinstance(self.runtime, Unset)
+            and not isinstance(self.runtime, dict)
+        ):
             runtime = self.runtime.to_dict()
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
@@ -95,7 +102,11 @@ class SandboxSpec:
         sandbox = self.sandbox
 
         lifecycle: Union[Unset, dict[str, Any]] = UNSET
-        if self.lifecycle and not isinstance(self.lifecycle, Unset) and not isinstance(self.lifecycle, dict):
+        if (
+            self.lifecycle
+            and not isinstance(self.lifecycle, Unset)
+            and not isinstance(self.lifecycle, dict)
+        ):
             lifecycle = self.lifecycle.to_dict()
         elif self.lifecycle and isinstance(self.lifecycle, dict):
             lifecycle = self.lifecycle
@@ -107,9 +118,13 @@ class SandboxSpec:
             volumes = []
             for componentsschemas_volume_attachments_item_data in self.volumes:
                 if type(componentsschemas_volume_attachments_item_data) is dict:
-                    componentsschemas_volume_attachments_item = componentsschemas_volume_attachments_item_data
+                    componentsschemas_volume_attachments_item = (
+                        componentsschemas_volume_attachments_item_data
+                    )
                 else:
-                    componentsschemas_volume_attachments_item = componentsschemas_volume_attachments_item_data.to_dict()
+                    componentsschemas_volume_attachments_item = (
+                        componentsschemas_volume_attachments_item_data.to_dict()
+                    )
                 volumes.append(componentsschemas_volume_attachments_item)
 
         field_dict: dict[str, Any] = {}

@@ -124,6 +124,7 @@ async def tmp_test_mcp_http_stream():
     sandbox_tool = [tool for tool in tools if tool.name == "fsGetWorkingDirectory"]
     assert len(sandbox_tool) == 1
 
+
 async def main():
     """Main function for standalone execution."""
     await test_mcp_tools_blaxel()
@@ -133,6 +134,7 @@ async def main():
     await test_mcp_tools_pydantic()
     await test_mcp_tools_google_adk()
     await tmp_test_mcp_http_stream()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

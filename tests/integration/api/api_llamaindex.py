@@ -14,7 +14,11 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from llama_index.core.agent.workflow import AgentOutput, ReActAgent, ToolCallResult
+from llama_index.core.agent.workflow import (
+    AgentOutput,
+    ReActAgent,
+    ToolCallResult,
+)
 from llama_index.core.tools import FunctionTool
 from llama_index.core.workflow import Context
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor

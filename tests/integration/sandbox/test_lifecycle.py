@@ -21,23 +21,15 @@ async def wait(seconds: float) -> None:
 async def test_ttl_max_age():
     try:
         print("[Test 1] TTL Max-Age: Starting...")
-        ttl_policy = ExpirationPolicy(
-            type_="ttl-max-age",
-            value="60s",
-            action="delete"
-        )
-        lifecycle = SandboxLifecycle(
-            expiration_policies=[ttl_policy]
-        )
+        ttl_policy = ExpirationPolicy(type_="ttl-max-age", value="60s", action="delete")
+        lifecycle = SandboxLifecycle(expiration_policies=[ttl_policy])
 
         print("[Test 1] Creating sandbox with lifecycle: ttl-max-age=60s")
         # Add unique suffix to avoid conflicts
         sandbox_name = f"sandbox-ttl-maxage-{uuid.uuid4().hex[:8]}"
-        sandbox = await SandboxInstance.create({
-            "lifecycle": lifecycle,
-            "image": BASE_IMAGE,
-            "name": sandbox_name
-        })
+        sandbox = await SandboxInstance.create(
+            {"lifecycle": lifecycle, "image": BASE_IMAGE, "name": sandbox_name}
+        )
         print(f"[Test 1] Created sandbox: {sandbox.metadata.name}")
 
         status = await SandboxInstance.get(sandbox.metadata.name)
@@ -70,23 +62,20 @@ async def test_date_expiration():
         print("[Test 2] Date Expiration: Starting...")
         # Use UTC time explicitly
         from datetime import timezone
+
         expiration_date = datetime.now(timezone.utc) + timedelta(seconds=60)
 
         date_policy = ExpirationPolicy(
             type_="date",
             value=expiration_date.strftime("%Y-%m-%dT%H:%M:%SZ"),  # Proper UTC format
-            action="delete"
+            action="delete",
         )
-        lifecycle = SandboxLifecycle(
-            expiration_policies=[date_policy]
-        )
+        lifecycle = SandboxLifecycle(expiration_policies=[date_policy])
 
         sandbox_name = f"sandbox-date-{uuid.uuid4().hex[:8]}"
-        sandbox = await SandboxInstance.create({
-            "lifecycle": lifecycle,
-            "image": BASE_IMAGE,
-            "name": sandbox_name
-        })
+        sandbox = await SandboxInstance.create(
+            {"lifecycle": lifecycle, "image": BASE_IMAGE, "name": sandbox_name}
+        )
         print(f"[Test 2] Created sandbox: {sandbox.metadata.name}")
         print(f"[Test 2] Expires at: {date_policy.value}")
 
@@ -123,18 +112,18 @@ async def test_ttl_idle():
     idle_policy_active = ExpirationPolicy(
         type_="ttl-idle",
         value="60s",  # 1 minute idle timeout
-        action="delete"
+        action="delete",
     )
-    lifecycle_active = SandboxLifecycle(
-        expiration_policies=[idle_policy_active]
-    )
+    lifecycle_active = SandboxLifecycle(expiration_policies=[idle_policy_active])
 
     sandbox_name_active = f"sandbox-idle-active-{uuid.uuid4().hex[:8]}"
-    sandbox_active = await SandboxInstance.create({
-        "lifecycle": lifecycle_active,
-        "image": BASE_IMAGE,
-        "name": sandbox_name_active
-    })
+    sandbox_active = await SandboxInstance.create(
+        {
+            "lifecycle": lifecycle_active,
+            "image": BASE_IMAGE,
+            "name": sandbox_name_active,
+        }
+    )
     print(f"[Test 3A] Created sandbox with 60s idle timeout: {sandbox_active.metadata.name}")
 
     # Make initial sandbox API call to activate idle monitoring
@@ -157,11 +146,17 @@ async def test_ttl_idle():
             print(f"[Test 3A] Control plane status: {status_active.status}")
         except Exception as error:
             if "404" in str(error) or "not found" in str(error).lower():
-                print(f"[Test 3A] ❌ FAILED: Sandbox was deleted prematurely after only {i * 30}s with regular activity")
-                raise Exception("Test 3A failed: Sandbox deleted while making regular calls every 30s")
+                print(
+                    f"[Test 3A] ❌ FAILED: Sandbox was deleted prematurely after only {i * 30}s with regular activity"
+                )
+                raise Exception(
+                    "Test 3A failed: Sandbox deleted while making regular calls every 30s"
+                )
             raise
 
-    print("[Test 3A] ✅ PASSED: Sandbox stayed alive with regular activity (90s total with calls every 30s)")
+    print(
+        "[Test 3A] ✅ PASSED: Sandbox stayed alive with regular activity (90s total with calls every 30s)"
+    )
 
     # Clean up the active sandbox
     await SandboxInstance.delete(sandbox_active.metadata.name)
@@ -172,18 +167,18 @@ async def test_ttl_idle():
     idle_policy_inactive = ExpirationPolicy(
         type_="ttl-idle",
         value="30s",  # 30 seconds idle timeout for faster testing
-        action="delete"
+        action="delete",
     )
-    lifecycle_inactive = SandboxLifecycle(
-        expiration_policies=[idle_policy_inactive]
-    )
+    lifecycle_inactive = SandboxLifecycle(expiration_policies=[idle_policy_inactive])
 
     sandbox_name_inactive = f"sandbox-idle-inactive-{uuid.uuid4().hex[:8]}"
-    sandbox_inactive = await SandboxInstance.create({
-        "lifecycle": lifecycle_inactive,
-        "image": BASE_IMAGE,
-        "name": sandbox_name_inactive
-    })
+    sandbox_inactive = await SandboxInstance.create(
+        {
+            "lifecycle": lifecycle_inactive,
+            "image": BASE_IMAGE,
+            "name": sandbox_name_inactive,
+        }
+    )
     print(f"[Test 3B] Created sandbox with 30s idle timeout: {sandbox_inactive.metadata.name}")
 
     # Make initial sandbox API call to activate idle monitoring
@@ -216,26 +211,14 @@ async def test_ttl_idle():
 # Test 4: Multiple expiration policies
 async def test_multiple_policies():
     print("[Test 4] Multiple Policies: Starting...")
-    idle_policy = ExpirationPolicy(
-        type_="ttl-idle",
-        value="5m",
-        action="delete"
-    )
-    max_age_policy = ExpirationPolicy(
-        type_="ttl-max-age",
-        value="10m",
-        action="delete"
-    )
-    lifecycle = SandboxLifecycle(
-        expiration_policies=[idle_policy, max_age_policy]
-    )
+    idle_policy = ExpirationPolicy(type_="ttl-idle", value="5m", action="delete")
+    max_age_policy = ExpirationPolicy(type_="ttl-max-age", value="10m", action="delete")
+    lifecycle = SandboxLifecycle(expiration_policies=[idle_policy, max_age_policy])
 
     sandbox_name = f"sandbox-multiple-{uuid.uuid4().hex[:8]}"
-    sandbox = await SandboxInstance.create({
-        "lifecycle": lifecycle,
-        "image": BASE_IMAGE,
-        "name": sandbox_name
-    })
+    sandbox = await SandboxInstance.create(
+        {"lifecycle": lifecycle, "image": BASE_IMAGE, "name": sandbox_name}
+    )
     print(f"[Test 4] Created sandbox: {sandbox.metadata.name}")
     print("[Test 4] Policy 1: ttl-idle=5m (delete)")
     print("[Test 4] Policy 2: ttl-max-age=10m (delete)")
@@ -255,10 +238,7 @@ async def test_empty_policies():
     print("[Test 5] No Lifecycle: Starting...")
     # Don't specify lifecycle at all (instead of empty policies)
     sandbox_name = f"sandbox-no-lifecycle-{uuid.uuid4().hex[:8]}"
-    sandbox = await SandboxInstance.create({
-        "image": BASE_IMAGE,
-        "name": sandbox_name
-    })
+    sandbox = await SandboxInstance.create({"image": BASE_IMAGE, "name": sandbox_name})
     print(f"[Test 5] Created sandbox without lifecycle: {sandbox.metadata.name}")
 
     status = await SandboxInstance.get(sandbox.metadata.name)
@@ -273,19 +253,19 @@ async def test_empty_policies():
 async def test_backward_compatibility():
     print("[Test 6] Backward Compatibility: Starting...")
     lifecycle = SandboxLifecycle(
-        expiration_policies=[
-            ExpirationPolicy(type_="ttl-max-age", value="2m", action="delete")
-        ]
+        expiration_policies=[ExpirationPolicy(type_="ttl-max-age", value="2m", action="delete")]
     )
 
     # Test that lifecycle can coexist with legacy ttl
     sandbox_name = f"sandbox-backcompat-{uuid.uuid4().hex[:8]}"
-    sandbox = await SandboxInstance.create({
-        "lifecycle": lifecycle,
-        "image": BASE_IMAGE,
-        "ttl": "5m",  # Legacy ttl - should be overridden by lifecycle
-        "name": sandbox_name
-    })
+    sandbox = await SandboxInstance.create(
+        {
+            "lifecycle": lifecycle,
+            "image": BASE_IMAGE,
+            "ttl": "5m",  # Legacy ttl - should be overridden by lifecycle
+            "name": sandbox_name,
+        }
+    )
     print("[Test 6] Created sandbox with both lifecycle and legacy ttl")
     print("[Test 6] Lifecycle: ttl-max-age=2m (delete), Legacy ttl: 5m")
 
@@ -310,11 +290,9 @@ async def test_duration_formats():
         )
 
         sandbox_name = f"sandbox-dur-{duration.replace('s', '').replace('m', '').replace('h', '').replace('d', '')}{duration[-1]}-{uuid.uuid4().hex[:8]}"
-        sandbox = await SandboxInstance.create({
-            "lifecycle": lifecycle,
-            "image": BASE_IMAGE,
-            "name": sandbox_name
-        })
+        sandbox = await SandboxInstance.create(
+            {"lifecycle": lifecycle, "image": BASE_IMAGE, "name": sandbox_name}
+        )
         print(f"[Test 7] Created sandbox with {duration} TTL: {sandbox.metadata.name}")
 
         # Clean up immediately
@@ -326,21 +304,13 @@ async def test_duration_formats():
 # Test 8: TTL Max-Age with delete action
 async def test_ttl_max_age_delete():
     print("[Test 8] TTL Max-Age Delete: Starting...")
-    delete_policy = ExpirationPolicy(
-        type_="ttl-max-age",
-        value="30s",
-        action="delete"
-    )
-    lifecycle = SandboxLifecycle(
-        expiration_policies=[delete_policy]
-    )
+    delete_policy = ExpirationPolicy(type_="ttl-max-age", value="30s", action="delete")
+    lifecycle = SandboxLifecycle(expiration_policies=[delete_policy])
 
     sandbox_name = f"sandbox-maxage-delete-{uuid.uuid4().hex[:8]}"
-    sandbox = await SandboxInstance.create({
-        "lifecycle": lifecycle,
-        "image": BASE_IMAGE,
-        "name": sandbox_name
-    })
+    sandbox = await SandboxInstance.create(
+        {"lifecycle": lifecycle, "image": BASE_IMAGE, "name": sandbox_name}
+    )
     print(f"[Test 8] Created sandbox: {sandbox.metadata.name}")
     print("[Test 8] Policy: ttl-max-age=30s (delete)")
 
@@ -369,23 +339,22 @@ async def test_ttl_max_age_delete():
 async def test_mixed_policies():
     print("[Test 9] Mixed Policies: Starting...")
     from datetime import timezone
+
     policies = [
         ExpirationPolicy(type_="ttl-idle", value="2m", action="delete"),
         ExpirationPolicy(type_="ttl-max-age", value="5m", action="delete"),
         ExpirationPolicy(
             type_="date",
             value=(datetime.now(timezone.utc) + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            action="delete"
-        )
+            action="delete",
+        ),
     ]
     lifecycle = SandboxLifecycle(expiration_policies=policies)
 
     sandbox_name = f"sandbox-mixed-{uuid.uuid4().hex[:8]}"
-    sandbox = await SandboxInstance.create({
-        "lifecycle": lifecycle,
-        "image": BASE_IMAGE,
-        "name": sandbox_name
-    })
+    sandbox = await SandboxInstance.create(
+        {"lifecycle": lifecycle, "image": BASE_IMAGE, "name": sandbox_name}
+    )
     print(f"[Test 9] Created sandbox: {sandbox.metadata.name}")
     print("[Test 9] Policies: idle=2m(delete), max-age=5m(delete), date=+1h(delete)")
 
@@ -405,6 +374,7 @@ async def main():
         print("=== Running all tests in parallel ===\n")
 
         import time
+
         start_time = time.time()
 
         # Run all tests in parallel
@@ -418,7 +388,7 @@ async def main():
             test_duration_formats(),
             test_ttl_max_age_delete(),
             test_mixed_policies(),
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         end_time = time.time()
@@ -429,9 +399,15 @@ async def main():
         print(f"Total execution time: {duration} seconds\n")
 
         test_names = [
-            "TTL Max-Age", "Date Expiration", "TTL Idle",
-            "Multiple Policies", "No Lifecycle", "Backward Compatibility",
-            "Duration Formats", "TTL Max-Age Delete", "Mixed Policies"
+            "TTL Max-Age",
+            "Date Expiration",
+            "TTL Idle",
+            "Multiple Policies",
+            "No Lifecycle",
+            "Backward Compatibility",
+            "Duration Formats",
+            "TTL Max-Age Delete",
+            "Mixed Policies",
         ]
 
         passed = 0
@@ -458,6 +434,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Fatal test error: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)
 

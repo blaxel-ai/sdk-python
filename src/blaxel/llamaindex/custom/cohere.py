@@ -17,7 +17,10 @@ from llama_index.core.base.llms.types import (
 )
 from llama_index.core.bridge.pydantic import Field, PrivateAttr
 from llama_index.core.callbacks import CallbackManager
-from llama_index.core.llms.callbacks import llm_chat_callback, llm_completion_callback
+from llama_index.core.llms.callbacks import (
+    llm_chat_callback,
+    llm_completion_callback,
+)
 from llama_index.core.llms.function_calling import FunctionCallingLLM
 from llama_index.core.llms.llm import ToolSelection
 from llama_index.core.tools.types import BaseTool
@@ -56,7 +59,8 @@ class Cohere(FunctionCallingLLM):
     )
     max_retries: int = Field(default=10, description="The maximum number of API retries.")
     additional_kwargs: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional kwargs for the Cohere API."
+        default_factory=dict,
+        description="Additional kwargs for the Cohere API.",
     )
     max_tokens: int = Field(description="The maximum number of tokens to generate.")
 
@@ -213,9 +217,9 @@ class Cohere(FunctionCallingLLM):
 
         messages, documents = remove_documents_from_messages(messages)
 
-        tool_results: List[Dict[str, Any]] | None = (
-            _messages_to_cohere_tool_results_curr_chat_turn(messages) or kwargs.get("tool_results")
-        )
+        tool_results: List[Dict[str, Any]] | None = _messages_to_cohere_tool_results_curr_chat_turn(
+            messages
+        ) or kwargs.get("tool_results")
         if not tool_results:
             tool_results = None
 
@@ -285,12 +289,14 @@ class Cohere(FunctionCallingLLM):
 
         if "stream" in all_kwargs:
             warnings.warn(
-                "Parameter `stream` is not supported by the `chat` method."
-                "Use the `stream_chat` method instead"
+                "Parameter `stream` is not supported by the `chat` method.Use the `stream_chat` method instead"
             )
 
         response = completion_with_retry(
-            client=self._client, max_retries=self.max_retries, chat=True, **chat_request
+            client=self._client,
+            max_retries=self.max_retries,
+            chat=True,
+            **chat_request,
         )
         if not isinstance(response, cohere.NonStreamedChatResponse):
             tool_calls = response.get("tool_calls")
@@ -316,8 +322,7 @@ class Cohere(FunctionCallingLLM):
         all_kwargs = self._get_all_kwargs(**kwargs)
         if "stream" in all_kwargs:
             warnings.warn(
-                "Parameter `stream` is not supported by the `chat` method."
-                "Use the `stream_chat` method instead"
+                "Parameter `stream` is not supported by the `chat` method.Use the `stream_chat` method instead"
             )
 
         response = completion_with_retry(
@@ -343,7 +348,10 @@ class Cohere(FunctionCallingLLM):
         chat_request = self.get_cohere_chat_request(messages=messages, **all_kwargs)
 
         response = completion_with_retry(
-            client=self._client, max_retries=self.max_retries, chat=True, **chat_request
+            client=self._client,
+            max_retries=self.max_retries,
+            chat=True,
+            **chat_request,
         )
 
         def gen() -> ChatResponseGen:
@@ -394,8 +402,7 @@ class Cohere(FunctionCallingLLM):
             raise ValueError(f"{all_kwargs['model']} not supported for chat")
         if "stream" in all_kwargs:
             warnings.warn(
-                "Parameter `stream` is not supported by the `chat` method."
-                "Use the `stream_chat` method instead"
+                "Parameter `stream` is not supported by the `chat` method.Use the `stream_chat` method instead"
             )
 
         chat_request = self.get_cohere_chat_request(messages=messages, **all_kwargs)
@@ -443,8 +450,7 @@ class Cohere(FunctionCallingLLM):
         all_kwargs = self._get_all_kwargs(**kwargs)
         if "stream" in all_kwargs:
             warnings.warn(
-                "Parameter `stream` is not supported by the `chat` method."
-                "Use the `stream_chat` method instead"
+                "Parameter `stream` is not supported by the `chat` method.Use the `stream_chat` method instead"
             )
 
         response = await acompletion_with_retry(
@@ -472,7 +478,10 @@ class Cohere(FunctionCallingLLM):
         chat_request = self.get_cohere_chat_request(messages, **all_kwargs)
 
         response = completion_with_retry(
-            client=self._client, max_retries=self.max_retries, chat=True, **chat_request
+            client=self._client,
+            max_retries=self.max_retries,
+            chat=True,
+            **chat_request,
         )
 
         async def gen() -> ChatResponseAsyncGen:

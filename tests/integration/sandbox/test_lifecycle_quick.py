@@ -17,24 +17,20 @@ async def test_basic_lifecycle():
     print(f"Testing basic lifecycle creation with {BASE_IMAGE} (BL_ENV={BL_ENV})")
 
     # Create a simple lifecycle with ttl-max-age
-    ttl_policy = ExpirationPolicy(
-        type_="ttl-max-age",
-        value="5m",
-        action="delete"
-    )
-    lifecycle = SandboxLifecycle(
-        expiration_policies=[ttl_policy]
-    )
+    ttl_policy = ExpirationPolicy(type_="ttl-max-age", value="5m", action="delete")
+    lifecycle = SandboxLifecycle(expiration_policies=[ttl_policy])
 
     print(f"Creating sandbox with lifecycle: {lifecycle.to_dict()}")
 
     try:
         # Create sandbox with lifecycle
-        sandbox = await SandboxInstance.create({
-            "lifecycle": lifecycle,
-            "image": BASE_IMAGE,
-            "name": "test-lifecycle-quick"
-        })
+        sandbox = await SandboxInstance.create(
+            {
+                "lifecycle": lifecycle,
+                "image": BASE_IMAGE,
+                "name": "test-lifecycle-quick",
+            }
+        )
 
         print(f"✅ Sandbox created successfully: {sandbox.metadata.name}")
         print(f"   Status: {sandbox.status}")
@@ -53,6 +49,7 @@ async def test_basic_lifecycle():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -68,11 +65,13 @@ async def test_multiple_policies():
     lifecycle = SandboxLifecycle(expiration_policies=policies)
 
     try:
-        sandbox = await SandboxInstance.create({
-            "lifecycle": lifecycle,
-            "image": BASE_IMAGE,
-            "name": "test-multiple-policies"
-        })
+        sandbox = await SandboxInstance.create(
+            {
+                "lifecycle": lifecycle,
+                "image": BASE_IMAGE,
+                "name": "test-multiple-policies",
+            }
+        )
 
         print(f"✅ Sandbox with multiple policies created: {sandbox.metadata.name}")
 
@@ -89,6 +88,7 @@ async def test_multiple_policies():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

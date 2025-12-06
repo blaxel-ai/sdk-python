@@ -51,11 +51,13 @@ class BlAgent:
             body = json.dumps(body)
 
         # Merge settings headers with provided headers
-        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
+        merged_headers = {
+            **settings.headers,
+            "Content-Type": "application/json",
+            **headers,
+        }
 
-        return client.get_httpx_client().post(
-            url, headers=merged_headers, data=body, params=params
-        )
+        return client.get_httpx_client().post(url, headers=merged_headers, data=body, params=params)
 
     async def acall(self, url, input_data, headers: dict = {}, params: dict = {}):
         logger.debug(f"Agent Calling: {self.name}")
@@ -64,7 +66,11 @@ class BlAgent:
             body = json.dumps(body)
 
         # Merge settings headers with provided headers
-        merged_headers = {**settings.headers, "Content-Type": "application/json", **headers}
+        merged_headers = {
+            **settings.headers,
+            "Content-Type": "application/json",
+            **headers,
+        }
 
         return await client.get_async_httpx_client().post(
             url, headers=merged_headers, data=body, params=params
@@ -119,5 +125,6 @@ async def get_agent_metadata(name):
         return await get_agent.asyncio(client=client, agent_name=name)
     except Exception:
         return None
+
 
 __all__ = ["BlAgent", "bl_agent", "get_agent_metadata"]

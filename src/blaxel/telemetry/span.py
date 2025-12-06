@@ -12,7 +12,7 @@ from opentelemetry.trace import Span, Tracer
 
 from blaxel.core import settings
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class DefaultAttributesSpanProcessor(SpanProcessor):
@@ -21,7 +21,7 @@ class DefaultAttributesSpanProcessor(SpanProcessor):
     def __init__(self, default_attributes: Dict[str, str]):
         self.default_attributes = default_attributes
 
-    def on_start(self, span: SdkSpan, parent_context = None) -> None:
+    def on_start(self, span: SdkSpan, parent_context=None) -> None:
         """Add default attributes to the span when it starts."""
         for key, value in self.default_attributes.items():
             span.set_attribute(key, value)
@@ -52,10 +52,12 @@ class SpanManager:
             "blaxel.environment": settings.env,
             "workload.id": settings.name,
             "workload.type": f"{settings.type}s",
-            "workspace": settings.workspace
+            "workspace": settings.workspace,
         }
 
-    def create_active_span(self, name: str, attributes: Dict[str, Any], parent: Span | None = None) -> ContextManager[Span]:
+    def create_active_span(
+        self, name: str, attributes: Dict[str, Any], parent: Span | None = None
+    ) -> ContextManager[Span]:
         """
         Creates an active span and executes the provided function within its context.
 
@@ -77,7 +79,9 @@ class SpanManager:
             context = trace.set_span_in_context(parent)
         return self.tracer.start_as_current_span(name, attributes=attributes, context=context)
 
-    def create_span(self, name: str, attributes: Dict[str, Any], parent: Span | None = None) -> Span:
+    def create_span(
+        self, name: str, attributes: Dict[str, Any], parent: Span | None = None
+    ) -> Span:
         """
         Creates a new span without making it active.
 
@@ -95,7 +99,7 @@ class SpanManager:
             "blaxel.environment": settings.env,
             "workload.id": settings.name,
             "workload.type": f"{settings.type}s",
-            "workspace": settings.workspace
+            "workspace": settings.workspace,
         }
 
         context = None

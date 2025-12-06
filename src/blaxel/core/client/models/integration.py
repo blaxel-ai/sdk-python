@@ -41,7 +41,6 @@ class Integration:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         additional_infos: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.additional_infos
@@ -53,13 +52,21 @@ class Integration:
             additional_infos = self.additional_infos
 
         endpoints: Union[Unset, dict[str, Any]] = UNSET
-        if self.endpoints and not isinstance(self.endpoints, Unset) and not isinstance(self.endpoints, dict):
+        if (
+            self.endpoints
+            and not isinstance(self.endpoints, Unset)
+            and not isinstance(self.endpoints, dict)
+        ):
             endpoints = self.endpoints.to_dict()
         elif self.endpoints and isinstance(self.endpoints, dict):
             endpoints = self.endpoints
 
         headers: Union[Unset, dict[str, Any]] = UNSET
-        if self.headers and not isinstance(self.headers, Unset) and not isinstance(self.headers, dict):
+        if (
+            self.headers
+            and not isinstance(self.headers, Unset)
+            and not isinstance(self.headers, dict)
+        ):
             headers = self.headers.to_dict()
         elif self.headers and isinstance(self.headers, dict):
             headers = self.headers

@@ -7,7 +7,11 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
+from ..types import (
+    ProcessRequestWithLog,
+    ProcessResponseWithLog,
+    SandboxConfiguration,
+)
 from .action import SyncSandboxAction
 
 
@@ -16,7 +20,9 @@ class SyncSandboxProcess(SyncSandboxAction):
         super().__init__(sandbox_config)
 
     def stream_logs(
-        self, process_name: str, options: Dict[str, Callable[[str], None]] | None = None
+        self,
+        process_name: str,
+        options: Dict[str, Callable[[str], None]] | None = None,
     ) -> Dict[str, Callable[[], None]]:
         if options is None:
             options = {}
@@ -31,6 +37,7 @@ class SyncSandboxProcess(SyncSandboxAction):
         def start_stream():
             nonlocal current_close
             log_counter = [0]
+
             def make_dedup(cb_key: str):
                 def inner(content: str):
                     key = f"{log_counter[0]}:{content}"
@@ -39,7 +46,9 @@ class SyncSandboxProcess(SyncSandboxAction):
                         seen_logs.add(key)
                         if options.get(cb_key):
                             options[cb_key](content)
+
                 return inner
+
             wrapped_options: Dict[str, Callable[[str], None]] = {}
             if "on_log" in options:
                 wrapped_options["on_log"] = make_dedup("on_log")
@@ -50,9 +59,11 @@ class SyncSandboxProcess(SyncSandboxAction):
             if current_close["fn"]:
                 current_close["fn"]()
             current_close["fn"] = self._stream_logs(process_name, wrapped_options)["close"]
+
             def schedule():
                 if is_running.is_set():
                     start_stream()
+
             with timer_lock:
                 if reconnect_timer["t"]:
                     reconnect_timer["t"].cancel()
@@ -60,7 +71,9 @@ class SyncSandboxProcess(SyncSandboxAction):
                 reconnect_timer["t"] = t
                 t.daemon = True
                 t.start()
+
         start_stream()
+
         def close():
             is_running.clear()
             with timer_lock:
@@ -71,14 +84,18 @@ class SyncSandboxProcess(SyncSandboxAction):
                 current_close["fn"]()
                 current_close["fn"] = None
             seen_logs.clear()
+
         return {"close": close}
 
     def _stream_logs(
-        self, identifier: str, options: Dict[str, Callable[[str], None]] | None = None
+        self,
+        identifier: str,
+        options: Dict[str, Callable[[str], None]] | None = None,
     ) -> Dict[str, Callable[[], None]]:
         if options is None:
             options = {}
         closed = threading.Event()
+
         def run():
             url = f"{self.url}/process/{identifier}/logs/stream"
             headers = {**settings.headers, **self.sandbox_config.headers}
@@ -116,14 +133,18 @@ class SyncSandboxProcess(SyncSandboxAction):
                 # Ignore on close
                 if not closed.is_set():
                     raise e
+
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
+
         def close():
             closed.set()
+
         return {"close": close}
 
     def exec(
-        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
+        self,
+        process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]],
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
         on_log = None
         if isinstance(process, ProcessRequestWithLog):
@@ -164,7 +185,8 @@ class SyncSandboxProcess(SyncSandboxAction):
                 if on_log is not None:
                     stream_control = self._stream_logs(result.pid, {"on_log": on_log})
                     return ProcessResponseWithLog(
-                        result, lambda: stream_control["close"]() if stream_control else None
+                        result,
+                        lambda: stream_control["close"]() if stream_control else None,
                     )
             return result
 
@@ -207,7 +229,11 @@ class SyncSandboxProcess(SyncSandboxAction):
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
-    def logs(self, identifier: str, log_type: Literal["stdout", "stderr", "all"] = "all") -> str:
+    def logs(
+        self,
+        identifier: str,
+        log_type: Literal["stdout", "stderr", "all"] = "all",
+    ) -> str:
         with self.get_client() as client_instance:
             response = client_instance.get(f"/process/{identifier}/logs")
             self.handle_response_error(response)
@@ -219,5 +245,3 @@ class SyncSandboxProcess(SyncSandboxAction):
             elif log_type == "stderr":
                 return data.get("stderr", "")
             raise Exception("Unsupported log type")
-
-

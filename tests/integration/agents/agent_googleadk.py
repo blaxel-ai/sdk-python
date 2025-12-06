@@ -43,7 +43,11 @@ If the status is 'success', present the weather 'report' clearly and concisely t
 Only use the tool when a city is mentioned for a weather request.
 """
     agent = Agent(
-        model=model, name=APP_NAME, description=description, instruction=prompt, tools=tools
+        model=model,
+        name=APP_NAME,
+        description=description,
+        instruction=prompt,
+        tools=tools,
     )
 
     # Create the specific session where the conversation will happen

@@ -6,7 +6,10 @@ from typing import Literal
 
 import anyio
 import mcp.types as types
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+from anyio.streams.memory import (
+    MemoryObjectReceiveStream,
+    MemoryObjectSendStream,
+)
 from mcp.server.fastmcp import FastMCP as FastMCPBase
 from mcp.shared.message import SessionMessage
 from websockets.asyncio.server import ServerConnection, serve
@@ -134,7 +137,10 @@ class FastMCP(FastMCPBase):
             anyio.run(self.run_sse_async)
 
     async def run_ws_async(self) -> None:
-        async with BlaxelMcpServerTransport().websocket_server() as (read_stream, write_stream):
+        async with BlaxelMcpServerTransport().websocket_server() as (
+            read_stream,
+            write_stream,
+        ):
             await self._mcp_server.run(
                 read_stream,
                 write_stream,

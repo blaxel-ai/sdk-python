@@ -24,6 +24,7 @@ class DeviceLogin:
         client_id (str): The client ID for the device.
         scope (str): The scope of the authentication.
     """
+
     client_id: str
     scope: str
 
@@ -42,6 +43,7 @@ class DeviceLoginResponse:
         verification_uri (str): URI for user to verify device login.
         verification_uri_complete (str): Complete URI including the user code for verification.
     """
+
     client_id: str
     device_code: str
     user_code: str
@@ -61,6 +63,7 @@ class DeviceLoginFinalizeRequest:
         client_id (str): The client ID for finalizing the device login.
         device_code (str): The device code to finalize login.
     """
+
     grant_type: str
     client_id: str
     device_code: str
@@ -78,6 +81,7 @@ class DeviceMode(BlaxelAuth):
     """
     DeviceMode auth that authenticates requests using a device code.
     """
+
     def get_headers(self) -> Dict[str, str]:
         """
         Retrieves the authentication headers containing the Bearer token and workspace information.
@@ -161,7 +165,11 @@ class DeviceMode(BlaxelAuth):
         }
 
         try:
-            response = post(url, json=refresh_data, headers={"Content-Type": "application/json"})
+            response = post(
+                url,
+                json=refresh_data,
+                headers={"Content-Type": "application/json"},
+            )
             response.raise_for_status()
             finalize_response = DeviceLoginFinalizeResponse(**response.json())
 

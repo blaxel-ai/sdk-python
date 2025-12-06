@@ -34,35 +34,35 @@ logger = getLogger(__name__)
 
 class TokenRefreshingWrapper:
     """Base wrapper class that refreshes token before each call."""
-    
+
     def __init__(self, model_config: dict):
         self.model_config = model_config
         self.wrapped_model = self._create_model()
-    
+
     def _create_model(self):
         """Create the model instance with current token."""
         config = self.model_config
-        model_type = config['type']
-        model = config['model']
-        url = config['url']
-        kwargs = config.get('kwargs', {})
-        
-        if model_type == 'anthropic':
+        model_type = config["type"]
+        model = config["model"]
+        url = config["url"]
+        kwargs = config.get("kwargs", {})
+
+        if model_type == "anthropic":
             return Anthropic(
                 model=model,
                 api_key=settings.auth.token,
                 base_url=url,
                 default_headers=settings.auth.get_headers(),
-                **kwargs
+                **kwargs,
             )
-        elif model_type == 'xai':
+        elif model_type == "xai":
             return Groq(
                 model=model,
                 api_key=settings.auth.token,
                 api_base=f"{url}/v1",
-                **kwargs
+                **kwargs,
             )
-        elif model_type == 'gemini':
+        elif model_type == "gemini":
             return GoogleGenAI(
                 api_key=settings.auth.token,
                 model=model,
@@ -71,62 +71,54 @@ class TokenRefreshingWrapper:
                     base_url=url,
                     headers=settings.auth.get_headers(),
                 ),
-                **kwargs
+                **kwargs,
             )
-        elif model_type == 'cohere':
-            return Cohere(
-                model=model,
-                api_key=settings.auth.token,
-                api_base=url,
-                **kwargs
-            )
-        elif model_type == 'deepseek':
+        elif model_type == "cohere":
+            return Cohere(model=model, api_key=settings.auth.token, api_base=url, **kwargs)
+        elif model_type == "deepseek":
             return DeepSeek(
                 model=model,
                 api_key=settings.auth.token,
                 api_base=f"{url}/v1",
-                **kwargs
+                **kwargs,
             )
-        elif model_type == 'mistral':
-            return MistralAI(
-                model=model,
-                api_key=settings.auth.token,
-                endpoint=url,
-                **kwargs
-            )
-        elif model_type == 'cerebras':
+        elif model_type == "mistral":
+            return MistralAI(model=model, api_key=settings.auth.token, endpoint=url, **kwargs)
+        elif model_type == "cerebras":
             return Cerebras(
                 model=model,
                 api_key=settings.auth.token,
                 api_base=f"{url}/v1",
-                **kwargs
+                **kwargs,
             )
         else:
             if model_type != "openai":
-                logger.warning(f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI")
-            
+                logger.warning(
+                    f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI"
+                )
+
             return OpenAI(
                 model=model,
                 api_key=settings.auth.token,
                 api_base=f"{url}/v1",
-                **kwargs
+                **kwargs,
             )
-    
+
     def _refresh_token(self):
         """Refresh the token and recreate the model if needed."""
         # Only refresh if using ClientCredentials (which has get_token method)
         current_token = settings.auth.token
-        
-        if hasattr(settings.auth, 'get_token'):
+
+        if hasattr(settings.auth, "get_token"):
             # This will trigger token refresh if needed
             settings.auth.get_token()
-        
+
         new_token = settings.auth.token
-        
+
         # If token changed, recreate the model
         if current_token != new_token:
             self.wrapped_model = self._create_model()
-    
+
     def __getattr__(self, name):
         """Delegate attribute access to wrapped model."""
         return getattr(self.wrapped_model, name)
@@ -134,7 +126,7 @@ class TokenRefreshingWrapper:
 
 class TokenRefreshingLLM(TokenRefreshingWrapper):
     """Wrapper for LlamaIndex LLMs that refreshes token before each call."""
-    
+
     async def achat(
         self,
         messages: Sequence[ChatMessage],
@@ -143,7 +135,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         """Async chat with token refresh."""
         self._refresh_token()
         return await self.wrapped_model.achat(messages, **kwargs)
-    
+
     def chat(
         self,
         messages: Sequence[ChatMessage],
@@ -152,7 +144,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         """Sync chat with token refresh."""
         self._refresh_token()
         return self.wrapped_model.chat(messages, **kwargs)
-    
+
     async def astream_chat(
         self,
         messages: Sequence[ChatMessage],
@@ -162,7 +154,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         self._refresh_token()
         async for chunk in self.wrapped_model.astream_chat(messages, **kwargs):
             yield chunk
-    
+
     def stream_chat(
         self,
         messages: Sequence[ChatMessage],
@@ -172,7 +164,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         self._refresh_token()
         for chunk in self.wrapped_model.stream_chat(messages, **kwargs):
             yield chunk
-    
+
     async def acomplete(
         self,
         prompt: str,
@@ -181,7 +173,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         """Async complete with token refresh."""
         self._refresh_token()
         return await self.wrapped_model.acomplete(prompt, **kwargs)
-    
+
     def complete(
         self,
         prompt: str,
@@ -190,7 +182,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         """Sync complete with token refresh."""
         self._refresh_token()
         return self.wrapped_model.complete(prompt, **kwargs)
-    
+
     async def astream_complete(
         self,
         prompt: str,
@@ -200,7 +192,7 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
         self._refresh_token()
         async for chunk in self.wrapped_model.astream_complete(prompt, **kwargs):
             yield chunk
-    
+
     def stream_complete(
         self,
         prompt: str,
@@ -214,14 +206,9 @@ class TokenRefreshingLLM(TokenRefreshingWrapper):
 
 async def bl_model(name, **kwargs):
     url, type, model = await bl_model_core(name).get_parameters()
-    
+
     # Store model configuration for recreation
-    model_config = {
-        'type': type,
-        'model': model,
-        'url': url,
-        'kwargs': kwargs
-    }
-    
+    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
+
     # Create and return the wrapper
     return TokenRefreshingLLM(model_config)

@@ -43,7 +43,9 @@ class Client:
     _headers: dict[str, str] = field(factory=dict, kw_only=True, alias="headers")
     _auth: httpx.Auth = field(default=None, alias="auth")
     _timeout: httpx.Timeout | None = field(default=None, kw_only=True, alias="timeout")
-    _verify_ssl: Union[str, bool, ssl.SSLContext] = field(default=True, kw_only=True, alias="verify_ssl")
+    _verify_ssl: Union[str, bool, ssl.SSLContext] = field(
+        default=True, kw_only=True, alias="verify_ssl"
+    )
     _follow_redirects: bool = field(default=False, kw_only=True, alias="follow_redirects")
     _httpx_args: dict[str, Any] = field(factory=dict, kw_only=True, alias="httpx_args")
     _client: httpx.Client | None = field(default=None, init=False)

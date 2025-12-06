@@ -17,7 +17,9 @@ class CodeInterpreter(SandboxInstance):
     DEFAULT_PORTS = [
         {"name": "jupyter", "target": 8888, "protocol": "HTTP"},
     ]
-    DEFAULT_LIFECYCLE = {"expirationPolicies": [{"type": "ttl-idle", "value": "30m", "action": "delete"}]}
+    DEFAULT_LIFECYCLE = {
+        "expirationPolicies": [{"type": "ttl-idle", "value": "30m", "action": "delete"}]
+    }
 
     @classmethod
     async def get(cls, sandbox_name: str) -> CodeInterpreter:
@@ -148,11 +150,15 @@ class CodeInterpreter(SandboxInstance):
         elif data_type == "stdout":
             execution.logs.stdout.append(data["text"])
             if on_stdout:
-                return on_stdout(CodeInterpreter.OutputMessage(data["text"], data.get("timestamp"), False))
+                return on_stdout(
+                    CodeInterpreter.OutputMessage(data["text"], data.get("timestamp"), False)
+                )
         elif data_type == "stderr":
             execution.logs.stderr.append(data["text"])
             if on_stderr:
-                return on_stderr(CodeInterpreter.OutputMessage(data["text"], data.get("timestamp"), True))
+                return on_stderr(
+                    CodeInterpreter.OutputMessage(data["text"], data.get("timestamp"), True)
+                )
         elif data_type == "error":
             execution.error = CodeInterpreter.ExecutionError(
                 data.get("name", ""), data.get("value"), data.get("traceback")
@@ -200,7 +206,10 @@ class CodeInterpreter(SandboxInstance):
 
         client = self.process.get_client()
         timeout_cfg = httpx.Timeout(
-            connect=connect_timeout, read=read_timeout, write=write_timeout, pool=pool_timeout
+            connect=connect_timeout,
+            read=read_timeout,
+            write=write_timeout,
+            pool=pool_timeout,
         )
         async with client.stream(
             "POST",
@@ -243,7 +252,7 @@ class CodeInterpreter(SandboxInstance):
                         on_error=on_error,
                     )
                 except json.JSONDecodeError:
-                        # Fallback: treat as stdout text-only message
+                    # Fallback: treat as stdout text-only message
                     execution.logs.stdout.append(decoded)
                     if on_stdout:
                         on_stdout(CodeInterpreter.OutputMessage(decoded, None, False))
@@ -271,10 +280,10 @@ class CodeInterpreter(SandboxInstance):
         try:
             # Always read response body first
             body_bytes = await response.aread()
-            
+
             if response.status_code >= 400:
                 try:
-                    body_text = body_bytes.decode('utf-8', errors='ignore')
+                    body_text = body_bytes.decode("utf-8", errors="ignore")
                 except Exception:
                     body_text = "<unavailable>"
                 method = getattr(response.request, "method", "UNKNOWN")
@@ -287,10 +296,8 @@ class CodeInterpreter(SandboxInstance):
                 )
                 self.logger.debug(details)
                 raise RuntimeError(details)
-            
+
             data = json.loads(body_bytes)
             return CodeInterpreter.Context.from_json(data)
         finally:
             await response.aclose()
-
-

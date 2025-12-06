@@ -7,7 +7,10 @@ from typing import Collection
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    unwrap,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -139,12 +142,22 @@ def _set_input_attributes(span, args, kwargs, llm_model):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span,
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
+        kwargs.get("max_output_tokens"),
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
-    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
-    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty"))
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_PRESENCE_PENALTY,
+        kwargs.get("presence_penalty"),
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_FREQUENCY_PENALTY,
+        kwargs.get("frequency_penalty"),
+    )
 
     return
 
@@ -176,7 +189,11 @@ def _set_response_attributes(span, response, llm_model):
                 _set_span_attribute(span, f"{prefix}.content", item.text)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response.text, str):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text)
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                response.text,
+            )
             _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
     else:
         if isinstance(response, list):

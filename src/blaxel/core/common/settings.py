@@ -69,23 +69,25 @@ class Settings:
             return "https://run.blaxel.ai"
         return "https://run.blaxel.dev"
 
-
     @property
     def sentry_dsn(self) -> str:
         """Get the Sentry DSN (injected at build time)."""
         import blaxel
+
         return blaxel.__sentry_dsn__
 
     @property
     def version(self) -> str:
         """Get the package version (injected at build time)."""
         import blaxel
+
         return blaxel.__version__ or "unknown"
 
     @property
     def commit(self) -> str:
         """Get the commit hash (injected at build time)."""
         import blaxel
+
         return blaxel.__commit__ or "unknown"
 
     @property
@@ -95,7 +97,6 @@ class Settings:
         os_arch = _get_os_arch()
         headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
         return headers
-
 
     @property
     def name(self) -> str:
@@ -164,5 +165,6 @@ class Settings:
             pass
 
         return True
+
 
 settings = Settings()

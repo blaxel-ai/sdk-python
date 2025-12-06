@@ -61,7 +61,11 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return self._upload_with_multipart(path, content, "0644")
         binary_file = io.BytesIO(content)
         files = {
-            "file": ("binary-file.bin", binary_file, "application/octet-stream"),
+            "file": (
+                "binary-file.bin",
+                binary_file,
+                "application/octet-stream",
+            ),
         }
         data = {"permissions": "0644", "path": path}
         url = f"{self.url}/filesystem/{path}"
@@ -195,7 +199,10 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                                     name=file_event_data.get("name", ""),
                                     content=file_event_data.get("content"),
                                 )
-                                if options.get("with_content") and file_event.op in ["CREATE", "WRITE"]:
+                                if options.get("with_content") and file_event.op in [
+                                    "CREATE",
+                                    "WRITE",
+                                ]:
                                     try:
                                         file_path = file_event.path
                                         if file_path.endswith("/"):
@@ -244,7 +251,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             self.handle_response_error(response)
             return response.json()
 
-    def _complete_multipart_upload(self, upload_id: str, parts: List[Dict[str, Any]]) -> SuccessResponse:
+    def _complete_multipart_upload(
+        self, upload_id: str, parts: List[Dict[str, Any]]
+    ) -> SuccessResponse:
         url = f"{self.url}/filesystem-multipart/{upload_id}/complete"
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"parts": parts}
@@ -261,7 +270,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             if not response.is_success:
                 logger.warning(f"Failed to abort multipart upload: {response.status_code}")
 
-    def _upload_with_multipart(self, path: str, data: bytes, permissions: str = "0644") -> SuccessResponse:
+    def _upload_with_multipart(
+        self, path: str, data: bytes, permissions: str = "0644"
+    ) -> SuccessResponse:
         init_response = self._initiate_multipart_upload(path, permissions)
         upload_id = init_response.get("uploadId")
         if not upload_id:
@@ -274,8 +285,10 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             for i in range(0, num_parts, MAX_PARALLEL_UPLOADS):
                 threads = []
                 results: Dict[int, Dict[str, Any]] = {}
+
                 def make_upload(part_number: int, chunk: bytes):
                     results[part_number] = self._upload_part(upload_id, part_number, chunk)
+
                 for j in range(MAX_PARALLEL_UPLOADS):
                     if i + j >= num_parts:
                         break
@@ -298,5 +311,3 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             except Exception as abort_error:
                 logger.warning(f"Failed to abort multipart upload: {abort_error}")
             raise error
-
-

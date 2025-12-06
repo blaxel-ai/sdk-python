@@ -14,18 +14,25 @@ def _load_cache() -> None:
     Load cache data from .cache.yaml file if it exists.
     """
     try:
-        if os.path.exists('.cache.yaml'):
-            with open('.cache.yaml', encoding='utf-8') as file:
+        if os.path.exists(".cache.yaml"):
+            with open(".cache.yaml", encoding="utf-8") as file:
                 cache_string = file.read()
                 cache_data = yaml.safe_load_all(cache_string)
 
                 for doc in cache_data:
-                    if doc and isinstance(doc, dict) and 'kind' in doc and 'metadata' in doc and 'name' in doc['metadata']:
+                    if (
+                        doc
+                        and isinstance(doc, dict)
+                        and "kind" in doc
+                        and "metadata" in doc
+                        and "name" in doc["metadata"]
+                    ):
                         cache_key = f"{doc['kind']}/{doc['metadata']['name']}"
                         _cache[cache_key] = doc
     except Exception:
         # Silently fail if cache file doesn't exist or is invalid
         pass
+
 
 # Initialize cache on module import
 _load_cache()

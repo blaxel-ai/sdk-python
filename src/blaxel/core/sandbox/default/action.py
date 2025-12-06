@@ -1,6 +1,4 @@
-
 import httpx
-from contextlib import asynccontextmanager
 
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
@@ -61,7 +59,9 @@ class SandboxAction:
             base_url = self.sandbox_config.force_url or self.url
             self._client = httpx.AsyncClient(
                 base_url=base_url,
-                headers=self.sandbox_config.headers if self.sandbox_config.force_url else {**settings.headers, **self.sandbox_config.headers},
+                headers=self.sandbox_config.headers
+                if self.sandbox_config.force_url
+                else {**settings.headers, **self.sandbox_config.headers},
                 http2=False,
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
                 timeout=httpx.Timeout(300.0, connect=10.0),

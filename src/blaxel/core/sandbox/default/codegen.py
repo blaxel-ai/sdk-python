@@ -1,4 +1,3 @@
-
 from ...common.settings import settings
 from ..client.api.codegen.get_codegen_reranking_path import (
     asyncio as get_codegen_reranking_path,
@@ -39,7 +38,7 @@ class SandboxCodegen(SandboxAction):
         # Create a Client instance with the sandbox URL and headers
         client = Client(
             base_url=self.url,
-            headers={**settings.headers, **self.sandbox_config.headers}
+            headers={**settings.headers, **self.sandbox_config.headers},
         )
 
         async with client:
@@ -77,7 +76,7 @@ class SandboxCodegen(SandboxAction):
         # Create a Client instance with the sandbox URL and headers
         client = Client(
             base_url=self.url,
-            headers={**settings.headers, **self.sandbox_config.headers}
+            headers={**settings.headers, **self.sandbox_config.headers},
         )
 
         async with client:
@@ -94,4 +93,3 @@ class SandboxCodegen(SandboxAction):
             if isinstance(response, ErrorResponse):
                 raise Exception(f"Reranking failed: {response}")
             return response
-

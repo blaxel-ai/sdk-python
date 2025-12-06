@@ -11,6 +11,7 @@ class OauthTokenData:
     headers: dict[str, str] = field(default_factory=dict)
     authenticated: bool | None = False
 
+
 @dataclass
 class OauthTokenResponse:
     access_token: str
@@ -18,14 +19,16 @@ class OauthTokenResponse:
     expires_in: int
     token_type: str
 
+
 @dataclass
 class OauthTokenError:
     error: str
 
+
 async def oauth_token(
     options: OauthTokenData,
     client: Client | None = None,
-    throw_on_error: bool = False
+    throw_on_error: bool = False,
 ) -> Union[OauthTokenResponse, OauthTokenError]:
     """
     Get a new OAuth token.
@@ -38,10 +41,14 @@ async def oauth_token(
     Returns:
         The OAuth token response or error
     """
-    response = await (client or default_client).get_async_httpx_client().post(
-        url="/oauth/token",
-        json=options.body or {},
-        headers=options.headers or {},
+    response = (
+        await (client or default_client)
+        .get_async_httpx_client()
+        .post(
+            url="/oauth/token",
+            json=options.body or {},
+            headers=options.headers or {},
+        )
     )
     if response.status_code >= 400:
         if throw_on_error:

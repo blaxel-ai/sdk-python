@@ -43,7 +43,6 @@ class JobMetrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         billable_time: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.billable_time, Unset):
             billable_time = []
@@ -125,7 +124,11 @@ class JobMetrics:
                 tasks_running.append(tasks_running_item)
 
         tasks_total: Union[Unset, dict[str, Any]] = UNSET
-        if self.tasks_total and not isinstance(self.tasks_total, Unset) and not isinstance(self.tasks_total, dict):
+        if (
+            self.tasks_total
+            and not isinstance(self.tasks_total, Unset)
+            and not isinstance(self.tasks_total, dict)
+        ):
             tasks_total = self.tasks_total.to_dict()
         elif self.tasks_total and isinstance(self.tasks_total, dict):
             tasks_total = self.tasks_total

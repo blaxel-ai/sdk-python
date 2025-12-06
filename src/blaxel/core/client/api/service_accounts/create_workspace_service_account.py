@@ -35,7 +35,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> CreateWorkspaceServiceAccountResponse200 | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> CreateWorkspaceServiceAccountResponse200 | None:
     if response.status_code == 200:
         response_200 = CreateWorkspaceServiceAccountResponse200.from_dict(response.json())
 
@@ -46,7 +48,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> CreateWorksp
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[CreateWorkspaceServiceAccountResponse200]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[CreateWorkspaceServiceAccountResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

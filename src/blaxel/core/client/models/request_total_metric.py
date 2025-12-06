@@ -37,7 +37,6 @@ class RequestTotalMetric:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         items: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.items, Unset):
             items = []
@@ -63,7 +62,11 @@ class RequestTotalMetric:
         rps = self.rps
 
         rps_per_code: Union[Unset, dict[str, Any]] = UNSET
-        if self.rps_per_code and not isinstance(self.rps_per_code, Unset) and not isinstance(self.rps_per_code, dict):
+        if (
+            self.rps_per_code
+            and not isinstance(self.rps_per_code, Unset)
+            and not isinstance(self.rps_per_code, dict)
+        ):
             rps_per_code = self.rps_per_code.to_dict()
         elif self.rps_per_code and isinstance(self.rps_per_code, dict):
             rps_per_code = self.rps_per_code
@@ -109,7 +112,9 @@ class RequestTotalMetric:
         if isinstance(_request_total_per_code, Unset):
             request_total_per_code = UNSET
         else:
-            request_total_per_code = RequestTotalMetricRequestTotalPerCode.from_dict(_request_total_per_code)
+            request_total_per_code = RequestTotalMetricRequestTotalPerCode.from_dict(
+                _request_total_per_code
+            )
 
         rps = d.pop("rps", UNSET)
 

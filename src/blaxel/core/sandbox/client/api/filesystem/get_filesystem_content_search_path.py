@@ -42,7 +42,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[ContentSearchResponse, ErrorResponse] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[ContentSearchResponse, ErrorResponse] | None:
     if response.status_code == 200:
         response_200 = ContentSearchResponse.from_dict(response.json())
 

@@ -17,4 +17,5 @@ async def run():
             tools = await session.list_tools()
             print(f"Tools retrieved, number of tools: {len(tools.tools)}")
 
+
 asyncio.run(run())

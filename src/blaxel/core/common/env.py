@@ -19,29 +19,31 @@ class EnvConfig(BaseModel):
     def __getitem__(self, name: str) -> str | None:
         return self.__getattr__(name)
 
+
 def load_env() -> EnvConfig:
     env_config = EnvConfig()
 
     # Load config from blaxel.toml
     try:
-        with open('blaxel.toml', 'rb') as f:
+        with open("blaxel.toml", "rb") as f:
             config_infos = tomli.load(f)
-            if 'env' in config_infos:
-                env_config.config_env.update(config_infos['env'])
+            if "env" in config_infos:
+                env_config.config_env.update(config_infos["env"])
     except Exception:
         pass
 
     # Load secrets from .env
     try:
-        with open('.env') as f:
+        with open(".env") as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'):
-                    key, value = line.split('=', 1)
-                    env_config.secret_env[key] = value.replace('"', '')
+                if line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
+                    env_config.secret_env[key] = value.replace('"', "")
     except Exception:
         pass
 
     return env_config
+
 
 env = load_env()

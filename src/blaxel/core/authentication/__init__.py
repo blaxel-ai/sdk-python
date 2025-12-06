@@ -34,7 +34,8 @@ def get_credentials() -> CredentialsType | None:
 
     if os.environ.get("BL_CLIENT_CREDENTIALS"):
         return CredentialsType(
-            client_credentials=os.environ.get("BL_CLIENT_CREDENTIALS"), workspace=get_workspace()
+            client_credentials=os.environ.get("BL_CLIENT_CREDENTIALS"),
+            workspace=get_workspace(),
         )
 
     try:

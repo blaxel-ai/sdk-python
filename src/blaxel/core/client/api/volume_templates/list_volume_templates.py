@@ -34,7 +34,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Volume
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["VolumeTemplate"]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[list["VolumeTemplate"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

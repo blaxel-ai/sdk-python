@@ -1,4 +1,3 @@
-
 from ..cache import find_from_cache
 from ..client import client
 from ..client.api.models import get_model
@@ -23,21 +22,21 @@ class BLModel:
         model_data = await self._get_model_metadata()
         if not model_data:
             raise Exception(f"Model {self.model_name} not found")
-        runtime = (model_data.spec and model_data.spec.runtime)
+        runtime = model_data.spec and model_data.spec.runtime
         if not runtime:
             raise Exception(f"Model {self.model_name} has no runtime")
 
-        type = runtime.type_ or 'openai'
+        type = runtime.type_ or "openai"
         model = runtime.model
         self.models[self.model_name] = {
             "url": url,
             "type": type,
-            "model": model
+            "model": model,
         }
         return url, type, model
 
     async def _get_model_metadata(self) -> Model | None:
-        cache_data = await find_from_cache('Model', self.model_name)
+        cache_data = await find_from_cache("Model", self.model_name)
         if cache_data:
             return Model.from_dict(cache_data)
 
@@ -46,7 +45,9 @@ class BLModel:
         except Exception:
             return None
 
+
 def bl_model(model_name, **kwargs):
     return BLModel(model_name, **kwargs)
+
 
 __all__ = ["bl_model"]

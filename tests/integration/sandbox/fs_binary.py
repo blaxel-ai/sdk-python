@@ -139,7 +139,9 @@ async def test_streaming_large_file(sandbox: SandboxInstance):
         print(f"Verify hash: {verify_hash}")
 
         if len(verify_bytes) != file_size:
-            raise Exception(f"Verified file size mismatch! Expected {file_size}, got {len(verify_bytes)}")
+            raise Exception(
+                f"Verified file size mismatch! Expected {file_size}, got {len(verify_bytes)}"
+            )
 
         if upload_hash != verify_hash:
             raise Exception(f"Verified hash mismatch! Expected: {upload_hash}, Got: {verify_hash}")
@@ -175,7 +177,10 @@ async def test_various_binary_types(sandbox: SandboxInstance):
         {"name": "All zeros", "data": bytes([0x00] * 1024)},
         {"name": "All ones", "data": bytes([0xFF] * 1024)},
         {"name": "Sequential", "data": bytes(range(256))},
-        {"name": "Random pattern", "data": bytes((i * 137) % 256 for i in range(1024))},
+        {
+            "name": "Random pattern",
+            "data": bytes((i * 137) % 256 for i in range(1024)),
+        },
     ]
 
     for test_case in test_cases:
@@ -233,7 +238,9 @@ async def test_binary_from_local_file(sandbox: SandboxInstance):
         downloaded_hash = calculate_hash(downloaded_bytes)
 
         if original_hash != downloaded_hash:
-            raise Exception(f"Hash mismatch! Original: {original_hash}, Downloaded: {downloaded_hash}")
+            raise Exception(
+                f"Hash mismatch! Original: {original_hash}, Downloaded: {downloaded_hash}"
+            )
 
         info("✅ Local file uploaded and verified successfully!")
 
@@ -256,7 +263,7 @@ async def run_tests():
         sandbox = await create_or_get_sandbox(
             sandbox_name=SANDBOX_NAME,
             image="blaxel/base-image:latest",
-            memory=8192  # 8GB for handling large files
+            memory=8192,  # 8GB for handling large files
         )
 
         print(sep)
@@ -285,6 +292,7 @@ async def run_tests():
         print("❌ Test failed with error:")
         print(e)
         import traceback
+
         traceback.print_exc()
         print(sep)
         sys.exit(1)
@@ -296,4 +304,3 @@ async def run_tests():
 
 if __name__ == "__main__":
     asyncio.run(run_tests())
-

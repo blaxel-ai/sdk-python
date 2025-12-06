@@ -17,6 +17,7 @@ class CredentialsType(BaseModel):
     expires_in: int | None = Field(default=None, description="The expiration time")
     workspace: str | None = Field(default=None, description="The workspace")
 
+
 class BlaxelAuth(Auth):
     def __init__(self, credentials: CredentialsType, workspace_name: str, base_url: str):
         """

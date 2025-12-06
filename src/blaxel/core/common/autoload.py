@@ -22,18 +22,16 @@ _captured_exceptions: set = set()  # Track already captured exceptions to avoid 
 
 # Exceptions that are part of normal control flow and should not be captured
 _IGNORED_EXCEPTIONS = (
-    StopIteration,       # Iterator exhaustion
+    StopIteration,  # Iterator exhaustion
     StopAsyncIteration,  # Async iterator exhaustion
-    GeneratorExit,       # Generator cleanup
-    KeyboardInterrupt,   # User interrupt (Ctrl+C)
-    SystemExit,          # Program exit
-    CancelledError,      # Async task cancellation
+    GeneratorExit,  # Generator cleanup
+    KeyboardInterrupt,  # User interrupt (Ctrl+C)
+    SystemExit,  # Program exit
+    CancelledError,  # Async task cancellation
 )
 
 # Optional dependencies that may not be installed - import errors for these are expected
-_OPTIONAL_DEPENDENCIES = (
-    'opentelemetry',
-)
+_OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 
 
 def _get_exception_key(exc_type, exc_value, frame) -> str:
@@ -43,7 +41,7 @@ def _get_exception_key(exc_type, exc_value, frame) -> str:
     exc_name = exc_type.__name__ if exc_type else "Unknown"
     exc_msg = str(exc_value) if exc_value else ""
     # Get the original traceback location (where exception was first raised)
-    tb = getattr(exc_value, '__traceback__', None)
+    tb = getattr(exc_value, "__traceback__", None)
     if tb:
         # Walk to the deepest frame (origin of exception)
         while tb.tb_next:
@@ -65,7 +63,7 @@ def _is_optional_dependency_error(exc_type, exc_value) -> bool:
 
 def _trace_blaxel_exceptions(frame, event, arg):
     """Trace function that captures exceptions from blaxel SDK code."""
-    if event == 'exception':
+    if event == "exception":
         exc_type, exc_value, exc_tb = arg
 
         # Skip control flow exceptions (not actual errors)
@@ -79,7 +77,7 @@ def _trace_blaxel_exceptions(frame, event, arg):
         filename = frame.f_code.co_filename
 
         # Only capture if it's from blaxel in site-packages
-        if 'site-packages/blaxel' in filename:
+        if "site-packages/blaxel" in filename:
             # Avoid capturing the same exception multiple times using a content-based key
             exc_key = _get_exception_key(exc_type, exc_value, frame)
             if exc_key not in _captured_exceptions:

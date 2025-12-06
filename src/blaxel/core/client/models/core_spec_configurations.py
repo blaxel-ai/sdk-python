@@ -25,7 +25,6 @@ class CoreSpecConfigurations:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         key: Union[Unset, dict[str, Any]] = UNSET
         if self.key and not isinstance(self.key, Unset) and not isinstance(self.key, dict):
             key = self.key.to_dict()

@@ -3,7 +3,13 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List
 
-from blaxel.core.client.models import Metadata, Port, Runtime, Sandbox, SandboxSpec
+from blaxel.core.client.models import (
+    Metadata,
+    Port,
+    Runtime,
+    Sandbox,
+    SandboxSpec,
+)
 from blaxel.core.sandbox import SandboxInstance
 
 env = os.environ.get("BL_ENV", "prod")
@@ -21,7 +27,7 @@ async def local_sandbox(sandbox_name: str) -> SandboxInstance:
     info(f"Using local sandbox {sandbox_name}")
     sandbox = SandboxInstance(
         Sandbox(metadata=Metadata(name=sandbox_name)),
-        force_url="http://localhost:8080"
+        force_url="http://localhost:8080",
     )
     return sandbox
 
@@ -64,7 +70,13 @@ async def create_or_get_sandbox(
 
     # Create proper model objects
     metadata = Metadata(name=sandbox_name)
-    runtime = Runtime(image=image, memory=memory, ports=port_objects, envs=envs, generation="mk3")
+    runtime = Runtime(
+        image=image,
+        memory=memory,
+        ports=port_objects,
+        envs=envs,
+        generation="mk3",
+    )
     spec = SandboxSpec(runtime=runtime)
     sandbox_model = Sandbox(metadata=metadata, spec=spec)
 
@@ -153,7 +165,10 @@ def create_zip_from_directory(source_dir: str, output_path: str) -> None:
 async def create_preview(sandbox: SandboxInstance):
     """Create a preview for the sandbox."""
     preview = await sandbox.previews.create_if_not_exists(
-        {"metadata": {"name": "preview-nextjs"}, "spec": {"port": 3000, "public": True}}
+        {
+            "metadata": {"name": "preview-nextjs"},
+            "spec": {"port": 3000, "public": True},
+        }
     )
     return preview
 

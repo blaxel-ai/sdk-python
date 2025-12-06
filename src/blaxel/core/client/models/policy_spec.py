@@ -38,7 +38,6 @@ class PolicySpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         flavors: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.flavors, Unset):
             flavors = []
@@ -54,13 +53,21 @@ class PolicySpec:
             locations = []
             for componentsschemas_policy_locations_item_data in self.locations:
                 if type(componentsschemas_policy_locations_item_data) is dict:
-                    componentsschemas_policy_locations_item = componentsschemas_policy_locations_item_data
+                    componentsschemas_policy_locations_item = (
+                        componentsschemas_policy_locations_item_data
+                    )
                 else:
-                    componentsschemas_policy_locations_item = componentsschemas_policy_locations_item_data.to_dict()
+                    componentsschemas_policy_locations_item = (
+                        componentsschemas_policy_locations_item_data.to_dict()
+                    )
                 locations.append(componentsschemas_policy_locations_item)
 
         max_tokens: Union[Unset, dict[str, Any]] = UNSET
-        if self.max_tokens and not isinstance(self.max_tokens, Unset) and not isinstance(self.max_tokens, dict):
+        if (
+            self.max_tokens
+            and not isinstance(self.max_tokens, Unset)
+            and not isinstance(self.max_tokens, dict)
+        ):
             max_tokens = self.max_tokens.to_dict()
         elif self.max_tokens and isinstance(self.max_tokens, dict):
             max_tokens = self.max_tokens

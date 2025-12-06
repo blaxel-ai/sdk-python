@@ -71,4 +71,3 @@ if __name__ == "__main__":
     except Exception as err:
         print(f"❌ There was an error => {err}")
         sys.exit(1)
-

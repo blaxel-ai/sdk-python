@@ -14,7 +14,11 @@ async def test_preview_public(sandbox: SandboxInstance):
         await sandbox.previews.create(
             {
                 "metadata": {"name": name},
-                "spec": {"port": 443, "prefixUrl": "prefix-python", "public": True},
+                "spec": {
+                    "port": 443,
+                    "prefixUrl": "prefix-python",
+                    "public": True,
+                },
             }
         )
         previews = await sandbox.previews.list()
@@ -118,5 +122,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-

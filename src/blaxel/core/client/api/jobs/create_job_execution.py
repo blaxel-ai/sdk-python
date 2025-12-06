@@ -51,7 +51,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, J
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, JobExecution]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Any, JobExecution]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

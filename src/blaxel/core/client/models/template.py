@@ -46,7 +46,6 @@ class Template:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         default_branch = self.default_branch
 
         description = self.description

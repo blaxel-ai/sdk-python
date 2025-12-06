@@ -22,7 +22,7 @@ async def test_small_file_regular_upload(sandbox: SandboxInstance):
     info("Test 1: Small File Upload (< 5MB)")
 
     small_content = "Hello, world! " * 1000  # ~14KB
-    content_bytes = small_content.encode('utf-8')
+    content_bytes = small_content.encode("utf-8")
     file_size_kb = len(content_bytes) / 1024
 
     info(f"File size: {file_size_kb:.2f} KB")
@@ -46,7 +46,7 @@ async def test_large_text_file_multipart(sandbox: SandboxInstance):
 
     # Create content > 5MB
     large_content = "Large file content line. " * 250000  # ~6MB
-    content_bytes = large_content.encode('utf-8')
+    content_bytes = large_content.encode("utf-8")
     file_size_mb = len(content_bytes) / (1024 * 1024)
 
     info(f"File size: {file_size_mb:.2f} MB")
@@ -93,7 +93,9 @@ async def test_large_binary_file_multipart(sandbox: SandboxInstance):
     assert len(read_binary) == binary_size, "Binary file size should match"
     assert original_hash == downloaded_hash, "Binary file hash should match"
     # Verify pattern integrity
-    assert all(read_binary[i] == i % 256 for i in range(min(1000, binary_size))), "Binary content pattern should match"
+    assert all(read_binary[i] == i % 256 for i in range(min(1000, binary_size))), (
+        "Binary content pattern should match"
+    )
     info("✓ Large binary file content verified")
 
     # Clean up
@@ -108,7 +110,7 @@ async def test_very_large_file_multiple_parts(sandbox: SandboxInstance):
 
     # Create content > 10MB to test multiple parts
     very_large_content = "X" * (12 * 1024 * 1024)  # 12MB (will be split into 3 parts)
-    content_bytes = very_large_content.encode('utf-8')
+    content_bytes = very_large_content.encode("utf-8")
     file_size_mb = len(content_bytes) / (1024 * 1024)
 
     info(f"File size: {file_size_mb:.2f} MB (will be split into ~3 parts)")
@@ -117,7 +119,9 @@ async def test_very_large_file_multiple_parts(sandbox: SandboxInstance):
     await sandbox.fs.write("/tmp/very-large-file.txt", very_large_content)
     upload_duration = time.time() - start_time
     upload_speed = file_size_mb / upload_duration
-    info(f"✓ Very large file uploaded with multipart in {upload_duration:.2f}s ({upload_speed:.2f} MB/s)")
+    info(
+        f"✓ Very large file uploaded with multipart in {upload_duration:.2f}s ({upload_speed:.2f} MB/s)"
+    )
 
     start_time = time.time()
     read_content = await sandbox.fs.read("/tmp/very-large-file.txt")
@@ -229,7 +233,7 @@ async def test_edge_case_exactly_threshold(sandbox: SandboxInstance):
     # Create content exactly 5MB (at threshold)
     exact_size = 5 * 1024 * 1024
     exact_content = "A" * exact_size
-    content_bytes = exact_content.encode('utf-8')
+    content_bytes = exact_content.encode("utf-8")
     file_size_mb = len(content_bytes) / (1024 * 1024)
 
     info(f"File size: {file_size_mb:.2f} MB (exactly at threshold)")
@@ -252,7 +256,7 @@ async def run_tests():
         sandbox = await create_or_get_sandbox(
             sandbox_name=SANDBOX_NAME,
             image="blaxel/base-image:latest",
-            memory=8192  # 8GB for handling large files
+            memory=8192,  # 8GB for handling large files
         )
 
         print(sep)
@@ -284,6 +288,7 @@ async def run_tests():
         print("❌ Test failed with error:")
         print(e)
         import traceback
+
         traceback.print_exc()
         print(sep)
         sys.exit(1)
@@ -295,4 +300,3 @@ async def run_tests():
 
 if __name__ == "__main__":
     asyncio.run(run_tests())
-

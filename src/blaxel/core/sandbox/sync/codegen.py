@@ -20,9 +20,7 @@ class SyncSandboxCodegen(SyncSandboxAction):
     def __init__(self, sandbox_config: SandboxConfiguration):
         super().__init__(sandbox_config)
 
-    def fastapply(
-        self, path: str, code_edit: str, model: str | None = None
-    ) -> ApplyEditResponse:
+    def fastapply(self, path: str, code_edit: str, model: str | None = None) -> ApplyEditResponse:
         body = ApplyEditRequest(code_edit=code_edit, model=model)
         client = Client(
             base_url=self.url,
@@ -66,5 +64,3 @@ class SyncSandboxCodegen(SyncSandboxAction):
             if isinstance(response, ErrorResponse):
                 raise Exception(f"Reranking failed: {response}")
             return response
-
-

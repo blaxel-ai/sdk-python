@@ -25,11 +25,14 @@ class DeleteVolumeTemplateVersionResponse200:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         message = self.message
 
         template: Union[Unset, dict[str, Any]] = UNSET
-        if self.template and not isinstance(self.template, Unset) and not isinstance(self.template, dict):
+        if (
+            self.template
+            and not isinstance(self.template, Unset)
+            and not isinstance(self.template, dict)
+        ):
             template = self.template.to_dict()
         elif self.template and isinstance(self.template, dict):
             template = self.template

@@ -24,13 +24,15 @@ class BlaxelLanggraphInstrumentor(BaseInstrumentor):
 
         # Restore original methods
         if hasattr(
-            blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content"
+            blaxel.langgraph.custom.gemini.GeminiRestClient,
+            "_blaxel_original_generate_content",
         ):
             blaxel.langgraph.custom.gemini.GeminiRestClient.generate_content = (
                 blaxel.langgraph.custom.gemini.GeminiRestClient._blaxel_original_generate_content
             )
             delattr(
-                blaxel.langgraph.custom.gemini.GeminiRestClient, "_blaxel_original_generate_content"
+                blaxel.langgraph.custom.gemini.GeminiRestClient,
+                "_blaxel_original_generate_content",
             )
 
         if hasattr(

@@ -32,7 +32,6 @@ class Function:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         events: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.events, Unset):
             events = []
@@ -40,11 +39,17 @@ class Function:
                 if type(componentsschemas_core_events_item_data) is dict:
                     componentsschemas_core_events_item = componentsschemas_core_events_item_data
                 else:
-                    componentsschemas_core_events_item = componentsschemas_core_events_item_data.to_dict()
+                    componentsschemas_core_events_item = (
+                        componentsschemas_core_events_item_data.to_dict()
+                    )
                 events.append(componentsschemas_core_events_item)
 
         metadata: Union[Unset, dict[str, Any]] = UNSET
-        if self.metadata and not isinstance(self.metadata, Unset) and not isinstance(self.metadata, dict):
+        if (
+            self.metadata
+            and not isinstance(self.metadata, Unset)
+            and not isinstance(self.metadata, dict)
+        ):
             metadata = self.metadata.to_dict()
         elif self.metadata and isinstance(self.metadata, dict):
             metadata = self.metadata
@@ -83,7 +88,9 @@ class Function:
         events = []
         _events = d.pop("events", UNSET)
         for componentsschemas_core_events_item_data in _events or []:
-            componentsschemas_core_events_item = CoreEvent.from_dict(componentsschemas_core_events_item_data)
+            componentsschemas_core_events_item = CoreEvent.from_dict(
+                componentsschemas_core_events_item_data
+            )
 
             events.append(componentsschemas_core_events_item)
 

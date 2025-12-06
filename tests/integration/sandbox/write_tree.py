@@ -67,22 +67,28 @@ async def main():
         print("🔧 Test 2: Nested directory structure...")
         nested_files = [
             SandboxFilesystemFile(
-                path="config/app.json", content='{"name": "test-app", "version": "1.0.0"}'
+                path="config/app.json",
+                content='{"name": "test-app", "version": "1.0.0"}',
             ),
             SandboxFilesystemFile(
-                path="config/database.json", content='{"host": "localhost", "port": 5432}'
+                path="config/database.json",
+                content='{"host": "localhost", "port": 5432}',
             ),
             SandboxFilesystemFile(
-                path="src/main.py", content="#!/usr/bin/env python3\nprint('Hello World')"
+                path="src/main.py",
+                content="#!/usr/bin/env python3\nprint('Hello World')",
             ),
             SandboxFilesystemFile(
-                path="src/utils.py", content="def helper_function():\n    return 'helper'"
+                path="src/utils.py",
+                content="def helper_function():\n    return 'helper'",
             ),
             SandboxFilesystemFile(
-                path="docs/readme.md", content="# Project\n\nThis is a test project."
+                path="docs/readme.md",
+                content="# Project\n\nThis is a test project.",
             ),
             SandboxFilesystemFile(
-                path="docs/api.md", content="# API Documentation\n\n## Endpoints"
+                path="docs/api.md",
+                content="# API Documentation\n\n## Endpoints",
             ),
             SandboxFilesystemFile(
                 path="tests/test_main.py",
@@ -190,10 +196,12 @@ async def main():
         print("🔧 Test 5: Overwrite existing files...")
         overwrite_files = [
             SandboxFilesystemFile(
-                path="simple1.txt", content="This is the NEW content for simple1"
+                path="simple1.txt",
+                content="This is the NEW content for simple1",
             ),
             SandboxFilesystemFile(
-                path="simple2.txt", content="This is the NEW content for simple2"
+                path="simple2.txt",
+                content="This is the NEW content for simple2",
             ),
             SandboxFilesystemFile(path="new_file.txt", content="This is a completely new file"),
         ]

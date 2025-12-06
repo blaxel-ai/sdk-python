@@ -22,7 +22,9 @@ class SyncSandboxSessions:
     def sandbox_name(self) -> str:
         return self.sandbox_config.metadata.name if self.sandbox_config.metadata else ""
 
-    def create(self, options: Union[SessionCreateOptions, Dict[str, Any]] | None = None) -> SessionWithToken:
+    def create(
+        self, options: Union[SessionCreateOptions, Dict[str, Any]] | None = None
+    ) -> SessionWithToken:
         if options is None:
             options = SessionCreateOptions()
         elif isinstance(options, dict):
@@ -112,9 +114,9 @@ class SyncSandboxSessions:
         return delete_sandbox_preview.sync(self.sandbox_name, name, client=client)
 
     def get_token(self, preview_name: str):
-        tokens_response = list_sandbox_preview_tokens.sync(self.sandbox_name, preview_name, client=client)
+        tokens_response = list_sandbox_preview_tokens.sync(
+            self.sandbox_name, preview_name, client=client
+        )
         if not tokens_response:
             return None
         return tokens_response[0]
-
-

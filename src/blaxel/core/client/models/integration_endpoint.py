@@ -36,7 +36,6 @@ class IntegrationEndpoint:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         body = self.body
 
         ignore_models: Union[Unset, list[Any]] = UNSET
@@ -52,7 +51,11 @@ class IntegrationEndpoint:
         stream_key = self.stream_key
 
         stream_token: Union[Unset, dict[str, Any]] = UNSET
-        if self.stream_token and not isinstance(self.stream_token, Unset) and not isinstance(self.stream_token, dict):
+        if (
+            self.stream_token
+            and not isinstance(self.stream_token, Unset)
+            and not isinstance(self.stream_token, dict)
+        ):
             stream_token = self.stream_token.to_dict()
         elif self.stream_token and isinstance(self.stream_token, dict):
             stream_token = self.stream_token

@@ -24,7 +24,6 @@ class SandboxLifecycle:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         expiration_policies: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.expiration_policies, Unset):
             expiration_policies = []

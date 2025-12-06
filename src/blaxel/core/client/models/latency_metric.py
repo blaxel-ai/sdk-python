@@ -31,7 +31,6 @@ class LatencyMetric:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         global_histogram: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.global_histogram, Unset):
             global_histogram = []
@@ -43,7 +42,11 @@ class LatencyMetric:
                 global_histogram.append(global_histogram_item)
 
         global_stats: Union[Unset, dict[str, Any]] = UNSET
-        if self.global_stats and not isinstance(self.global_stats, Unset) and not isinstance(self.global_stats, dict):
+        if (
+            self.global_stats
+            and not isinstance(self.global_stats, Unset)
+            and not isinstance(self.global_stats, dict)
+        ):
             global_stats = self.global_stats.to_dict()
         elif self.global_stats and isinstance(self.global_stats, dict):
             global_stats = self.global_stats

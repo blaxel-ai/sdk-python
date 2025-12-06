@@ -50,7 +50,9 @@ def authentication_error_interceptor_sync(response: httpx.Response) -> None:
         logger.error("Error processing authentication error response: %s", error)
 
 
-async def authentication_error_interceptor_async(response: httpx.Response) -> None:
+async def authentication_error_interceptor_async(
+    response: httpx.Response,
+) -> None:
     """
     Intercepts HTTP responses and adds authentication documentation
     to 401/403 error responses (asynchronous version)

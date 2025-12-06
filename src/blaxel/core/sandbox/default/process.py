@@ -6,7 +6,11 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
+from ..types import (
+    ProcessRequestWithLog,
+    ProcessResponseWithLog,
+    SandboxConfiguration,
+)
 from .action import SandboxAction
 
 
@@ -15,7 +19,9 @@ class SandboxProcess(SandboxAction):
         super().__init__(sandbox_config)
 
     def stream_logs(
-        self, process_name: str, options: Dict[str, Callable[[str], None]] | None = None
+        self,
+        process_name: str,
+        options: Dict[str, Callable[[str], None]] | None = None,
     ) -> Dict[str, Callable[[], None]]:
         """Stream logs from a process with automatic reconnection and deduplication."""
         if options is None:
@@ -111,7 +117,9 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     def _stream_logs(
-        self, identifier: str, options: Dict[str, Callable[[str], None]] | None = None
+        self,
+        identifier: str,
+        options: Dict[str, Callable[[str], None]] | None = None,
     ) -> Dict[str, Callable[[], None]]:
         """Private method to stream logs from a process with callbacks for different output types."""
         if options is None:
@@ -175,7 +183,8 @@ class SandboxProcess(SandboxAction):
         return {"close": close}
 
     async def exec(
-        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
+        self,
+        process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]],
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
         """Execute a process in the sandbox."""
         on_log = None
@@ -200,13 +209,14 @@ class SandboxProcess(SandboxAction):
         # Always start process without wait_for_completion to avoid server-side blocking
         if should_wait_for_completion and on_log is not None:
             process.wait_for_completion = False
-        
+
         client = self.get_client()
         response = await client.post("/process", json=process.to_dict())
         try:
             content_bytes = await response.aread()
             self.handle_response_error(response)
             import json
+
             response_data = json.loads(content_bytes) if content_bytes else None
             result = ProcessResponse.from_dict(response_data)
         finally:
@@ -227,7 +237,8 @@ class SandboxProcess(SandboxAction):
             if on_log is not None:
                 stream_control = self._stream_logs(result.pid, {"on_log": on_log})
                 return ProcessResponseWithLog(
-                    result, lambda: stream_control["close"]() if stream_control else None
+                    result,
+                    lambda: stream_control["close"]() if stream_control else None,
                 )
 
         return result
@@ -255,6 +266,7 @@ class SandboxProcess(SandboxAction):
 
     async def get(self, identifier: str) -> ProcessResponse:
         import json
+
         client = self.get_client()
         response = await client.get(f"/process/{identifier}")
         try:
@@ -266,6 +278,7 @@ class SandboxProcess(SandboxAction):
 
     async def list(self) -> list[ProcessResponse]:
         import json
+
         client = self.get_client()
         response = await client.get("/process")
         try:
@@ -277,6 +290,7 @@ class SandboxProcess(SandboxAction):
 
     async def stop(self, identifier: str) -> SuccessResponse:
         import json
+
         client = self.get_client()
         response = await client.delete(f"/process/{identifier}")
         try:
@@ -288,6 +302,7 @@ class SandboxProcess(SandboxAction):
 
     async def kill(self, identifier: str) -> SuccessResponse:
         import json
+
         client = self.get_client()
         response = await client.delete(f"/process/{identifier}/kill")
         try:
@@ -298,9 +313,12 @@ class SandboxProcess(SandboxAction):
             await response.aclose()
 
     async def logs(
-        self, identifier: str, log_type: Literal["stdout", "stderr", "all"] = "all"
+        self,
+        identifier: str,
+        log_type: Literal["stdout", "stderr", "all"] = "all",
     ) -> str:
         import json
+
         client = self.get_client()
         response = await client.get(f"/process/{identifier}/logs")
         try:
