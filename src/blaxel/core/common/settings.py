@@ -146,13 +146,13 @@ class Settings:
         Get the tracking setting.
 
         Priority:
-        1. Environment variable BL_TRACKING (true/false)
+        1. Environment variable DO_NOT_TRACK (true/false)
         2. config.yaml tracking field
         3. Default: true
         """
-        env_value = os.environ.get("BL_TRACKING")
+        env_value = os.environ.get("DO_NOT_TRACK")
         if env_value is not None:
-            return env_value.lower() == "true"
+            return env_value.lower() != "true"
 
         try:
             home_dir = Path.home()
