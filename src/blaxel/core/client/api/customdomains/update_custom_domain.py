@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -56,7 +56,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Cus
 def sync_detailed(
     domain_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CustomDomain,
 ) -> Response[CustomDomain]:
     """Update custom domain
@@ -91,7 +91,7 @@ def sync_detailed(
 def sync(
     domain_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CustomDomain,
 ) -> CustomDomain | None:
     """Update custom domain
@@ -121,7 +121,7 @@ def sync(
 async def asyncio_detailed(
     domain_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CustomDomain,
 ) -> Response[CustomDomain]:
     """Update custom domain
@@ -154,7 +154,7 @@ async def asyncio_detailed(
 async def asyncio(
     domain_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CustomDomain,
 ) -> CustomDomain | None:
     """Update custom domain

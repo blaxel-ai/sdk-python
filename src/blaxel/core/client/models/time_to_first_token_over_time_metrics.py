@@ -46,14 +46,16 @@ class TimeToFirstTokenOverTimeMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.request_duration_over_time_metric import RequestDurationOverTimeMetric
 
         if not src_dict:
             return None
         d = src_dict.copy()
         time_to_first_token_over_time = []
-        _time_to_first_token_over_time = d.pop("timeToFirstTokenOverTime", UNSET)
+        _time_to_first_token_over_time = d.pop(
+            "timeToFirstTokenOverTime", d.pop("time_to_first_token_over_time", UNSET)
+        )
         for time_to_first_token_over_time_item_data in _time_to_first_token_over_time or []:
             time_to_first_token_over_time_item = RequestDurationOverTimeMetric.from_dict(
                 time_to_first_token_over_time_item_data

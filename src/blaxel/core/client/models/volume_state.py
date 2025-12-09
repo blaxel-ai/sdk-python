@@ -32,11 +32,11 @@ class VolumeState:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        attached_to = d.pop("attachedTo", UNSET)
+        attached_to = d.pop("attachedTo", d.pop("attached_to", UNSET))
 
         volume_state = cls(
             attached_to=attached_to,

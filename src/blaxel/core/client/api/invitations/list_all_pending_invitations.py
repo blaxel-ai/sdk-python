@@ -52,7 +52,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, list["PendingInvitationRender"]]]:
     """List pending invitations
 
@@ -77,7 +77,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, list["PendingInvitationRender"]] | None:
     """List pending invitations
 
@@ -98,7 +98,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, list["PendingInvitationRender"]]]:
     """List pending invitations
 
@@ -121,7 +121,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, list["PendingInvitationRender"]] | None:
     """List pending invitations
 

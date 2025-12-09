@@ -27,7 +27,7 @@ class PublicIps:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.public_ip import PublicIp
 
         if not src_dict:

@@ -55,17 +55,17 @@ class WebsocketChannel:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
-        updated_at = d.pop("updatedAt", UNSET)
+        updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
         connection_id = d.pop("connection_id", UNSET)
 
-        source_region = d.pop("sourceRegion", UNSET)
+        source_region = d.pop("sourceRegion", d.pop("source_region", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 

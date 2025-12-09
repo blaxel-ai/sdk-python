@@ -55,7 +55,7 @@ class RevisionConfiguration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -63,9 +63,9 @@ class RevisionConfiguration:
 
         canary = d.pop("canary", UNSET)
 
-        canary_percent = d.pop("canaryPercent", UNSET)
+        canary_percent = d.pop("canaryPercent", d.pop("canary_percent", UNSET))
 
-        sticky_session_ttl = d.pop("stickySessionTtl", UNSET)
+        sticky_session_ttl = d.pop("stickySessionTtl", d.pop("sticky_session_ttl", UNSET))
 
         traffic = d.pop("traffic", UNSET)
 

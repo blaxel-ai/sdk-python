@@ -88,7 +88,7 @@ class Configuration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.continent import Continent
         from ..models.country import Country
         from ..models.private_location import PrivateLocation
@@ -112,7 +112,7 @@ class Configuration:
             countries.append(countries_item)
 
         private_locations = []
-        _private_locations = d.pop("privateLocations", UNSET)
+        _private_locations = d.pop("privateLocations", d.pop("private_locations", UNSET))
         for private_locations_item_data in _private_locations or []:
             private_locations_item = PrivateLocation.from_dict(private_locations_item_data)
 

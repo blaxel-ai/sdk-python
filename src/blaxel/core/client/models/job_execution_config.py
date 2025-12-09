@@ -43,13 +43,13 @@ class JobExecutionConfig:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        max_concurrent_tasks = d.pop("maxConcurrentTasks", UNSET)
+        max_concurrent_tasks = d.pop("maxConcurrentTasks", d.pop("max_concurrent_tasks", UNSET))
 
-        max_retries = d.pop("maxRetries", UNSET)
+        max_retries = d.pop("maxRetries", d.pop("max_retries", UNSET))
 
         timeout = d.pop("timeout", UNSET)
 

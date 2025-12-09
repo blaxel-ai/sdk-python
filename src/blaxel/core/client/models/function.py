@@ -77,7 +77,7 @@ class Function:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.core_event import CoreEvent
         from ..models.function_spec import FunctionSpec
         from ..models.metadata import Metadata

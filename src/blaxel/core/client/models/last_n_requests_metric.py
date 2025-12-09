@@ -55,17 +55,17 @@ class LastNRequestsMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         date = d.pop("date", UNSET)
 
-        status_code = d.pop("statusCode", UNSET)
+        status_code = d.pop("statusCode", d.pop("status_code", UNSET))
 
-        workload_id = d.pop("workloadId", UNSET)
+        workload_id = d.pop("workloadId", d.pop("workload_id", UNSET))
 
-        workload_type = d.pop("workloadType", UNSET)
+        workload_type = d.pop("workloadType", d.pop("workload_type", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 

@@ -71,28 +71,28 @@ class TokenRateMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.token_rate_metric import TokenRateMetric
 
         if not src_dict:
             return None
         d = src_dict.copy()
         token_rate = []
-        _token_rate = d.pop("tokenRate", UNSET)
+        _token_rate = d.pop("tokenRate", d.pop("token_rate", UNSET))
         for token_rate_item_data in _token_rate or []:
             token_rate_item = TokenRateMetric.from_dict(token_rate_item_data)
 
             token_rate.append(token_rate_item)
 
         token_rate_input = []
-        _token_rate_input = d.pop("tokenRateInput", UNSET)
+        _token_rate_input = d.pop("tokenRateInput", d.pop("token_rate_input", UNSET))
         for token_rate_input_item_data in _token_rate_input or []:
             token_rate_input_item = TokenRateMetric.from_dict(token_rate_input_item_data)
 
             token_rate_input.append(token_rate_input_item)
 
         token_rate_output = []
-        _token_rate_output = d.pop("tokenRateOutput", UNSET)
+        _token_rate_output = d.pop("tokenRateOutput", d.pop("token_rate_output", UNSET))
         for token_rate_output_item_data in _token_rate_output or []:
             token_rate_output_item = TokenRateMetric.from_dict(token_rate_output_item_data)
 

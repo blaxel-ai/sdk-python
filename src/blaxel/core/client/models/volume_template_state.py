@@ -49,17 +49,19 @@ class VolumeTemplateState:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        last_version_uploaded_at = d.pop("lastVersionUploadedAt", UNSET)
+        last_version_uploaded_at = d.pop(
+            "lastVersionUploadedAt", d.pop("last_version_uploaded_at", UNSET)
+        )
 
-        latest_version = d.pop("latestVersion", UNSET)
+        latest_version = d.pop("latestVersion", d.pop("latest_version", UNSET))
 
         status = d.pop("status", UNSET)
 
-        version_count = d.pop("versionCount", UNSET)
+        version_count = d.pop("versionCount", d.pop("version_count", UNSET))
 
         volume_template_state = cls(
             last_version_uploaded_at=last_version_uploaded_at,

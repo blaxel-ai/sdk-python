@@ -31,11 +31,11 @@ class MemoryAllocationMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        total_allocation = d.pop("totalAllocation", UNSET)
+        total_allocation = d.pop("totalAllocation", d.pop("total_allocation", UNSET))
 
         memory_allocation_metric = cls(
             total_allocation=total_allocation,

@@ -74,7 +74,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: FileRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Create or update a file or directory
@@ -108,7 +108,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: FileRequest,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Create or update a file or directory
@@ -137,7 +137,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: FileRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Create or update a file or directory
@@ -169,7 +169,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: FileRequest,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Create or update a file or directory

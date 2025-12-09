@@ -48,7 +48,7 @@ class FuzzySearchResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.fuzzy_search_match import FuzzySearchMatch
 
         if not src_dict:

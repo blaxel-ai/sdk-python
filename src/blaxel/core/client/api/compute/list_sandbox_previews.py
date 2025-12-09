@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -48,7 +48,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[list["Preview"]]:
     """List Sandboxes
 
@@ -79,7 +79,7 @@ def sync_detailed(
 def sync(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> list["Preview"] | None:
     """List Sandboxes
 
@@ -105,7 +105,7 @@ def sync(
 async def asyncio_detailed(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[list["Preview"]]:
     """List Sandboxes
 
@@ -134,7 +134,7 @@ async def asyncio_detailed(
 async def asyncio(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> list["Preview"] | None:
     """List Sandboxes
 

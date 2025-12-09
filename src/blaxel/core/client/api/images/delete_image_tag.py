@@ -53,7 +53,7 @@ def sync_detailed(
     image_name: str,
     tag_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, Image]]:
     """Delete image tag
 
@@ -90,7 +90,7 @@ def sync(
     image_name: str,
     tag_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, Image] | None:
     """Delete image tag
 
@@ -122,7 +122,7 @@ async def asyncio_detailed(
     image_name: str,
     tag_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, Image]]:
     """Delete image tag
 
@@ -157,7 +157,7 @@ async def asyncio(
     image_name: str,
     tag_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, Image] | None:
     """Delete image tag
 

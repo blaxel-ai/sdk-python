@@ -109,33 +109,33 @@ class PreviewSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.preview_spec_request_headers import PreviewSpecRequestHeaders
         from ..models.preview_spec_response_headers import PreviewSpecResponseHeaders
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        custom_domain = d.pop("customDomain", UNSET)
+        custom_domain = d.pop("customDomain", d.pop("custom_domain", UNSET))
 
         expires = d.pop("expires", UNSET)
 
         port = d.pop("port", UNSET)
 
-        prefix_url = d.pop("prefixUrl", UNSET)
+        prefix_url = d.pop("prefixUrl", d.pop("prefix_url", UNSET))
 
         public = d.pop("public", UNSET)
 
         region = d.pop("region", UNSET)
 
-        _request_headers = d.pop("requestHeaders", UNSET)
+        _request_headers = d.pop("requestHeaders", d.pop("request_headers", UNSET))
         request_headers: Union[Unset, PreviewSpecRequestHeaders]
         if isinstance(_request_headers, Unset):
             request_headers = UNSET
         else:
             request_headers = PreviewSpecRequestHeaders.from_dict(_request_headers)
 
-        _response_headers = d.pop("responseHeaders", UNSET)
+        _response_headers = d.pop("responseHeaders", d.pop("response_headers", UNSET))
         response_headers: Union[Unset, PreviewSpecResponseHeaders]
         if isinstance(_response_headers, Unset):
             response_headers = UNSET

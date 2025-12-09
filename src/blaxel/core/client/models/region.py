@@ -61,7 +61,7 @@ class Region:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -71,7 +71,7 @@ class Region:
 
         country = d.pop("country", UNSET)
 
-        info_generation = d.pop("infoGeneration", UNSET)
+        info_generation = d.pop("infoGeneration", d.pop("info_generation", UNSET))
 
         location = d.pop("location", UNSET)
 

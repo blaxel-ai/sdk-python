@@ -86,7 +86,7 @@ class LatencyMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.histogram_bucket import HistogramBucket
         from ..models.histogram_stats import HistogramStats
 
@@ -94,27 +94,27 @@ class LatencyMetric:
             return None
         d = src_dict.copy()
         global_histogram = []
-        _global_histogram = d.pop("globalHistogram", UNSET)
+        _global_histogram = d.pop("globalHistogram", d.pop("global_histogram", UNSET))
         for global_histogram_item_data in _global_histogram or []:
             global_histogram_item = HistogramBucket.from_dict(global_histogram_item_data)
 
             global_histogram.append(global_histogram_item)
 
-        _global_stats = d.pop("globalStats", UNSET)
+        _global_stats = d.pop("globalStats", d.pop("global_stats", UNSET))
         global_stats: Union[Unset, HistogramStats]
         if isinstance(_global_stats, Unset):
             global_stats = UNSET
         else:
             global_stats = HistogramStats.from_dict(_global_stats)
 
-        _histogram_per_code = d.pop("histogramPerCode", UNSET)
+        _histogram_per_code = d.pop("histogramPerCode", d.pop("histogram_per_code", UNSET))
         histogram_per_code: Union[Unset, HistogramBucket]
         if isinstance(_histogram_per_code, Unset):
             histogram_per_code = UNSET
         else:
             histogram_per_code = HistogramBucket.from_dict(_histogram_per_code)
 
-        _stats_per_code = d.pop("statsPerCode", UNSET)
+        _stats_per_code = d.pop("statsPerCode", d.pop("stats_per_code", UNSET))
         stats_per_code: Union[Unset, HistogramStats]
         if isinstance(_stats_per_code, Unset):
             stats_per_code = UNSET

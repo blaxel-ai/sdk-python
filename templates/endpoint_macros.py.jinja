@@ -99,7 +99,7 @@ params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 {% endif %}
 {# Proper client based on whether or not the endpoint requires authentication #}
 {% if include_client %}
-client: Union[Client],
+client: Client,
 {% endif %}
 {# Any allowed bodies #}
 {% if endpoint.bodies | length == 1 %}

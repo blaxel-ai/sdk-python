@@ -46,15 +46,15 @@ class PublicIp:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         description = d.pop("description", UNSET)
 
-        ipv_4_cidrs = cast(list[str], d.pop("ipv4Cidrs", UNSET))
+        ipv_4_cidrs = cast(list[str], d.pop("ipv4Cidrs", d.pop("ipv_4_cidrs", UNSET)))
 
-        ipv_6_cidrs = cast(list[str], d.pop("ipv6Cidrs", UNSET))
+        ipv_6_cidrs = cast(list[str], d.pop("ipv6Cidrs", d.pop("ipv_6_cidrs", UNSET)))
 
         public_ip = cls(
             description=description,

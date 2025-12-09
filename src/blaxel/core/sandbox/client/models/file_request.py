@@ -42,13 +42,13 @@ class FileRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         content = d.pop("content", UNSET)
 
-        is_directory = d.pop("isDirectory", UNSET)
+        is_directory = d.pop("isDirectory", d.pop("is_directory", UNSET))
 
         permissions = d.pop("permissions", UNSET)
 

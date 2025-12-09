@@ -61,11 +61,11 @@ class CoreEvent:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        canary_revision = d.pop("canaryRevision", UNSET)
+        canary_revision = d.pop("canaryRevision", d.pop("canary_revision", UNSET))
 
         message = d.pop("message", UNSET)
 
@@ -75,7 +75,7 @@ class CoreEvent:
 
         time = d.pop("time", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         core_event = cls(
             canary_revision=canary_revision,

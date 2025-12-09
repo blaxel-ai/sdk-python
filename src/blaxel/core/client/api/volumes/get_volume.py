@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -43,7 +43,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Vol
 def sync_detailed(
     volume_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Volume]:
     """Get volume
 
@@ -74,7 +74,7 @@ def sync_detailed(
 def sync(
     volume_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Volume | None:
     """Get volume
 
@@ -100,7 +100,7 @@ def sync(
 async def asyncio_detailed(
     volume_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Volume]:
     """Get volume
 
@@ -129,7 +129,7 @@ async def asyncio_detailed(
 async def asyncio(
     volume_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Volume | None:
     """Get volume
 

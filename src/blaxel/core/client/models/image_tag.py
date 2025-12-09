@@ -48,17 +48,17 @@ class ImageTag:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         name = d.pop("name", UNSET)
 
         size = d.pop("size", UNSET)
 
-        updated_at = d.pop("updatedAt", UNSET)
+        updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
         image_tag = cls(
             created_at=created_at,

@@ -154,16 +154,16 @@ class MCPDefinition:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.mcp_definition_entrypoint import MCPDefinitionEntrypoint
         from ..models.mcp_definition_form import MCPDefinitionForm
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
-        updated_at = d.pop("updatedAt", UNSET)
+        updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
         categories = cast(list[Any], d.pop("categories", UNSET))
 
@@ -171,7 +171,7 @@ class MCPDefinition:
 
         description = d.pop("description", UNSET)
 
-        display_name = d.pop("displayName", UNSET)
+        display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
         enterprise = d.pop("enterprise", UNSET)
 
@@ -191,7 +191,7 @@ class MCPDefinition:
 
         hidden = d.pop("hidden", UNSET)
 
-        hidden_secrets = cast(list[str], d.pop("hiddenSecrets", UNSET))
+        hidden_secrets = cast(list[str], d.pop("hiddenSecrets", d.pop("hidden_secrets", UNSET)))
 
         icon = d.pop("icon", UNSET)
 
@@ -199,7 +199,7 @@ class MCPDefinition:
 
         integration = d.pop("integration", UNSET)
 
-        long_description = d.pop("longDescription", UNSET)
+        long_description = d.pop("longDescription", d.pop("long_description", UNSET))
 
         name = d.pop("name", UNSET)
 

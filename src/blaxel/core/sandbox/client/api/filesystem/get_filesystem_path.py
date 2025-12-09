@@ -95,7 +95,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     download: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
     """Get file or directory information
@@ -130,7 +130,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     download: Union[Unset, bool] = UNSET,
 ) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
     """Get file or directory information
@@ -160,7 +160,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     download: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
     """Get file or directory information
@@ -193,7 +193,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     download: Union[Unset, bool] = UNSET,
 ) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
     """Get file or directory information

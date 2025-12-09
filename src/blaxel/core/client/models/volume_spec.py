@@ -49,11 +49,11 @@ class VolumeSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        infrastructure_id = d.pop("infrastructureId", UNSET)
+        infrastructure_id = d.pop("infrastructureId", d.pop("infrastructure_id", UNSET))
 
         region = d.pop("region", UNSET)
 

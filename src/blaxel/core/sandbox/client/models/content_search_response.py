@@ -54,7 +54,7 @@ class ContentSearchResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.content_search_match import ContentSearchMatch
 
         if not src_dict:

@@ -57,7 +57,7 @@ def sync_detailed(
     volume_template_name: str,
     version_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
     """Delete volume template version
 
@@ -91,7 +91,7 @@ def sync(
     volume_template_name: str,
     version_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
     """Delete volume template version
 
@@ -120,7 +120,7 @@ async def asyncio_detailed(
     volume_template_name: str,
     version_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
     """Delete volume template version
 
@@ -152,7 +152,7 @@ async def asyncio(
     volume_template_name: str,
     version_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
     """Delete volume template version
 

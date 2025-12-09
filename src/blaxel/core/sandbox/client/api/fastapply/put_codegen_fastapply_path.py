@@ -74,7 +74,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: ApplyEditRequest,
 ) -> Response[Union[ApplyEditResponse, ErrorResponse]]:
     r"""Apply code edit
@@ -142,7 +142,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: ApplyEditRequest,
 ) -> Union[ApplyEditResponse, ErrorResponse] | None:
     r"""Apply code edit
@@ -205,7 +205,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: ApplyEditRequest,
 ) -> Response[Union[ApplyEditResponse, ErrorResponse]]:
     r"""Apply code edit
@@ -271,7 +271,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: ApplyEditRequest,
 ) -> Union[ApplyEditResponse, ErrorResponse] | None:
     r"""Apply code edit

@@ -368,7 +368,7 @@ class ResourceMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.billable_time_metric import BillableTimeMetric
         from ..models.jobs_chart_value import JobsChartValue
         from ..models.last_n_requests_metric import LastNRequestsMetric
@@ -395,7 +395,7 @@ class ResourceMetrics:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _billable_time = d.pop("billableTime", UNSET)
+        _billable_time = d.pop("billableTime", d.pop("billable_time", UNSET))
         billable_time: Union[Unset, BillableTimeMetric]
         if isinstance(_billable_time, Unset):
             billable_time = UNSET
@@ -403,7 +403,9 @@ class ResourceMetrics:
             billable_time = BillableTimeMetric.from_dict(_billable_time)
 
         inference_errors_global = []
-        _inference_errors_global = d.pop("inferenceErrorsGlobal", UNSET)
+        _inference_errors_global = d.pop(
+            "inferenceErrorsGlobal", d.pop("inference_errors_global", UNSET)
+        )
         for componentsschemas_array_metric_item_data in _inference_errors_global or []:
             componentsschemas_array_metric_item = Metric.from_dict(
                 componentsschemas_array_metric_item_data
@@ -412,7 +414,7 @@ class ResourceMetrics:
             inference_errors_global.append(componentsschemas_array_metric_item)
 
         inference_global = []
-        _inference_global = d.pop("inferenceGlobal", UNSET)
+        _inference_global = d.pop("inferenceGlobal", d.pop("inference_global", UNSET))
         for componentsschemas_array_metric_item_data in _inference_global or []:
             componentsschemas_array_metric_item = Metric.from_dict(
                 componentsschemas_array_metric_item_data
@@ -421,7 +423,7 @@ class ResourceMetrics:
             inference_global.append(componentsschemas_array_metric_item)
 
         last_n_requests = []
-        _last_n_requests = d.pop("lastNRequests", UNSET)
+        _last_n_requests = d.pop("lastNRequests", d.pop("last_n_requests", UNSET))
         for last_n_requests_item_data in _last_n_requests or []:
             last_n_requests_item = LastNRequestsMetric.from_dict(last_n_requests_item_data)
 
@@ -434,35 +436,37 @@ class ResourceMetrics:
         else:
             latency = LatencyMetric.from_dict(_latency)
 
-        _latency_previous = d.pop("latencyPrevious", UNSET)
+        _latency_previous = d.pop("latencyPrevious", d.pop("latency_previous", UNSET))
         latency_previous: Union[Unset, LatencyMetric]
         if isinstance(_latency_previous, Unset):
             latency_previous = UNSET
         else:
             latency_previous = LatencyMetric.from_dict(_latency_previous)
 
-        _memory_allocation = d.pop("memoryAllocation", UNSET)
+        _memory_allocation = d.pop("memoryAllocation", d.pop("memory_allocation", UNSET))
         memory_allocation: Union[Unset, MemoryAllocationMetric]
         if isinstance(_memory_allocation, Unset):
             memory_allocation = UNSET
         else:
             memory_allocation = MemoryAllocationMetric.from_dict(_memory_allocation)
 
-        _model_ttft = d.pop("modelTtft", UNSET)
+        _model_ttft = d.pop("modelTtft", d.pop("model_ttft", UNSET))
         model_ttft: Union[Unset, LatencyMetric]
         if isinstance(_model_ttft, Unset):
             model_ttft = UNSET
         else:
             model_ttft = LatencyMetric.from_dict(_model_ttft)
 
-        _model_ttft_over_time = d.pop("modelTtftOverTime", UNSET)
+        _model_ttft_over_time = d.pop("modelTtftOverTime", d.pop("model_ttft_over_time", UNSET))
         model_ttft_over_time: Union[Unset, TimeToFirstTokenOverTimeMetrics]
         if isinstance(_model_ttft_over_time, Unset):
             model_ttft_over_time = UNSET
         else:
             model_ttft_over_time = TimeToFirstTokenOverTimeMetrics.from_dict(_model_ttft_over_time)
 
-        _request_duration_over_time = d.pop("requestDurationOverTime", UNSET)
+        _request_duration_over_time = d.pop(
+            "requestDurationOverTime", d.pop("request_duration_over_time", UNSET)
+        )
         request_duration_over_time: Union[Unset, RequestDurationOverTimeMetrics]
         if isinstance(_request_duration_over_time, Unset):
             request_duration_over_time = UNSET
@@ -471,16 +475,20 @@ class ResourceMetrics:
                 _request_duration_over_time
             )
 
-        request_total = d.pop("requestTotal", UNSET)
+        request_total = d.pop("requestTotal", d.pop("request_total", UNSET))
 
-        _request_total_by_origin = d.pop("requestTotalByOrigin", UNSET)
+        _request_total_by_origin = d.pop(
+            "requestTotalByOrigin", d.pop("request_total_by_origin", UNSET)
+        )
         request_total_by_origin: Union[Unset, RequestTotalByOriginMetric]
         if isinstance(_request_total_by_origin, Unset):
             request_total_by_origin = UNSET
         else:
             request_total_by_origin = RequestTotalByOriginMetric.from_dict(_request_total_by_origin)
 
-        _request_total_by_origin_previous = d.pop("requestTotalByOriginPrevious", UNSET)
+        _request_total_by_origin_previous = d.pop(
+            "requestTotalByOriginPrevious", d.pop("request_total_by_origin_previous", UNSET)
+        )
         request_total_by_origin_previous: Union[Unset, RequestTotalByOriginMetric]
         if isinstance(_request_total_by_origin_previous, Unset):
             request_total_by_origin_previous = UNSET
@@ -489,7 +497,9 @@ class ResourceMetrics:
                 _request_total_by_origin_previous
             )
 
-        _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
+        _request_total_per_code = d.pop(
+            "requestTotalPerCode", d.pop("request_total_per_code", UNSET)
+        )
         request_total_per_code: Union[Unset, ResourceMetricsRequestTotalPerCode]
         if isinstance(_request_total_per_code, Unset):
             request_total_per_code = UNSET
@@ -498,7 +508,9 @@ class ResourceMetrics:
                 _request_total_per_code
             )
 
-        _request_total_per_code_previous = d.pop("requestTotalPerCodePrevious", UNSET)
+        _request_total_per_code_previous = d.pop(
+            "requestTotalPerCodePrevious", d.pop("request_total_per_code_previous", UNSET)
+        )
         request_total_per_code_previous: Union[Unset, ResourceMetricsRequestTotalPerCodePrevious]
         if isinstance(_request_total_per_code_previous, Unset):
             request_total_per_code_previous = UNSET
@@ -507,18 +519,20 @@ class ResourceMetrics:
                 _request_total_per_code_previous
             )
 
-        request_total_previous = d.pop("requestTotalPrevious", UNSET)
+        request_total_previous = d.pop(
+            "requestTotalPrevious", d.pop("request_total_previous", UNSET)
+        )
 
         rps = d.pop("rps", UNSET)
 
-        _rps_per_code = d.pop("rpsPerCode", UNSET)
+        _rps_per_code = d.pop("rpsPerCode", d.pop("rps_per_code", UNSET))
         rps_per_code: Union[Unset, ResourceMetricsRpsPerCode]
         if isinstance(_rps_per_code, Unset):
             rps_per_code = UNSET
         else:
             rps_per_code = ResourceMetricsRpsPerCode.from_dict(_rps_per_code)
 
-        _rps_per_code_previous = d.pop("rpsPerCodePrevious", UNSET)
+        _rps_per_code_previous = d.pop("rpsPerCodePrevious", d.pop("rps_per_code_previous", UNSET))
         rps_per_code_previous: Union[Unset, ResourceMetricsRpsPerCodePrevious]
         if isinstance(_rps_per_code_previous, Unset):
             rps_per_code_previous = UNSET
@@ -527,30 +541,30 @@ class ResourceMetrics:
                 _rps_per_code_previous
             )
 
-        rps_previous = d.pop("rpsPrevious", UNSET)
+        rps_previous = d.pop("rpsPrevious", d.pop("rps_previous", UNSET))
 
         sandboxes_cpu_usage = []
-        _sandboxes_cpu_usage = d.pop("sandboxesCpuUsage", UNSET)
+        _sandboxes_cpu_usage = d.pop("sandboxesCpuUsage", d.pop("sandboxes_cpu_usage", UNSET))
         for sandboxes_cpu_usage_item_data in _sandboxes_cpu_usage or []:
             sandboxes_cpu_usage_item = JobsChartValue.from_dict(sandboxes_cpu_usage_item_data)
 
             sandboxes_cpu_usage.append(sandboxes_cpu_usage_item)
 
         sandboxes_ram_usage = []
-        _sandboxes_ram_usage = d.pop("sandboxesRamUsage", UNSET)
+        _sandboxes_ram_usage = d.pop("sandboxesRamUsage", d.pop("sandboxes_ram_usage", UNSET))
         for sandboxes_ram_usage_item_data in _sandboxes_ram_usage or []:
             sandboxes_ram_usage_item = SandboxMetrics.from_dict(sandboxes_ram_usage_item_data)
 
             sandboxes_ram_usage.append(sandboxes_ram_usage_item)
 
-        _token_rate = d.pop("tokenRate", UNSET)
+        _token_rate = d.pop("tokenRate", d.pop("token_rate", UNSET))
         token_rate: Union[Unset, TokenRateMetrics]
         if isinstance(_token_rate, Unset):
             token_rate = UNSET
         else:
             token_rate = TokenRateMetrics.from_dict(_token_rate)
 
-        _token_total = d.pop("tokenTotal", UNSET)
+        _token_total = d.pop("tokenTotal", d.pop("token_total", UNSET))
         token_total: Union[Unset, TokenTotalMetric]
         if isinstance(_token_total, Unset):
             token_total = UNSET

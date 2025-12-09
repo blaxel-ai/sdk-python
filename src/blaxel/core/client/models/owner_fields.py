@@ -37,13 +37,13 @@ class OwnerFields:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        created_by = d.pop("createdBy", UNSET)
+        created_by = d.pop("createdBy", d.pop("created_by", UNSET))
 
-        updated_by = d.pop("updatedBy", UNSET)
+        updated_by = d.pop("updatedBy", d.pop("updated_by", UNSET))
 
         owner_fields = cls(
             created_by=created_by,

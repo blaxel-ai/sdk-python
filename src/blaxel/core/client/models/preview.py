@@ -54,7 +54,7 @@ class Preview:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.preview_metadata import PreviewMetadata
         from ..models.preview_spec import PreviewSpec
 

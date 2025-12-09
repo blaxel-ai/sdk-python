@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -42,7 +42,7 @@ def sync_detailed(
     client_id: str,
     api_key_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Any]:
     """Delete API key for service account
 
@@ -76,7 +76,7 @@ async def asyncio_detailed(
     client_id: str,
     api_key_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Any]:
     """Delete API key for service account
 

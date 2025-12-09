@@ -43,15 +43,15 @@ class VolumeAttachment:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        mount_path = d.pop("mountPath", UNSET)
+        mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
         name = d.pop("name", UNSET)
 
-        read_only = d.pop("readOnly", UNSET)
+        read_only = d.pop("readOnly", d.pop("read_only", UNSET))
 
         volume_attachment = cls(
             mount_path=mount_path,

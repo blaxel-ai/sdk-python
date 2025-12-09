@@ -48,17 +48,17 @@ class FilesystemUploadedPart:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         etag = d.pop("etag", UNSET)
 
-        part_number = d.pop("partNumber", UNSET)
+        part_number = d.pop("partNumber", d.pop("part_number", UNSET))
 
         size = d.pop("size", UNSET)
 
-        uploaded_at = d.pop("uploadedAt", UNSET)
+        uploaded_at = d.pop("uploadedAt", d.pop("uploaded_at", UNSET))
 
         filesystem_uploaded_part = cls(
             etag=etag,

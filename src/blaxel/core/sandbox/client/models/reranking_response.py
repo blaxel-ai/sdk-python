@@ -54,7 +54,7 @@ class RerankingResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.ranked_file import RankedFile
 
         if not src_dict:

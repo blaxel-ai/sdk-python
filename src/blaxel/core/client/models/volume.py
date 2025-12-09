@@ -94,7 +94,7 @@ class Volume:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
         from ..models.volume_spec import VolumeSpec
@@ -135,7 +135,7 @@ class Volume:
 
         status = d.pop("status", UNSET)
 
-        terminated_at = d.pop("terminatedAt", UNSET)
+        terminated_at = d.pop("terminatedAt", d.pop("terminated_at", UNSET))
 
         volume = cls(
             events=events,

@@ -41,11 +41,11 @@ class ApplyEditRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        code_edit = d.pop("codeEdit")
+        code_edit = d.pop("codeEdit") if "codeEdit" in d else d.pop("code_edit")
 
         model = d.pop("model", UNSET)
 

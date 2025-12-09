@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -40,7 +40,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Any
 def sync_detailed(
     connection_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Any]:
     """Get integration connection model endpoint configurations
 
@@ -71,7 +71,7 @@ def sync_detailed(
 async def asyncio_detailed(
     connection_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Any]:
     """Get integration connection model endpoint configurations
 

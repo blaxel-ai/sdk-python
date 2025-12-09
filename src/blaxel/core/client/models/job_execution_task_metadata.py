@@ -61,21 +61,21 @@ class JobExecutionTaskMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        completed_at = d.pop("completedAt", UNSET)
+        completed_at = d.pop("completedAt", d.pop("completed_at", UNSET))
 
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         name = d.pop("name", UNSET)
 
-        scheduled_at = d.pop("scheduledAt", UNSET)
+        scheduled_at = d.pop("scheduledAt", d.pop("scheduled_at", UNSET))
 
-        started_at = d.pop("startedAt", UNSET)
+        started_at = d.pop("startedAt", d.pop("started_at", UNSET))
 
-        updated_at = d.pop("updatedAt", UNSET)
+        updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
         job_execution_task_metadata = cls(
             completed_at=completed_at,

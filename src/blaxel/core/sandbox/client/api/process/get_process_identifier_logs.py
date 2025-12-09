@@ -60,7 +60,7 @@ def _build_response(
 def sync_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, ProcessLogs]]:
     """Get process logs
 
@@ -91,7 +91,7 @@ def sync_detailed(
 def sync(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, ProcessLogs] | None:
     """Get process logs
 
@@ -117,7 +117,7 @@ def sync(
 async def asyncio_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, ProcessLogs]]:
     """Get process logs
 
@@ -146,7 +146,7 @@ async def asyncio_detailed(
 async def asyncio(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, ProcessLogs] | None:
     """Get process logs
 

@@ -69,7 +69,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     recursive: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Delete directory tree
@@ -103,7 +103,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     recursive: Union[Unset, bool] = UNSET,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Delete directory tree
@@ -132,7 +132,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     recursive: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Delete directory tree
@@ -164,7 +164,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     recursive: Union[Unset, bool] = UNSET,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Delete directory tree

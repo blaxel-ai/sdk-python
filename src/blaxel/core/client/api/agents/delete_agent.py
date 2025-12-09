@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -43,7 +43,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Age
 def sync_detailed(
     agent_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Agent]:
     """Delete agent by name
 
@@ -72,7 +72,7 @@ def sync_detailed(
 def sync(
     agent_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Agent | None:
     """Delete agent by name
 
@@ -96,7 +96,7 @@ def sync(
 async def asyncio_detailed(
     agent_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Agent]:
     """Delete agent by name
 
@@ -123,7 +123,7 @@ async def asyncio_detailed(
 async def asyncio(
     agent_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Agent | None:
     """Delete agent by name
 

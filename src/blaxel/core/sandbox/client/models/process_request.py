@@ -90,7 +90,7 @@ class ProcessRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.process_request_env import ProcessRequestEnv
 
         if not src_dict:
@@ -105,19 +105,19 @@ class ProcessRequest:
         else:
             env = ProcessRequestEnv.from_dict(_env)
 
-        max_restarts = d.pop("maxRestarts", UNSET)
+        max_restarts = d.pop("maxRestarts", d.pop("max_restarts", UNSET))
 
         name = d.pop("name", UNSET)
 
-        restart_on_failure = d.pop("restartOnFailure", UNSET)
+        restart_on_failure = d.pop("restartOnFailure", d.pop("restart_on_failure", UNSET))
 
         timeout = d.pop("timeout", UNSET)
 
-        wait_for_completion = d.pop("waitForCompletion", UNSET)
+        wait_for_completion = d.pop("waitForCompletion", d.pop("wait_for_completion", UNSET))
 
-        wait_for_ports = cast(list[int], d.pop("waitForPorts", UNSET))
+        wait_for_ports = cast(list[int], d.pop("waitForPorts", d.pop("wait_for_ports", UNSET)))
 
-        working_dir = d.pop("workingDir", UNSET)
+        working_dir = d.pop("workingDir", d.pop("working_dir", UNSET))
 
         process_request = cls(
             command=command,

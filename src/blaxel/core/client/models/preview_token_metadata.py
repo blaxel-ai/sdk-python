@@ -55,17 +55,17 @@ class PreviewTokenMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         name = d.pop("name", UNSET)
 
-        preview_name = d.pop("previewName", UNSET)
+        preview_name = d.pop("previewName", d.pop("preview_name", UNSET))
 
-        resource_name = d.pop("resourceName", UNSET)
+        resource_name = d.pop("resourceName", d.pop("resource_name", UNSET))
 
-        resource_type = d.pop("resourceType", UNSET)
+        resource_type = d.pop("resourceType", d.pop("resource_type", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 

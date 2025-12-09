@@ -74,28 +74,28 @@ class CustomDomainSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        cname_records = d.pop("cnameRecords", UNSET)
+        cname_records = d.pop("cnameRecords", d.pop("cname_records", UNSET))
 
-        last_verified_at = d.pop("lastVerifiedAt", UNSET)
+        last_verified_at = d.pop("lastVerifiedAt", d.pop("last_verified_at", UNSET))
 
         region = d.pop("region", UNSET)
 
         status = d.pop("status", UNSET)
 
-        _txt_records = d.pop("txtRecords", UNSET)
+        _txt_records = d.pop("txtRecords", d.pop("txt_records", UNSET))
         txt_records: Union[Unset, CustomDomainSpecTxtRecords]
         if isinstance(_txt_records, Unset):
             txt_records = UNSET
         else:
             txt_records = CustomDomainSpecTxtRecords.from_dict(_txt_records)
 
-        verification_error = d.pop("verificationError", UNSET)
+        verification_error = d.pop("verificationError", d.pop("verification_error", UNSET))
 
         custom_domain_spec = cls(
             cname_records=cname_records,

@@ -52,7 +52,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Mod
 def sync_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Model]:
     """Get job
@@ -86,7 +86,7 @@ def sync_detailed(
 def sync(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Model | None:
     """Get job
@@ -115,7 +115,7 @@ def sync(
 async def asyncio_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Model]:
     """Get job
@@ -147,7 +147,7 @@ async def asyncio_detailed(
 async def asyncio(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Model | None:
     """Get job

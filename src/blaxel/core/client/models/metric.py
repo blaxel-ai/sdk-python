@@ -43,13 +43,13 @@ class Metric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         rate = d.pop("rate", UNSET)
 
-        request_total = d.pop("requestTotal", UNSET)
+        request_total = d.pop("requestTotal", d.pop("request_total", UNSET))
 
         timestamp = d.pop("timestamp", UNSET)
 

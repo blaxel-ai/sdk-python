@@ -76,7 +76,7 @@ def _build_response(
 def sync_detailed(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
     body: PortMonitorRequest,
 ) -> Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]:
     """Start monitoring ports for a process
@@ -110,7 +110,7 @@ def sync_detailed(
 def sync(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
     body: PortMonitorRequest,
 ) -> Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200] | None:
     """Start monitoring ports for a process
@@ -139,7 +139,7 @@ def sync(
 async def asyncio_detailed(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
     body: PortMonitorRequest,
 ) -> Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]:
     """Start monitoring ports for a process
@@ -171,7 +171,7 @@ async def asyncio_detailed(
 async def asyncio(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
     body: PortMonitorRequest,
 ) -> Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200] | None:
     """Start monitoring ports for a process

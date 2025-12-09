@@ -65,7 +65,7 @@ class Form:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.form_config import FormConfig
         from ..models.form_oauth import FormOauth
         from ..models.form_secrets import FormSecrets

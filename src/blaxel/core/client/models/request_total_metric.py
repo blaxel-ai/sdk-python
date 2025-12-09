@@ -88,7 +88,7 @@ class RequestTotalMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.request_total_metric_request_total_per_code import (
             RequestTotalMetricRequestTotalPerCode,
         )
@@ -105,9 +105,11 @@ class RequestTotalMetric:
 
             items.append(items_item)
 
-        request_total = d.pop("requestTotal", UNSET)
+        request_total = d.pop("requestTotal", d.pop("request_total", UNSET))
 
-        _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
+        _request_total_per_code = d.pop(
+            "requestTotalPerCode", d.pop("request_total_per_code", UNSET)
+        )
         request_total_per_code: Union[Unset, RequestTotalMetricRequestTotalPerCode]
         if isinstance(_request_total_per_code, Unset):
             request_total_per_code = UNSET
@@ -118,7 +120,7 @@ class RequestTotalMetric:
 
         rps = d.pop("rps", UNSET)
 
-        _rps_per_code = d.pop("rpsPerCode", UNSET)
+        _rps_per_code = d.pop("rpsPerCode", d.pop("rps_per_code", UNSET))
         rps_per_code: Union[Unset, RequestTotalMetricRpsPerCode]
         if isinstance(_rps_per_code, Unset):
             rps_per_code = UNSET

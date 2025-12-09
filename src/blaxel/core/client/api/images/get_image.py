@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -45,7 +45,7 @@ def sync_detailed(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Image]:
     """Get image by name
 
@@ -79,7 +79,7 @@ def sync(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Image | None:
     """Get image by name
 
@@ -108,7 +108,7 @@ async def asyncio_detailed(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Image]:
     """Get image by name
 
@@ -140,7 +140,7 @@ async def asyncio(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Image | None:
     """Get image by name
 

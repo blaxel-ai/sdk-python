@@ -70,7 +70,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartInitiateRequest,
 ) -> Response[Union[ErrorResponse, MultipartInitiateResponse]]:
     """Initiate multipart upload
@@ -104,7 +104,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartInitiateRequest,
 ) -> Union[ErrorResponse, MultipartInitiateResponse] | None:
     """Initiate multipart upload
@@ -133,7 +133,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartInitiateRequest,
 ) -> Response[Union[ErrorResponse, MultipartInitiateResponse]]:
     """Initiate multipart upload
@@ -165,7 +165,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartInitiateRequest,
 ) -> Union[ErrorResponse, MultipartInitiateResponse] | None:
     """Initiate multipart upload

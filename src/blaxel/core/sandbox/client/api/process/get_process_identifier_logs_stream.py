@@ -58,7 +58,7 @@ def _build_response(
 def sync_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, str]]:
     """Stream process logs in real time
 
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, str] | None:
     """Stream process logs in real time
 
@@ -117,7 +117,7 @@ def sync(
 async def asyncio_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, str]]:
     """Stream process logs in real time
 
@@ -147,7 +147,7 @@ async def asyncio_detailed(
 async def asyncio(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, str] | None:
     """Stream process logs in real time
 

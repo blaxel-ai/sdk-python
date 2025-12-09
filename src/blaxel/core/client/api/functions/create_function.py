@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -54,7 +54,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Fun
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: Function,
 ) -> Response[Function]:
     """Create function
@@ -83,7 +83,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
     body: Function,
 ) -> Function | None:
     """Create function
@@ -107,7 +107,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: Function,
 ) -> Response[Function]:
     """Create function
@@ -134,7 +134,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
     body: Function,
 ) -> Function | None:
     """Create function

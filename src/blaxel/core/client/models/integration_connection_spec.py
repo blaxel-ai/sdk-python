@@ -62,7 +62,7 @@ class IntegrationConnectionSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.integration_connection_spec_config import IntegrationConnectionSpecConfig
         from ..models.integration_connection_spec_secret import IntegrationConnectionSpecSecret
 

@@ -43,11 +43,11 @@ class StoreConfigurationOption:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        if_ = d.pop("if", UNSET)
+        if_ = d.pop("if", d.pop("if_", UNSET))
 
         label = d.pop("label", UNSET)
 

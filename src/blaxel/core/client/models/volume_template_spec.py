@@ -37,11 +37,11 @@ class VolumeTemplateSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        default_size = d.pop("defaultSize", UNSET)
+        default_size = d.pop("defaultSize", d.pop("default_size", UNSET))
 
         description = d.pop("description", UNSET)
 

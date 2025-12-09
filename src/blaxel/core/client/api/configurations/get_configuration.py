@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -40,7 +40,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Con
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Configuration]:
     """List all configurations
 
@@ -63,7 +63,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Configuration | None:
     """List all configurations
 
@@ -82,7 +82,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Configuration]:
     """List all configurations
 
@@ -103,7 +103,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Configuration | None:
     """List all configurations
 

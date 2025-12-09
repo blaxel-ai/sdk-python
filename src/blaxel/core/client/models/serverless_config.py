@@ -68,7 +68,7 @@ class ServerlessConfig:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.serverless_config_configuration import ServerlessConfigConfiguration
 
         if not src_dict:
@@ -81,11 +81,11 @@ class ServerlessConfig:
         else:
             configuration = ServerlessConfigConfiguration.from_dict(_configuration)
 
-        max_retries = d.pop("maxRetries", UNSET)
+        max_retries = d.pop("maxRetries", d.pop("max_retries", UNSET))
 
-        max_scale = d.pop("maxScale", UNSET)
+        max_scale = d.pop("maxScale", d.pop("max_scale", UNSET))
 
-        min_scale = d.pop("minScale", UNSET)
+        min_scale = d.pop("minScale", d.pop("min_scale", UNSET))
 
         timeout = d.pop("timeout", UNSET)
 

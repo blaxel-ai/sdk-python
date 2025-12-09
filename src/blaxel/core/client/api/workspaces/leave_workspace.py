@@ -46,7 +46,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 def sync_detailed(
     workspace_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, Workspace]]:
     """Leave workspace
 
@@ -77,7 +77,7 @@ def sync_detailed(
 def sync(
     workspace_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, Workspace] | None:
     """Leave workspace
 
@@ -103,7 +103,7 @@ def sync(
 async def asyncio_detailed(
     workspace_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, Workspace]]:
     """Leave workspace
 
@@ -132,7 +132,7 @@ async def asyncio_detailed(
 async def asyncio(
     workspace_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, Workspace] | None:
     """Leave workspace
 

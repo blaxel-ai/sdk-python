@@ -52,7 +52,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[San
 def sync_detailed(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Sandbox]:
     """Get Sandbox
@@ -86,7 +86,7 @@ def sync_detailed(
 def sync(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Sandbox | None:
     """Get Sandbox
@@ -115,7 +115,7 @@ def sync(
 async def asyncio_detailed(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Sandbox]:
     """Get Sandbox
@@ -147,7 +147,7 @@ async def asyncio_detailed(
 async def asyncio(
     sandbox_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Sandbox | None:
     """Get Sandbox

@@ -56,7 +56,7 @@ def sync_detailed(
     job_id: str,
     execution_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, JobExecution]]:
     """Get job execution
 
@@ -90,7 +90,7 @@ def sync(
     job_id: str,
     execution_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, JobExecution] | None:
     """Get job execution
 
@@ -119,7 +119,7 @@ async def asyncio_detailed(
     job_id: str,
     execution_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, JobExecution]]:
     """Get job execution
 
@@ -151,7 +151,7 @@ async def asyncio(
     job_id: str,
     execution_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, JobExecution] | None:
     """Get job execution
 

@@ -67,7 +67,7 @@ class RequestTotalByOriginMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.request_total_by_origin_metric_request_total_by_origin import (
             RequestTotalByOriginMetricRequestTotalByOrigin,
         )
@@ -78,7 +78,9 @@ class RequestTotalByOriginMetric:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _request_total_by_origin = d.pop("requestTotalByOrigin", UNSET)
+        _request_total_by_origin = d.pop(
+            "requestTotalByOrigin", d.pop("request_total_by_origin", UNSET)
+        )
         request_total_by_origin: Union[Unset, RequestTotalByOriginMetricRequestTotalByOrigin]
         if isinstance(_request_total_by_origin, Unset):
             request_total_by_origin = UNSET
@@ -87,7 +89,9 @@ class RequestTotalByOriginMetric:
                 _request_total_by_origin
             )
 
-        _request_total_by_origin_and_code = d.pop("requestTotalByOriginAndCode", UNSET)
+        _request_total_by_origin_and_code = d.pop(
+            "requestTotalByOriginAndCode", d.pop("request_total_by_origin_and_code", UNSET)
+        )
         request_total_by_origin_and_code: Union[
             Unset, RequestTotalByOriginMetricRequestTotalByOriginAndCode
         ]

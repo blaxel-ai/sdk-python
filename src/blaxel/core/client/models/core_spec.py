@@ -116,7 +116,7 @@ class CoreSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
         from ..models.revision_configuration import RevisionConfiguration
@@ -141,7 +141,9 @@ class CoreSpec:
 
             flavors.append(componentsschemas_flavors_item)
 
-        integration_connections = cast(list[str], d.pop("integrationConnections", UNSET))
+        integration_connections = cast(
+            list[str], d.pop("integrationConnections", d.pop("integration_connections", UNSET))
+        )
 
         policies = cast(list[str], d.pop("policies", UNSET))
 

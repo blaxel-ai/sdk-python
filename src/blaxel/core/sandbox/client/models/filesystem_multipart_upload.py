@@ -62,13 +62,13 @@ class FilesystemMultipartUpload:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.filesystem_multipart_upload_parts import FilesystemMultipartUploadParts
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        initiated_at = d.pop("initiatedAt", UNSET)
+        initiated_at = d.pop("initiatedAt", d.pop("initiated_at", UNSET))
 
         _parts = d.pop("parts", UNSET)
         parts: Union[Unset, FilesystemMultipartUploadParts]
@@ -81,7 +81,7 @@ class FilesystemMultipartUpload:
 
         permissions = d.pop("permissions", UNSET)
 
-        upload_id = d.pop("uploadId", UNSET)
+        upload_id = d.pop("uploadId", d.pop("upload_id", UNSET))
 
         filesystem_multipart_upload = cls(
             initiated_at=initiated_at,

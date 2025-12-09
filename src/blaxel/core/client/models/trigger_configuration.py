@@ -85,17 +85,17 @@ class TriggerConfiguration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.trigger_configuration_task import TriggerConfigurationTask
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        authentication_type = d.pop("authenticationType", UNSET)
+        authentication_type = d.pop("authenticationType", d.pop("authentication_type", UNSET))
 
-        callback_secret = d.pop("callbackSecret", UNSET)
+        callback_secret = d.pop("callbackSecret", d.pop("callback_secret", UNSET))
 
-        callback_url = d.pop("callbackUrl", UNSET)
+        callback_url = d.pop("callbackUrl", d.pop("callback_url", UNSET))
 
         path = d.pop("path", UNSET)
 

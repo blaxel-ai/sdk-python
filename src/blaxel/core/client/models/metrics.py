@@ -162,7 +162,7 @@ class Metrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.last_n_requests_metric import LastNRequestsMetric
         from ..models.metric import Metric
         from ..models.metrics_models import MetricsModels
@@ -178,7 +178,9 @@ class Metrics:
         functions = d.pop("functions", UNSET)
 
         inference_error_global = []
-        _inference_error_global = d.pop("inferenceErrorGlobal", UNSET)
+        _inference_error_global = d.pop(
+            "inferenceErrorGlobal", d.pop("inference_error_global", UNSET)
+        )
         for componentsschemas_array_metric_item_data in _inference_error_global or []:
             componentsschemas_array_metric_item = Metric.from_dict(
                 componentsschemas_array_metric_item_data
@@ -186,7 +188,9 @@ class Metrics:
 
             inference_error_global.append(componentsschemas_array_metric_item)
 
-        inference_global = cast(list[Any], d.pop("inferenceGlobal", UNSET))
+        inference_global = cast(
+            list[Any], d.pop("inferenceGlobal", d.pop("inference_global", UNSET))
+        )
 
         items = []
         _items = d.pop("items", UNSET)
@@ -198,7 +202,7 @@ class Metrics:
         jobs = d.pop("jobs", UNSET)
 
         last_n_requests = []
-        _last_n_requests = d.pop("lastNRequests", UNSET)
+        _last_n_requests = d.pop("lastNRequests", d.pop("last_n_requests", UNSET))
         for last_n_requests_item_data in _last_n_requests or []:
             last_n_requests_item = LastNRequestsMetric.from_dict(last_n_requests_item_data)
 
@@ -211,9 +215,11 @@ class Metrics:
         else:
             models = MetricsModels.from_dict(_models)
 
-        request_total = d.pop("requestTotal", UNSET)
+        request_total = d.pop("requestTotal", d.pop("request_total", UNSET))
 
-        _request_total_per_code = d.pop("requestTotalPerCode", UNSET)
+        _request_total_per_code = d.pop(
+            "requestTotalPerCode", d.pop("request_total_per_code", UNSET)
+        )
         request_total_per_code: Union[Unset, MetricsRequestTotalPerCode]
         if isinstance(_request_total_per_code, Unset):
             request_total_per_code = UNSET
@@ -222,7 +228,7 @@ class Metrics:
 
         rps = d.pop("rps", UNSET)
 
-        _rps_per_code = d.pop("rpsPerCode", UNSET)
+        _rps_per_code = d.pop("rpsPerCode", d.pop("rps_per_code", UNSET))
         rps_per_code: Union[Unset, MetricsRpsPerCode]
         if isinstance(_rps_per_code, Unset):
             rps_per_code = UNSET

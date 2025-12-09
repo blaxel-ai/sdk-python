@@ -42,7 +42,7 @@ class MultipartCompleteRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.multipart_part_info import MultipartPartInfo
 
         if not src_dict:

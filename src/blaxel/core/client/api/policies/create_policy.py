@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -54,7 +54,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Pol
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: Policy,
 ) -> Response[Policy]:
     """Create policy
@@ -86,7 +86,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
     body: Policy,
 ) -> Policy | None:
     """Create policy
@@ -113,7 +113,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: Policy,
 ) -> Response[Policy]:
     """Create policy
@@ -143,7 +143,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
     body: Policy,
 ) -> Policy | None:
     """Create policy
