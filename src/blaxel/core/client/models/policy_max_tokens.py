@@ -61,17 +61,19 @@ class PolicyMaxTokens:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         granularity = d.pop("granularity", UNSET)
 
-        input_ = d.pop("input", UNSET)
+        input_ = d.pop("input", d.pop("input_", UNSET))
 
         output = d.pop("output", UNSET)
 
-        ratio_input_over_output = d.pop("ratioInputOverOutput", UNSET)
+        ratio_input_over_output = d.pop(
+            "ratioInputOverOutput", d.pop("ratio_input_over_output", UNSET)
+        )
 
         step = d.pop("step", UNSET)
 

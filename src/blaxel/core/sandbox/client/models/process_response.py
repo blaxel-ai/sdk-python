@@ -91,15 +91,15 @@ class ProcessResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         command = d.pop("command")
 
-        completed_at = d.pop("completedAt")
+        completed_at = d.pop("completedAt") if "completedAt" in d else d.pop("completed_at")
 
-        exit_code = d.pop("exitCode")
+        exit_code = d.pop("exitCode") if "exitCode" in d else d.pop("exit_code")
 
         logs = d.pop("logs")
 
@@ -107,17 +107,17 @@ class ProcessResponse:
 
         pid = d.pop("pid")
 
-        started_at = d.pop("startedAt")
+        started_at = d.pop("startedAt") if "startedAt" in d else d.pop("started_at")
 
         status = ProcessResponseStatus(d.pop("status"))
 
-        working_dir = d.pop("workingDir")
+        working_dir = d.pop("workingDir") if "workingDir" in d else d.pop("working_dir")
 
-        max_restarts = d.pop("maxRestarts", UNSET)
+        max_restarts = d.pop("maxRestarts", d.pop("max_restarts", UNSET))
 
-        restart_count = d.pop("restartCount", UNSET)
+        restart_count = d.pop("restartCount", d.pop("restart_count", UNSET))
 
-        restart_on_failure = d.pop("restartOnFailure", UNSET)
+        restart_on_failure = d.pop("restartOnFailure", d.pop("restart_on_failure", UNSET))
 
         process_response = cls(
             command=command,

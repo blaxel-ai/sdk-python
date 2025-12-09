@@ -65,7 +65,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Vol
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
@@ -102,7 +102,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
@@ -134,7 +134,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,
@@ -169,7 +169,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
     body: VolumeTemplate,
     upload: Union[Unset, bool] = UNSET,
     version: Union[Unset, str] = UNSET,

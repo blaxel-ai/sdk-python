@@ -47,7 +47,7 @@ class ResourceLogResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -55,7 +55,7 @@ class ResourceLogResponse:
 
         logs = cast(list[Any], d.pop("logs", UNSET))
 
-        total_count = d.pop("totalCount", UNSET)
+        total_count = d.pop("totalCount", d.pop("total_count", UNSET))
 
         resource_log_response = cls(
             chart=chart,

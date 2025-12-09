@@ -120,7 +120,7 @@ class Integration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.integration_additional_infos import IntegrationAdditionalInfos
         from ..models.integration_endpoints import IntegrationEndpoints
         from ..models.integration_headers import IntegrationHeaders
@@ -131,7 +131,7 @@ class Integration:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _additional_infos = d.pop("additionalInfos", UNSET)
+        _additional_infos = d.pop("additionalInfos", d.pop("additional_infos", UNSET))
         additional_infos: Union[Unset, IntegrationAdditionalInfos]
         if isinstance(_additional_infos, Unset):
             additional_infos = UNSET

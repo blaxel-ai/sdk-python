@@ -99,7 +99,7 @@ class PolicySpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.flavor import Flavor
         from ..models.policy_location import PolicyLocation
         from ..models.policy_max_tokens import PolicyMaxTokens
@@ -123,18 +123,18 @@ class PolicySpec:
 
             locations.append(componentsschemas_policy_locations_item)
 
-        _max_tokens = d.pop("maxTokens", UNSET)
+        _max_tokens = d.pop("maxTokens", d.pop("max_tokens", UNSET))
         max_tokens: Union[Unset, PolicyMaxTokens]
         if isinstance(_max_tokens, Unset):
             max_tokens = UNSET
         else:
             max_tokens = PolicyMaxTokens.from_dict(_max_tokens)
 
-        resource_types = cast(list[str], d.pop("resourceTypes", UNSET))
+        resource_types = cast(list[str], d.pop("resourceTypes", d.pop("resource_types", UNSET)))
 
         sandbox = d.pop("sandbox", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         policy_spec = cls(
             flavors=flavors,

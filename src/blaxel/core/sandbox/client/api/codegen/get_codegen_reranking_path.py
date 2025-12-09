@@ -78,7 +78,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     query: str,
     score_threshold: Union[Unset, float] = UNSET,
     token_limit: Union[Unset, int] = UNSET,
@@ -133,7 +133,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     query: str,
     score_threshold: Union[Unset, float] = UNSET,
     token_limit: Union[Unset, int] = UNSET,
@@ -183,7 +183,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     query: str,
     score_threshold: Union[Unset, float] = UNSET,
     token_limit: Union[Unset, int] = UNSET,
@@ -236,7 +236,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     query: str,
     score_threshold: Union[Unset, float] = UNSET,
     token_limit: Union[Unset, int] = UNSET,

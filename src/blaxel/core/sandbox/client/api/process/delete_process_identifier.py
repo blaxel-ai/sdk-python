@@ -60,7 +60,7 @@ def _build_response(
 def sync_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Stop a process
 
@@ -91,7 +91,7 @@ def sync_detailed(
 def sync(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Stop a process
 
@@ -117,7 +117,7 @@ def sync(
 async def asyncio_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Stop a process
 
@@ -146,7 +146,7 @@ async def asyncio_detailed(
 async def asyncio(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Stop a process
 

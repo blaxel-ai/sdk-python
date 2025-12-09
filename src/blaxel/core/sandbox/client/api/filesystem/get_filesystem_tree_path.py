@@ -86,7 +86,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
     """Get directory tree
 
@@ -117,7 +117,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
     """Get directory tree
 
@@ -143,7 +143,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
     """Get directory tree
 
@@ -172,7 +172,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
     """Get directory tree
 

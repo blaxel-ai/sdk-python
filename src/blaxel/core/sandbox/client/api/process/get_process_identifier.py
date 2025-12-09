@@ -52,7 +52,7 @@ def _build_response(
 def sync_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
     """Get process by identifier
 
@@ -83,7 +83,7 @@ def sync_detailed(
 def sync(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, ProcessResponse] | None:
     """Get process by identifier
 
@@ -109,7 +109,7 @@ def sync(
 async def asyncio_detailed(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
     """Get process by identifier
 
@@ -138,7 +138,7 @@ async def asyncio_detailed(
 async def asyncio(
     identifier: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, ProcessResponse] | None:
     """Get process by identifier
 

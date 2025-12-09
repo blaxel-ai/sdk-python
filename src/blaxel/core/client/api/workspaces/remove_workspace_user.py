@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -42,7 +42,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Any
 def sync_detailed(
     sub_or_email: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Any]:
     """Remove user from workspace or revoke invitation
 
@@ -74,7 +74,7 @@ def sync_detailed(
 async def asyncio_detailed(
     sub_or_email: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Any]:
     """Remove user from workspace or revoke invitation
 

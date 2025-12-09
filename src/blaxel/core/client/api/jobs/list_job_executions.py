@@ -70,7 +70,7 @@ def _build_response(
 def sync_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
 ) -> Response[Union[Any, list["JobExecution"]]]:
@@ -107,7 +107,7 @@ def sync_detailed(
 def sync(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
 ) -> Union[Any, list["JobExecution"]] | None:
@@ -139,7 +139,7 @@ def sync(
 async def asyncio_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
 ) -> Response[Union[Any, list["JobExecution"]]]:
@@ -174,7 +174,7 @@ async def asyncio_detailed(
 async def asyncio(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
 ) -> Union[Any, list["JobExecution"]] | None:

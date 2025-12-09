@@ -158,7 +158,7 @@ class JobMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.job_metrics_executions_total import JobMetricsExecutionsTotal
         from ..models.job_metrics_tasks_total import JobMetricsTasksTotal
         from ..models.jobs_chart_value import JobsChartValue
@@ -168,34 +168,34 @@ class JobMetrics:
             return None
         d = src_dict.copy()
         billable_time = []
-        _billable_time = d.pop("billableTime", UNSET)
+        _billable_time = d.pop("billableTime", d.pop("billable_time", UNSET))
         for billable_time_item_data in _billable_time or []:
             billable_time_item = JobsChartValue.from_dict(billable_time_item_data)
 
             billable_time.append(billable_time_item)
 
         cpu_usage = []
-        _cpu_usage = d.pop("cpuUsage", UNSET)
+        _cpu_usage = d.pop("cpuUsage", d.pop("cpu_usage", UNSET))
         for cpu_usage_item_data in _cpu_usage or []:
             cpu_usage_item = JobsChartValue.from_dict(cpu_usage_item_data)
 
             cpu_usage.append(cpu_usage_item)
 
         executions_chart = []
-        _executions_chart = d.pop("executionsChart", UNSET)
+        _executions_chart = d.pop("executionsChart", d.pop("executions_chart", UNSET))
         for executions_chart_item_data in _executions_chart or []:
             executions_chart_item = JobsSuccessFailedChart.from_dict(executions_chart_item_data)
 
             executions_chart.append(executions_chart_item)
 
         executions_running = []
-        _executions_running = d.pop("executionsRunning", UNSET)
+        _executions_running = d.pop("executionsRunning", d.pop("executions_running", UNSET))
         for executions_running_item_data in _executions_running or []:
             executions_running_item = JobsChartValue.from_dict(executions_running_item_data)
 
             executions_running.append(executions_running_item)
 
-        _executions_total = d.pop("executionsTotal", UNSET)
+        _executions_total = d.pop("executionsTotal", d.pop("executions_total", UNSET))
         executions_total: Union[Unset, JobMetricsExecutionsTotal]
         if isinstance(_executions_total, Unset):
             executions_total = UNSET
@@ -203,27 +203,27 @@ class JobMetrics:
             executions_total = JobMetricsExecutionsTotal.from_dict(_executions_total)
 
         ram_usage = []
-        _ram_usage = d.pop("ramUsage", UNSET)
+        _ram_usage = d.pop("ramUsage", d.pop("ram_usage", UNSET))
         for ram_usage_item_data in _ram_usage or []:
             ram_usage_item = JobsChartValue.from_dict(ram_usage_item_data)
 
             ram_usage.append(ram_usage_item)
 
         tasks_chart = []
-        _tasks_chart = d.pop("tasksChart", UNSET)
+        _tasks_chart = d.pop("tasksChart", d.pop("tasks_chart", UNSET))
         for tasks_chart_item_data in _tasks_chart or []:
             tasks_chart_item = JobsSuccessFailedChart.from_dict(tasks_chart_item_data)
 
             tasks_chart.append(tasks_chart_item)
 
         tasks_running = []
-        _tasks_running = d.pop("tasksRunning", UNSET)
+        _tasks_running = d.pop("tasksRunning", d.pop("tasks_running", UNSET))
         for tasks_running_item_data in _tasks_running or []:
             tasks_running_item = JobsChartValue.from_dict(tasks_running_item_data)
 
             tasks_running.append(tasks_running_item)
 
-        _tasks_total = d.pop("tasksTotal", UNSET)
+        _tasks_total = d.pop("tasksTotal", d.pop("tasks_total", UNSET))
         tasks_total: Union[Unset, JobMetricsTasksTotal]
         if isinstance(_tasks_total, Unset):
             tasks_total = UNSET

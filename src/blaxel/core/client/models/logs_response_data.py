@@ -57,19 +57,19 @@ class LogsResponseData:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         body = d.pop("body", UNSET)
 
-        log_attributes = cast(list[Any], d.pop("logAttributes", UNSET))
+        log_attributes = cast(list[Any], d.pop("logAttributes", d.pop("log_attributes", UNSET)))
 
-        severity_number = d.pop("severityNumber", UNSET)
+        severity_number = d.pop("severityNumber", d.pop("severity_number", UNSET))
 
         timestamp = d.pop("timestamp", UNSET)
 
-        trace_id = d.pop("traceId", UNSET)
+        trace_id = d.pop("traceId", d.pop("trace_id", UNSET))
 
         logs_response_data = cls(
             body=body,

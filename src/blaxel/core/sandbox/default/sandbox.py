@@ -110,22 +110,27 @@ class SandboxInstance:
                 )
             )
         ):
+            config: SandboxCreateConfiguration
             if sandbox is None:
-                sandbox = SandboxCreateConfiguration()
+                config = SandboxCreateConfiguration()
             elif isinstance(sandbox, dict) and not isinstance(sandbox, Sandbox):
-                sandbox = SandboxCreateConfiguration.from_dict(sandbox)
+                config = SandboxCreateConfiguration.from_dict(sandbox)
+            elif isinstance(sandbox, SandboxCreateConfiguration):
+                config = sandbox
+            else:
+                raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
 
             # Set defaults if not provided
-            name = sandbox.name or default_name
-            image = sandbox.image or default_image
-            memory = sandbox.memory or default_memory
-            ports = sandbox._normalize_ports() or UNSET
-            envs = sandbox._normalize_envs() or UNSET
-            volumes = sandbox._normalize_volumes() or UNSET
-            ttl = sandbox.ttl
-            expires = sandbox.expires
-            region = sandbox.region
-            lifecycle = sandbox.lifecycle
+            name = config.name or default_name
+            image = config.image or default_image
+            memory = config.memory or default_memory
+            ports = config._normalize_ports() or UNSET
+            envs = config._normalize_envs() or UNSET
+            volumes = config._normalize_volumes() or UNSET
+            ttl = config.ttl
+            expires = config.expires
+            region = config.region
+            lifecycle = config.lifecycle
             # snapshot_enabled = sandbox.snapshot_enabled
 
             # Create full Sandbox object

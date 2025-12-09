@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -40,7 +40,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Wel
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[WelcomeResponse]:
     """Welcome message
 
@@ -65,7 +65,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> WelcomeResponse | None:
     """Welcome message
 
@@ -86,7 +86,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[WelcomeResponse]:
     """Welcome message
 
@@ -109,7 +109,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
 ) -> WelcomeResponse | None:
     """Welcome message
 

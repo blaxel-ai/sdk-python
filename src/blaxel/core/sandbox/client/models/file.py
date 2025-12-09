@@ -60,13 +60,13 @@ class File:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         group = d.pop("group")
 
-        last_modified = d.pop("lastModified")
+        last_modified = d.pop("lastModified") if "lastModified" in d else d.pop("last_modified")
 
         name = d.pop("name")
 

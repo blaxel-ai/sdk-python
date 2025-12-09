@@ -85,27 +85,27 @@ class JobExecutionMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         cluster = d.pop("cluster", UNSET)
 
-        completed_at = d.pop("completedAt", UNSET)
+        completed_at = d.pop("completedAt", d.pop("completed_at", UNSET))
 
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
-        deleted_at = d.pop("deletedAt", UNSET)
+        deleted_at = d.pop("deletedAt", d.pop("deleted_at", UNSET))
 
-        expired_at = d.pop("expiredAt", UNSET)
+        expired_at = d.pop("expiredAt", d.pop("expired_at", UNSET))
 
         id = d.pop("id", UNSET)
 
         job = d.pop("job", UNSET)
 
-        started_at = d.pop("startedAt", UNSET)
+        started_at = d.pop("startedAt", d.pop("started_at", UNSET))
 
-        updated_at = d.pop("updatedAt", UNSET)
+        updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 

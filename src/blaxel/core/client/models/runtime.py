@@ -202,7 +202,7 @@ class Runtime:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.port import Port
         from ..models.runtime_configuration import RuntimeConfiguration
         from ..models.runtime_startup_probe import RuntimeStartupProbe
@@ -223,7 +223,7 @@ class Runtime:
 
         cpu = d.pop("cpu", UNSET)
 
-        endpoint_name = d.pop("endpointName", UNSET)
+        endpoint_name = d.pop("endpointName", d.pop("endpoint_name", UNSET))
 
         envs = cast(list[Any], d.pop("envs", UNSET))
 
@@ -233,17 +233,17 @@ class Runtime:
 
         image = d.pop("image", UNSET)
 
-        max_concurrent_tasks = d.pop("maxConcurrentTasks", UNSET)
+        max_concurrent_tasks = d.pop("maxConcurrentTasks", d.pop("max_concurrent_tasks", UNSET))
 
-        max_retries = d.pop("maxRetries", UNSET)
+        max_retries = d.pop("maxRetries", d.pop("max_retries", UNSET))
 
-        max_scale = d.pop("maxScale", UNSET)
+        max_scale = d.pop("maxScale", d.pop("max_scale", UNSET))
 
         memory = d.pop("memory", UNSET)
 
-        metric_port = d.pop("metricPort", UNSET)
+        metric_port = d.pop("metricPort", d.pop("metric_port", UNSET))
 
-        min_scale = d.pop("minScale", UNSET)
+        min_scale = d.pop("minScale", d.pop("min_scale", UNSET))
 
         model = d.pop("model", UNSET)
 
@@ -256,7 +256,7 @@ class Runtime:
 
             ports.append(componentsschemas_ports_item)
 
-        _startup_probe = d.pop("startupProbe", UNSET)
+        _startup_probe = d.pop("startupProbe", d.pop("startup_probe", UNSET))
         startup_probe: Union[Unset, RuntimeStartupProbe]
         if isinstance(_startup_probe, Unset):
             startup_probe = UNSET
@@ -269,7 +269,7 @@ class Runtime:
 
         ttl = d.pop("ttl", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         runtime = cls(
             args=args,

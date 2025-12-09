@@ -61,21 +61,27 @@ class TokenTotalMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        average_token_input_per_request = d.pop("averageTokenInputPerRequest", UNSET)
+        average_token_input_per_request = d.pop(
+            "averageTokenInputPerRequest", d.pop("average_token_input_per_request", UNSET)
+        )
 
-        average_token_output_per_request = d.pop("averageTokenOutputPerRequest", UNSET)
+        average_token_output_per_request = d.pop(
+            "averageTokenOutputPerRequest", d.pop("average_token_output_per_request", UNSET)
+        )
 
-        average_token_per_request = d.pop("averageTokenPerRequest", UNSET)
+        average_token_per_request = d.pop(
+            "averageTokenPerRequest", d.pop("average_token_per_request", UNSET)
+        )
 
-        token_input = d.pop("tokenInput", UNSET)
+        token_input = d.pop("tokenInput", d.pop("token_input", UNSET))
 
-        token_output = d.pop("tokenOutput", UNSET)
+        token_output = d.pop("tokenOutput", d.pop("token_output", UNSET))
 
-        token_total = d.pop("tokenTotal", UNSET)
+        token_total = d.pop("tokenTotal", d.pop("token_total", UNSET))
 
         token_total_metric = cls(
             average_token_input_per_request=average_token_input_per_request,

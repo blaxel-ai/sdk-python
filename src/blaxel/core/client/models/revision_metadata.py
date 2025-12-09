@@ -73,7 +73,7 @@ class RevisionMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -81,17 +81,17 @@ class RevisionMetadata:
 
         canary = d.pop("canary", UNSET)
 
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
-        created_by = d.pop("createdBy", UNSET)
+        created_by = d.pop("createdBy", d.pop("created_by", UNSET))
 
         id = d.pop("id", UNSET)
 
-        previous_active = d.pop("previousActive", UNSET)
+        previous_active = d.pop("previousActive", d.pop("previous_active", UNSET))
 
         status = d.pop("status", UNSET)
 
-        traffic_percent = d.pop("trafficPercent", UNSET)
+        traffic_percent = d.pop("trafficPercent", d.pop("traffic_percent", UNSET))
 
         revision_metadata = cls(
             active=active,

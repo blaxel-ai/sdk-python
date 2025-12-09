@@ -36,13 +36,13 @@ class MultipartInitiateResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         path = d.pop("path", UNSET)
 
-        upload_id = d.pop("uploadId", UNSET)
+        upload_id = d.pop("uploadId", d.pop("upload_id", UNSET))
 
         multipart_initiate_response = cls(
             path=path,

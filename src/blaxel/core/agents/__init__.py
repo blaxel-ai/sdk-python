@@ -1,6 +1,6 @@
 import json
 from logging import getLogger
-from typing import Any, Awaitable
+from typing import Any
 
 from ..cache import find_from_cache
 from ..client import client
@@ -57,7 +57,9 @@ class BlAgent:
             **headers,
         }
 
-        return client.get_httpx_client().post(url, headers=merged_headers, data=body, params=params)
+        return client.get_httpx_client().post(
+            url, headers=merged_headers, content=body, params=params
+        )
 
     async def acall(self, url, input_data, headers: dict = {}, params: dict = {}):
         logger.debug(f"Agent Calling: {self.name}")
@@ -73,7 +75,7 @@ class BlAgent:
         }
 
         return await client.get_async_httpx_client().post(
-            url, headers=merged_headers, data=body, params=params
+            url, headers=merged_headers, content=body, params=params
         )
 
     def run(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
@@ -91,7 +93,7 @@ class BlAgent:
                 )
         return response.text
 
-    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> Awaitable[str]:
+    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
         logger.debug(f"Agent Calling: {self.name}")
         response = await self.acall(self.url, input, headers, params)
         if response.status_code >= 400:

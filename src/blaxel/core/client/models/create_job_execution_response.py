@@ -70,7 +70,7 @@ class CreateJobExecutionResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.create_job_execution_response_tasks_item import (
             CreateJobExecutionResponseTasksItem,
         )
@@ -78,11 +78,11 @@ class CreateJobExecutionResponse:
         if not src_dict:
             return None
         d = src_dict.copy()
-        execution_id = d.pop("executionId", UNSET)
+        execution_id = d.pop("executionId", d.pop("execution_id", UNSET))
 
         id = d.pop("id", UNSET)
 
-        job_id = d.pop("jobId", UNSET)
+        job_id = d.pop("jobId", d.pop("job_id", UNSET))
 
         tasks = []
         _tasks = d.pop("tasks", UNSET)
@@ -91,7 +91,7 @@ class CreateJobExecutionResponse:
 
             tasks.append(tasks_item)
 
-        workspace_id = d.pop("workspaceId", UNSET)
+        workspace_id = d.pop("workspaceId", d.pop("workspace_id", UNSET))
 
         create_job_execution_response = cls(
             execution_id=execution_id,

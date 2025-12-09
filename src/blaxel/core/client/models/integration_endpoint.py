@@ -87,7 +87,7 @@ class IntegrationEndpoint:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.integration_endpoint_token import IntegrationEndpointToken
 
         if not src_dict:
@@ -95,15 +95,15 @@ class IntegrationEndpoint:
         d = src_dict.copy()
         body = d.pop("body", UNSET)
 
-        ignore_models = cast(list[Any], d.pop("ignoreModels", UNSET))
+        ignore_models = cast(list[Any], d.pop("ignoreModels", d.pop("ignore_models", UNSET)))
 
         method = d.pop("method", UNSET)
 
         models = cast(list[Any], d.pop("models", UNSET))
 
-        stream_key = d.pop("streamKey", UNSET)
+        stream_key = d.pop("streamKey", d.pop("stream_key", UNSET))
 
-        _stream_token = d.pop("streamToken", UNSET)
+        _stream_token = d.pop("streamToken", d.pop("stream_token", UNSET))
         stream_token: Union[Unset, IntegrationEndpointToken]
         if isinstance(_stream_token, Unset):
             stream_token = UNSET

@@ -86,7 +86,7 @@ class JobExecution:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.job_execution_metadata import JobExecutionMetadata
         from ..models.job_execution_spec import JobExecutionSpec
         from ..models.job_execution_stats import JobExecutionStats

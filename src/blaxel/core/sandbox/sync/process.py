@@ -7,11 +7,7 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..types import (
-    ProcessRequestWithLog,
-    ProcessResponseWithLog,
-    SandboxConfiguration,
-)
+from ..types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
 from .action import SyncSandboxAction
 
 
@@ -154,11 +150,6 @@ class SyncSandboxProcess(SyncSandboxAction):
             if "on_log" in process:
                 on_log = process["on_log"]
                 del process["on_log"]
-            if "wait_for_completion" in process:
-                process["waitForCompletion"] = process["wait_for_completion"]
-            if "wait_for_ports" in process:
-                process["waitForPorts"] = process["wait_for_ports"]
-                del process["wait_for_ports"]
             process = ProcessRequest.from_dict(process)
         should_wait_for_completion = process.wait_for_completion
         if should_wait_for_completion and on_log is not None:

@@ -54,7 +54,7 @@ class PreviewToken:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.preview_token_metadata import PreviewTokenMetadata
         from ..models.preview_token_spec import PreviewTokenSpec
 

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -43,7 +43,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Int
 def sync_detailed(
     connection_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[IntegrationConnection]:
     """Delete integration
 
@@ -74,7 +74,7 @@ def sync_detailed(
 def sync(
     connection_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> IntegrationConnection | None:
     """Delete integration
 
@@ -100,7 +100,7 @@ def sync(
 async def asyncio_detailed(
     connection_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[IntegrationConnection]:
     """Delete integration
 
@@ -129,7 +129,7 @@ async def asyncio_detailed(
 async def asyncio(
     connection_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> IntegrationConnection | None:
     """Delete integration
 

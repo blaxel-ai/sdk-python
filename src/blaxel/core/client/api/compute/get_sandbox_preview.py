@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -45,7 +45,7 @@ def sync_detailed(
     sandbox_name: str,
     preview_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Preview]:
     """Get Sandbox Preview
 
@@ -79,7 +79,7 @@ def sync(
     sandbox_name: str,
     preview_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Preview | None:
     """Get Sandbox Preview
 
@@ -108,7 +108,7 @@ async def asyncio_detailed(
     sandbox_name: str,
     preview_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Preview]:
     """Get Sandbox Preview
 
@@ -140,7 +140,7 @@ async def asyncio(
     sandbox_name: str,
     preview_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Preview | None:
     """Get Sandbox Preview
 

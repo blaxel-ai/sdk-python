@@ -49,20 +49,20 @@ class BillableTimeMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.jobs_chart_value import JobsChartValue
 
         if not src_dict:
             return None
         d = src_dict.copy()
         billable_time = []
-        _billable_time = d.pop("billableTime", UNSET)
+        _billable_time = d.pop("billableTime", d.pop("billable_time", UNSET))
         for billable_time_item_data in _billable_time or []:
             billable_time_item = JobsChartValue.from_dict(billable_time_item_data)
 
             billable_time.append(billable_time_item)
 
-        total_allocation = d.pop("totalAllocation", UNSET)
+        total_allocation = d.pop("totalAllocation", d.pop("total_allocation", UNSET))
 
         billable_time_metric = cls(
             billable_time=billable_time,

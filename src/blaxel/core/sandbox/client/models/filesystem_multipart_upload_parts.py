@@ -29,7 +29,7 @@ class FilesystemMultipartUploadParts:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.filesystem_uploaded_part import FilesystemUploadedPart
 
         if not src_dict:

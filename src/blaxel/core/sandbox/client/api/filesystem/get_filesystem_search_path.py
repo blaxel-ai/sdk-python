@@ -78,7 +78,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
@@ -122,7 +122,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
@@ -161,7 +161,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
@@ -203,7 +203,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,

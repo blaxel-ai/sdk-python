@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -57,7 +57,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Api
 def sync_detailed(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> Response[ApiKey]:
     """Create API key for service account
@@ -91,7 +91,7 @@ def sync_detailed(
 def sync(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> ApiKey | None:
     """Create API key for service account
@@ -120,7 +120,7 @@ def sync(
 async def asyncio_detailed(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> Response[ApiKey]:
     """Create API key for service account
@@ -152,7 +152,7 @@ async def asyncio_detailed(
 async def asyncio(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> ApiKey | None:
     """Create API key for service account

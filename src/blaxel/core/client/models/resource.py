@@ -55,19 +55,21 @@ class Resource:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        infrastructure_generation = d.pop("infrastructureGeneration", UNSET)
+        infrastructure_generation = d.pop(
+            "infrastructureGeneration", d.pop("infrastructure_generation", UNSET)
+        )
 
         name = d.pop("name", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 
-        workspace_id = d.pop("workspaceId", UNSET)
+        workspace_id = d.pop("workspaceId", d.pop("workspace_id", UNSET))
 
         resource = cls(
             infrastructure_generation=infrastructure_generation,

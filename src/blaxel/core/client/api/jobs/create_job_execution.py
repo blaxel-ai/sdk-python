@@ -65,7 +65,7 @@ def _build_response(
 def sync_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateJobExecutionRequest,
 ) -> Response[Union[Any, JobExecution]]:
     """Create job execution
@@ -99,7 +99,7 @@ def sync_detailed(
 def sync(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateJobExecutionRequest,
 ) -> Union[Any, JobExecution] | None:
     """Create job execution
@@ -128,7 +128,7 @@ def sync(
 async def asyncio_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateJobExecutionRequest,
 ) -> Response[Union[Any, JobExecution]]:
     """Create job execution
@@ -160,7 +160,7 @@ async def asyncio_detailed(
 async def asyncio(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: CreateJobExecutionRequest,
 ) -> Union[Any, JobExecution] | None:
     """Create job execution

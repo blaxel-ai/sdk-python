@@ -89,7 +89,7 @@ class Sandbox:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
         from ..models.sandbox_spec import SandboxSpec
@@ -106,7 +106,7 @@ class Sandbox:
 
             events.append(componentsschemas_core_events_item)
 
-        last_used_at = d.pop("lastUsedAt", UNSET)
+        last_used_at = d.pop("lastUsedAt", d.pop("last_used_at", UNSET))
 
         _metadata = d.pop("metadata", UNSET)
         metadata: Union[Unset, Metadata]

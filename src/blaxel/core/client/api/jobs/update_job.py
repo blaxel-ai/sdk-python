@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -56,7 +56,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Job
 def sync_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Job,
 ) -> Response[Job]:
     """Create or update job
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Job,
 ) -> Job | None:
     """Create or update job
@@ -119,7 +119,7 @@ def sync(
 async def asyncio_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Job,
 ) -> Response[Job]:
     """Create or update job
@@ -151,7 +151,7 @@ async def asyncio_detailed(
 async def asyncio(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Job,
 ) -> Job | None:
     """Create or update job

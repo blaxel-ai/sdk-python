@@ -61,7 +61,7 @@ class Trigger:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.trigger_configuration import TriggerConfiguration
 
         if not src_dict:
@@ -78,7 +78,7 @@ class Trigger:
 
         id = d.pop("id", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         trigger = cls(
             configuration=configuration,

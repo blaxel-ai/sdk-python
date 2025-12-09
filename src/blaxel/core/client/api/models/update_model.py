@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -56,7 +56,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Mod
 def sync_detailed(
     model_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Model,
 ) -> Response[Model]:
     """Create or update model
@@ -90,7 +90,7 @@ def sync_detailed(
 def sync(
     model_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Model,
 ) -> Model | None:
     """Create or update model
@@ -119,7 +119,7 @@ def sync(
 async def asyncio_detailed(
     model_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Model,
 ) -> Response[Model]:
     """Create or update model
@@ -151,7 +151,7 @@ async def asyncio_detailed(
 async def asyncio(
     model_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: Model,
 ) -> Model | None:
     """Create or update model

@@ -55,19 +55,19 @@ class ResourceTrace:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         duration = d.pop("duration", UNSET)
 
-        has_error = d.pop("hasError", UNSET)
+        has_error = d.pop("hasError", d.pop("has_error", UNSET))
 
-        start_time = d.pop("startTime", UNSET)
+        start_time = d.pop("startTime", d.pop("start_time", UNSET))
 
-        status_code = d.pop("statusCode", UNSET)
+        status_code = d.pop("statusCode", d.pop("status_code", UNSET))
 
-        trace_id = d.pop("traceID", UNSET)
+        trace_id = d.pop("traceID", d.pop("trace_id", UNSET))
 
         resource_trace = cls(
             duration=duration,

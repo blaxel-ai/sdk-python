@@ -111,29 +111,29 @@ class Template:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.template_variable import TemplateVariable
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        default_branch = d.pop("defaultBranch", UNSET)
+        default_branch = d.pop("defaultBranch", d.pop("default_branch", UNSET))
 
         description = d.pop("description", UNSET)
 
-        download_count = d.pop("downloadCount", UNSET)
+        download_count = d.pop("downloadCount", d.pop("download_count", UNSET))
 
-        forks_count = d.pop("forksCount", UNSET)
+        forks_count = d.pop("forksCount", d.pop("forks_count", UNSET))
 
         icon = d.pop("icon", UNSET)
 
-        icon_dark = d.pop("iconDark", UNSET)
+        icon_dark = d.pop("iconDark", d.pop("icon_dark", UNSET))
 
         name = d.pop("name", UNSET)
 
         sha = d.pop("sha", UNSET)
 
-        star_count = d.pop("starCount", UNSET)
+        star_count = d.pop("starCount", d.pop("star_count", UNSET))
 
         topics = cast(list[str], d.pop("topics", UNSET))
 

@@ -80,7 +80,7 @@ def _build_response(
 def sync_detailed(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: PutFilesystemMultipartUploadIdPartBody,
     part_number: int,
 ) -> Response[Union[ErrorResponse, MultipartUploadPartResponse]]:
@@ -117,7 +117,7 @@ def sync_detailed(
 def sync(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: PutFilesystemMultipartUploadIdPartBody,
     part_number: int,
 ) -> Union[ErrorResponse, MultipartUploadPartResponse] | None:
@@ -149,7 +149,7 @@ def sync(
 async def asyncio_detailed(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: PutFilesystemMultipartUploadIdPartBody,
     part_number: int,
 ) -> Response[Union[ErrorResponse, MultipartUploadPartResponse]]:
@@ -184,7 +184,7 @@ async def asyncio_detailed(
 async def asyncio(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: PutFilesystemMultipartUploadIdPartBody,
     part_number: int,
 ) -> Union[ErrorResponse, MultipartUploadPartResponse] | None:

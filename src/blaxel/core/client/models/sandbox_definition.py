@@ -123,7 +123,7 @@ class SandboxDefinition:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.port import Port
 
         if not src_dict:
@@ -135,7 +135,7 @@ class SandboxDefinition:
 
         description = d.pop("description", UNSET)
 
-        display_name = d.pop("displayName", UNSET)
+        display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
         enterprise = d.pop("enterprise", UNSET)
 
@@ -145,7 +145,7 @@ class SandboxDefinition:
 
         image = d.pop("image", UNSET)
 
-        long_description = d.pop("longDescription", UNSET)
+        long_description = d.pop("longDescription", d.pop("long_description", UNSET))
 
         memory = d.pop("memory", UNSET)
 

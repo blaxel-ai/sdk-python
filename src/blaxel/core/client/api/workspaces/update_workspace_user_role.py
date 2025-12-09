@@ -67,7 +67,7 @@ def _build_response(
 def sync_detailed(
     sub_or_email: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: UpdateWorkspaceUserRoleBody,
 ) -> Response[Union[Any, WorkspaceUser]]:
     """Update user role in workspace
@@ -101,7 +101,7 @@ def sync_detailed(
 def sync(
     sub_or_email: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: UpdateWorkspaceUserRoleBody,
 ) -> Union[Any, WorkspaceUser] | None:
     """Update user role in workspace
@@ -130,7 +130,7 @@ def sync(
 async def asyncio_detailed(
     sub_or_email: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: UpdateWorkspaceUserRoleBody,
 ) -> Response[Union[Any, WorkspaceUser]]:
     """Update user role in workspace
@@ -162,7 +162,7 @@ async def asyncio_detailed(
 async def asyncio(
     sub_or_email: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: UpdateWorkspaceUserRoleBody,
 ) -> Union[Any, WorkspaceUser] | None:
     """Update user role in workspace

@@ -36,13 +36,13 @@ class MultipartPartInfo:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         etag = d.pop("etag", UNSET)
 
-        part_number = d.pop("partNumber", UNSET)
+        part_number = d.pop("partNumber", d.pop("part_number", UNSET))
 
         multipart_part_info = cls(
             etag=etag,

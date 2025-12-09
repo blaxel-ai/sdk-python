@@ -73,13 +73,13 @@ class VolumeTemplateVersion:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         bucket = d.pop("bucket", UNSET)
 
-        content_size = d.pop("contentSize", UNSET)
+        content_size = d.pop("contentSize", d.pop("content_size", UNSET))
 
         name = d.pop("name", UNSET)
 
@@ -87,9 +87,9 @@ class VolumeTemplateVersion:
 
         status = d.pop("status", UNSET)
 
-        template_name = d.pop("templateName", UNSET)
+        template_name = d.pop("templateName", d.pop("template_name", UNSET))
 
-        version_id = d.pop("versionId", UNSET)
+        version_id = d.pop("versionId", d.pop("version_id", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 

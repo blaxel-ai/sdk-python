@@ -65,7 +65,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: InviteWorkspaceUserBody,
 ) -> Response[Union[Any, PendingInvitation]]:
     """Invite user to workspace
@@ -96,7 +96,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
     body: InviteWorkspaceUserBody,
 ) -> Union[Any, PendingInvitation] | None:
     """Invite user to workspace
@@ -122,7 +122,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: InviteWorkspaceUserBody,
 ) -> Response[Union[Any, PendingInvitation]]:
     """Invite user to workspace
@@ -151,7 +151,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
     body: InviteWorkspaceUserBody,
 ) -> Union[Any, PendingInvitation] | None:
     """Invite user to workspace

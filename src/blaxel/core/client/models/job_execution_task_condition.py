@@ -61,11 +61,11 @@ class JobExecutionTaskCondition:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        execution_reason = d.pop("executionReason", UNSET)
+        execution_reason = d.pop("executionReason", d.pop("execution_reason", UNSET))
 
         message = d.pop("message", UNSET)
 
@@ -75,7 +75,7 @@ class JobExecutionTaskCondition:
 
         state = d.pop("state", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         job_execution_task_condition = cls(
             execution_reason=execution_reason,

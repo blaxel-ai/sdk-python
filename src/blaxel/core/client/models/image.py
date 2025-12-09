@@ -53,7 +53,7 @@ class Image:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.image_metadata import ImageMetadata
         from ..models.image_spec import ImageSpec
 

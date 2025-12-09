@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -49,7 +49,7 @@ def _build_response(
 def sync_detailed(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[DeleteWorkspaceServiceAccountResponse200]:
     """Delete workspace service account
 
@@ -80,7 +80,7 @@ def sync_detailed(
 def sync(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> DeleteWorkspaceServiceAccountResponse200 | None:
     """Delete workspace service account
 
@@ -106,7 +106,7 @@ def sync(
 async def asyncio_detailed(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[DeleteWorkspaceServiceAccountResponse200]:
     """Delete workspace service account
 
@@ -135,7 +135,7 @@ async def asyncio_detailed(
 async def asyncio(
     client_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> DeleteWorkspaceServiceAccountResponse200 | None:
     """Delete workspace service account
 

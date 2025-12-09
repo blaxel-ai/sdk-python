@@ -48,7 +48,7 @@ class MultipartListPartsResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.filesystem_uploaded_part import FilesystemUploadedPart
 
         if not src_dict:
@@ -61,7 +61,7 @@ class MultipartListPartsResponse:
 
             parts.append(parts_item)
 
-        upload_id = d.pop("uploadId", UNSET)
+        upload_id = d.pop("uploadId", d.pop("upload_id", UNSET))
 
         multipart_list_parts_response = cls(
             parts=parts,

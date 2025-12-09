@@ -61,7 +61,7 @@ class TokenRateMetric:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -69,11 +69,11 @@ class TokenRateMetric:
 
         provider = d.pop("provider", UNSET)
 
-        provider_name = d.pop("providerName", UNSET)
+        provider_name = d.pop("providerName", d.pop("provider_name", UNSET))
 
         timestamp = d.pop("timestamp", UNSET)
 
-        token_total = d.pop("tokenTotal", UNSET)
+        token_total = d.pop("tokenTotal", d.pop("token_total", UNSET))
 
         trend = d.pop("trend", UNSET)
 

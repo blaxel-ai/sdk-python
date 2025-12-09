@@ -43,13 +43,13 @@ class PreviewTokenSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         expired = d.pop("expired", UNSET)
 
-        expires_at = d.pop("expiresAt", UNSET)
+        expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))
 
         token = d.pop("token", UNSET)
 

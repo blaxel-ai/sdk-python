@@ -83,7 +83,7 @@ class JobsSuccessFailedChart:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.jobs_chart_value import JobsChartValue
 
         if not src_dict:

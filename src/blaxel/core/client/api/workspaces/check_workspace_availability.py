@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -53,7 +53,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[boo
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: CheckWorkspaceAvailabilityBody,
 ) -> Response[bool]:
     """Check workspace availability
@@ -84,7 +84,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
     body: CheckWorkspaceAvailabilityBody,
 ) -> bool | None:
     """Check workspace availability
@@ -110,7 +110,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: CheckWorkspaceAvailabilityBody,
 ) -> Response[bool]:
     """Check workspace availability
@@ -139,7 +139,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
     body: CheckWorkspaceAvailabilityBody,
 ) -> bool | None:
     """Check workspace availability

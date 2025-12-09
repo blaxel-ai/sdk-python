@@ -100,7 +100,7 @@ def _build_response(
 def sync_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: TreeRequest,
 ) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
     """Create or update directory tree
@@ -134,7 +134,7 @@ def sync_detailed(
 def sync(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: TreeRequest,
 ) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
     """Create or update directory tree
@@ -163,7 +163,7 @@ def sync(
 async def asyncio_detailed(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: TreeRequest,
 ) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
     """Create or update directory tree
@@ -195,7 +195,7 @@ async def asyncio_detailed(
 async def asyncio(
     path: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: TreeRequest,
 ) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
     """Create or update directory tree

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -43,7 +43,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Tem
 def sync_detailed(
     template_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Template]:
     """Get template
 
@@ -74,7 +74,7 @@ def sync_detailed(
 def sync(
     template_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Template | None:
     """Get template
 
@@ -100,7 +100,7 @@ def sync(
 async def asyncio_detailed(
     template_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Template]:
     """Get template
 
@@ -129,7 +129,7 @@ async def asyncio_detailed(
 async def asyncio(
     template_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Template | None:
     """Get template
 

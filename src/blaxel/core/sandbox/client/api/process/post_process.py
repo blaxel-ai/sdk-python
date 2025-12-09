@@ -72,7 +72,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: ProcessRequest,
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
     """Execute a command
@@ -103,7 +103,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[Client],
+    client: Client,
     body: ProcessRequest,
 ) -> Union[ErrorResponse, ProcessResponse] | None:
     """Execute a command
@@ -129,7 +129,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[Client],
+    client: Client,
     body: ProcessRequest,
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
     """Execute a command
@@ -158,7 +158,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[Client],
+    client: Client,
     body: ProcessRequest,
 ) -> Union[ErrorResponse, ProcessResponse] | None:
     """Execute a command

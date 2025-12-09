@@ -39,7 +39,7 @@ class TreeRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.tree_request_files import TreeRequestFiles
 
         if not src_dict:

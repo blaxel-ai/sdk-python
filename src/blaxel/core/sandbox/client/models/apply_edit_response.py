@@ -64,13 +64,13 @@ class ApplyEditResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
         message = d.pop("message", UNSET)
 
-        original_content = d.pop("originalContent", UNSET)
+        original_content = d.pop("originalContent", d.pop("original_content", UNSET))
 
         path = d.pop("path", UNSET)
 
@@ -78,7 +78,7 @@ class ApplyEditResponse:
 
         success = d.pop("success", UNSET)
 
-        updated_content = d.pop("updatedContent", UNSET)
+        updated_content = d.pop("updatedContent", d.pop("updated_content", UNSET))
 
         apply_edit_response = cls(
             message=message,

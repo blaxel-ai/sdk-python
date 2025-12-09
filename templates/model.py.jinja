@@ -129,7 +129,7 @@ return field_dict
 {% endif %}
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
     {% for lazy_import in model.lazy_imports %}
         {{ lazy_import }}
     {% endfor %}
@@ -139,9 +139,17 @@ return field_dict
         d = src_dict.copy()
 {% for property in model.required_properties + model.optional_properties %}
     {% if property.required %}
-        {% set property_source = 'd.pop("' + property.name + '")' %}
+        {% if property.name != property.python_name %}
+            {% set property_source = 'd.pop("' + property.name + '") if "' + property.name + '" in d else d.pop("' + property.python_name + '")' %}
+        {% else %}
+            {% set property_source = 'd.pop("' + property.name + '")' %}
+        {% endif %}
     {% else %}
-        {% set property_source = 'd.pop("' + property.name + '", UNSET)' %}
+        {% if property.name != property.python_name %}
+            {% set property_source = 'd.pop("' + property.name + '", d.pop("' + property.python_name + '", UNSET))' %}
+        {% else %}
+            {% set property_source = 'd.pop("' + property.name + '", UNSET)' %}
+        {% endif %}
     {% endif %}
     {% import "property_templates/" + property.template as prop_template %}
     {% if prop_template.construct %}

@@ -37,11 +37,11 @@ class Country:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        display_name = d.pop("displayName", UNSET)
+        display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
         name = d.pop("name", UNSET)
 

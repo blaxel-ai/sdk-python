@@ -91,7 +91,7 @@ class PendingInvitationRender:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.pending_invitation_render_invited_by import PendingInvitationRenderInvitedBy
         from ..models.pending_invitation_render_workspace import PendingInvitationRenderWorkspace
         from ..models.pending_invitation_workspace_details import PendingInvitationWorkspaceDetails
@@ -101,9 +101,9 @@ class PendingInvitationRender:
         d = src_dict.copy()
         email = d.pop("email", UNSET)
 
-        invited_at = d.pop("invitedAt", UNSET)
+        invited_at = d.pop("invitedAt", d.pop("invited_at", UNSET))
 
-        _invited_by = d.pop("invitedBy", UNSET)
+        _invited_by = d.pop("invitedBy", d.pop("invited_by", UNSET))
         invited_by: Union[Unset, PendingInvitationRenderInvitedBy]
         if isinstance(_invited_by, Unset):
             invited_by = UNSET
@@ -119,7 +119,7 @@ class PendingInvitationRender:
         else:
             workspace = PendingInvitationRenderWorkspace.from_dict(_workspace)
 
-        _workspace_details = d.pop("workspaceDetails", UNSET)
+        _workspace_details = d.pop("workspaceDetails", d.pop("workspace_details", UNSET))
         workspace_details: Union[Unset, PendingInvitationWorkspaceDetails]
         if isinstance(_workspace_details, Unset):
             workspace_details = UNSET

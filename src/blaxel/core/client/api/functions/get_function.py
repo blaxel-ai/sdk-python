@@ -52,7 +52,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Fun
 def sync_detailed(
     function_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Function]:
     """Get function by name
@@ -84,7 +84,7 @@ def sync_detailed(
 def sync(
     function_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Function | None:
     """Get function by name
@@ -111,7 +111,7 @@ def sync(
 async def asyncio_detailed(
     function_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Function]:
     """Get function by name
@@ -141,7 +141,7 @@ async def asyncio_detailed(
 async def asyncio(
     function_name: str,
     *,
-    client: Union[Client],
+    client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Function | None:
     """Get function by name

@@ -79,25 +79,25 @@ class PreviewMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         if not src_dict:
             return None
         d = src_dict.copy()
-        created_at = d.pop("createdAt", UNSET)
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
-        updated_at = d.pop("updatedAt", UNSET)
+        updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
-        created_by = d.pop("createdBy", UNSET)
+        created_by = d.pop("createdBy", d.pop("created_by", UNSET))
 
-        updated_by = d.pop("updatedBy", UNSET)
+        updated_by = d.pop("updatedBy", d.pop("updated_by", UNSET))
 
-        display_name = d.pop("displayName", UNSET)
+        display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
         name = d.pop("name", UNSET)
 
-        resource_name = d.pop("resourceName", UNSET)
+        resource_name = d.pop("resourceName", d.pop("resource_name", UNSET))
 
-        resource_type = d.pop("resourceType", UNSET)
+        resource_type = d.pop("resourceType", d.pop("resource_type", UNSET))
 
         workspace = d.pop("workspace", UNSET)
 

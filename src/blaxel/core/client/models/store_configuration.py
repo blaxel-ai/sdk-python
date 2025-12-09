@@ -93,19 +93,21 @@ class StoreConfiguration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.store_configuration_option import StoreConfigurationOption
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        available_models = cast(list[str], d.pop("availableModels", UNSET))
+        available_models = cast(
+            list[str], d.pop("availableModels", d.pop("available_models", UNSET))
+        )
 
         description = d.pop("description", UNSET)
 
-        display_name = d.pop("displayName", UNSET)
+        display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
-        if_ = d.pop("if", UNSET)
+        if_ = d.pop("if", d.pop("if_", UNSET))
 
         name = d.pop("name", UNSET)
 
@@ -120,7 +122,7 @@ class StoreConfiguration:
 
         secret = d.pop("secret", UNSET)
 
-        type_ = d.pop("type", UNSET)
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         store_configuration = cls(
             available_models=available_models,

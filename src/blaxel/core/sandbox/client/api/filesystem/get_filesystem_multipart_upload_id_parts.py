@@ -60,7 +60,7 @@ def _build_response(
 def sync_detailed(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, MultipartListPartsResponse]]:
     """List parts
 
@@ -91,7 +91,7 @@ def sync_detailed(
 def sync(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, MultipartListPartsResponse] | None:
     """List parts
 
@@ -117,7 +117,7 @@ def sync(
 async def asyncio_detailed(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, MultipartListPartsResponse]]:
     """List parts
 
@@ -146,7 +146,7 @@ async def asyncio_detailed(
 async def asyncio(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, MultipartListPartsResponse] | None:
     """List parts
 

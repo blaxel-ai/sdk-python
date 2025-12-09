@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -51,7 +51,7 @@ def sync_detailed(
     preview_name: str,
     token_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[DeleteSandboxPreviewTokenResponse200]:
     """Delete token for Sandbox Preview
 
@@ -88,7 +88,7 @@ def sync(
     preview_name: str,
     token_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> DeleteSandboxPreviewTokenResponse200 | None:
     """Delete token for Sandbox Preview
 
@@ -120,7 +120,7 @@ async def asyncio_detailed(
     preview_name: str,
     token_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[DeleteSandboxPreviewTokenResponse200]:
     """Delete token for Sandbox Preview
 
@@ -155,7 +155,7 @@ async def asyncio(
     preview_name: str,
     token_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> DeleteSandboxPreviewTokenResponse200 | None:
     """Delete token for Sandbox Preview
 

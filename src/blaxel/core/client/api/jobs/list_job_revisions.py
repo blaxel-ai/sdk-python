@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -50,7 +50,7 @@ def _build_response(
 def sync_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[list["RevisionMetadata"]]:
     """List job revisions
 
@@ -81,7 +81,7 @@ def sync_detailed(
 def sync(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> list["RevisionMetadata"] | None:
     """List job revisions
 
@@ -107,7 +107,7 @@ def sync(
 async def asyncio_detailed(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[list["RevisionMetadata"]]:
     """List job revisions
 
@@ -136,7 +136,7 @@ async def asyncio_detailed(
 async def asyncio(
     job_id: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> list["RevisionMetadata"] | None:
     """List job revisions
 

@@ -51,7 +51,7 @@ def sync_detailed(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, Image]]:
     """Delete image by name
 
@@ -85,7 +85,7 @@ def sync(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, Image] | None:
     """Delete image by name
 
@@ -114,7 +114,7 @@ async def asyncio_detailed(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[Any, Image]]:
     """Delete image by name
 
@@ -146,7 +146,7 @@ async def asyncio(
     resource_type: str,
     image_name: str,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[Any, Image] | None:
     """Delete image by name
 

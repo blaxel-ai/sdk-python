@@ -74,7 +74,7 @@ def _build_response(
 def sync_detailed(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartCompleteRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Complete multipart upload
@@ -108,7 +108,7 @@ def sync_detailed(
 def sync(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartCompleteRequest,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Complete multipart upload
@@ -137,7 +137,7 @@ def sync(
 async def asyncio_detailed(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartCompleteRequest,
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Complete multipart upload
@@ -169,7 +169,7 @@ async def asyncio_detailed(
 async def asyncio(
     upload_id: str,
     *,
-    client: Union[Client],
+    client: Client,
     body: MultipartCompleteRequest,
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Complete multipart upload

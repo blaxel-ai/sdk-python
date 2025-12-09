@@ -43,14 +43,16 @@ class RequestDurationOverTimeMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.request_duration_over_time_metric import RequestDurationOverTimeMetric
 
         if not src_dict:
             return None
         d = src_dict.copy()
         request_duration_over_time = []
-        _request_duration_over_time = d.pop("requestDurationOverTime", UNSET)
+        _request_duration_over_time = d.pop(
+            "requestDurationOverTime", d.pop("request_duration_over_time", UNSET)
+        )
         for request_duration_over_time_item_data in _request_duration_over_time or []:
             request_duration_over_time_item = RequestDurationOverTimeMetric.from_dict(
                 request_duration_over_time_item_data

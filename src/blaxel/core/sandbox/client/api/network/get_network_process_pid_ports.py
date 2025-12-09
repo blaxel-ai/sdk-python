@@ -62,7 +62,7 @@ def _build_response(
 def sync_detailed(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, GetNetworkProcessPidPortsResponse200]]:
     """Get open ports for a process
 
@@ -93,7 +93,7 @@ def sync_detailed(
 def sync(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, GetNetworkProcessPidPortsResponse200] | None:
     """Get open ports for a process
 
@@ -119,7 +119,7 @@ def sync(
 async def asyncio_detailed(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Response[Union[ErrorResponse, GetNetworkProcessPidPortsResponse200]]:
     """Get open ports for a process
 
@@ -148,7 +148,7 @@ async def asyncio_detailed(
 async def asyncio(
     pid: int,
     *,
-    client: Union[Client],
+    client: Client,
 ) -> Union[ErrorResponse, GetNetworkProcessPidPortsResponse200] | None:
     """Get open ports for a process
 

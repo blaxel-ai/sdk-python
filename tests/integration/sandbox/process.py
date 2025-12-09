@@ -266,6 +266,33 @@ async def test_stream_close(sandbox: SandboxInstance):
         print(f"⚠️ Could not check process status: {error}")
 
 
+async def test_snake_case(sandbox: SandboxInstance):
+    """Test snake case functionality."""
+    print("🔧 Testing snake case functionality...")
+
+    process = await sandbox.process.exec(
+        {
+            "command": "ls -la",
+            "env": {"PORT": "3000"},
+            "working_dir": "/home",
+            "waitForCompletion": True,
+        }
+    )
+    assert process.working_dir == "/home"
+    assert process.logs is not None
+
+    process = await sandbox.process.exec(
+        {
+            "command": "ls -la",
+            "env": {"PORT": "3000"},
+            "workingDir": "/blaxel",
+            "wait_for_completion": True,
+        }
+    )
+    assert process.working_dir == "/blaxel"
+    assert process.logs is not None
+
+
 async def main():
     """Main test function for new process features."""
     print("🚀 Starting sandbox process feature tests...")
@@ -290,6 +317,9 @@ async def main():
         print()
 
         await test_stream_close(sandbox)
+        print()
+
+        await test_snake_case(sandbox)
         print()
 
         print("🎉 All process feature tests completed successfully!")

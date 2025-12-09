@@ -43,14 +43,14 @@ class SandboxLifecycle:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.expiration_policy import ExpirationPolicy
 
         if not src_dict:
             return None
         d = src_dict.copy()
         expiration_policies = []
-        _expiration_policies = d.pop("expirationPolicies", UNSET)
+        _expiration_policies = d.pop("expirationPolicies", d.pop("expiration_policies", UNSET))
         for expiration_policies_item_data in _expiration_policies or []:
             expiration_policies_item = ExpirationPolicy.from_dict(expiration_policies_item_data)
 

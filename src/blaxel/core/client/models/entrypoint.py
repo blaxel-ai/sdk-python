@@ -61,7 +61,7 @@ class Entrypoint:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.entrypoint_env import EntrypointEnv
 
         if not src_dict:
@@ -78,7 +78,9 @@ class Entrypoint:
         else:
             env = EntrypointEnv.from_dict(_env)
 
-        super_gateway_args = cast(list[Any], d.pop("superGatewayArgs", UNSET))
+        super_gateway_args = cast(
+            list[Any], d.pop("superGatewayArgs", d.pop("super_gateway_args", UNSET))
+        )
 
         entrypoint = cls(
             args=args,
