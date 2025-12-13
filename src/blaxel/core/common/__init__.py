@@ -1,5 +1,6 @@
-from .autoload import autoload, capture_exception
+from .autoload import autoload
 from .env import env
+from .sentry import capture_exception, flush_sentry, init_sentry, is_sentry_initialized
 from .internal import get_alphanumeric_limited_hash, get_global_unique_hash
 from .settings import Settings, settings
 from .webhook import (
@@ -12,6 +13,9 @@ from .webhook import (
 __all__ = [
     "autoload",
     "capture_exception",
+    "flush_sentry",
+    "init_sentry",
+    "is_sentry_initialized",
     "Settings",
     "settings",
     "env",
