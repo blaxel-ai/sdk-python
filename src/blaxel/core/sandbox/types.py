@@ -282,6 +282,8 @@ class SandboxCreateConfiguration:
 @_attrs_define
 class ProcessRequestWithLog(ProcessRequest):
     on_log: Callable[[str], None] | None = None
+    on_stdout: Callable[[str], None] | None = None
+    on_stderr: Callable[[str], None] | None = None
 
 
 class ProcessResponseWithLog:

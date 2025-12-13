@@ -184,55 +184,170 @@ class SandboxProcess(SandboxAction):
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
         """Execute a process in the sandbox."""
         on_log = None
+        on_stdout = None
+        on_stderr = None
+
         if isinstance(process, ProcessRequestWithLog):
             on_log = process.on_log
+            on_stdout = process.on_stdout
+            on_stderr = process.on_stderr
             process = process.to_dict()
 
         if isinstance(process, dict):
             if "on_log" in process:
                 on_log = process["on_log"]
                 del process["on_log"]
+            if "on_stdout" in process:
+                on_stdout = process["on_stdout"]
+                del process["on_stdout"]
+            if "on_stderr" in process:
+                on_stderr = process["on_stderr"]
+                del process["on_stderr"]
             process = ProcessRequest.from_dict(process)
 
         # Store original wait_for_completion setting
         should_wait_for_completion = process.wait_for_completion
 
-        # Always start process without wait_for_completion to avoid server-side blocking
-        if should_wait_for_completion and on_log is not None:
-            process.wait_for_completion = False
-
-        client = self.get_client()
-        response = await client.post("/process", json=process.to_dict())
-        try:
-            content_bytes = await response.aread()
-            self.handle_response_error(response)
-            import json
-
-            response_data = json.loads(content_bytes) if content_bytes else None
-            result = ProcessResponse.from_dict(response_data)
-        finally:
-            await response.aclose()
-
-        # Handle wait_for_completion with parallel log streaming
-        if should_wait_for_completion and on_log is not None:
-            stream_control = self._stream_logs(result.pid, {"on_log": on_log})
-            try:
-                # Wait for process completion
-                result = await self.wait(result.pid, interval=500, max_wait=1000 * 60 * 60)
-            finally:
-                # Clean up log streaming
-                if stream_control:
-                    stream_control["close"]()
+        # When waiting for completion with streaming callbacks, use streaming endpoint
+        if should_wait_for_completion and (on_log or on_stdout or on_stderr):
+            return await self._exec_with_streaming(
+                process, on_log=on_log, on_stdout=on_stdout, on_stderr=on_stderr
+            )
         else:
-            # For non-blocking execution, set up log streaming immediately if requested
-            if on_log is not None:
-                stream_control = self._stream_logs(result.pid, {"on_log": on_log})
+            client = self.get_client()
+            response = await client.post("/process", json=process.to_dict())
+            try:
+                content_bytes = await response.aread()
+                self.handle_response_error(response)
+                import json
+
+                response_data = json.loads(content_bytes) if content_bytes else None
+                result = ProcessResponse.from_dict(response_data)
+            finally:
+                await response.aclose()
+
+            if on_log or on_stdout or on_stderr:
+                stream_control = self._stream_logs(
+                    result.pid, {"on_log": on_log, "on_stdout": on_stdout, "on_stderr": on_stderr}
+                )
                 return ProcessResponseWithLog(
                     result,
                     lambda: stream_control["close"]() if stream_control else None,
                 )
 
-        return result
+            return result
+
+    async def _exec_with_streaming(
+        self,
+        process_request: ProcessRequest,
+        on_log: Callable[[str], None] | None = None,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
+    ) -> ProcessResponseWithLog:
+        """Execute a process with streaming response handling for NDJSON."""
+        import json
+
+        headers = (
+            self.sandbox_config.headers
+            if self.sandbox_config.force_url
+            else {**settings.headers, **self.sandbox_config.headers}
+        )
+
+        async with httpx.AsyncClient() as client_instance:
+            async with client_instance.stream(
+                "POST",
+                f"{self.url}/process",
+                headers={
+                    **headers,
+                    "Content-Type": "application/json",
+                    "Accept": "text/event-stream",
+                },
+                json=process_request.to_dict(),
+                timeout=None,
+            ) as response:
+                if response.status_code >= 400:
+                    error_text = await response.aread()
+                    raise Exception(f"Failed to execute process: {error_text}")
+
+                content_type = response.headers.get("Content-Type", "")
+                is_streaming = "application/x-ndjson" in content_type
+
+                # Fallback: server doesn't support streaming, use legacy approach
+                if not is_streaming:
+                    content = await response.aread()
+                    data = json.loads(content)
+                    result = ProcessResponse.from_dict(data)
+
+                    # If process already completed (server waited), emit logs through callbacks
+                    if result.status == "completed" or result.status == "failed":
+                        if result.stdout:
+                            for line in result.stdout.split("\n"):
+                                if line:
+                                    if on_stdout:
+                                        on_stdout(line)
+                        if result.stderr:
+                            for line in result.stderr.split("\n"):
+                                if line:
+                                    if on_stderr:
+                                        on_stderr(line)
+                        if result.logs:
+                            for line in result.logs.split("\n"):
+                                if line:
+                                    if on_log:
+                                        on_log(line)
+
+                    return ProcessResponseWithLog(result, lambda: None)
+
+                # Streaming response handling
+                buffer = ""
+                result = None
+
+                async for chunk in response.aiter_text():
+                    buffer += chunk
+                    lines = buffer.split("\n")
+                    buffer = lines.pop()
+
+                    for line in lines:
+                        if not line.strip():
+                            continue
+                        try:
+                            parsed = json.loads(line)
+                            parsed_type = parsed.get("type", "")
+                            parsed_data = parsed.get("data", "")
+
+                            if parsed_type == "stdout":
+                                if parsed_data:
+                                    if on_stdout:
+                                        on_stdout(parsed_data)
+                                    if on_log:
+                                        on_log(parsed_data)
+                            elif parsed_type == "stderr":
+                                if parsed_data:
+                                    if on_stderr:
+                                        on_stderr(parsed_data)
+                                    if on_log:
+                                        on_log(parsed_data)
+                            elif parsed_type == "result":
+                                try:
+                                    result = ProcessResponse.from_dict(json.loads(parsed_data))
+                                except Exception:
+                                    raise Exception(f"Failed to parse result JSON: {parsed_data}")
+                        except json.JSONDecodeError:
+                            continue
+
+                # Process any remaining buffer
+                if buffer.strip():
+                    if buffer.startswith("result:"):
+                        json_str = buffer[7:]
+                        try:
+                            result = ProcessResponse.from_dict(json.loads(json_str))
+                        except Exception:
+                            raise Exception(f"Failed to parse result JSON: {json_str}")
+
+                if not result:
+                    raise Exception("No result received from streaming response")
+
+                return ProcessResponseWithLog(result, lambda: None)
 
     async def wait(
         self, identifier: str, max_wait: int = 60000, interval: int = 1000
