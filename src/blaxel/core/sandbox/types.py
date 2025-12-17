@@ -155,6 +155,7 @@ class SandboxCreateConfiguration:
         region: str | None = None,
         lifecycle: Union[SandboxLifecycle, Dict[str, Any]] | None = None,
         snapshot_enabled: bool | None = None,
+        labels: Dict[str, str] | None = None,
     ):
         self.name = name
         self.image = image
@@ -167,6 +168,7 @@ class SandboxCreateConfiguration:
         self.region = region
         self.lifecycle = lifecycle
         self.snapshot_enabled = snapshot_enabled
+        self.labels = labels
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -190,6 +192,7 @@ class SandboxCreateConfiguration:
             region=data.get("region"),
             lifecycle=lifecycle,
             snapshot_enabled=data.get("snapshot_enabled"),
+            labels=data.get("labels"),
         )
 
     def _normalize_ports(self) -> List[Port] | None:
