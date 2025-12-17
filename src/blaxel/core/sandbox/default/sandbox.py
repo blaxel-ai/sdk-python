@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
@@ -24,6 +24,24 @@ from .process import SandboxProcess
 from .session import SandboxSessions
 
 logger = logging.getLogger(__name__)
+
+
+class _AsyncDeleteDescriptor:
+    """Descriptor that provides both class-level and instance-level delete functionality."""
+
+    def __init__(self, delete_func: Callable):
+        self._delete_func = delete_func
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            # Called on the class: SandboxInstance.delete("name")
+            return self._delete_func
+        else:
+            # Called on an instance: instance.delete()
+            async def instance_delete() -> Sandbox:
+                return await self._delete_func(instance.metadata.name)
+
+            return instance_delete
 
 
 class SandboxInstance:
@@ -107,6 +125,7 @@ class SandboxInstance:
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -135,7 +154,7 @@ class SandboxInstance:
 
             # Create full Sandbox object
             sandbox = Sandbox(
-                metadata=Metadata(name=name),
+                metadata=Metadata(name=name, labels=config.labels),
                 spec=SandboxSpec(
                     runtime=Runtime(
                         image=image,
@@ -201,14 +220,6 @@ class SandboxInstance:
     async def list(cls) -> List["SandboxInstance"]:
         response = await list_sandboxes()
         return [cls(sandbox) for sandbox in response]
-
-    @classmethod
-    async def delete(cls, sandbox_name: str) -> Sandbox:
-        response = await delete_sandbox(
-            sandbox_name,
-            client=client,
-        )
-        return response
 
     @classmethod
     async def update_metadata(
@@ -319,3 +330,16 @@ class SandboxInstance:
             headers={"X-Blaxel-Preview-Token": session.token},
             params={"bl_preview_token": session.token},
         )
+
+
+async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
+    """Delete a sandbox by name."""
+    response = await delete_sandbox(
+        sandbox_name,
+        client=client,
+    )
+    return response
+
+
+# Assign the delete descriptor to support both class-level and instance-level calls
+SandboxInstance.delete = _AsyncDeleteDescriptor(_delete_sandbox_by_name)

@@ -1,5 +1,5 @@
 """Volume module for persistent storage management."""
 
-from .volume import VolumeCreateConfiguration, VolumeInstance
+from .volume import SyncVolumeInstance, VolumeCreateConfiguration, VolumeInstance
 
-__all__ = ["VolumeInstance", "VolumeCreateConfiguration"]
+__all__ = ["VolumeInstance", "SyncVolumeInstance", "VolumeCreateConfiguration"]

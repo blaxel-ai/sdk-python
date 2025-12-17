@@ -30,7 +30,7 @@ from .sandbox import (
 )
 from .sandbox.types import Sandbox
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
-from .volume import VolumeCreateConfiguration, VolumeInstance
+from .volume import SyncVolumeInstance, VolumeCreateConfiguration, VolumeInstance
 
 __all__ = [
     "BlAgent",
@@ -65,6 +65,7 @@ __all__ = [
     "convert_mcp_tool_to_blaxel_tool",
     "websocket_client",
     "VolumeInstance",
+    "SyncVolumeInstance",
     "VolumeCreateConfiguration",
     "verify_webhook_signature",
     "verify_webhook_from_request",
