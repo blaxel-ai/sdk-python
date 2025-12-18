@@ -17,10 +17,6 @@ async def main():
         sandbox = await SandboxInstance.create()
         print(f"✅ Sandbox ready: {sandbox.metadata.name}")
 
-        # Wait for sandbox to be deployed
-        await sandbox.wait()
-        print("✅ Sandbox deployed successfully")
-
         # Clean up existing sessions
         print("🧹 Cleaning up existing sessions...")
         sessions = await sandbox.sessions.list()

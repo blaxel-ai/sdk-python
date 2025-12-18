@@ -8,7 +8,7 @@ from ...client.api.compute.get_sandbox import asyncio as get_sandbox
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Runtime, Sandbox, SandboxSpec
+from ...client.models import Metadata, Sandbox, SandboxRuntime, SandboxSpec
 from ...client.types import UNSET
 from ..types import (
     SandboxConfiguration,
@@ -156,12 +156,11 @@ class SandboxInstance:
             sandbox = Sandbox(
                 metadata=Metadata(name=name, labels=config.labels),
                 spec=SandboxSpec(
-                    runtime=Runtime(
+                    runtime=SandboxRuntime(
                         image=image,
                         memory=memory,
                         ports=ports,
                         envs=envs,
-                        generation="mk3",
                     ),
                     volumes=volumes,
                 ),
@@ -186,14 +185,13 @@ class SandboxInstance:
                 sandbox.metadata = Metadata(name=default_name)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
-                    runtime=Runtime(image=default_image, memory=default_memory)
+                    runtime=SandboxRuntime(image=default_image, memory=default_memory)
                 )
             if not sandbox.spec.runtime:
-                sandbox.spec.runtime = Runtime(image=default_image, memory=default_memory)
+                sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
 
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-            sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
 
         response = await create_sandbox(
             client=client,
@@ -218,7 +216,7 @@ class SandboxInstance:
 
     @classmethod
     async def list(cls) -> List["SandboxInstance"]:
-        response = await list_sandboxes()
+        response = await list_sandboxes(client=client)
         return [cls(sandbox) for sandbox in response]
 
     @classmethod
@@ -251,8 +249,11 @@ class SandboxInstance:
             if updated_sandbox.metadata.labels is None or updated_sandbox.metadata.labels is UNSET:
                 updated_sandbox.metadata.labels = {}
             else:
-                # If labels exist, ensure it's a dict
-                updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
+                # If labels exist, convert to dict (MetadataLabels stores in additional_properties)
+                if hasattr(updated_sandbox.metadata.labels, "to_dict"):
+                    updated_sandbox.metadata.labels = updated_sandbox.metadata.labels.to_dict()
+                else:
+                    updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
             updated_sandbox.metadata.labels.update(metadata.labels)
 
         # Update display_name if provided
@@ -321,7 +322,7 @@ class SandboxInstance:
 
         # Create a minimal sandbox configuration for session-based access
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
-        sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
+        sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
 
         # Use the constructor with force_url, headers, and params
         return cls(

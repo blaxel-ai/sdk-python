@@ -3,6 +3,7 @@ import time
 from logging import getLogger
 
 from utils import create_or_get_sandbox
+
 from blaxel.core import SandboxInstance
 
 logger = getLogger(__name__)
@@ -30,6 +31,7 @@ async def main():
     sandbox = await SandboxInstance.create()
 
     await SandboxInstance.delete(sandbox.metadata.name)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -3,13 +3,12 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.function_spec_transport import FunctionSpecTransport
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
-    from ..models.flavor import Flavor
+    from ..models.function_runtime import FunctionRuntime
     from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
     from ..models.trigger import Trigger
 
 
@@ -18,55 +17,31 @@ T = TypeVar("T", bound="FunctionSpec")
 
 @_attrs_define
 class FunctionSpec:
-    """Function specification
+    """Function specification for API
 
     Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
         enabled (Union[Unset, bool]): Enable or disable the resource
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
         integration_connections (Union[Unset, list[str]]):
         policies (Union[Unset, list[str]]):
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
-        description (Union[Unset, str]): Function description, very important for the agent function to work with an LLM
+        runtime (Union[Unset, FunctionRuntime]): Runtime configuration for Function
+        transport (Union[Unset, FunctionSpecTransport]): Transport compatibility for the MCP, can be "websocket" or
+            "http-stream"
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
     enabled: Union[Unset, bool] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
-    sandbox: Union[Unset, bool] = UNSET
-    description: Union[Unset, str] = UNSET
+    runtime: Union[Unset, "FunctionRuntime"] = UNSET
+    transport: Union[Unset, FunctionSpecTransport] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
-            configurations = self.configurations.to_dict()
-        elif self.configurations and isinstance(self.configurations, dict):
-            configurations = self.configurations
 
         enabled = self.enabled
-
-        flavors: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.flavors, Unset):
-            flavors = []
-            for componentsschemas_flavors_item_data in self.flavors:
-                if type(componentsschemas_flavors_item_data) is dict:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data
-                else:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
-                flavors.append(componentsschemas_flavors_item)
 
         integration_connections: Union[Unset, list[str]] = UNSET
         if not isinstance(self.integration_connections, Unset):
@@ -96,9 +71,9 @@ class FunctionSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        sandbox = self.sandbox
-
-        description = self.description
+        transport: Union[Unset, str] = UNSET
+        if not isinstance(self.transport, Unset):
+            transport = self.transport.value
 
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
@@ -113,12 +88,8 @@ class FunctionSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if configurations is not UNSET:
-            field_dict["configurations"] = configurations
         if enabled is not UNSET:
             field_dict["enabled"] = enabled
-        if flavors is not UNSET:
-            field_dict["flavors"] = flavors
         if integration_connections is not UNSET:
             field_dict["integrationConnections"] = integration_connections
         if policies is not UNSET:
@@ -127,10 +98,8 @@ class FunctionSpec:
             field_dict["revision"] = revision
         if runtime is not UNSET:
             field_dict["runtime"] = runtime
-        if sandbox is not UNSET:
-            field_dict["sandbox"] = sandbox
-        if description is not UNSET:
-            field_dict["description"] = description
+        if transport is not UNSET:
+            field_dict["transport"] = transport
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -138,30 +107,14 @@ class FunctionSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_spec_configurations import CoreSpecConfigurations
-        from ..models.flavor import Flavor
+        from ..models.function_runtime import FunctionRuntime
         from ..models.revision_configuration import RevisionConfiguration
-        from ..models.runtime import Runtime
         from ..models.trigger import Trigger
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        _configurations = d.pop("configurations", UNSET)
-        configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
-            configurations = UNSET
-        else:
-            configurations = CoreSpecConfigurations.from_dict(_configurations)
-
         enabled = d.pop("enabled", UNSET)
-
-        flavors = []
-        _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in _flavors or []:
-            componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
-
-            flavors.append(componentsschemas_flavors_item)
 
         integration_connections = cast(
             list[str], d.pop("integrationConnections", d.pop("integration_connections", UNSET))
@@ -177,15 +130,18 @@ class FunctionSpec:
             revision = RevisionConfiguration.from_dict(_revision)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, Runtime]
+        runtime: Union[Unset, FunctionRuntime]
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:
-            runtime = Runtime.from_dict(_runtime)
+            runtime = FunctionRuntime.from_dict(_runtime)
 
-        sandbox = d.pop("sandbox", UNSET)
-
-        description = d.pop("description", UNSET)
+        _transport = d.pop("transport", UNSET)
+        transport: Union[Unset, FunctionSpecTransport]
+        if isinstance(_transport, Unset):
+            transport = UNSET
+        else:
+            transport = FunctionSpecTransport(_transport)
 
         triggers = []
         _triggers = d.pop("triggers", UNSET)
@@ -197,15 +153,12 @@ class FunctionSpec:
             triggers.append(componentsschemas_triggers_item)
 
         function_spec = cls(
-            configurations=configurations,
             enabled=enabled,
-            flavors=flavors,
             integration_connections=integration_connections,
             policies=policies,
             revision=revision,
             runtime=runtime,
-            sandbox=sandbox,
-            description=description,
+            transport=transport,
             triggers=triggers,
         )
 

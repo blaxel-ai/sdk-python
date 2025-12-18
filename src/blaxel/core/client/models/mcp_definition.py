@@ -6,8 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.mcp_definition_entrypoint import MCPDefinitionEntrypoint
-    from ..models.mcp_definition_form import MCPDefinitionForm
+    from ..models.entrypoint import Entrypoint
+    from ..models.form import Form
+    from ..models.mcp_definition_categories_item import MCPDefinitionCategoriesItem
 
 
 T = TypeVar("T", bound="MCPDefinition")
@@ -20,13 +21,13 @@ class MCPDefinition:
     Attributes:
         created_at (Union[Unset, str]): The date and time when the resource was created
         updated_at (Union[Unset, str]): The date and time when the resource was updated
-        categories (Union[Unset, list[Any]]): Categories of the artifact
+        categories (Union[Unset, list['MCPDefinitionCategoriesItem']]): Categories of the artifact
         coming_soon (Union[Unset, bool]): If the artifact is coming soon
         description (Union[Unset, str]): Description of the artifact
         display_name (Union[Unset, str]): Display name of the artifact
         enterprise (Union[Unset, bool]): If the artifact is enterprise
-        entrypoint (Union[Unset, MCPDefinitionEntrypoint]): Entrypoint of the artifact
-        form (Union[Unset, MCPDefinitionForm]): Form of the artifact
+        entrypoint (Union[Unset, Entrypoint]): Entrypoint of the artifact
+        form (Union[Unset, Form]): Form of the artifact
         hidden (Union[Unset, bool]): If the artifact is hidden
         hidden_secrets (Union[Unset, list[str]]): Hidden secrets of the artifact
         icon (Union[Unset, str]): Icon of the artifact
@@ -40,13 +41,13 @@ class MCPDefinition:
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
-    categories: Union[Unset, list[Any]] = UNSET
+    categories: Union[Unset, list["MCPDefinitionCategoriesItem"]] = UNSET
     coming_soon: Union[Unset, bool] = UNSET
     description: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     enterprise: Union[Unset, bool] = UNSET
-    entrypoint: Union[Unset, "MCPDefinitionEntrypoint"] = UNSET
-    form: Union[Unset, "MCPDefinitionForm"] = UNSET
+    entrypoint: Union[Unset, "Entrypoint"] = UNSET
+    form: Union[Unset, "Form"] = UNSET
     hidden: Union[Unset, bool] = UNSET
     hidden_secrets: Union[Unset, list[str]] = UNSET
     icon: Union[Unset, str] = UNSET
@@ -59,13 +60,20 @@ class MCPDefinition:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         created_at = self.created_at
 
         updated_at = self.updated_at
 
-        categories: Union[Unset, list[Any]] = UNSET
+        categories: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.categories, Unset):
-            categories = self.categories
+            categories = []
+            for categories_item_data in self.categories:
+                if type(categories_item_data) is dict:
+                    categories_item = categories_item_data
+                else:
+                    categories_item = categories_item_data.to_dict()
+                categories.append(categories_item)
 
         coming_soon = self.coming_soon
 
@@ -155,8 +163,9 @@ class MCPDefinition:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.mcp_definition_entrypoint import MCPDefinitionEntrypoint
-        from ..models.mcp_definition_form import MCPDefinitionForm
+        from ..models.entrypoint import Entrypoint
+        from ..models.form import Form
+        from ..models.mcp_definition_categories_item import MCPDefinitionCategoriesItem
 
         if not src_dict:
             return None
@@ -165,7 +174,12 @@ class MCPDefinition:
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
 
-        categories = cast(list[Any], d.pop("categories", UNSET))
+        categories = []
+        _categories = d.pop("categories", UNSET)
+        for categories_item_data in _categories or []:
+            categories_item = MCPDefinitionCategoriesItem.from_dict(categories_item_data)
+
+            categories.append(categories_item)
 
         coming_soon = d.pop("coming_soon", UNSET)
 
@@ -176,18 +190,18 @@ class MCPDefinition:
         enterprise = d.pop("enterprise", UNSET)
 
         _entrypoint = d.pop("entrypoint", UNSET)
-        entrypoint: Union[Unset, MCPDefinitionEntrypoint]
+        entrypoint: Union[Unset, Entrypoint]
         if isinstance(_entrypoint, Unset):
             entrypoint = UNSET
         else:
-            entrypoint = MCPDefinitionEntrypoint.from_dict(_entrypoint)
+            entrypoint = Entrypoint.from_dict(_entrypoint)
 
         _form = d.pop("form", UNSET)
-        form: Union[Unset, MCPDefinitionForm]
+        form: Union[Unset, Form]
         if isinstance(_form, Unset):
             form = UNSET
         else:
-            form = MCPDefinitionForm.from_dict(_form)
+            form = Form.from_dict(_form)
 
         hidden = d.pop("hidden", UNSET)
 

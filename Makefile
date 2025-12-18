@@ -33,7 +33,7 @@ sdk-controlplane:
 	@curl -H "Authorization: token $$(gh auth token)" \
 		-H "Accept: application/vnd.github.v3.raw" \
 		-o ./definition.yml \
-		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=main
+		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=cploujoux/stainless
 	rm -rf src/blaxel/core/client/api src/blaxel/core/client/models
 	.venv/bin/openapi-python-client generate \
 		--path=definition.yml \
@@ -85,12 +85,10 @@ tag:
 
 test:
 	uv sync --group test
-	uv run pytest tests/ -v --ignore=tests/integration/
+	uv run pytest tests/ -v --ignore=tests/integration/ --ignore=tests/sandbox/integration/
 
-test-with-telemetry:
-	uv sync --group test --extra telemetry
-	pip install -e .
-	uv run pytest tests/ -v
+test-integration:
+	uv run pytest tests/sandbox/integration/ -n auto
 
 install-dev:
 	uv sync --group test

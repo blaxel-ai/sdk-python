@@ -57,7 +57,7 @@ def sync_detailed(
     client: Client,
     body: Workspace,
 ) -> Response[Workspace]:
-    """Create worspace
+    """Create workspace
 
      Creates a workspace.
 
@@ -88,7 +88,7 @@ def sync(
     client: Client,
     body: Workspace,
 ) -> Workspace | None:
-    """Create worspace
+    """Create workspace
 
      Creates a workspace.
 
@@ -114,7 +114,7 @@ async def asyncio_detailed(
     client: Client,
     body: Workspace,
 ) -> Response[Workspace]:
-    """Create worspace
+    """Create workspace
 
      Creates a workspace.
 
@@ -143,7 +143,7 @@ async def asyncio(
     client: Client,
     body: Workspace,
 ) -> Workspace | None:
-    """Create worspace
+    """Create workspace
 
      Creates a workspace.
 

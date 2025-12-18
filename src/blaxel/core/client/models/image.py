@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.image_metadata import ImageMetadata
@@ -17,38 +15,34 @@ T = TypeVar("T", bound="Image")
 class Image:
     """
     Attributes:
-        metadata (Union[Unset, ImageMetadata]):
-        spec (Union[Unset, ImageSpec]):
+        metadata (ImageMetadata):
+        spec (ImageSpec):
     """
 
-    metadata: Union[Unset, "ImageMetadata"] = UNSET
-    spec: Union[Unset, "ImageSpec"] = UNSET
+    metadata: "ImageMetadata"
+    spec: "ImageSpec"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        metadata: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.metadata
-            and not isinstance(self.metadata, Unset)
-            and not isinstance(self.metadata, dict)
-        ):
-            metadata = self.metadata.to_dict()
-        elif self.metadata and isinstance(self.metadata, dict):
-            metadata = self.metadata
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
-        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
-            spec = self.spec.to_dict()
-        elif self.spec and isinstance(self.spec, dict):
+        if type(self.metadata) is dict:
+            metadata = self.metadata
+        else:
+            metadata = self.metadata.to_dict()
+
+        if type(self.spec) is dict:
             spec = self.spec
+        else:
+            spec = self.spec.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
-        if spec is not UNSET:
-            field_dict["spec"] = spec
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "spec": spec,
+            }
+        )
 
         return field_dict
 
@@ -60,19 +54,9 @@ class Image:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, ImageMetadata]
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = ImageMetadata.from_dict(_metadata)
+        metadata = ImageMetadata.from_dict(d.pop("metadata"))
 
-        _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, ImageSpec]
-        if isinstance(_spec, Unset):
-            spec = UNSET
-        else:
-            spec = ImageSpec.from_dict(_spec)
+        spec = ImageSpec.from_dict(d.pop("spec"))
 
         image = cls(
             metadata=metadata,

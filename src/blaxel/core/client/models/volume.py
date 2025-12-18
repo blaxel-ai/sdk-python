@@ -20,23 +20,34 @@ class Volume:
     """Volume resource for persistent storage
 
     Attributes:
+        metadata (Metadata): Metadata
+        spec (VolumeSpec): Volume specification - immutable configuration
         events (Union[Unset, list['CoreEvent']]): Core events
-        metadata (Union[Unset, Metadata]): Metadata
-        spec (Union[Unset, VolumeSpec]): Volume specification - immutable configuration
         state (Union[Unset, VolumeState]): Volume state - mutable runtime state
         status (Union[Unset, str]): Volume status computed from events
         terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
     """
 
+    metadata: "Metadata"
+    spec: "VolumeSpec"
     events: Union[Unset, list["CoreEvent"]] = UNSET
-    metadata: Union[Unset, "Metadata"] = UNSET
-    spec: Union[Unset, "VolumeSpec"] = UNSET
     state: Union[Unset, "VolumeState"] = UNSET
     status: Union[Unset, str] = UNSET
     terminated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
+        if type(self.metadata) is dict:
+            metadata = self.metadata
+        else:
+            metadata = self.metadata.to_dict()
+
+        if type(self.spec) is dict:
+            spec = self.spec
+        else:
+            spec = self.spec.to_dict()
+
         events: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.events, Unset):
             events = []
@@ -48,22 +59,6 @@ class Volume:
                         componentsschemas_core_events_item_data.to_dict()
                     )
                 events.append(componentsschemas_core_events_item)
-
-        metadata: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.metadata
-            and not isinstance(self.metadata, Unset)
-            and not isinstance(self.metadata, dict)
-        ):
-            metadata = self.metadata.to_dict()
-        elif self.metadata and isinstance(self.metadata, dict):
-            metadata = self.metadata
-
-        spec: Union[Unset, dict[str, Any]] = UNSET
-        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
-            spec = self.spec.to_dict()
-        elif self.spec and isinstance(self.spec, dict):
-            spec = self.spec
 
         state: Union[Unset, dict[str, Any]] = UNSET
         if self.state and not isinstance(self.state, Unset) and not isinstance(self.state, dict):
@@ -77,13 +72,14 @@ class Volume:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "spec": spec,
+            }
+        )
         if events is not UNSET:
             field_dict["events"] = events
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
-        if spec is not UNSET:
-            field_dict["spec"] = spec
         if state is not UNSET:
             field_dict["state"] = state
         if status is not UNSET:
@@ -103,6 +99,10 @@ class Volume:
         if not src_dict:
             return None
         d = src_dict.copy()
+        metadata = Metadata.from_dict(d.pop("metadata"))
+
+        spec = VolumeSpec.from_dict(d.pop("spec"))
+
         events = []
         _events = d.pop("events", UNSET)
         for componentsschemas_core_events_item_data in _events or []:
@@ -111,20 +111,6 @@ class Volume:
             )
 
             events.append(componentsschemas_core_events_item)
-
-        _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, Metadata]
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = Metadata.from_dict(_metadata)
-
-        _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, VolumeSpec]
-        if isinstance(_spec, Unset):
-            spec = UNSET
-        else:
-            spec = VolumeSpec.from_dict(_spec)
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, VolumeState]
@@ -138,9 +124,9 @@ class Volume:
         terminated_at = d.pop("terminatedAt", d.pop("terminated_at", UNSET))
 
         volume = cls(
-            events=events,
             metadata=metadata,
             spec=spec,
+            events=events,
             state=state,
             status=status,
             terminated_at=terminated_at,

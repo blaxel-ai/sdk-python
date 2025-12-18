@@ -1,8 +1,9 @@
-from typing import Any, TypeVar, Union
+from typing import Any, Literal, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.expiration_policy_type import ExpirationPolicyType
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ExpirationPolicy")
@@ -13,20 +14,22 @@ class ExpirationPolicy:
     """Expiration policy for sandbox lifecycle management
 
     Attributes:
-        action (Union[Unset, str]): Action to take when policy is triggered
-        type_ (Union[Unset, str]): Type of expiration policy
+        action (Union[Literal['delete'], Unset]): Action to take when policy is triggered
+        type_ (Union[Unset, ExpirationPolicyType]): Type of expiration policy
         value (Union[Unset, str]): Duration value (e.g., '1h', '24h', '7d')
     """
 
-    action: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    action: Union[Literal["delete"], Unset] = UNSET
+    type_: Union[Unset, ExpirationPolicyType] = UNSET
     value: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         action = self.action
 
-        type_ = self.type_
+        type_: Union[Unset, str] = UNSET
+        if not isinstance(self.type_, Unset):
+            type_ = self.type_.value
 
         value = self.value
 
@@ -47,9 +50,16 @@ class ExpirationPolicy:
         if not src_dict:
             return None
         d = src_dict.copy()
-        action = d.pop("action", UNSET)
+        action = cast(Union[Literal["delete"], Unset], d.pop("action", UNSET))
+        if action != "delete" and not isinstance(action, Unset):
+            raise ValueError(f"action must match const 'delete', got '{action}'")
 
-        type_ = d.pop("type", d.pop("type_", UNSET))
+        _type_ = d.pop("type", d.pop("type_", UNSET))
+        type_: Union[Unset, ExpirationPolicyType]
+        if isinstance(_type_, Unset):
+            type_ = UNSET
+        else:
+            type_ = ExpirationPolicyType(_type_)
 
         value = d.pop("value", UNSET)
 

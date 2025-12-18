@@ -1,9 +1,13 @@
-from typing import Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.o_auth_scope_item import OAuthScopeItem
+
 
 T = TypeVar("T", bound="OAuth")
 
@@ -13,18 +17,25 @@ class OAuth:
     """OAuth of the artifact
 
     Attributes:
-        scope (Union[Unset, list[Any]]): Scope of the OAuth
+        scope (Union[Unset, list['OAuthScopeItem']]): Scope of the OAuth
         type_ (Union[Unset, str]): Type of the OAuth
     """
 
-    scope: Union[Unset, list[Any]] = UNSET
+    scope: Union[Unset, list["OAuthScopeItem"]] = UNSET
     type_: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        scope: Union[Unset, list[Any]] = UNSET
+
+        scope: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.scope, Unset):
-            scope = self.scope
+            scope = []
+            for scope_item_data in self.scope:
+                if type(scope_item_data) is dict:
+                    scope_item = scope_item_data
+                else:
+                    scope_item = scope_item_data.to_dict()
+                scope.append(scope_item)
 
         type_ = self.type_
 
@@ -40,10 +51,17 @@ class OAuth:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.o_auth_scope_item import OAuthScopeItem
+
         if not src_dict:
             return None
         d = src_dict.copy()
-        scope = cast(list[Any], d.pop("scope", UNSET))
+        scope = []
+        _scope = d.pop("scope", UNSET)
+        for scope_item_data in _scope or []:
+            scope_item = OAuthScopeItem.from_dict(scope_item_data)
+
+            scope.append(scope_item)
 
         type_ = d.pop("type", d.pop("type_", UNSET))
 

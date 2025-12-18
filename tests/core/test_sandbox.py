@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from blaxel.core.client.models import Metadata, Sandbox
+from blaxel.core.client.models import Metadata, Sandbox, SandboxSpec
 from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.sandbox.default.action import SandboxAction
 from blaxel.core.sandbox.types import ResponseError, SandboxConfiguration
@@ -14,7 +14,7 @@ from blaxel.core.sandbox.types import ResponseError, SandboxConfiguration
 @pytest.mark.asyncio
 async def test_sandbox_creation():
     """Test sandbox instance creation."""
-    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
+    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"), spec=SandboxSpec())
     sandbox = SandboxInstance(sandbox_data)
     assert sandbox.sandbox.metadata.name == "test-sandbox"
 
@@ -22,7 +22,7 @@ async def test_sandbox_creation():
 @pytest.mark.asyncio
 async def test_sandbox_properties():
     """Test sandbox instance properties."""
-    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
+    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"), spec=SandboxSpec())
     sandbox = SandboxInstance(sandbox_data)
 
     # Test that core properties exist
@@ -51,7 +51,7 @@ async def test_sandbox_get(mock_get):
 @pytest.mark.asyncio
 async def test_sandbox_filesystem_operations():
     """Test sandbox filesystem operations."""
-    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
+    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"), spec=SandboxSpec())
     sandbox = SandboxInstance(sandbox_data)
 
     # Mock the client and filesystem operations
@@ -81,7 +81,7 @@ async def test_sandbox_filesystem_operations():
 @pytest.mark.asyncio
 async def test_sandbox_process_operations():
     """Test sandbox process operations."""
-    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
+    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"), spec=SandboxSpec())
     sandbox = SandboxInstance(sandbox_data)
 
     # Mock the process operations
@@ -101,7 +101,7 @@ async def test_sandbox_process_operations():
 @pytest.mark.asyncio
 async def test_sandbox_handle_base_url_properties():
     """Test SandboxHandleBase URL properties."""
-    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
+    sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"), spec=SandboxSpec())
     sandbox_config = SandboxConfiguration(sandbox_data)
     handle = SandboxAction(sandbox_config)
 
@@ -119,7 +119,7 @@ async def test_sandbox_forced_url_base():
     os.environ["BL_SANDBOX_TEST_SANDBOX_URL"] = "http://localhost:8080"
 
     try:
-        sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"))
+        sandbox_data = Sandbox(metadata=Metadata(name="test-sandbox"), spec=SandboxSpec())
         sandbox_config = SandboxConfiguration(sandbox_data)
         handle = SandboxAction(sandbox_config)
 

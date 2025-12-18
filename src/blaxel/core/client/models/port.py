@@ -3,6 +3,7 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.port_protocol import PortProtocol
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="Port")
@@ -14,19 +15,21 @@ class Port:
 
     Attributes:
         name (Union[Unset, str]): The name of the port
-        protocol (Union[Unset, str]): The protocol of the port
+        protocol (Union[Unset, PortProtocol]): The protocol of the port
         target (Union[Unset, int]): The target port of the port
     """
 
     name: Union[Unset, str] = UNSET
-    protocol: Union[Unset, str] = UNSET
+    protocol: Union[Unset, PortProtocol] = UNSET
     target: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
-        protocol = self.protocol
+        protocol: Union[Unset, str] = UNSET
+        if not isinstance(self.protocol, Unset):
+            protocol = self.protocol.value
 
         target = self.target
 
@@ -49,7 +52,12 @@ class Port:
         d = src_dict.copy()
         name = d.pop("name", UNSET)
 
-        protocol = d.pop("protocol", UNSET)
+        _protocol = d.pop("protocol", UNSET)
+        protocol: Union[Unset, PortProtocol]
+        if isinstance(_protocol, Unset):
+            protocol = UNSET
+        else:
+            protocol = PortProtocol(_protocol)
 
         target = d.pop("target", UNSET)
 
