@@ -1,0 +1,15 @@
+title = "Blaxel SDK Python - Gitleaks Config"
+
+[extend]
+useDefaults = true
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+  "tests/",  # Test fixtures may contain fake credentials
+]
+
+regexes = [
+  "fake_api_key",  # Used in test.yaml
+  "fake_workspace",  # Used in test.yaml
+]
