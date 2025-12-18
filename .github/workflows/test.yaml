@@ -6,6 +6,9 @@ on:
   push:
     branches: ["main", "develop"]
 
+permissions:
+  contents: read
+
 env:
   BL_API_KEY: fake_api_key
   BL_WORKSPACE: fake_workspace
