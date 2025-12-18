@@ -5,6 +5,10 @@ on:
   push:
     branches: ["develop"]
 
+concurrency:
+  group: pypi-dev-deploy
+  cancel-in-progress: false
+
 jobs:
   pypi-publish:
     name: Upload blaxel package to PyPI (dev)
