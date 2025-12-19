@@ -45,6 +45,8 @@ class _AsyncDeleteDescriptor:
 
 
 class SandboxInstance:
+    delete: "_AsyncDeleteDescriptor"
+
     def __init__(
         self,
         sandbox: Union[Sandbox, SandboxConfiguration],
@@ -238,10 +240,12 @@ class SandboxInstance:
 
         # Prepare the updated sandbox object
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox is None:
+            raise ValueError(f"Sandbox {sandbox_name} not found")
 
         # Merge metadata
         if updated_sandbox.metadata is None:
-            updated_sandbox.metadata = Metadata()
+            updated_sandbox.metadata = Metadata(name=sandbox_name)
 
         # Update labels if provided
         if metadata.labels is not None:
@@ -339,6 +343,8 @@ async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         sandbox_name,
         client=client,
     )
+    if response is None:
+        raise ValueError(f"Sandbox {sandbox_name} not found")
     return response
 
 

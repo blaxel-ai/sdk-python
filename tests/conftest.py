@@ -1,9 +1,15 @@
 """Pytest configuration and shared fixtures."""
 
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from dotenv import load_dotenv
+
+# Load .env file from the sdk-python directory
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
 
 
 @pytest.fixture(scope="session", autouse=True)
