@@ -25,6 +25,7 @@ class TimeToFirstTokenOverTimeMetrics:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         time_to_first_token_over_time: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.time_to_first_token_over_time, Unset):
             time_to_first_token_over_time = []

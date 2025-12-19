@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.port import Port
+    from ..models.sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 
 
 T = TypeVar("T", bound="SandboxDefinition")
@@ -17,7 +18,7 @@ class SandboxDefinition:
     """Sandbox definition for admin store operations
 
     Attributes:
-        categories (Union[Unset, list[Any]]): Categories of the defintion
+        categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the defintion
         coming_soon (Union[Unset, bool]): If the definition is coming soon
         description (Union[Unset, str]): Description of the defintion
         display_name (Union[Unset, str]): Display name of the definition
@@ -33,7 +34,7 @@ class SandboxDefinition:
         url (Union[Unset, str]): URL of the definition
     """
 
-    categories: Union[Unset, list[Any]] = UNSET
+    categories: Union[Unset, list["SandboxDefinitionCategoriesItem"]] = UNSET
     coming_soon: Union[Unset, bool] = UNSET
     description: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
@@ -50,9 +51,16 @@ class SandboxDefinition:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        categories: Union[Unset, list[Any]] = UNSET
+
+        categories: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.categories, Unset):
-            categories = self.categories
+            categories = []
+            for categories_item_data in self.categories:
+                if type(categories_item_data) is dict:
+                    categories_item = categories_item_data
+                else:
+                    categories_item = categories_item_data.to_dict()
+                categories.append(categories_item)
 
         coming_soon = self.coming_soon
 
@@ -125,11 +133,17 @@ class SandboxDefinition:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.port import Port
+        from ..models.sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        categories = cast(list[Any], d.pop("categories", UNSET))
+        categories = []
+        _categories = d.pop("categories", UNSET)
+        for categories_item_data in _categories or []:
+            categories_item = SandboxDefinitionCategoriesItem.from_dict(categories_item_data)
+
+            categories.append(categories_item)
 
         coming_soon = d.pop("coming_soon", UNSET)
 

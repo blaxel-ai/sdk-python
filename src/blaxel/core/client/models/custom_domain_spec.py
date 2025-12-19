@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.custom_domain_spec_status import CustomDomainSpecStatus
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ class CustomDomainSpec:
         cname_records (Union[Unset, str]): CNAME target for the domain
         last_verified_at (Union[Unset, str]): Last verification attempt timestamp
         region (Union[Unset, str]): Region that the custom domain is associated with
-        status (Union[Unset, str]): Current status of the domain (pending, verified, failed)
+        status (Union[Unset, CustomDomainSpecStatus]): Current status of the domain (pending, verified, failed)
         txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
             verification
         verification_error (Union[Unset, str]): Error message if verification failed
@@ -29,19 +30,22 @@ class CustomDomainSpec:
     cname_records: Union[Unset, str] = UNSET
     last_verified_at: Union[Unset, str] = UNSET
     region: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, CustomDomainSpecStatus] = UNSET
     txt_records: Union[Unset, "CustomDomainSpecTxtRecords"] = UNSET
     verification_error: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         cname_records = self.cname_records
 
         last_verified_at = self.last_verified_at
 
         region = self.region
 
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         txt_records: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -86,7 +90,12 @@ class CustomDomainSpec:
 
         region = d.pop("region", UNSET)
 
-        status = d.pop("status", UNSET)
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, CustomDomainSpecStatus]
+        if isinstance(_status, Unset):
+            status = UNSET
+        else:
+            status = CustomDomainSpecStatus(_status)
 
         _txt_records = d.pop("txtRecords", d.pop("txt_records", UNSET))
         txt_records: Union[Unset, CustomDomainSpecTxtRecords]

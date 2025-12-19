@@ -56,7 +56,7 @@ class ProcessResponse:
 
         started_at = self.started_at
 
-        status = self.status.value
+        status = self.status.value if hasattr(self.status, "value") else self.status
 
         working_dir = self.working_dir
 

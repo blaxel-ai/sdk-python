@@ -3,6 +3,7 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.volume_template_state_status import VolumeTemplateStateStatus
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="VolumeTemplateState")
@@ -15,13 +16,13 @@ class VolumeTemplateState:
     Attributes:
         last_version_uploaded_at (Union[Unset, str]): Timestamp of last version upload
         latest_version (Union[Unset, str]): Current/latest S3 version ID
-        status (Union[Unset, str]): Status of the volume template (created, ready, error)
+        status (Union[Unset, VolumeTemplateStateStatus]): Status of the volume template (created, ready, error)
         version_count (Union[Unset, int]): Total number of versions for this template
     """
 
     last_version_uploaded_at: Union[Unset, str] = UNSET
     latest_version: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, VolumeTemplateStateStatus] = UNSET
     version_count: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -30,7 +31,9 @@ class VolumeTemplateState:
 
         latest_version = self.latest_version
 
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         version_count = self.version_count
 
@@ -59,7 +62,12 @@ class VolumeTemplateState:
 
         latest_version = d.pop("latestVersion", d.pop("latest_version", UNSET))
 
-        status = d.pop("status", UNSET)
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, VolumeTemplateStateStatus]
+        if isinstance(_status, Unset):
+            status = UNSET
+        else:
+            status = VolumeTemplateStateStatus(_status)
 
         version_count = d.pop("versionCount", d.pop("version_count", UNSET))
 

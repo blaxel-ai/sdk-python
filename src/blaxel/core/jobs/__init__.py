@@ -229,7 +229,6 @@ class BlJob:
             client=client,
             body=request,
         )
-
         if response.status_code != 200:
             raise Exception(f"Failed to create job execution: {response.status_code}")
 

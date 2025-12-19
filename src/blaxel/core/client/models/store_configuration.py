@@ -40,6 +40,7 @@ class StoreConfiguration:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         available_models: Union[Unset, list[str]] = UNSET
         if not isinstance(self.available_models, Unset):
             available_models = self.available_models

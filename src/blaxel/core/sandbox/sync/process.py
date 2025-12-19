@@ -186,7 +186,8 @@ class SyncSandboxProcess(SyncSandboxAction):
 
                 if on_log or on_stdout or on_stderr:
                     stream_control = self._stream_logs(
-                        result.pid, {"on_log": on_log, "on_stdout": on_stdout, "on_stderr": on_stderr}
+                        result.pid,
+                        {"on_log": on_log, "on_stdout": on_stdout, "on_stderr": on_stderr},
                     )
                     return ProcessResponseWithLog(
                         result,

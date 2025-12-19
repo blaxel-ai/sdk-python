@@ -29,6 +29,7 @@ from ...client.models import (
     Preview,
     PreviewSpec,
     PreviewToken,
+    PreviewTokenMetadata,
     PreviewTokenSpec,
     Sandbox,
 )
@@ -69,9 +70,10 @@ class SandboxPreviewTokens:
             self.resource_name,
             self.preview_name,
             body=PreviewToken(
+                metadata=PreviewTokenMetadata(name=""),
                 spec=PreviewTokenSpec(
                     expires_at=to_utc_z(expires_at),
-                )
+                ),
             ),
             client=client,
         )

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.trigger_type import TriggerType
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -20,16 +21,17 @@ class Trigger:
         configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
         enabled (Union[Unset, bool]): Enable or disable the trigger (default: true)
         id (Union[Unset, str]): The id of the trigger
-        type_ (Union[Unset, str]): The type of trigger, can be http or http-async
+        type_ (Union[Unset, TriggerType]): The type of trigger, can be http or http-async
     """
 
     configuration: Union[Unset, "TriggerConfiguration"] = UNSET
     enabled: Union[Unset, bool] = UNSET
     id: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    type_: Union[Unset, TriggerType] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         configuration: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.configuration
@@ -44,7 +46,9 @@ class Trigger:
 
         id = self.id
 
-        type_ = self.type_
+        type_: Union[Unset, str] = UNSET
+        if not isinstance(self.type_, Unset):
+            type_ = self.type_.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -78,7 +82,12 @@ class Trigger:
 
         id = d.pop("id", UNSET)
 
-        type_ = d.pop("type", d.pop("type_", UNSET))
+        _type_ = d.pop("type", d.pop("type_", UNSET))
+        type_: Union[Unset, TriggerType]
+        if isinstance(_type_, Unset):
+            type_ = UNSET
+        else:
+            type_ = TriggerType(_type_)
 
         trigger = cls(
             configuration=configuration,
