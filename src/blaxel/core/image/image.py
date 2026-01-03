@@ -59,12 +59,28 @@ class ImageBuildContext:
 
         return dfp.content
 
-    def compute_hash(self) -> str:
-        """Compute a hash of the image configuration for caching purposes."""
+    def compute_hash(self, max_file_size: int = 100 * 1024 * 1024) -> str:
+        """
+        Compute a hash of the image configuration for caching purposes.
+
+        Args:
+            max_file_size: Maximum file size to include in hash computation (default 100MB).
+                          Files larger than this will only use mtime for hashing.
+
+        Returns:
+            A 12-character hash string
+        """
         content = self.generate_dockerfile()
         for local_file in self.local_files:
             if local_file.source_path.exists():
-                content += f"\n{local_file.context_name}:{local_file.source_path.stat().st_mtime}"
+                stat = local_file.source_path.stat()
+                # Use mtime for all files, but skip size check for very large files
+                # to prevent resource exhaustion
+                if stat.st_size <= max_file_size:
+                    content += f"\n{local_file.context_name}:{stat.st_mtime}:{stat.st_size}"
+                else:
+                    # For very large files, just use mtime (already fast)
+                    content += f"\n{local_file.context_name}:{stat.st_mtime}:large"
         return hashlib.sha256(content.encode()).hexdigest()[:12]
 
 
@@ -415,8 +431,18 @@ class ImageInstance:
         """
         Write the image to a deployable folder in a temporary directory.
 
+        Note: The caller is responsible for cleaning up the temporary directory
+        when finished. Use `shutil.rmtree(path.parent, ignore_errors=True)` to clean up.
+
+        For automatic cleanup, consider using this pattern:
+            build_dir = image.write_temp()
+            try:
+                # ... use build_dir ...
+            finally:
+                shutil.rmtree(build_dir.parent, ignore_errors=True)
+
         Returns:
-            Path to the generated folder
+            Path to the generated folder (parent is the temp directory to clean up)
         """
         temp_dir = tempfile.mkdtemp(prefix="blaxel-image-")
         return self.write(temp_dir)
@@ -430,13 +456,28 @@ class ImageInstance:
 
         Returns:
             Zip file content as bytes
+
+        Raises:
+            ValueError: If a file path escapes the build directory (Zip Slip protection)
         """
+        build_dir = build_dir.resolve()
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             for file_path in build_dir.rglob("*"):
                 if file_path.is_file():
+                    # Resolve to handle symlinks and get the real path
+                    resolved_path = file_path.resolve()
+
+                    # Zip Slip protection: ensure the resolved path is within build_dir
+                    try:
+                        resolved_path.relative_to(build_dir)
+                    except ValueError:
+                        raise ValueError(
+                            f"Path traversal detected: {file_path} resolves outside build directory"
+                        )
+
                     arcname = file_path.relative_to(build_dir)
-                    zf.write(file_path, arcname)
+                    zf.write(resolved_path, arcname)
         zip_buffer.seek(0)
         return zip_buffer.getvalue()
 
@@ -503,11 +544,21 @@ class ImageInstance:
 
         upload_url = response.headers.get("x-blaxel-upload-url")
 
+        # Parse JSON response safely
+        parsed_sandbox = None
+        if response.status_code == 200:
+            try:
+                json_data = response.json()
+                parsed_sandbox = Sandbox.from_dict(json_data)
+            except (json.JSONDecodeError, ValueError):
+                # Response is not valid JSON or cannot be parsed as Sandbox
+                pass
+
         result = Response(
             status_code=HTTPStatus(response.status_code),
             content=response.content,
             headers=response.headers,
-            parsed=Sandbox.from_dict(response.json()) if response.status_code == 200 else None,
+            parsed=parsed_sandbox,
         )
 
         return result, upload_url
@@ -551,11 +602,21 @@ class ImageInstance:
 
         upload_url = response.headers.get("x-blaxel-upload-url")
 
+        # Parse JSON response safely
+        parsed_sandbox = None
+        if response.status_code == 200:
+            try:
+                json_data = response.json()
+                parsed_sandbox = Sandbox.from_dict(json_data)
+            except (json.JSONDecodeError, ValueError):
+                # Response is not valid JSON or cannot be parsed as Sandbox
+                pass
+
         result = Response(
             status_code=HTTPStatus(response.status_code),
             content=response.content,
             headers=response.headers,
-            parsed=Sandbox.from_dict(response.json()) if response.status_code == 200 else None,
+            parsed=parsed_sandbox,
         )
 
         return result, upload_url
@@ -610,8 +671,11 @@ class ImageInstance:
         http_client = client.get_httpx_client()
         response = http_client.get(f"/sandboxes/{name}")
         if response.status_code == 200:
-            data = response.json()
-            return data.get("status")
+            try:
+                data = response.json()
+                return data.get("status")
+            except (json.JSONDecodeError, ValueError):
+                return None
         return None
 
     async def _get_sandbox_status(self, name: str) -> str | None:
@@ -627,8 +691,11 @@ class ImageInstance:
         http_client = client.get_async_httpx_client()
         response = await http_client.get(f"/sandboxes/{name}")
         if response.status_code == 200:
-            data = response.json()
-            return data.get("status")
+            try:
+                data = response.json()
+                return data.get("status")
+            except (json.JSONDecodeError, ValueError):
+                return None
         return None
 
     def _wait_for_deployment_sync(
@@ -808,9 +875,12 @@ class ImageInstance:
             http_client = client.get_httpx_client()
             final_response = http_client.get(f"/sandboxes/{name}")
             if final_response.status_code == 200:
-                sandbox = Sandbox.from_dict(final_response.json())
-                if sandbox:
-                    return sandbox
+                try:
+                    sandbox = Sandbox.from_dict(final_response.json())
+                    if sandbox:
+                        return sandbox
+                except (json.JSONDecodeError, ValueError):
+                    pass
 
             if response.parsed:
                 return response.parsed
@@ -892,9 +962,12 @@ class ImageInstance:
             http_client = client.get_async_httpx_client()
             final_response = await http_client.get(f"/sandboxes/{name}")
             if final_response.status_code == 200:
-                sandbox = Sandbox.from_dict(final_response.json())
-                if sandbox:
-                    return sandbox
+                try:
+                    sandbox = Sandbox.from_dict(final_response.json())
+                    if sandbox:
+                        return sandbox
+                except (json.JSONDecodeError, ValueError):
+                    pass
 
             if response.parsed:
                 return response.parsed
