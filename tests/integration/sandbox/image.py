@@ -7,8 +7,7 @@ import asyncio
 import sys
 import uuid
 
-from blaxel.core.image import ImageInstance
-from blaxel.core.sandbox import SandboxInstance
+from blaxel.core import ImageInstance, SandboxInstance
 
 
 def get_sandbox_name(sandbox) -> str:
@@ -47,15 +46,16 @@ async def test_advanced_image_build():
     print("\n" + "=" * 60)
     print("Advanced Image Build Test")
     print("=" * 60)
-
-    sandbox_name = f"image-test-{uuid.uuid4().hex[:8]}"
+    sandbox = None
+    sandbox_v2 = None
+    image_name = f"image-test-{uuid.uuid4().hex[:8]}"
 
     # Create a comprehensive image with multiple features
     image = (
         ImageInstance.from_registry("python:3.11-slim")
-        .run_commands("apt-get update && apt-get install -y --no-install-recommends curl git wget && rm -rf /var/lib/apt/lists/*")
+        .apt_install("curl", "git", "wget")
         .workdir("/app")
-        .run_commands("pip install --no-cache-dir requests httpx pydantic")
+        .pip_install("requests", "httpx", "pydantic")
         .env(
             PYTHONUNBUFFERED="1",
             APP_NAME="blaxel-test",
@@ -76,7 +76,7 @@ async def test_advanced_image_build():
         .expose(8080)
     )
 
-    print(f"📦 Building advanced image as sandbox: {sandbox_name}")
+    print(f"📦 Building advanced image as sandbox: {image_name}")
     print(f"   Base image: {image.base_image}")
     print(f"   Dockerfile hash: {image.hash}")
     print(f"\n📄 User-defined Dockerfile:\n{'-' * 40}")
@@ -90,43 +90,44 @@ async def test_advanced_image_build():
     print("-" * 40)
 
     try:
-        sandbox = await image.build(
-            name=sandbox_name,
+        await image.build(
+            name=image_name,
             memory=4096,
             timeout=900.0,
             on_status_change=print_status,
             sandbox_version="latest",
         )
+        sandbox = await SandboxInstance.create({
+            "image": image_name,
+            "memory": 4096,
+        })
+        if not sandbox.metadata or not sandbox.metadata.name:
+            raise ValueError("Sandbox metadata is not set")
 
         print(f"\n✅ Build successful!")
         print(f"   Sandbox name: {get_sandbox_name(sandbox)}")
         print(f"   Status: {sandbox.status}")
 
-        # Verify the sandbox is accessible and packages work
-        print("\n🔍 Verifying sandbox...")
-        sandbox_instance = await SandboxInstance.get(sandbox_name)
-        print(f"   Sandbox exists: {get_sandbox_name(sandbox_instance)}")
-
         # Test Python packages
-        result = await sandbox_instance.process.exec(
+        result = await sandbox.process.exec(
             {
                 "command": "python -c \"import requests; import httpx; import pydantic; print('All packages OK')\"",
                 "waitForCompletion": True,
             }
         )
         process_name = result.name if result.name else "unknown"
-        logs = await sandbox_instance.process.logs(process_name, "all")
+        logs = await sandbox.process.logs(process_name, "all")
         print(f"   Python packages: {logs.strip() if logs else 'N/A'}")
 
         # Test apt packages
-        result = await sandbox_instance.process.exec(
+        result = await sandbox.process.exec(
             {
                 "command": "curl --version | head -1",
                 "waitForCompletion": True,
             }
         )
         process_name = result.name if result.name else "unknown"
-        logs = await sandbox_instance.process.logs(process_name, "all")
+        logs = await sandbox.process.logs(process_name, "all")
         print(f"   curl: {logs.strip() if logs else 'N/A'}")
 
         # Test re-building the same image with the same name (update scenario)
@@ -136,10 +137,10 @@ async def test_advanced_image_build():
 
         # Modify the image slightly to simulate an update
         image_v2 = (
-            ImageInstance.from_registry("python:3.11-slim")
-            .run_commands("apt-get update && apt-get install -y --no-install-recommends curl git wget vim && rm -rf /var/lib/apt/lists/*")  # Added vim
+            ImageInstance.from_registry("python:3.11-alpine")
+            .apk_add("curl", "git", "wget", "vim")
             .workdir("/app")
-            .run_commands("pip install --no-cache-dir requests httpx pydantic aiohttp")  # Added aiohttp
+            .pip_install("requests", "httpx", "pydantic", "aiohttp")
             .env(
                 PYTHONUNBUFFERED="1",
                 APP_NAME="blaxel-test",
@@ -162,50 +163,56 @@ async def test_advanced_image_build():
             .expose(8080)
         )
 
-        print(f"📦 Re-building updated image as sandbox: {sandbox_name}")
+        print(f"📦 Re-building updated image as sandbox: {image_name}")
         print(f"   Dockerfile hash: {image_v2.hash}")
 
-        sandbox_v2 = await image_v2.build(
-            name=sandbox_name,
+        await image_v2.build(
+            name=image_name,
             memory=4096,
             timeout=900.0,
             on_status_change=print_status,
             sandbox_version="latest",
         )
 
+        sandbox_v2 = await SandboxInstance.create({
+            "image": image_name,
+            "memory": 4096,
+        })
+
+        if not sandbox_v2.metadata or not sandbox_v2.metadata.name:
+            raise ValueError("Sandbox metadata is not set")
+
         print(f"\n✅ Re-build successful!")
         print(f"   Sandbox name: {get_sandbox_name(sandbox_v2)}")
         print(f"   Status: {sandbox_v2.status}")
 
-        # Verify the updated sandbox
-        print("\n🔍 Verifying updated sandbox...")
-        sandbox_instance_v2 = await SandboxInstance.get(sandbox_name)
-
         # Test new Python package (aiohttp)
-        result = await sandbox_instance_v2.process.exec(
+        result = await sandbox_v2.process.exec(
             {
                 "command": "python -c \"import aiohttp; print('aiohttp OK')\"",
                 "waitForCompletion": True,
             }
         )
         process_name = result.name if result.name else "unknown"
-        logs = await sandbox_instance_v2.process.logs(process_name, "all")
+        logs = await sandbox_v2.process.logs(process_name, "all")
         print(f"   aiohttp package: {logs.strip() if logs else 'N/A'}")
 
         # Test new apt package (vim)
-        result = await sandbox_instance_v2.process.exec(
+        result = await sandbox_v2.process.exec(
             {
                 "command": "vim --version | head -1",
                 "waitForCompletion": True,
             }
         )
         process_name = result.name if result.name else "unknown"
-        logs = await sandbox_instance_v2.process.logs(process_name, "all")
+        logs = await sandbox_v2.process.logs(process_name, "all")
         print(f"   vim: {logs.strip() if logs else 'N/A'}")
 
         # Clean up
-        print(f"\n🧹 Cleaning up sandbox: {sandbox_name}")
-        await delete_sandbox(sandbox_name)
+        print(f"\n🧹 Cleaning up sandbox: {image_name}")
+        await delete_sandbox(image_name)
+        await delete_sandbox(sandbox.metadata.name)
+        await delete_sandbox(sandbox_v2.metadata.name)
         print("✅ Cleanup complete")
 
         print("\n🎉 All verifications passed!")
@@ -220,7 +227,11 @@ async def test_advanced_image_build():
         traceback.print_exc()
         # Try to clean up even on failure
         try:
-            await delete_sandbox(sandbox_name)
+            await delete_sandbox(image_name)
+            if sandbox and sandbox.metadata and sandbox.metadata.name:
+                await delete_sandbox(sandbox.metadata.name)
+            if sandbox_v2 and sandbox_v2.metadata and sandbox_v2.metadata.name:
+                await delete_sandbox(sandbox_v2.metadata.name)
         except Exception:
             pass
         raise

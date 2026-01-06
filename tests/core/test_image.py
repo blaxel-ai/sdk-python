@@ -434,6 +434,366 @@ class TestImageChaining:
         assert "ENTRYPOINT" in dockerfile
 
 
+class TestImagePipInstall:
+    """Tests for ImageInstance.pip_install()."""
+
+    def test_pip_install_single_package(self):
+        """Test pip_install with a single package."""
+        image = ImageInstance.from_registry("python:3.11").pip_install("requests")
+        assert "RUN pip install requests" in image.dockerfile
+
+    def test_pip_install_multiple_packages(self):
+        """Test pip_install with multiple packages."""
+        image = ImageInstance.from_registry("python:3.11").pip_install("requests", "pandas", "numpy")
+        assert "RUN pip install requests pandas numpy" in image.dockerfile
+
+    def test_pip_install_with_find_links(self):
+        """Test pip_install with find_links option."""
+        image = ImageInstance.from_registry("python:3.11").pip_install(
+            "torch", find_links="https://download.pytorch.org/whl/cpu"
+        )
+        assert "--find-links https://download.pytorch.org/whl/cpu" in image.dockerfile
+        assert "torch" in image.dockerfile
+
+    def test_pip_install_with_index_url(self):
+        """Test pip_install with custom index URL."""
+        image = ImageInstance.from_registry("python:3.11").pip_install(
+            "mypackage", index_url="https://pypi.example.com/simple"
+        )
+        assert "--index-url https://pypi.example.com/simple" in image.dockerfile
+
+    def test_pip_install_with_extra_index_url(self):
+        """Test pip_install with extra index URL."""
+        image = ImageInstance.from_registry("python:3.11").pip_install(
+            "mypackage", extra_index_url="https://extra.pypi.example.com/simple"
+        )
+        assert "--extra-index-url https://extra.pypi.example.com/simple" in image.dockerfile
+
+    def test_pip_install_with_pre(self):
+        """Test pip_install with pre-release flag."""
+        image = ImageInstance.from_registry("python:3.11").pip_install("beta-package", pre=True)
+        assert "--pre" in image.dockerfile
+
+    def test_pip_install_with_extra_options(self):
+        """Test pip_install with extra options."""
+        image = ImageInstance.from_registry("python:3.11").pip_install(
+            "mypackage", extra_options="--no-cache-dir --upgrade"
+        )
+        assert "--no-cache-dir --upgrade" in image.dockerfile
+
+    def test_pip_install_empty_returns_same(self):
+        """Test pip_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("python:3.11")
+        image2 = image1.pip_install()
+        assert image1 is image2
+
+
+class TestImageAptInstall:
+    """Tests for ImageInstance.apt_install()."""
+
+    def test_apt_install_single_package(self):
+        """Test apt_install with a single package."""
+        image = ImageInstance.from_registry("ubuntu:22.04").apt_install("git")
+        dockerfile = image.dockerfile
+        assert "apt-get update" in dockerfile
+        assert "apt-get install -y --no-install-recommends git" in dockerfile
+        assert "rm -rf /var/lib/apt/lists/*" in dockerfile
+
+    def test_apt_install_multiple_packages(self):
+        """Test apt_install with multiple packages."""
+        image = ImageInstance.from_registry("ubuntu:22.04").apt_install("git", "curl", "wget")
+        assert "git curl wget" in image.dockerfile
+
+    def test_apt_install_no_update(self):
+        """Test apt_install without update."""
+        image = ImageInstance.from_registry("ubuntu:22.04").apt_install("git", update=False)
+        assert "apt-get update" not in image.dockerfile
+        assert "apt-get install" in image.dockerfile
+
+    def test_apt_install_no_clean(self):
+        """Test apt_install without clean."""
+        image = ImageInstance.from_registry("ubuntu:22.04").apt_install("git", clean=False)
+        assert "rm -rf /var/lib/apt/lists/*" not in image.dockerfile
+
+    def test_apt_install_combined_command(self):
+        """Test apt_install creates single combined RUN command."""
+        image = ImageInstance.from_registry("ubuntu:22.04").apt_install("git")
+        # Should be a single RUN with && separators
+        assert "apt-get update && apt-get install" in image.dockerfile
+
+    def test_apt_install_empty_returns_same(self):
+        """Test apt_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("ubuntu:22.04")
+        image2 = image1.apt_install()
+        assert image1 is image2
+
+
+class TestImageApkAdd:
+    """Tests for ImageInstance.apk_add()."""
+
+    def test_apk_add_single_package(self):
+        """Test apk_add with a single package."""
+        image = ImageInstance.from_registry("alpine:3.18").apk_add("git")
+        assert "apk add --no-cache git" in image.dockerfile
+
+    def test_apk_add_multiple_packages(self):
+        """Test apk_add with multiple packages."""
+        image = ImageInstance.from_registry("alpine:3.18").apk_add("git", "curl", "bash")
+        assert "apk add --no-cache git curl bash" in image.dockerfile
+
+    def test_apk_add_without_no_cache(self):
+        """Test apk_add without no-cache flag."""
+        image = ImageInstance.from_registry("alpine:3.18").apk_add("git", no_cache=False)
+        dockerfile = image.dockerfile
+        assert "apk update" in dockerfile
+        assert "apk add git" in dockerfile
+        assert "--no-cache" not in dockerfile
+
+    def test_apk_add_without_no_cache_with_clean(self):
+        """Test apk_add without no-cache but with clean."""
+        image = ImageInstance.from_registry("alpine:3.18").apk_add("git", no_cache=False, clean=True)
+        assert "rm -rf /var/cache/apk/*" in image.dockerfile
+
+    def test_apk_add_without_update(self):
+        """Test apk_add without update (when no_cache=False)."""
+        image = ImageInstance.from_registry("alpine:3.18").apk_add("git", no_cache=False, update=False)
+        assert "apk update" not in image.dockerfile
+
+    def test_apk_add_empty_returns_same(self):
+        """Test apk_add with no packages returns same image."""
+        image1 = ImageInstance.from_registry("alpine:3.18")
+        image2 = image1.apk_add()
+        assert image1 is image2
+
+
+class TestImageNpmInstall:
+    """Tests for ImageInstance.npm_install()."""
+
+    def test_npm_install_from_package_json(self):
+        """Test npm_install without packages installs from package.json."""
+        image = ImageInstance.from_registry("node:18").npm_install()
+        assert "RUN npm install" in image.dockerfile
+
+    def test_npm_install_specific_packages(self):
+        """Test npm_install with specific packages."""
+        image = ImageInstance.from_registry("node:18").npm_install("express", "lodash")
+        assert "npm install" in image.dockerfile
+        assert "express" in image.dockerfile
+        assert "lodash" in image.dockerfile
+
+    def test_npm_install_global(self):
+        """Test npm_install with global flag."""
+        image = ImageInstance.from_registry("node:18").npm_install("typescript", global_install=True)
+        assert "-g" in image.dockerfile
+        assert "typescript" in image.dockerfile
+
+    def test_npm_install_save_dev(self):
+        """Test npm_install with save-dev flag."""
+        image = ImageInstance.from_registry("node:18").npm_install("jest", save_dev=True)
+        assert "--save-dev" in image.dockerfile
+
+    def test_npm_install_with_yarn(self):
+        """Test npm_install with yarn package manager."""
+        image = ImageInstance.from_registry("node:18").npm_install(package_manager="yarn")
+        assert "yarn install" in image.dockerfile
+
+    def test_npm_install_with_yarn_add(self):
+        """Test npm_install with yarn adding packages."""
+        image = ImageInstance.from_registry("node:18").npm_install("express", package_manager="yarn")
+        assert "yarn add express" in image.dockerfile
+
+    def test_npm_install_with_yarn_global(self):
+        """Test npm_install with yarn global."""
+        image = ImageInstance.from_registry("node:18").npm_install(
+            "typescript", package_manager="yarn", global_install=True
+        )
+        assert "yarn global add typescript" in image.dockerfile
+
+    def test_npm_install_with_pnpm(self):
+        """Test npm_install with pnpm package manager."""
+        image = ImageInstance.from_registry("node:18").npm_install(package_manager="pnpm")
+        assert "pnpm install" in image.dockerfile
+
+    def test_npm_install_with_pnpm_add(self):
+        """Test npm_install with pnpm adding packages."""
+        image = ImageInstance.from_registry("node:18").npm_install("express", package_manager="pnpm")
+        assert "pnpm add express" in image.dockerfile
+
+    def test_npm_install_with_bun(self):
+        """Test npm_install with bun package manager."""
+        image = ImageInstance.from_registry("oven/bun:latest").npm_install(package_manager="bun")
+        assert "bun install" in image.dockerfile
+
+    def test_npm_install_with_bun_add(self):
+        """Test npm_install with bun adding packages."""
+        image = ImageInstance.from_registry("oven/bun:latest").npm_install("elysia", package_manager="bun")
+        assert "bun add elysia" in image.dockerfile
+
+    def test_npm_install_invalid_package_manager(self):
+        """Test npm_install with invalid package manager raises error."""
+        image = ImageInstance.from_registry("node:18")
+        with pytest.raises(ValueError, match="Invalid package manager"):
+            image.npm_install("express", package_manager="invalid")
+
+
+class TestImageGemInstall:
+    """Tests for ImageInstance.gem_install()."""
+
+    def test_gem_install_single_package(self):
+        """Test gem_install with a single gem."""
+        image = ImageInstance.from_registry("ruby:3.2").gem_install("rails")
+        assert "gem install --no-document rails" in image.dockerfile
+
+    def test_gem_install_multiple_packages(self):
+        """Test gem_install with multiple gems."""
+        image = ImageInstance.from_registry("ruby:3.2").gem_install("rails", "bundler", "rake")
+        assert "gem install --no-document rails bundler rake" in image.dockerfile
+
+    def test_gem_install_with_document(self):
+        """Test gem_install with documentation."""
+        image = ImageInstance.from_registry("ruby:3.2").gem_install("rails", no_document=False)
+        assert "--no-document" not in image.dockerfile
+        assert "gem install rails" in image.dockerfile
+
+    def test_gem_install_empty_returns_same(self):
+        """Test gem_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("ruby:3.2")
+        image2 = image1.gem_install()
+        assert image1 is image2
+
+
+class TestImageCargoInstall:
+    """Tests for ImageInstance.cargo_install()."""
+
+    def test_cargo_install_single_package(self):
+        """Test cargo_install with a single crate."""
+        image = ImageInstance.from_registry("rust:1.74").cargo_install("ripgrep")
+        assert "cargo install ripgrep" in image.dockerfile
+
+    def test_cargo_install_multiple_packages(self):
+        """Test cargo_install with multiple crates."""
+        image = ImageInstance.from_registry("rust:1.74").cargo_install("ripgrep", "fd-find")
+        assert "cargo install ripgrep fd-find" in image.dockerfile
+
+    def test_cargo_install_with_locked(self):
+        """Test cargo_install with locked flag."""
+        image = ImageInstance.from_registry("rust:1.74").cargo_install("ripgrep", locked=True)
+        assert "cargo install --locked ripgrep" in image.dockerfile
+
+    def test_cargo_install_empty_returns_same(self):
+        """Test cargo_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("rust:1.74")
+        image2 = image1.cargo_install()
+        assert image1 is image2
+
+
+class TestImageGoInstall:
+    """Tests for ImageInstance.go_install()."""
+
+    def test_go_install_single_package(self):
+        """Test go_install with a single package."""
+        image = ImageInstance.from_registry("golang:1.21").go_install(
+            "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+        )
+        assert "go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest" in image.dockerfile
+
+    def test_go_install_multiple_packages(self):
+        """Test go_install with multiple packages."""
+        image = ImageInstance.from_registry("golang:1.21").go_install(
+            "github.com/user/tool1@latest",
+            "github.com/user/tool2@v1.0.0",
+        )
+        dockerfile = image.dockerfile
+        assert "go install github.com/user/tool1@latest" in dockerfile
+        assert "go install github.com/user/tool2@v1.0.0" in dockerfile
+
+    def test_go_install_empty_returns_same(self):
+        """Test go_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("golang:1.21")
+        image2 = image1.go_install()
+        assert image1 is image2
+
+
+class TestImageComposerInstall:
+    """Tests for ImageInstance.composer_install()."""
+
+    def test_composer_install_from_json(self):
+        """Test composer_install without packages."""
+        image = ImageInstance.from_registry("php:8.2").composer_install()
+        assert "composer install" in image.dockerfile
+
+    def test_composer_install_specific_packages(self):
+        """Test composer_install with specific packages."""
+        image = ImageInstance.from_registry("php:8.2").composer_install(
+            "laravel/framework", "guzzlehttp/guzzle"
+        )
+        assert "composer require laravel/framework guzzlehttp/guzzle" in image.dockerfile
+
+    def test_composer_install_no_dev(self):
+        """Test composer_install with no-dev flag."""
+        image = ImageInstance.from_registry("php:8.2").composer_install(no_dev=True)
+        assert "--no-dev" in image.dockerfile
+
+    def test_composer_install_optimize_autoloader(self):
+        """Test composer_install with optimize-autoloader flag."""
+        image = ImageInstance.from_registry("php:8.2").composer_install(optimize_autoloader=True)
+        assert "--optimize-autoloader" in image.dockerfile
+
+
+class TestImageUvInstall:
+    """Tests for ImageInstance.uv_install()."""
+
+    def test_uv_install_single_package(self):
+        """Test uv_install with a single package."""
+        image = ImageInstance.from_registry("python:3.11").uv_install("requests")
+        assert "uv pip install --system requests" in image.dockerfile
+
+    def test_uv_install_multiple_packages(self):
+        """Test uv_install with multiple packages."""
+        image = ImageInstance.from_registry("python:3.11").uv_install("requests", "pandas", "numpy")
+        assert "uv pip install --system requests pandas numpy" in image.dockerfile
+
+    def test_uv_install_not_system(self):
+        """Test uv_install without system flag."""
+        image = ImageInstance.from_registry("python:3.11").uv_install("requests", system=False)
+        assert "--system" not in image.dockerfile
+        assert "uv pip install requests" in image.dockerfile
+
+    def test_uv_install_with_upgrade(self):
+        """Test uv_install with upgrade flag."""
+        image = ImageInstance.from_registry("python:3.11").uv_install("requests", upgrade=True)
+        assert "--upgrade" in image.dockerfile
+
+    def test_uv_install_empty_returns_same(self):
+        """Test uv_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("python:3.11")
+        image2 = image1.uv_install()
+        assert image1 is image2
+
+
+class TestImagePipxInstall:
+    """Tests for ImageInstance.pipx_install()."""
+
+    def test_pipx_install_single_package(self):
+        """Test pipx_install with a single package."""
+        image = ImageInstance.from_registry("python:3.11").pipx_install("black")
+        assert "pipx install black" in image.dockerfile
+
+    def test_pipx_install_multiple_packages(self):
+        """Test pipx_install with multiple packages."""
+        image = ImageInstance.from_registry("python:3.11").pipx_install("black", "ruff", "poetry")
+        dockerfile = image.dockerfile
+        assert "pipx install black" in dockerfile
+        assert "pipx install ruff" in dockerfile
+        assert "pipx install poetry" in dockerfile
+
+    def test_pipx_install_empty_returns_same(self):
+        """Test pipx_install with no packages returns same image."""
+        image1 = ImageInstance.from_registry("python:3.11")
+        image2 = image1.pipx_install()
+        assert image1 is image2
+
+
 class TestImageHash:
     """Tests for ImageInstance.hash property."""
 

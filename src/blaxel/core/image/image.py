@@ -163,6 +163,319 @@ class ImageInstance:
             new_context.instructions.append(f"RUN {cmd}")
         return ImageInstance(new_context)
 
+    def pip_install(
+        self,
+        *packages: str,
+        find_links: Optional[str] = None,
+        index_url: Optional[str] = None,
+        extra_index_url: Optional[str] = None,
+        pre: bool = False,
+        extra_options: str = "",
+    ) -> "ImageInstance":
+        """
+        Install Python packages using pip.
+
+        Args:
+            *packages: Package names to install (e.g., "requests", "numpy>=1.20")
+            find_links: URL to look for packages (--find-links)
+            index_url: Base URL of the Python Package Index (--index-url)
+            extra_index_url: Extra URLs of package indexes (--extra-index-url)
+            pre: Include pre-release versions (--pre)
+            extra_options: Additional pip options as a string
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.pip_install("requests", "numpy>=1.20", pre=True)
+        """
+        if not packages:
+            return self
+
+        options = []
+        if find_links:
+            options.append(f"--find-links {find_links}")
+        if index_url:
+            options.append(f"--index-url {index_url}")
+        if extra_index_url:
+            options.append(f"--extra-index-url {extra_index_url}")
+        if pre:
+            options.append("--pre")
+        if extra_options:
+            options.append(extra_options)
+
+        options_str = " ".join(options)
+        packages_str = " ".join(packages)
+
+        cmd = f"pip install {options_str} {packages_str}".strip()
+        # Clean up multiple spaces
+        cmd = " ".join(cmd.split())
+
+        return self.run_commands(cmd)
+
+    def apt_install(
+        self,
+        *packages: str,
+        update: bool = True,
+        clean: bool = True,
+    ) -> "ImageInstance":
+        """
+        Install packages using apt-get (Debian/Ubuntu).
+
+        Args:
+            *packages: Package names to install
+            update: Run apt-get update before installing (default True)
+            clean: Clean up apt cache after installing (default True)
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.apt_install("git", "curl", "build-essential")
+        """
+        if not packages:
+            return self
+
+        packages_str = " ".join(packages)
+        commands = []
+
+        if update:
+            commands.append("apt-get update")
+
+        commands.append(f"apt-get install -y --no-install-recommends {packages_str}")
+
+        if clean:
+            commands.append("rm -rf /var/lib/apt/lists/*")
+
+        # Combine into a single RUN command for smaller image layers
+        cmd = " && ".join(commands)
+        return self.run_commands(cmd)
+
+    def apk_add(
+        self,
+        *packages: str,
+        update: bool = True,
+        no_cache: bool = True,
+        clean: bool = True,
+    ) -> "ImageInstance":
+        """
+        Install packages using apk (Alpine Linux).
+
+        Args:
+            *packages: Package names to install
+            update: Run apk update before installing (default True)
+            no_cache: Use --no-cache flag (default True, implies no cache cleanup needed)
+            clean: Clean up apk cache after installing (default True, ignored if no_cache=True)
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.apk_add("git", "curl", "build-base")
+        """
+        if not packages:
+            return self
+
+        packages_str = " ".join(packages)
+        commands = []
+
+        if no_cache:
+            commands.append(f"apk add --no-cache {packages_str}")
+        else:
+            if update:
+                commands.append("apk update")
+            commands.append(f"apk add {packages_str}")
+            if clean:
+                commands.append("rm -rf /var/cache/apk/*")
+
+        cmd = " && ".join(commands)
+        return self.run_commands(cmd)
+
+    def npm_install(
+        self,
+        *packages: str,
+        package_manager: str = "npm",
+        global_install: bool = False,
+        save_dev: bool = False,
+    ) -> "ImageInstance":
+        """
+        Install Node.js packages using npm, yarn, pnpm, or bun.
+
+        Args:
+            *packages: Package names to install. If empty, installs from package.json
+            package_manager: Package manager to use ("npm", "yarn", "pnpm", "bun")
+            global_install: Install packages globally (default False)
+            save_dev: Save as dev dependencies (default False)
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            # Install specific packages with npm
+            image.npm_install("express", "lodash")
+
+            # Install from package.json with yarn
+            image.npm_install(package_manager="yarn")
+
+            # Install global packages with pnpm
+            image.npm_install("typescript", package_manager="pnpm", global_install=True)
+
+            # Install with bun
+            image.npm_install("elysia", package_manager="bun")
+        """
+        pm = package_manager.lower()
+        pkgs = " ".join(packages)
+        g, d = global_install, save_dev
+
+        # Command builders: (install_cmd, add_cmd_with_packages)
+        builders = {
+            "npm": lambda: ("npm install", f"npm install {'-g ' if g else ''}{('--save-dev ' if d else '')}{pkgs}"),
+            "yarn": lambda: ("yarn install", f"yarn {'global add' if g else 'add'} {('--dev ' if d and not g else '')}{pkgs}"),
+            "pnpm": lambda: ("pnpm install", f"pnpm add {'-g ' if g else ''}{('-D ' if d else '')}{pkgs}"),
+            "bun": lambda: ("bun install", f"bun add {'-g ' if g else ''}{('-d ' if d else '')}{pkgs}"),
+        }
+
+        if pm not in builders:
+            raise ValueError(f"Invalid package manager: {pm}. Must be one of {set(builders.keys())}")
+
+        install_cmd, add_cmd = builders[pm]()
+        cmd = " ".join((add_cmd if packages else install_cmd).split())
+        return self.run_commands(cmd)
+
+    def gem_install(self, *packages: str, no_document: bool = True) -> "ImageInstance":
+        """
+        Install Ruby gems.
+
+        Args:
+            *packages: Gem names to install
+            no_document: Skip documentation generation (default True)
+
+        Returns:
+            A new Image instance with the gems installed
+
+        Example:
+            image.gem_install("rails", "bundler")
+        """
+        if not packages:
+            return self
+
+        flags = "--no-document " if no_document else ""
+        cmd = f"gem install {flags}{' '.join(packages)}"
+        return self.run_commands(" ".join(cmd.split()))
+
+    def cargo_install(self, *packages: str, locked: bool = False) -> "ImageInstance":
+        """
+        Install Rust packages using cargo.
+
+        Args:
+            *packages: Crate names to install
+            locked: Use locked dependencies (default False)
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.cargo_install("ripgrep", "fd-find")
+        """
+        if not packages:
+            return self
+
+        flags = "--locked " if locked else ""
+        cmd = f"cargo install {flags}{' '.join(packages)}"
+        return self.run_commands(" ".join(cmd.split()))
+
+    def go_install(self, *packages: str) -> "ImageInstance":
+        """
+        Install Go packages.
+
+        Args:
+            *packages: Package paths to install (e.g., "github.com/user/repo@latest")
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.go_install("github.com/golangci/golangci-lint/cmd/golangci-lint@latest")
+        """
+        if not packages:
+            return self
+
+        commands = [f"go install {pkg}" for pkg in packages]
+        return self.run_commands(" && ".join(commands))
+
+    def composer_install(
+        self,
+        *packages: str,
+        no_dev: bool = False,
+        optimize_autoloader: bool = False,
+    ) -> "ImageInstance":
+        """
+        Install PHP packages using Composer.
+
+        Args:
+            *packages: Package names to install. If empty, installs from composer.json
+            no_dev: Skip dev dependencies (default False)
+            optimize_autoloader: Optimize autoloader (default False)
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.composer_install("laravel/framework", "guzzlehttp/guzzle")
+        """
+        flags = f"{'--no-dev ' if no_dev else ''}{'--optimize-autoloader ' if optimize_autoloader else ''}"
+        if packages:
+            cmd = f"composer require {flags}{' '.join(packages)}"
+        else:
+            cmd = f"composer install {flags}"
+        return self.run_commands(" ".join(cmd.split()))
+
+    def uv_install(
+        self,
+        *packages: str,
+        system: bool = True,
+        upgrade: bool = False,
+    ) -> "ImageInstance":
+        """
+        Install Python packages using uv (fast Python package installer).
+
+        Args:
+            *packages: Package names to install
+            system: Install to system Python (default True)
+            upgrade: Upgrade packages if already installed (default False)
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.uv_install("requests", "pandas", "numpy")
+        """
+        if not packages:
+            return self
+
+        flags = f"{'--system ' if system else ''}{'--upgrade ' if upgrade else ''}"
+        cmd = f"uv pip install {flags}{' '.join(packages)}"
+        return self.run_commands(" ".join(cmd.split()))
+
+    def pipx_install(self, *packages: str) -> "ImageInstance":
+        """
+        Install Python CLI applications using pipx.
+
+        Args:
+            *packages: Package names to install
+
+        Returns:
+            A new Image instance with the packages installed
+
+        Example:
+            image.pipx_install("black", "ruff", "poetry")
+        """
+        if not packages:
+            return self
+
+        commands = [f"pipx install {pkg}" for pkg in packages]
+        return self.run_commands(" && ".join(commands))
+
     def env(self, **variables: str) -> "ImageInstance":
         """
         Set environment variables.
