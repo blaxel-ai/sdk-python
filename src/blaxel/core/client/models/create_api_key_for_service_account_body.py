@@ -12,7 +12,8 @@ T = TypeVar("T", bound="CreateApiKeyForServiceAccountBody")
 class CreateApiKeyForServiceAccountBody:
     """
     Attributes:
-        expires_in (Union[Unset, str]): Expiration period for the API key
+        expires_in (Union[Unset, str]): Expiration period for the API key. Supports formats like '30d' (30 days), '24h'
+            (24 hours), '1w' (1 week). If not set, the API key never expires.
         name (Union[Unset, str]): Name for the API key
     """
 

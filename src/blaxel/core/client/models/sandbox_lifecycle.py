@@ -14,10 +14,11 @@ T = TypeVar("T", bound="SandboxLifecycle")
 
 @_attrs_define
 class SandboxLifecycle:
-    """Lifecycle configuration for sandbox management
+    """Lifecycle configuration controlling automatic sandbox deletion based on idle time, max age, or specific dates
 
     Attributes:
-        expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies
+        expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies. Multiple policies can
+            be combined; whichever condition is met first triggers the action.
     """
 
     expiration_policies: Union[Unset, list["ExpirationPolicy"]] = UNSET

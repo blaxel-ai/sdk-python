@@ -49,9 +49,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["LocationResponse"]]:
-    """List locations
+    """List deployment regions
 
-     Returns a list of all locations available with status.
+     Returns all deployment regions with their current availability status and supported hardware
+    flavors. Use this to discover where resources can be deployed.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -74,9 +75,10 @@ def sync(
     *,
     client: Client,
 ) -> list["LocationResponse"] | None:
-    """List locations
+    """List deployment regions
 
-     Returns a list of all locations available with status.
+     Returns all deployment regions with their current availability status and supported hardware
+    flavors. Use this to discover where resources can be deployed.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -95,9 +97,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["LocationResponse"]]:
-    """List locations
+    """List deployment regions
 
-     Returns a list of all locations available with status.
+     Returns all deployment regions with their current availability status and supported hardware
+    flavors. Use this to discover where resources can be deployed.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -118,9 +121,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["LocationResponse"] | None:
-    """List locations
+    """List deployment regions
 
-     Returns a list of all locations available with status.
+     Returns all deployment regions with their current availability status and supported hardware
+    flavors. Use this to discover where resources can be deployed.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

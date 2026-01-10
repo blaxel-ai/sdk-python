@@ -3,6 +3,7 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.volume_template_version_status import VolumeTemplateVersionStatus
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="VolumeTemplateVersion")
@@ -17,7 +18,7 @@ class VolumeTemplateVersion:
         content_size (Union[Unset, int]): Size of the template content in bytes
         name (Union[Unset, str]): Name of the template version
         region (Union[Unset, str]): AWS region where this version is stored
-        status (Union[Unset, str]): Status of the version (CREATED, READY, FAILED)
+        status (Union[Unset, VolumeTemplateVersionStatus]): Status of the version (CREATED, READY, FAILED)
         template_name (Union[Unset, str]): Template name this version belongs to
         version_id (Union[Unset, str]): S3 version ID for this template version
         workspace (Union[Unset, str]): Workspace name
@@ -27,7 +28,7 @@ class VolumeTemplateVersion:
     content_size: Union[Unset, int] = UNSET
     name: Union[Unset, str] = UNSET
     region: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, VolumeTemplateVersionStatus] = UNSET
     template_name: Union[Unset, str] = UNSET
     version_id: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
@@ -42,7 +43,9 @@ class VolumeTemplateVersion:
 
         region = self.region
 
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         template_name = self.template_name
 
@@ -85,7 +88,12 @@ class VolumeTemplateVersion:
 
         region = d.pop("region", UNSET)
 
-        status = d.pop("status", UNSET)
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, VolumeTemplateVersionStatus]
+        if isinstance(_status, Unset):
+            status = UNSET
+        else:
+            status = VolumeTemplateVersionStatus(_status)
 
         template_name = d.pop("templateName", d.pop("template_name", UNSET))
 

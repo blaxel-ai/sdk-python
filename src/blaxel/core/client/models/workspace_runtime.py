@@ -10,10 +10,11 @@ T = TypeVar("T", bound="WorkspaceRuntime")
 
 @_attrs_define
 class WorkspaceRuntime:
-    """Workspace runtime
+    """Runtime configuration for the workspace infrastructure
 
     Attributes:
-        generation (Union[Unset, str]): Workspace generation
+        generation (Union[Unset, str]): Infrastructure generation version for the workspace (affects available features
+            and deployment behavior) Example: mk3.
     """
 
     generation: Union[Unset, str] = UNSET

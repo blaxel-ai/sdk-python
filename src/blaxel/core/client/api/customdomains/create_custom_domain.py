@@ -59,6 +59,9 @@ def sync_detailed(
 ) -> Response[CustomDomain]:
     """Create custom domain
 
+     Creates a new custom domain for preview deployments. After creation, you must configure DNS records
+    and verify domain ownership before it becomes active.
+
     Args:
         body (CustomDomain): Custom domain for preview deployments
             The custom domain represents a base domain (e.g., example.com) that will be used
@@ -91,6 +94,9 @@ def sync(
 ) -> CustomDomain | None:
     """Create custom domain
 
+     Creates a new custom domain for preview deployments. After creation, you must configure DNS records
+    and verify domain ownership before it becomes active.
+
     Args:
         body (CustomDomain): Custom domain for preview deployments
             The custom domain represents a base domain (e.g., example.com) that will be used
@@ -117,6 +123,9 @@ async def asyncio_detailed(
     body: CustomDomain,
 ) -> Response[CustomDomain]:
     """Create custom domain
+
+     Creates a new custom domain for preview deployments. After creation, you must configure DNS records
+    and verify domain ownership before it becomes active.
 
     Args:
         body (CustomDomain): Custom domain for preview deployments
@@ -147,6 +156,9 @@ async def asyncio(
     body: CustomDomain,
 ) -> CustomDomain | None:
     """Create custom domain
+
+     Creates a new custom domain for preview deployments. After creation, you must configure DNS records
+    and verify domain ownership before it becomes active.
 
     Args:
         body (CustomDomain): Custom domain for preview deployments

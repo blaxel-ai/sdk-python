@@ -50,9 +50,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["ApiKey"]]:
-    """List API keys for service account
+    """List service account API keys
 
-     Returns a list of all API keys for a service account.
+     Returns all long-lived API keys created for a service account. API keys provide an alternative to
+    OAuth for simpler authentication scenarios.
 
     Args:
         client_id (str):
@@ -81,9 +82,10 @@ def sync(
     *,
     client: Client,
 ) -> list["ApiKey"] | None:
-    """List API keys for service account
+    """List service account API keys
 
-     Returns a list of all API keys for a service account.
+     Returns all long-lived API keys created for a service account. API keys provide an alternative to
+    OAuth for simpler authentication scenarios.
 
     Args:
         client_id (str):
@@ -107,9 +109,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["ApiKey"]]:
-    """List API keys for service account
+    """List service account API keys
 
-     Returns a list of all API keys for a service account.
+     Returns all long-lived API keys created for a service account. API keys provide an alternative to
+    OAuth for simpler authentication scenarios.
 
     Args:
         client_id (str):
@@ -136,9 +139,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["ApiKey"] | None:
-    """List API keys for service account
+    """List service account API keys
 
-     Returns a list of all API keys for a service account.
+     Returns all long-lived API keys created for a service account. API keys provide an alternative to
+    OAuth for simpler authentication scenarios.
 
     Args:
         client_id (str):

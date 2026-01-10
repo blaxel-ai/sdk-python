@@ -8,8 +8,11 @@ from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Runtime, Sandbox, SandboxSpec
+from ...client.models import Metadata, Sandbox, SandboxRuntime, SandboxSpec
+from ...client.models.error import Error
+from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ..default.sandbox import SandboxAPIError
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -146,12 +149,11 @@ class SyncSandboxInstance:
             sandbox = Sandbox(
                 metadata=Metadata(name=name, labels=config.labels),
                 spec=SandboxSpec(
-                    runtime=Runtime(
+                    runtime=SandboxRuntime(
                         image=image,
                         memory=memory,
                         ports=ports,
                         envs=envs,
-                        generation="mk3",
                     ),
                     volumes=volumes,
                 ),
@@ -171,17 +173,24 @@ class SyncSandboxInstance:
                 sandbox.metadata = Metadata(name=default_name)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
-                    runtime=Runtime(image=default_image, memory=default_memory)
+                    runtime=SandboxRuntime(image=default_image, memory=default_memory)
                 )
             if not sandbox.spec.runtime:
-                sandbox.spec.runtime = Runtime(image=default_image, memory=default_memory)
+                sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-            sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
         response = create_sandbox(
             client=client,
             body=sandbox,
         )
+
+        # Check if response is an error
+        if isinstance(response, SandboxError):
+            status_code = response.status_code if response.status_code is not UNSET else None
+            code = response.code if response.code else None
+            message = response.message if response.message else str(response)
+            raise SandboxAPIError(message, status_code=status_code, code=code)
+
         instance = cls(response)
         if safe:
             try:
@@ -196,6 +205,16 @@ class SyncSandboxInstance:
             sandbox_name,
             client=client,
         )
+
+        # Check if response is an error
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+
+        if response is None:
+            raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
+
         return cls(response)
 
     @classmethod
@@ -216,7 +235,11 @@ class SyncSandboxInstance:
             if updated_sandbox.metadata.labels is None or updated_sandbox.metadata.labels is UNSET:
                 updated_sandbox.metadata.labels = {}
             else:
-                updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
+                # MetadataLabels stores in additional_properties, use to_dict()
+                if hasattr(updated_sandbox.metadata.labels, "to_dict"):
+                    updated_sandbox.metadata.labels = updated_sandbox.metadata.labels.to_dict()
+                else:
+                    updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
             updated_sandbox.metadata.labels.update(metadata.labels)
         if metadata.display_name is not None:
             updated_sandbox.metadata.display_name = metadata.display_name
@@ -233,10 +256,8 @@ class SyncSandboxInstance:
     ) -> "SyncSandboxInstance":
         try:
             return cls.create(sandbox)
-        except Exception as e:
-            if (hasattr(e, "status_code") and e.status_code == 409) or (
-                hasattr(e, "code") and e.code in [409, "SANDBOX_ALREADY_EXISTS"]
-            ):
+        except SandboxAPIError as e:
+            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
                 if isinstance(sandbox, SandboxCreateConfiguration):
                     name = sandbox.name
                 elif isinstance(sandbox, dict):
@@ -256,7 +277,7 @@ class SyncSandboxInstance:
                 if sandbox_instance.status == "TERMINATED":
                     return cls.create(sandbox)
                 return sandbox_instance
-            raise e
+            raise
 
     @classmethod
     def from_session(
@@ -265,7 +286,7 @@ class SyncSandboxInstance:
         if isinstance(session, dict):
             session = SessionWithToken.from_dict(session)
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
-        sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
+        sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
         return cls(
             sandbox=sandbox,
             force_url=session.url,

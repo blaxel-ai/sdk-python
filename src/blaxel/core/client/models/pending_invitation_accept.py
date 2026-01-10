@@ -18,7 +18,8 @@ class PendingInvitationAccept:
 
     Attributes:
         email (Union[Unset, str]): User email
-        workspace (Union[Unset, Workspace]): Workspace
+        workspace (Union[Unset, Workspace]): Tenant container that groups all Blaxel resources (agents, functions,
+            models, etc.) with shared team access control and billing.
     """
 
     email: Union[Unset, str] = UNSET

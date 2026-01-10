@@ -8,7 +8,7 @@ T = TypeVar("T", bound="IntegrationConnectionSpecSecret")
 
 @_attrs_define
 class IntegrationConnectionSpecSecret:
-    """Integration secret"""
+    """Encrypted credentials and API keys for authenticating with the external service"""
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 

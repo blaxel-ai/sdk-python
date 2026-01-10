@@ -72,7 +72,8 @@ def sync_detailed(
 ) -> Response[VolumeTemplate]:
     """Create volume template
 
-     Creates a volume template.
+     Creates a new volume template for initializing volumes with pre-configured filesystem contents.
+    Optionally returns a presigned URL for uploading the template archive.
 
     Args:
         upload (Union[Unset, bool]):
@@ -109,7 +110,8 @@ def sync(
 ) -> VolumeTemplate | None:
     """Create volume template
 
-     Creates a volume template.
+     Creates a new volume template for initializing volumes with pre-configured filesystem contents.
+    Optionally returns a presigned URL for uploading the template archive.
 
     Args:
         upload (Union[Unset, bool]):
@@ -141,7 +143,8 @@ async def asyncio_detailed(
 ) -> Response[VolumeTemplate]:
     """Create volume template
 
-     Creates a volume template.
+     Creates a new volume template for initializing volumes with pre-configured filesystem contents.
+    Optionally returns a presigned URL for uploading the template archive.
 
     Args:
         upload (Union[Unset, bool]):
@@ -176,7 +179,8 @@ async def asyncio(
 ) -> VolumeTemplate | None:
     """Create volume template
 
-     Creates a volume template.
+     Creates a new volume template for initializing volumes with pre-configured filesystem contents.
+    Optionally returns a presigned URL for uploading the template archive.
 
     Args:
         upload (Union[Unset, bool]):

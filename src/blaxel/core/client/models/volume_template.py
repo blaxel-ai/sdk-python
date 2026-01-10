@@ -20,34 +20,29 @@ class VolumeTemplate:
     """Volume template for creating pre-configured volumes
 
     Attributes:
-        metadata (Union[Unset, Metadata]): Metadata
-        spec (Union[Unset, VolumeTemplateSpec]): Volume template specification
+        metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+            and ownership information
+        spec (VolumeTemplateSpec): Volume template specification
         state (Union[Unset, VolumeTemplateState]): Volume template state
         versions (Union[Unset, list['VolumeTemplateVersion']]): List of versions for this template
     """
 
-    metadata: Union[Unset, "Metadata"] = UNSET
-    spec: Union[Unset, "VolumeTemplateSpec"] = UNSET
+    metadata: "Metadata"
+    spec: "VolumeTemplateSpec"
     state: Union[Unset, "VolumeTemplateState"] = UNSET
     versions: Union[Unset, list["VolumeTemplateVersion"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        metadata: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.metadata
-            and not isinstance(self.metadata, Unset)
-            and not isinstance(self.metadata, dict)
-        ):
-            metadata = self.metadata.to_dict()
-        elif self.metadata and isinstance(self.metadata, dict):
+        if type(self.metadata) is dict:
             metadata = self.metadata
+        else:
+            metadata = self.metadata.to_dict()
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
-        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
-            spec = self.spec.to_dict()
-        elif self.spec and isinstance(self.spec, dict):
+        if type(self.spec) is dict:
             spec = self.spec
+        else:
+            spec = self.spec.to_dict()
 
         state: Union[Unset, dict[str, Any]] = UNSET
         if self.state and not isinstance(self.state, Unset) and not isinstance(self.state, dict):
@@ -67,11 +62,12 @@ class VolumeTemplate:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
-        if spec is not UNSET:
-            field_dict["spec"] = spec
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "spec": spec,
+            }
+        )
         if state is not UNSET:
             field_dict["state"] = state
         if versions is not UNSET:
@@ -89,19 +85,9 @@ class VolumeTemplate:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, Metadata]
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = Metadata.from_dict(_metadata)
+        metadata = Metadata.from_dict(d.pop("metadata"))
 
-        _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, VolumeTemplateSpec]
-        if isinstance(_spec, Unset):
-            spec = UNSET
-        else:
-            spec = VolumeTemplateSpec.from_dict(_spec)
+        spec = VolumeTemplateSpec.from_dict(d.pop("spec"))
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, VolumeTemplateState]

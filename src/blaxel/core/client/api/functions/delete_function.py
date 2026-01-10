@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.function import Function
 from ...types import Response
 
@@ -20,18 +21,36 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Function | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Function] | None:
     if response.status_code == 200:
         response_200 = Function.from_dict(response.json())
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Function]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Error, Function]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -44,8 +63,11 @@ def sync_detailed(
     function_name: str,
     *,
     client: Client,
-) -> Response[Function]:
-    """Delete function by name
+) -> Response[Union[Error, Function]]:
+    """Delete MCP server
+
+     Permanently deletes an MCP server function and all its deployment history. Any agents using this
+    function's tools will no longer be able to invoke them.
 
     Args:
         function_name (str):
@@ -55,7 +77,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Function]
+        Response[Union[Error, Function]]
     """
 
     kwargs = _get_kwargs(
@@ -73,8 +95,11 @@ def sync(
     function_name: str,
     *,
     client: Client,
-) -> Function | None:
-    """Delete function by name
+) -> Union[Error, Function] | None:
+    """Delete MCP server
+
+     Permanently deletes an MCP server function and all its deployment history. Any agents using this
+    function's tools will no longer be able to invoke them.
 
     Args:
         function_name (str):
@@ -84,7 +109,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Function
+        Union[Error, Function]
     """
 
     return sync_detailed(
@@ -97,8 +122,11 @@ async def asyncio_detailed(
     function_name: str,
     *,
     client: Client,
-) -> Response[Function]:
-    """Delete function by name
+) -> Response[Union[Error, Function]]:
+    """Delete MCP server
+
+     Permanently deletes an MCP server function and all its deployment history. Any agents using this
+    function's tools will no longer be able to invoke them.
 
     Args:
         function_name (str):
@@ -108,7 +136,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Function]
+        Response[Union[Error, Function]]
     """
 
     kwargs = _get_kwargs(
@@ -124,8 +152,11 @@ async def asyncio(
     function_name: str,
     *,
     client: Client,
-) -> Function | None:
-    """Delete function by name
+) -> Union[Error, Function] | None:
+    """Delete MCP server
+
+     Permanently deletes an MCP server function and all its deployment history. Any agents using this
+    function's tools will no longer be able to invoke them.
 
     Args:
         function_name (str):
@@ -135,7 +166,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Function
+        Union[Error, Function]
     """
 
     return (

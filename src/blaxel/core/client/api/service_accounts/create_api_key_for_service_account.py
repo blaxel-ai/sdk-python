@@ -60,9 +60,10 @@ def sync_detailed(
     client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> Response[ApiKey]:
-    """Create API key for service account
+    """Create service account API key
 
-     Creates an API key for a service account.
+     Creates a new long-lived API key for a service account. The full key value is only returned once at
+    creation. API keys can have optional expiration dates.
 
     Args:
         client_id (str):
@@ -94,9 +95,10 @@ def sync(
     client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> ApiKey | None:
-    """Create API key for service account
+    """Create service account API key
 
-     Creates an API key for a service account.
+     Creates a new long-lived API key for a service account. The full key value is only returned once at
+    creation. API keys can have optional expiration dates.
 
     Args:
         client_id (str):
@@ -123,9 +125,10 @@ async def asyncio_detailed(
     client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> Response[ApiKey]:
-    """Create API key for service account
+    """Create service account API key
 
-     Creates an API key for a service account.
+     Creates a new long-lived API key for a service account. The full key value is only returned once at
+    creation. API keys can have optional expiration dates.
 
     Args:
         client_id (str):
@@ -155,9 +158,10 @@ async def asyncio(
     client: Client,
     body: CreateApiKeyForServiceAccountBody,
 ) -> ApiKey | None:
-    """Create API key for service account
+    """Create service account API key
 
-     Creates an API key for a service account.
+     Creates a new long-lived API key for a service account. The full key value is only returned once at
+    creation. API keys can have optional expiration dates.
 
     Args:
         client_id (str):

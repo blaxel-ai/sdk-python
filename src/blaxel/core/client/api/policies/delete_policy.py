@@ -45,9 +45,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Policy]:
-    """Delete policy
+    """Delete governance policy
 
-     Deletes a policy by name.
+     Permanently deletes a governance policy. Resources using this policy will need to be updated to use
+    a different policy.
 
     Args:
         policy_name (str):
@@ -76,9 +77,10 @@ def sync(
     *,
     client: Client,
 ) -> Policy | None:
-    """Delete policy
+    """Delete governance policy
 
-     Deletes a policy by name.
+     Permanently deletes a governance policy. Resources using this policy will need to be updated to use
+    a different policy.
 
     Args:
         policy_name (str):
@@ -102,9 +104,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Policy]:
-    """Delete policy
+    """Delete governance policy
 
-     Deletes a policy by name.
+     Permanently deletes a governance policy. Resources using this policy will need to be updated to use
+    a different policy.
 
     Args:
         policy_name (str):
@@ -131,9 +134,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Policy | None:
-    """Delete policy
+    """Delete governance policy
 
-     Deletes a policy by name.
+     Permanently deletes a governance policy. Resources using this policy will need to be updated to use
+    a different policy.
 
     Args:
         policy_name (str):

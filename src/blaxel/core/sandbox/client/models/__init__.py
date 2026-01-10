@@ -41,7 +41,6 @@ from .subdirectory import Subdirectory
 from .success_response import SuccessResponse
 from .tree_request import TreeRequest
 from .tree_request_files import TreeRequestFiles
-from .welcome_response import WelcomeResponse
 
 __all__ = (
     "ApplyEditRequest",
@@ -83,5 +82,4 @@ __all__ = (
     "SuccessResponse",
     "TreeRequest",
     "TreeRequestFiles",
-    "WelcomeResponse",
 )

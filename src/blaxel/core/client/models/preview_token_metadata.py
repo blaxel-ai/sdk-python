@@ -13,14 +13,14 @@ class PreviewTokenMetadata:
     """PreviewTokenMetadata
 
     Attributes:
-        name (Union[Unset, str]): Token name
+        name (str): Token name
         preview_name (Union[Unset, str]): Preview name
         resource_name (Union[Unset, str]): Resource name
         resource_type (Union[Unset, str]): Resource type
         workspace (Union[Unset, str]): Workspace name
     """
 
-    name: Union[Unset, str] = UNSET
+    name: str
     preview_name: Union[Unset, str] = UNSET
     resource_name: Union[Unset, str] = UNSET
     resource_type: Union[Unset, str] = UNSET
@@ -40,9 +40,11 @@ class PreviewTokenMetadata:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if name is not UNSET:
-            field_dict["name"] = name
+        field_dict.update(
+            {
+                "name": name,
+            }
+        )
         if preview_name is not UNSET:
             field_dict["previewName"] = preview_name
         if resource_name is not UNSET:
@@ -59,7 +61,7 @@ class PreviewTokenMetadata:
         if not src_dict:
             return None
         d = src_dict.copy()
-        name = d.pop("name", UNSET)
+        name = d.pop("name")
 
         preview_name = d.pop("previewName", d.pop("preview_name", UNSET))
 

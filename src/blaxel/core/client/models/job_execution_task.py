@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.job_execution_task_status import JobExecutionTaskStatus
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -22,13 +23,13 @@ class JobExecutionTask:
         conditions (Union[Unset, list['JobExecutionTaskCondition']]): Task conditions
         metadata (Union[Unset, JobExecutionTaskMetadata]): Job execution task metadata
         spec (Union[Unset, JobExecutionTaskSpec]): Job execution task specification
-        status (Union[Unset, str]): Job execution task status
+        status (Union[Unset, JobExecutionTaskStatus]): Job execution task status
     """
 
     conditions: Union[Unset, list["JobExecutionTaskCondition"]] = UNSET
     metadata: Union[Unset, "JobExecutionTaskMetadata"] = UNSET
     spec: Union[Unset, "JobExecutionTaskSpec"] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, JobExecutionTaskStatus] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -58,7 +59,9 @@ class JobExecutionTask:
         elif self.spec and isinstance(self.spec, dict):
             spec = self.spec
 
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -104,7 +107,12 @@ class JobExecutionTask:
         else:
             spec = JobExecutionTaskSpec.from_dict(_spec)
 
-        status = d.pop("status", UNSET)
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, JobExecutionTaskStatus]
+        if isinstance(_status, Unset):
+            status = UNSET
+        else:
+            status = JobExecutionTaskStatus(_status)
 
         job_execution_task = cls(
             conditions=conditions,

@@ -6,6 +6,7 @@ from .client.models import (
 )
 from .default import (
     CodeInterpreter,
+    SandboxAPIError,
     SandboxCodegen,
     SandboxFileSystem,
     SandboxInstance,
@@ -34,6 +35,7 @@ from .types import (
 
 __all__ = [
     "SandboxInstance",
+    "SandboxAPIError",
     "SessionCreateOptions",
     "SessionWithToken",
     "SandboxConfiguration",

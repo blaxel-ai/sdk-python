@@ -13,11 +13,11 @@ class TemplateVariable:
     """Blaxel template variable
 
     Attributes:
-        description (Union[Unset, str]): Description of the variable
-        integration (Union[Unset, str]): Integration of the variable
-        name (Union[Unset, str]): Name of the variable
-        path (Union[Unset, str]): Path of the variable
-        secret (Union[Unset, bool]): Whether the variable is secret
+        description (Union[Unset, str]): Description of the variable Example: OpenAI API key for the agent.
+        integration (Union[Unset, str]): Integration of the variable Example: openai.
+        name (Union[Unset, str]): Name of the variable Example: OPENAI_API_KEY.
+        path (Union[Unset, str]): Path of the variable Example: .env.
+        secret (Union[Unset, bool]): Whether the variable is secret Example: True.
     """
 
     description: Union[Unset, str] = UNSET

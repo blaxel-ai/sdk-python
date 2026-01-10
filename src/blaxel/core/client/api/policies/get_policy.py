@@ -45,9 +45,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Policy]:
-    """Get policy
+    """Get governance policy
 
-     Returns a policy by name.
+     Returns detailed information about a governance policy including its type (location, flavor, or
+    maxToken), restrictions, and which resource types it applies to.
 
     Args:
         policy_name (str):
@@ -76,9 +77,10 @@ def sync(
     *,
     client: Client,
 ) -> Policy | None:
-    """Get policy
+    """Get governance policy
 
-     Returns a policy by name.
+     Returns detailed information about a governance policy including its type (location, flavor, or
+    maxToken), restrictions, and which resource types it applies to.
 
     Args:
         policy_name (str):
@@ -102,9 +104,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Policy]:
-    """Get policy
+    """Get governance policy
 
-     Returns a policy by name.
+     Returns detailed information about a governance policy including its type (location, flavor, or
+    maxToken), restrictions, and which resource types it applies to.
 
     Args:
         policy_name (str):
@@ -131,9 +134,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Policy | None:
-    """Get policy
+    """Get governance policy
 
-     Returns a policy by name.
+     Returns detailed information about a governance policy including its type (location, flavor, or
+    maxToken), restrictions, and which resource types it applies to.
 
     Args:
         policy_name (str):

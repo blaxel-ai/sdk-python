@@ -19,7 +19,7 @@ class CreateJobExecutionRequest:
     Attributes:
         execution_id (Union[Unset, str]): Execution ID (optional, will be generated if not provided)
         id (Union[Unset, str]): Unique message ID
-        job_id (Union[Unset, str]): Job ID
+        job_id (Union[Unset, str]): Job ID Example: data-processing-job.
         tasks (Union[Unset, list['CreateJobExecutionRequestTasksItem']]): Array of task parameters for parallel
             execution
         workspace_id (Union[Unset, str]): Workspace ID

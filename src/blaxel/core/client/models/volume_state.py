@@ -10,11 +10,11 @@ T = TypeVar("T", bound="VolumeState")
 
 @_attrs_define
 class VolumeState:
-    """Volume state - mutable runtime state
+    """Current runtime state of the volume including attachment status
 
     Attributes:
-        attached_to (Union[Unset, str]): Resource this volume is attached to (e.g. "sandbox:my-sandbox", "model:my-
-            model")
+        attached_to (Union[Unset, str]): Resource currently using this volume in format "type:name" (e.g., "sandbox:my-
+            sandbox"). Empty if not attached. Example: sandbox:my-sandbox.
     """
 
     attached_to: Union[Unset, str] = UNSET

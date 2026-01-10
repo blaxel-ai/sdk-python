@@ -6,7 +6,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.create_job_execution_request import CreateJobExecutionRequest
-from ...models.job_execution import JobExecution
+from ...models.create_job_execution_response import CreateJobExecutionResponse
 from ...types import Response
 
 
@@ -34,9 +34,11 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, JobExecution] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Any, CreateJobExecutionResponse] | None:
     if response.status_code == 200:
-        response_200 = JobExecution.from_dict(response.json())
+        response_200 = CreateJobExecutionResponse.from_dict(response.json())
 
         return response_200
     if response.status_code == 400:
@@ -53,7 +55,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, J
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, JobExecution]]:
+) -> Response[Union[Any, CreateJobExecutionResponse]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,10 +69,11 @@ def sync_detailed(
     *,
     client: Client,
     body: CreateJobExecutionRequest,
-) -> Response[Union[Any, JobExecution]]:
+) -> Response[Union[Any, CreateJobExecutionResponse]]:
     """Create job execution
 
-     Creates a new execution for a job by name.
+     Triggers a new execution of the batch job. Each execution runs multiple tasks in parallel according
+    to the job's configured concurrency. Tasks can be parameterized via the request body.
 
     Args:
         job_id (str):
@@ -81,7 +84,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecution]]
+        Response[Union[Any, CreateJobExecutionResponse]]
     """
 
     kwargs = _get_kwargs(
@@ -101,10 +104,11 @@ def sync(
     *,
     client: Client,
     body: CreateJobExecutionRequest,
-) -> Union[Any, JobExecution] | None:
+) -> Union[Any, CreateJobExecutionResponse] | None:
     """Create job execution
 
-     Creates a new execution for a job by name.
+     Triggers a new execution of the batch job. Each execution runs multiple tasks in parallel according
+    to the job's configured concurrency. Tasks can be parameterized via the request body.
 
     Args:
         job_id (str):
@@ -115,7 +119,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecution]
+        Union[Any, CreateJobExecutionResponse]
     """
 
     return sync_detailed(
@@ -130,10 +134,11 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: CreateJobExecutionRequest,
-) -> Response[Union[Any, JobExecution]]:
+) -> Response[Union[Any, CreateJobExecutionResponse]]:
     """Create job execution
 
-     Creates a new execution for a job by name.
+     Triggers a new execution of the batch job. Each execution runs multiple tasks in parallel according
+    to the job's configured concurrency. Tasks can be parameterized via the request body.
 
     Args:
         job_id (str):
@@ -144,7 +149,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecution]]
+        Response[Union[Any, CreateJobExecutionResponse]]
     """
 
     kwargs = _get_kwargs(
@@ -162,10 +167,11 @@ async def asyncio(
     *,
     client: Client,
     body: CreateJobExecutionRequest,
-) -> Union[Any, JobExecution] | None:
+) -> Union[Any, CreateJobExecutionResponse] | None:
     """Create job execution
 
-     Creates a new execution for a job by name.
+     Triggers a new execution of the batch job. Each execution runs multiple tasks in parallel according
+    to the job's configured concurrency. Tasks can be parameterized via the request body.
 
     Args:
         job_id (str):
@@ -176,7 +182,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecution]
+        Union[Any, CreateJobExecutionResponse]
     """
 
     return (

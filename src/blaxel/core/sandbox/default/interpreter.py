@@ -52,7 +52,7 @@ class CodeInterpreter(SandboxInstance):
         }
 
         # Whitelist a minimal set of fields that can be propagated from input
-        allowed_copy_keys = {"name", "envs", "memory", "region", "headers"}
+        allowed_copy_keys = {"name", "envs", "memory", "region", "headers", "labels"}
 
         if isinstance(sandbox, dict):
             for k in allowed_copy_keys:
@@ -67,10 +67,14 @@ class CodeInterpreter(SandboxInstance):
                 payload["memory"] = sandbox.memory
             if getattr(sandbox, "region", None):
                 payload["region"] = sandbox.region
+            if getattr(sandbox, "labels", None):
+                payload["labels"] = sandbox.labels
         elif isinstance(sandbox, Sandbox):
             # Extract a few basics if available
             if sandbox.metadata and getattr(sandbox.metadata, "name", None):
                 payload["name"] = sandbox.metadata.name
+            if sandbox.metadata and getattr(sandbox.metadata, "labels", None):
+                payload["labels"] = sandbox.metadata.labels
             if sandbox.spec and sandbox.spec.runtime:
                 if getattr(sandbox.spec.runtime, "envs", None):
                     payload["envs"] = sandbox.spec.runtime.envs

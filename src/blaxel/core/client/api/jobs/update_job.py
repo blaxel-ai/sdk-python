@@ -59,13 +59,15 @@ def sync_detailed(
     client: Client,
     body: Job,
 ) -> Response[Job]:
-    """Create or update job
+    """Update batch job
 
-     Update a job by name.
+     Updates a batch job's configuration. Changes affect new executions; running executions continue with
+    their original configuration.
 
     Args:
         job_id (str):
-        body (Job): Job
+        body (Job): Batch processing job definition for running parallel AI tasks. Jobs can
+            execute multiple tasks concurrently with configurable parallelism, retries, and timeouts.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,13 +95,15 @@ def sync(
     client: Client,
     body: Job,
 ) -> Job | None:
-    """Create or update job
+    """Update batch job
 
-     Update a job by name.
+     Updates a batch job's configuration. Changes affect new executions; running executions continue with
+    their original configuration.
 
     Args:
         job_id (str):
-        body (Job): Job
+        body (Job): Batch processing job definition for running parallel AI tasks. Jobs can
+            execute multiple tasks concurrently with configurable parallelism, retries, and timeouts.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -122,13 +126,15 @@ async def asyncio_detailed(
     client: Client,
     body: Job,
 ) -> Response[Job]:
-    """Create or update job
+    """Update batch job
 
-     Update a job by name.
+     Updates a batch job's configuration. Changes affect new executions; running executions continue with
+    their original configuration.
 
     Args:
         job_id (str):
-        body (Job): Job
+        body (Job): Batch processing job definition for running parallel AI tasks. Jobs can
+            execute multiple tasks concurrently with configurable parallelism, retries, and timeouts.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -154,13 +160,15 @@ async def asyncio(
     client: Client,
     body: Job,
 ) -> Job | None:
-    """Create or update job
+    """Update batch job
 
-     Update a job by name.
+     Updates a batch job's configuration. Changes affect new executions; running executions continue with
+    their original configuration.
 
     Args:
         job_id (str):
-        body (Job): Job
+        body (Job): Batch processing job definition for running parallel AI tasks. Jobs can
+            execute multiple tasks concurrently with configurable parallelism, retries, and timeouts.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

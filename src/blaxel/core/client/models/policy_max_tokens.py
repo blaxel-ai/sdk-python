@@ -13,12 +13,12 @@ class PolicyMaxTokens:
     """PolicyMaxTokens is a local type that wraps a slice of PolicyMaxTokens
 
     Attributes:
-        granularity (Union[Unset, str]): Granularity
-        input_ (Union[Unset, int]): Input
-        output (Union[Unset, int]): Output
-        ratio_input_over_output (Union[Unset, int]): RatioInputOverOutput
-        step (Union[Unset, int]): Step
-        total (Union[Unset, int]): Total
+        granularity (Union[Unset, str]): Granularity Example: minute.
+        input_ (Union[Unset, int]): Input Example: 10000.
+        output (Union[Unset, int]): Output Example: 5000.
+        ratio_input_over_output (Union[Unset, int]): RatioInputOverOutput Example: 2.
+        step (Union[Unset, int]): Step Example: 1.
+        total (Union[Unset, int]): Total Example: 15000.
     """
 
     granularity: Union[Unset, str] = UNSET

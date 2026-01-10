@@ -1,5 +1,6 @@
 from .interpreter import CodeInterpreter
 from .sandbox import (
+    SandboxAPIError,
     SandboxCodegen,
     SandboxFileSystem,
     SandboxInstance,
@@ -9,6 +10,7 @@ from .sandbox import (
 
 __all__ = [
     "SandboxInstance",
+    "SandboxAPIError",
     "SandboxFileSystem",
     "SandboxPreviews",
     "SandboxProcess",

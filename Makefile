@@ -5,7 +5,7 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 GIT_COMMIT_SHORT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 install:
-	uv sync --all-groups --all-packages --all-extras
+	uv sync --all-groups --all-packages --all-extras --group test --group dev
 
 install-groups:
 	uv sync --refresh --force-reinstall --extra telemetry --extra langgraph
@@ -85,12 +85,10 @@ tag:
 
 test:
 	uv sync --group test
-	uv run pytest tests/ -v --ignore=tests/integration/
+	uv run pytest tests/ -v --ignore=tests/integration/ --ignore=tests/sandbox/integration/
 
-test-with-telemetry:
-	uv sync --group test --extra telemetry
-	pip install -e .
-	uv run pytest tests/ -v
+test-integration:
+	uv run pytest tests/integration/ -n auto
 
 install-dev:
 	uv sync --group test

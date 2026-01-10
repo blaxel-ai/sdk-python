@@ -17,14 +17,15 @@ class TriggerConfiguration:
     """Trigger configuration
 
     Attributes:
-        authentication_type (Union[Unset, str]): The authentication type of the trigger
+        authentication_type (Union[Unset, str]): The authentication type of the trigger Example: blaxel.
         callback_secret (Union[Unset, str]): The callback secret for async triggers (auto-generated, encrypted)
-        callback_url (Union[Unset, str]): The callback URL for async triggers (optional)
-        path (Union[Unset, str]): The path of the trigger
-        retry (Union[Unset, int]): The retry of the trigger
-        schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * *
+        callback_url (Union[Unset, str]): The callback URL for async triggers (optional) Example:
+            https://myapp.com/webhook.
+        path (Union[Unset, str]): The path of the trigger Example: /invoke.
+        retry (Union[Unset, int]): The retry of the trigger Example: 3.
+        schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * * Example: 0 * * * *.
         tasks (Union[Unset, list['TriggerConfigurationTask']]): The tasks configuration of the cronjob
-        timeout (Union[Unset, int]): The timeout in seconds for async triggers (max 900s, MK3 only)
+        timeout (Union[Unset, int]): The timeout in seconds for async triggers (max 900s, MK3 only) Example: 300.
     """
 
     authentication_type: Union[Unset, str] = UNSET

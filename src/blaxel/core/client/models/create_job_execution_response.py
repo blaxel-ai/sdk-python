@@ -16,15 +16,19 @@ T = TypeVar("T", bound="CreateJobExecutionResponse")
 
 @_attrs_define
 class CreateJobExecutionResponse:
-    """Response for creating a job execution
+    """Response returned when a job execution is successfully created. Contains identifiers and the tasks that will be
+    executed.
 
-    Attributes:
-        execution_id (Union[Unset, str]): Execution ID
-        id (Union[Unset, str]): Unique message ID
-        job_id (Union[Unset, str]): Job ID
-        tasks (Union[Unset, list['CreateJobExecutionResponseTasksItem']]): Array of task parameters for parallel
-            execution
-        workspace_id (Union[Unset, str]): Workspace ID
+        Attributes:
+            execution_id (Union[Unset, str]): Unique identifier for the created execution. Use this ID to track execution
+                status, retrieve logs, or cancel the execution. Example: exec-abc123.
+            id (Union[Unset, str]): Unique identifier for this request, used for idempotency and tracking. Auto-generated if
+                not provided in the request. Example: 550e8400-e29b-41d4-a716-446655440000.
+            job_id (Union[Unset, str]): Name of the job that this execution belongs to Example: data-processing-job.
+            tasks (Union[Unset, list['CreateJobExecutionResponseTasksItem']]): Array of task configurations that will be
+                executed in parallel according to the job's concurrency settings. Each task can have custom parameters.
+            workspace_id (Union[Unset, str]): Name of the workspace where the job execution was created Example: my-
+                workspace.
     """
 
     execution_id: Union[Unset, str] = UNSET

@@ -17,12 +17,12 @@ class LocationResponse:
     """Location availability for policies
 
     Attributes:
-        continent (Union[Unset, str]): Continent of the location
-        country (Union[Unset, str]): Country of the location
+        continent (Union[Unset, str]): Continent of the location Example: NA.
+        country (Union[Unset, str]): Country of the location Example: US.
         flavors (Union[Unset, list['Flavor']]): Hardware flavors available in the location
-        location (Union[Unset, str]): Name of the location
-        region (Union[Unset, str]): Region of the location
-        status (Union[Unset, str]): Status of the location
+        location (Union[Unset, str]): Name of the location Example: Portland.
+        region (Union[Unset, str]): Region of the location Example: us-pdx-1.
+        status (Union[Unset, str]): Status of the location Example: healthy.
     """
 
     continent: Union[Unset, str] = UNSET

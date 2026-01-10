@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.preview_token_metadata import PreviewTokenMetadata
@@ -18,38 +16,33 @@ class PreviewToken:
     """Token for a Preview
 
     Attributes:
-        metadata (Union[Unset, PreviewTokenMetadata]): PreviewTokenMetadata
-        spec (Union[Unset, PreviewTokenSpec]): Spec for a Preview Token
+        metadata (PreviewTokenMetadata): PreviewTokenMetadata
+        spec (PreviewTokenSpec): Spec for a Preview Token
     """
 
-    metadata: Union[Unset, "PreviewTokenMetadata"] = UNSET
-    spec: Union[Unset, "PreviewTokenSpec"] = UNSET
+    metadata: "PreviewTokenMetadata"
+    spec: "PreviewTokenSpec"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        metadata: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.metadata
-            and not isinstance(self.metadata, Unset)
-            and not isinstance(self.metadata, dict)
-        ):
-            metadata = self.metadata.to_dict()
-        elif self.metadata and isinstance(self.metadata, dict):
+        if type(self.metadata) is dict:
             metadata = self.metadata
+        else:
+            metadata = self.metadata.to_dict()
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
-        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
-            spec = self.spec.to_dict()
-        elif self.spec and isinstance(self.spec, dict):
+        if type(self.spec) is dict:
             spec = self.spec
+        else:
+            spec = self.spec.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
-        if spec is not UNSET:
-            field_dict["spec"] = spec
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "spec": spec,
+            }
+        )
 
         return field_dict
 
@@ -61,19 +54,9 @@ class PreviewToken:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, PreviewTokenMetadata]
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = PreviewTokenMetadata.from_dict(_metadata)
+        metadata = PreviewTokenMetadata.from_dict(d.pop("metadata"))
 
-        _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, PreviewTokenSpec]
-        if isinstance(_spec, Unset):
-            spec = UNSET
-        else:
-            spec = PreviewTokenSpec.from_dict(_spec)
+        spec = PreviewTokenSpec.from_dict(d.pop("spec"))
 
         preview_token = cls(
             metadata=metadata,

@@ -11,7 +11,17 @@ from ..client.api.volumes.list_volumes import asyncio as list_volumes
 from ..client.api.volumes.list_volumes import sync as list_volumes_sync
 from ..client.client import client
 from ..client.models import Metadata, Volume, VolumeSpec
+from ..client.models.error import Error
 from ..client.types import UNSET
+
+
+class VolumeAPIError(Exception):
+    """Exception raised when volume API returns an error."""
+
+    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
 
 
 class _AsyncDeleteDescriptor:
@@ -171,11 +181,19 @@ class VolumeInstance:
             volume.spec.size = default_size
 
         response = await create_volume(client=client, body=volume)
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise VolumeAPIError(message, status_code=status_code, code=response.error)
         return cls(response)
 
     @classmethod
     async def get(cls, volume_name: str) -> "VolumeInstance":
         response = await get_volume(volume_name=volume_name, client=client)
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise VolumeAPIError(message, status_code=status_code, code=response.error)
         return cls(response)
 
     @classmethod
@@ -190,11 +208,9 @@ class VolumeInstance:
         """Create a volume if it doesn't exist, otherwise return existing."""
         try:
             return await cls.create(config)
-        except Exception as e:
+        except VolumeAPIError as e:
             # Check if it's a 409 conflict error (volume already exists)
-            if (hasattr(e, "status_code") and e.status_code == 409) or (
-                hasattr(e, "code") and e.code in [409, "VOLUME_ALREADY_EXISTS"]
-            ):
+            if e.status_code == 409 or e.code in ["409", "VOLUME_ALREADY_EXISTS"]:
                 # Extract name from different configuration types
                 if isinstance(config, VolumeCreateConfiguration):
                     name = config.name
@@ -210,7 +226,7 @@ class VolumeInstance:
 
                 volume_instance = await cls.get(name)
                 return volume_instance
-            raise e
+            raise
 
 
 class SyncVolumeInstance:
@@ -306,12 +322,20 @@ class SyncVolumeInstance:
             volume.spec.size = default_size
 
         response = create_volume_sync(client=client, body=volume)
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise VolumeAPIError(message, status_code=status_code, code=response.error)
         return cls(response)
 
     @classmethod
     def get(cls, volume_name: str) -> "SyncVolumeInstance":
         """Get a volume by name synchronously."""
         response = get_volume_sync(volume_name=volume_name, client=client)
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise VolumeAPIError(message, status_code=status_code, code=response.error)
         return cls(response)
 
     @classmethod
@@ -327,11 +351,9 @@ class SyncVolumeInstance:
         """Create a volume if it doesn't exist, otherwise return existing."""
         try:
             return cls.create(config)
-        except Exception as e:
+        except VolumeAPIError as e:
             # Check if it's a 409 conflict error (volume already exists)
-            if (hasattr(e, "status_code") and e.status_code == 409) or (
-                hasattr(e, "code") and e.code in [409, "VOLUME_ALREADY_EXISTS"]
-            ):
+            if e.status_code == 409 or e.code in ["409", "VOLUME_ALREADY_EXISTS"]:
                 # Extract name from different configuration types
                 if isinstance(config, VolumeCreateConfiguration):
                     name = config.name
@@ -347,7 +369,7 @@ class SyncVolumeInstance:
 
                 volume_instance = cls.get(name)
                 return volume_instance
-            raise e
+            raise
 
 
 async def _delete_volume_by_name(volume_name: str) -> Volume:

@@ -1,9 +1,15 @@
-from typing import Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.pending_invitation_workspace_details_emails_item import (
+        PendingInvitationWorkspaceDetailsEmailsItem,
+    )
+
 
 T = TypeVar("T", bound="PendingInvitationWorkspaceDetails")
 
@@ -13,18 +19,24 @@ class PendingInvitationWorkspaceDetails:
     """Workspace details
 
     Attributes:
-        emails (Union[Unset, list[Any]]): List of user emails in the workspace
+        emails (Union[Unset, list['PendingInvitationWorkspaceDetailsEmailsItem']]): List of user emails in the workspace
         user_number (Union[Unset, float]): Number of users in the workspace
     """
 
-    emails: Union[Unset, list[Any]] = UNSET
+    emails: Union[Unset, list["PendingInvitationWorkspaceDetailsEmailsItem"]] = UNSET
     user_number: Union[Unset, float] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        emails: Union[Unset, list[Any]] = UNSET
+        emails: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.emails, Unset):
-            emails = self.emails
+            emails = []
+            for emails_item_data in self.emails:
+                if type(emails_item_data) is dict:
+                    emails_item = emails_item_data
+                else:
+                    emails_item = emails_item_data.to_dict()
+                emails.append(emails_item)
 
         user_number = self.user_number
 
@@ -40,10 +52,19 @@ class PendingInvitationWorkspaceDetails:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.pending_invitation_workspace_details_emails_item import (
+            PendingInvitationWorkspaceDetailsEmailsItem,
+        )
+
         if not src_dict:
             return None
         d = src_dict.copy()
-        emails = cast(list[Any], d.pop("emails", UNSET))
+        emails = []
+        _emails = d.pop("emails", UNSET)
+        for emails_item_data in _emails or []:
+            emails_item = PendingInvitationWorkspaceDetailsEmailsItem.from_dict(emails_item_data)
+
+            emails.append(emails_item)
 
         user_number = d.pop("user_number", UNSET)
 

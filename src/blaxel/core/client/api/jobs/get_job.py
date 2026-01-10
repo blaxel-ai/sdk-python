@@ -5,7 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.model import Model
+from ...models.job import Job
 from ...types import UNSET, Response, Unset
 
 
@@ -29,9 +29,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Model | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Job | None:
     if response.status_code == 200:
-        response_200 = Model.from_dict(response.json())
+        response_200 = Job.from_dict(response.json())
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -40,7 +40,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Model | None
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Model]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Job]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -54,10 +54,11 @@ def sync_detailed(
     *,
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
-) -> Response[Model]:
-    """Get job
+) -> Response[Job]:
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -68,7 +69,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Model]
+        Response[Job]
     """
 
     kwargs = _get_kwargs(
@@ -88,10 +89,11 @@ def sync(
     *,
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
-) -> Model | None:
-    """Get job
+) -> Job | None:
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -102,7 +104,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Model
+        Job
     """
 
     return sync_detailed(
@@ -117,10 +119,11 @@ async def asyncio_detailed(
     *,
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
-) -> Response[Model]:
-    """Get job
+) -> Response[Job]:
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -131,7 +134,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Model]
+        Response[Job]
     """
 
     kwargs = _get_kwargs(
@@ -149,10 +152,11 @@ async def asyncio(
     *,
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
-) -> Model | None:
-    """Get job
+) -> Job | None:
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -163,7 +167,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Model
+        Job
     """
 
     return (
