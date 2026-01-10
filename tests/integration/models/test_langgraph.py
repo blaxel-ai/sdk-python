@@ -68,7 +68,7 @@ class TestAgentWithTools:
             return f"The weather in {city} is sunny"
 
         model = await bl_model("sandbox-openai")
-        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"], timeout_enabled=False)
 
         assert len(tools) > 0
 
