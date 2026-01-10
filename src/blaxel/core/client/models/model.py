@@ -17,13 +17,16 @@ T = TypeVar("T", bound="Model")
 
 @_attrs_define
 class Model:
-    """Logical object representing a model
+    """Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.) with unified access control, credentials
+    management, and usage tracking.
 
-    Attributes:
-        metadata (Metadata): Metadata
-        spec (ModelSpec): Model specification for API
-        events (Union[Unset, list['CoreEvent']]): Core events
-        status (Union[Unset, Status]): Status of a resource
+        Attributes:
+            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+                and ownership information
+            spec (ModelSpec): Configuration for a model gateway endpoint including provider type, credentials, and access
+                policies
+            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
 
     metadata: "Metadata"
@@ -33,7 +36,6 @@ class Model:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

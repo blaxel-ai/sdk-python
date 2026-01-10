@@ -17,18 +17,20 @@ T = TypeVar("T", bound="AgentSpec")
 
 @_attrs_define
 class AgentSpec:
-    """Agent specification for API
+    """Configuration for an AI agent including runtime settings, repository source, and deployment triggers
 
     Attributes:
-        enabled (Union[Unset, bool]): Enable or disable the resource
+        enabled (Union[Unset, bool]): When false, the agent is disabled and will not serve inference requests Default:
+            True. Example: True.
         policies (Union[Unset, list[str]]):
         repository (Union[Unset, Repository]): Repository
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, AgentRuntime]): Runtime configuration for Agent
+        runtime (Union[Unset, AgentRuntime]): Runtime configuration defining how the AI agent is deployed and scaled
+            globally
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
-    enabled: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     policies: Union[Unset, list[str]] = UNSET
     repository: Union[Unset, "Repository"] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
@@ -37,7 +39,6 @@ class AgentSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
         policies: Union[Unset, list[str]] = UNSET

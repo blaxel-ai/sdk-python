@@ -16,7 +16,8 @@ class Policy:
     """Rule that controls how a deployment is made and served (e.g. location restrictions)
 
     Attributes:
-        metadata (Metadata): Metadata
+        metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+            and ownership information
         spec (PolicySpec): Policy specification
     """
 
@@ -25,7 +26,6 @@ class Policy:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

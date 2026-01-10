@@ -7,7 +7,7 @@ from ..models.job_runtime_generation import JobRuntimeGeneration
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.job_runtime_envs_item import JobRuntimeEnvsItem
+    from ..models.env import Env
     from ..models.port import Port
 
 
@@ -16,21 +16,26 @@ T = TypeVar("T", bound="JobRuntime")
 
 @_attrs_define
 class JobRuntime:
-    """Runtime configuration for Job
+    """Runtime configuration defining how batch job tasks are executed with parallelism and retry settings
 
     Attributes:
-        envs (Union[Unset, list['JobRuntimeEnvsItem']]): The env variables to set in the job. Should be a list of
-            Kubernetes EnvVar types
-        generation (Union[Unset, JobRuntimeGeneration]): The generation of the job
-        image (Union[Unset, str]): The Docker image for the job
-        max_concurrent_tasks (Union[Unset, int]): The maximum number of concurrent task for an execution
-        max_retries (Union[Unset, int]): The maximum number of retries for the job
-        memory (Union[Unset, int]): The memory for the job in MB
+        envs (Union[Unset, list['Env']]): Environment variables injected into job tasks. Supports Kubernetes EnvVar
+            format with valueFrom references.
+        generation (Union[Unset, JobRuntimeGeneration]): Infrastructure generation: mk2 (containers, 2-10s cold starts)
+            or mk3 (microVMs, sub-25ms cold starts) Example: mk3.
+        image (Union[Unset, str]): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
+            populated during deployment.
+        max_concurrent_tasks (Union[Unset, int]): Maximum number of tasks that can run simultaneously within a single
+            execution Example: 10.
+        max_retries (Union[Unset, int]): Number of automatic retry attempts for failed tasks before marking as failed
+            Example: 3.
+        memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
+            in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 2048.
         ports (Union[Unset, list['Port']]): Set of ports for a resource
-        timeout (Union[Unset, int]): The timeout for the job in seconds
+        timeout (Union[Unset, int]): Maximum execution time in seconds before a task is terminated Example: 3600.
     """
 
-    envs: Union[Unset, list["JobRuntimeEnvsItem"]] = UNSET
+    envs: Union[Unset, list["Env"]] = UNSET
     generation: Union[Unset, JobRuntimeGeneration] = UNSET
     image: Union[Unset, str] = UNSET
     max_concurrent_tasks: Union[Unset, int] = UNSET
@@ -41,7 +46,6 @@ class JobRuntime:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
@@ -100,7 +104,7 @@ class JobRuntime:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.job_runtime_envs_item import JobRuntimeEnvsItem
+        from ..models.env import Env
         from ..models.port import Port
 
         if not src_dict:
@@ -109,7 +113,7 @@ class JobRuntime:
         envs = []
         _envs = d.pop("envs", UNSET)
         for envs_item_data in _envs or []:
-            envs_item = JobRuntimeEnvsItem.from_dict(envs_item_data)
+            envs_item = Env.from_dict(envs_item_data)
 
             envs.append(envs_item)
 

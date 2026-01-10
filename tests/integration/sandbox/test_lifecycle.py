@@ -189,6 +189,7 @@ class TestExpirationPolicies(TestSandboxLifecycleAndExpiration):
 @pytest.mark.asyncio(loop_scope="class")
 class TestTTLExpirationBehavior(TestSandboxLifecycleAndExpiration):
     """Test TTL expiration behavior."""
+
     async def test_sandbox_terminates_after_ttl_expires(self):
         """Test that sandbox terminates after TTL expires."""
         name = unique_name("ttl-expire")

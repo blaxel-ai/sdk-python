@@ -5,28 +5,43 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="MemoryAllocationMetric")
+T = TypeVar("T", bound="Error")
 
 
 @_attrs_define
-class MemoryAllocationMetric:
-    """Metrics for memory allocation
+class Error:
+    """Standard error response returned by the API when a request fails
 
     Attributes:
-        total_allocation (Union[Unset, float]): Total memory allocation in GB-seconds
+        error (str): Error type or code identifying the kind of error Example: Resource already exists.
+        code (Union[Unset, int]): HTTP status code of the error Example: 409.
+        message (Union[Unset, str]): Human-readable error message describing what went wrong Example: Invalid request
+            body.
     """
 
-    total_allocation: Union[Unset, float] = UNSET
+    error: str
+    code: Union[Unset, int] = UNSET
+    message: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        total_allocation = self.total_allocation
+        error = self.error
+
+        code = self.code
+
+        message = self.message
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if total_allocation is not UNSET:
-            field_dict["totalAllocation"] = total_allocation
+        field_dict.update(
+            {
+                "error": error,
+            }
+        )
+        if code is not UNSET:
+            field_dict["code"] = code
+        if message is not UNSET:
+            field_dict["message"] = message
 
         return field_dict
 
@@ -35,14 +50,20 @@ class MemoryAllocationMetric:
         if not src_dict:
             return None
         d = src_dict.copy()
-        total_allocation = d.pop("totalAllocation", d.pop("total_allocation", UNSET))
+        error = d.pop("error")
 
-        memory_allocation_metric = cls(
-            total_allocation=total_allocation,
+        code = d.pop("code", UNSET)
+
+        message = d.pop("message", UNSET)
+
+        error = cls(
+            error=error,
+            code=code,
+            message=message,
         )
 
-        memory_allocation_metric.additional_properties = d
-        return memory_allocation_metric
+        error.additional_properties = d
+        return error
 
     @property
     def additional_keys(self) -> list[str]:

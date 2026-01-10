@@ -20,8 +20,9 @@ class CustomDomainSpec:
     Attributes:
         cname_records (Union[Unset, str]): CNAME target for the domain
         last_verified_at (Union[Unset, str]): Last verification attempt timestamp
-        region (Union[Unset, str]): Region that the custom domain is associated with
-        status (Union[Unset, CustomDomainSpecStatus]): Current status of the domain (pending, verified, failed)
+        region (Union[Unset, str]): Region that the custom domain is associated with Example: us-pdx-1.
+        status (Union[Unset, CustomDomainSpecStatus]): Current status of the domain (pending, verified, failed) Example:
+            verified.
         txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
             verification
         verification_error (Union[Unset, str]): Error message if verification failed
@@ -36,7 +37,6 @@ class CustomDomainSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         cname_records = self.cname_records
 
         last_verified_at = self.last_verified_at

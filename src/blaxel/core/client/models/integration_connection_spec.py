@@ -15,13 +15,16 @@ T = TypeVar("T", bound="IntegrationConnectionSpec")
 
 @_attrs_define
 class IntegrationConnectionSpec:
-    """Integration connection specification
+    """Specification defining the integration type, configuration parameters, and encrypted credentials
 
     Attributes:
-        config (Union[Unset, IntegrationConnectionSpecConfig]): Additional configuration for the integration
-        integration (Union[Unset, str]): Integration type
-        sandbox (Union[Unset, bool]): Sandbox mode
-        secret (Union[Unset, IntegrationConnectionSpecSecret]): Integration secret
+        config (Union[Unset, IntegrationConnectionSpecConfig]): Non-sensitive configuration parameters for the
+            integration (e.g., organization ID, region)
+        integration (Union[Unset, str]): Integration provider type (e.g., openai, anthropic, github, slack) Example:
+            openai.
+        sandbox (Union[Unset, bool]): Whether this connection uses sandbox/test credentials instead of production
+        secret (Union[Unset, IntegrationConnectionSpecSecret]): Encrypted credentials and API keys for authenticating
+            with the external service
     """
 
     config: Union[Unset, "IntegrationConnectionSpecConfig"] = UNSET
@@ -31,7 +34,6 @@ class IntegrationConnectionSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         config: Union[Unset, dict[str, Any]] = UNSET
         if self.config and not isinstance(self.config, Unset) and not isinstance(self.config, dict):
             config = self.config.to_dict()

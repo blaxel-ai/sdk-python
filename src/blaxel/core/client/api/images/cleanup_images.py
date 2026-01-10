@@ -44,10 +44,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[CleanupImagesResponse200]:
-    """Cleanup unused images
+    """Cleanup unused container images
 
-     Deletes all unused images in the workspace. Only removes images that are not currently being used by
-    any agents, functions, sandboxes, or jobs.
+     Cleans up unused container images in the workspace registry. Only removes images that are not
+    currently referenced by any active agent, function, sandbox, or job deployment.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -70,10 +70,10 @@ def sync(
     *,
     client: Client,
 ) -> CleanupImagesResponse200 | None:
-    """Cleanup unused images
+    """Cleanup unused container images
 
-     Deletes all unused images in the workspace. Only removes images that are not currently being used by
-    any agents, functions, sandboxes, or jobs.
+     Cleans up unused container images in the workspace registry. Only removes images that are not
+    currently referenced by any active agent, function, sandbox, or job deployment.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -92,10 +92,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[CleanupImagesResponse200]:
-    """Cleanup unused images
+    """Cleanup unused container images
 
-     Deletes all unused images in the workspace. Only removes images that are not currently being used by
-    any agents, functions, sandboxes, or jobs.
+     Cleans up unused container images in the workspace registry. Only removes images that are not
+    currently referenced by any active agent, function, sandbox, or job deployment.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,10 +116,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> CleanupImagesResponse200 | None:
-    """Cleanup unused images
+    """Cleanup unused container images
 
-     Deletes all unused images in the workspace. Only removes images that are not currently being used by
-    any agents, functions, sandboxes, or jobs.
+     Cleans up unused container images in the workspace registry. Only removes images that are not
+    currently referenced by any active agent, function, sandbox, or job deployment.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

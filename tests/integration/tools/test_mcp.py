@@ -6,11 +6,11 @@ The blTools wrapper in test_bltools.py handles auth automatically.
 
 import pytest
 import pytest_asyncio
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
 
 from blaxel.core import settings
 from blaxel.core.sandbox import SandboxInstance
-from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
 from tests.helpers import default_image, default_labels, unique_name
 
 

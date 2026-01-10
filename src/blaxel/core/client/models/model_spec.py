@@ -15,18 +15,20 @@ T = TypeVar("T", bound="ModelSpec")
 
 @_attrs_define
 class ModelSpec:
-    """Model specification for API
+    """Configuration for a model gateway endpoint including provider type, credentials, and access policies
 
     Attributes:
-        enabled (Union[Unset, bool]): Enable or disable the resource
+        enabled (Union[Unset, bool]): When false, the model endpoint is disabled and will not accept inference requests
+            Default: True. Example: True.
         flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
         integration_connections (Union[Unset, list[str]]):
         policies (Union[Unset, list[str]]):
-        runtime (Union[Unset, ModelRuntime]): Runtime configuration for Model
-        sandbox (Union[Unset, bool]): Sandbox mode
+        runtime (Union[Unset, ModelRuntime]): Configuration identifying which external LLM provider and model this
+            gateway endpoint proxies to
+        sandbox (Union[Unset, bool]): When true, uses sandbox/test credentials from the integration connection
     """
 
-    enabled: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     flavors: Union[Unset, list["Flavor"]] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
@@ -35,7 +37,6 @@ class ModelSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
         flavors: Union[Unset, list[dict[str, Any]]] = UNSET

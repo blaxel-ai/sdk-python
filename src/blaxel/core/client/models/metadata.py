@@ -14,19 +14,23 @@ T = TypeVar("T", bound="Metadata")
 
 @_attrs_define
 class Metadata:
-    """Metadata
+    """Common metadata fields shared by all Blaxel resources including name, labels, timestamps, and ownership information
 
     Attributes:
-        name (str): Model name
+        name (str): Unique identifier for the resource within the workspace. Must be lowercase alphanumeric with
+            hyphens, max 49 characters. Immutable after creation. Example: my-resource.
         created_at (Union[Unset, str]): The date and time when the resource was created
         updated_at (Union[Unset, str]): The date and time when the resource was updated
         created_by (Union[Unset, str]): The user or service account who created the resource
         updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Model display name
-        labels (Union[Unset, MetadataLabels]): Labels
-        plan (Union[Unset, str]): Plan
-        url (Union[Unset, str]): URL
-        workspace (Union[Unset, str]): Workspace name
+        display_name (Union[Unset, str]): Human-readable name for display in the UI. Can contain spaces and special
+            characters, max 63 characters. Example: My Resource.
+        labels (Union[Unset, MetadataLabels]): Key-value pairs for organizing and filtering resources. Labels can be
+            used to categorize resources by environment, project, team, or any custom taxonomy.
+        plan (Union[Unset, str]): Billing plan tier applied to this resource (inherited from workspace account)
+        url (Union[Unset, str]): Auto-generated endpoint URL for accessing this resource (for agents, functions, models,
+            sandboxes)
+        workspace (Union[Unset, str]): Name of the workspace this resource belongs to (read-only, set automatically)
     """
 
     name: str
@@ -42,7 +46,6 @@ class Metadata:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         name = self.name
 
         created_at = self.created_at

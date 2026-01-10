@@ -28,7 +28,7 @@ class PolicySpec:
         resource_types (Union[Unset, list[PolicyResourceType]]): PolicyResourceTypes is a local type that wraps a slice
             of PolicyResourceType
         sandbox (Union[Unset, bool]): Sandbox mode
-        type_ (Union[Unset, PolicySpecType]): Policy type, can be location or flavor
+        type_ (Union[Unset, PolicySpecType]): Policy type, can be location or flavor Example: location.
     """
 
     flavors: Union[Unset, list["Flavor"]] = UNSET
@@ -40,7 +40,6 @@ class PolicySpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         flavors: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.flavors, Unset):
             flavors = []

@@ -45,9 +45,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Integration]:
-    """List integrations connections
+    """Get integration provider info
 
-     Returns integration information by name.
+     Returns metadata about an integration provider including available endpoints, authentication
+    methods, and supported models or features.
 
     Args:
         integration_name (str):
@@ -76,9 +77,10 @@ def sync(
     *,
     client: Client,
 ) -> Integration | None:
-    """List integrations connections
+    """Get integration provider info
 
-     Returns integration information by name.
+     Returns metadata about an integration provider including available endpoints, authentication
+    methods, and supported models or features.
 
     Args:
         integration_name (str):
@@ -102,9 +104,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Integration]:
-    """List integrations connections
+    """Get integration provider info
 
-     Returns integration information by name.
+     Returns metadata about an integration provider including available endpoints, authentication
+    methods, and supported models or features.
 
     Args:
         integration_name (str):
@@ -131,9 +134,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Integration | None:
-    """List integrations connections
+    """Get integration provider info
 
-     Returns integration information by name.
+     Returns metadata about an integration provider including available endpoints, authentication
+    methods, and supported models or features.
 
     Args:
         integration_name (str):

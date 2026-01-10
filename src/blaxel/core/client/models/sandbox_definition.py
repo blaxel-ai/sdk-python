@@ -15,23 +15,25 @@ T = TypeVar("T", bound="SandboxDefinition")
 
 @_attrs_define
 class SandboxDefinition:
-    """Sandbox definition for admin store operations
+    """Pre-configured sandbox template available in the Sandbox Hub for quick deployment with predefined tools and
+    configurations
 
-    Attributes:
-        categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the defintion
-        coming_soon (Union[Unset, bool]): If the definition is coming soon
-        description (Union[Unset, str]): Description of the defintion
-        display_name (Union[Unset, str]): Display name of the definition
-        enterprise (Union[Unset, bool]): If the definition is enterprise
-        hidden (Union[Unset, bool]): If the definition is hidden
-        icon (Union[Unset, str]): Icon of the definition
-        image (Union[Unset, str]): Image of the Sandbox definition
-        long_description (Union[Unset, str]): Long description of the defintion
-        memory (Union[Unset, int]): Memory of the Sandbox definition in MB
-        name (Union[Unset, str]): Name of the artifact
-        ports (Union[Unset, list['Port']]): Set of ports for a resource
-        tags (Union[Unset, str]): Tags of the definition
-        url (Union[Unset, str]): URL of the definition
+        Attributes:
+            categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the defintion
+            coming_soon (Union[Unset, bool]): If the definition is coming soon
+            description (Union[Unset, str]): Description of the defintion Example: Python environment with data science
+                libraries pre-installed.
+            display_name (Union[Unset, str]): Display name of the definition Example: Python Data Science.
+            enterprise (Union[Unset, bool]): If the definition is enterprise
+            hidden (Union[Unset, bool]): If the definition is hidden
+            icon (Union[Unset, str]): Icon of the definition
+            image (Union[Unset, str]): Image of the Sandbox definition Example: blaxel/python-data-science:latest.
+            long_description (Union[Unset, str]): Long description of the defintion
+            memory (Union[Unset, int]): Memory of the Sandbox definition in MB Example: 2048.
+            name (Union[Unset, str]): Name of the artifact Example: python-data-science.
+            ports (Union[Unset, list['Port']]): Set of ports for a resource
+            tags (Union[Unset, str]): Tags of the definition
+            url (Union[Unset, str]): URL of the definition
     """
 
     categories: Union[Unset, list["SandboxDefinitionCategoriesItem"]] = UNSET
@@ -51,7 +53,6 @@ class SandboxDefinition:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         categories: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.categories, Unset):
             categories = []

@@ -76,7 +76,8 @@ def sync_detailed(
 ) -> Response[Union[Any, list["JobExecution"]]]:
     """List job executions
 
-     Returns a list of all executions for a job by name.
+     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
+    contains status, task counts, and timing information.
 
     Args:
         job_id (str):
@@ -113,7 +114,8 @@ def sync(
 ) -> Union[Any, list["JobExecution"]] | None:
     """List job executions
 
-     Returns a list of all executions for a job by name.
+     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
+    contains status, task counts, and timing information.
 
     Args:
         job_id (str):
@@ -145,7 +147,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, list["JobExecution"]]]:
     """List job executions
 
-     Returns a list of all executions for a job by name.
+     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
+    contains status, task counts, and timing information.
 
     Args:
         job_id (str):
@@ -180,7 +183,8 @@ async def asyncio(
 ) -> Union[Any, list["JobExecution"]] | None:
     """List job executions
 
-     Returns a list of all executions for a job by name.
+     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
+    contains status, task counts, and timing information.
 
     Args:
         job_id (str):

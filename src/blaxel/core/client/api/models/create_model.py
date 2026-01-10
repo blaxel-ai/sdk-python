@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.model import Model
 from ...types import Response
 
@@ -32,18 +33,38 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Model | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Model] | None:
     if response.status_code == 200:
         response_200 = Model.from_dict(response.json())
 
         return response_200
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        return response_400
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Model]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Model]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,20 +77,22 @@ def sync_detailed(
     *,
     client: Client,
     body: Model,
-) -> Response[Model]:
-    """Create model
+) -> Response[Union[Error, Model]]:
+    """Create model endpoint
 
-     Creates a model.
+     Creates a new model gateway endpoint that proxies requests to an external LLM provider. Requires an
+    integration connection with valid API credentials for the target provider.
 
     Args:
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Model]
+        Response[Union[Error, Model]]
     """
 
     kwargs = _get_kwargs(
@@ -87,20 +110,22 @@ def sync(
     *,
     client: Client,
     body: Model,
-) -> Model | None:
-    """Create model
+) -> Union[Error, Model] | None:
+    """Create model endpoint
 
-     Creates a model.
+     Creates a new model gateway endpoint that proxies requests to an external LLM provider. Requires an
+    integration connection with valid API credentials for the target provider.
 
     Args:
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Model
+        Union[Error, Model]
     """
 
     return sync_detailed(
@@ -113,20 +138,22 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Model,
-) -> Response[Model]:
-    """Create model
+) -> Response[Union[Error, Model]]:
+    """Create model endpoint
 
-     Creates a model.
+     Creates a new model gateway endpoint that proxies requests to an external LLM provider. Requires an
+    integration connection with valid API credentials for the target provider.
 
     Args:
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Model]
+        Response[Union[Error, Model]]
     """
 
     kwargs = _get_kwargs(
@@ -142,20 +169,22 @@ async def asyncio(
     *,
     client: Client,
     body: Model,
-) -> Model | None:
-    """Create model
+) -> Union[Error, Model] | None:
+    """Create model endpoint
 
-     Creates a model.
+     Creates a new model gateway endpoint that proxies requests to an external LLM provider. Requires an
+    integration connection with valid API credentials for the target provider.
 
     Args:
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Model
+        Union[Error, Model]
     """
 
     return (

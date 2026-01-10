@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.workspace import Workspace
 from ...types import Response
 
@@ -18,7 +19,9 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["Workspace"] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Error, list["Workspace"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -28,13 +31,23 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Worksp
             response_200.append(response_200_item)
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Workspace"]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Error, list["Workspace"]]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,17 +59,18 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["Workspace"]]:
-    """List workspaces
+) -> Response[Union[Error, list["Workspace"]]]:
+    """List accessible workspaces
 
-     Returns a list of all workspaces.
+     Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
+    with its own resources, team members, and billing.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['Workspace']]
+        Response[Union[Error, list['Workspace']]]
     """
 
     kwargs = _get_kwargs()
@@ -71,17 +85,18 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["Workspace"] | None:
-    """List workspaces
+) -> Union[Error, list["Workspace"]] | None:
+    """List accessible workspaces
 
-     Returns a list of all workspaces.
+     Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
+    with its own resources, team members, and billing.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['Workspace']
+        Union[Error, list['Workspace']]
     """
 
     return sync_detailed(
@@ -92,17 +107,18 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["Workspace"]]:
-    """List workspaces
+) -> Response[Union[Error, list["Workspace"]]]:
+    """List accessible workspaces
 
-     Returns a list of all workspaces.
+     Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
+    with its own resources, team members, and billing.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['Workspace']]
+        Response[Union[Error, list['Workspace']]]
     """
 
     kwargs = _get_kwargs()
@@ -115,17 +131,18 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["Workspace"] | None:
-    """List workspaces
+) -> Union[Error, list["Workspace"]] | None:
+    """List accessible workspaces
 
-     Returns a list of all workspaces.
+     Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
+    with its own resources, team members, and billing.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['Workspace']
+        Union[Error, list['Workspace']]
     """
 
     return (

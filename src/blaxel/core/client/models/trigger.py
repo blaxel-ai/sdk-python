@@ -19,9 +19,9 @@ class Trigger:
 
     Attributes:
         configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
-        enabled (Union[Unset, bool]): Enable or disable the trigger (default: true)
-        id (Union[Unset, str]): The id of the trigger
-        type_ (Union[Unset, TriggerType]): The type of trigger, can be http or http-async
+        enabled (Union[Unset, bool]): Enable or disable the trigger (default: true) Example: True.
+        id (Union[Unset, str]): The id of the trigger Example: trigger-1.
+        type_ (Union[Unset, TriggerType]): The type of trigger, can be http or http-async Example: http.
     """
 
     configuration: Union[Unset, "TriggerConfiguration"] = UNSET
@@ -31,7 +31,6 @@ class Trigger:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         configuration: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.configuration

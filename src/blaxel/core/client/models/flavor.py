@@ -14,8 +14,8 @@ class Flavor:
     """A type of hardware available for deployments
 
     Attributes:
-        name (Union[Unset, str]): Flavor name (e.g. t4)
-        type_ (Union[Unset, FlavorType]): Flavor type (e.g. cpu, gpu)
+        name (Union[Unset, str]): Flavor name (e.g. t4) Example: t4.
+        type_ (Union[Unset, FlavorType]): Flavor type (e.g. cpu, gpu) Example: cpu.
     """
 
     name: Union[Unset, str] = UNSET

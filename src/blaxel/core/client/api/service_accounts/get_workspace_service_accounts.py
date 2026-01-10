@@ -55,9 +55,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["GetWorkspaceServiceAccountsResponse200Item"]]:
-    """Get workspace service accounts
+    """List service accounts
 
-     Returns a list of all service accounts in the workspace.
+     Returns all service accounts in the workspace. Service accounts are machine identities for external
+    systems to authenticate with Blaxel via OAuth or API keys.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -80,9 +81,10 @@ def sync(
     *,
     client: Client,
 ) -> list["GetWorkspaceServiceAccountsResponse200Item"] | None:
-    """Get workspace service accounts
+    """List service accounts
 
-     Returns a list of all service accounts in the workspace.
+     Returns all service accounts in the workspace. Service accounts are machine identities for external
+    systems to authenticate with Blaxel via OAuth or API keys.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -101,9 +103,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["GetWorkspaceServiceAccountsResponse200Item"]]:
-    """Get workspace service accounts
+    """List service accounts
 
-     Returns a list of all service accounts in the workspace.
+     Returns all service accounts in the workspace. Service accounts are machine identities for external
+    systems to authenticate with Blaxel via OAuth or API keys.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -124,9 +127,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["GetWorkspaceServiceAccountsResponse200Item"] | None:
-    """Get workspace service accounts
+    """List service accounts
 
-     Returns a list of all service accounts in the workspace.
+     Returns all service accounts in the workspace. Service accounts are machine identities for external
+    systems to authenticate with Blaxel via OAuth or API keys.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

@@ -55,9 +55,10 @@ def sync_detailed(
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Job]:
-    """Get job
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -89,9 +90,10 @@ def sync(
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Job | None:
-    """Get job
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -118,9 +120,10 @@ async def asyncio_detailed(
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Response[Job]:
-    """Get job
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):
@@ -150,9 +153,10 @@ async def asyncio(
     client: Client,
     show_secrets: Union[Unset, bool] = UNSET,
 ) -> Job | None:
-    """Get job
+    """Get batch job
 
-     Returns a job by name.
+     Returns detailed information about a batch job including its runtime configuration, execution
+    history, and deployment status.
 
     Args:
         job_id (str):

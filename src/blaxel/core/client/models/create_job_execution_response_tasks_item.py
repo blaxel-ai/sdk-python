@@ -3,12 +3,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="RequestTotalByOriginMetricRequestTotalByOrigin")
+T = TypeVar("T", bound="CreateJobExecutionResponseTasksItem")
 
 
 @_attrs_define
-class RequestTotalByOriginMetricRequestTotalByOrigin:
-    """Request total by origin"""
+class CreateJobExecutionResponseTasksItem:
+    """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -23,10 +23,10 @@ class RequestTotalByOriginMetricRequestTotalByOrigin:
         if not src_dict:
             return None
         d = src_dict.copy()
-        request_total_by_origin_metric_request_total_by_origin = cls()
+        create_job_execution_response_tasks_item = cls()
 
-        request_total_by_origin_metric_request_total_by_origin.additional_properties = d
-        return request_total_by_origin_metric_request_total_by_origin
+        create_job_execution_response_tasks_item.additional_properties = d
+        return create_job_execution_response_tasks_item
 
     @property
     def additional_keys(self) -> list[str]:

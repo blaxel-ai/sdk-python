@@ -3,12 +3,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="RequestTotalByOriginMetricRequestTotalByOriginAndCode")
+T = TypeVar("T", bound="SandboxErrorDetails")
 
 
 @_attrs_define
-class RequestTotalByOriginMetricRequestTotalByOriginAndCode:
-    """Request total by origin and code"""
+class SandboxErrorDetails:
+    """Additional error details. For INVALID_IMAGE errors, includes requested_image and supported_images array."""
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -23,10 +23,10 @@ class RequestTotalByOriginMetricRequestTotalByOriginAndCode:
         if not src_dict:
             return None
         d = src_dict.copy()
-        request_total_by_origin_metric_request_total_by_origin_and_code = cls()
+        sandbox_error_details = cls()
 
-        request_total_by_origin_metric_request_total_by_origin_and_code.additional_properties = d
-        return request_total_by_origin_metric_request_total_by_origin_and_code
+        sandbox_error_details.additional_properties = d
+        return sandbox_error_details
 
     @property
     def additional_keys(self) -> list[str]:

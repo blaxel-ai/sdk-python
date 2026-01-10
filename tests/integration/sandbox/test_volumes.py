@@ -186,15 +186,19 @@ class TestMountingVolumesToSandboxes(TestVolumeOperations):
         TestVolumeOperations.created_sandboxes.append(sandbox_name)
 
         # Verify mount by writing a file
-        await sandbox.process.exec({
-            "command": "echo 'mounted' > /data/test.txt",
-            "wait_for_completion": True,
-        })
+        await sandbox.process.exec(
+            {
+                "command": "echo 'mounted' > /data/test.txt",
+                "wait_for_completion": True,
+            }
+        )
 
-        result = await sandbox.process.exec({
-            "command": "cat /data/test.txt",
-            "wait_for_completion": True,
-        })
+        result = await sandbox.process.exec(
+            {
+                "command": "cat /data/test.txt",
+                "wait_for_completion": True,
+            }
+        )
 
         assert "mounted" in result.logs
 
@@ -230,10 +234,12 @@ class TestVolumePersistence(TestVolumeOperations):
             }
         )
 
-        await sandbox1.process.exec({
-            "command": f"echo '{file_content}' > /persistent/data.txt",
-            "wait_for_completion": True,
-        })
+        await sandbox1.process.exec(
+            {
+                "command": f"echo '{file_content}' > /persistent/data.txt",
+                "wait_for_completion": True,
+            }
+        )
 
         # Delete first sandbox and wait for full deletion
         await SandboxInstance.delete(sandbox1_name)
@@ -252,9 +258,11 @@ class TestVolumePersistence(TestVolumeOperations):
         )
         TestVolumeOperations.created_sandboxes.append(sandbox2_name)
 
-        result = await sandbox2.process.exec({
-            "command": "cat /data/data.txt",
-            "wait_for_completion": True,
-        })
+        result = await sandbox2.process.exec(
+            {
+                "command": "cat /data/data.txt",
+                "wait_for_completion": True,
+            }
+        )
 
         assert result.logs.strip() == file_content

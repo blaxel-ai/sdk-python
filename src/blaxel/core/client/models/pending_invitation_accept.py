@@ -18,7 +18,8 @@ class PendingInvitationAccept:
 
     Attributes:
         email (Union[Unset, str]): User email
-        workspace (Union[Unset, Workspace]): Workspace
+        workspace (Union[Unset, Workspace]): Tenant container that groups all Blaxel resources (agents, functions,
+            models, etc.) with shared team access control and billing.
     """
 
     email: Union[Unset, str] = UNSET
@@ -26,7 +27,6 @@ class PendingInvitationAccept:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         email = self.email
 
         workspace: Union[Unset, dict[str, Any]] = UNSET

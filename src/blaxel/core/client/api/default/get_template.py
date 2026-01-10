@@ -47,7 +47,8 @@ def sync_detailed(
 ) -> Response[Template]:
     """Get template
 
-     Returns a template by name.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
         template_name (str):
@@ -78,7 +79,8 @@ def sync(
 ) -> Template | None:
     """Get template
 
-     Returns a template by name.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
         template_name (str):
@@ -104,7 +106,8 @@ async def asyncio_detailed(
 ) -> Response[Template]:
     """Get template
 
-     Returns a template by name.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
         template_name (str):
@@ -133,7 +136,8 @@ async def asyncio(
 ) -> Template | None:
     """Get template
 
-     Returns a template by name.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
         template_name (str):

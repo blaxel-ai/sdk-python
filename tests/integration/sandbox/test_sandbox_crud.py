@@ -165,7 +165,9 @@ class TestSandboxCreateIfNotExists:
     async def test_creates_new_sandbox_if_not_exists(self):
         """Test creating a new sandbox if it doesn't exist."""
         name = unique_name("cine")
-        sandbox = await SandboxInstance.create_if_not_exists({"name": name, "labels": default_labels})
+        sandbox = await SandboxInstance.create_if_not_exists(
+            {"name": name, "labels": default_labels}
+        )
 
         try:
             assert sandbox.metadata.name == name
@@ -181,7 +183,9 @@ class TestSandboxCreateIfNotExists:
 
         try:
             # create_if_not_exists should return the same sandbox
-            second = await SandboxInstance.create_if_not_exists({"name": name, "labels": default_labels})
+            second = await SandboxInstance.create_if_not_exists(
+                {"name": name, "labels": default_labels}
+            )
             assert second.metadata.name == first.metadata.name
         finally:
             await SandboxInstance.delete(name)
@@ -193,7 +197,9 @@ class TestSandboxCreateIfNotExists:
 
         async def create_task():
             try:
-                sb = await SandboxInstance.create_if_not_exists({"name": name, "labels": default_labels})
+                sb = await SandboxInstance.create_if_not_exists(
+                    {"name": name, "labels": default_labels}
+                )
                 return {"sandbox": sb, "error": None}
             except Exception as e:
                 return {"sandbox": None, "error": e}

@@ -58,9 +58,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Union[Any, JobExecution]]:
-    """Delete job execution
+    """Cancel job execution
 
-     Stop an execution for a job by name.
+     Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
+    started. The execution status changes to 'cancelling' then 'cancelled'.
 
     Args:
         job_id (str):
@@ -92,9 +93,10 @@ def sync(
     *,
     client: Client,
 ) -> Union[Any, JobExecution] | None:
-    """Delete job execution
+    """Cancel job execution
 
-     Stop an execution for a job by name.
+     Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
+    started. The execution status changes to 'cancelling' then 'cancelled'.
 
     Args:
         job_id (str):
@@ -121,9 +123,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Union[Any, JobExecution]]:
-    """Delete job execution
+    """Cancel job execution
 
-     Stop an execution for a job by name.
+     Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
+    started. The execution status changes to 'cancelling' then 'cancelled'.
 
     Args:
         job_id (str):
@@ -153,9 +156,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Union[Any, JobExecution] | None:
-    """Delete job execution
+    """Cancel job execution
 
-     Stop an execution for a job by name.
+     Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
+    started. The execution status changes to 'cancelling' then 'cancelled'.
 
     Args:
         job_id (str):

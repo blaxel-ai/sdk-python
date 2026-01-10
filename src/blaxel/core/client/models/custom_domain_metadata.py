@@ -21,9 +21,10 @@ class CustomDomainMetadata:
         updated_at (Union[Unset, str]): The date and time when the resource was updated
         created_by (Union[Unset, str]): The user or service account who created the resource
         updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Display name for the custom domain
-        labels (Union[Unset, MetadataLabels]): Labels
-        name (Union[Unset, str]): Domain name (e.g., "example.com")
+        display_name (Union[Unset, str]): Display name for the custom domain Example: Preview Domain.
+        labels (Union[Unset, MetadataLabels]): Key-value pairs for organizing and filtering resources. Labels can be
+            used to categorize resources by environment, project, team, or any custom taxonomy.
+        name (Union[Unset, str]): Domain name (e.g., "example.com") Example: preview.example.com.
         workspace (Union[Unset, str]): Workspace name
     """
 
@@ -38,7 +39,6 @@ class CustomDomainMetadata:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         updated_at = self.updated_at

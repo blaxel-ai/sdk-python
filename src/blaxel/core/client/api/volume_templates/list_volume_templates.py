@@ -51,7 +51,8 @@ def sync_detailed(
 ) -> Response[list["VolumeTemplate"]]:
     """List volume templates
 
-     Returns a list of all volume templates.
+     Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
+    snapshots that can be used to initialize new volumes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -76,7 +77,8 @@ def sync(
 ) -> list["VolumeTemplate"] | None:
     """List volume templates
 
-     Returns a list of all volume templates.
+     Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
+    snapshots that can be used to initialize new volumes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -97,7 +99,8 @@ async def asyncio_detailed(
 ) -> Response[list["VolumeTemplate"]]:
     """List volume templates
 
-     Returns a list of all volume templates.
+     Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
+    snapshots that can be used to initialize new volumes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,7 +123,8 @@ async def asyncio(
 ) -> list["VolumeTemplate"] | None:
     """List volume templates
 
-     Returns a list of all volume templates.
+     Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
+    snapshots that can be used to initialize new volumes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

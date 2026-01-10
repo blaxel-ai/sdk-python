@@ -11,14 +11,16 @@ T = TypeVar("T", bound="ModelRuntime")
 
 @_attrs_define
 class ModelRuntime:
-    """Runtime configuration for Model
+    """Configuration identifying which external LLM provider and model this gateway endpoint proxies to
 
     Attributes:
-        endpoint_name (Union[Unset, str]): Endpoint Name of the model. In case of hf_private_endpoint, it is the
-            endpoint name. In case of hf_public_endpoint, it is not used.
-        model (Union[Unset, str]): The slug name of the origin model at HuggingFace.
-        organization (Union[Unset, str]): The organization of the model
-        type_ (Union[Unset, ModelRuntimeType]): The type of origin for the deployment
+        endpoint_name (Union[Unset, str]): Provider-specific endpoint name (e.g., HuggingFace Inference Endpoints name)
+        model (Union[Unset, str]): Model identifier at the provider (e.g., gpt-4.1, claude-sonnet-4-20250514, mistral-
+            large-latest) Example: gpt-4.1.
+        organization (Union[Unset, str]): Organization or account identifier at the provider (required for some
+            providers like OpenAI) Example: org-abc123.
+        type_ (Union[Unset, ModelRuntimeType]): LLM provider type determining the API protocol and authentication method
+            Example: openai.
     """
 
     endpoint_name: Union[Unset, str] = UNSET

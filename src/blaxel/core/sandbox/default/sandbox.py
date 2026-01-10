@@ -9,6 +9,8 @@ from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
 from ...client.models import Metadata, Sandbox, SandboxRuntime, SandboxSpec
+from ...client.models.error import Error
+from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
 from ..types import (
     SandboxConfiguration,
@@ -22,6 +24,16 @@ from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .session import SandboxSessions
+
+
+class SandboxAPIError(Exception):
+    """Exception raised when sandbox API returns an error."""
+
+    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +211,14 @@ class SandboxInstance:
             client=client,
             body=sandbox,
         )
+
+        # Check if response is an error
+        if isinstance(response, SandboxError):
+            status_code = response.status_code if response.status_code is not UNSET else None
+            code = response.code if response.code else None
+            message = response.message if response.message else str(response)
+            raise SandboxAPIError(message, status_code=status_code, code=code)
+
         instance = cls(response)
         # TODO remove this part once we have a better way to handle this
         if safe:
@@ -214,6 +234,16 @@ class SandboxInstance:
             sandbox_name,
             client=client,
         )
+
+        # Check if response is an error
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+
+        if response is None:
+            raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
+
         return cls(response)
 
     @classmethod
@@ -281,11 +311,9 @@ class SandboxInstance:
         """Create a sandbox if it doesn't exist, otherwise return existing."""
         try:
             return await cls.create(sandbox)
-        except Exception as e:
+        except SandboxAPIError as e:
             # Check if it's a 409 conflict error (sandbox already exists)
-            if (hasattr(e, "status_code") and e.status_code == 409) or (
-                hasattr(e, "code") and e.code in [409, "SANDBOX_ALREADY_EXISTS"]
-            ):
+            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
                 # Extract name from different configuration types
                 if isinstance(sandbox, SandboxCreateConfiguration):
                     name = sandbox.name
@@ -314,7 +342,7 @@ class SandboxInstance:
 
                 # Otherwise return the existing active sandbox
                 return sandbox_instance
-            raise e
+            raise
 
     @classmethod
     async def from_session(

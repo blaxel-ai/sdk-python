@@ -13,11 +13,14 @@ T = TypeVar("T", bound="IntegrationConnection")
 
 @_attrs_define
 class IntegrationConnection:
-    """Integration Connection
+    """Configured connection to an external service (LLM provider, API, SaaS, database) storing credentials and settings
+    for use by workspace resources.
 
-    Attributes:
-        metadata (Metadata): Metadata
-        spec (IntegrationConnectionSpec): Integration connection specification
+        Attributes:
+            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+                and ownership information
+            spec (IntegrationConnectionSpec): Specification defining the integration type, configuration parameters, and
+                encrypted credentials
     """
 
     metadata: "Metadata"
@@ -25,7 +28,6 @@ class IntegrationConnection:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

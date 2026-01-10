@@ -5,44 +5,38 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="SandboxMetrics")
+T = TypeVar("T", bound="Env")
 
 
 @_attrs_define
-class SandboxMetrics:
-    """Enhanced sandbox metrics with memory, value, and percent data
+class Env:
+    """Environment variable with name and value
 
     Attributes:
-        memory (Union[Unset, float]): Memory limit in bytes (from query A)
-        percent (Union[Unset, float]): Memory usage percentage (from formula F1)
-        timestamp (Union[Unset, str]): Metric timestamp
-        value (Union[Unset, float]): Memory usage in bytes (from query B)
+        name (Union[Unset, str]): Name of the environment variable Example: MY_ENV_VAR.
+        secret (Union[Unset, bool]): Whether the value is a secret Example: True.
+        value (Union[Unset, str]): Value of the environment variable Example: my-value.
     """
 
-    memory: Union[Unset, float] = UNSET
-    percent: Union[Unset, float] = UNSET
-    timestamp: Union[Unset, str] = UNSET
-    value: Union[Unset, float] = UNSET
+    name: Union[Unset, str] = UNSET
+    secret: Union[Unset, bool] = UNSET
+    value: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        memory = self.memory
+        name = self.name
 
-        percent = self.percent
-
-        timestamp = self.timestamp
+        secret = self.secret
 
         value = self.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if memory is not UNSET:
-            field_dict["memory"] = memory
-        if percent is not UNSET:
-            field_dict["percent"] = percent
-        if timestamp is not UNSET:
-            field_dict["timestamp"] = timestamp
+        if name is not UNSET:
+            field_dict["name"] = name
+        if secret is not UNSET:
+            field_dict["secret"] = secret
         if value is not UNSET:
             field_dict["value"] = value
 
@@ -53,23 +47,20 @@ class SandboxMetrics:
         if not src_dict:
             return None
         d = src_dict.copy()
-        memory = d.pop("memory", UNSET)
+        name = d.pop("name", UNSET)
 
-        percent = d.pop("percent", UNSET)
-
-        timestamp = d.pop("timestamp", UNSET)
+        secret = d.pop("secret", UNSET)
 
         value = d.pop("value", UNSET)
 
-        sandbox_metrics = cls(
-            memory=memory,
-            percent=percent,
-            timestamp=timestamp,
+        env = cls(
+            name=name,
+            secret=secret,
             value=value,
         )
 
-        sandbox_metrics.additional_properties = d
-        return sandbox_metrics
+        env.additional_properties = d
+        return env
 
     @property
     def additional_keys(self) -> list[str]:

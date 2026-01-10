@@ -51,7 +51,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["SandboxDefinition"]]:
-    """List sandbox hub definitions
+    """List Sandbox Hub templates
+
+     Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
+    development environments with pre-installed tools and frameworks.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -74,7 +77,10 @@ def sync(
     *,
     client: Client,
 ) -> list["SandboxDefinition"] | None:
-    """List sandbox hub definitions
+    """List Sandbox Hub templates
+
+     Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
+    development environments with pre-installed tools and frameworks.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,7 +99,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["SandboxDefinition"]]:
-    """List sandbox hub definitions
+    """List Sandbox Hub templates
+
+     Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
+    development environments with pre-installed tools and frameworks.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -114,7 +123,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["SandboxDefinition"] | None:
-    """List sandbox hub definitions
+    """List Sandbox Hub templates
+
+     Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
+    development environments with pre-installed tools and frameworks.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

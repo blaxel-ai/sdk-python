@@ -17,9 +17,9 @@ class JobExecutionSpec:
     """Job execution specification
 
     Attributes:
-        parallelism (Union[Unset, int]): Number of parallel tasks
+        parallelism (Union[Unset, int]): Number of parallel tasks Example: 5.
         tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
-        timeout (Union[Unset, int]): Job timeout in seconds (captured at execution creation time)
+        timeout (Union[Unset, int]): Job timeout in seconds (captured at execution creation time) Example: 3600.
     """
 
     parallelism: Union[Unset, int] = UNSET
@@ -28,7 +28,6 @@ class JobExecutionSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         parallelism = self.parallelism
 
         tasks: Union[Unset, list[dict[str, Any]]] = UNSET

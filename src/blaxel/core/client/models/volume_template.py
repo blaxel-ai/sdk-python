@@ -20,7 +20,8 @@ class VolumeTemplate:
     """Volume template for creating pre-configured volumes
 
     Attributes:
-        metadata (Metadata): Metadata
+        metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+            and ownership information
         spec (VolumeTemplateSpec): Volume template specification
         state (Union[Unset, VolumeTemplateState]): Volume template state
         versions (Union[Unset, list['VolumeTemplateVersion']]): List of versions for this template
@@ -33,7 +34,6 @@ class VolumeTemplate:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

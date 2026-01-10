@@ -124,10 +124,12 @@ class TestFromSession(TestSessionOperations):
 
         sandbox_from_session = await SandboxInstance.from_session(session)
 
-        result = await sandbox_from_session.process.exec({
-            "command": "echo 'from session'",
-            "wait_for_completion": True,
-        })
+        result = await sandbox_from_session.process.exec(
+            {
+                "command": "echo 'from session'",
+                "wait_for_completion": True,
+            }
+        )
 
         assert "from session" in result.logs
 
@@ -140,11 +142,13 @@ class TestFromSession(TestSessionOperations):
 
         sandbox_from_session = await SandboxInstance.from_session(session)
 
-        await sandbox_from_session.process.exec({
-            "name": "stream-session",
-            "command": "for i in 1 2 3; do echo $i; sleep 1; done",
-            "wait_for_completion": False,
-        })
+        await sandbox_from_session.process.exec(
+            {
+                "name": "stream-session",
+                "command": "for i in 1 2 3; do echo $i; sleep 1; done",
+                "wait_for_completion": False,
+            }
+        )
 
         logs = []
         stream = sandbox_from_session.process.stream_logs(

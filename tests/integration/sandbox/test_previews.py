@@ -31,11 +31,13 @@ class TestPreviewOperations:
         )
 
         # Start the dev server
-        await request.cls.sandbox.process.exec({
-            "command": "npm run dev -- --port 3000",
-            "working_dir": "/blaxel/app",
-            "wait_for_ports": [3000],
-        })
+        await request.cls.sandbox.process.exec(
+            {
+                "command": "npm run dev -- --port 3000",
+                "working_dir": "/blaxel/app",
+                "wait_for_ports": [3000],
+            }
+        )
 
         yield
 

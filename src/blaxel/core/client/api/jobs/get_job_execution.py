@@ -60,7 +60,8 @@ def sync_detailed(
 ) -> Response[Union[Any, JobExecution]]:
     """Get job execution
 
-     Returns an execution for a job by name.
+     Returns detailed information about a specific job execution including status, task statistics
+    (success/failure/running counts), and timing information.
 
     Args:
         job_id (str):
@@ -94,7 +95,8 @@ def sync(
 ) -> Union[Any, JobExecution] | None:
     """Get job execution
 
-     Returns an execution for a job by name.
+     Returns detailed information about a specific job execution including status, task statistics
+    (success/failure/running counts), and timing information.
 
     Args:
         job_id (str):
@@ -123,7 +125,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, JobExecution]]:
     """Get job execution
 
-     Returns an execution for a job by name.
+     Returns detailed information about a specific job execution including status, task statistics
+    (success/failure/running counts), and timing information.
 
     Args:
         job_id (str):
@@ -155,7 +158,8 @@ async def asyncio(
 ) -> Union[Any, JobExecution] | None:
     """Get job execution
 
-     Returns an execution for a job by name.
+     Returns detailed information about a specific job execution including status, task statistics
+    (success/failure/running counts), and timing information.
 
     Args:
         job_id (str):

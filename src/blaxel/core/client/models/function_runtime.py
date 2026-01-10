@@ -7,7 +7,7 @@ from ..models.function_runtime_generation import FunctionRuntimeGeneration
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.function_runtime_envs_item import FunctionRuntimeEnvsItem
+    from ..models.env import Env
 
 
 T = TypeVar("T", bound="FunctionRuntime")
@@ -15,20 +15,23 @@ T = TypeVar("T", bound="FunctionRuntime")
 
 @_attrs_define
 class FunctionRuntime:
-    """Runtime configuration for Function
+    """Runtime configuration defining how the MCP server function is deployed and scaled
 
     Attributes:
-        envs (Union[Unset, list['FunctionRuntimeEnvsItem']]): The env variables to set in the function. Should be a list
-            of Kubernetes EnvVar types
-        generation (Union[Unset, FunctionRuntimeGeneration]): The generation of the function
-        image (Union[Unset, str]): The Docker image for the function
-        max_scale (Union[Unset, int]): The maximum number of replicas for the function.
-        memory (Union[Unset, int]): The memory for the function in MB
-        min_scale (Union[Unset, int]): The minimum number of replicas for the function. Can be 0 or 1 (in which case the
-            function is always running in at least one location).
+        envs (Union[Unset, list['Env']]): Environment variables injected into the function. Supports Kubernetes EnvVar
+            format with valueFrom references.
+        generation (Union[Unset, FunctionRuntimeGeneration]): Infrastructure generation: mk2 (containers, 2-10s cold
+            starts, 15+ global regions) or mk3 (microVMs, sub-25ms cold starts) Example: mk3.
+        image (Union[Unset, str]): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
+            populated during deployment.
+        max_scale (Union[Unset, int]): Maximum number of concurrent function instances for auto-scaling Example: 10.
+        memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
+            in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 2048.
+        min_scale (Union[Unset, int]): Minimum instances to keep warm. Set to 1+ to eliminate cold starts, 0 for scale-
+            to-zero.
     """
 
-    envs: Union[Unset, list["FunctionRuntimeEnvsItem"]] = UNSET
+    envs: Union[Unset, list["Env"]] = UNSET
     generation: Union[Unset, FunctionRuntimeGeneration] = UNSET
     image: Union[Unset, str] = UNSET
     max_scale: Union[Unset, int] = UNSET
@@ -37,7 +40,6 @@ class FunctionRuntime:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
@@ -80,7 +82,7 @@ class FunctionRuntime:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.function_runtime_envs_item import FunctionRuntimeEnvsItem
+        from ..models.env import Env
 
         if not src_dict:
             return None
@@ -88,7 +90,7 @@ class FunctionRuntime:
         envs = []
         _envs = d.pop("envs", UNSET)
         for envs_item_data in _envs or []:
-            envs_item = FunctionRuntimeEnvsItem.from_dict(envs_item_data)
+            envs_item = Env.from_dict(envs_item_data)
 
             envs.append(envs_item)
 

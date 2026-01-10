@@ -47,9 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Image]:
-    """Get image by name
+    """Get container image
 
-     Returns an image by name.
+     Returns detailed information about a container image including all available tags, creation dates,
+    and size information.
 
     Args:
         resource_type (str):
@@ -81,9 +82,10 @@ def sync(
     *,
     client: Client,
 ) -> Image | None:
-    """Get image by name
+    """Get container image
 
-     Returns an image by name.
+     Returns detailed information about a container image including all available tags, creation dates,
+    and size information.
 
     Args:
         resource_type (str):
@@ -110,9 +112,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Image]:
-    """Get image by name
+    """Get container image
 
-     Returns an image by name.
+     Returns detailed information about a container image including all available tags, creation dates,
+    and size information.
 
     Args:
         resource_type (str):
@@ -142,9 +145,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Image | None:
-    """Get image by name
+    """Get container image
 
-     Returns an image by name.
+     Returns detailed information about a container image including all available tags, creation dates,
+    and size information.
 
     Args:
         resource_type (str):

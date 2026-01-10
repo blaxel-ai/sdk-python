@@ -14,17 +14,17 @@ T = TypeVar("T", bound="SandboxLifecycle")
 
 @_attrs_define
 class SandboxLifecycle:
-    """Lifecycle configuration for sandbox management
+    """Lifecycle configuration controlling automatic sandbox deletion based on idle time, max age, or specific dates
 
     Attributes:
-        expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies
+        expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies. Multiple policies can
+            be combined; whichever condition is met first triggers the action.
     """
 
     expiration_policies: Union[Unset, list["ExpirationPolicy"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         expiration_policies: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.expiration_policies, Unset):
             expiration_policies = []

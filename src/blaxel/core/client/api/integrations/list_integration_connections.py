@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.integration_connection import IntegrationConnection
 from ...types import Response
 
@@ -20,7 +21,7 @@ def _get_kwargs() -> dict[str, Any]:
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> list["IntegrationConnection"] | None:
+) -> Union[Error, list["IntegrationConnection"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -30,6 +31,18 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -38,7 +51,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[list["IntegrationConnection"]]:
+) -> Response[Union[Error, list["IntegrationConnection"]]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -50,17 +63,18 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["IntegrationConnection"]]:
-    """List integrations connections
+) -> Response[Union[Error, list["IntegrationConnection"]]]:
+    """List integration connections
 
-     Returns a list of all connections integrations in the workspace.
+     Returns all configured integration connections in the workspace. Each connection stores credentials
+    and settings for an external service (LLM provider, API, database).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['IntegrationConnection']]
+        Response[Union[Error, list['IntegrationConnection']]]
     """
 
     kwargs = _get_kwargs()
@@ -75,17 +89,18 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["IntegrationConnection"] | None:
-    """List integrations connections
+) -> Union[Error, list["IntegrationConnection"]] | None:
+    """List integration connections
 
-     Returns a list of all connections integrations in the workspace.
+     Returns all configured integration connections in the workspace. Each connection stores credentials
+    and settings for an external service (LLM provider, API, database).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['IntegrationConnection']
+        Union[Error, list['IntegrationConnection']]
     """
 
     return sync_detailed(
@@ -96,17 +111,18 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["IntegrationConnection"]]:
-    """List integrations connections
+) -> Response[Union[Error, list["IntegrationConnection"]]]:
+    """List integration connections
 
-     Returns a list of all connections integrations in the workspace.
+     Returns all configured integration connections in the workspace. Each connection stores credentials
+    and settings for an external service (LLM provider, API, database).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['IntegrationConnection']]
+        Response[Union[Error, list['IntegrationConnection']]]
     """
 
     kwargs = _get_kwargs()
@@ -119,17 +135,18 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["IntegrationConnection"] | None:
-    """List integrations connections
+) -> Union[Error, list["IntegrationConnection"]] | None:
+    """List integration connections
 
-     Returns a list of all connections integrations in the workspace.
+     Returns all configured integration connections in the workspace. Each connection stores credentials
+    and settings for an external service (LLM provider, API, database).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['IntegrationConnection']
+        Union[Error, list['IntegrationConnection']]
     """
 
     return (

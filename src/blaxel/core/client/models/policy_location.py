@@ -14,8 +14,8 @@ class PolicyLocation:
     """Policy location
 
     Attributes:
-        name (Union[Unset, str]): Policy location name
-        type_ (Union[Unset, PolicyLocationType]): Policy location type
+        name (Union[Unset, str]): Policy location name Example: EU.
+        type_ (Union[Unset, PolicyLocationType]): Policy location type Example: continent.
     """
 
     name: Union[Unset, str] = UNSET

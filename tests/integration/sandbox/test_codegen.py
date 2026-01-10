@@ -140,7 +140,9 @@ class TestFastapplyWithMorph:
         assert result.files is not None
 
 
-@pytest.mark.skipif("os.environ.get('RELACE_API_KEY') or os.environ.get('MORPH_API_KEY')", reason="API keys are set")
+@pytest.mark.skipif(
+    "os.environ.get('RELACE_API_KEY') or os.environ.get('MORPH_API_KEY')", reason="API keys are set"
+)
 class TestCodegenSkipped:
     """Tests that are skipped when no API keys are set."""
 

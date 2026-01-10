@@ -18,11 +18,11 @@ class JobExecutionMetadata:
         created_at (Union[Unset, str]): Creation timestamp
         deleted_at (Union[Unset, str]): Deletion timestamp
         expired_at (Union[Unset, str]): Expiration timestamp
-        id (Union[Unset, str]): Execution ID
-        job (Union[Unset, str]): Job name
+        id (Union[Unset, str]): Execution ID Example: exec-abc123.
+        job (Union[Unset, str]): Job name Example: data-processing-job.
         started_at (Union[Unset, str]): Start timestamp
         updated_at (Union[Unset, str]): Last update timestamp
-        workspace (Union[Unset, str]): Workspace ID
+        workspace (Union[Unset, str]): Workspace ID Example: my-workspace.
     """
 
     cluster: Union[Unset, str] = UNSET

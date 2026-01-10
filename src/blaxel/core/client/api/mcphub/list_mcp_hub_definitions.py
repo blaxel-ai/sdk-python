@@ -47,7 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["MCPDefinition"]]:
-    """List MCP hub definitions
+    """List MCP Hub servers
+
+     Returns all pre-built MCP server definitions available in the Blaxel Hub. These can be deployed
+    directly to your workspace with pre-configured tools and integrations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -70,7 +73,10 @@ def sync(
     *,
     client: Client,
 ) -> list["MCPDefinition"] | None:
-    """List MCP hub definitions
+    """List MCP Hub servers
+
+     Returns all pre-built MCP server definitions available in the Blaxel Hub. These can be deployed
+    directly to your workspace with pre-configured tools and integrations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -89,7 +95,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["MCPDefinition"]]:
-    """List MCP hub definitions
+    """List MCP Hub servers
+
+     Returns all pre-built MCP server definitions available in the Blaxel Hub. These can be deployed
+    directly to your workspace with pre-configured tools and integrations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -110,7 +119,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["MCPDefinition"] | None:
-    """List MCP hub definitions
+    """List MCP Hub servers
+
+     Returns all pre-built MCP server definitions available in the Blaxel Hub. These can be deployed
+    directly to your workspace with pre-configured tools and integrations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

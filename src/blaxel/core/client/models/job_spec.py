@@ -16,18 +16,20 @@ T = TypeVar("T", bound="JobSpec")
 
 @_attrs_define
 class JobSpec:
-    """Job specification for API
+    """Configuration for a batch job including execution parameters, parallelism settings, and deployment region
 
     Attributes:
-        enabled (Union[Unset, bool]): Enable or disable the resource
+        enabled (Union[Unset, bool]): When false, the job is disabled and new executions cannot be triggered Default:
+            True. Example: True.
         policies (Union[Unset, list[str]]):
-        region (Union[Unset, str]): Region where the job should be created (e.g. us-was-1, eu-lon-1)
+        region (Union[Unset, str]): Region where the job should be created (e.g. us-was-1, eu-lon-1) Example: us-was-1.
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, JobRuntime]): Runtime configuration for Job
+        runtime (Union[Unset, JobRuntime]): Runtime configuration defining how batch job tasks are executed with
+            parallelism and retry settings
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
-    enabled: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     policies: Union[Unset, list[str]] = UNSET
     region: Union[Unset, str] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
@@ -36,7 +38,6 @@ class JobSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
         policies: Union[Unset, list[str]] = UNSET

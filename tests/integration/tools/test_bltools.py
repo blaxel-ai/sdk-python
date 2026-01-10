@@ -4,10 +4,10 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
+from blaxel.core.tools import bl_tools as bl_tools_core
 from blaxel.langgraph import bl_tools as bl_tools_langgraph
 from blaxel.llamaindex import bl_tools as bl_tools_llamaindex
 from blaxel.openai import bl_tools as bl_tools_openai
-from blaxel.core.tools import bl_tools as bl_tools_core
 from tests.helpers import default_image, default_labels, unique_name
 
 
@@ -54,9 +54,11 @@ class TestLanggraphTools:
         # Find the exec tool to test
         exec_tool = next((t for t in tools if "exec" in t.name.lower()), None)
         if exec_tool:
-            result = await exec_tool.ainvoke({
-                "command": "echo 'hello'",
-            })
+            result = await exec_tool.ainvoke(
+                {
+                    "command": "echo 'hello'",
+                }
+            )
             assert result is not None
 
 

@@ -16,17 +16,21 @@ T = TypeVar("T", bound="SandboxSpec")
 
 @_attrs_define
 class SandboxSpec:
-    """Sandbox specification for API
+    """Configuration for a sandbox including its image, memory, ports, region, and lifecycle policies
 
     Attributes:
-        enabled (Union[Unset, bool]): Enable or disable the resource
-        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration for sandbox management
-        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
-        runtime (Union[Unset, SandboxRuntime]): Runtime configuration for Sandbox
+        enabled (Union[Unset, bool]): When false, the sandbox is disabled and will not accept connections Default: True.
+            Example: True.
+        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
+            on idle time, max age, or specific dates
+        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
+            specified, defaults to the region closest to the user. Example: us-pdx-1.
+        runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its
+            resource limits
         volumes (Union[Unset, list['VolumeAttachment']]):
     """
 
-    enabled: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
     region: Union[Unset, str] = UNSET
     runtime: Union[Unset, "SandboxRuntime"] = UNSET
@@ -34,7 +38,6 @@ class SandboxSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
         lifecycle: Union[Unset, dict[str, Any]] = UNSET

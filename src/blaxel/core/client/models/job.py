@@ -17,13 +17,16 @@ T = TypeVar("T", bound="Job")
 
 @_attrs_define
 class Job:
-    """Job
+    """Batch processing job definition for running parallel AI tasks. Jobs can execute multiple tasks concurrently with
+    configurable parallelism, retries, and timeouts.
 
-    Attributes:
-        metadata (Metadata): Metadata
-        spec (JobSpec): Job specification for API
-        events (Union[Unset, list['CoreEvent']]): Core events
-        status (Union[Unset, Status]): Status of a resource
+        Attributes:
+            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+                and ownership information
+            spec (JobSpec): Configuration for a batch job including execution parameters, parallelism settings, and
+                deployment region
+            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
 
     metadata: "Metadata"
@@ -33,7 +36,6 @@ class Job:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

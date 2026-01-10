@@ -64,9 +64,10 @@ def sync_detailed(
     client: Client,
     body: CreateWorkspaceServiceAccountBody,
 ) -> Response[CreateWorkspaceServiceAccountResponse200]:
-    """Create workspace service account
+    """Create service account
 
-     Creates a service account in the workspace.
+     Creates a new service account for machine-to-machine authentication. Returns client ID and secret
+    (secret is only shown once at creation). Use these credentials for OAuth client_credentials flow.
 
     Args:
         body (CreateWorkspaceServiceAccountBody):
@@ -95,9 +96,10 @@ def sync(
     client: Client,
     body: CreateWorkspaceServiceAccountBody,
 ) -> CreateWorkspaceServiceAccountResponse200 | None:
-    """Create workspace service account
+    """Create service account
 
-     Creates a service account in the workspace.
+     Creates a new service account for machine-to-machine authentication. Returns client ID and secret
+    (secret is only shown once at creation). Use these credentials for OAuth client_credentials flow.
 
     Args:
         body (CreateWorkspaceServiceAccountBody):
@@ -121,9 +123,10 @@ async def asyncio_detailed(
     client: Client,
     body: CreateWorkspaceServiceAccountBody,
 ) -> Response[CreateWorkspaceServiceAccountResponse200]:
-    """Create workspace service account
+    """Create service account
 
-     Creates a service account in the workspace.
+     Creates a new service account for machine-to-machine authentication. Returns client ID and secret
+    (secret is only shown once at creation). Use these credentials for OAuth client_credentials flow.
 
     Args:
         body (CreateWorkspaceServiceAccountBody):
@@ -150,9 +153,10 @@ async def asyncio(
     client: Client,
     body: CreateWorkspaceServiceAccountBody,
 ) -> CreateWorkspaceServiceAccountResponse200 | None:
-    """Create workspace service account
+    """Create service account
 
-     Creates a service account in the workspace.
+     Creates a new service account for machine-to-machine authentication. Returns client ID and secret
+    (secret is only shown once at creation). Use these credentials for OAuth client_credentials flow.
 
     Args:
         body (CreateWorkspaceServiceAccountBody):

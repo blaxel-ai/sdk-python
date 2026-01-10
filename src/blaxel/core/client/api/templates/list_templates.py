@@ -47,9 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["Template"]]:
-    """List templates
+    """List deployment templates
 
-     Returns a list of all templates.
+     Returns all deployment templates available for creating agents, functions, and other resources with
+    pre-configured settings and code.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -72,9 +73,10 @@ def sync(
     *,
     client: Client,
 ) -> list["Template"] | None:
-    """List templates
+    """List deployment templates
 
-     Returns a list of all templates.
+     Returns all deployment templates available for creating agents, functions, and other resources with
+    pre-configured settings and code.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,9 +95,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["Template"]]:
-    """List templates
+    """List deployment templates
 
-     Returns a list of all templates.
+     Returns all deployment templates available for creating agents, functions, and other resources with
+    pre-configured settings and code.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,9 +119,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["Template"] | None:
-    """List templates
+    """List deployment templates
 
-     Returns a list of all templates.
+     Returns all deployment templates available for creating agents, functions, and other resources with
+    pre-configured settings and code.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

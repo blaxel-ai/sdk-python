@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.function import Function
 from ...types import Response
 
@@ -32,18 +33,40 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Function | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Function] | None:
     if response.status_code == 200:
         response_200 = Function.from_dict(response.json())
 
         return response_200
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        return response_400
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Function]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Error, Function]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,18 +79,23 @@ def sync_detailed(
     *,
     client: Client,
     body: Function,
-) -> Response[Function]:
-    """Create function
+) -> Response[Union[Error, Function]]:
+    """Create MCP server
+
+     Creates a new MCP server function deployment. The function will expose tools via the Model Context
+    Protocol that can be used by AI agents. Supports streamable HTTP transport.
 
     Args:
-        body (Function): Function
+        body (Function): MCP server deployment that exposes tools for AI agents via the Model
+            Context Protocol (MCP). Deployed as a serverless auto-scaling endpoint using streamable
+            HTTP transport.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Function]
+        Response[Union[Error, Function]]
     """
 
     kwargs = _get_kwargs(
@@ -85,18 +113,23 @@ def sync(
     *,
     client: Client,
     body: Function,
-) -> Function | None:
-    """Create function
+) -> Union[Error, Function] | None:
+    """Create MCP server
+
+     Creates a new MCP server function deployment. The function will expose tools via the Model Context
+    Protocol that can be used by AI agents. Supports streamable HTTP transport.
 
     Args:
-        body (Function): Function
+        body (Function): MCP server deployment that exposes tools for AI agents via the Model
+            Context Protocol (MCP). Deployed as a serverless auto-scaling endpoint using streamable
+            HTTP transport.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Function
+        Union[Error, Function]
     """
 
     return sync_detailed(
@@ -109,18 +142,23 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Function,
-) -> Response[Function]:
-    """Create function
+) -> Response[Union[Error, Function]]:
+    """Create MCP server
+
+     Creates a new MCP server function deployment. The function will expose tools via the Model Context
+    Protocol that can be used by AI agents. Supports streamable HTTP transport.
 
     Args:
-        body (Function): Function
+        body (Function): MCP server deployment that exposes tools for AI agents via the Model
+            Context Protocol (MCP). Deployed as a serverless auto-scaling endpoint using streamable
+            HTTP transport.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Function]
+        Response[Union[Error, Function]]
     """
 
     kwargs = _get_kwargs(
@@ -136,18 +174,23 @@ async def asyncio(
     *,
     client: Client,
     body: Function,
-) -> Function | None:
-    """Create function
+) -> Union[Error, Function] | None:
+    """Create MCP server
+
+     Creates a new MCP server function deployment. The function will expose tools via the Model Context
+    Protocol that can be used by AI agents. Supports streamable HTTP transport.
 
     Args:
-        body (Function): Function
+        body (Function): MCP server deployment that exposes tools for AI agents via the Model
+            Context Protocol (MCP). Deployed as a serverless auto-scaling endpoint using streamable
+            HTTP transport.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Function
+        Union[Error, Function]
     """
 
     return (

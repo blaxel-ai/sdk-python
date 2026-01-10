@@ -47,9 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["Image"]]:
-    """List images
+    """List container images
 
-     Returns a list of all images in the workspace grouped by repository with tags.
+     Returns all container images stored in the workspace registry, grouped by repository with their
+    available tags. Images are created during deployments of agents, functions, sandboxes, and jobs.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -72,9 +73,10 @@ def sync(
     *,
     client: Client,
 ) -> list["Image"] | None:
-    """List images
+    """List container images
 
-     Returns a list of all images in the workspace grouped by repository with tags.
+     Returns all container images stored in the workspace registry, grouped by repository with their
+    available tags. Images are created during deployments of agents, functions, sandboxes, and jobs.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,9 +95,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["Image"]]:
-    """List images
+    """List container images
 
-     Returns a list of all images in the workspace grouped by repository with tags.
+     Returns all container images stored in the workspace registry, grouped by repository with their
+    available tags. Images are created during deployments of agents, functions, sandboxes, and jobs.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,9 +119,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["Image"] | None:
-    """List images
+    """List container images
 
-     Returns a list of all images in the workspace grouped by repository with tags.
+     Returns all container images stored in the workspace registry, grouped by repository with their
+    available tags. Images are created during deployments of agents, functions, sandboxes, and jobs.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

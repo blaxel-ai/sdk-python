@@ -17,15 +17,18 @@ T = TypeVar("T", bound="Volume")
 
 @_attrs_define
 class Volume:
-    """Volume resource for persistent storage
+    """Persistent storage volume that can be attached to sandboxes for durable file storage across sessions. Volumes
+    survive sandbox deletion and can be reattached to new sandboxes.
 
-    Attributes:
-        metadata (Metadata): Metadata
-        spec (VolumeSpec): Volume specification - immutable configuration
-        events (Union[Unset, list['CoreEvent']]): Core events
-        state (Union[Unset, VolumeState]): Volume state - mutable runtime state
-        status (Union[Unset, str]): Volume status computed from events
-        terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
+        Attributes:
+            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+                and ownership information
+            spec (VolumeSpec): Immutable volume configuration set at creation time (size and region cannot be changed after
+                creation)
+            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            state (Union[Unset, VolumeState]): Current runtime state of the volume including attachment status
+            status (Union[Unset, str]): Volume status computed from events
+            terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
     """
 
     metadata: "Metadata"
@@ -37,7 +40,6 @@ class Volume:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

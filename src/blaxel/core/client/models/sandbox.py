@@ -17,14 +17,17 @@ T = TypeVar("T", bound="Sandbox")
 
 @_attrs_define
 class Sandbox:
-    """Micro VM for running agentic tasks
+    """Lightweight virtual machine for secure AI code execution. Sandboxes resume from standby in under 25ms and
+    automatically scale to zero after inactivity, preserving memory state including running processes and filesystem.
 
-    Attributes:
-        metadata (Metadata): Metadata
-        spec (SandboxSpec): Sandbox specification for API
-        events (Union[Unset, list['CoreEvent']]): Core events
-        last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
-        status (Union[Unset, Status]): Status of a resource
+        Attributes:
+            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+                and ownership information
+            spec (SandboxSpec): Configuration for a sandbox including its image, memory, ports, region, and lifecycle
+                policies
+            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
+            status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
 
     metadata: "Metadata"
@@ -35,7 +38,6 @@ class Sandbox:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -62,7 +64,7 @@ class Sandbox:
 
         status: Union[Unset, str] = UNSET
         if not isinstance(self.status, Unset):
-            status = self.status.value if hasattr(self.status, "value") else self.status
+            status = self.status.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)

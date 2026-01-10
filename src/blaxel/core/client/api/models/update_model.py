@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.model import Model
 from ...types import Response
 
@@ -33,18 +34,38 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Model | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Model] | None:
     if response.status_code == 200:
         response_200 = Model.from_dict(response.json())
 
         return response_200
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        return response_400
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Model]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Model]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,21 +79,23 @@ def sync_detailed(
     *,
     client: Client,
     body: Model,
-) -> Response[Model]:
-    """Create or update model
+) -> Response[Union[Error, Model]]:
+    """Update model endpoint
 
-     Update a model by name.
+     Updates a model gateway endpoint's configuration. Changes to provider settings or integration
+    connection take effect immediately.
 
     Args:
         model_name (str):
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Model]
+        Response[Union[Error, Model]]
     """
 
     kwargs = _get_kwargs(
@@ -92,21 +115,23 @@ def sync(
     *,
     client: Client,
     body: Model,
-) -> Model | None:
-    """Create or update model
+) -> Union[Error, Model] | None:
+    """Update model endpoint
 
-     Update a model by name.
+     Updates a model gateway endpoint's configuration. Changes to provider settings or integration
+    connection take effect immediately.
 
     Args:
         model_name (str):
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Model
+        Union[Error, Model]
     """
 
     return sync_detailed(
@@ -121,21 +146,23 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Model,
-) -> Response[Model]:
-    """Create or update model
+) -> Response[Union[Error, Model]]:
+    """Update model endpoint
 
-     Update a model by name.
+     Updates a model gateway endpoint's configuration. Changes to provider settings or integration
+    connection take effect immediately.
 
     Args:
         model_name (str):
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Model]
+        Response[Union[Error, Model]]
     """
 
     kwargs = _get_kwargs(
@@ -153,21 +180,23 @@ async def asyncio(
     *,
     client: Client,
     body: Model,
-) -> Model | None:
-    """Create or update model
+) -> Union[Error, Model] | None:
+    """Update model endpoint
 
-     Update a model by name.
+     Updates a model gateway endpoint's configuration. Changes to provider settings or integration
+    connection take effect immediately.
 
     Args:
         model_name (str):
-        body (Model): Logical object representing a model
+        body (Model): Gateway endpoint to external LLM provider APIs (OpenAI, Anthropic, etc.)
+            with unified access control, credentials management, and usage tracking.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Model
+        Union[Error, Model]
     """
 
     return (

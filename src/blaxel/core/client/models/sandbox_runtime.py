@@ -6,8 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.env import Env
     from ..models.port import Port
-    from ..models.sandbox_runtime_envs_item import SandboxRuntimeEnvsItem
 
 
 T = TypeVar("T", bound="SandboxRuntime")
@@ -15,19 +15,23 @@ T = TypeVar("T", bound="SandboxRuntime")
 
 @_attrs_define
 class SandboxRuntime:
-    """Runtime configuration for Sandbox
+    """Runtime configuration defining how the sandbox VM is provisioned and its resource limits
 
     Attributes:
-        envs (Union[Unset, list['SandboxRuntimeEnvsItem']]): The env variables to set in the sandbox. Should be a list
-            of Kubernetes EnvVar types
-        expires (Union[Unset, str]): The expiration date for the sandbox in ISO 8601 format - 2024-12-31T23:59:59Z
-        image (Union[Unset, str]): The Docker image for the sandbox
-        memory (Union[Unset, int]): The memory for the sandbox in MB
+        envs (Union[Unset, list['Env']]): Environment variables injected into the sandbox. Supports Kubernetes EnvVar
+            format with valueFrom references.
+        expires (Union[Unset, str]): Absolute expiration timestamp in ISO 8601 format when the sandbox will be deleted
+            Example: 2025-12-31T23:59:59Z.
+        image (Union[Unset, str]): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest)
+            or a custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
+        memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
+            in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 4096.
         ports (Union[Unset, list['Port']]): Set of ports for a resource
-        ttl (Union[Unset, str]): The TTL for the sandbox in seconds - 30m, 24h, 7d
+        ttl (Union[Unset, str]): Time-to-live duration after which the sandbox is automatically deleted (e.g., '30m',
+            '24h', '7d') Example: 24h.
     """
 
-    envs: Union[Unset, list["SandboxRuntimeEnvsItem"]] = UNSET
+    envs: Union[Unset, list["Env"]] = UNSET
     expires: Union[Unset, str] = UNSET
     image: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
@@ -36,7 +40,6 @@ class SandboxRuntime:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
@@ -85,8 +88,8 @@ class SandboxRuntime:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.env import Env
         from ..models.port import Port
-        from ..models.sandbox_runtime_envs_item import SandboxRuntimeEnvsItem
 
         if not src_dict:
             return None
@@ -94,7 +97,7 @@ class SandboxRuntime:
         envs = []
         _envs = d.pop("envs", UNSET)
         for envs_item_data in _envs or []:
-            envs_item = SandboxRuntimeEnvsItem.from_dict(envs_item_data)
+            envs_item = Env.from_dict(envs_item_data)
 
             envs.append(envs_item)
 

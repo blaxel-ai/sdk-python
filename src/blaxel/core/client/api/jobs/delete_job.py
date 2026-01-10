@@ -45,9 +45,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Job]:
-    """Delete job
+    """Delete batch job
 
-     Deletes a job by name.
+     Permanently deletes a batch job definition and cancels any running executions. Historical execution
+    data will be retained for a limited time.
 
     Args:
         job_id (str):
@@ -76,9 +77,10 @@ def sync(
     *,
     client: Client,
 ) -> Job | None:
-    """Delete job
+    """Delete batch job
 
-     Deletes a job by name.
+     Permanently deletes a batch job definition and cancels any running executions. Historical execution
+    data will be retained for a limited time.
 
     Args:
         job_id (str):
@@ -102,9 +104,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Job]:
-    """Delete job
+    """Delete batch job
 
-     Deletes a job by name.
+     Permanently deletes a batch job definition and cancels any running executions. Historical execution
+    data will be retained for a limited time.
 
     Args:
         job_id (str):
@@ -131,9 +134,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Job | None:
-    """Delete job
+    """Delete batch job
 
-     Deletes a job by name.
+     Permanently deletes a batch job definition and cancels any running executions. Historical execution
+    data will be retained for a limited time.
 
     Args:
         job_id (str):

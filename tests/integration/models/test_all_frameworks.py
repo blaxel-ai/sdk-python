@@ -7,9 +7,7 @@ It tests basic functionality across langgraph, llamaindex, openai, and pydantic 
 import pytest
 
 from blaxel.langgraph import bl_model as bl_model_langgraph
-
 from blaxel.llamaindex import bl_model as bl_model_llamaindex
-from llama_index.core.llms import ChatMessage
 from blaxel.openai import bl_model as bl_model_openai
 from blaxel.pydantic import bl_model as bl_model_pydantic
 

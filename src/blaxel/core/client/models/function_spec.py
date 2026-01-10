@@ -17,20 +17,22 @@ T = TypeVar("T", bound="FunctionSpec")
 
 @_attrs_define
 class FunctionSpec:
-    """Function specification for API
+    """Configuration for an MCP server function including runtime settings, transport protocol, and connected integrations
 
     Attributes:
-        enabled (Union[Unset, bool]): Enable or disable the resource
+        enabled (Union[Unset, bool]): When false, the function is disabled and will not serve requests Default: True.
+            Example: True.
         integration_connections (Union[Unset, list[str]]):
         policies (Union[Unset, list[str]]):
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, FunctionRuntime]): Runtime configuration for Function
+        runtime (Union[Unset, FunctionRuntime]): Runtime configuration defining how the MCP server function is deployed
+            and scaled
         transport (Union[Unset, FunctionSpecTransport]): Transport compatibility for the MCP, can be "websocket" or
-            "http-stream"
+            "http-stream" Example: http-stream.
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
-    enabled: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
@@ -40,7 +42,6 @@ class FunctionSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
         integration_connections: Union[Unset, list[str]] = UNSET
