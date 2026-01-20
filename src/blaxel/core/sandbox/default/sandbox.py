@@ -113,7 +113,7 @@ class SandboxInstance:
     async def create(
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
-        safe: bool = True,
+        safe: bool = False,
     ) -> "SandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
