@@ -13,12 +13,16 @@ from mcp.types import (
     CallToolRequestParams,
     CallToolResult,
     ClientRequest,
+    TextContent,
 )
+from mcp.types import RequestParams
 from mcp.types import Tool as MCPTool
 
+from ..client.types import UNSET
 from ..common.internal import get_forced_url, get_global_unique_hash
 from ..common.settings import settings
 from ..mcp.client import websocket_client
+from ..sandbox.default.sandbox import SandboxInstance
 from .types import Tool
 
 logger = getLogger(__name__)
@@ -114,13 +118,17 @@ class PersistentMcpClient:
 
             # Pass meta as a separate field instead of merging into arguments
             # This matches the TypeScript SDK pattern and MCP protocol specification
+            # Create Meta object if metas is provided
+            meta_obj = RequestParams.Meta(**self.metas) if self.metas else None
+            
             call_tool_result = await self.session.send_request(
                 ClientRequest(
                     CallToolRequest(
+                        method="tools/call",
                         params=CallToolRequestParams(
                             name=tool_name,
                             arguments=arguments,
-                            meta=self.metas if self.metas else None,
+                            _meta=meta_obj,
                         ),
                     )
                 ),
@@ -137,10 +145,10 @@ class PersistentMcpClient:
             logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
             return CallToolResult(
                 content=[
-                    {
-                        "type": "text",
-                        "text": f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}",
-                    }
+                    TextContent(
+                        type="text",
+                        text=f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}",
+                    )
                 ],
                 isError=True,
             )
@@ -213,6 +221,36 @@ class PersistentMcpClient:
 
     async def initialize(self, fallback: bool = False):
         if not self.session:
+            # Sandbox using run v2 API
+            if self.pluralType == "sandboxes":
+                try:
+                    logger.debug(f"Initializing sandbox MCP client for {self.name}")
+                    sandbox = await SandboxInstance.get(self.name)
+                    
+                    # Check if metadata.url is available and not UNSET
+                    if sandbox.metadata.url is UNSET or not sandbox.metadata.url:
+                        raise ValueError(f"Sandbox {self.name} does not have a metadata URL")
+                    
+                    url = str(sandbox.metadata.url) + "/mcp"
+                    logger.debug(f"Using sandbox metadata URL: {url}")
+                    
+                    # Use streamablehttp_client for sandboxes
+                    result = await self.client_exit_stack.enter_async_context(
+                        streamablehttp_client(url, settings.headers)
+                    )
+                    read, write = result[0], result[1]
+                    
+                    self.session = cast(
+                        ClientSession,
+                        await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
+                    )
+                    await self.session.initialize()
+                    logger.debug(f"MCP:{self.name}:Connected to sandbox")
+                    return
+                except Exception as e:
+                    logger.error(f"Failed to initialize sandbox MCP client: {e}")
+                    raise e
+            
             try:
                 logger.debug(f"Initializing client for {self._url}")
                 # Both transports now return a tuple of (read, write)
