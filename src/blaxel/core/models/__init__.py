@@ -2,6 +2,8 @@ from ..cache import find_from_cache
 from ..client import client
 from ..client.api.models import get_model
 from ..client.models import Model
+from ..client.models.error import Error
+from ..client.types import UNSET
 from ..common import settings
 
 
@@ -27,7 +29,9 @@ class BLModel:
             raise Exception(f"Model {self.model_name} has no runtime")
 
         type = runtime.type_ or "openai"
-        model = runtime.model
+        model = runtime.model if runtime.model is not UNSET else ""
+        if not model:
+            raise Exception(f"Model {self.model_name} has no model name configured")
         self.models[self.model_name] = {
             "url": url,
             "type": type,
@@ -41,7 +45,12 @@ class BLModel:
             return Model.from_dict(cache_data)
 
         try:
-            return await get_model.asyncio(client=client, model_name=self.model_name)
+            result = await get_model.asyncio(client=client, model_name=self.model_name)
+            # Check if the result is an Error object
+            if isinstance(result, Error):
+                error_msg = result.message if hasattr(result, 'message') else str(result)
+                raise Exception(f"Failed to get model {self.model_name}: {error_msg}")
+            return result
         except Exception:
             return None
 

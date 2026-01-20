@@ -8,26 +8,26 @@ import pytest_asyncio
 
 @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
 async def reset_client():
-    """Reset the global client's async httpx client before each test class.
+    """Clean up the global client's async httpx client after each test class.
 
-    This is needed because the SDK uses a global client singleton that caches
-    the httpx.AsyncClient. When tests run in sequence with different event loops,
-    the cached client becomes stale and causes "Event loop is closed" errors.
+    The client now automatically detects event loop changes and recreates itself,
+    but we still need to explicitly close it after test classes to avoid leaking
+    connections.
     """
-    # Reset the async client before each test class
-    from blaxel.core.client.client import client
-
-    client._async_client = None
-
     yield
 
-    # Optionally close and reset after test class
+    # Close and reset after test class (while event loop is still running)
+    from blaxel.core.client.client import client
+    
     if client._async_client is not None:
         try:
             await client._async_client.aclose()
         except Exception:
+            # Ignore cleanup errors - they're often due to connection issues
             pass
-        client._async_client = None
+        finally:
+            client._async_client = None
+            client._async_client_loop = None
 
 
 def pytest_sessionfinish(session, exitstatus):

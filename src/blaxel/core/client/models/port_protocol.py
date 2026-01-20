@@ -5,6 +5,7 @@ class PortProtocol(str, Enum):
     HTTP = "HTTP"
     TCP = "TCP"
     UDP = "UDP"
+    TLS = "TLS"
 
     def __str__(self) -> str:
         return str(self.value)

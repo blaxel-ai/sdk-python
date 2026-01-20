@@ -23,6 +23,9 @@ from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.llms.groq import Groq
 from llama_index.llms.mistralai import MistralAI
 from llama_index.llms.openai import OpenAI
+from llama_index.llms.openai.utils import (
+    openai_modelname_to_contextsize as _original_openai_modelname_to_contextsize,
+)
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
@@ -30,6 +33,58 @@ from blaxel.core import settings
 from .custom.cohere import Cohere
 
 logger = getLogger(__name__)
+
+
+# Monkey-patch LlamaIndex's model validation to accept any model name
+# This is needed for proxy/gateway scenarios where custom model names are used
+def _patched_openai_modelname_to_contextsize(modelname: str) -> int:
+    """Wrapper that returns a default context size for unknown models."""
+    try:
+        return _original_openai_modelname_to_contextsize(modelname)
+    except ValueError:
+        # For unknown models (e.g., from proxies), return a reasonable default
+        logger.debug(f"Unknown model '{modelname}', using default context window of 128000")
+        return 128000
+
+
+# Monkey-patch is_chat_model check to recognize unknown models as chat models
+from llama_index.llms.openai.utils import is_chat_model as _original_is_chat_model, CHAT_MODELS
+
+
+def _patched_is_chat_model(model: str) -> bool:
+    """Wrapper that defaults to treating unknown models as chat models."""
+    result = _original_is_chat_model(model)
+    if not result and model not in CHAT_MODELS:
+        # Default to chat model for unknown models (modern standard)
+        logger.debug(f"Unknown model '{model}', treating as chat model")
+        return True
+    return result
+
+
+# Also monkey-patch tiktoken's model lookup for tokenizer validation
+import tiktoken
+from tiktoken.model import encoding_name_for_model as _original_encoding_name_for_model
+
+
+def _patched_encoding_name_for_model(model_name: str) -> str:
+    """Wrapper that returns a default encoding for unknown models."""
+    try:
+        return _original_encoding_name_for_model(model_name)
+    except KeyError:
+        # For unknown models, use the gpt-4o encoding (most modern default)
+        logger.debug(f"Unknown model '{model_name}', using default encoding 'o200k_base'")
+        return "o200k_base"
+
+
+# Apply the monkey-patches
+import llama_index.llms.openai.utils
+import llama_index.llms.openai.base
+
+llama_index.llms.openai.utils.openai_modelname_to_contextsize = _patched_openai_modelname_to_contextsize
+llama_index.llms.openai.base.openai_modelname_to_contextsize = _patched_openai_modelname_to_contextsize
+llama_index.llms.openai.utils.is_chat_model = _patched_is_chat_model
+llama_index.llms.openai.base.is_chat_model = _patched_is_chat_model
+tiktoken.model.encoding_name_for_model = _patched_encoding_name_for_model
 
 
 class TokenRefreshingWrapper:
@@ -96,6 +151,10 @@ class TokenRefreshingWrapper:
                 logger.warning(
                     f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI"
                 )
+
+            # Set default temperature to 1.0 if not specified (some proxies only support default)
+            if "temperature" not in kwargs:
+                kwargs["temperature"] = 1.0
 
             return OpenAI(
                 model=model,

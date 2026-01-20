@@ -1,3 +1,4 @@
+import asyncio
 import ssl
 from typing import Any, Union
 
@@ -50,6 +51,7 @@ class Client:
     _httpx_args: dict[str, Any] = field(factory=dict, kw_only=True, alias="httpx_args")
     _client: httpx.Client | None = field(default=None, init=False)
     _async_client: httpx.AsyncClient | None = field(default=None, init=False)
+    _async_client_loop: asyncio.AbstractEventLoop | None = field(default=None, init=False)
 
     def with_base_url(self, base_url: str) -> "Client":
         """Get a new client matching this one with a new base URL"""
@@ -137,8 +139,46 @@ class Client:
         return self
 
     def get_async_httpx_client(self) -> httpx.AsyncClient:
-        """Get the underlying httpx.AsyncClient, constructing a new one if not previously set"""
+        """Get the underlying httpx.AsyncClient, constructing a new one if not previously set.
+        
+        Automatically detects event loop changes and recreates the client if needed.
+        This prevents "Event loop is closed" errors when tests run in parallel.
+        """
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No event loop running, return existing client or create new one
+            current_loop = None
+        
+        # Check if we need to recreate the client due to event loop change
+        needs_recreation = False
+        if self._async_client is not None:
+            # Client exists, check if it's still valid
+            if current_loop is not None and self._async_client_loop is not current_loop:
+                # Different event loop, need to close old client and create new one
+                needs_recreation = True
+            elif self._async_client.is_closed:
+                # Client was closed, need new one
+                needs_recreation = True
+        
+        if needs_recreation:
+            # Close old client (best effort, ignore errors)
+            try:
+                # Can't await here since we're not async, but mark for garbage collection
+                self._async_client = None
+                self._async_client_loop = None
+            except Exception:
+                pass
+        
         if self._async_client is None:
+            # Configure connection limits to help with event loop cleanup issues in tests
+            # Use smaller limits to ensure connections are closed promptly
+            limits = httpx.Limits(
+                max_connections=100,
+                max_keepalive_connections=20,
+                keepalive_expiry=5.0,  # Close idle connections after 5 seconds
+            )
+            
             self._async_client = httpx.AsyncClient(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -147,8 +187,11 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
+                limits=limits,
                 **self._httpx_args,
             )
+            self._async_client_loop = current_loop
+            
         return self._async_client
 
     async def __aenter__(self) -> "Client":
