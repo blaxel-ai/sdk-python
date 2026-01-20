@@ -147,4 +147,5 @@ test = [
   "aiohttp>=3.11.16",
   "flask>=3.0.0",
   "requests>=2.32.0",
+  "pydantic-ai>=0.0.48",
 ]

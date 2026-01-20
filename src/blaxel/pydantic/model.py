@@ -1,19 +1,7 @@
 import logging
 from typing import Any
 
-from anthropic import AsyncAnthropic
-from cohere import AsyncClientV2
-from mistralai.sdk import Mistral
 from pydantic_ai.models import Model
-from pydantic_ai.models.anthropic import AnthropicModel
-from pydantic_ai.models.cohere import CohereModel
-from pydantic_ai.models.gemini import GeminiModel
-from pydantic_ai.models.mistral import MistralModel
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.anthropic import AnthropicProvider
-from pydantic_ai.providers.cohere import CohereProvider
-from pydantic_ai.providers.mistral import MistralProvider
-from pydantic_ai.providers.openai import OpenAIProvider
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
@@ -41,6 +29,10 @@ class TokenRefreshingModel(Model):
         kwargs = config.get("kwargs", {})
 
         if type == "mistral":
+            from mistralai.sdk import Mistral
+            from pydantic_ai.models.mistral import MistralModel
+            from pydantic_ai.providers.mistral import MistralProvider
+
             return MistralModel(
                 model_name=model,
                 provider=MistralProvider(
@@ -52,6 +44,10 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "cohere":
+            from cohere import AsyncClientV2
+            from pydantic_ai.models.cohere import CohereModel
+            from pydantic_ai.providers.cohere import CohereProvider
+
             return CohereModel(
                 model_name=model,
                 provider=CohereProvider(
@@ -62,6 +58,9 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "xai":
+            from pydantic_ai.models.openai import OpenAIModel
+            from pydantic_ai.providers.openai import OpenAIProvider
+
             return OpenAIModel(
                 model_name=model,
                 provider=OpenAIProvider(
@@ -69,6 +68,9 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "deepseek":
+            from pydantic_ai.models.openai import OpenAIModel
+            from pydantic_ai.providers.openai import OpenAIProvider
+
             return OpenAIModel(
                 model_name=model,
                 provider=OpenAIProvider(
@@ -76,6 +78,9 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "cerebras":
+            from pydantic_ai.models.openai import OpenAIModel
+            from pydantic_ai.providers.openai import OpenAIProvider
+
             return OpenAIModel(
                 model_name=model,
                 provider=OpenAIProvider(
@@ -83,6 +88,10 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "anthropic":
+            from anthropic import AsyncAnthropic
+            from pydantic_ai.models.anthropic import AnthropicModel
+            from pydantic_ai.providers.anthropic import AnthropicProvider
+
             return AnthropicModel(
                 model_name=model,
                 provider=AnthropicProvider(
@@ -95,6 +104,8 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "gemini":
+            from pydantic_ai.models.gemini import GeminiModel
+
             return GeminiModel(
                 model_name=model,
                 provider=GoogleGLAProvider(
@@ -105,6 +116,9 @@ class TokenRefreshingModel(Model):
                 ),
             )
         else:
+            from pydantic_ai.models.openai import OpenAIModel
+            from pydantic_ai.providers.openai import OpenAIProvider
+
             if type != "openai":
                 logger.warning(f"Model {model} is not supported by Pydantic, defaulting to OpenAI")
             return OpenAIModel(
