@@ -9,14 +9,13 @@ on:
 permissions:
   contents: read
 
-env:
-  BL_API_KEY: fake_api_key
-  BL_WORKSPACE: fake_workspace
-
 jobs:
   test:
-    name: Test blaxel package
+    name: Unit Tests
     runs-on: ubuntu-latest
+    env:
+      BL_API_KEY: fake_api_key
+      BL_WORKSPACE: fake_workspace
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
@@ -57,3 +56,32 @@ jobs:
         run: |
           source .venv/bin/activate
           make test
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    env:
+      BL_API_KEY: ${{ secrets.BL_API_KEY }}
+      BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
+    # Only run if secrets are available (not on forks)
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install -e ".[telemetry]"
+          uv pip install pytest pytest-asyncio pytest-xdist
+
+      - name: Run integration tests
+        run: |
+          source .venv/bin/activate
+          make test-integration
