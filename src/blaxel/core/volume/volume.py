@@ -9,6 +9,8 @@ from ..client.api.volumes.get_volume import asyncio as get_volume
 from ..client.api.volumes.get_volume import sync as get_volume_sync
 from ..client.api.volumes.list_volumes import asyncio as list_volumes
 from ..client.api.volumes.list_volumes import sync as list_volumes_sync
+from ..client.api.volumes.update_volume import asyncio as update_volume
+from ..client.api.volumes.update_volume import sync as update_volume_sync
 from ..client.client import client
 from ..client.models import Metadata, Volume, VolumeSpec
 from ..client.models.error import Error
@@ -58,6 +60,46 @@ class _SyncDeleteDescriptor:
                 return self._delete_func(instance.metadata.name or "")
 
             return instance_delete
+
+
+class _AsyncUpdateDescriptor:
+    """Descriptor that provides both class-level and instance-level update functionality."""
+
+    def __init__(self, update_func: Callable):
+        self._update_func = update_func
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            # Called on the class: VolumeInstance.update("name", updates)
+            return self._update_func
+        else:
+            # Called on an instance: instance.update(updates)
+            async def instance_update(
+                updates: Union["VolumeCreateConfiguration", Volume, Dict[str, any]],
+            ) -> "VolumeInstance":
+                return await self._update_func(instance.metadata.name or "", updates)
+
+            return instance_update
+
+
+class _SyncUpdateDescriptor:
+    """Descriptor that provides both class-level and instance-level update functionality (sync)."""
+
+    def __init__(self, update_func: Callable):
+        self._update_func = update_func
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            # Called on the class: SyncVolumeInstance.update("name", updates)
+            return self._update_func
+        else:
+            # Called on an instance: instance.update(updates)
+            def instance_update(
+                updates: Union["VolumeCreateConfiguration", Volume, Dict[str, any]],
+            ) -> "SyncVolumeInstance":
+                return self._update_func(instance.metadata.name or "", updates)
+
+            return instance_update
 
 
 class VolumeCreateConfiguration:
@@ -384,6 +426,162 @@ def _delete_volume_by_name_sync(volume_name: str) -> Volume:
     return response
 
 
+async def _update_volume_by_name(
+    volume_name: str, updates: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
+) -> "VolumeInstance":
+    """Update a volume by name (async)."""
+    # Get the current volume
+    volume_instance = await VolumeInstance.get(volume_name)
+    current_volume = volume_instance.volume
+
+    # Build the update body
+    if isinstance(updates, Volume):
+        new_metadata = updates.metadata
+        new_spec = updates.spec
+    elif isinstance(updates, VolumeCreateConfiguration):
+        new_metadata = Metadata(
+            name=current_volume.metadata.name if current_volume.metadata else volume_name,
+            display_name=updates.display_name,
+            labels=updates.labels,
+        )
+        new_spec = VolumeSpec(
+            size=updates.size,
+            region=updates.region,
+            template=updates.template,
+        )
+    elif isinstance(updates, dict):
+        config = VolumeCreateConfiguration.from_dict(updates)
+        new_metadata = Metadata(
+            name=current_volume.metadata.name if current_volume.metadata else volume_name,
+            display_name=config.display_name,
+            labels=config.labels,
+        )
+        new_spec = VolumeSpec(
+            size=config.size,
+            region=config.region,
+            template=config.template,
+        )
+    else:
+        raise ValueError(
+            f"Invalid updates type: {type(updates)}. Expected VolumeCreateConfiguration, Volume, or dict."
+        )
+
+    # Merge current values with updates
+    merged_metadata = Metadata(
+        name=current_volume.metadata.name if current_volume.metadata else volume_name,
+        display_name=new_metadata.display_name
+        if new_metadata and new_metadata.display_name
+        else (current_volume.metadata.display_name if current_volume.metadata else None),
+        labels=new_metadata.labels
+        if new_metadata and new_metadata.labels
+        else (current_volume.metadata.labels if current_volume.metadata else None),
+    )
+
+    merged_spec = VolumeSpec(
+        size=new_spec.size
+        if new_spec and new_spec.size
+        else (current_volume.spec.size if current_volume.spec else None),
+        region=new_spec.region
+        if new_spec and new_spec.region
+        else (current_volume.spec.region if current_volume.spec else None),
+        template=new_spec.template
+        if new_spec and new_spec.template
+        else (current_volume.spec.template if current_volume.spec else None),
+    )
+
+    body = Volume(
+        metadata=merged_metadata,
+        spec=merged_spec,
+    )
+
+    response = await update_volume(volume_name=volume_name, client=client, body=body)
+    if isinstance(response, Error):
+        status_code = int(response.code) if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise VolumeAPIError(message, status_code=status_code, code=response.error)
+    return VolumeInstance(response)
+
+
+def _update_volume_by_name_sync(
+    volume_name: str, updates: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
+) -> "SyncVolumeInstance":
+    """Update a volume by name (sync)."""
+    # Get the current volume
+    volume_instance = SyncVolumeInstance.get(volume_name)
+    current_volume = volume_instance.volume
+
+    # Build the update body
+    if isinstance(updates, Volume):
+        new_metadata = updates.metadata
+        new_spec = updates.spec
+    elif isinstance(updates, VolumeCreateConfiguration):
+        new_metadata = Metadata(
+            name=current_volume.metadata.name if current_volume.metadata else volume_name,
+            display_name=updates.display_name,
+            labels=updates.labels,
+        )
+        new_spec = VolumeSpec(
+            size=updates.size,
+            region=updates.region,
+            template=updates.template,
+        )
+    elif isinstance(updates, dict):
+        config = VolumeCreateConfiguration.from_dict(updates)
+        new_metadata = Metadata(
+            name=current_volume.metadata.name if current_volume.metadata else volume_name,
+            display_name=config.display_name,
+            labels=config.labels,
+        )
+        new_spec = VolumeSpec(
+            size=config.size,
+            region=config.region,
+            template=config.template,
+        )
+    else:
+        raise ValueError(
+            f"Invalid updates type: {type(updates)}. Expected VolumeCreateConfiguration, Volume, or dict."
+        )
+
+    # Merge current values with updates
+    merged_metadata = Metadata(
+        name=current_volume.metadata.name if current_volume.metadata else volume_name,
+        display_name=new_metadata.display_name
+        if new_metadata and new_metadata.display_name
+        else (current_volume.metadata.display_name if current_volume.metadata else None),
+        labels=new_metadata.labels
+        if new_metadata and new_metadata.labels
+        else (current_volume.metadata.labels if current_volume.metadata else None),
+    )
+
+    merged_spec = VolumeSpec(
+        size=new_spec.size
+        if new_spec and new_spec.size
+        else (current_volume.spec.size if current_volume.spec else None),
+        region=new_spec.region
+        if new_spec and new_spec.region
+        else (current_volume.spec.region if current_volume.spec else None),
+        template=new_spec.template
+        if new_spec and new_spec.template
+        else (current_volume.spec.template if current_volume.spec else None),
+    )
+
+    body = Volume(
+        metadata=merged_metadata,
+        spec=merged_spec,
+    )
+
+    response = update_volume_sync(volume_name=volume_name, client=client, body=body)
+    if isinstance(response, Error):
+        status_code = int(response.code) if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise VolumeAPIError(message, status_code=status_code, code=response.error)
+    return SyncVolumeInstance(response)
+
+
 # Assign the delete descriptors to support both class-level and instance-level calls
 VolumeInstance.delete = _AsyncDeleteDescriptor(_delete_volume_by_name)
 SyncVolumeInstance.delete = _SyncDeleteDescriptor(_delete_volume_by_name_sync)
+
+# Assign the update descriptors to support both class-level and instance-level calls
+VolumeInstance.update = _AsyncUpdateDescriptor(_update_volume_by_name)
+SyncVolumeInstance.update = _SyncUpdateDescriptor(_update_volume_by_name_sync)

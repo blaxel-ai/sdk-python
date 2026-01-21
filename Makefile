@@ -88,7 +88,7 @@ test:
 	uv run pytest tests/ -v --ignore=tests/integration/ --ignore=tests/sandbox/integration/
 
 test-integration:
-	uv run pytest tests/integration/ -n auto
+	uv run pytest tests/integration/
 
 install-dev:
 	uv sync --group test

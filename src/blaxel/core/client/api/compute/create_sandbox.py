@@ -7,18 +7,26 @@ from ... import errors
 from ...client import Client
 from ...models.sandbox import Sandbox
 from ...models.sandbox_error import SandboxError
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
     body: Sandbox,
+    create_if_not_exist: Union[Unset, bool] = False,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+    params: dict[str, Any] = {}
+
+    params["createIfNotExist"] = create_if_not_exist
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/sandboxes",
+        "params": params,
     }
 
     if type(body) is dict:
@@ -81,6 +89,7 @@ def sync_detailed(
     *,
     client: Client,
     body: Sandbox,
+    create_if_not_exist: Union[Unset, bool] = False,
 ) -> Response[Union[Sandbox, SandboxError]]:
     """Create sandbox
 
@@ -88,6 +97,7 @@ def sync_detailed(
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
+        create_if_not_exist (Union[Unset, bool]):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -102,6 +112,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         body=body,
+        create_if_not_exist=create_if_not_exist,
     )
 
     response = client.get_httpx_client().request(
@@ -115,6 +126,7 @@ def sync(
     *,
     client: Client,
     body: Sandbox,
+    create_if_not_exist: Union[Unset, bool] = False,
 ) -> Union[Sandbox, SandboxError] | None:
     """Create sandbox
 
@@ -122,6 +134,7 @@ def sync(
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
+        create_if_not_exist (Union[Unset, bool]):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -137,6 +150,7 @@ def sync(
     return sync_detailed(
         client=client,
         body=body,
+        create_if_not_exist=create_if_not_exist,
     ).parsed
 
 
@@ -144,6 +158,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Sandbox,
+    create_if_not_exist: Union[Unset, bool] = False,
 ) -> Response[Union[Sandbox, SandboxError]]:
     """Create sandbox
 
@@ -151,6 +166,7 @@ async def asyncio_detailed(
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
+        create_if_not_exist (Union[Unset, bool]):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -165,6 +181,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         body=body,
+        create_if_not_exist=create_if_not_exist,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -176,6 +193,7 @@ async def asyncio(
     *,
     client: Client,
     body: Sandbox,
+    create_if_not_exist: Union[Unset, bool] = False,
 ) -> Union[Sandbox, SandboxError] | None:
     """Create sandbox
 
@@ -183,6 +201,7 @@ async def asyncio(
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
+        create_if_not_exist (Union[Unset, bool]):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -199,5 +218,6 @@ async def asyncio(
         await asyncio_detailed(
             client=client,
             body=body,
+            create_if_not_exist=create_if_not_exist,
         )
     ).parsed

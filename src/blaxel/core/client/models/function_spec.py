@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.function_spec_transport import FunctionSpecTransport
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -27,8 +26,6 @@ class FunctionSpec:
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, FunctionRuntime]): Runtime configuration defining how the MCP server function is deployed
             and scaled
-        transport (Union[Unset, FunctionSpecTransport]): Transport compatibility for the MCP, can be "websocket" or
-            "http-stream" Example: http-stream.
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
@@ -37,7 +34,6 @@ class FunctionSpec:
     policies: Union[Unset, list[str]] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "FunctionRuntime"] = UNSET
-    transport: Union[Unset, FunctionSpecTransport] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -72,10 +68,6 @@ class FunctionSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        transport: Union[Unset, str] = UNSET
-        if not isinstance(self.transport, Unset):
-            transport = self.transport.value
-
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
@@ -99,8 +91,6 @@ class FunctionSpec:
             field_dict["revision"] = revision
         if runtime is not UNSET:
             field_dict["runtime"] = runtime
-        if transport is not UNSET:
-            field_dict["transport"] = transport
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -137,13 +127,6 @@ class FunctionSpec:
         else:
             runtime = FunctionRuntime.from_dict(_runtime)
 
-        _transport = d.pop("transport", UNSET)
-        transport: Union[Unset, FunctionSpecTransport]
-        if isinstance(_transport, Unset):
-            transport = UNSET
-        else:
-            transport = FunctionSpecTransport(_transport)
-
         triggers = []
         _triggers = d.pop("triggers", UNSET)
         for componentsschemas_triggers_item_data in _triggers or []:
@@ -159,7 +142,6 @@ class FunctionSpec:
             policies=policies,
             revision=revision,
             runtime=runtime,
-            transport=transport,
             triggers=triggers,
         )
 
