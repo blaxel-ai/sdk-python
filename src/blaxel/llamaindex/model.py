@@ -1,33 +1,25 @@
+from __future__ import annotations
+
 import os
-
-# Transformers is a dependency of DeepSeek, and it logs a lot of warnings that are not useful
-os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
-
 from logging import getLogger
-from typing import Any, Sequence
-
-from google.genai.types import HttpOptions
-from llama_index.core.base.llms.types import (
-    ChatMessage,
-    ChatResponse,
-    ChatResponseAsyncGen,
-    ChatResponseGen,
-    CompletionResponse,
-    CompletionResponseAsyncGen,
-    CompletionResponseGen,
-)
-from llama_index.llms.anthropic import Anthropic
-from llama_index.llms.cerebras import Cerebras
-from llama_index.llms.deepseek import DeepSeek
-from llama_index.llms.google_genai import GoogleGenAI
-from llama_index.llms.groq import Groq
-from llama_index.llms.mistralai import MistralAI
-from llama_index.llms.openai import OpenAI
+from typing import TYPE_CHECKING, Any, Sequence
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
 
-from .custom.cohere import Cohere
+# Transformers is a dependency of DeepSeek, and it logs a lot of warnings that are not useful
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+
+if TYPE_CHECKING:
+    from llama_index.core.base.llms.types import (
+        ChatMessage,
+        ChatResponse,
+        ChatResponseAsyncGen,
+        ChatResponseGen,
+        CompletionResponse,
+        CompletionResponseAsyncGen,
+        CompletionResponseGen,
+    )
 
 logger = getLogger(__name__)
 
@@ -48,6 +40,8 @@ class TokenRefreshingWrapper:
         kwargs = config.get("kwargs", {})
 
         if model_type == "anthropic":
+            from llama_index.llms.anthropic import Anthropic
+
             return Anthropic(
                 model=model,
                 api_key=settings.auth.token,
@@ -56,6 +50,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "xai":
+            from llama_index.llms.groq import Groq
+
             return Groq(
                 model=model,
                 api_key=settings.auth.token,
@@ -63,6 +59,9 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "gemini":
+            from google.genai.types import HttpOptions
+            from llama_index.llms.google_genai import GoogleGenAI
+
             return GoogleGenAI(
                 api_key=settings.auth.token,
                 model=model,
@@ -74,8 +73,12 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "cohere":
+            from .custom.cohere import Cohere
+
             return Cohere(model=model, api_key=settings.auth.token, api_base=url, **kwargs)
         elif model_type == "deepseek":
+            from llama_index.llms.deepseek import DeepSeek
+
             return DeepSeek(
                 model=model,
                 api_key=settings.auth.token,
@@ -83,8 +86,12 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "mistral":
+            from llama_index.llms.mistralai import MistralAI
+
             return MistralAI(model=model, api_key=settings.auth.token, endpoint=url, **kwargs)
         elif model_type == "cerebras":
+            from llama_index.llms.cerebras import Cerebras
+
             return Cerebras(
                 model=model,
                 api_key=settings.auth.token,
@@ -92,6 +99,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         else:
+            from llama_index.llms.openai import OpenAI
+
             if model_type != "openai":
                 logger.warning(
                     f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI"

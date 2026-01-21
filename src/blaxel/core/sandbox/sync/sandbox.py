@@ -8,7 +8,7 @@ from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Sandbox, SandboxRuntime, SandboxSpec
+from ...client.models import Metadata, Sandbox, SandboxLifecycle, SandboxRuntime, SandboxSpec
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
@@ -248,6 +248,72 @@ class SyncSandboxInstance:
             client=client,
             body=updated_sandbox,
         )
+        return cls(response)
+
+    @classmethod
+    def update_ttl(cls, sandbox_name: str, ttl: str) -> "SyncSandboxInstance":
+        """Update sandbox TTL without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+
+        Returns:
+            A new SyncSandboxInstance with updated TTL
+        """
+        # Get the existing sandbox
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        # Update TTL
+        updated_sandbox.spec.runtime.ttl = ttl
+
+        # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        return cls(response)
+
+    @classmethod
+    def update_lifecycle(
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+    ) -> "SyncSandboxInstance":
+        """Update sandbox lifecycle configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            lifecycle: The new lifecycle configuration
+
+        Returns:
+            A new SyncSandboxInstance with updated lifecycle
+        """
+        # Get the existing sandbox
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        # Update lifecycle
+        updated_sandbox.spec.lifecycle = lifecycle
+
+        # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
         return cls(response)
 
     @classmethod

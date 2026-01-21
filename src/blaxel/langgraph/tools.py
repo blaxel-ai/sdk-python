@@ -1,17 +1,11 @@
-from typing import Any, Dict
-
-from langchain_core.tools import StructuredTool
-from mcp.types import (
-    CallToolResult,
-    EmbeddedResource,
-    ImageContent,
-    TextContent,
-)
+from typing import TYPE_CHECKING, Any, Dict
 
 from blaxel.core.tools import bl_tools as bl_tools_core
 from blaxel.core.tools.types import Tool, ToolException
 
-NonTextContent = ImageContent | EmbeddedResource
+if TYPE_CHECKING:
+    from langchain_core.tools import StructuredTool
+    from mcp.types import EmbeddedResource, ImageContent
 
 
 def _clean_schema_for_openai(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -43,7 +37,17 @@ def _clean_schema_for_openai(schema: Dict[str, Any]) -> Dict[str, Any]:
     return cleaned
 
 
-def get_langchain_tool(tool: Tool) -> StructuredTool:
+def get_langchain_tool(tool: Tool) -> "StructuredTool":
+    from langchain_core.tools import StructuredTool
+    from mcp.types import (
+        CallToolResult,
+        EmbeddedResource,
+        ImageContent,
+        TextContent,
+    )
+
+    NonTextContent = ImageContent | EmbeddedResource
+
     async def langchain_coroutine(
         **arguments: dict[str, Any],
     ) -> tuple[str | list[str], list[NonTextContent] | None]:
@@ -77,7 +81,7 @@ def get_langchain_tool(tool: Tool) -> StructuredTool:
     )
 
 
-async def bl_tools(tools_names: list[str], **kwargs) -> list[StructuredTool]:
+async def bl_tools(tools_names: list[str], **kwargs) -> list["StructuredTool"]:
     tools = bl_tools_core(tools_names, **kwargs)
     await tools.initialize()
     return [get_langchain_tool(tool) for tool in tools.get_tools()]

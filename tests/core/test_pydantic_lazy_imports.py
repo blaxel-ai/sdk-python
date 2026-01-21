@@ -145,9 +145,9 @@ class TestPydanticLazyImports:
         # Allow only the base Model class, not specific provider models
         provider_model_pattern = r"from pydantic_ai\.models\.(?!__)\w+"
         provider_model_matches = re.findall(provider_model_pattern, top_level_code)
-        assert (
-            not provider_model_matches
-        ), f"Found provider model imports at module level: {provider_model_matches}"
+        assert not provider_model_matches, (
+            f"Found provider model imports at module level: {provider_model_matches}"
+        )
 
         # Check for provider imports (e.g., from pydantic_ai.providers.openai import ...)
         provider_pattern = r"from pydantic_ai\.providers\.\w+"
