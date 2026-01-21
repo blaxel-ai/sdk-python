@@ -25,6 +25,30 @@ def unique_name(prefix: str = "test") -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
 
 
+async def wait_for_sandbox_deployed(sandbox_name: str, max_attempts: int = 30) -> bool:
+    """
+    Wait for a sandbox to be deployed by polling until status is DEPLOYED.
+
+    Args:
+        sandbox_name: The name of the sandbox to wait for
+        max_attempts: Maximum number of attempts to wait (default: 30 seconds)
+
+    Returns:
+        True if deployed, False if timeout
+    """
+    attempts = 0
+
+    while attempts < max_attempts:
+        sandbox = await SandboxInstance.get(sandbox_name)
+        if sandbox.status == "DEPLOYED":
+            return True
+        await async_sleep(1)
+        attempts += 1
+
+    print(f"Timeout waiting for {sandbox_name} to be deployed")
+    return False
+
+
 async def wait_for_sandbox_deletion(sandbox_name: str, max_attempts: int = 30) -> bool:
     """
     Wait for a sandbox deletion to fully complete by polling until the sandbox no longer exists.

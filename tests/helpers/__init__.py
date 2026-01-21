@@ -9,6 +9,7 @@ from .utils import (
     sleep,
     unique_name,
     wait_for_sandbox_deletion,
+    wait_for_sandbox_deployed,
     wait_for_volume_deletion,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "sleep",
     "unique_name",
     "wait_for_sandbox_deletion",
+    "wait_for_sandbox_deployed",
     "wait_for_volume_deletion",
 ]
