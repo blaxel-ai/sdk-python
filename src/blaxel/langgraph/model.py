@@ -1,22 +1,17 @@
-from logging import getLogger
-from typing import Any, AsyncIterator, Iterator, List
+from __future__ import annotations
 
-from langchain_anthropic import ChatAnthropic
-from langchain_cerebras import ChatCerebras
-from langchain_cohere import ChatCohere
-from langchain_core.callbacks import Callbacks
-from langchain_core.language_models import LanguageModelInput
-from langchain_core.messages import BaseMessage
-from langchain_core.outputs import LLMResult
-from langchain_core.runnables import RunnableConfig
-from langchain_deepseek import ChatDeepSeek
-from langchain_openai import ChatOpenAI
-from langchain_xai import ChatXAI
+from logging import getLogger
+from typing import TYPE_CHECKING, Any, AsyncIterator, Iterator, List
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
 
-from .custom.gemini import ChatGoogleGenerativeAI
+if TYPE_CHECKING:
+    from langchain_core.callbacks import Callbacks
+    from langchain_core.language_models import LanguageModelInput
+    from langchain_core.messages import BaseMessage
+    from langchain_core.outputs import LLMResult
+    from langchain_core.runnables import RunnableConfig
 
 logger = getLogger(__name__)
 
@@ -37,6 +32,8 @@ class TokenRefreshingWrapper:
         kwargs = config.get("kwargs", {})
 
         if model_type == "mistral":
+            from langchain_openai import ChatOpenAI
+
             return ChatOpenAI(
                 api_key=settings.auth.token,
                 model=model,
@@ -44,6 +41,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "cohere":
+            from langchain_cohere import ChatCohere
+
             return ChatCohere(
                 cohere_api_key=settings.auth.token,
                 model=model,
@@ -51,6 +50,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "xai":
+            from langchain_xai import ChatXAI
+
             return ChatXAI(
                 model=model,
                 api_key=settings.auth.token,
@@ -58,6 +59,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "deepseek":
+            from langchain_deepseek import ChatDeepSeek
+
             return ChatDeepSeek(
                 api_key=settings.auth.token,
                 model=model,
@@ -65,6 +68,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "anthropic":
+            from langchain_anthropic import ChatAnthropic
+
             return ChatAnthropic(
                 api_key=settings.auth.token,
                 anthropic_api_url=url,
@@ -73,6 +78,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "gemini":
+            from .custom.gemini import ChatGoogleGenerativeAI
+
             return ChatGoogleGenerativeAI(
                 model=model,
                 client_options={"api_endpoint": url},
@@ -81,6 +88,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "cerebras":
+            from langchain_cerebras import ChatCerebras
+
             return ChatCerebras(
                 api_key=settings.auth.token,
                 model=model,
@@ -88,6 +97,8 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         else:
+            from langchain_openai import ChatOpenAI
+
             if model_type != "openai":
                 logger.warning(f"Model {model} is not supported by Langchain, defaulting to OpenAI")
             return ChatOpenAI(
