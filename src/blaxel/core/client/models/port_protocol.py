@@ -4,6 +4,7 @@ from enum import Enum
 class PortProtocol(str, Enum):
     HTTP = "HTTP"
     TCP = "TCP"
+    TLS = "TLS"
     UDP = "UDP"
 
     def __str__(self) -> str:

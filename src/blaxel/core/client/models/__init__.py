@@ -13,6 +13,7 @@ from .core_event import CoreEvent
 from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
 from .create_job_execution_request import CreateJobExecutionRequest
+from .create_job_execution_request_env import CreateJobExecutionRequestEnv
 from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
 from .create_job_execution_response import CreateJobExecutionResponse
 from .create_job_execution_response_tasks_item import CreateJobExecutionResponseTasksItem
@@ -43,8 +44,8 @@ from .form_secrets import FormSecrets
 from .function import Function
 from .function_runtime import FunctionRuntime
 from .function_runtime_generation import FunctionRuntimeGeneration
+from .function_runtime_transport import FunctionRuntimeTransport
 from .function_spec import FunctionSpec
-from .function_spec_transport import FunctionSpecTransport
 from .get_workspace_service_accounts_response_200_item import (
     GetWorkspaceServiceAccountsResponse200Item,
 )
@@ -175,6 +176,7 @@ __all__ = (
     "Country",
     "CreateApiKeyForServiceAccountBody",
     "CreateJobExecutionRequest",
+    "CreateJobExecutionRequestEnv",
     "CreateJobExecutionRequestTasksItem",
     "CreateJobExecutionResponse",
     "CreateJobExecutionResponseTasksItem",
@@ -205,8 +207,8 @@ __all__ = (
     "Function",
     "FunctionRuntime",
     "FunctionRuntimeGeneration",
+    "FunctionRuntimeTransport",
     "FunctionSpec",
-    "FunctionSpecTransport",
     "GetWorkspaceServiceAccountsResponse200Item",
     "Image",
     "ImageMetadata",
