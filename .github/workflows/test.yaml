@@ -2,9 +2,8 @@ name: Test blaxel package
 
 on:
   pull_request:
-    branches: ["main", "develop"]
-  push:
-    branches: ["main", "develop"]
+    branches:
+      - "main"
 
 permissions:
   contents: read
