@@ -1,114 +1,432 @@
-<p align="center">
-  <img src="https://blaxel.ai/logo.png" alt="Blaxel" width=500/>
-</p>
+# Blaxel Python SDK
 
-# Python SDK
+[Blaxel](https://blaxel.ai) is a perpetual sandbox platform that achieves near instant latency by keeping infinite secure sandboxes on automatic standby, while co-hosting your agent logic to cut network overhead.
 
-**Blaxel is a computing platform for AI agent builders, with all the services and infrastructure to build and deploy agents efficiently.** This repository contains the Python SDK to create and manage resources on Blaxel.
-
-## Table of Contents
-
-- [Installation](#installation)
-  - [Authentication](#authentication)
-- [Features](#features)
-- [Quickstart](#quickstart)
-- [Contributing](#contributing)
-- [License](#license)
-
-
+This repository contains Blaxel's Python SDK, which lets you create and manage sandboxes and other resources on Blaxel.
 
 ## Installation
 
-Install Blaxel SDK which lets you manage Blaxel resources.
+```bash
+pip install blaxel
+```
+
+## Authentication
+
+The SDK authenticates with your Blaxel workspace using these sources (in priority order):
+
+1. Blaxel CLI, when logged in
+2. Environment variables in `.env` file (`BL_WORKSPACE`, `BL_API_KEY`)
+3. System environment variables
+4. Blaxel configuration file (`~/.blaxel/config.yaml`)
+
+When developing locally, the recommended method is to just log in to your workspace with the Blaxel CLI:
 
 ```bash
-# Base package (core functionality)
-pip install blaxel
+bl login YOUR-WORKSPACE
+```
 
-# With specific modules
+This allows you to run Blaxel SDK functions that will automatically connect to your workspace without additional setup. When you deploy on Blaxel, this connection persists automatically.
+
+When running Blaxel SDK from a remote server that is not Blaxel-hosted, we recommend using environment variables as described in the third option above.
+
+## Usage
+
+### Sandboxes
+
+Sandboxes are secure, instant-launching compute environments that scale to zero after inactivity and resume in under 25ms.
+
+```python
+import asyncio
+from blaxel.core import SandboxInstance
+
+async def main():
+
+    # Create a new sandbox
+    sandbox = await SandboxInstance.create_if_not_exists({
+        "name": "my-sandbox",
+        "image": "blaxel/base-image:latest",
+        "memory": 4096,
+        "region": "us-pdx-1",
+        "ports": [{"target": 3000, "protocol": "HTTP"}],
+        "labels": {"env": "dev", "project": "my-project"},
+        "ttl": "24h"
+    })
+
+    # Get existing sandbox
+    existing = await SandboxInstance.get("my-sandbox")
+
+    # Delete sandbox (using class)
+    await SandboxInstance.delete("my-sandbox")
+
+    # Delete sandbox (using instance)
+    await existing.delete()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+#### Preview URLs
+
+Generate public preview URLs to access services running in your sandbox:
+
+```python
+import asyncio
+from blaxel.core import SandboxInstance
+
+async def main():
+
+    # Get existing sandbox
+    sandbox = await SandboxInstance.get("my-sandbox")
+
+    # Start a web server in the sandbox
+    await sandbox.process.exec({
+        "command": "python -m http.server 3000",
+        "working_dir": "/app",
+        "wait_for_ports": [3000]
+    })
+
+    # Create a public preview URL
+    preview = await sandbox.previews.create_if_not_exists({
+        "metadata": {"name": "app-preview"},
+        "spec": {
+            "port": 3000,
+            "public": True
+        }
+    })
+
+    print(preview.spec.url)  # https://xyz.preview.bl.run
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Previews can also be private, with or without a custom prefix. When you create a private preview URL, a [token](https://docs.blaxel.ai/Sandboxes/Preview-url#private-preview-urls) is required to access the URL, passed as a request parameter or request header.
+
+```python
+# ...
+
+# Create a private preview URL
+private_preview = await sandbox.previews.create_if_not_exists({
+    "metadata": {"name": "private-app-preview"},
+    "spec": {
+        "port": 3000,
+        "public": False
+    }
+})
+
+# Create a public preview URL with a custom prefix
+custom_preview = await sandbox.previews.create_if_not_exists({
+    "metadata": {"name": "custom-app-preview"},
+    "spec": {
+        "port": 3000,
+        "prefix_url": "my-app",
+        "public": True
+    }
+})
+```
+
+#### Process execution
+
+Execute and manage processes in your sandbox:
+
+```python
+import asyncio
+from blaxel.core import SandboxInstance
+
+async def main():
+
+    # Get existing sandbox
+    sandbox = await SandboxInstance.get("my-sandbox")
+
+    # Execute a command
+    process = await sandbox.process.exec({
+        "name": "build-process",
+        "command": "npm run build",
+        "working_dir": "/app",
+        "wait_for_completion": True,
+        "timeout": 60000  # 60 seconds
+    })
+
+    # Kill a running process
+    await sandbox.process.kill("build-process")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Restart a process if it fails, up to a maximum number of restart attempts:
+
+```python
+# ...
+
+# Run with auto-restart on failure
+process = await sandbox.process.exec({
+    "name": "web-server",
+    "command": "python -m http.server 3000 --bind 0.0.0.0",
+    "restart_on_failure": True,
+    "max_restarts": 5
+})
+```
+
+#### Filesystem operations
+
+Manage files and directories within your sandbox:
+
+```python
+import asyncio
+from blaxel.core import SandboxInstance
+
+async def main():
+
+    # Get existing sandbox
+    sandbox = await SandboxInstance.get("my-sandbox")
+
+    # Write and read text files
+    await sandbox.fs.write("/app/config.json", '{"key": "value"}')
+    content = await sandbox.fs.read("/app/config.json")
+
+    # Write and read binary files
+    with open("./image.png", "rb") as f:
+        binary_data = f.read()
+    await sandbox.fs.write_binary("/app/image.png", binary_data)
+    blob = await sandbox.fs.read_binary("/app/image.png")
+
+    # Create directories
+    await sandbox.fs.mkdir("/app/uploads")
+
+    # List files
+    listing = await sandbox.fs.ls("/app")
+    subdirectories = listing.subdirectories
+    files = listing.files
+
+    # Search for text within files
+    matches = await sandbox.fs.grep("pattern", "/app", {
+        "case_sensitive": True,
+        "context_lines": 2,
+        "max_results": 5,
+        "file_pattern": "*.py",
+        "exclude_dirs": ["__pycache__"]
+    })
+
+    # Find files and directories matching specified patterns
+    results = await sandbox.fs.find("/app", {
+        "type": "file",
+        "patterns": ["*.md", "*.html"],
+        "max_results": 1000
+    })
+
+    # Watch for file changes
+    def on_change(event):
+        print(event.op, event.path)
+
+    handle = sandbox.fs.watch("/app", on_change, {
+        "with_content": True,
+        "ignore": ["node_modules", ".git"]
+    })
+
+    # Close watcher
+    handle["close"]()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+#### Volumes
+
+Persist data by attaching and using volumes:
+
+```python
+import asyncio
+from blaxel.core import VolumeInstance, SandboxInstance
+
+async def main():
+
+    # Create a volume
+    volume = await VolumeInstance.create_if_not_exists({
+        "name": "my-volume",
+        "size": 1024,  # MB
+        "region": "us-pdx-1",
+        "labels": {"env": "test", "project": "12345"}
+    })
+
+    # Attach volume to sandbox
+    sandbox = await SandboxInstance.create_if_not_exists({
+        "name": "my-sandbox",
+        "image": "blaxel/base-image:latest",
+        "volumes": [
+            {"name": "my-volume", "mount_path": "/data", "read_only": False}
+        ]
+    })
+
+    # List volumes
+    volumes = await VolumeInstance.list()
+
+    # Delete volume (using class)
+    await VolumeInstance.delete("my-volume")
+
+    # Delete volume (using instance)
+    await volume.delete()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Batch jobs
+
+Blaxel lets you support agentic workflows by offloading asynchronous batch processing tasks to its scalable infrastructure, where they can run in parallel. Jobs can run multiple times within a single execution and accept optional input parameters.
+
+```python
+from blaxel.core.jobs import bl_job
+from blaxel.core.client.models import CreateJobExecutionRequest
+
+# Create and run a job execution
+job = bl_job("job-name")
+
+execution_id = job.create_execution(CreateJobExecutionRequest(
+    tasks=[
+        {"name": "John"},
+        {"name": "Jane"},
+        {"name": "Bob"}
+    ]
+))
+
+# Get execution status
+# Returns: "pending" | "running" | "completed" | "failed"
+status = job.get_execution_status(execution_id)
+
+# Get execution details
+execution = job.get_execution(execution_id)
+print(execution.status, execution.metadata)
+
+# Wait for completion
+try:
+    result = job.wait_for_execution(
+        execution_id,
+        max_wait=300,  # 5 minutes (seconds)
+        interval=2     # Poll every 2 seconds
+    )
+    print(f"Completed: {result.status}")
+except Exception as error:
+    print(f"Timeout: {error}")
+
+# List all executions
+executions = job.list_executions()
+
+# Delete an execution
+job.cancel_execution(execution_id)
+```
+
+### Framework integrations
+
+Blaxel provides additional packages for framework-specific integrations and telemetry:
+
+```bash
+# With specific integrations
 pip install "blaxel[telemetry]"
-pip install "blaxel[core,telemetry,crewai]"
+pip install "blaxel[crewai]"
+pip install "blaxel[openai]"
+pip install "blaxel[langgraph]"
+pip install "blaxel[livekit]"
+pip install "blaxel[llamaindex]"
+pip install "blaxel[pydantic]"
+pip install "blaxel[googleadk]"
 
 # Everything
 pip install "blaxel[all]"
 ```
 
-### Available modules
+#### Model use
 
-- `blaxel.core` - Core functionality (always available)
-- `blaxel.telemetry` - Telemetry and monitoring
-- `blaxel.crewai` - CrewAI integration
-- `blaxel.openai` - OpenAI integration
-- `blaxel.langgraph` - LangGraph integration
-- `blaxel.livekit` - LiveKit integration
-- `blaxel.llamaindex` - LlamaIndex integration
-- `blaxel.pydantic` - Pydantic AI integration
-- `blaxel.googleadk` - Google ADK integration
+Blaxel acts as a unified gateway for model APIs, centralizing access credentials, tracing and telemetry. You can integrate with any model API provider, or deploy your own custom model. When a model is deployed on Blaxel, a global API endpoint is also created to call it.
 
+The SDK includes a helper function that creates a reference to a model deployed on Blaxel and returns a framework-specific model client that routes API calls through Blaxel's unified gateway.
 
+```python
+from blaxel.core import bl_model
 
-### Authentication
+# With OpenAI
+from blaxel.openai import bl_model
+model = await bl_model("gpt-4o-mini")
 
-The Blaxel SDK authenticates with your workspace using credentials from these sources, in priority order:
-1. When running on Blaxel, authentication is handled automatically
-2. Variables in your .env file (`BL_WORKSPACE` and `BL_API_KEY`, or see [this page](https://docs.blaxel.ai/Agents/Variables-and-secrets) for other authentication options).
-3. Environment variables from your machine
-4. Configuration file created locally when you log in through Blaxel CLI (or deploy on Blaxel)
+# With LangChain
+from blaxel.langgraph import bl_model
+model = await bl_model("claude-3-5-sonnet")
 
-When developing locally, the recommended method is to just log in to your workspace with Blaxel CLI. This allows you to run Blaxel SDK functions that will automatically connect to your workspace without additional setup. When you deploy on Blaxel, this connection persists automatically.
+# With LlamaIndex
+from blaxel.llamaindex import bl_model
+model = await bl_model("gpt-4o")
 
-When running Blaxel SDK from a remote server that is not Blaxel-hosted, we recommend using environment variables as described in the third option above.
+# With Pydantic AI
+from blaxel.pydantic import bl_model
+model = await bl_model("gpt-4o-mini")
 
+# With CrewAI
+from blaxel.crewai import bl_model
+model = await bl_model("gpt-4o")
 
+# With Google ADK
+from blaxel.googleadk import bl_model
+model = await bl_model("gpt-4o-mini")
 
-## Features
-- Agents & MCP servers
-  - [Create MCP servers](https://docs.blaxel.ai/Functions/Create-MCP-server)
-  - [Connect to MCP servers and model APIs hosted on Blaxel](https://docs.blaxel.ai/Agents/Develop-an-agent-ts)
-  - [Call agents from another agent](https://docs.blaxel.ai/Agents/Develop-an-agent-ts#connect-to-another-agent-multi-agent-chaining)
-  - [Deploy on Blaxel](https://docs.blaxel.ai/Agents/Deploy-an-agent)
-- Sandboxes
-  - [Create and update sandboxes and sandbox previews](https://docs.blaxel.ai/Sandboxes/Overview)
-  - [Run filesystem operations and processes on a sandbox](https://docs.blaxel.ai/Sandboxes/Processes)
-- [Use environment variables or secrets](https://docs.blaxel.ai/Agents/Variables-and-secrets)
-
-
-
-## Quickstart
-
-Blaxel CLI gives you a quick way to create new applications: agents, MCP servers, jobs, etc - and deploy them to Blaxel.
-
-**Prerequisites**:
-- **Node.js:** v18 or later.
-- **Blaxel CLI:** Make sure you have Blaxel CLI installed. If not, [install it](https://docs.blaxel.ai/cli-reference/introduction):
-  ```bash
-  curl -fsSL \
-  https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh \
-  | BINDIR=/usr/local/bin sudo -E sh
-  ```
-- **Blaxel login:** Login to Blaxel:
-  ```bash
-    bl login YOUR-WORKSPACE
-  ```
-
-```bash
-bl create-agent-app myfolder
-cd myfolder
-bl deploy
+# With LiveKit
+from blaxel.livekit import bl_model
+model = await bl_model("gpt-4o")
 ```
 
-Also available:
--  `bl create-mcp-server`
--  `bl create-job`
+#### MCP tool use
 
+Blaxel lets you deploy and host Model Context Protocol (MCP) servers, accessible at a global endpoint over streamable HTTP.
 
+The SDK includes a helper function that retrieves and returns tool definitions from a Blaxel-hosted MCP server in the format required by specific frameworks.
+
+```python
+# With OpenAI
+from blaxel.openai import bl_tools
+tools = await bl_tools(["blaxel-search"])
+
+# With Pydantic AI
+from blaxel.pydantic import bl_tools
+tools = await bl_tools(["blaxel-search"])
+
+# With LlamaIndex
+from blaxel.llamaindex import bl_tools
+tools = await bl_tools(["blaxel-search"])
+
+# With LangChain
+from blaxel.langgraph import bl_tools
+tools = await bl_tools(["blaxel-search"])
+
+# With CrewAI
+from blaxel.crewai import bl_tools
+model = await bl_tools(["blaxel-search"])
+
+# With Google ADK
+from blaxel.googleadk import bl_tools
+model = await bl_tools(["blaxel-search"])
+
+# With LiveKit
+from blaxel.livekit import bl_tools
+model = await bl_tools(["blaxel-search"])
+```
+
+### Telemetry
+
+Instrumentation happens automatically when workloads run on Blaxel.
+
+Enable automatic telemetry by importing the `blaxel.telemetry` package:
+
+```python
+import blaxel.telemetry
+```
+
+## Requirements
+
+- Python 3.9 or later
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-
+Contributions are welcome! Please feel free to [submit a pull request](https://github.com/blaxel-ai/sdk-python/pulls).
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
