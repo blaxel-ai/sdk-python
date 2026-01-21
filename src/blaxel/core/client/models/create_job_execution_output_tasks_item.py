@@ -3,11 +3,11 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="CreateJobExecutionResponseTasksItem")
+T = TypeVar("T", bound="CreateJobExecutionOutputTasksItem")
 
 
 @_attrs_define
-class CreateJobExecutionResponseTasksItem:
+class CreateJobExecutionOutputTasksItem:
     """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -23,10 +23,10 @@ class CreateJobExecutionResponseTasksItem:
         if not src_dict:
             return None
         d = src_dict.copy()
-        create_job_execution_response_tasks_item = cls()
+        create_job_execution_output_tasks_item = cls()
 
-        create_job_execution_response_tasks_item.additional_properties = d
-        return create_job_execution_response_tasks_item
+        create_job_execution_output_tasks_item.additional_properties = d
+        return create_job_execution_output_tasks_item
 
     @property
     def additional_keys(self) -> list[str]:

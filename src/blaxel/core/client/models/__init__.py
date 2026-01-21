@@ -12,11 +12,11 @@ from .continent import Continent
 from .core_event import CoreEvent
 from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
+from .create_job_execution_output import CreateJobExecutionOutput
+from .create_job_execution_output_tasks_item import CreateJobExecutionOutputTasksItem
 from .create_job_execution_request import CreateJobExecutionRequest
 from .create_job_execution_request_env import CreateJobExecutionRequestEnv
 from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
-from .create_job_execution_response import CreateJobExecutionResponse
-from .create_job_execution_response_tasks_item import CreateJobExecutionResponseTasksItem
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
@@ -73,6 +73,7 @@ from .job import Job
 from .job_execution import JobExecution
 from .job_execution_metadata import JobExecutionMetadata
 from .job_execution_spec import JobExecutionSpec
+from .job_execution_spec_env_override import JobExecutionSpecEnvOverride
 from .job_execution_stats import JobExecutionStats
 from .job_execution_status import JobExecutionStatus
 from .job_execution_task import JobExecutionTask
@@ -175,11 +176,11 @@ __all__ = (
     "CoreEvent",
     "Country",
     "CreateApiKeyForServiceAccountBody",
+    "CreateJobExecutionOutput",
+    "CreateJobExecutionOutputTasksItem",
     "CreateJobExecutionRequest",
     "CreateJobExecutionRequestEnv",
     "CreateJobExecutionRequestTasksItem",
-    "CreateJobExecutionResponse",
-    "CreateJobExecutionResponseTasksItem",
     "CreateWorkspaceServiceAccountBody",
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
@@ -234,6 +235,7 @@ __all__ = (
     "JobExecution",
     "JobExecutionMetadata",
     "JobExecutionSpec",
+    "JobExecutionSpecEnvOverride",
     "JobExecutionStats",
     "JobExecutionStatus",
     "JobExecutionTask",

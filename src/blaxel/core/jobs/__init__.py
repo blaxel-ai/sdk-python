@@ -18,8 +18,6 @@ from ..client.models.create_job_execution_request import (
     CreateJobExecutionRequest,
 )
 from ..client.models.job_execution import JobExecution
-from ..common.internal import get_forced_url, get_global_unique_hash
-from ..common.settings import settings
 
 
 class BlJobWrapper:
@@ -74,99 +72,73 @@ class BlJob:
     def __init__(self, name: str):
         self.name = name
 
-    @property
-    def internal_url(self):
-        """Get the internal URL for the job using a hash of workspace and job name."""
-        hash = get_global_unique_hash(settings.workspace, "job", self.name)
-        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
+    def run(
+        self,
+        tasks: List[Dict[str, Any]],
+        env: Dict[str, Any] | None = None,
+        memory: int | None = None,
+        execution_id: str | None = None,
+    ) -> str:
+        """
+        Run the job with the provided tasks and optional overrides.
 
-    @property
-    def forced_url(self):
-        """Get the forced URL from environment variables if set."""
-        return get_forced_url("job", self.name)
+        Args:
+            tasks: List of task parameters for parallel execution
+            env: Optional environment variable overrides (merged with job's environment)
+            memory: Optional memory override in megabytes (must be <= job's configured memory)
+            execution_id: Optional custom execution ID
 
-    @property
-    def external_url(self):
-        return f"{settings.run_url}/{settings.workspace}/jobs/{self.name}"
+        Returns:
+            str: The execution ID
 
-    @property
-    def fallback_url(self):
-        if self.external_url != self.url:
-            return self.external_url
-        return None
-
-    @property
-    def url(self):
-        if self.forced_url:
-            return self.forced_url
-        if settings.run_internal_hostname:
-            return self.internal_url
-        return self.external_url
-
-    def call(self, url, input_data, headers: dict = {}, params: dict = {}):
-        body = {"tasks": input_data}
-
-        # Merge settings headers with provided headers
-        merged_headers = {
-            **settings.headers,
-            "Content-Type": "application/json",
-            **headers,
-        }
-
-        return client.get_httpx_client().post(
-            url + "/executions",
-            headers=merged_headers,
-            json=body,
-            params=params,
-        )
-
-    async def acall(self, url, input_data, headers: dict = {}, params: dict = {}):
+        Raises:
+            Exception: If the job execution fails
+        """
         logger.debug(f"Job Calling: {self.name}")
-        body = {"tasks": input_data}
 
-        # Merge settings headers with provided headers
-        merged_headers = {
-            **settings.headers,
-            "Content-Type": "application/json",
-            **headers,
-        }
+        request = CreateJobExecutionRequest(tasks=tasks)
+        if env is not None:
+            request.env = env
+        if memory is not None:
+            request.memory = memory
+        if execution_id is not None:
+            request.execution_id = execution_id
 
-        return await client.get_async_httpx_client().post(
-            url + "/executions",
-            headers=merged_headers,
-            json=body,
-            params=params,
-        )
+        return self.create_execution(request)
 
-    def run(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
+    async def arun(
+        self,
+        tasks: List[Dict[str, Any]],
+        env: Dict[str, Any] | None = None,
+        memory: int | None = None,
+        execution_id: str | None = None,
+    ) -> str:
+        """
+        Run the job with the provided tasks and optional overrides (async).
+
+        Args:
+            tasks: List of task parameters for parallel execution
+            env: Optional environment variable overrides (merged with job's environment)
+            memory: Optional memory override in megabytes (must be <= job's configured memory)
+            execution_id: Optional custom execution ID
+
+        Returns:
+            str: The execution ID
+
+        Raises:
+            Exception: If the job execution fails
+        """
         logger.debug(f"Job Calling: {self.name}")
-        response = self.call(self.url, input, headers, params)
-        if response.status_code >= 400:
-            if not self.fallback_url:
-                raise Exception(
-                    f"Job {self.name} returned status code {response.status_code} with body {response.text}"
-                )
-            response = self.call(self.fallback_url, input, headers, params)
-            if response.status_code >= 400:
-                raise Exception(
-                    f"Job {self.name} returned status code {response.status_code} with body {response.text}"
-                )
-        return response.text
 
-    async def arun(self, input: Any, headers: dict = {}, params: dict = {}) -> str:
-        logger.debug(f"Job Calling: {self.name}")
-        response = await self.acall(self.url, input, headers, params)
-        if response.status_code >= 400:
-            if not self.fallback_url:
-                raise Exception(
-                    f"Job {self.name} returned status code {response.status_code} with body {response.text}"
-                )
-            response = await self.acall(self.fallback_url, input, headers, params)
-            if response.status_code >= 400:
-                raise Exception(
-                    f"Job {self.name} returned status code {response.status_code} with body {response.text}"
-                )
-        return response.text
+        request = CreateJobExecutionRequest(tasks=tasks)
+        if env is not None:
+            request.env = env
+        if memory is not None:
+            request.memory = memory
+        if execution_id is not None:
+            request.execution_id = execution_id
+
+        return await self.acreate_execution(request)
 
     def create_execution(self, request: CreateJobExecutionRequest) -> str:
         """

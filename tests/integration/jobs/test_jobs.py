@@ -94,12 +94,12 @@ class TestJobExecutions:
         assert completed_execution is not None
         assert completed_execution.status in ["succeeded", "failed", "cancelled"]
 
-    async def test_run_job_and_wait_for_completion(self):
-        """Test running a job and waiting for completion using the convenience method."""
+    async def test_run_job_without_overrides(self):
+        """Test running a job without any overrides."""
         job = bl_job(TEST_JOB_NAME)
 
         try:
-            result = await job.arun([{"duration": 5}])
+            execution_id = await job.arun([{"name": "Richard"}, {"name": "John"}])
         except KeyError as e:
             pytest.skip(f"Job API response missing expected field: {e}")
         except Exception as e:
@@ -107,7 +107,82 @@ class TestJobExecutions:
                 pytest.skip(f"Job '{TEST_JOB_NAME}' not found in workspace")
             raise
 
-        assert result is not None
+        assert execution_id is not None
+        assert isinstance(execution_id, str)
+
+        # Verify execution was created
+        execution = await job.aget_execution(execution_id)
+        assert execution is not None
+        assert execution.status is not None
+
+    async def test_run_job_with_memory_override(self):
+        """Test running a job with memory override."""
+        job = bl_job(TEST_JOB_NAME)
+
+        try:
+            execution_id = await job.arun(tasks=[{"name": "MemoryTest"}], memory=2048)
+        except KeyError as e:
+            pytest.skip(f"Job API response missing expected field: {e}")
+        except Exception as e:
+            if "not found" in str(e).lower() or "404" in str(e):
+                pytest.skip(f"Job '{TEST_JOB_NAME}' not found in workspace")
+            raise
+
+        assert execution_id is not None
+        assert isinstance(execution_id, str)
+
+        # Verify execution was created
+        execution = await job.aget_execution(execution_id)
+        assert execution is not None
+        assert execution.status is not None
+
+    async def test_run_job_with_env_overrides(self):
+        """Test running a job with environment variable overrides."""
+        job = bl_job(TEST_JOB_NAME)
+
+        try:
+            execution_id = await job.arun(
+                tasks=[{"name": "EnvTest"}], env={"CUSTOM_VAR": "test_value", "DEBUG_MODE": "true"}
+            )
+        except KeyError as e:
+            pytest.skip(f"Job API response missing expected field: {e}")
+        except Exception as e:
+            if "not found" in str(e).lower() or "404" in str(e):
+                pytest.skip(f"Job '{TEST_JOB_NAME}' not found in workspace")
+            raise
+
+        assert execution_id is not None
+        assert isinstance(execution_id, str)
+
+        # Verify execution was created
+        execution = await job.aget_execution(execution_id)
+        assert execution is not None
+        assert execution.status is not None
+
+    async def test_run_job_with_both_memory_and_env_overrides(self):
+        """Test running a job with both memory and env overrides."""
+        job = bl_job(TEST_JOB_NAME)
+
+        try:
+            execution_id = await job.arun(
+                tasks=[{"name": "CombinedTest"}],
+                memory=1024,
+                env={"TEST_ENV": "production", "LOG_LEVEL": "info"},
+            )
+        except KeyError as e:
+            pytest.skip(f"Job API response missing expected field: {e}")
+        except Exception as e:
+            if "not found" in str(e).lower() or "404" in str(e):
+                pytest.skip(f"Job '{TEST_JOB_NAME}' not found in workspace")
+            raise
+
+        assert execution_id is not None
+        assert isinstance(execution_id, str)
+
+        # Verify execution was created
+        execution = await job.aget_execution(execution_id)
+        assert execution is not None
+        assert execution.status is not None
 
     async def test_create_execution_with_memory_override(self):
         """Test creating an execution with memory override.
