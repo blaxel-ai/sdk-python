@@ -35,7 +35,7 @@ class CodeInterpreter(SandboxInstance):
     async def create(
         cls,
         sandbox: Sandbox | SandboxCreateConfiguration | Dict[str, Any] | None = None,
-        safe: bool = True,
+        safe: bool = False,
     ) -> CodeInterpreter:
         """
         Create a sandbox instance using the jupyter-server image.

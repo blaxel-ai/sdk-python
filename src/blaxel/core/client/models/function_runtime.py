@@ -4,6 +4,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.function_runtime_generation import FunctionRuntimeGeneration
+from ..models.function_runtime_transport import FunctionRuntimeTransport
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -29,6 +30,8 @@ class FunctionRuntime:
             in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 2048.
         min_scale (Union[Unset, int]): Minimum instances to keep warm. Set to 1+ to eliminate cold starts, 0 for scale-
             to-zero.
+        transport (Union[Unset, FunctionRuntimeTransport]): Transport compatibility for the MCP, can be "websocket" or
+            "http-stream" Example: http-stream.
     """
 
     envs: Union[Unset, list["Env"]] = UNSET
@@ -37,6 +40,7 @@ class FunctionRuntime:
     max_scale: Union[Unset, int] = UNSET
     memory: Union[Unset, int] = UNSET
     min_scale: Union[Unset, int] = UNSET
+    transport: Union[Unset, FunctionRuntimeTransport] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,6 +66,10 @@ class FunctionRuntime:
 
         min_scale = self.min_scale
 
+        transport: Union[Unset, str] = UNSET
+        if not isinstance(self.transport, Unset):
+            transport = self.transport.value
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -77,6 +85,8 @@ class FunctionRuntime:
             field_dict["memory"] = memory
         if min_scale is not UNSET:
             field_dict["minScale"] = min_scale
+        if transport is not UNSET:
+            field_dict["transport"] = transport
 
         return field_dict
 
@@ -109,6 +119,13 @@ class FunctionRuntime:
 
         min_scale = d.pop("minScale", d.pop("min_scale", UNSET))
 
+        _transport = d.pop("transport", UNSET)
+        transport: Union[Unset, FunctionRuntimeTransport]
+        if isinstance(_transport, Unset):
+            transport = UNSET
+        else:
+            transport = FunctionRuntimeTransport(_transport)
+
         function_runtime = cls(
             envs=envs,
             generation=generation,
@@ -116,6 +133,7 @@ class FunctionRuntime:
             max_scale=max_scale,
             memory=memory,
             min_scale=min_scale,
+            transport=transport,
         )
 
         function_runtime.additional_properties = d

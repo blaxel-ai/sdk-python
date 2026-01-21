@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class FunctionSpecTransport(str, Enum):
+class FunctionRuntimeTransport(str, Enum):
     HTTP_STREAM = "http-stream"
     WEBSOCKET = "websocket"
 
@@ -9,7 +9,7 @@ class FunctionSpecTransport(str, Enum):
         return str(self.value)
 
     @classmethod
-    def _missing_(cls, value: object) -> "FunctionSpecTransport | None":
+    def _missing_(cls, value: object) -> "FunctionRuntimeTransport | None":
         if isinstance(value, str):
             upper_value = value.upper()
             for member in cls:

@@ -2,10 +2,17 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pytest
+import pytest_asyncio
 
 from blaxel.core.client.models import SandboxLifecycle
 from blaxel.core.sandbox import SandboxInstance
-from tests.helpers import async_sleep, default_image, default_labels, unique_name, wait_for_sandbox_deployed
+from tests.helpers import (
+    async_sleep,
+    default_image,
+    default_labels,
+    unique_name,
+    wait_for_sandbox_deployed,
+)
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -14,7 +21,7 @@ class TestSandboxLifecycleAndExpiration:
 
     created_sandboxes: list[str] = []
 
-    @pytest.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)
     async def cleanup(self):
         """Clean up all sandboxes after each test class."""
         yield
@@ -366,9 +373,7 @@ class TestUpdateLifecyclePreservesState(TestSandboxLifecycleAndExpiration):
 
         # Update lifecycle to a new policy
         new_lifecycle = SandboxLifecycle(
-            expiration_policies=[
-                {"type": "ttl-max-age", "value": "30m", "action": "delete"}
-            ]
+            expiration_policies=[{"type": "ttl-max-age", "value": "30m", "action": "delete"}]
         )
         await SandboxInstance.update_lifecycle(name, new_lifecycle)
 
@@ -397,9 +402,7 @@ class TestUpdateLifecyclePreservesState(TestSandboxLifecycleAndExpiration):
                 "name": name,
                 "image": default_image,
                 "lifecycle": {
-                    "expiration_policies": [
-                        {"type": "ttl-idle", "value": "5m", "action": "delete"}
-                    ]
+                    "expiration_policies": [{"type": "ttl-idle", "value": "5m", "action": "delete"}]
                 },
                 "labels": default_labels,
             }
