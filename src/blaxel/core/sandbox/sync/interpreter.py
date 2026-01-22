@@ -28,7 +28,7 @@ class SyncCodeInterpreter(SyncSandboxInstance):
     def create(
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
-        safe: bool = False,
+        safe: bool = True,
     ) -> "SyncCodeInterpreter":
         """
         Create a sandbox instance using the jupyter-server image.
