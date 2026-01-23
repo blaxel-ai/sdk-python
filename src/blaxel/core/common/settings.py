@@ -166,5 +166,10 @@ class Settings:
 
         return True
 
+    @property
+    def region(self) -> str | None:
+        """Get the region from BL_REGION environment variable."""
+        return os.environ.get("BL_REGION")
+
 
 settings = Settings()
