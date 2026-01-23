@@ -12,6 +12,7 @@ from ...client.models import Metadata, Sandbox, SandboxLifecycle, SandboxRuntime
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -162,7 +163,7 @@ class SandboxInstance:
             volumes = config._normalize_volumes() or UNSET
             ttl = config.ttl
             expires = config.expires
-            region = config.region
+            region = config.region or settings.region
             lifecycle = config.lifecycle
             # snapshot_enabled = sandbox.snapshot_enabled
 

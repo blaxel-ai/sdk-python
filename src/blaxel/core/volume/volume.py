@@ -15,6 +15,7 @@ from ..client.client import client
 from ..client.models import Metadata, Volume, VolumeSpec
 from ..client.models.error import Error
 from ..client.types import UNSET
+from ..common.settings import settings
 
 
 class VolumeAPIError(Exception):
@@ -189,7 +190,7 @@ class VolumeInstance:
                 ),
                 spec=VolumeSpec(
                     size=config.size or default_size,
-                    region=config.region or UNSET,
+                    region=config.region or settings.region or UNSET,
                     template=config.template or UNSET,
                 ),
             )
@@ -203,7 +204,7 @@ class VolumeInstance:
                 ),
                 spec=VolumeSpec(
                     size=volume_config.size or default_size,
-                    region=volume_config.region or UNSET,
+                    region=volume_config.region or settings.region or UNSET,
                     template=volume_config.template or UNSET,
                 ),
             )
@@ -330,7 +331,7 @@ class SyncVolumeInstance:
                 ),
                 spec=VolumeSpec(
                     size=config.size or default_size,
-                    region=config.region or UNSET,
+                    region=config.region or settings.region or UNSET,
                     template=config.template or UNSET,
                 ),
             )
@@ -344,7 +345,7 @@ class SyncVolumeInstance:
                 ),
                 spec=VolumeSpec(
                     size=volume_config.size or default_size,
-                    region=volume_config.region or UNSET,
+                    region=volume_config.region or settings.region or UNSET,
                     template=volume_config.template or UNSET,
                 ),
             )
