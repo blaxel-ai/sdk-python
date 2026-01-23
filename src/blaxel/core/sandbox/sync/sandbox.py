@@ -12,6 +12,7 @@ from ...client.models import Metadata, Sandbox, SandboxLifecycle, SandboxRuntime
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ...common.settings import settings
 from ..default.sandbox import SandboxAPIError
 from ..types import (
     SandboxConfiguration,
@@ -99,7 +100,7 @@ class SyncSandboxInstance:
     def create(
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
-        safe: bool = False,
+        safe: bool = True,
     ) -> "SyncSandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -144,7 +145,7 @@ class SyncSandboxInstance:
             volumes = config._normalize_volumes() or UNSET
             ttl = config.ttl
             expires = config.expires
-            region = config.region
+            region = config.region or settings.region
             lifecycle = config.lifecycle
             sandbox = Sandbox(
                 metadata=Metadata(name=name, labels=config.labels),

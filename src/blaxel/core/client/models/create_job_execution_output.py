@@ -6,16 +6,14 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.create_job_execution_response_tasks_item import (
-        CreateJobExecutionResponseTasksItem,
-    )
+    from ..models.create_job_execution_output_tasks_item import CreateJobExecutionOutputTasksItem
 
 
-T = TypeVar("T", bound="CreateJobExecutionResponse")
+T = TypeVar("T", bound="CreateJobExecutionOutput")
 
 
 @_attrs_define
-class CreateJobExecutionResponse:
+class CreateJobExecutionOutput:
     """Response returned when a job execution is successfully created. Contains identifiers and the tasks that will be
     executed.
 
@@ -25,7 +23,7 @@ class CreateJobExecutionResponse:
             id (Union[Unset, str]): Unique identifier for this request, used for idempotency and tracking. Auto-generated if
                 not provided in the request. Example: 550e8400-e29b-41d4-a716-446655440000.
             job_id (Union[Unset, str]): Name of the job that this execution belongs to Example: data-processing-job.
-            tasks (Union[Unset, list['CreateJobExecutionResponseTasksItem']]): Array of task configurations that will be
+            tasks (Union[Unset, list['CreateJobExecutionOutputTasksItem']]): Array of task configurations that will be
                 executed in parallel according to the job's concurrency settings. Each task can have custom parameters.
             workspace_id (Union[Unset, str]): Name of the workspace where the job execution was created Example: my-
                 workspace.
@@ -34,7 +32,7 @@ class CreateJobExecutionResponse:
     execution_id: Union[Unset, str] = UNSET
     id: Union[Unset, str] = UNSET
     job_id: Union[Unset, str] = UNSET
-    tasks: Union[Unset, list["CreateJobExecutionResponseTasksItem"]] = UNSET
+    tasks: Union[Unset, list["CreateJobExecutionOutputTasksItem"]] = UNSET
     workspace_id: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -75,8 +73,8 @@ class CreateJobExecutionResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.create_job_execution_response_tasks_item import (
-            CreateJobExecutionResponseTasksItem,
+        from ..models.create_job_execution_output_tasks_item import (
+            CreateJobExecutionOutputTasksItem,
         )
 
         if not src_dict:
@@ -91,13 +89,13 @@ class CreateJobExecutionResponse:
         tasks = []
         _tasks = d.pop("tasks", UNSET)
         for tasks_item_data in _tasks or []:
-            tasks_item = CreateJobExecutionResponseTasksItem.from_dict(tasks_item_data)
+            tasks_item = CreateJobExecutionOutputTasksItem.from_dict(tasks_item_data)
 
             tasks.append(tasks_item)
 
         workspace_id = d.pop("workspaceId", d.pop("workspace_id", UNSET))
 
-        create_job_execution_response = cls(
+        create_job_execution_output = cls(
             execution_id=execution_id,
             id=id,
             job_id=job_id,
@@ -105,8 +103,8 @@ class CreateJobExecutionResponse:
             workspace_id=workspace_id,
         )
 
-        create_job_execution_response.additional_properties = d
-        return create_job_execution_response
+        create_job_execution_output.additional_properties = d
+        return create_job_execution_output
 
     @property
     def additional_keys(self) -> list[str]:

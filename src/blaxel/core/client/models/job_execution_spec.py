@@ -6,6 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.job_execution_spec_env_override import JobExecutionSpecEnvOverride
     from ..models.job_execution_task import JobExecutionTask
 
 
@@ -17,17 +18,35 @@ class JobExecutionSpec:
     """Job execution specification
 
     Attributes:
+        env_override (Union[Unset, JobExecutionSpecEnvOverride]): Environment variable overrides (if provided for this
+            execution, values are masked with ***) Example: {"MY_VAR": "***", "BATCH_SIZE": "***"}.
+        memory_override (Union[Unset, int]): Memory override in megabytes (if provided for this execution) Example:
+            2048.
         parallelism (Union[Unset, int]): Number of parallel tasks Example: 5.
         tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
         timeout (Union[Unset, int]): Job timeout in seconds (captured at execution creation time) Example: 3600.
     """
 
+    env_override: Union[Unset, "JobExecutionSpecEnvOverride"] = UNSET
+    memory_override: Union[Unset, int] = UNSET
     parallelism: Union[Unset, int] = UNSET
     tasks: Union[Unset, list["JobExecutionTask"]] = UNSET
     timeout: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        env_override: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.env_override
+            and not isinstance(self.env_override, Unset)
+            and not isinstance(self.env_override, dict)
+        ):
+            env_override = self.env_override.to_dict()
+        elif self.env_override and isinstance(self.env_override, dict):
+            env_override = self.env_override
+
+        memory_override = self.memory_override
+
         parallelism = self.parallelism
 
         tasks: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -45,6 +64,10 @@ class JobExecutionSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if env_override is not UNSET:
+            field_dict["envOverride"] = env_override
+        if memory_override is not UNSET:
+            field_dict["memoryOverride"] = memory_override
         if parallelism is not UNSET:
             field_dict["parallelism"] = parallelism
         if tasks is not UNSET:
@@ -56,11 +79,21 @@ class JobExecutionSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.job_execution_spec_env_override import JobExecutionSpecEnvOverride
         from ..models.job_execution_task import JobExecutionTask
 
         if not src_dict:
             return None
         d = src_dict.copy()
+        _env_override = d.pop("envOverride", d.pop("env_override", UNSET))
+        env_override: Union[Unset, JobExecutionSpecEnvOverride]
+        if isinstance(_env_override, Unset):
+            env_override = UNSET
+        else:
+            env_override = JobExecutionSpecEnvOverride.from_dict(_env_override)
+
+        memory_override = d.pop("memoryOverride", d.pop("memory_override", UNSET))
+
         parallelism = d.pop("parallelism", UNSET)
 
         tasks = []
@@ -73,6 +106,8 @@ class JobExecutionSpec:
         timeout = d.pop("timeout", UNSET)
 
         job_execution_spec = cls(
+            env_override=env_override,
+            memory_override=memory_override,
             parallelism=parallelism,
             tasks=tasks,
             timeout=timeout,
