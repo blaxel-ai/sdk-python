@@ -12,26 +12,24 @@ T = TypeVar("T", bound="ContentSearchMatch")
 class ContentSearchMatch:
     """
     Attributes:
-        column (Union[Unset, int]):  Example: 10.
+        column (int):  Example: 10.
+        line (int):  Example: 42.
+        path (str):  Example: src/main.go.
+        text (str):  Example: const searchText = 'example'.
         context (Union[Unset, str]):  Example: previous line
             current line
             next line.
-        line (Union[Unset, int]):  Example: 42.
-        path (Union[Unset, str]):  Example: src/main.go.
-        text (Union[Unset, str]):  Example: const searchText = 'example'.
     """
 
-    column: Union[Unset, int] = UNSET
+    column: int
+    line: int
+    path: str
+    text: str
     context: Union[Unset, str] = UNSET
-    line: Union[Unset, int] = UNSET
-    path: Union[Unset, str] = UNSET
-    text: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         column = self.column
-
-        context = self.context
 
         line = self.line
 
@@ -39,19 +37,20 @@ class ContentSearchMatch:
 
         text = self.text
 
+        context = self.context
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if column is not UNSET:
-            field_dict["column"] = column
+        field_dict.update(
+            {
+                "column": column,
+                "line": line,
+                "path": path,
+                "text": text,
+            }
+        )
         if context is not UNSET:
             field_dict["context"] = context
-        if line is not UNSET:
-            field_dict["line"] = line
-        if path is not UNSET:
-            field_dict["path"] = path
-        if text is not UNSET:
-            field_dict["text"] = text
 
         return field_dict
 
@@ -60,22 +59,22 @@ class ContentSearchMatch:
         if not src_dict:
             return None
         d = src_dict.copy()
-        column = d.pop("column", UNSET)
+        column = d.pop("column")
+
+        line = d.pop("line")
+
+        path = d.pop("path")
+
+        text = d.pop("text")
 
         context = d.pop("context", UNSET)
 
-        line = d.pop("line", UNSET)
-
-        path = d.pop("path", UNSET)
-
-        text = d.pop("text", UNSET)
-
         content_search_match = cls(
             column=column,
-            context=context,
             line=line,
             path=path,
             text=text,
+            context=context,
         )
 
         content_search_match.additional_properties = d

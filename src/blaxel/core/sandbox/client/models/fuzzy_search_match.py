@@ -1,9 +1,7 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="FuzzySearchMatch")
 
@@ -12,14 +10,14 @@ T = TypeVar("T", bound="FuzzySearchMatch")
 class FuzzySearchMatch:
     """
     Attributes:
-        path (Union[Unset, str]):  Example: src/main.go.
-        score (Union[Unset, int]):  Example: 100.
-        type_ (Union[Unset, str]): "file" or "directory" Example: file.
+        path (str):  Example: src/main.go.
+        score (int):  Example: 100.
+        type_ (str): "file" or "directory" Example: file.
     """
 
-    path: Union[Unset, str] = UNSET
-    score: Union[Unset, int] = UNSET
-    type_: Union[Unset, str] = UNSET
+    path: str
+    score: int
+    type_: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,13 +29,13 @@ class FuzzySearchMatch:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if path is not UNSET:
-            field_dict["path"] = path
-        if score is not UNSET:
-            field_dict["score"] = score
-        if type_ is not UNSET:
-            field_dict["type"] = type_
+        field_dict.update(
+            {
+                "path": path,
+                "score": score,
+                "type": type_,
+            }
+        )
 
         return field_dict
 
@@ -46,11 +44,11 @@ class FuzzySearchMatch:
         if not src_dict:
             return None
         d = src_dict.copy()
-        path = d.pop("path", UNSET)
+        path = d.pop("path")
 
-        score = d.pop("score", UNSET)
+        score = d.pop("score")
 
-        type_ = d.pop("type", d.pop("type_", UNSET))
+        type_ = d.pop("type") if "type" in d else d.pop("type_")
 
         fuzzy_search_match = cls(
             path=path,

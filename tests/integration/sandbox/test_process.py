@@ -399,6 +399,119 @@ class TestProcessKill(TestProcessOperations):
 
 
 @pytest.mark.asyncio(loop_scope="class")
+class TestProcessStop(TestProcessOperations):
+    """Test process stop operations."""
+
+    async def test_stops_running_process(self):
+        """Test stopping a running process gracefully."""
+        await self.sandbox.process.exec(
+            {
+                "name": "stop-test",
+                "command": "sleep 60",
+                "wait_for_completion": False,
+            }
+        )
+
+        process = await self.sandbox.process.get("stop-test")
+        assert process.status == "running"
+
+        await self.sandbox.process.stop("stop-test")
+        await async_sleep(1)
+
+        process = await self.sandbox.process.get("stop-test")
+        assert process.status in ["stopped", "killed", "failed", "completed"]
+
+    async def test_handles_stopping_completed_process_gracefully(self):
+        """Test that stopping a completed process is handled gracefully."""
+        await self.sandbox.process.exec(
+            {
+                "name": "stop-already-done",
+                "command": "echo 'done'",
+                "wait_for_completion": True,
+            }
+        )
+
+        # Should not throw
+        try:
+            await self.sandbox.process.stop("stop-already-done")
+        except Exception:
+            # Expected - some implementations throw for already completed processes
+            pass
+
+
+@pytest.mark.asyncio(loop_scope="class")
+class TestProcessList(TestProcessOperations):
+    """Test process list operations."""
+
+    async def test_lists_all_processes(self):
+        """Test listing all processes."""
+        # Create a few processes
+        await self.sandbox.process.exec(
+            {
+                "name": "list-test-1",
+                "command": "echo 'process 1'",
+                "wait_for_completion": True,
+            }
+        )
+        await self.sandbox.process.exec(
+            {
+                "name": "list-test-2",
+                "command": "echo 'process 2'",
+                "wait_for_completion": True,
+            }
+        )
+
+        processes = await self.sandbox.process.list()
+
+        assert processes is not None
+        assert isinstance(processes, list)
+        assert len(processes) >= 2
+
+        names = [p.name for p in processes]
+        assert "list-test-1" in names
+        assert "list-test-2" in names
+
+    async def test_list_includes_running_processes(self):
+        """Test that list includes running processes."""
+        await self.sandbox.process.exec(
+            {
+                "name": "list-running-test",
+                "command": "sleep 30",
+                "wait_for_completion": False,
+            }
+        )
+
+        processes = await self.sandbox.process.list()
+
+        running_process = next(
+            (p for p in processes if p.name == "list-running-test"), None
+        )
+        assert running_process is not None
+        assert running_process.status == "running"
+
+        # Cleanup
+        await self.sandbox.process.kill("list-running-test")
+
+    async def test_list_returns_process_details(self):
+        """Test that list returns process details."""
+        await self.sandbox.process.exec(
+            {
+                "name": "list-details-test",
+                "command": "echo 'details'",
+                "wait_for_completion": True,
+            }
+        )
+
+        processes = await self.sandbox.process.list()
+
+        process = next((p for p in processes if p.name == "list-details-test"), None)
+        assert process is not None
+        assert process.name == "list-details-test"
+        assert process.pid is not None
+        assert process.status is not None
+
+
+@pytest.mark.asyncio(loop_scope="class")
 class TestRestartOnFailure(TestProcessOperations):
     """Test restartOnFailure operations."""
 

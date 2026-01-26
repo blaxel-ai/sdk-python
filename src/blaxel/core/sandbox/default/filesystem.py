@@ -327,9 +327,7 @@ class SandboxFileSystem(SandboxAction):
             data = json.loads(await response.aread())
             self.handle_response_error(response)
 
-            from ..client.models.content_search_response import (
-                ContentSearchResponse,
-            )
+            from ..client.models.content_search_response import ContentSearchResponse
 
             return ContentSearchResponse.from_dict(data)
         finally:
