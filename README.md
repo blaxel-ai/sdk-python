@@ -203,7 +203,7 @@ async def main():
     matches = await sandbox.fs.grep("pattern", "/app", case_sensitive=True,context_lines=2, max_results=5, file_pattern="*.py", exclude_dirs=["__pycache__"])
 
     # Find files and directories matching specified patterns
-    results = await sandbox.fs.find("/app", type="file", patterns=[".md", ".html"], max_results=1000)
+    results = await sandbox.fs.find("/app", type="file", patterns=["*.md", "*.html"], max_results=1000)
 
     # Watch for file changes
     def on_change(event):
