@@ -372,7 +372,7 @@ The SDK includes a helper function that retrieves and returns tool definitions f
 ```python
 # With OpenAI
 from blaxel.openai import bl_tools
-tools = await bl_tools([["sandbox/my-sandbox"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 
 # With Pydantic AI
 from blaxel.pydantic import bl_tools
