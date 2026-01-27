@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.fuzzy_search_match import FuzzySearchMatch
@@ -16,34 +14,33 @@ T = TypeVar("T", bound="FuzzySearchResponse")
 class FuzzySearchResponse:
     """
     Attributes:
-        matches (Union[Unset, list['FuzzySearchMatch']]):
-        total (Union[Unset, int]):  Example: 5.
+        matches (list['FuzzySearchMatch']):
+        total (int):  Example: 5.
     """
 
-    matches: Union[Unset, list["FuzzySearchMatch"]] = UNSET
-    total: Union[Unset, int] = UNSET
+    matches: list["FuzzySearchMatch"]
+    total: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        matches: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.matches, Unset):
-            matches = []
-            for matches_item_data in self.matches:
-                if type(matches_item_data) is dict:
-                    matches_item = matches_item_data
-                else:
-                    matches_item = matches_item_data.to_dict()
-                matches.append(matches_item)
+        matches = []
+        for matches_item_data in self.matches:
+            if type(matches_item_data) is dict:
+                matches_item = matches_item_data
+            else:
+                matches_item = matches_item_data.to_dict()
+            matches.append(matches_item)
 
         total = self.total
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if matches is not UNSET:
-            field_dict["matches"] = matches
-        if total is not UNSET:
-            field_dict["total"] = total
+        field_dict.update(
+            {
+                "matches": matches,
+                "total": total,
+            }
+        )
 
         return field_dict
 
@@ -55,13 +52,13 @@ class FuzzySearchResponse:
             return None
         d = src_dict.copy()
         matches = []
-        _matches = d.pop("matches", UNSET)
-        for matches_item_data in _matches or []:
+        _matches = d.pop("matches")
+        for matches_item_data in _matches:
             matches_item = FuzzySearchMatch.from_dict(matches_item_data)
 
             matches.append(matches_item)
 
-        total = d.pop("total", UNSET)
+        total = d.pop("total")
 
         fuzzy_search_response = cls(
             matches=matches,

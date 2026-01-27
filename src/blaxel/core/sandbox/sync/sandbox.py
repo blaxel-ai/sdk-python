@@ -8,7 +8,13 @@ from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Sandbox, SandboxLifecycle, SandboxRuntime, SandboxSpec
+from ...client.models import (
+    Metadata,
+    Sandbox,
+    SandboxLifecycle,
+    SandboxRuntime,
+    SandboxSpec,
+)
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
@@ -159,17 +165,26 @@ class SyncSandboxInstance:
                     volumes=volumes,
                 ),
             )
-            if ttl:
+            if ttl and sandbox.spec.runtime:
                 sandbox.spec.runtime.ttl = ttl
-            if expires:
+            if expires and sandbox.spec.runtime:
                 sandbox.spec.runtime.expires = expires.isoformat()
             if region:
                 sandbox.spec.region = region
             if lifecycle:
-                sandbox.spec.lifecycle = lifecycle
+                if type(lifecycle) is dict:
+                    lifecycle = SandboxLifecycle.from_dict(lifecycle)
+                    assert lifecycle is not None
+                    sandbox.spec.lifecycle = lifecycle
+                elif type(lifecycle) is SandboxLifecycle:
+                    sandbox.spec.lifecycle = lifecycle
+                else:
+                    raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
         else:
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
+            assert isinstance(sandbox, Sandbox)
+
             if not sandbox.metadata:
                 sandbox.metadata = Metadata(name=default_name)
             if not sandbox.spec:

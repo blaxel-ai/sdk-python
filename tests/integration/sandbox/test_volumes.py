@@ -231,9 +231,7 @@ class TestVolumeResize(TestVolumeOperations):
                 "image": default_image,
                 "memory": 4096,
                 "region": default_region,
-                "volumes": [
-                    {"name": volume_name, "mount_path": "/data", "read_only": False}
-                ],
+                "volumes": [{"name": volume_name, "mount_path": "/data", "read_only": False}],
                 "labels": default_labels,
             }
         )
@@ -270,9 +268,7 @@ class TestVolumeResize(TestVolumeOperations):
                 "image": default_image,
                 "memory": 4096,
                 "region": default_region,
-                "volumes": [
-                    {"name": volume_name, "mount_path": "/data", "read_only": False}
-                ],
+                "volumes": [{"name": volume_name, "mount_path": "/data", "read_only": False}],
                 "labels": default_labels,
             }
         )
@@ -329,9 +325,7 @@ class TestVolumeResize(TestVolumeOperations):
                 "image": default_image,
                 "memory": 4096,
                 "region": default_region,
-                "volumes": [
-                    {"name": volume_name, "mount_path": "/data", "read_only": False}
-                ],
+                "volumes": [{"name": volume_name, "mount_path": "/data", "read_only": False}],
                 "labels": default_labels,
             }
         )

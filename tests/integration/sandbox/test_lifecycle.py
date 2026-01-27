@@ -4,7 +4,12 @@ from datetime import datetime, timedelta, timezone
 import pytest
 import pytest_asyncio
 
-from blaxel.core.client.models import SandboxLifecycle
+from blaxel.core.client.models import (
+    ExpirationPolicy,
+    ExpirationPolicyAction,
+    ExpirationPolicyType,
+    SandboxLifecycle,
+)
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import (
     async_sleep,
@@ -415,8 +420,9 @@ class TestUpdateLifecyclePreservesState(TestSandboxLifecycleAndExpiration):
         # Change to a different policy type
         new_lifecycle = SandboxLifecycle(
             expiration_policies=[
-                {"type": "ttl-max-age", "value": "20m", "action": "delete"},
-                {"type": "ttl-idle", "value": "10m", "action": "delete"},
+                ExpirationPolicy(type_=ExpirationPolicyType.TTL_MAX_AGE, value="20m", action=ExpirationPolicyAction.DELETE),
+                ExpirationPolicy(type_=ExpirationPolicyType.TTL_IDLE, value="10m", action=ExpirationPolicyAction.DELETE),
+                ExpirationPolicy(type_=ExpirationPolicyType.TTL_IDLE, value="10m", action=ExpirationPolicyAction.DELETE),
             ]
         )
         await SandboxInstance.update_lifecycle(name, new_lifecycle)

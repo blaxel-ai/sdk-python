@@ -9,8 +9,8 @@ from tests.helpers import async_sleep, default_image, default_labels, unique_nam
 class TestProcessOperations:
     """Test sandbox process operations."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance
+    sandbox_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -29,7 +29,7 @@ class TestProcessOperations:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await self.sandbox.delete()
         except Exception:
             pass
 
@@ -283,11 +283,12 @@ class TestStreamLogs(TestProcessOperations):
             },
         )
 
-        await self.sandbox.process.wait("stream-test")
-        await async_sleep(1)
-        stream["close"]()
-
-        assert len(logs) > 0
+        try:
+            await self.sandbox.process.wait("stream-test")
+            await async_sleep(1)
+            assert len(logs) > 0
+        finally:
+            stream.close()
 
     async def test_can_close_stream_early(self):
         """Test that stream can be closed early."""
@@ -308,14 +309,18 @@ class TestStreamLogs(TestProcessOperations):
             },
         )
 
-        await async_sleep(2)
-        stream["close"]()
+        try:
+            await async_sleep(2)
+            stream.close()
 
-        logs_at_close = len(logs)
-        await async_sleep(3)
+            logs_at_close = len(logs)
+            await async_sleep(3)
 
-        # No new logs should arrive after close
-        assert len(logs) == logs_at_close
+            # No new logs should arrive after close
+            assert len(logs) == logs_at_close
+        finally:
+            # Ensure stream is closed even if test fails
+            stream.close()  # Safe to call multiple times
 
         # Clean up
         await self.sandbox.process.kill("close-early")
@@ -399,6 +404,117 @@ class TestProcessKill(TestProcessOperations):
 
 
 @pytest.mark.asyncio(loop_scope="class")
+class TestProcessStop(TestProcessOperations):
+    """Test process stop operations."""
+
+    async def test_stops_running_process(self):
+        """Test stopping a running process gracefully."""
+        await self.sandbox.process.exec(
+            {
+                "name": "stop-test",
+                "command": "sleep 60",
+                "wait_for_completion": False,
+            }
+        )
+
+        process = await self.sandbox.process.get("stop-test")
+        assert process.status == "running"
+
+        await self.sandbox.process.stop("stop-test")
+        await async_sleep(1)
+
+        process = await self.sandbox.process.get("stop-test")
+        assert process.status in ["stopped", "killed", "failed", "completed"]
+
+    async def test_handles_stopping_completed_process_gracefully(self):
+        """Test that stopping a completed process is handled gracefully."""
+        await self.sandbox.process.exec(
+            {
+                "name": "stop-already-done",
+                "command": "echo 'done'",
+                "wait_for_completion": True,
+            }
+        )
+
+        # Should not throw
+        try:
+            await self.sandbox.process.stop("stop-already-done")
+        except Exception:
+            # Expected - some implementations throw for already completed processes
+            pass
+
+
+@pytest.mark.asyncio(loop_scope="class")
+class TestProcessList(TestProcessOperations):
+    """Test process list operations."""
+
+    async def test_lists_all_processes(self):
+        """Test listing all processes."""
+        # Create a few processes
+        await self.sandbox.process.exec(
+            {
+                "name": "list-test-1",
+                "command": "echo 'process 1'",
+                "wait_for_completion": True,
+            }
+        )
+        await self.sandbox.process.exec(
+            {
+                "name": "list-test-2",
+                "command": "echo 'process 2'",
+                "wait_for_completion": True,
+            }
+        )
+
+        processes = await self.sandbox.process.list()
+
+        assert processes is not None
+        assert isinstance(processes, list)
+        assert len(processes) >= 2
+
+        names = [p.name for p in processes]
+        assert "list-test-1" in names
+        assert "list-test-2" in names
+
+    async def test_list_includes_running_processes(self):
+        """Test that list includes running processes."""
+        await self.sandbox.process.exec(
+            {
+                "name": "list-running-test",
+                "command": "sleep 30",
+                "wait_for_completion": False,
+            }
+        )
+
+        processes = await self.sandbox.process.list()
+
+        running_process = next((p for p in processes if p.name == "list-running-test"), None)
+        assert running_process is not None
+        assert running_process.status == "running"
+
+        # Cleanup
+        await self.sandbox.process.kill("list-running-test")
+
+    async def test_list_returns_process_details(self):
+        """Test that list returns process details."""
+        await self.sandbox.process.exec(
+            {
+                "name": "list-details-test",
+                "command": "echo 'details'",
+                "wait_for_completion": True,
+            }
+        )
+
+        processes = await self.sandbox.process.list()
+
+        process = next((p for p in processes if p.name == "list-details-test"), None)
+        assert process is not None
+        assert process.name == "list-details-test"
+        assert process.pid is not None
+        assert process.status is not None
+
+
+@pytest.mark.asyncio(loop_scope="class")
 class TestRestartOnFailure(TestProcessOperations):
     """Test restartOnFailure operations."""
 
@@ -414,5 +530,5 @@ class TestRestartOnFailure(TestProcessOperations):
             }
         )
 
-        assert result.restart_count > 0
-        assert result.restart_count <= 3
+        assert type(result.restart_count) == int and result.restart_count > 0
+        assert type(result.restart_count) == int and result.restart_count <= 3

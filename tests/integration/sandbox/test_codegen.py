@@ -12,8 +12,8 @@ from tests.helpers import default_image, default_labels, unique_name
 class TestFastapplyWithRelace:
     """Test fastapply with Relace backend."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance
+    sandbox_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -34,7 +34,7 @@ class TestFastapplyWithRelace:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await self.sandbox.delete()
         except Exception:
             pass
 
@@ -88,8 +88,8 @@ class TestFastapplyWithRelace:
 class TestFastapplyWithMorph:
     """Test fastapply with Morph backend."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance
+    sandbox_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -110,7 +110,7 @@ class TestFastapplyWithMorph:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await self.sandbox.delete()
         except Exception:
             pass
 

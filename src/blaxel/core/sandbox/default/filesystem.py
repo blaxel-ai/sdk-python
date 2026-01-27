@@ -10,6 +10,7 @@ import httpx
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
 from ..types import (
+    AsyncWatchHandle,
     CopyResponse,
     SandboxConfiguration,
     SandboxFilesystemFile,
@@ -327,9 +328,7 @@ class SandboxFileSystem(SandboxAction):
             data = json.loads(await response.aread())
             self.handle_response_error(response)
 
-            from ..client.models.content_search_response import (
-                ContentSearchResponse,
-            )
+            from ..client.models.content_search_response import ContentSearchResponse
 
             return ContentSearchResponse.from_dict(data)
         finally:
@@ -364,8 +363,23 @@ class SandboxFileSystem(SandboxAction):
         path: str,
         callback: Callable[[WatchEvent], None],
         options: Dict[str, Any] | None = None,
-    ) -> Dict[str, Callable]:
-        """Watch for file system changes."""
+    ) -> AsyncWatchHandle:
+        """Watch for file system changes.
+
+        Returns an AsyncWatchHandle that can be used as a context manager:
+
+            async with sandbox.fs.watch(path, callback) as handle:
+                # do something
+            # handle is automatically closed
+
+        Or manually:
+
+            handle = sandbox.fs.watch(path, callback)
+            try:
+                # do something
+            finally:
+                handle.close()
+        """
         path = self.format_path(path)
         closed = False
 
@@ -444,7 +458,7 @@ class SandboxFileSystem(SandboxAction):
             closed = True
             task.cancel()
 
-        return {"close": close}
+        return AsyncWatchHandle(close)
 
     def format_path(self, path: str) -> str:
         """Format path for filesystem operations.

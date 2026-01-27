@@ -6,7 +6,12 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
+from ..types import (
+    AsyncStreamHandle,
+    ProcessRequestWithLog,
+    ProcessResponseWithLog,
+    SandboxConfiguration,
+)
 from .action import SandboxAction
 
 
@@ -18,13 +23,28 @@ class SandboxProcess(SandboxAction):
         self,
         process_name: str,
         options: Dict[str, Callable[[str], None]] | None = None,
-    ) -> Dict[str, Callable[[], None]]:
-        """Stream logs from a process with automatic reconnection and deduplication."""
+    ) -> AsyncStreamHandle:
+        """Stream logs from a process with automatic reconnection and deduplication.
+
+        Returns an AsyncStreamHandle that can be used as a context manager:
+
+            async with sandbox.process.stream_logs(name, options) as handle:
+                # do something
+            # handle is automatically closed
+
+        Or manually:
+
+            handle = sandbox.process.stream_logs(name, options)
+            try:
+                # do something
+            finally:
+                handle.close()
+        """
         if options is None:
             options = {}
 
         reconnect_interval = 30  # 30 seconds in Python (TypeScript uses milliseconds)
-        current_stream = None
+        current_stream: AsyncStreamHandle | None = None
         is_running = True
         reconnect_timer = None
 
@@ -37,7 +57,7 @@ class SandboxProcess(SandboxAction):
 
             # Close existing stream if any
             if current_stream:
-                current_stream["close"]()
+                current_stream.close()
 
             # Create wrapper options with deduplication
             wrapped_options = {}
@@ -104,19 +124,19 @@ class SandboxProcess(SandboxAction):
 
             # Close current stream
             if current_stream:
-                current_stream["close"]()
+                current_stream.close()
                 current_stream = None
 
             # Clear seen logs
             seen_logs.clear()
 
-        return {"close": close}
+        return AsyncStreamHandle(close)
 
     def _stream_logs(
         self,
         identifier: str,
         options: Dict[str, Callable[[str], None]] | None = None,
-    ) -> Dict[str, Callable[[], None]]:
+    ) -> AsyncStreamHandle:
         """Private method to stream logs from a process with callbacks for different output types."""
         if options is None:
             options = {}
@@ -165,7 +185,9 @@ class SandboxProcess(SandboxAction):
                                         options["on_log"](line)
             except Exception as e:
                 # Suppress AbortError when closing
-                if not (hasattr(e, "name") and e.name == "AbortError"):
+                if hasattr(e, "name") and getattr(e, "name") == "AbortError":
+                    pass
+                else:
                     raise e
 
         # Start streaming in the background
@@ -176,7 +198,7 @@ class SandboxProcess(SandboxAction):
             closed = True
             task.cancel()
 
-        return {"close": close}
+        return AsyncStreamHandle(close)
 
     async def exec(
         self,
@@ -203,7 +225,9 @@ class SandboxProcess(SandboxAction):
             if "on_stderr" in process:
                 on_stderr = process["on_stderr"]
                 del process["on_stderr"]
-            process = ProcessRequest.from_dict(process)
+            tmp_process = ProcessRequest.from_dict(process)
+            assert tmp_process is not None
+            process = tmp_process
 
         # Store original wait_for_completion setting
         should_wait_for_completion = process.wait_for_completion
@@ -221,18 +245,27 @@ class SandboxProcess(SandboxAction):
                 self.handle_response_error(response)
                 import json
 
-                response_data = json.loads(content_bytes) if content_bytes else None
-                result = ProcessResponse.from_dict(response_data)
+                if content_bytes:
+                    response_data = json.loads(content_bytes)
+                    result = ProcessResponse.from_dict(response_data)
+                    assert result is not None
+                else:
+                    raise Exception("No content received from response")
             finally:
                 await response.aclose()
 
             if on_log or on_stdout or on_stderr:
-                stream_control = self._stream_logs(
-                    result.pid, {"on_log": on_log, "on_stdout": on_stdout, "on_stderr": on_stderr}
-                )
+                stream_options: dict[str, Callable[[str], None]] = {}
+                if on_log:
+                    stream_options["on_log"] = on_log
+                if on_stdout:
+                    stream_options["on_stdout"] = on_stdout
+                if on_stderr:
+                    stream_options["on_stderr"] = on_stderr
+                stream_control = self._stream_logs(result.pid, stream_options)
                 return ProcessResponseWithLog(
                     result,
-                    lambda: stream_control["close"]() if stream_control else None,
+                    lambda: stream_control.close() if stream_control else None,
                 )
 
             return result
@@ -277,6 +310,7 @@ class SandboxProcess(SandboxAction):
                     content = await response.aread()
                     data = json.loads(content)
                     result = ProcessResponse.from_dict(data)
+                    assert result is not None
 
                     # If process already completed (server waited), emit logs through callbacks
                     if result.status == "completed" or result.status == "failed":
@@ -378,7 +412,9 @@ class SandboxProcess(SandboxAction):
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return ProcessResponse.from_dict(data)
+            result = ProcessResponse.from_dict(data)
+            assert result is not None
+            return result
         finally:
             await response.aclose()
 
@@ -390,7 +426,12 @@ class SandboxProcess(SandboxAction):
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return [ProcessResponse.from_dict(item) for item in data]
+            results = []
+            for item in data:
+                result = ProcessResponse.from_dict(item)
+                assert result is not None
+                results.append(result)
+            return results
         finally:
             await response.aclose()
 
@@ -402,7 +443,9 @@ class SandboxProcess(SandboxAction):
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(data)
+            result = SuccessResponse.from_dict(data)
+            assert result is not None
+            return result
         finally:
             await response.aclose()
 
@@ -414,7 +457,9 @@ class SandboxProcess(SandboxAction):
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return SuccessResponse.from_dict(data)
+            result = SuccessResponse.from_dict(data)
+            assert result is not None
+            return result
         finally:
             await response.aclose()
 

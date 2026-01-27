@@ -5,7 +5,6 @@ from blaxel.core.tools.types import Tool, ToolException
 
 if TYPE_CHECKING:
     from langchain_core.tools import StructuredTool
-    from mcp.types import EmbeddedResource, ImageContent
 
 
 def _clean_schema_for_openai(schema: Dict[str, Any]) -> Dict[str, Any]:
