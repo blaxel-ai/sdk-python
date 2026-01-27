@@ -202,6 +202,8 @@ class SandboxInstance:
             if lifecycle:
                 if type(lifecycle) is dict:
                     lifecycle = SandboxLifecycle.from_dict(lifecycle)
+                    assert lifecycle is not None
+                    sandbox.spec.lifecycle = lifecycle
                 elif type(lifecycle) is SandboxLifecycle:
                     sandbox.spec.lifecycle = lifecycle
                 else:
