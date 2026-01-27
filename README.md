@@ -372,31 +372,31 @@ The SDK includes a helper function that retrieves and returns tool definitions f
 ```python
 # With OpenAI
 from blaxel.openai import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools([["sandbox/my-sandbox"])
 
 # With Pydantic AI
 from blaxel.pydantic import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 
 # With LlamaIndex
 from blaxel.llamaindex import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 
 # With LangChain
 from blaxel.langgraph import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 
 # With CrewAI
 from blaxel.crewai import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 
 # With Google ADK
 from blaxel.googleadk import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 
 # With LiveKit
 from blaxel.livekit import bl_tools
-tools = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["sandbox/my-sandbox"])
 ```
 
 Here is an example of retrieving tool definitions from a Blaxel sandbox's MCP server for use with the OpenAI SDK:
