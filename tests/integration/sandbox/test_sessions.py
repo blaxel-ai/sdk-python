@@ -11,8 +11,8 @@ from tests.helpers import async_sleep, default_image, default_labels, unique_nam
 class TestSessionOperations:
     """Test sandbox session operations."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance
+    sandbox_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -31,7 +31,7 @@ class TestSessionOperations:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await self.sandbox.delete()
         except Exception:
             pass
 
@@ -158,11 +158,12 @@ class TestFromSession(TestSessionOperations):
             },
         )
 
-        await sandbox_from_session.process.wait("stream-session")
-        await async_sleep(0.1)
-        stream["close"]()
-
-        assert len(logs) > 0
+        try:
+            await sandbox_from_session.process.wait("stream-session")
+            await async_sleep(0.1)
+            assert len(logs) > 0
+        finally:
+            stream.close()
 
         await self.sandbox.sessions.delete(session.name)
 
@@ -180,12 +181,13 @@ class TestFromSession(TestSessionOperations):
             change_detected = True
 
         handle = sandbox_from_session.fs.watch("/", on_change)
-        await async_sleep(0.5)  # Wait for watch to be established
-        await sandbox_from_session.fs.write("/session-test.txt", "content")
+        try:
+            await async_sleep(0.5)  # Wait for watch to be established
+            await sandbox_from_session.fs.write("/session-test.txt", "content")
 
-        await async_sleep(1.0)  # Wait for callback to fire
-        handle["close"]()
-
-        assert change_detected is True
+            await async_sleep(1.0)  # Wait for callback to fire
+            assert change_detected is True
+        finally:
+            handle.close()
 
         await self.sandbox.sessions.delete(session.name)

@@ -22,6 +22,8 @@ from .sync import (
     SyncSandboxProcess,
 )
 from .types import (
+    AsyncStreamHandle,
+    AsyncWatchHandle,
     CopyResponse,
     ProcessRequestWithLog,
     ProcessResponseWithLog,
@@ -30,7 +32,9 @@ from .types import (
     SandboxFilesystemFile,
     SessionCreateOptions,
     SessionWithToken,
+    StreamHandle,
     WatchEvent,
+    WatchHandle,
 )
 
 __all__ = [
@@ -41,6 +45,10 @@ __all__ = [
     "SandboxConfiguration",
     "SandboxCreateConfiguration",
     "WatchEvent",
+    "WatchHandle",
+    "AsyncWatchHandle",
+    "StreamHandle",
+    "AsyncStreamHandle",
     "SandboxFilesystemFile",
     "CopyResponse",
     "Sandbox",

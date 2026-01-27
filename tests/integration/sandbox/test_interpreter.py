@@ -9,8 +9,8 @@ from tests.helpers import default_labels, unique_name
 class TestCodeInterpreterOperations:
     """Test CodeInterpreter operations."""
 
-    interpreter: CodeInterpreter = None
-    interpreter_name: str = None
+    interpreter: CodeInterpreter
+    interpreter_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_interpreter(self, request):
@@ -28,7 +28,7 @@ class TestCodeInterpreterOperations:
         # Cleanup
         if request.cls.interpreter and request.cls.interpreter.metadata:
             try:
-                await CodeInterpreter.delete(request.cls.interpreter.metadata.name)
+                await self.interpreter.delete()
             except Exception:
                 pass
 

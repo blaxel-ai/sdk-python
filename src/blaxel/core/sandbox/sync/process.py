@@ -7,7 +7,12 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..types import ProcessRequestWithLog, ProcessResponseWithLog, SandboxConfiguration
+from ..types import (
+    ProcessRequestWithLog,
+    ProcessResponseWithLog,
+    SandboxConfiguration,
+    StreamHandle,
+)
 from .action import SyncSandboxAction
 
 
@@ -19,19 +24,35 @@ class SyncSandboxProcess(SyncSandboxAction):
         self,
         process_name: str,
         options: Dict[str, Callable[[str], None]] | None = None,
-    ) -> Dict[str, Callable[[], None]]:
+    ) -> StreamHandle:
+        """Stream logs from a process with automatic reconnection and deduplication.
+
+        Returns a StreamHandle that can be used as a context manager:
+
+            with sandbox.process.stream_logs(name, options) as handle:
+                # do something
+            # handle is automatically closed
+
+        Or manually:
+
+            handle = sandbox.process.stream_logs(name, options)
+            try:
+                # do something
+            finally:
+                handle.close()
+        """
         if options is None:
             options = {}
         reconnect_interval = 30
         is_running = threading.Event()
         is_running.set()
         seen_logs = set()
-        current_close = {"fn": None}
+        current_stream: StreamHandle | None = None
         timer_lock = threading.Lock()
-        reconnect_timer = {"t": None}
+        reconnect_timer: dict[str, threading.Timer | None] = {"t": None}
 
         def start_stream():
-            nonlocal current_close
+            nonlocal current_stream
             log_counter = [0]
 
             def make_dedup(cb_key: str):
@@ -52,9 +73,9 @@ class SyncSandboxProcess(SyncSandboxAction):
                 wrapped_options["on_stdout"] = make_dedup("on_stdout")
             if "on_stderr" in options:
                 wrapped_options["on_stderr"] = make_dedup("on_stderr")
-            if current_close["fn"]:
-                current_close["fn"]()
-            current_close["fn"] = self._stream_logs(process_name, wrapped_options)["close"]
+            if current_stream:
+                current_stream.close()
+            current_stream = self._stream_logs(process_name, wrapped_options)
 
             def schedule():
                 if is_running.is_set():
@@ -71,23 +92,25 @@ class SyncSandboxProcess(SyncSandboxAction):
         start_stream()
 
         def close():
+            nonlocal current_stream
             is_running.clear()
             with timer_lock:
                 if reconnect_timer["t"]:
                     reconnect_timer["t"].cancel()
                     reconnect_timer["t"] = None
-            if current_close["fn"]:
-                current_close["fn"]()
-                current_close["fn"] = None
+            if current_stream:
+                current_stream.close()
+                current_stream = None
             seen_logs.clear()
 
-        return {"close": close}
+        return StreamHandle(close)
 
     def _stream_logs(
         self,
         identifier: str,
         options: Dict[str, Callable[[str], None]] | None = None,
-    ) -> Dict[str, Callable[[], None]]:
+    ) -> StreamHandle:
+        """Private method to stream logs from a process with callbacks for different output types."""
         if options is None:
             options = {}
         closed = threading.Event()
@@ -136,7 +159,7 @@ class SyncSandboxProcess(SyncSandboxAction):
         def close():
             closed.set()
 
-        return {"close": close}
+        return StreamHandle(close)
 
     def exec(
         self,
@@ -191,7 +214,7 @@ class SyncSandboxProcess(SyncSandboxAction):
                     )
                     return ProcessResponseWithLog(
                         result,
-                        lambda: stream_control["close"]() if stream_control else None,
+                        lambda: stream_control.close() if stream_control else None,
                     )
 
                 return result

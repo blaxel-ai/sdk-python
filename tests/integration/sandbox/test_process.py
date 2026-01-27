@@ -9,8 +9,8 @@ from tests.helpers import async_sleep, default_image, default_labels, unique_nam
 class TestProcessOperations:
     """Test sandbox process operations."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance
+    sandbox_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -29,7 +29,7 @@ class TestProcessOperations:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await self.sandbox.delete()
         except Exception:
             pass
 
@@ -283,11 +283,12 @@ class TestStreamLogs(TestProcessOperations):
             },
         )
 
-        await self.sandbox.process.wait("stream-test")
-        await async_sleep(1)
-        stream["close"]()
-
-        assert len(logs) > 0
+        try:
+            await self.sandbox.process.wait("stream-test")
+            await async_sleep(1)
+            assert len(logs) > 0
+        finally:
+            stream.close()
 
     async def test_can_close_stream_early(self):
         """Test that stream can be closed early."""
@@ -308,14 +309,18 @@ class TestStreamLogs(TestProcessOperations):
             },
         )
 
-        await async_sleep(2)
-        stream["close"]()
+        try:
+            await async_sleep(2)
+            stream.close()
 
-        logs_at_close = len(logs)
-        await async_sleep(3)
+            logs_at_close = len(logs)
+            await async_sleep(3)
 
-        # No new logs should arrive after close
-        assert len(logs) == logs_at_close
+            # No new logs should arrive after close
+            assert len(logs) == logs_at_close
+        finally:
+            # Ensure stream is closed even if test fails
+            stream.close()  # Safe to call multiple times
 
         # Clean up
         await self.sandbox.process.kill("close-early")
@@ -483,9 +488,7 @@ class TestProcessList(TestProcessOperations):
 
         processes = await self.sandbox.process.list()
 
-        running_process = next(
-            (p for p in processes if p.name == "list-running-test"), None
-        )
+        running_process = next((p for p in processes if p.name == "list-running-test"), None)
         assert running_process is not None
         assert running_process.status == "running"
 
@@ -527,5 +530,5 @@ class TestRestartOnFailure(TestProcessOperations):
             }
         )
 
-        assert result.restart_count > 0
-        assert result.restart_count <= 3
+        assert type(result.restart_count) == int and result.restart_count > 0
+        assert type(result.restart_count) == int and result.restart_count <= 3

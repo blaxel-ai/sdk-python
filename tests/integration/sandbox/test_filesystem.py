@@ -212,7 +212,7 @@ class TestDownload(TestFilesystemOperations):
             await self.sandbox.fs.download(sandbox_path, local_path)
 
             # Verify local file content
-            with open(local_path, "r") as f:
+            with open(local_path) as f:
                 local_content = f.read()
 
             assert local_content == content
@@ -390,15 +390,16 @@ class TestWatch(TestFilesystemOperations):
 
         handle = self.sandbox.fs.watch(dir_path, on_change)
 
-        await async_sleep(0.5)
-        # Trigger a file change
-        await self.sandbox.fs.write(f"{dir_path}/watched-file.txt", "new content")
+        try:
+            await async_sleep(0.5)
+            # Trigger a file change
+            await self.sandbox.fs.write(f"{dir_path}/watched-file.txt", "new content")
 
-        # Wait for callback
-        await async_sleep(0.5)
-        handle["close"]()
-
-        assert change_detected is True
+            # Wait for callback
+            await async_sleep(0.5)
+            assert change_detected is True
+        finally:
+            handle.close()
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -686,9 +687,7 @@ class TestGrep(TestFilesystemOperations):
         await self.sandbox.fs.write(f"{base_dir}/other.txt", "SEARCH_TARGET in txt")
         await self.sandbox.fs.write(f"{base_dir}/lowercase.py", "search_target lowercase")
         # Create file in excluded directory
-        await self.sandbox.fs.write(
-            f"{base_dir}/node_modules/dep.py", "SEARCH_TARGET in excluded"
-        )
+        await self.sandbox.fs.write(f"{base_dir}/node_modules/dep.py", "SEARCH_TARGET in excluded")
 
         result = await self.sandbox.fs.grep(
             "SEARCH_TARGET",

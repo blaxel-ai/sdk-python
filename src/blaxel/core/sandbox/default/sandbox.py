@@ -8,7 +8,14 @@ from ...client.api.compute.get_sandbox import asyncio as get_sandbox
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Sandbox, SandboxLifecycle, SandboxRuntime, SandboxSpec
+from ...client.models import (
+    Metadata,
+    MetadataLabels,
+    Sandbox,
+    SandboxLifecycle,
+    SandboxRuntime,
+    SandboxSpec,
+)
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
@@ -167,9 +174,13 @@ class SandboxInstance:
             lifecycle = config.lifecycle
             # snapshot_enabled = sandbox.snapshot_enabled
 
+            labels = MetadataLabels.from_dict(config.labels) if config.labels else UNSET
+            if labels is None:
+                labels = UNSET
+
             # Create full Sandbox object
             sandbox = Sandbox(
-                metadata=Metadata(name=name, labels=config.labels),
+                metadata=Metadata(name=name, labels=labels),
                 spec=SandboxSpec(
                     runtime=SandboxRuntime(
                         image=image,
@@ -182,19 +193,26 @@ class SandboxInstance:
             )
 
             # Set ttl and expires if provided
-            if ttl:
+            if ttl and sandbox.spec.runtime:
                 sandbox.spec.runtime.ttl = ttl
-            if expires:
+            if expires and sandbox.spec.runtime:
                 sandbox.spec.runtime.expires = expires.isoformat()
             if region:
                 sandbox.spec.region = region
             if lifecycle:
-                sandbox.spec.lifecycle = lifecycle
+                if type(lifecycle) is dict:
+                    lifecycle = SandboxLifecycle.from_dict(lifecycle)
+                elif type(lifecycle) is SandboxLifecycle:
+                    sandbox.spec.lifecycle = lifecycle
+                else:
+                    raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
+                assert sandbox is not None
 
+            assert isinstance(sandbox, Sandbox)
             # Set defaults for missing fields
             if not sandbox.metadata:
                 sandbox.metadata = Metadata(name=default_name)
@@ -220,6 +238,7 @@ class SandboxInstance:
             message = response.message if response.message else str(response)
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
+        assert response is not None
         instance = cls(response)
         # TODO remove this part once we have a better way to handle this
         if safe:

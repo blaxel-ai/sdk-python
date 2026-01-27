@@ -12,8 +12,8 @@ from tests.helpers import default_labels, unique_name
 class TestPreviewOperations:
     """Test sandbox preview operations."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance
+    sandbox_name: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -43,7 +43,7 @@ class TestPreviewOperations:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await self.sandbox.delete()
         except Exception:
             pass
 
