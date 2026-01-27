@@ -346,31 +346,31 @@ from blaxel.core import bl_model
 
 # With OpenAI
 from blaxel.openai import bl_model
-model = await bl_model("gpt-4o-mini")
+model = await bl_model("gpt-5-mini")
 
 # With LangChain
 from blaxel.langgraph import bl_model
-model = await bl_model("claude-3-5-sonnet")
+model = await bl_model("gpt-5-mini")
 
 # With LlamaIndex
 from blaxel.llamaindex import bl_model
-model = await bl_model("gpt-4o")
+model = await bl_model("gpt-5-mini")
 
 # With Pydantic AI
 from blaxel.pydantic import bl_model
-model = await bl_model("gpt-4o-mini")
+model = await bl_model("gpt-5-mini")
 
 # With CrewAI
 from blaxel.crewai import bl_model
-model = await bl_model("gpt-4o")
+model = await bl_model("gpt-5-mini")
 
 # With Google ADK
 from blaxel.googleadk import bl_model
-model = await bl_model("gpt-4o-mini")
+model = await bl_model("gpt-5-mini")
 
 # With LiveKit
 from blaxel.livekit import bl_model
-model = await bl_model("gpt-4o")
+model = await bl_model("gpt-5-mini")
 ```
 
 #### MCP tool use
@@ -398,15 +398,41 @@ tools = await bl_tools(["blaxel-search"])
 
 # With CrewAI
 from blaxel.crewai import bl_tools
-model = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["blaxel-search"])
 
 # With Google ADK
 from blaxel.googleadk import bl_tools
-model = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["blaxel-search"])
 
 # With LiveKit
 from blaxel.livekit import bl_tools
-model = await bl_tools(["blaxel-search"])
+tools = await bl_tools(["blaxel-search"])
+```
+
+Here is an example of retrieving tool definitions from a Blaxel sandbox's MCP server for use with the OpenAI SDK:
+
+```python
+import asyncio
+from blaxel.core import SandboxInstance
+from blaxel.openai import bl_tools
+
+async def main():
+
+    # Create a new sandbox
+    sandbox = await SandboxInstance.create_if_not_exists({
+        "name": "my-sandbox",
+        "image": "blaxel/base-image:latest",
+        "memory": 4096,
+        "region": "us-pdx-1",
+        "ports": [{"target": 3000, "protocol": "HTTP"}],
+        "ttl": "24h"
+    })
+
+    # Get sandbox MCP tools
+    tools = await bl_tools(["sandbox/my-sandbox"])
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### Telemetry
