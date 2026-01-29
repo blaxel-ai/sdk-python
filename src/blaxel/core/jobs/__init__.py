@@ -75,7 +75,7 @@ class BlJob:
     def run(
         self,
         tasks: List[Dict[str, Any]],
-        env: Dict[str, Any] | None = None,
+        env: Dict[str, str] | None = None,
         memory: int | None = None,
         execution_id: str | None = None,
     ) -> str:
@@ -109,7 +109,7 @@ class BlJob:
     async def arun(
         self,
         tasks: List[Dict[str, Any]],
-        env: Dict[str, Any] | None = None,
+        env: Dict[str, str] | None = None,
         memory: int | None = None,
         execution_id: str | None = None,
     ) -> str:

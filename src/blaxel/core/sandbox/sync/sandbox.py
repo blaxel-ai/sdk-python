@@ -96,6 +96,14 @@ class SyncSandboxInstance:
     def spec(self):
         return self.sandbox.spec
 
+    @property
+    def last_used_at(self):
+        return self.sandbox.last_used_at
+
+    @property
+    def expires_in(self):
+        return self.sandbox.expires_in
+
     def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SyncSandboxInstance":
         logger.warning(
             "⚠️  Warning: sandbox.wait() is deprecated. You don't need to wait for the sandbox to be deployed anymore."
