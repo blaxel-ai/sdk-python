@@ -266,45 +266,52 @@ if __name__ == "__main__":
 Blaxel lets you support agentic workflows by offloading asynchronous batch processing tasks to its scalable infrastructure, where they can run in parallel. Jobs can run multiple times within a single execution and accept optional input parameters.
 
 ```python
+import asyncio
 from blaxel.core.jobs import bl_job
 from blaxel.core.client.models import CreateJobExecutionRequest
 
-# Create and run a job execution
-job = bl_job("job-name")
+async def main():
+    # Create and run a job execution
+    job = bl_job("job-name")
 
-execution_id = job.create_execution(CreateJobExecutionRequest(
-    tasks=[
-        {"name": "John"},
-        {"name": "Jane"},
-        {"name": "Bob"}
-    ]
-))
+    execution_id = await job.acreate_execution(CreateJobExecutionRequest(
+        tasks=[
+            {"name": "John"},
+            {"name": "Jane"},
+            {"name": "Bob"}
+        ]
+    ))
 
-# Get execution status
-# Returns: "pending" | "running" | "completed" | "failed"
-status = job.get_execution_status(execution_id)
+    # Get execution status
+    # Returns: "pending" | "running" | "completed" | "failed"
+    status = await job.aget_execution_status(execution_id)
 
-# Get execution details
-execution = job.get_execution(execution_id)
-print(execution.status, execution.metadata)
+    # Get execution details
+    execution = await job.aget_execution(execution_id)
+    print(execution.status, execution.metadata)
 
-# Wait for completion
-try:
-    result = job.wait_for_execution(
-        execution_id,
-        max_wait=300,  # 5 minutes (seconds)
-        interval=2     # Poll every 2 seconds
-    )
-    print(f"Completed: {result.status}")
-except Exception as error:
-    print(f"Timeout: {error}")
+    # Wait for completion
+    try:
+        result = await job.await_for_execution(
+            execution_id,
+            max_wait=300,  # 5 minutes (seconds)
+            interval=2     # Poll every 2 seconds
+        )
+        print(f"Completed: {result.status}")
+    except Exception as error:
+        print(f"Timeout: {error}")
 
-# List all executions
-executions = job.list_executions()
+    # List all executions
+    executions = await job.alist_executions()
 
-# Delete an execution
-job.cancel_execution(execution_id)
+    # Delete an execution
+    await job.acancel_execution(execution_id)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+Synchronous calls are [also available](https://docs.blaxel.ai/Jobs/Manage-job-execution-py).
 
 ### Framework integrations
 
