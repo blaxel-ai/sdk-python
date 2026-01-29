@@ -26,6 +26,8 @@ class Sandbox:
             spec (SandboxSpec): Configuration for a sandbox including its image, memory, ports, region, and lifecycle
                 policies
             events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            expires_in (Union[Unset, int]): Time in seconds until the sandbox is automatically deleted based on TTL and
+                lifecycle policies. Only present for sandboxes with lifecycle configured.
             last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
             status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
@@ -33,6 +35,7 @@ class Sandbox:
     metadata: "Metadata"
     spec: "SandboxSpec"
     events: Union[Unset, list["CoreEvent"]] = UNSET
+    expires_in: Union[Unset, int] = UNSET
     last_used_at: Union[Unset, str] = UNSET
     status: Union[Unset, Status] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -60,6 +63,8 @@ class Sandbox:
                     )
                 events.append(componentsschemas_core_events_item)
 
+        expires_in = self.expires_in
+
         last_used_at = self.last_used_at
 
         status: Union[Unset, str] = UNSET
@@ -76,6 +81,8 @@ class Sandbox:
         )
         if events is not UNSET:
             field_dict["events"] = events
+        if expires_in is not UNSET:
+            field_dict["expiresIn"] = expires_in
         if last_used_at is not UNSET:
             field_dict["lastUsedAt"] = last_used_at
         if status is not UNSET:
@@ -105,6 +112,8 @@ class Sandbox:
 
             events.append(componentsschemas_core_events_item)
 
+        expires_in = d.pop("expiresIn", d.pop("expires_in", UNSET))
+
         last_used_at = d.pop("lastUsedAt", d.pop("last_used_at", UNSET))
 
         _status = d.pop("status", UNSET)
@@ -118,6 +127,7 @@ class Sandbox:
             metadata=metadata,
             spec=spec,
             events=events,
+            expires_in=expires_in,
             last_used_at=last_used_at,
             status=status,
         )

@@ -420,9 +420,21 @@ class TestUpdateLifecyclePreservesState(TestSandboxLifecycleAndExpiration):
         # Change to a different policy type
         new_lifecycle = SandboxLifecycle(
             expiration_policies=[
-                ExpirationPolicy(type_=ExpirationPolicyType.TTL_MAX_AGE, value="20m", action=ExpirationPolicyAction.DELETE),
-                ExpirationPolicy(type_=ExpirationPolicyType.TTL_IDLE, value="10m", action=ExpirationPolicyAction.DELETE),
-                ExpirationPolicy(type_=ExpirationPolicyType.TTL_IDLE, value="10m", action=ExpirationPolicyAction.DELETE),
+                ExpirationPolicy(
+                    type_=ExpirationPolicyType.TTL_MAX_AGE,
+                    value="20m",
+                    action=ExpirationPolicyAction.DELETE,
+                ),
+                ExpirationPolicy(
+                    type_=ExpirationPolicyType.TTL_IDLE,
+                    value="10m",
+                    action=ExpirationPolicyAction.DELETE,
+                ),
+                ExpirationPolicy(
+                    type_=ExpirationPolicyType.TTL_IDLE,
+                    value="10m",
+                    action=ExpirationPolicyAction.DELETE,
+                ),
             ]
         )
         await SandboxInstance.update_lifecycle(name, new_lifecycle)
