@@ -12,6 +12,7 @@ from .default import (
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+    SandboxSystem,
 )
 from .sync import (
     SyncCodeInterpreter,
@@ -20,6 +21,7 @@ from .sync import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    SyncSandboxSystem,
 )
 from .types import (
     AsyncStreamHandle,
@@ -56,6 +58,7 @@ __all__ = [
     "SandboxPreviews",
     "SandboxProcess",
     "SandboxCodegen",
+    "SandboxSystem",
     "ProcessRequestWithLog",
     "ProcessResponseWithLog",
     "ApplyEditRequest",
@@ -67,6 +70,7 @@ __all__ = [
     "SyncSandboxInstance",
     "SyncSandboxPreviews",
     "SyncSandboxProcess",
+    "SyncSandboxSystem",
     "SyncCodeInterpreter",
     "CodeInterpreter",
 ]

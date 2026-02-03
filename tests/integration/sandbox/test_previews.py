@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -361,3 +362,89 @@ class TestCORSHeaders(TestPreviewOperations):
         assert response.headers.get("access-control-allow-origin") == "*"
 
         await self.sandbox.previews.delete("cors-test")
+
+
+@pytest.mark.asyncio(loop_scope="class")
+class TestAsyncDeletion(TestPreviewOperations):
+    """Test async deletion of previews."""
+
+    async def test_creates_private_preview_with_15_tokens_and_tests_async_deletion(self):
+        """Test creating private preview with 15 tokens and async deletion."""
+        print(f"Sandbox name: {self.sandbox.metadata.name}")
+        preview = await self.sandbox.previews.create(
+            {
+                "metadata": {"name": "preview-with-many-tokens"},
+                "spec": {"port": 3000, "public": False},
+            }
+        )
+        print(f"Preview created: {preview.metadata.name}")
+
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=10)
+        tokens = await asyncio.gather(
+            *[preview.tokens.create(expiration) for _ in range(15)]
+        )
+
+        assert len(tokens) == 15
+        for token in tokens:
+            assert token.value is not None
+
+        listed_tokens = await preview.tokens.list()
+        assert len(listed_tokens) >= 15
+
+        await self.sandbox.previews.delete("preview-with-many-tokens")
+        with pytest.raises(Exception):
+            await self.sandbox.previews.get("preview-with-many-tokens")
+
+        await self.sandbox.previews.create(
+            {
+                "metadata": {"name": "preview-with-many-tokens"},
+                "spec": {"port": 3000, "public": True},
+            }
+        )
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.get(preview.spec.url)
+        assert response.status_code == 200
+
+        await self.sandbox.previews.delete("preview-with-many-tokens")
+
+
+@pytest.mark.asyncio(loop_scope="class")
+class TestPreviewRaceConditions(TestPreviewOperations):
+    """Test preview race conditions."""
+
+    async def test_creates_preview_then_removes_and_recreates_same_preview(self):
+        """Test creating a preview then removing it and recreating the same preview."""
+
+        async def run_test(index: int):
+            preview_name = f"preview-race-{index}"
+            preview = await self.sandbox.previews.create_if_not_exists(
+                {
+                    "metadata": {"name": preview_name},
+                    "spec": {"port": 3000, "public": True},
+                }
+            )
+
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.get(preview.spec.url)
+            assert response.status_code == 200
+
+            await self.sandbox.previews.delete(preview_name)
+
+            preview2 = await self.sandbox.previews.create_if_not_exists(
+                {
+                    "metadata": {"name": preview_name},
+                    "spec": {"port": 3000, "public": True},
+                }
+            )
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response2 = await client.get(preview2.spec.url)
+            if response2.status_code != 200:
+                print(
+                    f"Preview URL check failed for {preview_name}: {preview2.spec.url} - Status: {response2.status_code}"
+                )
+            assert response2.status_code == 200
+
+            # Cleanup
+            await self.sandbox.previews.delete(preview_name)
+
+        await asyncio.gather(*[run_test(i + 1) for i in range(100)])

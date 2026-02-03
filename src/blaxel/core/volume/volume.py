@@ -1,3 +1,5 @@
+import asyncio
+import time
 import uuid
 from typing import Callable, Dict, List, Union
 
@@ -500,6 +502,8 @@ async def _update_volume_by_name(
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
         raise VolumeAPIError(message, status_code=status_code, code=response.error)
+    # This is for safe update
+    await asyncio.sleep(0.5)
     return VolumeInstance(response)
 
 
@@ -576,6 +580,8 @@ def _update_volume_by_name_sync(
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
         raise VolumeAPIError(message, status_code=status_code, code=response.error)
+    # This is for safe update
+    time.sleep(0.5)
     return SyncVolumeInstance(response)
 
 

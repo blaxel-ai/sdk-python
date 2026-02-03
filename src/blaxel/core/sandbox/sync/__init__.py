@@ -6,6 +6,7 @@ from .sandbox import (
     SyncSandboxPreviews,
     SyncSandboxProcess,
 )
+from .system import SyncSandboxSystem
 
 __all__ = [
     "SyncSandboxInstance",
@@ -13,5 +14,6 @@ __all__ = [
     "SyncSandboxPreviews",
     "SyncSandboxProcess",
     "SyncSandboxCodegen",
+    "SyncSandboxSystem",
     "SyncCodeInterpreter",
 ]

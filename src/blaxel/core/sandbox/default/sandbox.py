@@ -32,6 +32,7 @@ from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .session import SandboxSessions
+from .system import SandboxSystem
 
 
 class SandboxAPIError(Exception):
@@ -94,6 +95,7 @@ class SandboxInstance:
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
         self.codegen = SandboxCodegen(self.config)
+        self.system = SandboxSystem(self.config)
 
     @property
     def metadata(self):
