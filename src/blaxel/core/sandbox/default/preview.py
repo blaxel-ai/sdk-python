@@ -210,13 +210,19 @@ class SandboxPreviews:
         timeout_seconds = timeout_ms / 1000.0
 
         while elapsed < timeout_seconds:
-            response = await get_sandbox_preview_detailed(
-                self.sandbox_name,
-                preview_name,
-                client=client,
-            )
-            if response.status_code == 404:
-                return
+            try:
+                response = await get_sandbox_preview_detailed(
+                    self.sandbox_name,
+                    preview_name,
+                    client=client,
+                )
+                if response.status_code == 404:
+                    return
+            except errors.UnexpectedStatus as e:
+                # 404 means the preview is deleted
+                if e.status_code == 404:
+                    return
+                raise
             # Preview still exists, wait and retry
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
