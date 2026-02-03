@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Union
@@ -10,6 +11,9 @@ from ...client.api.compute.create_sandbox_preview_token import (
 from ...client.api.compute.delete_sandbox_preview import sync as delete_sandbox_preview
 from ...client.api.compute.delete_sandbox_preview_token import (
     sync as delete_sandbox_preview_token,
+)
+from ...client.api.compute.get_sandbox_preview import (
+    sync_detailed as get_sandbox_preview_detailed,
 )
 from ...client.api.compute.get_sandbox_preview import sync as get_sandbox_preview
 from ...client.api.compute.list_sandbox_preview_tokens import (
@@ -188,9 +192,46 @@ class SyncSandboxPreviews:
             preview_name,
             client=client,
         )
-        if response:
-            return response
-        raise errors.UnexpectedStatus(400, b"Failed to delete preview")
+        if not response:
+            raise errors.UnexpectedStatus(400, b"Failed to delete preview")
+
+        # If the preview is in DELETING state, wait for it to be fully deleted
+        if response.status == "DELETING":
+            self._wait_for_deletion(preview_name)
+
+        return response
+
+    def _wait_for_deletion(self, preview_name: str, timeout_ms: int = 10000) -> None:
+        """Wait for a preview to be fully deleted.
+
+        Args:
+            preview_name: Name of the preview to wait for
+            timeout_ms: Timeout in milliseconds (default: 10000)
+
+        Raises:
+            Exception: If the preview is still in DELETING state after timeout
+        """
+        print(f"Waiting for preview deletion: {preview_name}")
+        poll_interval = 0.5  # Poll every 500ms
+        elapsed = 0.0
+        timeout_seconds = timeout_ms / 1000.0
+
+        while elapsed < timeout_seconds:
+            response = get_sandbox_preview_detailed(
+                self.sandbox_name,
+                preview_name,
+                client=client,
+            )
+            if response.status_code == 404:
+                return
+            # Preview still exists, wait and retry
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+        # Timeout reached, but deletion was initiated
+        raise Exception(
+            f"Preview deletion timeout: {preview_name} is still in DELETING state after {timeout_ms}ms"
+        )
 
 
 def to_utc_z(dt: datetime) -> str:

@@ -7,6 +7,7 @@ from .sandbox import (
     SandboxPreviews,
     SandboxProcess,
 )
+from .system import SandboxSystem
 
 __all__ = [
     "SandboxInstance",
@@ -15,5 +16,6 @@ __all__ = [
     "SandboxPreviews",
     "SandboxProcess",
     "SandboxCodegen",
+    "SandboxSystem",
     "CodeInterpreter",
 ]

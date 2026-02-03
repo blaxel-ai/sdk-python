@@ -32,6 +32,7 @@ from .network import SyncSandboxNetwork
 from .preview import SyncSandboxPreviews
 from .process import SyncSandboxProcess
 from .session import SyncSandboxSessions
+from .system import SyncSandboxSystem
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,7 @@ class SyncSandboxInstance:
         self.sessions = SyncSandboxSessions(self.config)
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)
+        self.system = SyncSandboxSystem(self.config)
 
     @property
     def metadata(self):
