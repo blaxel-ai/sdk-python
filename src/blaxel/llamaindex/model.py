@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Union
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
@@ -20,20 +20,61 @@ if TYPE_CHECKING:
         CompletionResponseAsyncGen,
         CompletionResponseGen,
     )
+    from llama_index.core.llms.llm import ToolSelection
+    from llama_index.core.tools.types import BaseTool
+
+# Runtime imports needed for class inheritance and construction
+from llama_index.core.base.llms.types import LLMMetadata  # noqa: E402
+from llama_index.core.llms.function_calling import FunctionCallingLLM  # noqa: E402
+from pydantic import PrivateAttr  # noqa: E402
 
 logger = getLogger(__name__)
 
+DEFAULT_CONTEXT_WINDOW = 128000
+DEFAULT_NUM_OUTPUT = 4096
 
-class TokenRefreshingWrapper:
-    """Base wrapper class that refreshes token before each call."""
+
+class TokenRefreshingLLM(FunctionCallingLLM):
+    """Wrapper for LlamaIndex LLMs that refreshes token before each call.
+
+    Inherits from FunctionCallingLLM to maintain type compatibility with
+    LlamaIndex's agents and components that validate isinstance(model, LLM).
+    """
+
+    _model_config_data: dict = PrivateAttr(default_factory=dict)
+    _wrapped: Any = PrivateAttr(default=None)
 
     def __init__(self, model_config: dict):
-        self.model_config = model_config
-        self.wrapped_model = self._create_model()
+        super().__init__()
+        self._model_config_data = model_config
+        self._wrapped = self._create_model()
+
+    @classmethod
+    def class_name(cls) -> str:
+        return "TokenRefreshingLLM"
+
+    @property
+    def wrapped_model(self) -> Any:
+        """Access the underlying wrapped LLM model."""
+        return self._wrapped
+
+    @property
+    def metadata(self) -> LLMMetadata:
+        """Get LLM metadata, with fallback for unknown model names."""
+        try:
+            return self._wrapped.metadata
+        except (ValueError, KeyError) as e:
+            logger.warning(f"Could not get metadata from wrapped model: {e}. Using defaults.")
+            return LLMMetadata(
+                context_window=DEFAULT_CONTEXT_WINDOW,
+                num_output=DEFAULT_NUM_OUTPUT,
+                is_chat_model=True,
+                model_name=self._model_config_data.get("model", "unknown"),
+            )
 
     def _create_model(self):
         """Create the model instance with current token."""
-        config = self.model_config
+        config = self._model_config_data
         model_type = config["type"]
         model = config["model"]
         url = config["url"]
@@ -115,102 +156,106 @@ class TokenRefreshingWrapper:
 
     def _refresh_token(self):
         """Refresh the token and recreate the model if needed."""
-        # Only refresh if using ClientCredentials (which has get_token method)
         current_token = settings.auth.token
-
-        if hasattr(settings.auth, "get_token"):
-            # This will trigger token refresh if needed
-            settings.auth.get_token()
 
         new_token = settings.auth.token
 
-        # If token changed, recreate the model
         if current_token != new_token:
-            self.wrapped_model = self._create_model()
+            self._wrapped = self._create_model()
 
-    def __getattr__(self, name):
-        """Delegate attribute access to wrapped model."""
-        return getattr(self.wrapped_model, name)
+    # --- Core LLM methods with token refresh ---
 
-
-class TokenRefreshingLLM(TokenRefreshingWrapper):
-    """Wrapper for LlamaIndex LLMs that refreshes token before each call."""
-
-    async def achat(
-        self,
-        messages: Sequence[ChatMessage],
-        **kwargs: Any,
-    ) -> ChatResponse:
-        """Async chat with token refresh."""
+    def chat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponse:
         self._refresh_token()
-        return await self.wrapped_model.achat(messages, **kwargs)
+        return self._wrapped.chat(messages, **kwargs)
 
-    def chat(
-        self,
-        messages: Sequence[ChatMessage],
-        **kwargs: Any,
-    ) -> ChatResponse:
-        """Sync chat with token refresh."""
+    async def achat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponse:
         self._refresh_token()
-        return self.wrapped_model.chat(messages, **kwargs)
+        return await self._wrapped.achat(messages, **kwargs)
 
-    async def astream_chat(
-        self,
-        messages: Sequence[ChatMessage],
-        **kwargs: Any,
-    ) -> ChatResponseAsyncGen:
-        """Async stream chat with token refresh."""
+    def complete(self, prompt: str, formatted: bool = False, **kwargs: Any) -> CompletionResponse:
         self._refresh_token()
-        async for chunk in self.wrapped_model.astream_chat(messages, **kwargs):
-            yield chunk
-
-    def stream_chat(
-        self,
-        messages: Sequence[ChatMessage],
-        **kwargs: Any,
-    ) -> ChatResponseGen:
-        """Sync stream chat with token refresh."""
-        self._refresh_token()
-        for chunk in self.wrapped_model.stream_chat(messages, **kwargs):
-            yield chunk
+        return self._wrapped.complete(prompt, formatted=formatted, **kwargs)
 
     async def acomplete(
-        self,
-        prompt: str,
-        **kwargs: Any,
+        self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponse:
-        """Async complete with token refresh."""
         self._refresh_token()
-        return await self.wrapped_model.acomplete(prompt, **kwargs)
+        return await self._wrapped.acomplete(prompt, formatted=formatted, **kwargs)
 
-    def complete(
-        self,
-        prompt: str,
-        **kwargs: Any,
-    ) -> CompletionResponse:
-        """Sync complete with token refresh."""
+    def stream_chat(
+        self, messages: Sequence[ChatMessage], **kwargs: Any
+    ) -> ChatResponseGen:
         self._refresh_token()
-        return self.wrapped_model.complete(prompt, **kwargs)
+        return self._wrapped.stream_chat(messages, **kwargs)
 
-    async def astream_complete(
-        self,
-        prompt: str,
-        **kwargs: Any,
-    ) -> CompletionResponseAsyncGen:
-        """Async stream complete with token refresh."""
+    async def astream_chat(
+        self, messages: Sequence[ChatMessage], **kwargs: Any
+    ) -> ChatResponseAsyncGen:
         self._refresh_token()
-        async for chunk in self.wrapped_model.astream_complete(prompt, **kwargs):
-            yield chunk
+        result = self._wrapped.astream_chat(messages, **kwargs)
+        # Handle both coroutine and async generator patterns
+        if hasattr(result, "__aiter__"):
+            return result
+        return await result
 
     def stream_complete(
-        self,
-        prompt: str,
-        **kwargs: Any,
+        self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponseGen:
-        """Sync stream complete with token refresh."""
         self._refresh_token()
-        for chunk in self.wrapped_model.stream_complete(prompt, **kwargs):
-            yield chunk
+        return self._wrapped.stream_complete(prompt, formatted=formatted, **kwargs)
+
+    async def astream_complete(
+        self, prompt: str, formatted: bool = False, **kwargs: Any
+    ) -> CompletionResponseAsyncGen:
+        self._refresh_token()
+        result = self._wrapped.astream_complete(prompt, formatted=formatted, **kwargs)
+        # Handle both coroutine and async generator patterns
+        if hasattr(result, "__aiter__"):
+            return result
+        return await result
+
+    # --- FunctionCallingLLM methods (delegate to wrapped model) ---
+
+    def _prepare_chat_with_tools(
+        self,
+        tools: Sequence[BaseTool],
+        user_msg: Union[str, ChatMessage, None] = None,
+        chat_history: List[ChatMessage] | None = None,
+        verbose: bool = False,
+        allow_parallel_tool_calls: bool = False,
+        tool_required: Any = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        if hasattr(self._wrapped, "_prepare_chat_with_tools"):
+            return self._wrapped._prepare_chat_with_tools(
+                tools,
+                user_msg=user_msg,
+                chat_history=chat_history,
+                verbose=verbose,
+                allow_parallel_tool_calls=allow_parallel_tool_calls,
+                tool_required=tool_required,
+                **kwargs,
+            )
+        raise NotImplementedError(
+            f"The wrapped model ({type(self._wrapped).__name__}) does not support function calling"
+        )
+
+    def get_tool_calls_from_response(
+        self,
+        response: ChatResponse,
+        error_on_no_tool_call: bool = True,
+        **kwargs: Any,
+    ) -> List[ToolSelection]:
+        if hasattr(self._wrapped, "get_tool_calls_from_response"):
+            return self._wrapped.get_tool_calls_from_response(
+                response,
+                error_on_no_tool_call=error_on_no_tool_call,
+                **kwargs,
+            )
+        raise NotImplementedError(
+            f"The wrapped model ({type(self._wrapped).__name__}) does not support function calling"
+        )
 
 
 async def bl_model(name, **kwargs):
