@@ -1,9 +1,42 @@
-from pydantic_ai import RunContext
-from pydantic_ai.tools import Tool as PydanticTool
-from pydantic_ai.tools import ToolDefinition
+from typing import Any
+
+from pydantic_ai import RunContext  # type: ignore[import-not-found]
+from pydantic_ai.tools import Tool as PydanticTool  # type: ignore[import-not-found]
+from pydantic_ai.tools import ToolDefinition  # type: ignore[import-not-found]
 
 from blaxel.core.tools import Tool
 from blaxel.core.tools import bl_tools as bl_tools_core
+
+
+def _clean_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
+    """Clean JSON schema to be compatible with OpenAI function calling.
+
+    OpenAI requires object schemas to have a 'properties' field, even if empty.
+    """
+    if not isinstance(schema, dict):
+        return schema
+
+    cleaned = schema.copy()
+
+    if cleaned.get("type") == "object":
+        if "properties" not in cleaned:
+            cleaned["properties"] = {}
+        if "required" not in cleaned:
+            cleaned["required"] = []
+
+    if "additionalProperties" in cleaned:
+        del cleaned["additionalProperties"]
+    if "$schema" in cleaned:
+        del cleaned["$schema"]
+
+    if "properties" in cleaned:
+        cleaned["properties"] = {
+            k: _clean_schema_for_openai(v) for k, v in cleaned["properties"].items()
+        }
+    if "items" in cleaned and isinstance(cleaned["items"], dict):
+        cleaned["items"] = _clean_schema_for_openai(cleaned["items"])
+
+    return cleaned
 
 
 def get_pydantic_tool(tool: Tool) -> PydanticTool:
@@ -27,7 +60,7 @@ def get_pydantic_tool(tool: Tool) -> PydanticTool:
         """Dynamically prepares the ToolDefinition using the custom Tool's attributes."""
         tool_def.name = tool.name  # Override inferred name
         tool_def.description = tool.description  # Override inferred description
-        tool_def.parameters_json_schema = tool.input_schema
+        tool_def.parameters_json_schema = _clean_schema_for_openai(tool.input_schema)
         return tool_def
 
     async def pydantic_function(**kwargs):

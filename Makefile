@@ -5,7 +5,7 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 GIT_COMMIT_SHORT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 install:
-	uv sync --refresh --force-reinstall
+	uv sync --refresh --force-reinstall --group test --group dev
 
 sdk-sandbox:
 	@echo "Downloading sandbox definition from blaxel-ai/sandbox"
@@ -88,10 +88,10 @@ FRAMEWORK_DIRS := llamaindex langgraph openai livekit crewai pydantic googleadk
 IGNORE_FRAMEWORK := $(foreach dir,$(FRAMEWORK_DIRS),--ignore=tests/integration/$(dir)/)
 
 test-integration:
-	uv run pytest tests/integration/ $(IGNORE_FRAMEWORK)
+	uv run pytest tests/integration/ $(IGNORE_FRAMEWORK) -s
 
 test-integration-%:
-	uv run --extra $* pytest tests/integration/$*/
+	uv run --extra $* pytest tests/integration/$*/ -s
 
 install-dev:
 	uv sync --group test

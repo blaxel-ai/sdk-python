@@ -5,6 +5,8 @@ import pytest  # noqa: E402
 
 pytest.importorskip("crewai", reason="crewai not installed (install with: blaxel[crewai])")
 
+from crewai import LLM  # noqa: E402
+
 from blaxel.crewai import bl_model  # noqa: E402
 
 TEST_MODELS = [

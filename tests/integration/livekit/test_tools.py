@@ -45,3 +45,17 @@ class TestBlTools:
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
         assert len(tools) > 0
+
+    async def test_can_invoke_a_tool(self):
+        """Test invoking a tool."""
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        assert len(tools) > 0
+
+        exec_tool = next(
+            (t for t in tools if hasattr(t, "__livekit_raw_tool_info") and "exec" in t.__livekit_raw_tool_info.name.lower()),
+            None,
+        )
+        assert exec_tool is not None
+        result = await exec_tool({"command": "echo 'hello'"})
+        assert result is not None

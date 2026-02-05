@@ -6,9 +6,10 @@ import pytest  # noqa: E402
 pytest.importorskip("llama_index", reason="llama-index not installed (install with: blaxel[llamaindex])")
 
 import pytest_asyncio  # noqa: E402
+from llama_index.core.agent import ReActAgent  # noqa: E402
 
 from blaxel.core.sandbox import SandboxInstance  # noqa: E402
-from blaxel.llamaindex import bl_tools  # noqa: E402
+from blaxel.llamaindex import bl_model, bl_tools  # noqa: E402
 from tests.helpers import default_image, default_labels, unique_name  # noqa: E402
 
 
@@ -56,3 +57,20 @@ class TestBlTools:
         assert exec_tool is not None
         result = await exec_tool.acall(command="echo 'hello'")
         assert result is not None
+
+    async def test_agent_can_use_tools(self):
+        """Test that an agent can use sandbox tools to list files."""
+        model = await bl_model("sandbox-openai")
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        agent = ReActAgent(
+            name="test",
+            llm=model,
+            tools=tools,
+            system_prompt="You are a helpful assistant. Use the tools available to answer the user's question.",
+        )
+        result = await agent.run("List the files and directories in /")
+
+        assert result is not None
+        assert result.response is not None
+        print(f"\n[llamaindex agent result] {result.response}")

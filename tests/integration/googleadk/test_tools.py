@@ -6,9 +6,13 @@ import pytest  # noqa: E402
 pytest.importorskip("google.adk", reason="google-adk not installed (install with: blaxel[googleadk])")
 
 import pytest_asyncio  # noqa: E402
+from google.adk.agents import Agent  # noqa: E402
+from google.adk.runners import Runner  # noqa: E402
+from google.adk.sessions import InMemorySessionService  # noqa: E402
+from google.genai import types  # noqa: E402
 
 from blaxel.core.sandbox import SandboxInstance  # noqa: E402
-from blaxel.googleadk import bl_tools  # noqa: E402
+from blaxel.googleadk import bl_model, bl_tools  # noqa: E402
 from tests.helpers import default_image, default_labels, unique_name  # noqa: E402
 
 
@@ -45,3 +49,60 @@ class TestBlTools:
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
         assert len(tools) > 0
+
+    async def test_can_invoke_a_tool(self):
+        """Test invoking a tool."""
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        assert len(tools) > 0
+
+        exec_tool = next((t for t in tools if "exec" in t.name.lower()), None)
+        assert exec_tool is not None
+        result = await exec_tool.run_async(args={"command": "echo 'hello'"}, tool_context=None)  # type: ignore[arg-type]
+        assert result is not None
+
+    async def test_agent_can_use_tools(self):
+        """Test that an agent can use sandbox tools to list files."""
+        model = await bl_model("sandbox-openai")
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        agent = Agent(
+            name="test",
+            model=model,
+            tools=tools,
+            instruction="You are a helpful assistant. Use the tools available to answer the user's question.",
+        )
+
+        session_service = InMemorySessionService()
+        session = await session_service.create_session(
+            app_name="test", user_id="test-user"
+        )
+
+        runner = Runner(agent=agent, app_name="test", session_service=session_service)
+
+        message = types.Content(
+            parts=[types.Part(text="List the files and directories in /")],
+            role="user",
+        )
+
+        events = []
+        async for event in runner.run_async(
+            user_id="test-user",
+            session_id=session.id,
+            new_message=message,
+        ):
+            events.append(event)
+
+        assert len(events) > 0
+        # Check that at least one event has content
+        has_content = any(
+            event.content and event.content.parts
+            for event in events
+        )
+        assert has_content
+        # Print the last event with content
+        for event in reversed(events):
+            if event.content and event.content.parts:
+                text = " ".join(p.text for p in event.content.parts if p.text)
+                print(f"\n[googleadk agent result] {text}")
+                break

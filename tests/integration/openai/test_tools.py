@@ -6,9 +6,10 @@ import pytest  # noqa: E402
 pytest.importorskip("agents", reason="openai-agents not installed (install with: blaxel[openai])")
 
 import pytest_asyncio  # noqa: E402
+from agents import Agent, Runner  # noqa: E402
 
 from blaxel.core.sandbox import SandboxInstance  # noqa: E402
-from blaxel.openai import bl_tools  # noqa: E402
+from blaxel.openai import bl_model, bl_tools  # noqa: E402
 from tests.helpers import default_image, default_labels, unique_name  # noqa: E402
 
 
@@ -46,3 +47,36 @@ class TestBlTools:
 
         assert tools is not None
         assert len(tools) > 0
+
+    async def test_can_invoke_a_tool(self):
+        """Test invoking a tool."""
+        import json
+
+        from agents.tool_context import ToolContext  # noqa: E402
+
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        assert len(tools) > 0
+
+        exec_tool = next((t for t in tools if "exec" in t.name.lower()), None)
+        assert exec_tool is not None
+        ctx = ToolContext(context=None, tool_name=exec_tool.name, tool_call_id="test")
+        result = await exec_tool.on_invoke_tool(ctx, json.dumps({"command": "echo 'hello'"}))
+        assert result is not None
+
+    async def test_agent_can_use_tools(self):
+        """Test that an agent can use sandbox tools to list files."""
+        model = await bl_model("sandbox-openai")
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        agent = Agent(
+            name="test",
+            instructions="You are a helpful assistant. Use the tools available to answer the user's question.",
+            model=model,
+            tools=tools,
+        )
+        result = await Runner.run(agent, input="List the files and directories in /")
+
+        assert result is not None
+        assert result.final_output is not None
+        print(f"\n[openai agent result] {result.final_output}")

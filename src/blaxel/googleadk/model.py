@@ -1,6 +1,9 @@
 from logging import getLogger
 
-from google.adk.models.lite_llm import LiteLlm, LiteLLMClient
+from google.adk.models.lite_llm import (  # type: ignore[import-not-found]
+    LiteLlm,
+    LiteLLMClient,
+)
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings

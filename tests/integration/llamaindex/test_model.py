@@ -5,9 +5,11 @@ import pytest  # noqa: E402
 
 pytest.importorskip("llama_index", reason="llama-index not installed (install with: blaxel[llamaindex])")
 
-from llama_index.core.base.llms.base import BaseLLM  # noqa: E402
-from llama_index.core.llms import ChatMessage  # noqa: E402
-from llama_index.core.llms.function_calling import FunctionCallingLLM  # noqa: E402
+from llama_index.core.base.llms.base import BaseLLM  # type: ignore[import-not-found]
+from llama_index.core.llms import ChatMessage  # type: ignore[import-not-found]
+from llama_index.core.llms.function_calling import (  # type: ignore[import-not-found]
+    FunctionCallingLLM,
+)
 
 from blaxel.llamaindex import bl_model  # noqa: E402
 

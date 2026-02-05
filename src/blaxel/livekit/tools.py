@@ -1,4 +1,4 @@
-from livekit.agents import function_tool, llm
+from livekit.agents import function_tool, llm  # type: ignore[import-not-found]
 
 from blaxel.core.tools import bl_tools as bl_tools_core
 from blaxel.core.tools.types import Tool
@@ -6,6 +6,8 @@ from blaxel.core.tools.types import Tool
 
 def livekit_coroutine(tool: Tool):
     async def livekit_coroutine_wrapper(raw_arguments: dict[str, object]):
+        if not tool.coroutine:
+            raise ValueError(f"Tool {tool.name} does not have a coroutine defined")
         result = await tool.coroutine(**raw_arguments)
         return result.model_dump_json()
 

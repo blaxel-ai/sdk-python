@@ -6,9 +6,10 @@ import pytest  # noqa: E402
 pytest.importorskip("pydantic_ai", reason="pydantic-ai not installed (install with: blaxel[pydantic])")
 
 import pytest_asyncio  # noqa: E402
+from pydantic_ai import Agent  # noqa: E402
 
 from blaxel.core.sandbox import SandboxInstance  # noqa: E402
-from blaxel.pydantic import bl_tools  # noqa: E402
+from blaxel.pydantic import bl_model, bl_tools  # noqa: E402
 from tests.helpers import default_image, default_labels, unique_name  # noqa: E402
 
 
@@ -45,3 +46,30 @@ class TestBlTools:
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
         assert len(tools) > 0
+
+    async def test_can_invoke_a_tool(self):
+        """Test invoking a tool."""
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        assert len(tools) > 0
+
+        exec_tool = next((t for t in tools if "exec" in t.name.lower()), None)
+        assert exec_tool is not None
+        result = await exec_tool.function(command="echo 'hello'")
+        assert result is not None
+
+    async def test_agent_can_use_tools(self):
+        """Test that an agent can use sandbox tools to list files."""
+        model = await bl_model("sandbox-openai")
+        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
+
+        agent = Agent(
+            model=model,
+            system_prompt="You are a helpful assistant. Use the tools available to answer the user's question.",
+            tools=tools,
+        )
+        result = await agent.run("List the files and directories in /")
+
+        assert result is not None
+        assert result.output is not None
+        print(f"\n[pydantic agent result] {result.output}")

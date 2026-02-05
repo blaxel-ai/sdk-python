@@ -11,7 +11,7 @@ from blaxel.core import settings
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 
 if TYPE_CHECKING:
-    from llama_index.core.base.llms.types import (
+    from llama_index.core.base.llms.types import (  # type: ignore[import-not-found]
         ChatMessage,
         ChatResponse,
         ChatResponseAsyncGen,
@@ -20,13 +20,19 @@ if TYPE_CHECKING:
         CompletionResponseAsyncGen,
         CompletionResponseGen,
     )
-    from llama_index.core.llms.llm import ToolSelection
-    from llama_index.core.tools.types import BaseTool
+    from llama_index.core.llms.llm import (  # type: ignore[import-not-found]
+        ToolSelection,
+    )
+    from llama_index.core.tools.types import BaseTool  # type: ignore[import-not-found]
 
 # Runtime imports needed for class inheritance and construction
-from llama_index.core.base.llms.types import LLMMetadata  # noqa: E402
-from llama_index.core.llms.function_calling import FunctionCallingLLM  # noqa: E402
-from pydantic import PrivateAttr  # noqa: E402
+from llama_index.core.base.llms.types import (  # type: ignore[import-not-found]
+    LLMMetadata,
+)
+from llama_index.core.llms.function_calling import (  # type: ignore[import-not-found]
+    FunctionCallingLLM,
+)
+from pydantic import PrivateAttr  # type: ignore[import-not-found]
 
 logger = getLogger(__name__)
 
@@ -81,7 +87,9 @@ class TokenRefreshingLLM(FunctionCallingLLM):
         kwargs = config.get("kwargs", {})
 
         if model_type == "anthropic":
-            from llama_index.llms.anthropic import Anthropic
+            from llama_index.llms.anthropic import (  # type: ignore[import-not-found]
+                Anthropic,
+            )
 
             return Anthropic(
                 model=model,
@@ -91,7 +99,7 @@ class TokenRefreshingLLM(FunctionCallingLLM):
                 **kwargs,
             )
         elif model_type == "xai":
-            from llama_index.llms.groq import Groq
+            from llama_index.llms.groq import Groq  # type: ignore[import-not-found]
 
             return Groq(
                 model=model,
@@ -101,7 +109,9 @@ class TokenRefreshingLLM(FunctionCallingLLM):
             )
         elif model_type == "gemini":
             from google.genai.types import HttpOptions
-            from llama_index.llms.google_genai import GoogleGenAI
+            from llama_index.llms.google_genai import (  # type: ignore[import-not-found]
+                GoogleGenAI,
+            )
 
             return GoogleGenAI(
                 api_key=settings.auth.token,
@@ -114,11 +124,13 @@ class TokenRefreshingLLM(FunctionCallingLLM):
                 **kwargs,
             )
         elif model_type == "cohere":
-            from .custom.cohere import Cohere
+            from .custom.cohere import Cohere  # type: ignore[import-not-found]
 
             return Cohere(model=model, api_key=settings.auth.token, api_base=url, **kwargs)
         elif model_type == "deepseek":
-            from llama_index.llms.deepseek import DeepSeek
+            from llama_index.llms.deepseek import (  # type: ignore[import-not-found]
+                DeepSeek,
+            )
 
             return DeepSeek(
                 model=model,
@@ -127,11 +139,15 @@ class TokenRefreshingLLM(FunctionCallingLLM):
                 **kwargs,
             )
         elif model_type == "mistral":
-            from llama_index.llms.mistralai import MistralAI
+            from llama_index.llms.mistralai import (  # type: ignore[import-not-found]
+                MistralAI,
+            )
 
             return MistralAI(model=model, api_key=settings.auth.token, endpoint=url, **kwargs)
         elif model_type == "cerebras":
-            from llama_index.llms.cerebras import Cerebras
+            from llama_index.llms.cerebras import (  # type: ignore[import-not-found]
+                Cerebras,
+            )
 
             return Cerebras(
                 model=model,
@@ -140,7 +156,7 @@ class TokenRefreshingLLM(FunctionCallingLLM):
                 **kwargs,
             )
         else:
-            from llama_index.llms.openai import OpenAI
+            from llama_index.llms.openai import OpenAI  # type: ignore[import-not-found]
 
             if model_type != "openai":
                 logger.warning(
@@ -260,6 +276,22 @@ class TokenRefreshingLLM(FunctionCallingLLM):
 
 async def bl_model(name, **kwargs):
     url, type, model = await bl_model_core(name).get_parameters()
+
+    # Store model configuration for recreation
+    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
+
+    # Create and return the wrapper
+    return TokenRefreshingLLM(model_config)
+
+    # Store model configuration for recreation
+    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
+
+    # Create and return the wrapper
+    return TokenRefreshingLLM(model_config)
+    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
+
+    # Create and return the wrapper
+    return TokenRefreshingLLM(model_config)
 
     # Store model configuration for recreation
     model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
