@@ -55,7 +55,7 @@ def pytest_sessionfinish(session, exitstatus):
                     props = getattr(labels, "additional_properties", {}) or {}
                     if props.get("env") == "integration-test":
                         try:
-                            await SandboxInstance.delete(sb.metadata.name)
+                            await sb.delete()
                         except Exception:
                             pass
         except Exception as e:
@@ -71,7 +71,7 @@ def pytest_sessionfinish(session, exitstatus):
                     props = getattr(labels, "additional_properties", {}) or {}
                     if props.get("env") == "integration-test":
                         try:
-                            await VolumeInstance.delete(vol.name)
+                            await vol.delete()
                         except Exception:
                             pass
         except Exception as e:
@@ -79,10 +79,6 @@ def pytest_sessionfinish(session, exitstatus):
 
         # Close the client
         if client._async_client is not None:
-            try:
-                await client._async_client.aclose()
-            except Exception:
-                pass
             client._async_client = None
 
         print("✅ Cleanup complete!")

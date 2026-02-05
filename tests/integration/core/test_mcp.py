@@ -1,7 +1,7 @@
 """MCP Client Integration Tests.
 
 Note: These tests require special authentication setup for raw MCP SDK.
-The blTools wrapper in test_bltools.py handles auth automatically.
+The blTools wrapper in test_tools.py handles auth automatically.
 """
 
 import pytest
@@ -18,8 +18,8 @@ from tests.helpers import default_image, default_labels, unique_name
 class TestMCPClientIntegration:
     """Test MCP client integration."""
 
-    sandbox: SandboxInstance = None
-    sandbox_name: str = None
+    sandbox: SandboxInstance | None = None
+    sandbox_name: str | None = None
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
@@ -38,12 +38,14 @@ class TestMCPClientIntegration:
 
         # Cleanup
         try:
-            await SandboxInstance.delete(request.cls.sandbox_name)
+            await request.cls.sandbox.delete()
         except Exception:
             pass
 
     async def test_streamable_http_transport(self):
         """Test Streamable HTTP Transport."""
+        if not self.sandbox:
+            pytest.skip("Sandbox not found")
         base_url = f"{self.sandbox.metadata.url}/mcp"
 
         async with streamablehttp_client(
