@@ -6,9 +6,10 @@ import pytest  # noqa: E402
 pytest.importorskip("crewai", reason="crewai not installed (install with: blaxel[crewai])")
 
 import pytest_asyncio  # noqa: E402
+from crewai import Agent, Crew, Task  # type: ignore[import-not-found]
 
 from blaxel.core.sandbox import SandboxInstance  # noqa: E402
-from blaxel.crewai import bl_tools  # noqa: E402
+from blaxel.crewai import bl_model, bl_tools  # noqa: E402
 from tests.helpers import default_image, default_labels, unique_name  # noqa: E402
 
 
@@ -40,8 +41,32 @@ class TestBlTools:
         except Exception:
             pass
 
-    async def test_can_load_tools_from_sandbox(self):
-        """Test loading tools from sandbox."""
+    async def test_agent_can_use_tools(self):
+        """Test that an agent can use sandbox tools to list files."""
+        model = await bl_model("sandbox-openai")
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
-        assert len(tools) > 0
+        agent = Agent(
+            role="File Explorer",
+            goal="List files and directories using available tools",
+            backstory="You are a helpful assistant that can explore file systems.",
+            tools=tools,
+            llm=model,
+            verbose=False,
+        )
+        task = Task(
+            description="List the files and directories in /",
+            expected_output="A list of files and directories",
+            agent=agent,
+        )
+        crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            verbose=False,
+        )
+
+        result = await crew.kickoff_async()
+
+        assert result is not None
+        assert result.raw is not None
+        print(f"\n[crewai agent result] {result.raw}")

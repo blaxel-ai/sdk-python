@@ -19,7 +19,13 @@ class AuthInterceptor(BaseInterceptor[httpx.Request, httpx.Response]):
     """
 
     def on_outbound(self, message: httpx.Request) -> httpx.Request:
-        for key, value in settings.auth.get_headers().items():
+        auth_headers = settings.auth.get_headers()
+        # Remove the SDK's default "Authorization: Bearer replaced" header
+        # when our auth uses a different header (e.g. X-Blaxel-Authorization with API keys)
+        if "Authorization" not in auth_headers:
+            message.headers.pop("Authorization", None)
+            message.headers.pop("authorization", None)
+        for key, value in auth_headers.items():
             message.headers[key] = value
         return message
 
@@ -72,12 +78,17 @@ async def bl_model(name: str, **kwargs):
         base_url = f"{url}/v1"
 
     model_string = f"{provider_prefix}/{model}"
+    auth_headers = settings.auth.get_headers()
+    # Only pass api_key when auth uses Authorization header (e.g. OAuth).
+    # When auth uses X-Blaxel-Authorization (API keys), omit api_key
+    # to prevent "Authorization: Bearer replaced" from being sent.
+    llm_api_key = "replaced" if "Authorization" in auth_headers else None
 
     if _is_native_route(provider_prefix):
         # Native providers: use interceptor for dynamic auth headers
         return LLM(
             model=model_string,
-            api_key="replaced",
+            api_key=llm_api_key,
             base_url=base_url,
             interceptor=AuthInterceptor(),
             **kwargs,
@@ -86,8 +97,8 @@ async def bl_model(name: str, **kwargs):
         # LiteLLM fallback: pass auth headers via extra_headers param
         return LLM(
             model=model_string,
-            api_key="replaced",
+            api_key=llm_api_key,
             base_url=base_url,
-            extra_headers=settings.auth.get_headers(),
+            extra_headers=auth_headers,
             **kwargs,
         )

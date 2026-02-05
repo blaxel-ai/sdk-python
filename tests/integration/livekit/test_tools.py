@@ -52,8 +52,12 @@ class TestBlTools:
 
         assert len(tools) > 0
 
+        def _get_tool_name(t):
+            info = getattr(t, "__livekit_raw_tool_info", None)
+            return info.name if info else ""
+
         exec_tool = next(
-            (t for t in tools if hasattr(t, "__livekit_raw_tool_info") and "exec" in t.__livekit_raw_tool_info.name.lower()),
+            (t for t in tools if "exec" in _get_tool_name(t).lower()),
             None,
         )
         assert exec_tool is not None

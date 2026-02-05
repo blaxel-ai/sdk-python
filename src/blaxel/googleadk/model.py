@@ -26,7 +26,13 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         Returns:
           The model response as a message.
         """
-        kwargs["extra_headers"] = settings.auth.get_headers()
+        auth_headers = settings.auth.get_headers()
+        kwargs["extra_headers"] = auth_headers
+        # Remove the dummy api_key when auth uses a different header
+        # (e.g. X-Blaxel-Authorization with API keys) to prevent litellm
+        # from adding "Authorization: Bearer replaced"
+        if "Authorization" not in auth_headers:
+            kwargs.pop("api_key", None)
         return await super().acompletion(
             model=model,
             messages=messages,
@@ -47,7 +53,13 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         Returns:
           The response from the model.
         """
-        kwargs["extra_headers"] = settings.auth.get_headers()
+        auth_headers = settings.auth.get_headers()
+        kwargs["extra_headers"] = auth_headers
+        # Remove the dummy api_key when auth uses a different header
+        # (e.g. X-Blaxel-Authorization with API keys) to prevent litellm
+        # from adding "Authorization: Bearer replaced"
+        if "Authorization" not in auth_headers:
+            kwargs.pop("api_key", None)
         return super().completion(
             model=model,
             messages=messages,

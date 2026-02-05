@@ -41,29 +41,6 @@ class TestBlTools:
         except Exception:
             pass
 
-    async def test_can_load_tools_from_sandbox(self):
-        """Test loading tools from sandbox."""
-        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
-
-        assert tools is not None
-        assert len(tools) > 0
-
-    async def test_can_invoke_a_tool(self):
-        """Test invoking a tool."""
-        import json
-
-        from agents.tool_context import ToolContext  # noqa: E402
-
-        tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
-
-        assert len(tools) > 0
-
-        exec_tool = next((t for t in tools if "exec" in t.name.lower()), None)
-        assert exec_tool is not None
-        ctx = ToolContext(context=None, tool_name=exec_tool.name, tool_call_id="test")
-        result = await exec_tool.on_invoke_tool(ctx, json.dumps({"command": "echo 'hello'"}))
-        assert result is not None
-
     async def test_agent_can_use_tools(self):
         """Test that an agent can use sandbox tools to list files."""
         model = await bl_model("sandbox-openai")
