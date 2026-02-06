@@ -27,12 +27,14 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
           The model response as a message.
         """
         auth_headers = settings.auth.get_headers()
-        kwargs["extra_headers"] = auth_headers
-        # Remove the dummy api_key when auth uses a different header
-        # (e.g. X-Blaxel-Authorization with API keys) to prevent litellm
-        # from adding "Authorization: Bearer replaced"
+        extra = dict(auth_headers)
+        # When auth uses X-Blaxel-Authorization (API keys), override the
+        # Authorization header that litellm sets from api_key or OPENAI_API_KEY
+        # env var. Without this, the server sees an invalid Authorization header
+        # and rejects the request.
         if "Authorization" not in auth_headers:
-            kwargs.pop("api_key", None)
+            extra["Authorization"] = ""
+        kwargs["extra_headers"] = extra
         return await super().acompletion(
             model=model,
             messages=messages,
@@ -54,12 +56,14 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
           The response from the model.
         """
         auth_headers = settings.auth.get_headers()
-        kwargs["extra_headers"] = auth_headers
-        # Remove the dummy api_key when auth uses a different header
-        # (e.g. X-Blaxel-Authorization with API keys) to prevent litellm
-        # from adding "Authorization: Bearer replaced"
+        extra = dict(auth_headers)
+        # When auth uses X-Blaxel-Authorization (API keys), override the
+        # Authorization header that litellm sets from api_key or OPENAI_API_KEY
+        # env var. Without this, the server sees an invalid Authorization header
+        # and rejects the request.
         if "Authorization" not in auth_headers:
-            kwargs.pop("api_key", None)
+            extra["Authorization"] = ""
+        kwargs["extra_headers"] = extra
         return super().completion(
             model=model,
             messages=messages,

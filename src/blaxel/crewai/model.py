@@ -79,22 +79,24 @@ async def bl_model(name: str, **kwargs):
 
     model_string = f"{provider_prefix}/{model}"
     auth_headers = settings.auth.get_headers()
-    # Only pass api_key when auth uses Authorization header (e.g. OAuth).
-    # When auth uses X-Blaxel-Authorization (API keys), omit api_key
-    # to prevent "Authorization: Bearer replaced" from being sent.
-    llm_api_key = "replaced" if "Authorization" in auth_headers else None
 
     if _is_native_route(provider_prefix):
-        # Native providers: use interceptor for dynamic auth headers
+        # Native providers: use interceptor for dynamic auth headers.
+        # Always pass api_key="replaced" because crewai's native providers
+        # require a non-None api_key. The AuthInterceptor handles stripping
+        # the dummy Authorization header and injecting the real auth.
         return LLM(
             model=model_string,
-            api_key=llm_api_key,
+            api_key="replaced",
             base_url=base_url,
             interceptor=AuthInterceptor(),
             **kwargs,
         )
     else:
-        # LiteLLM fallback: pass auth headers via extra_headers param
+        # LiteLLM fallback: pass auth headers via extra_headers param.
+        # Omit api_key when auth uses X-Blaxel-Authorization to prevent
+        # litellm from adding "Authorization: Bearer replaced".
+        llm_api_key = "replaced" if "Authorization" in auth_headers else None
         return LLM(
             model=model_string,
             api_key=llm_api_key,
