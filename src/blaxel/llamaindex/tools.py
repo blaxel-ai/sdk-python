@@ -32,5 +32,3 @@ async def bl_tools(tools_names: list[str], **kwargs) -> list["FunctionTool"]:
     tools = bl_tools_core(tools_names, **kwargs)
     await tools.initialize()
     return [get_llamaindex_tool(tool) for tool in tools.get_tools()]
-    await tools.initialize()
-    return [get_llamaindex_tool(tool) for tool in tools.get_tools()]

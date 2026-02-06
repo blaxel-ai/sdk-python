@@ -282,19 +282,3 @@ async def bl_model(name, **kwargs):
 
     # Create and return the wrapper
     return TokenRefreshingLLM(model_config)
-
-    # Store model configuration for recreation
-    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
-
-    # Create and return the wrapper
-    return TokenRefreshingLLM(model_config)
-    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
-
-    # Create and return the wrapper
-    return TokenRefreshingLLM(model_config)
-
-    # Store model configuration for recreation
-    model_config = {"type": type, "model": model, "url": url, "kwargs": kwargs}
-
-    # Create and return the wrapper
-    return TokenRefreshingLLM(model_config)

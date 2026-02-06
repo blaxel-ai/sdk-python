@@ -1475,10 +1475,3 @@ def image_bytes_to_b64_string(image_bytes: bytes, image_format: str = "jpeg") ->
     import base64
 
     return f"data:image/{image_format};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
-
-
-def image_bytes_to_b64_string(image_bytes: bytes, image_format: str = "jpeg") -> str:
-    """Convert image bytes to base64 string."""
-    import base64
-
-    return f"data:image/{image_format};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
