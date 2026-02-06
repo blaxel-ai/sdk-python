@@ -4,7 +4,7 @@ from blaxel.core.tools import bl_tools as bl_tools_core
 from blaxel.core.tools.types import Tool, ToolException
 
 if TYPE_CHECKING:
-    from langchain_core.tools import StructuredTool
+    from langchain_core.tools import StructuredTool  # type: ignore[import-not-found]
 
 
 def _clean_schema_for_openai(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -37,19 +37,14 @@ def _clean_schema_for_openai(schema: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def get_langchain_tool(tool: Tool) -> "StructuredTool":
-    from langchain_core.tools import StructuredTool
-    from mcp.types import (
-        CallToolResult,
-        EmbeddedResource,
-        ImageContent,
-        TextContent,
-    )
-
-    NonTextContent = ImageContent | EmbeddedResource
+    from langchain_core.tools import StructuredTool  # type: ignore[import-not-found]
+    from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
 
     async def langchain_coroutine(
         **arguments: dict[str, Any],
-    ) -> tuple[str | list[str], list[NonTextContent] | None]:
+    ) -> tuple[str | list[str], list[ImageContent | EmbeddedResource] | None]:
+        if not tool.coroutine:
+            raise ValueError(f"Tool {tool.name} does not have a coroutine defined")
         result: CallToolResult = await tool.coroutine(**arguments)
         text_contents: list[TextContent] = []
         non_text_contents = []

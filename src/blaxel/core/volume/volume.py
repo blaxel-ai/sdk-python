@@ -137,6 +137,8 @@ class VolumeCreateConfiguration:
 
 
 class VolumeInstance:
+    delete: "_AsyncDeleteDescriptor"
+
     def __init__(self, volume: Volume):
         self.volume = volume
 
@@ -275,6 +277,8 @@ class VolumeInstance:
 
 
 class SyncVolumeInstance:
+    delete: "_SyncDeleteDescriptor"
+
     """Synchronous volume instance for managing persistent storage."""
 
     def __init__(self, volume: Volume):

@@ -1,7 +1,8 @@
 import json
 from typing import Any
 
-from agents import FunctionTool, RunContextWrapper
+from agents import FunctionTool  # type: ignore[import-not-found]
+from agents.tool_context import ToolContext  # type: ignore[import-not-found]
 
 from blaxel.core.tools import bl_tools as bl_tools_core
 from blaxel.core.tools.types import Tool
@@ -24,6 +25,13 @@ def _clean_schema_for_openai(schema: dict) -> dict:
     if "additionalProperties" in cleaned_schema:
         del cleaned_schema["additionalProperties"]
 
+    # Ensure object type schemas have properties
+    if cleaned_schema.get("type") == "object":
+        if "properties" not in cleaned_schema:
+            cleaned_schema["properties"] = {}
+        if "required" not in cleaned_schema:
+            cleaned_schema["required"] = []
+
     # Recursively clean properties if they exist
     if "properties" in cleaned_schema:
         cleaned_schema["properties"] = {
@@ -39,9 +47,11 @@ def _clean_schema_for_openai(schema: dict) -> dict:
 
 def get_openai_tool(tool: Tool) -> FunctionTool:
     async def openai_coroutine(
-        _: RunContextWrapper,
-        arguments: dict[str, Any],
+        _: ToolContext[Any],
+        arguments: str,
     ) -> Any:
+        if not tool.coroutine:
+            raise ValueError(f"Tool {tool.name} does not have a coroutine defined")
         result = await tool.coroutine(**json.loads(arguments))
         return result
 
