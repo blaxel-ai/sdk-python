@@ -2,6 +2,8 @@ from ..cache import find_from_cache
 from ..client import client
 from ..client.api.models import get_model
 from ..client.models import Model
+from ..client.models.model_runtime_generation import ModelRuntimeGeneration
+from ..client.types import Unset
 from ..common import settings
 
 
@@ -18,7 +20,7 @@ class BLModel:
             settings.auth.get_headers()
             model = self.models[self.model_name]
             return model["url"], model["type"], model["model"]
-        url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"
+
         model_data = await self._get_model_metadata()
         if not model_data:
             raise Exception(f"Model {self.model_name} not found")
@@ -26,8 +28,25 @@ class BLModel:
         if not runtime:
             raise Exception(f"Model {self.model_name} has no runtime")
 
-        type = runtime.type_ or "openai"
         model = runtime.model
+
+        # mk3 models use the direct gateway URL and always speak OpenAI-compatible API
+        generation = runtime.generation
+        if not isinstance(generation, Unset) and generation == ModelRuntimeGeneration.MK3:
+            metadata_url = model_data.metadata.url
+            if isinstance(metadata_url, Unset) or not metadata_url:
+                raise Exception(
+                    f"Model {self.model_name} is mk3 but has no gateway URL in metadata"
+                )
+            self.models[self.model_name] = {
+                "url": metadata_url,
+                "type": "openai",
+                "model": self.model_name,
+            }
+            return metadata_url, "openai", self.model_name
+
+        url = f"{settings.run_url}/{settings.auth.workspace_name}/models/{self.model_name}"
+        type = runtime.type_ or "openai"
         self.models[self.model_name] = {
             "url": url,
             "type": type,

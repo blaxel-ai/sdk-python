@@ -23,9 +23,9 @@ from .types import Tool
 
 logger = getLogger(__name__)
 
-DEFAULT_TIMEOUT = 1
+DEFAULT_TIMEOUT = 30
 if os.getenv("BL_SERVER_PORT"):
-    DEFAULT_TIMEOUT = 5
+    DEFAULT_TIMEOUT = 120
 
 
 class PersistentMcpClient:
@@ -105,9 +105,11 @@ class PersistentMcpClient:
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         try:
-            await self.initialize()
+            # Cancel the inactivity timer BEFORE initializing to prevent
+            # the timer from firing _close() while we are reconnecting.
             if self.timeout_enabled:
                 self._remove_timer()
+            await self.initialize()
             logger.debug(
                 f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}"
             )
@@ -117,6 +119,7 @@ class PersistentMcpClient:
             call_tool_result = await self.session.send_request(
                 ClientRequest(
                     CallToolRequest(
+                        method="tools/call",
                         params=CallToolRequestParams(
                             name=tool_name,
                             arguments=arguments,
@@ -133,7 +136,11 @@ class PersistentMcpClient:
             else:
                 await self._close()
             return call_tool_result
-        except Exception as e:
+        except (Exception, asyncio.CancelledError) as e:
+            # Catch CancelledError explicitly because in Python 3.9+
+            # it is a BaseException and would otherwise escape the handler.
+            # CancelledError here originates from the MCP library's internal
+            # anyio cancel scopes, not from an external task cancellation.
             logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
             return CallToolResult(
                 content=[
@@ -147,10 +154,10 @@ class PersistentMcpClient:
 
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
-        await self.initialize()
-        logger.debug(f"Initialized websocket for {self.name}")
         if self.timeout_enabled:
             self._remove_timer()
+        await self.initialize()
+        logger.debug(f"Initialized client for {self.name}")
         logger.debug("Listing tools")
         list_tools_result = await self.session.list_tools()
         self.tools_cache = list_tools_result.tools
@@ -213,21 +220,48 @@ class PersistentMcpClient:
 
     async def initialize(self, fallback: bool = False):
         if not self.session:
-            try:
-                logger.debug(f"Initializing client for {self._url}")
-                # Both transports now return a tuple of (read, write)
-                read, write = await self._get_transport()
+            last_error: BaseException | None = None
+            for attempt in range(2):
+                try:
+                    logger.debug(
+                        f"Initializing client for {self._url} (attempt {attempt + 1})"
+                    )
+                    read, write = await self._get_transport()
 
-                self.session = cast(
-                    ClientSession,
-                    await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
-                )
-                await self.session.initialize()
-            except Exception as e:
-                if not fallback and self._fallback_url is not None:
-                    self.use_fallback_url = True
-                    return await self.initialize(fallback=True)
-                raise e
+                    self.session = cast(
+                        ClientSession,
+                        await self.session_exit_stack.enter_async_context(
+                            ClientSession(read, write)
+                        ),
+                    )
+                    await self.session.initialize()
+                    return  # Success
+                except (Exception, asyncio.CancelledError) as e:
+                    last_error = e
+                    logger.warning(
+                        f"Initialization attempt {attempt + 1} failed for {self._url}: {e}"
+                    )
+                    # Clean up the failed attempt with fresh stacks
+                    self.session = None
+                    old_session_stack = self.session_exit_stack
+                    old_client_stack = self.client_exit_stack
+                    self.session_exit_stack = AsyncExitStack()
+                    self.client_exit_stack = AsyncExitStack()
+                    try:
+                        await old_session_stack.aclose()
+                    except Exception:
+                        pass
+                    try:
+                        await old_client_stack.aclose()
+                    except Exception:
+                        pass
+                    if attempt < 1:
+                        await asyncio.sleep(0.5)
+            # All attempts failed — try fallback URL if available
+            if not fallback and self._fallback_url is not None:
+                self.use_fallback_url = True
+                return await self.initialize(fallback=True)
+            raise last_error
 
     def _reset_timer(self):
         self._remove_timer()
@@ -240,25 +274,27 @@ class PersistentMcpClient:
     async def _close_after_timeout(self):
         await asyncio.sleep(self.timeout)
         await self._close()
-        self.session = None
 
     async def _close(self):
-        logger.debug(f"Closing websocket client {self._url}")
+        logger.debug(f"Closing client {self._url}")
         if self.session:
             self.session = None
+            # Swap to fresh exit stacks FIRST so that any concurrent
+            # initialize() (interleaved via asyncio) uses clean stacks
+            # rather than the ones being torn down.
+            old_session_stack = self.session_exit_stack
+            old_client_stack = self.client_exit_stack
+            self.session_exit_stack = AsyncExitStack()
+            self.client_exit_stack = AsyncExitStack()
             try:
-                await self.session_exit_stack.aclose()
+                await old_session_stack.aclose()
             except Exception as e:
                 logger.debug(f"Error closing session exit stack: {e}")
             try:
-                await self.client_exit_stack.aclose()
+                await old_client_stack.aclose()
             except Exception as e:
                 logger.debug(f"Error closing client exit stack: {e}")
-            # Create fresh exit stacks so that future initialize() calls
-            # don't reuse stacks tainted by old cancel scopes
-            self.session_exit_stack = AsyncExitStack()
-            self.client_exit_stack = AsyncExitStack()
-            logger.debug("WebSocket connection closed due to inactivity.")
+            logger.debug("Connection closed due to inactivity.")
 
 
 def convert_mcp_tool_to_blaxel_tool(
@@ -276,6 +312,15 @@ def convert_mcp_tool_to_blaxel_tool(
     Returns:
         a LangChain tool
     """
+
+    # Capture the event loop at tool creation time. This is needed because
+    # frameworks like CrewAI run tool calls in worker threads via
+    # asyncio.to_thread(). The MCP session is bound to the creation loop,
+    # so sync_call_tool must schedule back on it instead of creating a new loop.
+    try:
+        _creation_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        _creation_loop = None
 
     async def initialize_and_call_tool(
         *args: Any,
@@ -297,6 +342,14 @@ def convert_mcp_tool_to_blaxel_tool(
             loop = asyncio.get_running_loop()
             return loop.run_until_complete(initialize_and_call_tool(*args, **arguments))
         except RuntimeError:
+            # No running loop in this thread. If the MCP session was created on
+            # another loop (e.g. main thread), schedule the call there to avoid
+            # creating a new loop that can't access the session's connections.
+            if _creation_loop is not None and _creation_loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(
+                    initialize_and_call_tool(*args, **arguments), _creation_loop
+                )
+                return future.result()
             return asyncio.run(initialize_and_call_tool(*args, **arguments))
 
     return Tool(

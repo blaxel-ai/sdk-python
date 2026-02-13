@@ -163,7 +163,24 @@ class TokenRefreshingLLM(FunctionCallingLLM):
                     f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI"
                 )
 
-            return OpenAI(
+            # Use a subclass that handles unknown model names (e.g. Blaxel
+            # resource names like "sandbox-openai") gracefully.  LlamaIndex's
+            # OpenAI.metadata calls openai_modelname_to_contextsize() which
+            # raises ValueError for names not in its hardcoded list.
+            class _BlaxelOpenAI(OpenAI):  # type: ignore[no-redef]
+                @property
+                def metadata(self) -> "LLMMetadata":
+                    try:
+                        return super().metadata
+                    except (ValueError, KeyError):
+                        return LLMMetadata(
+                            context_window=DEFAULT_CONTEXT_WINDOW,
+                            num_output=DEFAULT_NUM_OUTPUT,
+                            is_chat_model=True,
+                            model_name=self._get_model_name(),
+                        )
+
+            return _BlaxelOpenAI(
                 model=model,
                 api_key=settings.auth.token,
                 api_base=f"{url}/v1",

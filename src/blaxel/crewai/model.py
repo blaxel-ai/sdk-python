@@ -85,8 +85,14 @@ async def bl_model(name: str, **kwargs):
         # Always pass api_key="replaced" because crewai's native providers
         # require a non-None api_key. The AuthInterceptor handles stripping
         # the dummy Authorization header and injecting the real auth.
+        #
+        # Pass `provider` explicitly so CrewAI's LLM.__new__ bypasses its
+        # model-name validation against known provider constants. Without this,
+        # custom model names (e.g. blaxel resource names like "sandbox-openai")
+        # fail validation and fall back to LiteLLM, which ignores the interceptor.
         return LLM(
-            model=model_string,
+            model=model,
+            provider=provider_prefix,
             api_key="replaced",
             base_url=base_url,
             interceptor=AuthInterceptor(),
