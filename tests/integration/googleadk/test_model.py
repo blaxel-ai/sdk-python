@@ -3,7 +3,9 @@
 pytest_plugins = []
 import pytest  # noqa: E402
 
-pytest.importorskip("google.adk", reason="google-adk not installed (install with: blaxel[googleadk])")
+pytest.importorskip(
+    "google.adk", reason="google-adk not installed (install with: blaxel[googleadk])"
+)
 
 from google.adk.models import LlmRequest  # noqa: E402
 from google.genai import types  # noqa: E402

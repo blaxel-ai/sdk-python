@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from pydantic_ai.models import Model  # type: ignore[import-not-found]
 

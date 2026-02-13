@@ -12,10 +12,10 @@ from ...client.api.compute.delete_sandbox_preview import sync as delete_sandbox_
 from ...client.api.compute.delete_sandbox_preview_token import (
     sync as delete_sandbox_preview_token,
 )
+from ...client.api.compute.get_sandbox_preview import sync as get_sandbox_preview
 from ...client.api.compute.get_sandbox_preview import (
     sync_detailed as get_sandbox_preview_detailed,
 )
-from ...client.api.compute.get_sandbox_preview import sync as get_sandbox_preview
 from ...client.api.compute.list_sandbox_preview_tokens import (
     sync as list_sandbox_preview_tokens,
 )

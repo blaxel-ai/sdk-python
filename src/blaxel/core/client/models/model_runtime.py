@@ -3,6 +3,7 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.model_runtime_generation import ModelRuntimeGeneration
 from ..models.model_runtime_type import ModelRuntimeType
 from ..types import UNSET, Unset
 
@@ -15,6 +16,8 @@ class ModelRuntime:
 
     Attributes:
         endpoint_name (Union[Unset, str]): Provider-specific endpoint name (e.g., HuggingFace Inference Endpoints name)
+        generation (Union[Unset, ModelRuntimeGeneration]): Infrastructure generation. Empty (default) uses the classic
+            deployment path. mk3 deploys through the model-gateway on microVM clusters.
         model (Union[Unset, str]): Model identifier at the provider (e.g., gpt-4.1, claude-sonnet-4-20250514, mistral-
             large-latest) Example: gpt-4.1.
         organization (Union[Unset, str]): Organization or account identifier at the provider (required for some
@@ -24,6 +27,7 @@ class ModelRuntime:
     """
 
     endpoint_name: Union[Unset, str] = UNSET
+    generation: Union[Unset, ModelRuntimeGeneration] = UNSET
     model: Union[Unset, str] = UNSET
     organization: Union[Unset, str] = UNSET
     type_: Union[Unset, ModelRuntimeType] = UNSET
@@ -31,6 +35,10 @@ class ModelRuntime:
 
     def to_dict(self) -> dict[str, Any]:
         endpoint_name = self.endpoint_name
+
+        generation: Union[Unset, str] = UNSET
+        if not isinstance(self.generation, Unset):
+            generation = self.generation.value
 
         model = self.model
 
@@ -45,6 +53,8 @@ class ModelRuntime:
         field_dict.update({})
         if endpoint_name is not UNSET:
             field_dict["endpointName"] = endpoint_name
+        if generation is not UNSET:
+            field_dict["generation"] = generation
         if model is not UNSET:
             field_dict["model"] = model
         if organization is not UNSET:
@@ -61,6 +71,13 @@ class ModelRuntime:
         d = src_dict.copy()
         endpoint_name = d.pop("endpointName", d.pop("endpoint_name", UNSET))
 
+        _generation = d.pop("generation", UNSET)
+        generation: Union[Unset, ModelRuntimeGeneration]
+        if isinstance(_generation, Unset):
+            generation = UNSET
+        else:
+            generation = ModelRuntimeGeneration(_generation)
+
         model = d.pop("model", UNSET)
 
         organization = d.pop("organization", UNSET)
@@ -74,6 +91,7 @@ class ModelRuntime:
 
         model_runtime = cls(
             endpoint_name=endpoint_name,
+            generation=generation,
             model=model,
             organization=organization,
             type_=type_,

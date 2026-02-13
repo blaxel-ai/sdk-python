@@ -47,7 +47,9 @@ class TestBlTools:
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
         agent = create_react_agent(model, tools)
-        result = await agent.ainvoke({"messages": [("user", "List the files and directories in /")]})
+        result = await agent.ainvoke(
+            {"messages": [("user", "List the files and directories in /")]}
+        )
 
         assert result is not None
         assert "messages" in result

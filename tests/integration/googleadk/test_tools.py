@@ -3,7 +3,9 @@
 pytest_plugins = []
 import pytest  # noqa: E402
 
-pytest.importorskip("google.adk", reason="google-adk not installed (install with: blaxel[googleadk])")
+pytest.importorskip(
+    "google.adk", reason="google-adk not installed (install with: blaxel[googleadk])"
+)
 
 import pytest_asyncio  # noqa: E402
 from google.adk.agents import Agent  # noqa: E402
@@ -57,9 +59,7 @@ class TestBlTools:
         )
 
         session_service = InMemorySessionService()
-        session = await session_service.create_session(
-            app_name="test", user_id="test-user"
-        )
+        session = await session_service.create_session(app_name="test", user_id="test-user")
 
         runner = Runner(agent=agent, app_name="test", session_service=session_service)
 
@@ -78,10 +78,7 @@ class TestBlTools:
 
         assert len(events) > 0
         # Check that at least one event has content
-        has_content = any(
-            event.content and event.content.parts
-            for event in events
-        )
+        has_content = any(event.content and event.content.parts for event in events)
         assert has_content
         # Print the last event with content
         for event in reversed(events):
