@@ -17,10 +17,10 @@ from ...client.api.compute.delete_sandbox_preview_token import (
     asyncio as delete_sandbox_preview_token,
 )
 from ...client.api.compute.get_sandbox_preview import (
-    asyncio_detailed as get_sandbox_preview_detailed,
+    asyncio as get_sandbox_preview,
 )
 from ...client.api.compute.get_sandbox_preview import (
-    asyncio as get_sandbox_preview,
+    asyncio_detailed as get_sandbox_preview_detailed,
 )
 from ...client.api.compute.list_sandbox_preview_tokens import (
     asyncio as list_sandbox_preview_tokens,
