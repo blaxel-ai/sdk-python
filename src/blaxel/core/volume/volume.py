@@ -1,6 +1,7 @@
 import asyncio
 import time
 import uuid
+import warnings
 from typing import Callable, Dict, List, Union
 
 from ..client.api.volumes.create_volume import asyncio as create_volume
@@ -227,6 +228,15 @@ class VolumeInstance:
         if not volume.spec.size:
             volume.spec.size = default_size
 
+        # Warn if region is not set
+        if not volume.spec.region or volume.spec.region is UNSET:
+            warnings.warn(
+                "VolumeInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
+                "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the volume configuration or set the BL_REGION environment variable.",
+                FutureWarning,
+                stacklevel=2,
+            )
+
         response = await create_volume(client=client, body=volume)
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
@@ -369,6 +379,15 @@ class SyncVolumeInstance:
             volume.spec = VolumeSpec(size=default_size)
         if not volume.spec.size:
             volume.spec.size = default_size
+
+        # Warn if region is not set
+        if not volume.spec.region or volume.spec.region is UNSET:
+            warnings.warn(
+                "SyncVolumeInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
+                "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the volume configuration or set the BL_REGION environment variable.",
+                FutureWarning,
+                stacklevel=2,
+            )
 
         response = create_volume_sync(client=client, body=volume)
         if isinstance(response, Error):

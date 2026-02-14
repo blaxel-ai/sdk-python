@@ -1,4 +1,3 @@
-from typing import Union
 
 from ...common.settings import settings
 from ..client.api.system.get_health import sync as get_health
