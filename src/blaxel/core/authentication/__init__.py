@@ -51,6 +51,10 @@ def get_credentials() -> CredentialsType | None:
 
         for workspace in config_json.get("workspaces", []):
             if workspace.get("name") == workspace_name:
+                # Set BL_ENV from config.yaml workspace if not already set via env vars
+                if not os.environ.get("BL_ENV") and workspace.get("env"):
+                    os.environ["BL_ENV"] = workspace["env"]
+
                 credentials = workspace.get("credentials", {})
                 credentials["workspace"] = workspace_name
                 return CredentialsType(
