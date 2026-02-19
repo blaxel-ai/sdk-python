@@ -12,17 +12,17 @@ class SandboxDrive(SandboxAction):
     def __init__(self, sandbox_config: SandboxConfiguration):
         super().__init__(sandbox_config)
 
-    async def attach(
+    async def mount(
         self,
         drive_name: str,
         mount_path: str,
         drive_path: str = "/",
     ) -> Dict[str, Any]:
         """
-        Attach a drive to the sandbox at the specified mount path.
+        Mount a drive to the sandbox at the specified mount path.
 
         Args:
-            drive_name: Name of the drive to attach
+            drive_name: Name of the drive to mount
             mount_path: Path in the sandbox where the drive should be mounted
             drive_path: Path within the drive to mount (default: "/")
 
@@ -48,9 +48,9 @@ class SandboxDrive(SandboxAction):
 
             return response.json()
 
-    async def detach(self, mount_path: str) -> Dict[str, Any]:
+    async def unmount(self, mount_path: str) -> Dict[str, Any]:
         """
-        Detach a drive from the sandbox.
+        Unmount a drive from the sandbox.
 
         Args:
             mount_path: Path where the drive is currently mounted

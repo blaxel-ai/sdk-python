@@ -205,8 +205,8 @@ class TestDriveInstanceCRUD(TestDriveOperations):
 class TestSandboxDriveMounting(TestDriveOperations):
     """Test sandbox drive mounting operations."""
 
-    async def test_attaches_a_drive_to_a_sandbox(self):
-        """Test attaching a drive to a sandbox."""
+    async def test_mounts_a_drive_to_a_sandbox(self):
+        """Test mounting a drive to a sandbox."""
         drive_name = unique_name("mount-drive")
         sandbox_name = unique_name("mount-sandbox")
 
@@ -233,8 +233,8 @@ class TestSandboxDriveMounting(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        # Attach drive
-        result = await sandbox.drive.attach(
+        # Mount drive
+        result = await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/test",
             drive_path="/",
@@ -270,8 +270,8 @@ class TestSandboxDriveMounting(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        # Attach drive
-        await sandbox.drive.attach(
+        # Mount drive
+        await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/data",
         )
@@ -311,8 +311,8 @@ class TestSandboxDriveMounting(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        # Attach drive
-        await sandbox.drive.attach(
+        # Mount drive
+        await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/storage",
         )
@@ -335,10 +335,10 @@ class TestSandboxDriveMounting(TestDriveOperations):
 
         assert "Hello from Drive" in result.logs
 
-    async def test_detaches_a_drive_from_sandbox(self):
-        """Test detaching a drive from a sandbox."""
-        drive_name = unique_name("detach-drive")
-        sandbox_name = unique_name("detach-sandbox")
+    async def test_unmounts_a_drive_from_sandbox(self):
+        """Test unmounting a drive from a sandbox."""
+        drive_name = unique_name("unmount-drive")
+        sandbox_name = unique_name("unmount-sandbox")
 
         await DriveInstance.create(
             {
@@ -361,8 +361,8 @@ class TestSandboxDriveMounting(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        # Attach drive
-        await sandbox.drive.attach(
+        # Mount drive
+        await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/temp",
         )
@@ -372,10 +372,10 @@ class TestSandboxDriveMounting(TestDriveOperations):
         found_before = next((m for m in mounts_before if m["driveName"] == drive_name), None)
         assert found_before is not None
 
-        # Detach drive
-        detach_result = await sandbox.drive.detach("/mnt/temp")
-        assert detach_result["success"] is True
-        assert detach_result["mountPath"] == "/mnt/temp"
+        # Unmount drive
+        unmount_result = await sandbox.drive.unmount("/mnt/temp")
+        assert unmount_result["success"] is True
+        assert unmount_result["mountPath"] == "/mnt/temp"
 
         # Verify it's unmounted
         mounts_after = await sandbox.drive.list()
@@ -409,7 +409,7 @@ class TestSandboxDriveMounting(TestDriveOperations):
         self.created_sandboxes.append(sandbox_name)
 
         # First, mount the root and create a subdirectory
-        await sandbox.drive.attach(
+        await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/root",
         )
@@ -421,10 +421,10 @@ class TestSandboxDriveMounting(TestDriveOperations):
             }
         )
 
-        await sandbox.drive.detach("/mnt/root")
+        await sandbox.drive.unmount("/mnt/root")
 
         # Now mount only the subdirectory
-        mount_result = await sandbox.drive.attach(
+        mount_result = await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/sub",
             drive_path="/subdir",
@@ -447,8 +447,8 @@ class TestSandboxDriveMounting(TestDriveOperations):
 class TestDrivePersistence(TestDriveOperations):
     """Test drive persistence across sandboxes."""
 
-    async def test_data_persists_when_drive_is_attached_to_different_sandboxes(self):
-        """Test that data persists when a drive is attached to different sandboxes."""
+    async def test_data_persists_when_drive_is_mounted_to_different_sandboxes(self):
+        """Test that data persists when a drive is mounted to different sandboxes."""
         drive_name = unique_name("persist-drive")
         file_content = f"persistent data {time.time()}"
 
@@ -475,7 +475,7 @@ class TestDrivePersistence(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox1_name)
 
-        await sandbox1.drive.attach(
+        await sandbox1.drive.mount(
             drive_name=drive_name,
             mount_path="/data",
         )
@@ -487,7 +487,7 @@ class TestDrivePersistence(TestDriveOperations):
             }
         )
 
-        await sandbox1.drive.detach("/data")
+        await sandbox1.drive.unmount("/data")
 
         # Delete first sandbox
         await SandboxInstance.delete(sandbox1_name)
@@ -506,7 +506,7 @@ class TestDrivePersistence(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox2_name)
 
-        await sandbox2.drive.attach(
+        await sandbox2.drive.mount(
             drive_name=drive_name,
             mount_path="/data",
         )
@@ -562,13 +562,13 @@ class TestMultipleDrives(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        # Attach both drives
-        await sandbox.drive.attach(
+        # Mount both drives
+        await sandbox.drive.mount(
             drive_name=drive1_name,
             mount_path="/mnt/drive1",
         )
 
-        await sandbox.drive.attach(
+        await sandbox.drive.mount(
             drive_name=drive2_name,
             mount_path="/mnt/drive2",
         )
@@ -638,16 +638,16 @@ class TestDriveMountPathHandling(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        # Attach with path that will be normalized
-        result = await sandbox.drive.attach(
+        # Mount with path that will be normalized
+        result = await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/test",
         )
 
         assert result["success"] is True
 
-        # Detach should also work without leading slash
-        await sandbox.drive.detach("mnt/test")
+        # Unmount should also work without leading slash
+        await sandbox.drive.unmount("mnt/test")
 
         mounts = await sandbox.drive.list()
         found = next((m for m in mounts if m["driveName"] == drive_name), None)
@@ -684,7 +684,7 @@ class TestDriveFileOperations(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        await sandbox.drive.attach(
+        await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/files",
         )
@@ -744,7 +744,7 @@ class TestDriveFileOperations(TestDriveOperations):
         )
         self.created_sandboxes.append(sandbox_name)
 
-        await sandbox.drive.attach(
+        await sandbox.drive.mount(
             drive_name=drive_name,
             mount_path="/mnt/fs",
         )
