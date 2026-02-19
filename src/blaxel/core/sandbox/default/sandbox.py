@@ -28,6 +28,7 @@ from ..types import (
     SessionWithToken,
 )
 from .codegen import SandboxCodegen
+from .drive import SandboxDrive
 from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
@@ -97,6 +98,7 @@ class SandboxInstance:
         self.network = SandboxNetwork(self.config)
         self.codegen = SandboxCodegen(self.config)
         self.system = SandboxSystem(self.config)
+        self.drive = SandboxDrive(self.config)
 
     @property
     def metadata(self):

@@ -28,6 +28,7 @@ from ..types import (
     SessionWithToken,
 )
 from .codegen import SyncSandboxCodegen
+from .drive import SyncSandboxDrive
 from .filesystem import SyncSandboxFileSystem
 from .network import SyncSandboxNetwork
 from .preview import SyncSandboxPreviews
@@ -82,6 +83,7 @@ class SyncSandboxInstance:
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
+        self.drive = SyncSandboxDrive(self.config)
 
     @property
     def metadata(self):
