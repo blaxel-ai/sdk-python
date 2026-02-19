@@ -16,6 +16,8 @@ class Region:
         allowed (Union[Unset, str]): Region display name
         continent (Union[Unset, str]): Region display name
         country (Union[Unset, str]): Region display name
+        egress_available (Union[Unset, bool]): Egress availability status - indicates if network plane URL is configured
+            for the region
         info_generation (Union[Unset, str]): Region display name
         location (Union[Unset, str]): Region display name
         name (Union[Unset, str]): Region name
@@ -24,6 +26,7 @@ class Region:
     allowed: Union[Unset, str] = UNSET
     continent: Union[Unset, str] = UNSET
     country: Union[Unset, str] = UNSET
+    egress_available: Union[Unset, bool] = UNSET
     info_generation: Union[Unset, str] = UNSET
     location: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
@@ -35,6 +38,8 @@ class Region:
         continent = self.continent
 
         country = self.country
+
+        egress_available = self.egress_available
 
         info_generation = self.info_generation
 
@@ -51,6 +56,8 @@ class Region:
             field_dict["continent"] = continent
         if country is not UNSET:
             field_dict["country"] = country
+        if egress_available is not UNSET:
+            field_dict["egressAvailable"] = egress_available
         if info_generation is not UNSET:
             field_dict["infoGeneration"] = info_generation
         if location is not UNSET:
@@ -71,6 +78,8 @@ class Region:
 
         country = d.pop("country", UNSET)
 
+        egress_available = d.pop("egressAvailable", d.pop("egress_available", UNSET))
+
         info_generation = d.pop("infoGeneration", d.pop("info_generation", UNSET))
 
         location = d.pop("location", UNSET)
@@ -81,6 +90,7 @@ class Region:
             allowed=allowed,
             continent=continent,
             country=country,
+            egress_available=egress_available,
             info_generation=info_generation,
             location=location,
             name=name,

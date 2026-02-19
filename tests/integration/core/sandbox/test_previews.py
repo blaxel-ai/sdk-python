@@ -380,9 +380,7 @@ class TestAsyncDeletion(TestPreviewOperations):
         print(f"Preview created: {preview.metadata.name}")
 
         expiration = datetime.now(timezone.utc) + timedelta(minutes=10)
-        tokens = await asyncio.gather(
-            *[preview.tokens.create(expiration) for _ in range(15)]
-        )
+        tokens = await asyncio.gather(*[preview.tokens.create(expiration) for _ in range(15)])
 
         assert len(tokens) == 15
         for token in tokens:
