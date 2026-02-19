@@ -10,6 +10,7 @@ from ..client.models import (
     PortProtocol,
     Sandbox,
     SandboxLifecycle,
+    SandboxNetwork,
     VolumeAttachment,
 )
 from ..client.types import UNSET
@@ -161,6 +162,7 @@ class SandboxCreateConfiguration:
         expires: datetime | None = None,
         region: str | None = None,
         lifecycle: Union[SandboxLifecycle, Dict[str, Any]] | None = None,
+        network: Union[SandboxNetwork, Dict[str, Any]] | None = None,
         snapshot_enabled: bool | None = None,
         labels: Dict[str, str] | None = None,
     ):
@@ -174,6 +176,7 @@ class SandboxCreateConfiguration:
         self.expires = expires
         self.region = region
         self.lifecycle = lifecycle
+        self.network = network
         self.snapshot_enabled = snapshot_enabled
         self.labels = labels
 
@@ -187,6 +190,10 @@ class SandboxCreateConfiguration:
         if lifecycle and isinstance(lifecycle, dict):
             lifecycle = SandboxLifecycle.from_dict(lifecycle)
 
+        network = data.get("network")
+        if network and isinstance(network, dict):
+            network = SandboxNetwork.from_dict(network)
+
         return cls(
             name=data.get("name"),
             image=data.get("image"),
@@ -198,6 +205,7 @@ class SandboxCreateConfiguration:
             expires=expires,
             region=data.get("region"),
             lifecycle=lifecycle,
+            network=network,
             snapshot_enabled=data.get("snapshot_enabled"),
             labels=data.get("labels"),
         )

@@ -13,6 +13,7 @@ from ...client.models import (
     Metadata,
     Sandbox,
     SandboxLifecycle,
+    SandboxNetwork as SandboxNetworkModel,
     SandboxRuntime,
     SandboxSpec,
 )
@@ -139,6 +140,7 @@ class SyncSandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "network" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
@@ -171,6 +173,8 @@ class SyncSandboxInstance:
                     stacklevel=2,
                 )
             lifecycle = config.lifecycle
+            network = config.network
+            snapshot_enabled = config.snapshot_enabled
             sandbox = Sandbox(
                 metadata=Metadata(name=name, labels=config.labels),
                 spec=SandboxSpec(
@@ -198,6 +202,13 @@ class SyncSandboxInstance:
                     sandbox.spec.lifecycle = lifecycle
                 else:
                     raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
+            if network:
+                if isinstance(network, dict):
+                    network = SandboxNetworkModel.from_dict(network)
+                    assert network is not None
+                sandbox.spec.network = network
+            if snapshot_enabled is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime["snapshotEnabled"] = snapshot_enabled
         else:
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
