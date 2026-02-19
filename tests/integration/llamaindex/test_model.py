@@ -3,7 +3,9 @@
 pytest_plugins = []
 import pytest  # noqa: E402
 
-pytest.importorskip("llama_index", reason="llama-index not installed (install with: blaxel[llamaindex])")
+pytest.importorskip(
+    "llama_index", reason="llama-index not installed (install with: blaxel[llamaindex])"
+)
 
 from llama_index.core.llms import ChatMessage  # type: ignore[import-not-found]
 

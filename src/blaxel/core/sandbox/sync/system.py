@@ -1,4 +1,3 @@
-
 from ...common.settings import settings
 from ..client.api.system.get_health import sync as get_health
 from ..client.api.system.post_upgrade import sync as post_upgrade

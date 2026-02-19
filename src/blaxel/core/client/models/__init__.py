@@ -24,9 +24,20 @@ from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_status import CustomDomainSpecStatus
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
+from .delete_drive_response_200 import DeleteDriveResponse200
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
+from .drive import Drive
+from .drive_spec import DriveSpec
+from .drive_state import DriveState
+from .egress_gateway import EgressGateway
+from .egress_gateway_metadata import EgressGatewayMetadata
+from .egress_gateway_spec import EgressGatewaySpec
+from .egress_ip import EgressIP
+from .egress_ip_metadata import EgressIPMetadata
+from .egress_ip_spec import EgressIPSpec
+from .egress_ip_spec_ip_family import EgressIPSpecIpFamily
 from .entrypoint import Entrypoint
 from .entrypoint_args_item import EntrypointArgsItem
 from .entrypoint_env import EntrypointEnv
@@ -46,6 +57,8 @@ from .function_runtime import FunctionRuntime
 from .function_runtime_generation import FunctionRuntimeGeneration
 from .function_runtime_transport import FunctionRuntimeTransport
 from .function_spec import FunctionSpec
+from .get_workspace_features_response_200 import GetWorkspaceFeaturesResponse200
+from .get_workspace_features_response_200_features import GetWorkspaceFeaturesResponse200Features
 from .get_workspace_service_accounts_response_200_item import (
     GetWorkspaceServiceAccountsResponse200Item,
 )
@@ -91,6 +104,7 @@ from .metadata import Metadata
 from .metadata_labels import MetadataLabels
 from .model import Model
 from .model_runtime import ModelRuntime
+from .model_runtime_generation import ModelRuntimeGeneration
 from .model_runtime_type import ModelRuntimeType
 from .model_spec import ModelSpec
 from .o_auth import OAuth
@@ -135,11 +149,14 @@ from .sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 from .sandbox_error import SandboxError
 from .sandbox_error_details import SandboxErrorDetails
 from .sandbox_lifecycle import SandboxLifecycle
+from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_spec import SandboxSpec
 from .status import Status
 from .template import Template
 from .template_variable import TemplateVariable
+from .test_feature_flag_response_200 import TestFeatureFlagResponse200
+from .test_feature_flag_response_200_payload import TestFeatureFlagResponse200Payload
 from .time_fields import TimeFields
 from .trigger import Trigger
 from .trigger_configuration import TriggerConfiguration
@@ -158,6 +175,8 @@ from .volume_template_state import VolumeTemplateState
 from .volume_template_state_status import VolumeTemplateStateStatus
 from .volume_template_version import VolumeTemplateVersion
 from .volume_template_version_status import VolumeTemplateVersionStatus
+from .vpc import VPC
+from .vpc_spec import VPCSpec
 from .workspace import Workspace
 from .workspace_runtime import WorkspaceRuntime
 from .workspace_status import WorkspaceStatus
@@ -188,9 +207,20 @@ __all__ = (
     "CustomDomainSpec",
     "CustomDomainSpecStatus",
     "CustomDomainSpecTxtRecords",
+    "DeleteDriveResponse200",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteVolumeTemplateVersionResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
+    "Drive",
+    "DriveSpec",
+    "DriveState",
+    "EgressGateway",
+    "EgressGatewayMetadata",
+    "EgressGatewaySpec",
+    "EgressIP",
+    "EgressIPMetadata",
+    "EgressIPSpec",
+    "EgressIPSpecIpFamily",
     "Entrypoint",
     "EntrypointArgsItem",
     "EntrypointEnv",
@@ -210,6 +240,8 @@ __all__ = (
     "FunctionRuntimeGeneration",
     "FunctionRuntimeTransport",
     "FunctionSpec",
+    "GetWorkspaceFeaturesResponse200",
+    "GetWorkspaceFeaturesResponse200Features",
     "GetWorkspaceServiceAccountsResponse200Item",
     "Image",
     "ImageMetadata",
@@ -253,6 +285,7 @@ __all__ = (
     "MetadataLabels",
     "Model",
     "ModelRuntime",
+    "ModelRuntimeGeneration",
     "ModelRuntimeType",
     "ModelSpec",
     "OAuth",
@@ -295,11 +328,14 @@ __all__ = (
     "SandboxError",
     "SandboxErrorDetails",
     "SandboxLifecycle",
+    "SandboxNetwork",
     "SandboxRuntime",
     "SandboxSpec",
     "Status",
     "Template",
     "TemplateVariable",
+    "TestFeatureFlagResponse200",
+    "TestFeatureFlagResponse200Payload",
     "TimeFields",
     "Trigger",
     "TriggerConfiguration",
@@ -318,6 +354,8 @@ __all__ = (
     "VolumeTemplateStateStatus",
     "VolumeTemplateVersion",
     "VolumeTemplateVersionStatus",
+    "VPC",
+    "VPCSpec",
     "Workspace",
     "WorkspaceRuntime",
     "WorkspaceStatus",
