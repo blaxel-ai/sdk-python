@@ -1,6 +1,9 @@
 from logging import getLogger
 
-from google.adk.models.lite_llm import LiteLlm, LiteLLMClient
+from google.adk.models.lite_llm import (  # type: ignore[import-not-found]
+    LiteLlm,
+    LiteLLMClient,
+)
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
@@ -23,7 +26,15 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         Returns:
           The model response as a message.
         """
-        kwargs["extra_headers"] = settings.auth.get_headers()
+        auth_headers = settings.auth.get_headers()
+        extra = dict(auth_headers)
+        # When auth uses X-Blaxel-Authorization (API keys), override the
+        # Authorization header that litellm sets from api_key or OPENAI_API_KEY
+        # env var. Without this, the server sees an invalid Authorization header
+        # and rejects the request.
+        if "Authorization" not in auth_headers:
+            extra["Authorization"] = ""
+        kwargs["extra_headers"] = extra
         return await super().acompletion(
             model=model,
             messages=messages,
@@ -44,7 +55,15 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         Returns:
           The response from the model.
         """
-        kwargs["extra_headers"] = settings.auth.get_headers()
+        auth_headers = settings.auth.get_headers()
+        extra = dict(auth_headers)
+        # When auth uses X-Blaxel-Authorization (API keys), override the
+        # Authorization header that litellm sets from api_key or OPENAI_API_KEY
+        # env var. Without this, the server sees an invalid Authorization header
+        # and rejects the request.
+        if "Authorization" not in auth_headers:
+            extra["Authorization"] = ""
+        kwargs["extra_headers"] = extra
         return super().completion(
             model=model,
             messages=messages,

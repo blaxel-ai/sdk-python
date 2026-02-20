@@ -57,12 +57,11 @@ jobs:
           make test
 
   integration-test:
-    name: Integration Tests
+    name: Integration Tests (Core)
     runs-on: ubuntu-latest
     env:
       BL_API_KEY: ${{ secrets.BL_API_KEY }}
       BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
-    # Only run if secrets are available (not on forks)
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
 
     steps:
@@ -77,9 +76,40 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          make install
+          uv sync --group test --extra telemetry
 
       - name: Run integration tests
         run: |
           source .venv/bin/activate
           make test-integration
+
+  integration-test-framework:
+    name: Integration Tests (${{ matrix.framework }})
+    runs-on: ubuntu-latest
+    env:
+      BL_API_KEY: ${{ secrets.BL_API_KEY }}
+      BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: [llamaindex, langgraph, openai, crewai, pydantic, googleadk, livekit]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv sync --group test --extra ${{ matrix.framework }}
+
+      - name: Run ${{ matrix.framework }} integration tests
+        run: |
+          source .venv/bin/activate
+          make test-integration-${{ matrix.framework }}

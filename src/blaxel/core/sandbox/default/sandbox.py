@@ -1,5 +1,6 @@
 import logging
 import uuid
+import warnings
 from typing import Any, Callable, Dict, List, Union
 
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
@@ -181,6 +182,13 @@ class SandboxInstance:
             ttl = config.ttl
             expires = config.expires
             region = config.region or settings.region
+            if not region:
+                warnings.warn(
+                    "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
+                    "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the sandbox configuration or set the BL_REGION environment variable.",
+                    FutureWarning,
+                    stacklevel=2,
+                )
             lifecycle = config.lifecycle
             # snapshot_enabled = sandbox.snapshot_enabled
 

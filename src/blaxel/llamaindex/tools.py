@@ -5,12 +5,14 @@ from blaxel.core.tools.common import create_model_from_json_schema
 from blaxel.core.tools.types import Tool
 
 if TYPE_CHECKING:
-    from llama_index.core.tools import FunctionTool
+    from llama_index.core.tools import FunctionTool  # type: ignore[import-not-found]
 
 
 def get_llamaindex_tool(tool: Tool) -> "FunctionTool":
-    from llama_index.core.tools import FunctionTool
-    from llama_index.core.tools.types import ToolMetadata
+    from llama_index.core.tools import FunctionTool  # type: ignore[import-not-found]
+    from llama_index.core.tools.types import (  # type: ignore[import-not-found]
+        ToolMetadata,
+    )
 
     model_schema = create_model_from_json_schema(
         tool.input_schema, model_name=f"{tool.name}_Schema"

@@ -226,6 +226,7 @@ class PersistentMcpClient:
             except Exception as e:
                 if not fallback and self._fallback_url is not None:
                     self.use_fallback_url = True
+                    self.transport_name = None
                     return await self.initialize(fallback=True)
                 raise e
 
@@ -254,6 +255,10 @@ class PersistentMcpClient:
                 await self.client_exit_stack.aclose()
             except Exception as e:
                 logger.debug(f"Error closing client exit stack: {e}")
+            # Create fresh exit stacks so that future initialize() calls
+            # don't reuse stacks tainted by old cancel scopes
+            self.session_exit_stack = AsyncExitStack()
+            self.client_exit_stack = AsyncExitStack()
             logger.debug("WebSocket connection closed due to inactivity.")
 
 
