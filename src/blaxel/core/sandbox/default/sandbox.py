@@ -14,6 +14,7 @@ from ...client.models import (
     MetadataLabels,
     Sandbox,
     SandboxLifecycle,
+    SandboxNetwork as SandboxNetworkModel,
     SandboxRuntime,
     SandboxSpec,
 )
@@ -156,6 +157,7 @@ class SandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "network" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
@@ -190,7 +192,8 @@ class SandboxInstance:
                     stacklevel=2,
                 )
             lifecycle = config.lifecycle
-            # snapshot_enabled = sandbox.snapshot_enabled
+            network = config.network
+            snapshot_enabled = config.snapshot_enabled
 
             labels = MetadataLabels.from_dict(config.labels) if config.labels else UNSET
             if labels is None:
@@ -226,6 +229,13 @@ class SandboxInstance:
                     sandbox.spec.lifecycle = lifecycle
                 else:
                     raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
+            if network:
+                if isinstance(network, dict):
+                    network = SandboxNetworkModel.from_dict(network)
+                    assert network is not None
+                sandbox.spec.network = network
+            if snapshot_enabled is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime["snapshotEnabled"] = snapshot_enabled
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
