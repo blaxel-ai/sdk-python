@@ -226,6 +226,7 @@ class PersistentMcpClient:
             except Exception as e:
                 if not fallback and self._fallback_url is not None:
                     self.use_fallback_url = True
+                    self.transport_name = None
                     return await self.initialize(fallback=True)
                 raise e
 
