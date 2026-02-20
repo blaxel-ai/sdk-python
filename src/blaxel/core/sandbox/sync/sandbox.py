@@ -13,9 +13,11 @@ from ...client.models import (
     Metadata,
     Sandbox,
     SandboxLifecycle,
-    SandboxNetwork as SandboxNetworkModel,
     SandboxRuntime,
     SandboxSpec,
+)
+from ...client.models import (
+    SandboxNetwork as SandboxNetworkModel,
 )
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
