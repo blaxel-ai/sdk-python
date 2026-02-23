@@ -21,7 +21,7 @@ from .action import SandboxAction
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
-MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
+MAX_PARALLEL_UPLOADS = 20  # Number of parallel part uploads
 
 logger = logging.getLogger(__name__)
 
