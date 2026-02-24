@@ -60,6 +60,7 @@ jobs:
     name: Integration Tests (Core)
     runs-on: ubuntu-latest
     env:
+      BL_REGION: ${{ vars.BL_REGION || 'us-pdx-1' }}
       BL_API_KEY: ${{ secrets.BL_API_KEY }}
       BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
@@ -87,6 +88,7 @@ jobs:
     name: Integration Tests (${{ matrix.framework }})
     runs-on: ubuntu-latest
     env:
+      BL_REGION: ${{ vars.BL_REGION || 'us-pdx-1' }}
       BL_API_KEY: ${{ secrets.BL_API_KEY }}
       BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
