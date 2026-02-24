@@ -47,7 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["CustomDomain"]]:
-    """List all custom domains
+    """List custom domains
+
+     Returns all custom domains configured in the workspace. Custom domains allow serving preview
+    deployments under your own domain (e.g., preview.yourdomain.com).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -70,7 +73,10 @@ def sync(
     *,
     client: Client,
 ) -> list["CustomDomain"] | None:
-    """List all custom domains
+    """List custom domains
+
+     Returns all custom domains configured in the workspace. Custom domains allow serving preview
+    deployments under your own domain (e.g., preview.yourdomain.com).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -89,7 +95,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["CustomDomain"]]:
-    """List all custom domains
+    """List custom domains
+
+     Returns all custom domains configured in the workspace. Custom domains allow serving preview
+    deployments under your own domain (e.g., preview.yourdomain.com).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -110,7 +119,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["CustomDomain"] | None:
-    """List all custom domains
+    """List custom domains
+
+     Returns all custom domains configured in the workspace. Custom domains allow serving preview
+    deployments under your own domain (e.g., preview.yourdomain.com).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

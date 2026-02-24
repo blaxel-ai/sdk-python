@@ -51,9 +51,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[DeleteWorkspaceServiceAccountResponse200]:
-    """Delete workspace service account
+    """Delete service account
 
-     Deletes a service account.
+     Permanently deletes a service account and invalidates all its credentials. Any systems using this
+    service account will lose access immediately.
 
     Args:
         client_id (str):
@@ -82,9 +83,10 @@ def sync(
     *,
     client: Client,
 ) -> DeleteWorkspaceServiceAccountResponse200 | None:
-    """Delete workspace service account
+    """Delete service account
 
-     Deletes a service account.
+     Permanently deletes a service account and invalidates all its credentials. Any systems using this
+    service account will lose access immediately.
 
     Args:
         client_id (str):
@@ -108,9 +110,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[DeleteWorkspaceServiceAccountResponse200]:
-    """Delete workspace service account
+    """Delete service account
 
-     Deletes a service account.
+     Permanently deletes a service account and invalidates all its credentials. Any systems using this
+    service account will lose access immediately.
 
     Args:
         client_id (str):
@@ -137,9 +140,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> DeleteWorkspaceServiceAccountResponse200 | None:
-    """Delete workspace service account
+    """Delete service account
 
-     Deletes a service account.
+     Permanently deletes a service account and invalidates all its credentials. Any systems using this
+    service account will lose access immediately.
 
     Args:
         client_id (str):

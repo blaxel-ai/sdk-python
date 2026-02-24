@@ -13,8 +13,8 @@ class Repository:
     """Repository
 
     Attributes:
-        type_ (Union[Unset, str]): Repository type
-        url (Union[Unset, str]): Repository URL
+        type_ (Union[Unset, str]): Repository type Example: github.
+        url (Union[Unset, str]): Repository URL Example: https://github.com/my-org/my-agent.
     """
 
     type_: Union[Unset, str] = UNSET

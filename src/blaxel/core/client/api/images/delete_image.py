@@ -53,9 +53,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Union[Any, Image]]:
-    """Delete image by name
+    """Delete container image
 
-     Deletes an image by name.
+     Deletes a container image and all its tags from the workspace registry. Will fail if the image is
+    currently in use by an active deployment.
 
     Args:
         resource_type (str):
@@ -87,9 +88,10 @@ def sync(
     *,
     client: Client,
 ) -> Union[Any, Image] | None:
-    """Delete image by name
+    """Delete container image
 
-     Deletes an image by name.
+     Deletes a container image and all its tags from the workspace registry. Will fail if the image is
+    currently in use by an active deployment.
 
     Args:
         resource_type (str):
@@ -116,9 +118,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Union[Any, Image]]:
-    """Delete image by name
+    """Delete container image
 
-     Deletes an image by name.
+     Deletes a container image and all its tags from the workspace registry. Will fail if the image is
+    currently in use by an active deployment.
 
     Args:
         resource_type (str):
@@ -148,9 +151,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Union[Any, Image] | None:
-    """Delete image by name
+    """Delete container image
 
-     Deletes an image by name.
+     Deletes a container image and all its tags from the workspace registry. Will fail if the image is
+    currently in use by an active deployment.
 
     Args:
         resource_type (str):

@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.volume import Volume
 from ...types import Response
 
@@ -32,18 +33,38 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Volume | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Volume] | None:
     if response.status_code == 200:
         response_200 = Volume.from_dict(response.json())
 
         return response_200
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        return response_400
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Volume]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Volume]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,20 +77,23 @@ def sync_detailed(
     *,
     client: Client,
     body: Volume,
-) -> Response[Volume]:
-    """Create volume
+) -> Response[Union[Error, Volume]]:
+    """Create persistent volume
 
-     Creates a volume.
+     Creates a new persistent storage volume that can be attached to sandboxes. Volumes must be created
+    in a specific region and can only attach to sandboxes in the same region.
 
     Args:
-        body (Volume): Volume resource for persistent storage
+        body (Volume): Persistent storage volume that can be attached to sandboxes for durable
+            file storage across sessions. Volumes survive sandbox deletion and can be reattached to
+            new sandboxes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Volume]
+        Response[Union[Error, Volume]]
     """
 
     kwargs = _get_kwargs(
@@ -87,20 +111,23 @@ def sync(
     *,
     client: Client,
     body: Volume,
-) -> Volume | None:
-    """Create volume
+) -> Union[Error, Volume] | None:
+    """Create persistent volume
 
-     Creates a volume.
+     Creates a new persistent storage volume that can be attached to sandboxes. Volumes must be created
+    in a specific region and can only attach to sandboxes in the same region.
 
     Args:
-        body (Volume): Volume resource for persistent storage
+        body (Volume): Persistent storage volume that can be attached to sandboxes for durable
+            file storage across sessions. Volumes survive sandbox deletion and can be reattached to
+            new sandboxes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Volume
+        Union[Error, Volume]
     """
 
     return sync_detailed(
@@ -113,20 +140,23 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Volume,
-) -> Response[Volume]:
-    """Create volume
+) -> Response[Union[Error, Volume]]:
+    """Create persistent volume
 
-     Creates a volume.
+     Creates a new persistent storage volume that can be attached to sandboxes. Volumes must be created
+    in a specific region and can only attach to sandboxes in the same region.
 
     Args:
-        body (Volume): Volume resource for persistent storage
+        body (Volume): Persistent storage volume that can be attached to sandboxes for durable
+            file storage across sessions. Volumes survive sandbox deletion and can be reattached to
+            new sandboxes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Volume]
+        Response[Union[Error, Volume]]
     """
 
     kwargs = _get_kwargs(
@@ -142,20 +172,23 @@ async def asyncio(
     *,
     client: Client,
     body: Volume,
-) -> Volume | None:
-    """Create volume
+) -> Union[Error, Volume] | None:
+    """Create persistent volume
 
-     Creates a volume.
+     Creates a new persistent storage volume that can be attached to sandboxes. Volumes must be created
+    in a specific region and can only attach to sandboxes in the same region.
 
     Args:
-        body (Volume): Volume resource for persistent storage
+        body (Volume): Persistent storage volume that can be attached to sandboxes for durable
+            file storage across sessions. Volumes survive sandbox deletion and can be reattached to
+            new sandboxes.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Volume
+        Union[Error, Volume]
     """
 
     return (

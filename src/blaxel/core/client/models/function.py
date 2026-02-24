@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.status import Status
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -16,22 +17,35 @@ T = TypeVar("T", bound="Function")
 
 @_attrs_define
 class Function:
-    """Function
+    """MCP server deployment that exposes tools for AI agents via the Model Context Protocol (MCP). Deployed as a
+    serverless auto-scaling endpoint using streamable HTTP transport.
 
-    Attributes:
-        events (Union[Unset, list['CoreEvent']]): Core events
-        metadata (Union[Unset, Metadata]): Metadata
-        spec (Union[Unset, FunctionSpec]): Function specification
-        status (Union[Unset, str]): Function status
+        Attributes:
+            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
+                and ownership information
+            spec (FunctionSpec): Configuration for an MCP server function including runtime settings, transport protocol,
+                and connected integrations
+            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
 
+    metadata: "Metadata"
+    spec: "FunctionSpec"
     events: Union[Unset, list["CoreEvent"]] = UNSET
-    metadata: Union[Unset, "Metadata"] = UNSET
-    spec: Union[Unset, "FunctionSpec"] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, Status] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        if type(self.metadata) is dict:
+            metadata = self.metadata
+        else:
+            metadata = self.metadata.to_dict()
+
+        if type(self.spec) is dict:
+            spec = self.spec
+        else:
+            spec = self.spec.to_dict()
+
         events: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.events, Unset):
             events = []
@@ -44,33 +58,20 @@ class Function:
                     )
                 events.append(componentsschemas_core_events_item)
 
-        metadata: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.metadata
-            and not isinstance(self.metadata, Unset)
-            and not isinstance(self.metadata, dict)
-        ):
-            metadata = self.metadata.to_dict()
-        elif self.metadata and isinstance(self.metadata, dict):
-            metadata = self.metadata
-
-        spec: Union[Unset, dict[str, Any]] = UNSET
-        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
-            spec = self.spec.to_dict()
-        elif self.spec and isinstance(self.spec, dict):
-            spec = self.spec
-
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "spec": spec,
+            }
+        )
         if events is not UNSET:
             field_dict["events"] = events
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
-        if spec is not UNSET:
-            field_dict["spec"] = spec
         if status is not UNSET:
             field_dict["status"] = status
 
@@ -85,6 +86,10 @@ class Function:
         if not src_dict:
             return None
         d = src_dict.copy()
+        metadata = Metadata.from_dict(d.pop("metadata"))
+
+        spec = FunctionSpec.from_dict(d.pop("spec"))
+
         events = []
         _events = d.pop("events", UNSET)
         for componentsschemas_core_events_item_data in _events or []:
@@ -94,26 +99,17 @@ class Function:
 
             events.append(componentsschemas_core_events_item)
 
-        _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, Metadata]
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, Status]
+        if isinstance(_status, Unset):
+            status = UNSET
         else:
-            metadata = Metadata.from_dict(_metadata)
-
-        _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, FunctionSpec]
-        if isinstance(_spec, Unset):
-            spec = UNSET
-        else:
-            spec = FunctionSpec.from_dict(_spec)
-
-        status = d.pop("status", UNSET)
+            status = Status(_status)
 
         function = cls(
-            events=events,
             metadata=metadata,
             spec=spec,
+            events=events,
             status=status,
         )
 

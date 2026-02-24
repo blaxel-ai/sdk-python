@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.workspace import Workspace
 from ...types import Response
 
@@ -20,18 +21,36 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Workspace | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Workspace] | None:
     if response.status_code == 200:
         response_200 = Workspace.from_dict(response.json())
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Workspace]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Error, Workspace]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -44,10 +63,11 @@ def sync_detailed(
     workspace_name: str,
     *,
     client: Client,
-) -> Response[Workspace]:
-    """Get workspace
+) -> Response[Union[Error, Workspace]]:
+    """Get workspace details
 
-     Returns a workspace by name.
+     Returns detailed information about a workspace including its display name, account ID, status, and
+    runtime configuration.
 
     Args:
         workspace_name (str):
@@ -57,7 +77,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Workspace]
+        Response[Union[Error, Workspace]]
     """
 
     kwargs = _get_kwargs(
@@ -75,10 +95,11 @@ def sync(
     workspace_name: str,
     *,
     client: Client,
-) -> Workspace | None:
-    """Get workspace
+) -> Union[Error, Workspace] | None:
+    """Get workspace details
 
-     Returns a workspace by name.
+     Returns detailed information about a workspace including its display name, account ID, status, and
+    runtime configuration.
 
     Args:
         workspace_name (str):
@@ -88,7 +109,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Workspace
+        Union[Error, Workspace]
     """
 
     return sync_detailed(
@@ -101,10 +122,11 @@ async def asyncio_detailed(
     workspace_name: str,
     *,
     client: Client,
-) -> Response[Workspace]:
-    """Get workspace
+) -> Response[Union[Error, Workspace]]:
+    """Get workspace details
 
-     Returns a workspace by name.
+     Returns detailed information about a workspace including its display name, account ID, status, and
+    runtime configuration.
 
     Args:
         workspace_name (str):
@@ -114,7 +136,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Workspace]
+        Response[Union[Error, Workspace]]
     """
 
     kwargs = _get_kwargs(
@@ -130,10 +152,11 @@ async def asyncio(
     workspace_name: str,
     *,
     client: Client,
-) -> Workspace | None:
-    """Get workspace
+) -> Union[Error, Workspace] | None:
+    """Get workspace details
 
-     Returns a workspace by name.
+     Returns detailed information about a workspace including its display name, account ID, status, and
+    runtime configuration.
 
     Args:
         workspace_name (str):
@@ -143,7 +166,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Workspace
+        Union[Error, Workspace]
     """
 
     return (

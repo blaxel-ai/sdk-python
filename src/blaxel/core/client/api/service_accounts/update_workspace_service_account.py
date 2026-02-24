@@ -66,9 +66,9 @@ def sync_detailed(
     client: Client,
     body: UpdateWorkspaceServiceAccountBody,
 ) -> Response[UpdateWorkspaceServiceAccountResponse200]:
-    """Update workspace service account
+    """Update service account
 
-     Updates a service account.
+     Updates a service account's name or description. Credentials (client ID/secret) cannot be changed.
 
     Args:
         client_id (str):
@@ -100,9 +100,9 @@ def sync(
     client: Client,
     body: UpdateWorkspaceServiceAccountBody,
 ) -> UpdateWorkspaceServiceAccountResponse200 | None:
-    """Update workspace service account
+    """Update service account
 
-     Updates a service account.
+     Updates a service account's name or description. Credentials (client ID/secret) cannot be changed.
 
     Args:
         client_id (str):
@@ -129,9 +129,9 @@ async def asyncio_detailed(
     client: Client,
     body: UpdateWorkspaceServiceAccountBody,
 ) -> Response[UpdateWorkspaceServiceAccountResponse200]:
-    """Update workspace service account
+    """Update service account
 
-     Updates a service account.
+     Updates a service account's name or description. Credentials (client ID/secret) cannot be changed.
 
     Args:
         client_id (str):
@@ -161,9 +161,9 @@ async def asyncio(
     client: Client,
     body: UpdateWorkspaceServiceAccountBody,
 ) -> UpdateWorkspaceServiceAccountResponse200 | None:
-    """Update workspace service account
+    """Update service account
 
-     Updates a service account.
+     Updates a service account's name or description. Credentials (client ID/secret) cannot be changed.
 
     Args:
         client_id (str):

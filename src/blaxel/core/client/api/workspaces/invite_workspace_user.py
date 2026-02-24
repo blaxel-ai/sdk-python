@@ -70,7 +70,8 @@ def sync_detailed(
 ) -> Response[Union[Any, PendingInvitation]]:
     """Invite user to workspace
 
-     Invites a user to the workspace by email.
+     Invites a new team member to the workspace by email. The invitee will receive an email to accept the
+    invitation before gaining access to workspace resources.
 
     Args:
         body (InviteWorkspaceUserBody):
@@ -101,7 +102,8 @@ def sync(
 ) -> Union[Any, PendingInvitation] | None:
     """Invite user to workspace
 
-     Invites a user to the workspace by email.
+     Invites a new team member to the workspace by email. The invitee will receive an email to accept the
+    invitation before gaining access to workspace resources.
 
     Args:
         body (InviteWorkspaceUserBody):
@@ -127,7 +129,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, PendingInvitation]]:
     """Invite user to workspace
 
-     Invites a user to the workspace by email.
+     Invites a new team member to the workspace by email. The invitee will receive an email to accept the
+    invitation before gaining access to workspace resources.
 
     Args:
         body (InviteWorkspaceUserBody):
@@ -156,7 +159,8 @@ async def asyncio(
 ) -> Union[Any, PendingInvitation] | None:
     """Invite user to workspace
 
-     Invites a user to the workspace by email.
+     Invites a new team member to the workspace by email. The invitee will receive an email to accept the
+    invitation before gaining access to workspace resources.
 
     Args:
         body (InviteWorkspaceUserBody):

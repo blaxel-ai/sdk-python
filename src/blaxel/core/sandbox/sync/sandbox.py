@@ -1,5 +1,6 @@
 import logging
 import uuid
+import warnings
 from typing import Any, Callable, Dict, List, Union
 
 from ...client.api.compute.create_sandbox import sync as create_sandbox
@@ -8,8 +9,21 @@ from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Runtime, Sandbox, SandboxSpec
+from ...client.models import (
+    Metadata,
+    Sandbox,
+    SandboxLifecycle,
+    SandboxRuntime,
+    SandboxSpec,
+)
+from ...client.models import (
+    SandboxNetwork as SandboxNetworkModel,
+)
+from ...client.models.error import Error
+from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ...common.settings import settings
+from ..default.sandbox import SandboxAPIError
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -22,6 +36,7 @@ from .network import SyncSandboxNetwork
 from .preview import SyncSandboxPreviews
 from .process import SyncSandboxProcess
 from .session import SyncSandboxSessions
+from .system import SyncSandboxSystem
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +84,7 @@ class SyncSandboxInstance:
         self.sessions = SyncSandboxSessions(self.config)
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)
+        self.system = SyncSandboxSystem(self.config)
 
     @property
     def metadata(self):
@@ -85,6 +101,14 @@ class SyncSandboxInstance:
     @property
     def spec(self):
         return self.sandbox.spec
+
+    @property
+    def last_used_at(self):
+        return self.sandbox.last_used_at
+
+    @property
+    def expires_in(self):
+        return self.sandbox.expires_in
 
     def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SyncSandboxInstance":
         logger.warning(
@@ -118,6 +142,7 @@ class SyncSandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "network" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
@@ -141,47 +166,78 @@ class SyncSandboxInstance:
             volumes = config._normalize_volumes() or UNSET
             ttl = config.ttl
             expires = config.expires
-            region = config.region
+            region = config.region or settings.region
+            if not region:
+                warnings.warn(
+                    "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
+                    "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the sandbox configuration or set the BL_REGION environment variable.",
+                    FutureWarning,
+                    stacklevel=2,
+                )
             lifecycle = config.lifecycle
+            network = config.network
+            snapshot_enabled = config.snapshot_enabled
             sandbox = Sandbox(
                 metadata=Metadata(name=name, labels=config.labels),
                 spec=SandboxSpec(
-                    runtime=Runtime(
+                    runtime=SandboxRuntime(
                         image=image,
                         memory=memory,
                         ports=ports,
                         envs=envs,
-                        generation="mk3",
                     ),
                     volumes=volumes,
                 ),
             )
-            if ttl:
+            if ttl and sandbox.spec.runtime:
                 sandbox.spec.runtime.ttl = ttl
-            if expires:
+            if expires and sandbox.spec.runtime:
                 sandbox.spec.runtime.expires = expires.isoformat()
             if region:
                 sandbox.spec.region = region
             if lifecycle:
-                sandbox.spec.lifecycle = lifecycle
+                if type(lifecycle) is dict:
+                    lifecycle = SandboxLifecycle.from_dict(lifecycle)
+                    assert lifecycle is not None
+                    sandbox.spec.lifecycle = lifecycle
+                elif type(lifecycle) is SandboxLifecycle:
+                    sandbox.spec.lifecycle = lifecycle
+                else:
+                    raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
+            if network:
+                if isinstance(network, dict):
+                    network = SandboxNetworkModel.from_dict(network)
+                    assert network is not None
+                sandbox.spec.network = network
+            if snapshot_enabled is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime["snapshotEnabled"] = snapshot_enabled
         else:
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
+            assert isinstance(sandbox, Sandbox)
+
             if not sandbox.metadata:
                 sandbox.metadata = Metadata(name=default_name)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
-                    runtime=Runtime(image=default_image, memory=default_memory)
+                    runtime=SandboxRuntime(image=default_image, memory=default_memory)
                 )
             if not sandbox.spec.runtime:
-                sandbox.spec.runtime = Runtime(image=default_image, memory=default_memory)
+                sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-            sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
         response = create_sandbox(
             client=client,
             body=sandbox,
         )
+
+        # Check if response is an error
+        if isinstance(response, SandboxError):
+            status_code = response.status_code if response.status_code is not UNSET else None
+            code = response.code if response.code else None
+            message = response.message if response.message else str(response)
+            raise SandboxAPIError(message, status_code=status_code, code=code)
+
         instance = cls(response)
         if safe:
             try:
@@ -196,6 +252,16 @@ class SyncSandboxInstance:
             sandbox_name,
             client=client,
         )
+
+        # Check if response is an error
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+
+        if response is None:
+            raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
+
         return cls(response)
 
     @classmethod
@@ -216,7 +282,11 @@ class SyncSandboxInstance:
             if updated_sandbox.metadata.labels is None or updated_sandbox.metadata.labels is UNSET:
                 updated_sandbox.metadata.labels = {}
             else:
-                updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
+                # MetadataLabels stores in additional_properties, use to_dict()
+                if hasattr(updated_sandbox.metadata.labels, "to_dict"):
+                    updated_sandbox.metadata.labels = updated_sandbox.metadata.labels.to_dict()
+                else:
+                    updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
             updated_sandbox.metadata.labels.update(metadata.labels)
         if metadata.display_name is not None:
             updated_sandbox.metadata.display_name = metadata.display_name
@@ -228,15 +298,79 @@ class SyncSandboxInstance:
         return cls(response)
 
     @classmethod
+    def update_ttl(cls, sandbox_name: str, ttl: str) -> "SyncSandboxInstance":
+        """Update sandbox TTL without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+
+        Returns:
+            A new SyncSandboxInstance with updated TTL
+        """
+        # Get the existing sandbox
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        # Update TTL
+        updated_sandbox.spec.runtime.ttl = ttl
+
+        # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        return cls(response)
+
+    @classmethod
+    def update_lifecycle(
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+    ) -> "SyncSandboxInstance":
+        """Update sandbox lifecycle configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            lifecycle: The new lifecycle configuration
+
+        Returns:
+            A new SyncSandboxInstance with updated lifecycle
+        """
+        # Get the existing sandbox
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        # Update lifecycle
+        updated_sandbox.spec.lifecycle = lifecycle
+
+        # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        return cls(response)
+
+    @classmethod
     def create_if_not_exists(
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
         try:
             return cls.create(sandbox)
-        except Exception as e:
-            if (hasattr(e, "status_code") and e.status_code == 409) or (
-                hasattr(e, "code") and e.code in [409, "SANDBOX_ALREADY_EXISTS"]
-            ):
+        except SandboxAPIError as e:
+            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
                 if isinstance(sandbox, SandboxCreateConfiguration):
                     name = sandbox.name
                 elif isinstance(sandbox, dict):
@@ -256,7 +390,7 @@ class SyncSandboxInstance:
                 if sandbox_instance.status == "TERMINATED":
                     return cls.create(sandbox)
                 return sandbox_instance
-            raise e
+            raise
 
     @classmethod
     def from_session(
@@ -265,7 +399,7 @@ class SyncSandboxInstance:
         if isinstance(session, dict):
             session = SessionWithToken.from_dict(session)
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
-        sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
+        sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
         return cls(
             sandbox=sandbox,
             force_url=session.url,

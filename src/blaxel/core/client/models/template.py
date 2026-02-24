@@ -17,17 +17,18 @@ class Template:
     """Blaxel template
 
     Attributes:
-        default_branch (Union[Unset, str]): Default branch of the template
-        description (Union[Unset, str]): Description of the template
-        download_count (Union[Unset, int]): Number of downloads/clones of the repository
-        forks_count (Union[Unset, int]): Number of forks the repository has
+        default_branch (Union[Unset, str]): Default branch of the template Example: main.
+        description (Union[Unset, str]): Description of the template Example: A starter template for building LangChain
+            agents.
+        download_count (Union[Unset, int]): Number of downloads/clones of the repository Example: 1200.
+        forks_count (Union[Unset, int]): Number of forks the repository has Example: 45.
         icon (Union[Unset, str]): URL to the template's icon
         icon_dark (Union[Unset, str]): URL to the template's icon in dark mode
-        name (Union[Unset, str]): Name of the template
+        name (Union[Unset, str]): Name of the template Example: langchain-agent.
         sha (Union[Unset, str]): SHA of the variable
-        star_count (Union[Unset, int]): Number of stars the repository has
+        star_count (Union[Unset, int]): Number of stars the repository has Example: 150.
         topics (Union[Unset, list[str]]): Topic of the template
-        url (Union[Unset, str]): URL of the template
+        url (Union[Unset, str]): URL of the template Example: https://github.com/blaxel-ai/template-langchain-agent.
         variables (Union[Unset, list['TemplateVariable']]): Variables of the template
     """
 

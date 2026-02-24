@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -6,11 +6,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
-    from ..models.flavor import Flavor
-    from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
     from ..models.sandbox_lifecycle import SandboxLifecycle
+    from ..models.sandbox_network import SandboxNetwork
+    from ..models.sandbox_runtime import SandboxRuntime
     from ..models.volume_attachment import VolumeAttachment
 
 
@@ -19,87 +17,32 @@ T = TypeVar("T", bound="SandboxSpec")
 
 @_attrs_define
 class SandboxSpec:
-    """Sandbox specification
+    """Configuration for a sandbox including its image, memory, ports, region, and lifecycle policies
 
     Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the resource
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
-        integration_connections (Union[Unset, list[str]]):
-        policies (Union[Unset, list[str]]):
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
-        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration for sandbox management
-        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1)
+        enabled (Union[Unset, bool]): When false, the sandbox is disabled and will not accept connections Default: True.
+            Example: True.
+        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
+            on idle time, max age, or specific dates
+        network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including egress IP binding. All
+            three fields (vpcName, egressGatewayName, egressIpName) must be specified together to assign a dedicated IP.
+        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
+            specified, defaults to the region closest to the user. Example: us-pdx-1.
+        runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its
+            resource limits
         volumes (Union[Unset, list['VolumeAttachment']]):
     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
-    enabled: Union[Unset, bool] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
-    integration_connections: Union[Unset, list[str]] = UNSET
-    policies: Union[Unset, list[str]] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
-    sandbox: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
+    network: Union[Unset, "SandboxNetwork"] = UNSET
     region: Union[Unset, str] = UNSET
+    runtime: Union[Unset, "SandboxRuntime"] = UNSET
     volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
-            configurations = self.configurations.to_dict()
-        elif self.configurations and isinstance(self.configurations, dict):
-            configurations = self.configurations
-
         enabled = self.enabled
-
-        flavors: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.flavors, Unset):
-            flavors = []
-            for componentsschemas_flavors_item_data in self.flavors:
-                if type(componentsschemas_flavors_item_data) is dict:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data
-                else:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
-                flavors.append(componentsschemas_flavors_item)
-
-        integration_connections: Union[Unset, list[str]] = UNSET
-        if not isinstance(self.integration_connections, Unset):
-            integration_connections = self.integration_connections
-
-        policies: Union[Unset, list[str]] = UNSET
-        if not isinstance(self.policies, Unset):
-            policies = self.policies
-
-        revision: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.revision
-            and not isinstance(self.revision, Unset)
-            and not isinstance(self.revision, dict)
-        ):
-            revision = self.revision.to_dict()
-        elif self.revision and isinstance(self.revision, dict):
-            revision = self.revision
-
-        runtime: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.runtime
-            and not isinstance(self.runtime, Unset)
-            and not isinstance(self.runtime, dict)
-        ):
-            runtime = self.runtime.to_dict()
-        elif self.runtime and isinstance(self.runtime, dict):
-            runtime = self.runtime
-
-        sandbox = self.sandbox
 
         lifecycle: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -111,7 +54,27 @@ class SandboxSpec:
         elif self.lifecycle and isinstance(self.lifecycle, dict):
             lifecycle = self.lifecycle
 
+        network: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.network
+            and not isinstance(self.network, Unset)
+            and not isinstance(self.network, dict)
+        ):
+            network = self.network.to_dict()
+        elif self.network and isinstance(self.network, dict):
+            network = self.network
+
         region = self.region
+
+        runtime: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.runtime
+            and not isinstance(self.runtime, Unset)
+            and not isinstance(self.runtime, dict)
+        ):
+            runtime = self.runtime.to_dict()
+        elif self.runtime and isinstance(self.runtime, dict):
+            runtime = self.runtime
 
         volumes: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.volumes, Unset):
@@ -130,26 +93,16 @@ class SandboxSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if configurations is not UNSET:
-            field_dict["configurations"] = configurations
         if enabled is not UNSET:
             field_dict["enabled"] = enabled
-        if flavors is not UNSET:
-            field_dict["flavors"] = flavors
-        if integration_connections is not UNSET:
-            field_dict["integrationConnections"] = integration_connections
-        if policies is not UNSET:
-            field_dict["policies"] = policies
-        if revision is not UNSET:
-            field_dict["revision"] = revision
-        if runtime is not UNSET:
-            field_dict["runtime"] = runtime
-        if sandbox is not UNSET:
-            field_dict["sandbox"] = sandbox
         if lifecycle is not UNSET:
             field_dict["lifecycle"] = lifecycle
+        if network is not UNSET:
+            field_dict["network"] = network
         if region is not UNSET:
             field_dict["region"] = region
+        if runtime is not UNSET:
+            field_dict["runtime"] = runtime
         if volumes is not UNSET:
             field_dict["volumes"] = volumes
 
@@ -157,53 +110,15 @@ class SandboxSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_spec_configurations import CoreSpecConfigurations
-        from ..models.flavor import Flavor
-        from ..models.revision_configuration import RevisionConfiguration
-        from ..models.runtime import Runtime
         from ..models.sandbox_lifecycle import SandboxLifecycle
+        from ..models.sandbox_network import SandboxNetwork
+        from ..models.sandbox_runtime import SandboxRuntime
         from ..models.volume_attachment import VolumeAttachment
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        _configurations = d.pop("configurations", UNSET)
-        configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
-            configurations = UNSET
-        else:
-            configurations = CoreSpecConfigurations.from_dict(_configurations)
-
         enabled = d.pop("enabled", UNSET)
-
-        flavors = []
-        _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in _flavors or []:
-            componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
-
-            flavors.append(componentsschemas_flavors_item)
-
-        integration_connections = cast(
-            list[str], d.pop("integrationConnections", d.pop("integration_connections", UNSET))
-        )
-
-        policies = cast(list[str], d.pop("policies", UNSET))
-
-        _revision = d.pop("revision", UNSET)
-        revision: Union[Unset, RevisionConfiguration]
-        if isinstance(_revision, Unset):
-            revision = UNSET
-        else:
-            revision = RevisionConfiguration.from_dict(_revision)
-
-        _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, Runtime]
-        if isinstance(_runtime, Unset):
-            runtime = UNSET
-        else:
-            runtime = Runtime.from_dict(_runtime)
-
-        sandbox = d.pop("sandbox", UNSET)
 
         _lifecycle = d.pop("lifecycle", UNSET)
         lifecycle: Union[Unset, SandboxLifecycle]
@@ -212,7 +127,21 @@ class SandboxSpec:
         else:
             lifecycle = SandboxLifecycle.from_dict(_lifecycle)
 
+        _network = d.pop("network", UNSET)
+        network: Union[Unset, SandboxNetwork]
+        if isinstance(_network, Unset):
+            network = UNSET
+        else:
+            network = SandboxNetwork.from_dict(_network)
+
         region = d.pop("region", UNSET)
+
+        _runtime = d.pop("runtime", UNSET)
+        runtime: Union[Unset, SandboxRuntime]
+        if isinstance(_runtime, Unset):
+            runtime = UNSET
+        else:
+            runtime = SandboxRuntime.from_dict(_runtime)
 
         volumes = []
         _volumes = d.pop("volumes", UNSET)
@@ -224,16 +153,11 @@ class SandboxSpec:
             volumes.append(componentsschemas_volume_attachments_item)
 
         sandbox_spec = cls(
-            configurations=configurations,
             enabled=enabled,
-            flavors=flavors,
-            integration_connections=integration_connections,
-            policies=policies,
-            revision=revision,
-            runtime=runtime,
-            sandbox=sandbox,
             lifecycle=lifecycle,
+            network=network,
             region=region,
+            runtime=runtime,
             volumes=volumes,
         )
 

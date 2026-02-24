@@ -44,9 +44,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Any]:
-    """Delete API key for service account
+    """Revoke service account API key
 
-     Deletes an API key for a service account.
+     Revokes an API key for a service account. The key becomes invalid immediately and any requests using
+    it will fail authentication.
 
     Args:
         client_id (str):
@@ -78,9 +79,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Any]:
-    """Delete API key for service account
+    """Revoke service account API key
 
-     Deletes an API key for a service account.
+     Revokes an API key for a service account. The key becomes invalid immediately and any requests using
+    it will fail authentication.
 
     Args:
         client_id (str):

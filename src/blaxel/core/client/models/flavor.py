@@ -3,6 +3,7 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.flavor_type import FlavorType
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="Flavor")
@@ -13,18 +14,20 @@ class Flavor:
     """A type of hardware available for deployments
 
     Attributes:
-        name (Union[Unset, str]): Flavor name (e.g. t4)
-        type_ (Union[Unset, str]): Flavor type (e.g. cpu, gpu)
+        name (Union[Unset, str]): Flavor name (e.g. t4) Example: t4.
+        type_ (Union[Unset, FlavorType]): Flavor type (e.g. cpu, gpu) Example: cpu.
     """
 
     name: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    type_: Union[Unset, FlavorType] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
-        type_ = self.type_
+        type_: Union[Unset, str] = UNSET
+        if not isinstance(self.type_, Unset):
+            type_ = self.type_.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -43,7 +46,12 @@ class Flavor:
         d = src_dict.copy()
         name = d.pop("name", UNSET)
 
-        type_ = d.pop("type", d.pop("type_", UNSET))
+        _type_ = d.pop("type", d.pop("type_", UNSET))
+        type_: Union[Unset, FlavorType]
+        if isinstance(_type_, Unset):
+            type_ = UNSET
+        else:
+            type_ = FlavorType(_type_)
 
         flavor = cls(
             name=name,

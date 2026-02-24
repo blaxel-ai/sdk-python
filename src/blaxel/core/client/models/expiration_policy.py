@@ -3,6 +3,8 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.expiration_policy_action import ExpirationPolicyAction
+from ..models.expiration_policy_type import ExpirationPolicyType
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ExpirationPolicy")
@@ -10,23 +12,30 @@ T = TypeVar("T", bound="ExpirationPolicy")
 
 @_attrs_define
 class ExpirationPolicy:
-    """Expiration policy for sandbox lifecycle management
+    """Expiration policy for automatic sandbox cleanup based on time conditions
 
     Attributes:
-        action (Union[Unset, str]): Action to take when policy is triggered
-        type_ (Union[Unset, str]): Type of expiration policy
-        value (Union[Unset, str]): Duration value (e.g., '1h', '24h', '7d')
+        action (Union[Unset, ExpirationPolicyAction]): Action to take when the expiration condition is met Example:
+            delete.
+        type_ (Union[Unset, ExpirationPolicyType]): Type of expiration policy: ttl-idle (delete after inactivity), ttl-
+            max-age (delete after total lifetime), or date (delete at specific time) Example: ttl-idle.
+        value (Union[Unset, str]): Duration value for TTL policies (e.g., '30m', '24h', '7d') or ISO 8601 date for date
+            policies Example: 24h.
     """
 
-    action: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    action: Union[Unset, ExpirationPolicyAction] = UNSET
+    type_: Union[Unset, ExpirationPolicyType] = UNSET
     value: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        action = self.action
+        action: Union[Unset, str] = UNSET
+        if not isinstance(self.action, Unset):
+            action = self.action.value
 
-        type_ = self.type_
+        type_: Union[Unset, str] = UNSET
+        if not isinstance(self.type_, Unset):
+            type_ = self.type_.value
 
         value = self.value
 
@@ -47,9 +56,19 @@ class ExpirationPolicy:
         if not src_dict:
             return None
         d = src_dict.copy()
-        action = d.pop("action", UNSET)
+        _action = d.pop("action", UNSET)
+        action: Union[Unset, ExpirationPolicyAction]
+        if isinstance(_action, Unset):
+            action = UNSET
+        else:
+            action = ExpirationPolicyAction(_action)
 
-        type_ = d.pop("type", d.pop("type_", UNSET))
+        _type_ = d.pop("type", d.pop("type_", UNSET))
+        type_: Union[Unset, ExpirationPolicyType]
+        if isinstance(_type_, Unset):
+            type_ = UNSET
+        else:
+            type_ = ExpirationPolicyType(_type_)
 
         value = d.pop("value", UNSET)
 

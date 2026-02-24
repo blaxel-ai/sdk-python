@@ -21,6 +21,8 @@ class ProcessResponse:
         pid (str):  Example: 1234.
         started_at (str):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
         status (ProcessResponseStatus):  Example: running.
+        stderr (str):  Example: stderr output.
+        stdout (str):  Example: stdout output.
         working_dir (str):  Example: /home/user.
         max_restarts (Union[Unset, int]):  Example: 3.
         restart_count (Union[Unset, int]):  Example: 2.
@@ -35,6 +37,8 @@ class ProcessResponse:
     pid: str
     started_at: str
     status: ProcessResponseStatus
+    stderr: str
+    stdout: str
     working_dir: str
     max_restarts: Union[Unset, int] = UNSET
     restart_count: Union[Unset, int] = UNSET
@@ -58,6 +62,10 @@ class ProcessResponse:
 
         status = self.status.value
 
+        stderr = self.stderr
+
+        stdout = self.stdout
+
         working_dir = self.working_dir
 
         max_restarts = self.max_restarts
@@ -78,6 +86,8 @@ class ProcessResponse:
                 "pid": pid,
                 "startedAt": started_at,
                 "status": status,
+                "stderr": stderr,
+                "stdout": stdout,
                 "workingDir": working_dir,
             }
         )
@@ -111,6 +121,10 @@ class ProcessResponse:
 
         status = ProcessResponseStatus(d.pop("status"))
 
+        stderr = d.pop("stderr")
+
+        stdout = d.pop("stdout")
+
         working_dir = d.pop("workingDir") if "workingDir" in d else d.pop("working_dir")
 
         max_restarts = d.pop("maxRestarts", d.pop("max_restarts", UNSET))
@@ -128,6 +142,8 @@ class ProcessResponse:
             pid=pid,
             started_at=started_at,
             status=status,
+            stderr=stderr,
+            stdout=stdout,
             working_dir=working_dir,
             max_restarts=max_restarts,
             restart_count=restart_count,

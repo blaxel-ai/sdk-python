@@ -6,11 +6,13 @@ from .client.models import (
 )
 from .default import (
     CodeInterpreter,
+    SandboxAPIError,
     SandboxCodegen,
     SandboxFileSystem,
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+    SandboxSystem,
 )
 from .sync import (
     SyncCodeInterpreter,
@@ -19,8 +21,11 @@ from .sync import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    SyncSandboxSystem,
 )
 from .types import (
+    AsyncStreamHandle,
+    AsyncWatchHandle,
     CopyResponse,
     ProcessRequestWithLog,
     ProcessResponseWithLog,
@@ -29,16 +34,23 @@ from .types import (
     SandboxFilesystemFile,
     SessionCreateOptions,
     SessionWithToken,
+    StreamHandle,
     WatchEvent,
+    WatchHandle,
 )
 
 __all__ = [
     "SandboxInstance",
+    "SandboxAPIError",
     "SessionCreateOptions",
     "SessionWithToken",
     "SandboxConfiguration",
     "SandboxCreateConfiguration",
     "WatchEvent",
+    "WatchHandle",
+    "AsyncWatchHandle",
+    "StreamHandle",
+    "AsyncStreamHandle",
     "SandboxFilesystemFile",
     "CopyResponse",
     "Sandbox",
@@ -46,6 +58,7 @@ __all__ = [
     "SandboxPreviews",
     "SandboxProcess",
     "SandboxCodegen",
+    "SandboxSystem",
     "ProcessRequestWithLog",
     "ProcessResponseWithLog",
     "ApplyEditRequest",
@@ -57,6 +70,7 @@ __all__ = [
     "SyncSandboxInstance",
     "SyncSandboxPreviews",
     "SyncSandboxProcess",
+    "SyncSandboxSystem",
     "SyncCodeInterpreter",
     "CodeInterpreter",
 ]

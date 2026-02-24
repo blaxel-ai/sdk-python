@@ -20,6 +20,7 @@ from .find_response import FindResponse
 from .fuzzy_search_match import FuzzySearchMatch
 from .fuzzy_search_response import FuzzySearchResponse
 from .get_network_process_pid_ports_response_200 import GetNetworkProcessPidPortsResponse200
+from .health_response import HealthResponse
 from .multipart_complete_request import MultipartCompleteRequest
 from .multipart_initiate_request import MultipartInitiateRequest
 from .multipart_initiate_response import MultipartInitiateResponse
@@ -34,6 +35,7 @@ from .process_request import ProcessRequest
 from .process_request_env import ProcessRequestEnv
 from .process_response import ProcessResponse
 from .process_response_status import ProcessResponseStatus
+from .process_upgrade_state import ProcessUpgradeState
 from .put_filesystem_multipart_upload_id_part_body import PutFilesystemMultipartUploadIdPartBody
 from .ranked_file import RankedFile
 from .reranking_response import RerankingResponse
@@ -41,7 +43,9 @@ from .subdirectory import Subdirectory
 from .success_response import SuccessResponse
 from .tree_request import TreeRequest
 from .tree_request_files import TreeRequestFiles
-from .welcome_response import WelcomeResponse
+from .tunnel_config_request import TunnelConfigRequest
+from .upgrade_request import UpgradeRequest
+from .upgrade_status import UpgradeStatus
 
 __all__ = (
     "ApplyEditRequest",
@@ -62,6 +66,7 @@ __all__ = (
     "FuzzySearchMatch",
     "FuzzySearchResponse",
     "GetNetworkProcessPidPortsResponse200",
+    "HealthResponse",
     "MultipartCompleteRequest",
     "MultipartInitiateRequest",
     "MultipartInitiateResponse",
@@ -76,6 +81,7 @@ __all__ = (
     "ProcessRequestEnv",
     "ProcessResponse",
     "ProcessResponseStatus",
+    "ProcessUpgradeState",
     "PutFilesystemMultipartUploadIdPartBody",
     "RankedFile",
     "RerankingResponse",
@@ -83,5 +89,7 @@ __all__ = (
     "SuccessResponse",
     "TreeRequest",
     "TreeRequestFiles",
-    "WelcomeResponse",
+    "TunnelConfigRequest",
+    "UpgradeRequest",
+    "UpgradeStatus",
 )

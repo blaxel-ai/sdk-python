@@ -8,7 +8,7 @@ T = TypeVar("T", bound="IntegrationConnectionSpecConfig")
 
 @_attrs_define
 class IntegrationConnectionSpecConfig:
-    """Additional configuration for the integration"""
+    """Non-sensitive configuration parameters for the integration (e.g., organization ID, region)"""
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 

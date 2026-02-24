@@ -13,11 +13,11 @@ class RevisionConfiguration:
     """Revision configuration
 
     Attributes:
-        active (Union[Unset, str]): Active revision id
+        active (Union[Unset, str]): Active revision id Example: rev-abc123.
         canary (Union[Unset, str]): Canary revision id
-        canary_percent (Union[Unset, int]): Canary revision percent
+        canary_percent (Union[Unset, int]): Canary revision percent Example: 10.
         sticky_session_ttl (Union[Unset, int]): Sticky session TTL in seconds (0 = disabled)
-        traffic (Union[Unset, int]): Traffic percentage
+        traffic (Union[Unset, int]): Traffic percentage Example: 100.
     """
 
     active: Union[Unset, str] = UNSET

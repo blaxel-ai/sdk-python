@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.volume import Volume
 from ...types import Response
 
@@ -20,18 +21,38 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Volume | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Volume] | None:
     if response.status_code == 200:
         response_200 = Volume.from_dict(response.json())
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Volume]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Volume]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -44,10 +65,11 @@ def sync_detailed(
     volume_name: str,
     *,
     client: Client,
-) -> Response[Volume]:
-    """Delete volume
+) -> Response[Union[Error, Volume]]:
+    """Delete persistent volume
 
-     Deletes a volume by name.
+     Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
+    action cannot be undone.
 
     Args:
         volume_name (str):
@@ -57,7 +79,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Volume]
+        Response[Union[Error, Volume]]
     """
 
     kwargs = _get_kwargs(
@@ -75,10 +97,11 @@ def sync(
     volume_name: str,
     *,
     client: Client,
-) -> Volume | None:
-    """Delete volume
+) -> Union[Error, Volume] | None:
+    """Delete persistent volume
 
-     Deletes a volume by name.
+     Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
+    action cannot be undone.
 
     Args:
         volume_name (str):
@@ -88,7 +111,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Volume
+        Union[Error, Volume]
     """
 
     return sync_detailed(
@@ -101,10 +124,11 @@ async def asyncio_detailed(
     volume_name: str,
     *,
     client: Client,
-) -> Response[Volume]:
-    """Delete volume
+) -> Response[Union[Error, Volume]]:
+    """Delete persistent volume
 
-     Deletes a volume by name.
+     Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
+    action cannot be undone.
 
     Args:
         volume_name (str):
@@ -114,7 +138,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Volume]
+        Response[Union[Error, Volume]]
     """
 
     kwargs = _get_kwargs(
@@ -130,10 +154,11 @@ async def asyncio(
     volume_name: str,
     *,
     client: Client,
-) -> Volume | None:
-    """Delete volume
+) -> Union[Error, Volume] | None:
+    """Delete persistent volume
 
-     Deletes a volume by name.
+     Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
+    action cannot be undone.
 
     Args:
         volume_name (str):
@@ -143,7 +168,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Volume
+        Union[Error, Volume]
     """
 
     return (

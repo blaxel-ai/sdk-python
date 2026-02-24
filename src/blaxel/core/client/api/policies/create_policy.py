@@ -57,9 +57,10 @@ def sync_detailed(
     client: Client,
     body: Policy,
 ) -> Response[Policy]:
-    """Create policy
+    """Create governance policy
 
-     Creates a policy.
+     Creates a new governance policy to control where and how resources are deployed. Policies can
+    restrict deployment to specific regions, countries, or continents for compliance.
 
     Args:
         body (Policy): Rule that controls how a deployment is made and served (e.g. location
@@ -89,9 +90,10 @@ def sync(
     client: Client,
     body: Policy,
 ) -> Policy | None:
-    """Create policy
+    """Create governance policy
 
-     Creates a policy.
+     Creates a new governance policy to control where and how resources are deployed. Policies can
+    restrict deployment to specific regions, countries, or continents for compliance.
 
     Args:
         body (Policy): Rule that controls how a deployment is made and served (e.g. location
@@ -116,9 +118,10 @@ async def asyncio_detailed(
     client: Client,
     body: Policy,
 ) -> Response[Policy]:
-    """Create policy
+    """Create governance policy
 
-     Creates a policy.
+     Creates a new governance policy to control where and how resources are deployed. Policies can
+    restrict deployment to specific regions, countries, or continents for compliance.
 
     Args:
         body (Policy): Rule that controls how a deployment is made and served (e.g. location
@@ -146,9 +149,10 @@ async def asyncio(
     client: Client,
     body: Policy,
 ) -> Policy | None:
-    """Create policy
+    """Create governance policy
 
-     Creates a policy.
+     Creates a new governance policy to control where and how resources are deployed. Policies can
+    restrict deployment to specific regions, countries, or continents for compliance.
 
     Args:
         body (Policy): Rule that controls how a deployment is made and served (e.g. location

@@ -13,8 +13,8 @@ class JobExecutionTaskSpec:
     """Job execution task specification
 
     Attributes:
-        max_retries (Union[Unset, int]): Maximum number of retries
-        timeout (Union[Unset, str]): Task timeout duration
+        max_retries (Union[Unset, int]): Maximum number of retries Example: 3.
+        timeout (Union[Unset, str]): Task timeout duration Example: 30m.
     """
 
     max_retries: Union[Unset, int] = UNSET

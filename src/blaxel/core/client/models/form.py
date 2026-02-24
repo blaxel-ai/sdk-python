@@ -7,8 +7,8 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.form_config import FormConfig
-    from ..models.form_oauth import FormOauth
     from ..models.form_secrets import FormSecrets
+    from ..models.o_auth import OAuth
 
 
 T = TypeVar("T", bound="Form")
@@ -20,12 +20,12 @@ class Form:
 
     Attributes:
         config (Union[Unset, FormConfig]): Config of the artifact
-        oauth (Union[Unset, FormOauth]): OAuth of the artifact
+        oauth (Union[Unset, OAuth]): OAuth of the artifact
         secrets (Union[Unset, FormSecrets]): Secrets of the artifact
     """
 
     config: Union[Unset, "FormConfig"] = UNSET
-    oauth: Union[Unset, "FormOauth"] = UNSET
+    oauth: Union[Unset, "OAuth"] = UNSET
     secrets: Union[Unset, "FormSecrets"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -67,8 +67,8 @@ class Form:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.form_config import FormConfig
-        from ..models.form_oauth import FormOauth
         from ..models.form_secrets import FormSecrets
+        from ..models.o_auth import OAuth
 
         if not src_dict:
             return None
@@ -81,11 +81,11 @@ class Form:
             config = FormConfig.from_dict(_config)
 
         _oauth = d.pop("oauth", UNSET)
-        oauth: Union[Unset, FormOauth]
+        oauth: Union[Unset, OAuth]
         if isinstance(_oauth, Unset):
             oauth = UNSET
         else:
-            oauth = FormOauth.from_dict(_oauth)
+            oauth = OAuth.from_dict(_oauth)
 
         _secrets = d.pop("secrets", UNSET)
         secrets: Union[Unset, FormSecrets]

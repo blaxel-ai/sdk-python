@@ -14,11 +14,11 @@ class JobExecutionStats:
 
     Attributes:
         cancelled (Union[Unset, int]): Number of cancelled tasks
-        failure (Union[Unset, int]): Number of failed tasks
-        retried (Union[Unset, int]): Number of retried tasks
-        running (Union[Unset, int]): Number of running tasks
-        success (Union[Unset, int]): Number of successful tasks
-        total (Union[Unset, int]): Total number of tasks
+        failure (Union[Unset, int]): Number of failed tasks Example: 1.
+        retried (Union[Unset, int]): Number of retried tasks Example: 2.
+        running (Union[Unset, int]): Number of running tasks Example: 1.
+        success (Union[Unset, int]): Number of successful tasks Example: 8.
+        total (Union[Unset, int]): Total number of tasks Example: 10.
     """
 
     cancelled: Union[Unset, int] = UNSET

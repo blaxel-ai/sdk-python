@@ -55,9 +55,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Union[Any, Image]]:
-    """Delete image tag
+    """Delete container image tag
 
-     Deletes a specific tag from an image.
+     Deletes a specific tag from a container image. The underlying image layers are kept if other tags
+    reference them. Will fail if the tag is currently in use.
 
     Args:
         resource_type (str):
@@ -92,9 +93,10 @@ def sync(
     *,
     client: Client,
 ) -> Union[Any, Image] | None:
-    """Delete image tag
+    """Delete container image tag
 
-     Deletes a specific tag from an image.
+     Deletes a specific tag from a container image. The underlying image layers are kept if other tags
+    reference them. Will fail if the tag is currently in use.
 
     Args:
         resource_type (str):
@@ -124,9 +126,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Union[Any, Image]]:
-    """Delete image tag
+    """Delete container image tag
 
-     Deletes a specific tag from an image.
+     Deletes a specific tag from a container image. The underlying image layers are kept if other tags
+    reference them. Will fail if the tag is currently in use.
 
     Args:
         resource_type (str):
@@ -159,9 +162,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Union[Any, Image] | None:
-    """Delete image tag
+    """Delete container image tag
 
-     Deletes a specific tag from an image.
+     Deletes a specific tag from a container image. The underlying image layers are kept if other tags
+    reference them. Will fail if the tag is currently in use.
 
     Args:
         resource_type (str):

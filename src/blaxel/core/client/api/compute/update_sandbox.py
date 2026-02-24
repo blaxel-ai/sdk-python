@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.sandbox import Sandbox
 from ...types import Response
 
@@ -33,18 +34,38 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Sandbox | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Sandbox] | None:
     if response.status_code == 200:
         response_200 = Sandbox.from_dict(response.json())
 
         return response_200
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        return response_400
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Sandbox]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Sandbox]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,21 +79,24 @@ def sync_detailed(
     *,
     client: Client,
     body: Sandbox,
-) -> Response[Sandbox]:
-    """Update Sandbox
+) -> Response[Union[Error, Sandbox]]:
+    """Update sandbox
 
-     Update a Sandbox by name.
+     Updates a sandbox's configuration. Note that certain changes (like image or memory) may reset the
+    sandbox state. Use lifecycle policies to control automatic cleanup.
 
     Args:
         sandbox_name (str):
-        body (Sandbox): Micro VM for running agentic tasks
+        body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
+            from standby in under 25ms and automatically scale to zero after inactivity, preserving
+            memory state including running processes and filesystem.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Sandbox]
+        Response[Union[Error, Sandbox]]
     """
 
     kwargs = _get_kwargs(
@@ -92,21 +116,24 @@ def sync(
     *,
     client: Client,
     body: Sandbox,
-) -> Sandbox | None:
-    """Update Sandbox
+) -> Union[Error, Sandbox] | None:
+    """Update sandbox
 
-     Update a Sandbox by name.
+     Updates a sandbox's configuration. Note that certain changes (like image or memory) may reset the
+    sandbox state. Use lifecycle policies to control automatic cleanup.
 
     Args:
         sandbox_name (str):
-        body (Sandbox): Micro VM for running agentic tasks
+        body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
+            from standby in under 25ms and automatically scale to zero after inactivity, preserving
+            memory state including running processes and filesystem.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Sandbox
+        Union[Error, Sandbox]
     """
 
     return sync_detailed(
@@ -121,21 +148,24 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Sandbox,
-) -> Response[Sandbox]:
-    """Update Sandbox
+) -> Response[Union[Error, Sandbox]]:
+    """Update sandbox
 
-     Update a Sandbox by name.
+     Updates a sandbox's configuration. Note that certain changes (like image or memory) may reset the
+    sandbox state. Use lifecycle policies to control automatic cleanup.
 
     Args:
         sandbox_name (str):
-        body (Sandbox): Micro VM for running agentic tasks
+        body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
+            from standby in under 25ms and automatically scale to zero after inactivity, preserving
+            memory state including running processes and filesystem.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Sandbox]
+        Response[Union[Error, Sandbox]]
     """
 
     kwargs = _get_kwargs(
@@ -153,21 +183,24 @@ async def asyncio(
     *,
     client: Client,
     body: Sandbox,
-) -> Sandbox | None:
-    """Update Sandbox
+) -> Union[Error, Sandbox] | None:
+    """Update sandbox
 
-     Update a Sandbox by name.
+     Updates a sandbox's configuration. Note that certain changes (like image or memory) may reset the
+    sandbox state. Use lifecycle policies to control automatic cleanup.
 
     Args:
         sandbox_name (str):
-        body (Sandbox): Micro VM for running agentic tasks
+        body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
+            from standby in under 25ms and automatically scale to zero after inactivity, preserving
+            memory state including running processes and filesystem.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Sandbox
+        Union[Error, Sandbox]
     """
 
     return (

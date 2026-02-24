@@ -14,6 +14,7 @@ from ..types import (
     SandboxConfiguration,
     SandboxFilesystemFile,
     WatchEvent,
+    WatchHandle,
 )
 from .action import SyncSandboxAction
 
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
-MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
+MAX_PARALLEL_UPLOADS = 20  # Number of parallel part uploads
 
 
 class SyncSandboxFileSystem(SyncSandboxAction):
@@ -162,7 +163,23 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         path: str,
         callback: Callable[[WatchEvent], None],
         options: Dict[str, Any] | None = None,
-    ) -> Dict[str, Callable]:
+    ) -> WatchHandle:
+        """Watch for file system changes.
+
+        Returns a WatchHandle that can be used as a context manager:
+
+            with sandbox.fs.watch(path, callback) as handle:
+                # do something
+            # handle is automatically closed
+
+        Or manually:
+
+            handle = sandbox.fs.watch(path, callback)
+            try:
+                # do something
+            finally:
+                handle.close()
+        """
         path = self.format_path(path)
         closed = threading.Event()
         if options is None:
@@ -226,7 +243,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         def close():
             closed.set()
 
-        return {"close": close}
+        return WatchHandle(close)
 
     def format_path(self, path: str) -> str:
         return path

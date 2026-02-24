@@ -47,9 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["Policy"]]:
-    """List policies
+    """List governance policies
 
-     Returns a list of all policies in the workspace.
+     Returns all governance policies in the workspace. Policies control deployment locations, hardware
+    flavors, and token limits for agents, functions, and models.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -72,9 +73,10 @@ def sync(
     *,
     client: Client,
 ) -> list["Policy"] | None:
-    """List policies
+    """List governance policies
 
-     Returns a list of all policies in the workspace.
+     Returns all governance policies in the workspace. Policies control deployment locations, hardware
+    flavors, and token limits for agents, functions, and models.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,9 +95,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["Policy"]]:
-    """List policies
+    """List governance policies
 
-     Returns a list of all policies in the workspace.
+     Returns all governance policies in the workspace. Policies control deployment locations, hardware
+    flavors, and token limits for agents, functions, and models.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,9 +119,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["Policy"] | None:
-    """List policies
+    """List governance policies
 
-     Returns a list of all policies in the workspace.
+     Returns all governance policies in the workspace. Policies control deployment locations, hardware
+    flavors, and token limits for agents, functions, and models.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

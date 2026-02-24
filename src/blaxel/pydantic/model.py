@@ -1,19 +1,6 @@
 import logging
-from typing import Any
 
-from anthropic import AsyncAnthropic
-from cohere import AsyncClientV2
-from mistralai.sdk import Mistral
-from pydantic_ai.models import Model
-from pydantic_ai.models.anthropic import AnthropicModel
-from pydantic_ai.models.cohere import CohereModel
-from pydantic_ai.models.gemini import GeminiModel
-from pydantic_ai.models.mistral import MistralModel
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.anthropic import AnthropicProvider
-from pydantic_ai.providers.cohere import CohereProvider
-from pydantic_ai.providers.mistral import MistralProvider
-from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.models import Model  # type: ignore[import-not-found]
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
@@ -41,6 +28,14 @@ class TokenRefreshingModel(Model):
         kwargs = config.get("kwargs", {})
 
         if type == "mistral":
+            from mistralai.sdk import Mistral
+            from pydantic_ai.models.mistral import (  # type: ignore[import-not-found]
+                MistralModel,
+            )
+            from pydantic_ai.providers.mistral import (  # type: ignore[import-not-found]
+                MistralProvider,
+            )
+
             return MistralModel(
                 model_name=model,
                 provider=MistralProvider(
@@ -52,6 +47,14 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "cohere":
+            from cohere import AsyncClientV2
+            from pydantic_ai.models.cohere import (  # type: ignore[import-not-found]
+                CohereModel,
+            )
+            from pydantic_ai.providers.cohere import (  # type: ignore[import-not-found]
+                CohereProvider,
+            )
+
             return CohereModel(
                 model_name=model,
                 provider=CohereProvider(
@@ -62,27 +65,52 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "xai":
-            return OpenAIModel(
+            from pydantic_ai.models.openai import (  # type: ignore[import-not-found]
+                OpenAIChatModel,
+            )
+            from pydantic_ai.providers.openai import (  # type: ignore[import-not-found]
+                OpenAIProvider,
+            )
+
+            return OpenAIChatModel(
                 model_name=model,
                 provider=OpenAIProvider(
                     base_url=f"{url}/v1", api_key=settings.auth.token, **kwargs
                 ),
             )
         elif type == "deepseek":
-            return OpenAIModel(
+            from pydantic_ai.models.openai import (  # type: ignore[import-not-found]
+                OpenAIChatModel,
+            )
+            from pydantic_ai.providers.openai import (  # type: ignore[import-not-found]
+                OpenAIProvider,
+            )
+
+            return OpenAIChatModel(
                 model_name=model,
                 provider=OpenAIProvider(
                     base_url=f"{url}/v1", api_key=settings.auth.token, **kwargs
                 ),
             )
         elif type == "cerebras":
-            return OpenAIModel(
+            from pydantic_ai.models.openai import (  # type: ignore[import-not-found]
+                OpenAIChatModel,
+            )
+            from pydantic_ai.providers.openai import (  # type: ignore[import-not-found]
+                OpenAIProvider,
+            )
+
+            return OpenAIChatModel(
                 model_name=model,
                 provider=OpenAIProvider(
                     base_url=f"{url}/v1", api_key=settings.auth.token, **kwargs
                 ),
             )
         elif type == "anthropic":
+            from anthropic import AsyncAnthropic
+            from pydantic_ai.models.anthropic import AnthropicModel
+            from pydantic_ai.providers.anthropic import AnthropicProvider
+
             return AnthropicModel(
                 model_name=model,
                 provider=AnthropicProvider(
@@ -95,6 +123,8 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "gemini":
+            from pydantic_ai.models.gemini import GeminiModel
+
             return GeminiModel(
                 model_name=model,
                 provider=GoogleGLAProvider(
@@ -105,9 +135,12 @@ class TokenRefreshingModel(Model):
                 ),
             )
         else:
+            from pydantic_ai.models.openai import OpenAIChatModel
+            from pydantic_ai.providers.openai import OpenAIProvider
+
             if type != "openai":
                 logger.warning(f"Model {model} is not supported by Pydantic, defaulting to OpenAI")
-            return OpenAIModel(
+            return OpenAIChatModel(
                 model_name=model,
                 provider=OpenAIProvider(
                     base_url=f"{url}/v1", api_key=settings.auth.token, **kwargs
@@ -116,12 +149,6 @@ class TokenRefreshingModel(Model):
 
     def _get_fresh_model(self) -> Model:
         """Get or create a model with fresh token if needed."""
-        # Only refresh if using ClientCredentials (which has get_token method)
-        if hasattr(settings.auth, "get_token"):
-            # This will trigger token refresh if needed
-            logger.debug(f"Calling get_token for {self.model_config['type']} model")
-            settings.auth.get_token()
-
         new_token = settings.auth.token
 
         # If token changed or no cached model, create new one
@@ -138,10 +165,10 @@ class TokenRefreshingModel(Model):
         return model.model_name
 
     @property
-    def system(self) -> Any | None:
+    def system(self) -> str:
         """Return the system property from the wrapped model."""
         model = self._get_fresh_model()
-        return model.system if hasattr(model, "system") else None
+        return model.system if hasattr(model, "system") else ""
 
     async def request(self, *args, **kwargs):
         """Make a request to the model with token refresh."""

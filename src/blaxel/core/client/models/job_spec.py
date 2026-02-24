@@ -6,10 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
-    from ..models.flavor import Flavor
+    from ..models.job_runtime import JobRuntime
     from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
     from ..models.trigger import Trigger
 
 
@@ -18,63 +16,35 @@ T = TypeVar("T", bound="JobSpec")
 
 @_attrs_define
 class JobSpec:
-    """Job specification
+    """Configuration for a batch job including execution parameters, parallelism settings, and deployment region
 
     Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the resource
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
-        integration_connections (Union[Unset, list[str]]):
+        enabled (Union[Unset, bool]): When false, the job is disabled and new executions cannot be triggered Default:
+            True. Example: True.
         policies (Union[Unset, list[str]]):
+        region (Union[Unset, str]): Region where the job should be created (e.g. us-was-1, eu-lon-1) Example: us-was-1.
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
-        region (Union[Unset, str]): Region where the job should be created (e.g. us-was-1, eu-lon-1)
+        runtime (Union[Unset, JobRuntime]): Runtime configuration defining how batch job tasks are executed with
+            parallelism and retry settings
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
-    enabled: Union[Unset, bool] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
-    integration_connections: Union[Unset, list[str]] = UNSET
+    enabled: Union[Unset, bool] = True
     policies: Union[Unset, list[str]] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
-    sandbox: Union[Unset, bool] = UNSET
     region: Union[Unset, str] = UNSET
+    revision: Union[Unset, "RevisionConfiguration"] = UNSET
+    runtime: Union[Unset, "JobRuntime"] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
-            configurations = self.configurations.to_dict()
-        elif self.configurations and isinstance(self.configurations, dict):
-            configurations = self.configurations
-
         enabled = self.enabled
-
-        flavors: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.flavors, Unset):
-            flavors = []
-            for componentsschemas_flavors_item_data in self.flavors:
-                if type(componentsschemas_flavors_item_data) is dict:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data
-                else:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
-                flavors.append(componentsschemas_flavors_item)
-
-        integration_connections: Union[Unset, list[str]] = UNSET
-        if not isinstance(self.integration_connections, Unset):
-            integration_connections = self.integration_connections
 
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
+
+        region = self.region
 
         revision: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -96,10 +66,6 @@ class JobSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        sandbox = self.sandbox
-
-        region = self.region
-
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
@@ -113,24 +79,16 @@ class JobSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if configurations is not UNSET:
-            field_dict["configurations"] = configurations
         if enabled is not UNSET:
             field_dict["enabled"] = enabled
-        if flavors is not UNSET:
-            field_dict["flavors"] = flavors
-        if integration_connections is not UNSET:
-            field_dict["integrationConnections"] = integration_connections
         if policies is not UNSET:
             field_dict["policies"] = policies
+        if region is not UNSET:
+            field_dict["region"] = region
         if revision is not UNSET:
             field_dict["revision"] = revision
         if runtime is not UNSET:
             field_dict["runtime"] = runtime
-        if sandbox is not UNSET:
-            field_dict["sandbox"] = sandbox
-        if region is not UNSET:
-            field_dict["region"] = region
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -138,36 +96,18 @@ class JobSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_spec_configurations import CoreSpecConfigurations
-        from ..models.flavor import Flavor
+        from ..models.job_runtime import JobRuntime
         from ..models.revision_configuration import RevisionConfiguration
-        from ..models.runtime import Runtime
         from ..models.trigger import Trigger
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        _configurations = d.pop("configurations", UNSET)
-        configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
-            configurations = UNSET
-        else:
-            configurations = CoreSpecConfigurations.from_dict(_configurations)
-
         enabled = d.pop("enabled", UNSET)
 
-        flavors = []
-        _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in _flavors or []:
-            componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
-
-            flavors.append(componentsschemas_flavors_item)
-
-        integration_connections = cast(
-            list[str], d.pop("integrationConnections", d.pop("integration_connections", UNSET))
-        )
-
         policies = cast(list[str], d.pop("policies", UNSET))
+
+        region = d.pop("region", UNSET)
 
         _revision = d.pop("revision", UNSET)
         revision: Union[Unset, RevisionConfiguration]
@@ -177,15 +117,11 @@ class JobSpec:
             revision = RevisionConfiguration.from_dict(_revision)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, Runtime]
+        runtime: Union[Unset, JobRuntime]
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:
-            runtime = Runtime.from_dict(_runtime)
-
-        sandbox = d.pop("sandbox", UNSET)
-
-        region = d.pop("region", UNSET)
+            runtime = JobRuntime.from_dict(_runtime)
 
         triggers = []
         _triggers = d.pop("triggers", UNSET)
@@ -197,15 +133,11 @@ class JobSpec:
             triggers.append(componentsschemas_triggers_item)
 
         job_spec = cls(
-            configurations=configurations,
             enabled=enabled,
-            flavors=flavors,
-            integration_connections=integration_connections,
             policies=policies,
+            region=region,
             revision=revision,
             runtime=runtime,
-            sandbox=sandbox,
-            region=region,
             triggers=triggers,
         )
 

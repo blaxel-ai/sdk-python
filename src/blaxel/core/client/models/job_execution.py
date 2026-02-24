@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.job_execution_status import JobExecutionStatus
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -20,36 +21,30 @@ class JobExecution:
     """Job execution
 
     Attributes:
-        metadata (Union[Unset, JobExecutionMetadata]): Job execution metadata
-        spec (Union[Unset, JobExecutionSpec]): Job execution specification
+        metadata (JobExecutionMetadata): Job execution metadata
+        spec (JobExecutionSpec): Job execution specification
         stats (Union[Unset, JobExecutionStats]): Job execution statistics
-        status (Union[Unset, str]): Job execution status
+        status (Union[Unset, JobExecutionStatus]): Job execution status
         tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
     """
 
-    metadata: Union[Unset, "JobExecutionMetadata"] = UNSET
-    spec: Union[Unset, "JobExecutionSpec"] = UNSET
+    metadata: "JobExecutionMetadata"
+    spec: "JobExecutionSpec"
     stats: Union[Unset, "JobExecutionStats"] = UNSET
-    status: Union[Unset, str] = UNSET
+    status: Union[Unset, JobExecutionStatus] = UNSET
     tasks: Union[Unset, list["JobExecutionTask"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        metadata: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.metadata
-            and not isinstance(self.metadata, Unset)
-            and not isinstance(self.metadata, dict)
-        ):
-            metadata = self.metadata.to_dict()
-        elif self.metadata and isinstance(self.metadata, dict):
+        if type(self.metadata) is dict:
             metadata = self.metadata
+        else:
+            metadata = self.metadata.to_dict()
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
-        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
-            spec = self.spec.to_dict()
-        elif self.spec and isinstance(self.spec, dict):
+        if type(self.spec) is dict:
             spec = self.spec
+        else:
+            spec = self.spec.to_dict()
 
         stats: Union[Unset, dict[str, Any]] = UNSET
         if self.stats and not isinstance(self.stats, Unset) and not isinstance(self.stats, dict):
@@ -57,7 +52,9 @@ class JobExecution:
         elif self.stats and isinstance(self.stats, dict):
             stats = self.stats
 
-        status = self.status
+        status: Union[Unset, str] = UNSET
+        if not isinstance(self.status, Unset):
+            status = self.status.value
 
         tasks: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.tasks, Unset):
@@ -71,11 +68,12 @@ class JobExecution:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
-        if spec is not UNSET:
-            field_dict["spec"] = spec
+        field_dict.update(
+            {
+                "metadata": metadata,
+                "spec": spec,
+            }
+        )
         if stats is not UNSET:
             field_dict["stats"] = stats
         if status is not UNSET:
@@ -95,19 +93,9 @@ class JobExecution:
         if not src_dict:
             return None
         d = src_dict.copy()
-        _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, JobExecutionMetadata]
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = JobExecutionMetadata.from_dict(_metadata)
+        metadata = JobExecutionMetadata.from_dict(d.pop("metadata"))
 
-        _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, JobExecutionSpec]
-        if isinstance(_spec, Unset):
-            spec = UNSET
-        else:
-            spec = JobExecutionSpec.from_dict(_spec)
+        spec = JobExecutionSpec.from_dict(d.pop("spec"))
 
         _stats = d.pop("stats", UNSET)
         stats: Union[Unset, JobExecutionStats]
@@ -116,7 +104,12 @@ class JobExecution:
         else:
             stats = JobExecutionStats.from_dict(_stats)
 
-        status = d.pop("status", UNSET)
+        _status = d.pop("status", UNSET)
+        status: Union[Unset, JobExecutionStatus]
+        if isinstance(_status, Unset):
+            status = UNSET
+        else:
+            status = JobExecutionStatus(_status)
 
         tasks = []
         _tasks = d.pop("tasks", UNSET)

@@ -8,7 +8,10 @@ T = TypeVar("T", bound="MetadataLabels")
 
 @_attrs_define
 class MetadataLabels:
-    """Labels"""
+    """Key-value pairs for organizing and filtering resources. Labels can be used to categorize resources by environment,
+    project, team, or any custom taxonomy.
+
+    """
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 

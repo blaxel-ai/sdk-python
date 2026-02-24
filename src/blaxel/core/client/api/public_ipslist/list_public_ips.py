@@ -1,18 +1,28 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
 from ...models.public_ips import PublicIps
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    *,
+    region: Union[Unset, str] = UNSET,
+) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["region"] = region
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/publicIps",
+        "params": params,
     }
 
     return _kwargs
@@ -41,10 +51,14 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Pub
 def sync_detailed(
     *,
     client: Client,
+    region: Union[Unset, str] = UNSET,
 ) -> Response[PublicIps]:
     """List public ips
 
      Returns a list of all public ips used in Blaxel..
+
+    Args:
+        region (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -54,7 +68,9 @@ def sync_detailed(
         Response[PublicIps]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        region=region,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -66,10 +82,14 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
+    region: Union[Unset, str] = UNSET,
 ) -> PublicIps | None:
     """List public ips
 
      Returns a list of all public ips used in Blaxel..
+
+    Args:
+        region (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -81,16 +101,21 @@ def sync(
 
     return sync_detailed(
         client=client,
+        region=region,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: Client,
+    region: Union[Unset, str] = UNSET,
 ) -> Response[PublicIps]:
     """List public ips
 
      Returns a list of all public ips used in Blaxel..
+
+    Args:
+        region (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -100,7 +125,9 @@ async def asyncio_detailed(
         Response[PublicIps]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        region=region,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -110,10 +137,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
+    region: Union[Unset, str] = UNSET,
 ) -> PublicIps | None:
     """List public ips
 
      Returns a list of all public ips used in Blaxel..
+
+    Args:
+        region (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -126,5 +157,6 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
+            region=region,
         )
     ).parsed

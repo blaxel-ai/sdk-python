@@ -4,7 +4,15 @@ from typing import Any, Callable, Dict, List, TypeVar, Union
 import httpx
 from attrs import define as _attrs_define
 
-from ..client.models import Port, Sandbox, SandboxLifecycle, VolumeAttachment
+from ..client.models import (
+    Env,
+    Port,
+    PortProtocol,
+    Sandbox,
+    SandboxLifecycle,
+    SandboxNetwork,
+    VolumeAttachment,
+)
 from ..client.types import UNSET
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
@@ -154,6 +162,7 @@ class SandboxCreateConfiguration:
         expires: datetime | None = None,
         region: str | None = None,
         lifecycle: Union[SandboxLifecycle, Dict[str, Any]] | None = None,
+        network: Union[SandboxNetwork, Dict[str, Any]] | None = None,
         snapshot_enabled: bool | None = None,
         labels: Dict[str, str] | None = None,
     ):
@@ -167,6 +176,7 @@ class SandboxCreateConfiguration:
         self.expires = expires
         self.region = region
         self.lifecycle = lifecycle
+        self.network = network
         self.snapshot_enabled = snapshot_enabled
         self.labels = labels
 
@@ -180,6 +190,10 @@ class SandboxCreateConfiguration:
         if lifecycle and isinstance(lifecycle, dict):
             lifecycle = SandboxLifecycle.from_dict(lifecycle)
 
+        network = data.get("network")
+        if network and isinstance(network, dict):
+            network = SandboxNetwork.from_dict(network)
+
         return cls(
             name=data.get("name"),
             image=data.get("image"),
@@ -191,6 +205,7 @@ class SandboxCreateConfiguration:
             expires=expires,
             region=data.get("region"),
             lifecycle=lifecycle,
+            network=network,
             snapshot_enabled=data.get("snapshot_enabled"),
             labels=data.get("labels"),
         )
@@ -205,7 +220,7 @@ class SandboxCreateConfiguration:
             if isinstance(port, Port):
                 # If it's already a Port object, ensure protocol defaults to HTTP
                 if port.protocol is UNSET or not port.protocol:
-                    port.protocol = "HTTP"
+                    port.protocol = PortProtocol.HTTP
                 port_objects.append(port)
             elif isinstance(port, dict):
                 # Convert dict to Port object with HTTP as default protocol
@@ -218,20 +233,22 @@ class SandboxCreateConfiguration:
 
         return port_objects
 
-    def _normalize_envs(self) -> List[Dict[str, str]] | None:
+    def _normalize_envs(self) -> List[Env] | None:
         """Convert envs to list of dicts with name and value keys."""
         if not self.envs:
             return None
 
         env_objects = []
         for env in self.envs:
-            if isinstance(env, dict):
+            if isinstance(env, Env):
+                env_objects.append(env)
+            elif isinstance(env, dict):
                 # Validate that the dict has the required keys
                 if "name" not in env or "value" not in env:
                     raise ValueError(
                         f"Environment variable dict must have 'name' and 'value' keys: {env}"
                     )
-                env_objects.append({"name": env["name"], "value": env["value"]})
+                env_objects.append(Env(name=env["name"], value=env["value"]))
             else:
                 raise ValueError(
                     f"Invalid env type: {type(env)}. Expected dict with 'name' and 'value' keys."
@@ -385,3 +402,201 @@ class Context:
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> "Context":
         return cls(id=str(data.get("id") or data.get("context_id") or ""))
+
+
+class StreamHandle:
+    """Handle for managing a streaming operation (sync version).
+
+    Can be used as a context manager for automatic cleanup:
+
+        with sandbox.process.stream_logs(name, options) as handle:
+            # do something
+        # handle is automatically closed
+
+    Or used manually:
+
+        handle = sandbox.process.stream_logs(name, options)
+        try:
+            # do something
+        finally:
+            handle.close()
+    """
+
+    def __init__(self, close_func: Callable[[], None]):
+        self._close_func = close_func
+        self._closed = False
+
+    def close(self) -> None:
+        """Close the stream and stop receiving data."""
+        if not self._closed:
+            self._close_func()
+            self._closed = True
+
+    @property
+    def closed(self) -> bool:
+        """Returns True if the stream handle has been closed."""
+        return self._closed
+
+    def __enter__(self) -> "StreamHandle":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    # Backward compatibility: support dict-like access
+    def __getitem__(self, key: str) -> Callable[[], None]:
+        if key == "close":
+            return self.close
+        raise KeyError(key)
+
+
+class AsyncStreamHandle:
+    """Handle for managing a streaming operation (async version).
+
+    Can be used as an async context manager for automatic cleanup:
+
+        async with sandbox.process.stream_logs(name, options) as handle:
+            # do something
+        # handle is automatically closed
+
+    Or used manually:
+
+        handle = sandbox.process.stream_logs(name, options)
+        try:
+            # do something
+        finally:
+            handle.close()
+    """
+
+    def __init__(self, close_func: Callable[[], None]):
+        self._close_func = close_func
+        self._closed = False
+
+    def close(self) -> None:
+        """Close the stream and stop receiving data."""
+        if not self._closed:
+            self._close_func()
+            self._closed = True
+
+    @property
+    def closed(self) -> bool:
+        """Returns True if the stream handle has been closed."""
+        return self._closed
+
+    async def __aenter__(self) -> "AsyncStreamHandle":
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    # Also support sync context manager for convenience
+    def __enter__(self) -> "AsyncStreamHandle":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    # Backward compatibility: support dict-like access
+    def __getitem__(self, key: str) -> Callable[[], None]:
+        if key == "close":
+            return self.close
+        raise KeyError(key)
+
+
+class WatchHandle:
+    """Handle for managing a file system watch operation (sync version).
+
+    Can be used as a context manager for automatic cleanup:
+
+        with sandbox.fs.watch(path, callback) as handle:
+            # do something
+        # handle is automatically closed
+
+    Or used manually:
+
+        handle = sandbox.fs.watch(path, callback)
+        try:
+            # do something
+        finally:
+            handle.close()
+    """
+
+    def __init__(self, close_func: Callable[[], None]):
+        self._close_func = close_func
+        self._closed = False
+
+    def close(self) -> None:
+        """Close the watch and stop receiving events."""
+        if not self._closed:
+            self._close_func()
+            self._closed = True
+
+    @property
+    def closed(self) -> bool:
+        """Returns True if the watch handle has been closed."""
+        return self._closed
+
+    def __enter__(self) -> "WatchHandle":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    # Backward compatibility: support dict-like access
+    def __getitem__(self, key: str) -> Callable[[], None]:
+        if key == "close":
+            return self.close
+        raise KeyError(key)
+
+
+class AsyncWatchHandle:
+    """Handle for managing a file system watch operation (async version).
+
+    Can be used as an async context manager for automatic cleanup:
+
+        async with sandbox.fs.watch(path, callback) as handle:
+            # do something
+        # handle is automatically closed
+
+    Or used manually:
+
+        handle = sandbox.fs.watch(path, callback)
+        try:
+            # do something
+        finally:
+            handle.close()
+    """
+
+    def __init__(self, close_func: Callable[[], None]):
+        self._close_func = close_func
+        self._closed = False
+
+    def close(self) -> None:
+        """Close the watch and stop receiving events."""
+        if not self._closed:
+            self._close_func()
+            self._closed = True
+
+    @property
+    def closed(self) -> bool:
+        """Returns True if the watch handle has been closed."""
+        return self._closed
+
+    async def __aenter__(self) -> "AsyncWatchHandle":
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    # Also support sync context manager for convenience
+    def __enter__(self) -> "AsyncWatchHandle":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    # Backward compatibility: support dict-like access
+    def __getitem__(self, key: str) -> Callable[[], None]:
+        if key == "close":
+            return self.close
+        raise KeyError(key)

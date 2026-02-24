@@ -12,7 +12,7 @@ dependencies = [
   "python-dateutil>=2.8.0",
   "pyyaml>=6.0.0",
   "requests>=2.32.3",
-  "tomli>=2.2.1",
+  "tomli>=2.0.2",
   "websockets<16.0.0",
   "attrs>=21.3.0",
   "httpx>=0.27.0",
@@ -29,7 +29,7 @@ telemetry = [
   "opentelemetry-exporter-otlp>=1.28.0",
   "opentelemetry-instrumentation-anthropic==0.41.0",
   "opentelemetry-instrumentation-cohere==0.41.0",
-  "opentelemetry-instrumentation-fastapi==0.56b0",
+  "opentelemetry-instrumentation-fastapi==0.55b0",
   "opentelemetry-instrumentation-google-generativeai==0.41.0",
   "opentelemetry-instrumentation-ollama==0.41.0",
   "opentelemetry-instrumentation-openai==0.41.0",
@@ -37,9 +37,7 @@ telemetry = [
 
 # CrewAI module
 crewai = [
-  "crewai==0.159.0",
-  "litellm==1.74.9",
-  "openai==1.99.9",
+  "crewai[litellm]==1.9.3",
   "opentelemetry-instrumentation-crewai==0.41.0",
 ]
 
@@ -56,7 +54,7 @@ langgraph = [
   "langchain-openai>=0.3.10",
   "langchain-xai>=0.2.2",
   "langchain-anthropic>=0.3.10",
-  "langchain-cerebras>=0.5.0",
+  "langchain-cerebras>=0.5.0,<0.6.0",
   "opentelemetry-instrumentation-langchain>=0.35.0",
   "pillow>=10.0.0",
 ]
@@ -69,7 +67,7 @@ livekit = [
 
 # LlamaIndex module
 llamaindex = [
-  "llama-index>=0.12.46",
+  "llama-index>=0.14.13",
   "llama-index-llms-anthropic>=0.6.14",
   "llama-index-llms-cerebras>=0.2.2",
   "llama-index-llms-cohere>=0.4.1",
@@ -82,15 +80,10 @@ llamaindex = [
 ]
 
 # Pydantic module
-pydantic = ["pydantic-ai>=0.0.48"]
+pydantic = ["pydantic-ai>=1.0.8"]
 
 # Google ADK module
 googleadk = ["google-adk>=1.4.0", "litellm>=1.63.11"]
-
-# Convenience extras for common combinations
-all = [
-  "blaxel[core,telemetry,crewai,openai,langgraph,livekit,llamaindex,pydantic,googleadk]",
-]
 
 # Development dependencies
 dev = ["ruff", "pyright", "pytest", "uv"]
@@ -121,6 +114,21 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
+[tool.uv]
+# crewai, llamaindex, and livekit have conflicting transitive dependencies
+# (openai, tokenizers, opentelemetry-sdk) and cannot be installed together.
+conflicts = [
+  [
+    { extra = "crewai" },
+    { extra = "llamaindex" },
+    { extra = "livekit" },
+    { extra = "openai" },
+    { extra = "pydantic" },
+    { extra = "googleadk" },
+    { extra = "langgraph" },
+  ],
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -143,8 +151,10 @@ test = [
   "pytest-asyncio>=0.24.0",
   "pytest-cov>=6.0.0",
   "pytest-mock>=3.14.0",
+  "pytest-xdist>=3.8.0",
   "coverage>=7.0.0",
   "aiohttp>=3.11.16",
   "flask>=3.0.0",
   "requests>=2.32.0",
+  "pydantic-ai>=0.0.48",
 ]

@@ -10,13 +10,16 @@ T = TypeVar("T", bound="VolumeSpec")
 
 @_attrs_define
 class VolumeSpec:
-    """Volume specification - immutable configuration
+    """Immutable volume configuration set at creation time (size and region cannot be changed after creation)
 
     Attributes:
         infrastructure_id (Union[Unset, str]): The internal infrastructure resource identifier for this volume
-        region (Union[Unset, str]): Region where the volume should be created (e.g. us-pdx-1, eu-lon-1)
-        size (Union[Unset, int]): Size of the volume in MB
-        template (Union[Unset, str]): Volume template with revision (e.g. "mytemplate:1" or "mytemplate:latest")
+        region (Union[Unset, str]): Deployment region for the volume (e.g., us-pdx-1, eu-lon-1). Must match the region
+            of sandboxes it attaches to. Example: us-pdx-1.
+        size (Union[Unset, int]): Storage capacity in megabytes. Can be increased after creation but not decreased.
+            Example: 1024.
+        template (Union[Unset, str]): Volume template to initialize from, with optional revision (e.g., "mytemplate:1"
+            or "mytemplate:latest") Example: mytemplate:latest.
     """
 
     infrastructure_id: Union[Unset, str] = UNSET

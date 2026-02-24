@@ -15,7 +15,7 @@ class JobExecutionTaskMetadata:
     Attributes:
         completed_at (Union[Unset, str]): Completion timestamp
         created_at (Union[Unset, str]): Creation timestamp
-        name (Union[Unset, str]): Task name
+        name (Union[Unset, str]): Task name Example: task-0.
         scheduled_at (Union[Unset, str]): Scheduled timestamp
         started_at (Union[Unset, str]): Start timestamp
         updated_at (Union[Unset, str]): Last update timestamp

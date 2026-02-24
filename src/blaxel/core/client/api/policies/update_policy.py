@@ -59,9 +59,10 @@ def sync_detailed(
     client: Client,
     body: Policy,
 ) -> Response[Policy]:
-    """Update policy
+    """Update governance policy
 
-     Updates a policy.
+     Updates a governance policy's restrictions. Changes take effect on the next deployment of resources
+    using this policy.
 
     Args:
         policy_name (str):
@@ -94,9 +95,10 @@ def sync(
     client: Client,
     body: Policy,
 ) -> Policy | None:
-    """Update policy
+    """Update governance policy
 
-     Updates a policy.
+     Updates a governance policy's restrictions. Changes take effect on the next deployment of resources
+    using this policy.
 
     Args:
         policy_name (str):
@@ -124,9 +126,10 @@ async def asyncio_detailed(
     client: Client,
     body: Policy,
 ) -> Response[Policy]:
-    """Update policy
+    """Update governance policy
 
-     Updates a policy.
+     Updates a governance policy's restrictions. Changes take effect on the next deployment of resources
+    using this policy.
 
     Args:
         policy_name (str):
@@ -157,9 +160,10 @@ async def asyncio(
     client: Client,
     body: Policy,
 ) -> Policy | None:
-    """Update policy
+    """Update governance policy
 
-     Updates a policy.
+     Updates a governance policy's restrictions. Changes take effect on the next deployment of resources
+    using this policy.
 
     Args:
         policy_name (str):

@@ -1,11 +1,12 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
 from ...models.agent import Agent
+from ...models.error import Error
 from ...types import Response
 
 
@@ -18,7 +19,9 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["Agent"] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Error, list["Agent"]] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -28,13 +31,27 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Agent"
             response_200.append(response_200_item)
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Agent"]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Error, list["Agent"]]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,15 +63,18 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["Agent"]]:
+) -> Response[Union[Error, list["Agent"]]]:
     """List all agents
+
+     Returns all AI agents deployed in the workspace. Each agent includes its deployment status, runtime
+    configuration, and global inference endpoint URL.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['Agent']]
+        Response[Union[Error, list['Agent']]]
     """
 
     kwargs = _get_kwargs()
@@ -69,15 +89,18 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["Agent"] | None:
+) -> Union[Error, list["Agent"]] | None:
     """List all agents
+
+     Returns all AI agents deployed in the workspace. Each agent includes its deployment status, runtime
+    configuration, and global inference endpoint URL.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['Agent']
+        Union[Error, list['Agent']]
     """
 
     return sync_detailed(
@@ -88,15 +111,18 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["Agent"]]:
+) -> Response[Union[Error, list["Agent"]]]:
     """List all agents
+
+     Returns all AI agents deployed in the workspace. Each agent includes its deployment status, runtime
+    configuration, and global inference endpoint URL.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['Agent']]
+        Response[Union[Error, list['Agent']]]
     """
 
     kwargs = _get_kwargs()
@@ -109,15 +135,18 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["Agent"] | None:
+) -> Union[Error, list["Agent"]] | None:
     """List all agents
+
+     Returns all AI agents deployed in the workspace. Each agent includes its deployment status, runtime
+    configuration, and global inference endpoint URL.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['Agent']
+        Union[Error, list['Agent']]
     """
 
     return (

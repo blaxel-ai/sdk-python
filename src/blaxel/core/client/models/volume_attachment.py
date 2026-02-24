@@ -10,12 +10,14 @@ T = TypeVar("T", bound="VolumeAttachment")
 
 @_attrs_define
 class VolumeAttachment:
-    """Volume attachment configuration for sandbox
+    """Configuration for attaching a volume to a sandbox at a specific filesystem path
 
     Attributes:
-        mount_path (Union[Unset, str]): Mount path in the container
-        name (Union[Unset, str]): Name of the volume to attach
-        read_only (Union[Unset, bool]): Whether the volume is mounted as read-only
+        mount_path (Union[Unset, str]): Absolute filesystem path where the volume will be mounted inside the sandbox
+            Example: /mnt/data.
+        name (Union[Unset, str]): Name of the volume resource to attach (must exist in the same workspace and region)
+            Example: my-volume.
+        read_only (Union[Unset, bool]): If true, the volume is mounted read-only and cannot be modified by the sandbox
     """
 
     mount_path: Union[Unset, str] = UNSET

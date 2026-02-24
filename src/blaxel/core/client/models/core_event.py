@@ -14,11 +14,11 @@ class CoreEvent:
 
     Attributes:
         canary_revision (Union[Unset, str]): Canary revisionID link to the event
-        message (Union[Unset, str]): Event message
-        revision (Union[Unset, str]): RevisionID link to the event
-        status (Union[Unset, str]): Event status
-        time (Union[Unset, str]): Event time
-        type_ (Union[Unset, str]): Event type
+        message (Union[Unset, str]): Event message Example: Deployment successful.
+        revision (Union[Unset, str]): RevisionID link to the event Example: rev-abc123.
+        status (Union[Unset, str]): Event status Example: DEPLOYED.
+        time (Union[Unset, str]): Event time Example: 2025-01-15T10:30:00Z.
+        type_ (Union[Unset, str]): Event type Example: deployment.
     """
 
     canary_revision: Union[Unset, str] = UNSET

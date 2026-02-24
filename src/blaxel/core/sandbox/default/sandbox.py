@@ -1,5 +1,6 @@
 import logging
 import uuid
+import warnings
 from typing import Any, Callable, Dict, List, Union
 
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
@@ -8,8 +9,21 @@ from ...client.api.compute.get_sandbox import asyncio as get_sandbox
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
-from ...client.models import Metadata, Runtime, Sandbox, SandboxSpec
+from ...client.models import (
+    Metadata,
+    MetadataLabels,
+    Sandbox,
+    SandboxLifecycle,
+    SandboxRuntime,
+    SandboxSpec,
+)
+from ...client.models import (
+    SandboxNetwork as SandboxNetworkModel,
+)
+from ...client.models.error import Error
+from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -22,6 +36,17 @@ from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .session import SandboxSessions
+from .system import SandboxSystem
+
+
+class SandboxAPIError(Exception):
+    """Exception raised when sandbox API returns an error."""
+
+    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +70,8 @@ class _AsyncDeleteDescriptor:
 
 
 class SandboxInstance:
+    delete: "_AsyncDeleteDescriptor"
+
     def __init__(
         self,
         sandbox: Union[Sandbox, SandboxConfiguration],
@@ -72,6 +99,7 @@ class SandboxInstance:
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
         self.codegen = SandboxCodegen(self.config)
+        self.system = SandboxSystem(self.config)
 
     @property
     def metadata(self):
@@ -88,6 +116,14 @@ class SandboxInstance:
     @property
     def spec(self):
         return self.sandbox.spec
+
+    @property
+    def last_used_at(self):
+        return self.sandbox.last_used_at
+
+    @property
+    def expires_in(self):
+        return self.sandbox.expires_in
 
     async def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SandboxInstance":
         logger.warning(
@@ -123,6 +159,7 @@ class SandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "network" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
@@ -148,57 +185,92 @@ class SandboxInstance:
             volumes = config._normalize_volumes() or UNSET
             ttl = config.ttl
             expires = config.expires
-            region = config.region
+            region = config.region or settings.region
+            if not region:
+                warnings.warn(
+                    "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
+                    "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the sandbox configuration or set the BL_REGION environment variable.",
+                    FutureWarning,
+                    stacklevel=2,
+                )
             lifecycle = config.lifecycle
-            # snapshot_enabled = sandbox.snapshot_enabled
+            network = config.network
+            snapshot_enabled = config.snapshot_enabled
+
+            labels = MetadataLabels.from_dict(config.labels) if config.labels else UNSET
+            if labels is None:
+                labels = UNSET
 
             # Create full Sandbox object
             sandbox = Sandbox(
-                metadata=Metadata(name=name, labels=config.labels),
+                metadata=Metadata(name=name, labels=labels),
                 spec=SandboxSpec(
-                    runtime=Runtime(
+                    runtime=SandboxRuntime(
                         image=image,
                         memory=memory,
                         ports=ports,
                         envs=envs,
-                        generation="mk3",
                     ),
                     volumes=volumes,
                 ),
             )
 
             # Set ttl and expires if provided
-            if ttl:
+            if ttl and sandbox.spec.runtime:
                 sandbox.spec.runtime.ttl = ttl
-            if expires:
+            if expires and sandbox.spec.runtime:
                 sandbox.spec.runtime.expires = expires.isoformat()
             if region:
                 sandbox.spec.region = region
             if lifecycle:
-                sandbox.spec.lifecycle = lifecycle
+                if type(lifecycle) is dict:
+                    lifecycle = SandboxLifecycle.from_dict(lifecycle)
+                    assert lifecycle is not None
+                    sandbox.spec.lifecycle = lifecycle
+                elif type(lifecycle) is SandboxLifecycle:
+                    sandbox.spec.lifecycle = lifecycle
+                else:
+                    raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
+            if network:
+                if isinstance(network, dict):
+                    network = SandboxNetworkModel.from_dict(network)
+                    assert network is not None
+                sandbox.spec.network = network
+            if snapshot_enabled is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime["snapshotEnabled"] = snapshot_enabled
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
+                assert sandbox is not None
 
+            assert isinstance(sandbox, Sandbox)
             # Set defaults for missing fields
             if not sandbox.metadata:
                 sandbox.metadata = Metadata(name=default_name)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
-                    runtime=Runtime(image=default_image, memory=default_memory)
+                    runtime=SandboxRuntime(image=default_image, memory=default_memory)
                 )
             if not sandbox.spec.runtime:
-                sandbox.spec.runtime = Runtime(image=default_image, memory=default_memory)
+                sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
 
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-            sandbox.spec.runtime.generation = sandbox.spec.runtime.generation or "mk3"
 
         response = await create_sandbox(
             client=client,
             body=sandbox,
         )
+
+        # Check if response is an error
+        if isinstance(response, SandboxError):
+            status_code = response.status_code if response.status_code is not UNSET else None
+            code = response.code if response.code else None
+            message = response.message if response.message else str(response)
+            raise SandboxAPIError(message, status_code=status_code, code=code)
+
+        assert response is not None
         instance = cls(response)
         # TODO remove this part once we have a better way to handle this
         if safe:
@@ -214,11 +286,21 @@ class SandboxInstance:
             sandbox_name,
             client=client,
         )
+
+        # Check if response is an error
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+
+        if response is None:
+            raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
+
         return cls(response)
 
     @classmethod
     async def list(cls) -> List["SandboxInstance"]:
-        response = await list_sandboxes()
+        response = await list_sandboxes(client=client)
         return [cls(sandbox) for sandbox in response]
 
     @classmethod
@@ -240,10 +322,12 @@ class SandboxInstance:
 
         # Prepare the updated sandbox object
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox is None:
+            raise ValueError(f"Sandbox {sandbox_name} not found")
 
         # Merge metadata
         if updated_sandbox.metadata is None:
-            updated_sandbox.metadata = Metadata()
+            updated_sandbox.metadata = Metadata(name=sandbox_name)
 
         # Update labels if provided
         if metadata.labels is not None:
@@ -251,8 +335,11 @@ class SandboxInstance:
             if updated_sandbox.metadata.labels is None or updated_sandbox.metadata.labels is UNSET:
                 updated_sandbox.metadata.labels = {}
             else:
-                # If labels exist, ensure it's a dict
-                updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
+                # If labels exist, convert to dict (MetadataLabels stores in additional_properties)
+                if hasattr(updated_sandbox.metadata.labels, "to_dict"):
+                    updated_sandbox.metadata.labels = updated_sandbox.metadata.labels.to_dict()
+                else:
+                    updated_sandbox.metadata.labels = dict(updated_sandbox.metadata.labels)
             updated_sandbox.metadata.labels.update(metadata.labels)
 
         # Update display_name if provided
@@ -270,17 +357,81 @@ class SandboxInstance:
         return cls(response)
 
     @classmethod
+    async def update_ttl(cls, sandbox_name: str, ttl: str) -> "SandboxInstance":
+        """Update sandbox TTL without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+
+        Returns:
+            A new SandboxInstance with updated TTL
+        """
+        # Get the existing sandbox
+        sandbox_instance = await cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        # Update TTL
+        updated_sandbox.spec.runtime.ttl = ttl
+
+        # Call the update API
+        response = await update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        return cls(response)
+
+    @classmethod
+    async def update_lifecycle(
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+    ) -> "SandboxInstance":
+        """Update sandbox lifecycle configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            lifecycle: The new lifecycle configuration
+
+        Returns:
+            A new SandboxInstance with updated lifecycle
+        """
+        # Get the existing sandbox
+        sandbox_instance = await cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        # Prepare the updated sandbox object
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        # Update lifecycle
+        updated_sandbox.spec.lifecycle = lifecycle
+
+        # Call the update API
+        response = await update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        return cls(response)
+
+    @classmethod
     async def create_if_not_exists(
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
         try:
             return await cls.create(sandbox)
-        except Exception as e:
+        except SandboxAPIError as e:
             # Check if it's a 409 conflict error (sandbox already exists)
-            if (hasattr(e, "status_code") and e.status_code == 409) or (
-                hasattr(e, "code") and e.code in [409, "SANDBOX_ALREADY_EXISTS"]
-            ):
+            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
                 # Extract name from different configuration types
                 if isinstance(sandbox, SandboxCreateConfiguration):
                     name = sandbox.name
@@ -309,7 +460,7 @@ class SandboxInstance:
 
                 # Otherwise return the existing active sandbox
                 return sandbox_instance
-            raise e
+            raise
 
     @classmethod
     async def from_session(
@@ -321,7 +472,7 @@ class SandboxInstance:
 
         # Create a minimal sandbox configuration for session-based access
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
-        sandbox = Sandbox(metadata=Metadata(name=sandbox_name))
+        sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
 
         # Use the constructor with force_url, headers, and params
         return cls(
@@ -338,6 +489,8 @@ async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         sandbox_name,
         client=client,
     )
+    if response is None:
+        raise ValueError(f"Sandbox {sandbox_name} not found")
     return response
 
 

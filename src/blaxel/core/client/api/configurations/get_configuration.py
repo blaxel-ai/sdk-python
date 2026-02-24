@@ -42,7 +42,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Configuration]:
-    """List all configurations
+    """Get platform configuration
+
+     Returns global platform configuration including available regions, countries, continents, and
+    private locations for deployment policies.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -65,7 +68,10 @@ def sync(
     *,
     client: Client,
 ) -> Configuration | None:
-    """List all configurations
+    """Get platform configuration
+
+     Returns global platform configuration including available regions, countries, continents, and
+    private locations for deployment policies.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -84,7 +90,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Configuration]:
-    """List all configurations
+    """Get platform configuration
+
+     Returns global platform configuration including available regions, countries, continents, and
+    private locations for deployment policies.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -105,7 +114,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> Configuration | None:
-    """List all configurations
+    """Get platform configuration
+
+     Returns global platform configuration including available regions, countries, continents, and
+    private locations for deployment policies.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

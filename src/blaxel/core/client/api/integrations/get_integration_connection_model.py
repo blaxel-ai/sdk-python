@@ -44,7 +44,7 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[Any]:
-    """Get integration model endpoint configurations
+    """Get integration connection model
 
      Returns a model for an integration connection by ID.
 
@@ -78,7 +78,7 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[Any]:
-    """Get integration model endpoint configurations
+    """Get integration connection model
 
      Returns a model for an integration connection by ID.
 

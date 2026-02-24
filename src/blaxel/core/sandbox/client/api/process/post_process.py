@@ -77,7 +77,8 @@ def sync_detailed(
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
     """Execute a command
 
-     Execute a command and return process information
+     Execute a command and return process information. If Accept header is text/event-stream, streams
+    logs in SSE format and returns the process response as a final event.
 
     Args:
         body (ProcessRequest):
@@ -108,7 +109,8 @@ def sync(
 ) -> Union[ErrorResponse, ProcessResponse] | None:
     """Execute a command
 
-     Execute a command and return process information
+     Execute a command and return process information. If Accept header is text/event-stream, streams
+    logs in SSE format and returns the process response as a final event.
 
     Args:
         body (ProcessRequest):
@@ -134,7 +136,8 @@ async def asyncio_detailed(
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
     """Execute a command
 
-     Execute a command and return process information
+     Execute a command and return process information. If Accept header is text/event-stream, streams
+    logs in SSE format and returns the process response as a final event.
 
     Args:
         body (ProcessRequest):
@@ -163,7 +166,8 @@ async def asyncio(
 ) -> Union[ErrorResponse, ProcessResponse] | None:
     """Execute a command
 
-     Execute a command and return process information
+     Execute a command and return process information. If Accept header is text/event-stream, streams
+    logs in SSE format and returns the process response as a final event.
 
     Args:
         body (ProcessRequest):

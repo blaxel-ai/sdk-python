@@ -47,9 +47,10 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["Job"]]:
-    """List jobs
+    """List batch jobs
 
-     Returns a list of all jobs in the workspace.
+     Returns all batch job definitions in the workspace. Each job can be triggered to run multiple
+    parallel tasks with configurable concurrency and retry settings.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -72,9 +73,10 @@ def sync(
     *,
     client: Client,
 ) -> list["Job"] | None:
-    """List jobs
+    """List batch jobs
 
-     Returns a list of all jobs in the workspace.
+     Returns all batch job definitions in the workspace. Each job can be triggered to run multiple
+    parallel tasks with configurable concurrency and retry settings.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,9 +95,10 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["Job"]]:
-    """List jobs
+    """List batch jobs
 
-     Returns a list of all jobs in the workspace.
+     Returns all batch job definitions in the workspace. Each job can be triggered to run multiple
+    parallel tasks with configurable concurrency and retry settings.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,9 +119,10 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["Job"] | None:
-    """List jobs
+    """List batch jobs
 
-     Returns a list of all jobs in the workspace.
+     Returns all batch job definitions in the workspace. Each job can be triggered to run multiple
+    parallel tasks with configurable concurrency and retry settings.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

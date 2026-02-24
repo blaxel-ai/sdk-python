@@ -18,11 +18,12 @@ class ApiKey:
         created_by (Union[Unset, str]): The user or service account who created the resource
         updated_by (Union[Unset, str]): The user or service account who updated the resource
         api_key (Union[Unset, str]): Api key
-        expires_in (Union[Unset, str]): Duration until expiration (in seconds)
-        id (Union[Unset, str]): Api key id, to retrieve it from the API
-        name (Union[Unset, str]): Name for the API key
+        expires_in (Union[Unset, str]): Duration until expiration. Supports formats like '30d' (30 days), '24h' (24
+            hours), '1w' (1 week). If not set, the API key never expires. Example: 30d.
+        id (Union[Unset, str]): Api key id, to retrieve it from the API Example: ak_abc123def456.
+        name (Union[Unset, str]): Name for the API key Example: CI/CD Pipeline Key.
         sub (Union[Unset, str]): User subject identifier
-        sub_type (Union[Unset, str]): Subject type
+        sub_type (Union[Unset, str]): Subject type (user or service_account) Example: user.
     """
 
     created_at: Union[Unset, str] = UNSET

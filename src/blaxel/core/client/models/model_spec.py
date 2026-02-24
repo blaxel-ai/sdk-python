@@ -6,10 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
     from ..models.flavor import Flavor
-    from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
+    from ..models.model_runtime import ModelRuntime
 
 
 T = TypeVar("T", bound="ModelSpec")
@@ -17,40 +15,28 @@ T = TypeVar("T", bound="ModelSpec")
 
 @_attrs_define
 class ModelSpec:
-    """Model specification
+    """Configuration for a model gateway endpoint including provider type, credentials, and access policies
 
     Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the resource
+        enabled (Union[Unset, bool]): When false, the model endpoint is disabled and will not accept inference requests
+            Default: True. Example: True.
         flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
         integration_connections (Union[Unset, list[str]]):
         policies (Union[Unset, list[str]]):
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
+        runtime (Union[Unset, ModelRuntime]): Configuration identifying which external LLM provider and model this
+            gateway endpoint proxies to
+        sandbox (Union[Unset, bool]): When true, uses sandbox/test credentials from the integration connection
     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
-    enabled: Union[Unset, bool] = UNSET
+    enabled: Union[Unset, bool] = True
     flavors: Union[Unset, list["Flavor"]] = UNSET
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
+    runtime: Union[Unset, "ModelRuntime"] = UNSET
     sandbox: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
-            configurations = self.configurations.to_dict()
-        elif self.configurations and isinstance(self.configurations, dict):
-            configurations = self.configurations
-
         enabled = self.enabled
 
         flavors: Union[Unset, list[dict[str, Any]]] = UNSET
@@ -71,16 +57,6 @@ class ModelSpec:
         if not isinstance(self.policies, Unset):
             policies = self.policies
 
-        revision: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.revision
-            and not isinstance(self.revision, Unset)
-            and not isinstance(self.revision, dict)
-        ):
-            revision = self.revision.to_dict()
-        elif self.revision and isinstance(self.revision, dict):
-            revision = self.revision
-
         runtime: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.runtime
@@ -96,8 +72,6 @@ class ModelSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if configurations is not UNSET:
-            field_dict["configurations"] = configurations
         if enabled is not UNSET:
             field_dict["enabled"] = enabled
         if flavors is not UNSET:
@@ -106,8 +80,6 @@ class ModelSpec:
             field_dict["integrationConnections"] = integration_connections
         if policies is not UNSET:
             field_dict["policies"] = policies
-        if revision is not UNSET:
-            field_dict["revision"] = revision
         if runtime is not UNSET:
             field_dict["runtime"] = runtime
         if sandbox is not UNSET:
@@ -117,21 +89,12 @@ class ModelSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_spec_configurations import CoreSpecConfigurations
         from ..models.flavor import Flavor
-        from ..models.revision_configuration import RevisionConfiguration
-        from ..models.runtime import Runtime
+        from ..models.model_runtime import ModelRuntime
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        _configurations = d.pop("configurations", UNSET)
-        configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
-            configurations = UNSET
-        else:
-            configurations = CoreSpecConfigurations.from_dict(_configurations)
-
         enabled = d.pop("enabled", UNSET)
 
         flavors = []
@@ -147,29 +110,20 @@ class ModelSpec:
 
         policies = cast(list[str], d.pop("policies", UNSET))
 
-        _revision = d.pop("revision", UNSET)
-        revision: Union[Unset, RevisionConfiguration]
-        if isinstance(_revision, Unset):
-            revision = UNSET
-        else:
-            revision = RevisionConfiguration.from_dict(_revision)
-
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, Runtime]
+        runtime: Union[Unset, ModelRuntime]
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:
-            runtime = Runtime.from_dict(_runtime)
+            runtime = ModelRuntime.from_dict(_runtime)
 
         sandbox = d.pop("sandbox", UNSET)
 
         model_spec = cls(
-            configurations=configurations,
             enabled=enabled,
             flavors=flavors,
             integration_connections=integration_connections,
             policies=policies,
-            revision=revision,
             runtime=runtime,
             sandbox=sandbox,
         )

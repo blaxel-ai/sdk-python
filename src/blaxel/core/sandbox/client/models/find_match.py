@@ -1,9 +1,7 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="FindMatch")
 
@@ -12,12 +10,12 @@ T = TypeVar("T", bound="FindMatch")
 class FindMatch:
     """
     Attributes:
-        path (Union[Unset, str]):  Example: src/main.go.
-        type_ (Union[Unset, str]): "file" or "directory" Example: file.
+        path (str):  Example: src/main.go.
+        type_ (str): "file" or "directory" Example: file.
     """
 
-    path: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    path: str
+    type_: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -27,11 +25,12 @@ class FindMatch:
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if path is not UNSET:
-            field_dict["path"] = path
-        if type_ is not UNSET:
-            field_dict["type"] = type_
+        field_dict.update(
+            {
+                "path": path,
+                "type": type_,
+            }
+        )
 
         return field_dict
 
@@ -40,9 +39,9 @@ class FindMatch:
         if not src_dict:
             return None
         d = src_dict.copy()
-        path = d.pop("path", UNSET)
+        path = d.pop("path")
 
-        type_ = d.pop("type", d.pop("type_", UNSET))
+        type_ = d.pop("type") if "type" in d else d.pop("type_")
 
         find_match = cls(
             path=path,

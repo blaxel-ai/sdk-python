@@ -6,10 +6,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.core_spec_configurations import CoreSpecConfigurations
-    from ..models.flavor import Flavor
+    from ..models.function_runtime import FunctionRuntime
     from ..models.revision_configuration import RevisionConfiguration
-    from ..models.runtime import Runtime
     from ..models.trigger import Trigger
 
 
@@ -18,55 +16,32 @@ T = TypeVar("T", bound="FunctionSpec")
 
 @_attrs_define
 class FunctionSpec:
-    """Function specification
+    """Configuration for an MCP server function including runtime settings, transport protocol, and connected integrations
 
     Attributes:
-        configurations (Union[Unset, CoreSpecConfigurations]): Optional configurations for the object
-        enabled (Union[Unset, bool]): Enable or disable the resource
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
+        enabled (Union[Unset, bool]): When false, the function is disabled and will not serve requests Default: True.
+            Example: True.
         integration_connections (Union[Unset, list[str]]):
         policies (Union[Unset, list[str]]):
+        public (Union[Unset, bool]): When true, the function is publicly accessible without authentication. Only
+            available for mk3 generation. Default: False.
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, Runtime]): Set of configurations for a deployment
-        sandbox (Union[Unset, bool]): Sandbox mode
-        description (Union[Unset, str]): Function description, very important for the agent function to work with an LLM
+        runtime (Union[Unset, FunctionRuntime]): Runtime configuration defining how the MCP server function is deployed
+            and scaled
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
     """
 
-    configurations: Union[Unset, "CoreSpecConfigurations"] = UNSET
-    enabled: Union[Unset, bool] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
+    enabled: Union[Unset, bool] = True
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
+    public: Union[Unset, bool] = False
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "Runtime"] = UNSET
-    sandbox: Union[Unset, bool] = UNSET
-    description: Union[Unset, str] = UNSET
+    runtime: Union[Unset, "FunctionRuntime"] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        configurations: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.configurations
-            and not isinstance(self.configurations, Unset)
-            and not isinstance(self.configurations, dict)
-        ):
-            configurations = self.configurations.to_dict()
-        elif self.configurations and isinstance(self.configurations, dict):
-            configurations = self.configurations
-
         enabled = self.enabled
-
-        flavors: Union[Unset, list[dict[str, Any]]] = UNSET
-        if not isinstance(self.flavors, Unset):
-            flavors = []
-            for componentsschemas_flavors_item_data in self.flavors:
-                if type(componentsschemas_flavors_item_data) is dict:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data
-                else:
-                    componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
-                flavors.append(componentsschemas_flavors_item)
 
         integration_connections: Union[Unset, list[str]] = UNSET
         if not isinstance(self.integration_connections, Unset):
@@ -75,6 +50,8 @@ class FunctionSpec:
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
+
+        public = self.public
 
         revision: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -96,10 +73,6 @@ class FunctionSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        sandbox = self.sandbox
-
-        description = self.description
-
         triggers: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
@@ -113,24 +86,18 @@ class FunctionSpec:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if configurations is not UNSET:
-            field_dict["configurations"] = configurations
         if enabled is not UNSET:
             field_dict["enabled"] = enabled
-        if flavors is not UNSET:
-            field_dict["flavors"] = flavors
         if integration_connections is not UNSET:
             field_dict["integrationConnections"] = integration_connections
         if policies is not UNSET:
             field_dict["policies"] = policies
+        if public is not UNSET:
+            field_dict["public"] = public
         if revision is not UNSET:
             field_dict["revision"] = revision
         if runtime is not UNSET:
             field_dict["runtime"] = runtime
-        if sandbox is not UNSET:
-            field_dict["sandbox"] = sandbox
-        if description is not UNSET:
-            field_dict["description"] = description
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
 
@@ -138,36 +105,22 @@ class FunctionSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_spec_configurations import CoreSpecConfigurations
-        from ..models.flavor import Flavor
+        from ..models.function_runtime import FunctionRuntime
         from ..models.revision_configuration import RevisionConfiguration
-        from ..models.runtime import Runtime
         from ..models.trigger import Trigger
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        _configurations = d.pop("configurations", UNSET)
-        configurations: Union[Unset, CoreSpecConfigurations]
-        if isinstance(_configurations, Unset):
-            configurations = UNSET
-        else:
-            configurations = CoreSpecConfigurations.from_dict(_configurations)
-
         enabled = d.pop("enabled", UNSET)
-
-        flavors = []
-        _flavors = d.pop("flavors", UNSET)
-        for componentsschemas_flavors_item_data in _flavors or []:
-            componentsschemas_flavors_item = Flavor.from_dict(componentsschemas_flavors_item_data)
-
-            flavors.append(componentsschemas_flavors_item)
 
         integration_connections = cast(
             list[str], d.pop("integrationConnections", d.pop("integration_connections", UNSET))
         )
 
         policies = cast(list[str], d.pop("policies", UNSET))
+
+        public = d.pop("public", UNSET)
 
         _revision = d.pop("revision", UNSET)
         revision: Union[Unset, RevisionConfiguration]
@@ -177,15 +130,11 @@ class FunctionSpec:
             revision = RevisionConfiguration.from_dict(_revision)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, Runtime]
+        runtime: Union[Unset, FunctionRuntime]
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:
-            runtime = Runtime.from_dict(_runtime)
-
-        sandbox = d.pop("sandbox", UNSET)
-
-        description = d.pop("description", UNSET)
+            runtime = FunctionRuntime.from_dict(_runtime)
 
         triggers = []
         _triggers = d.pop("triggers", UNSET)
@@ -197,15 +146,12 @@ class FunctionSpec:
             triggers.append(componentsschemas_triggers_item)
 
         function_spec = cls(
-            configurations=configurations,
             enabled=enabled,
-            flavors=flavors,
             integration_connections=integration_connections,
             policies=policies,
+            public=public,
             revision=revision,
             runtime=runtime,
-            sandbox=sandbox,
-            description=description,
             triggers=triggers,
         )
 

@@ -1,10 +1,11 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.integration_connection import IntegrationConnection
 from ...types import Response
 
@@ -32,18 +33,42 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> IntegrationConnection | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Error, IntegrationConnection] | None:
     if response.status_code == 200:
         response_200 = IntegrationConnection.from_dict(response.json())
 
         return response_200
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        return response_400
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[IntegrationConnection]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Error, IntegrationConnection]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,20 +81,22 @@ def sync_detailed(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> Response[IntegrationConnection]:
-    """Create integration
+) -> Response[Union[Error, IntegrationConnection]]:
+    """Create integration connection
 
-     Create a connection for an integration.
+     Creates a new integration connection with credentials for an external service. The connection can
+    then be used by models, functions, and other resources to authenticate with the service.
 
     Args:
-        body (IntegrationConnection): Integration Connection
+        body (IntegrationConnection): Configured connection to an external service (LLM provider,
+            API, SaaS, database) storing credentials and settings for use by workspace resources.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[IntegrationConnection]
+        Response[Union[Error, IntegrationConnection]]
     """
 
     kwargs = _get_kwargs(
@@ -87,20 +114,22 @@ def sync(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> IntegrationConnection | None:
-    """Create integration
+) -> Union[Error, IntegrationConnection] | None:
+    """Create integration connection
 
-     Create a connection for an integration.
+     Creates a new integration connection with credentials for an external service. The connection can
+    then be used by models, functions, and other resources to authenticate with the service.
 
     Args:
-        body (IntegrationConnection): Integration Connection
+        body (IntegrationConnection): Configured connection to an external service (LLM provider,
+            API, SaaS, database) storing credentials and settings for use by workspace resources.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        IntegrationConnection
+        Union[Error, IntegrationConnection]
     """
 
     return sync_detailed(
@@ -113,20 +142,22 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> Response[IntegrationConnection]:
-    """Create integration
+) -> Response[Union[Error, IntegrationConnection]]:
+    """Create integration connection
 
-     Create a connection for an integration.
+     Creates a new integration connection with credentials for an external service. The connection can
+    then be used by models, functions, and other resources to authenticate with the service.
 
     Args:
-        body (IntegrationConnection): Integration Connection
+        body (IntegrationConnection): Configured connection to an external service (LLM provider,
+            API, SaaS, database) storing credentials and settings for use by workspace resources.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[IntegrationConnection]
+        Response[Union[Error, IntegrationConnection]]
     """
 
     kwargs = _get_kwargs(
@@ -142,20 +173,22 @@ async def asyncio(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> IntegrationConnection | None:
-    """Create integration
+) -> Union[Error, IntegrationConnection] | None:
+    """Create integration connection
 
-     Create a connection for an integration.
+     Creates a new integration connection with credentials for an external service. The connection can
+    then be used by models, functions, and other resources to authenticate with the service.
 
     Args:
-        body (IntegrationConnection): Integration Connection
+        body (IntegrationConnection): Configured connection to an external service (LLM provider,
+            API, SaaS, database) storing credentials and settings for use by workspace resources.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        IntegrationConnection
+        Union[Error, IntegrationConnection]
     """
 
     return (
