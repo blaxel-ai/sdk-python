@@ -37,11 +37,6 @@ class TestImage:
             sandbox_version="latest",
         )
 
-        sandbox_v1 = await SandboxInstance.create({
-            "image": image_name,
-            "memory": 4096,
-        })
-
         # Rebuild with updated spec (v2)
         image_v2 = (
             ImageInstance.from_registry("python:3.11-alpine")
