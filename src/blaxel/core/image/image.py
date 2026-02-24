@@ -17,11 +17,7 @@ import httpx
 from dockerfile_parse import DockerfileParser  # type: ignore[import-untyped]
 
 from ..client.client import client
-from ..client.models.metadata import Metadata
-from ..client.models.metadata_labels import MetadataLabels
-from ..client.models.runtime import Runtime
-from ..client.models.sandbox import Sandbox
-from ..client.models.sandbox_spec import SandboxSpec
+from ..client.models import SandboxRuntime, Sandbox, SandboxSpec, MetadataLabels, Metadata
 from ..client.types import Response
 
 SANDBOX_API_IMAGE = "ghcr.io/blaxel-ai/sandbox"
@@ -813,7 +809,7 @@ class ImageInstance:
             labels=labels,
         )
 
-        runtime = Runtime(memory=memory)
+        runtime = SandboxRuntime(memory=memory)
         spec = SandboxSpec(runtime=runtime)
 
         return Sandbox(metadata=metadata, spec=spec)
