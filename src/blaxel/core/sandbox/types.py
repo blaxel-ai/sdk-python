@@ -491,10 +491,19 @@ class AsyncStreamHandle:
             self._close_func()
             self._closed = True
 
-    async def wait(self) -> None:
-        """Wait for the stream to complete."""
+    async def wait(self, timeout: Optional[float] = None) -> None:
+        """Wait for the stream to complete.
+
+        Args:
+            timeout: Maximum time to wait in seconds. None means wait indefinitely.
+        """
         if self._wait_func:
-            await self._wait_func()
+            if timeout is not None:
+                import asyncio
+
+                await asyncio.wait_for(self._wait_func(), timeout=timeout)
+            else:
+                await self._wait_func()
 
     @property
     def closed(self) -> bool:
