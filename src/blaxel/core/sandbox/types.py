@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Dict, List, TypeVar, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar, Union
 
 import httpx
 from attrs import define as _attrs_define
@@ -422,8 +422,9 @@ class StreamHandle:
             handle.close()
     """
 
-    def __init__(self, close_func: Callable[[], None]):
+    def __init__(self, close_func: Callable[[], None], wait_func: Optional[Callable[[Optional[float]], None]] = None):
         self._close_func = close_func
+        self._wait_func = wait_func
         self._closed = False
 
     def close(self) -> None:
@@ -431,6 +432,15 @@ class StreamHandle:
         if not self._closed:
             self._close_func()
             self._closed = True
+
+    def wait(self, timeout: Optional[float] = None) -> None:
+        """Wait for the stream to complete.
+
+        Args:
+            timeout: Maximum time to wait in seconds. None means wait indefinitely.
+        """
+        if self._wait_func:
+            self._wait_func(timeout)
 
     @property
     def closed(self) -> bool:
@@ -447,6 +457,8 @@ class StreamHandle:
     def __getitem__(self, key: str) -> Callable[[], None]:
         if key == "close":
             return self.close
+        if key == "wait":
+            return self.wait  # type: ignore[return-value]
         raise KeyError(key)
 
 
@@ -468,8 +480,9 @@ class AsyncStreamHandle:
             handle.close()
     """
 
-    def __init__(self, close_func: Callable[[], None]):
+    def __init__(self, close_func: Callable[[], None], wait_func: Optional[Callable[[], Awaitable[None]]] = None):
         self._close_func = close_func
+        self._wait_func = wait_func
         self._closed = False
 
     def close(self) -> None:
@@ -477,6 +490,11 @@ class AsyncStreamHandle:
         if not self._closed:
             self._close_func()
             self._closed = True
+
+    async def wait(self) -> None:
+        """Wait for the stream to complete."""
+        if self._wait_func:
+            await self._wait_func()
 
     @property
     def closed(self) -> bool:
@@ -500,6 +518,8 @@ class AsyncStreamHandle:
     def __getitem__(self, key: str) -> Callable[[], None]:
         if key == "close":
             return self.close
+        if key == "wait":
+            return self.wait  # type: ignore[return-value]
         raise KeyError(key)
 
 
