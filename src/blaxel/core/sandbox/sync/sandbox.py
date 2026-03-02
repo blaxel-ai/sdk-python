@@ -83,7 +83,7 @@ class SyncSandboxInstance:
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
-        self.drive = SyncSandboxDrive(self.config)
+        self.drives = SyncSandboxDrive(self.config)
 
     @property
     def metadata(self):

@@ -98,7 +98,7 @@ class SandboxInstance:
         self.network = SandboxNetwork(self.config)
         self.codegen = SandboxCodegen(self.config)
         self.system = SandboxSystem(self.config)
-        self.drive = SandboxDrive(self.config)
+        self.drives = SandboxDrive(self.config)
 
     @property
     def metadata(self):
