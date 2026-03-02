@@ -240,7 +240,9 @@ class DriveInstance:
     async def get(cls, drive_name: str) -> "DriveInstance":
         response = await get_drive(drive_name=drive_name, client=client)
         if response is None:
-            raise DriveAPIError(f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND")
+            raise DriveAPIError(
+                f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND"
+            )
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -392,7 +394,9 @@ class SyncDriveInstance:
         """Get a drive by name synchronously."""
         response = get_drive_sync(drive_name=drive_name, client=client)
         if response is None:
-            raise DriveAPIError(f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND")
+            raise DriveAPIError(
+                f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND"
+            )
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error

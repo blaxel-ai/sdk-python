@@ -130,7 +130,11 @@ class SandboxProcess(SandboxAction):
             # Clear seen logs
             seen_logs.clear()
 
-        return AsyncStreamHandle(close)
+        async def wait_func():
+            if current_stream:
+                await current_stream.wait()
+
+        return AsyncStreamHandle(close, wait_func)
 
     def _stream_logs(
         self,
@@ -198,7 +202,13 @@ class SandboxProcess(SandboxAction):
             closed = True
             task.cancel()
 
-        return AsyncStreamHandle(close)
+        async def wait_func():
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+        return AsyncStreamHandle(close, wait_func)
 
     async def exec(
         self,

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import time
 
 import pytest
@@ -6,7 +7,6 @@ import pytest_asyncio
 
 from blaxel.core.drive import DriveInstance
 from blaxel.core.sandbox import SandboxInstance
-import os
 from tests.helpers import (
     default_image,
     default_labels,
