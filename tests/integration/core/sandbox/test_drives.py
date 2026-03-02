@@ -6,13 +6,15 @@ import pytest_asyncio
 
 from blaxel.core.drive import DriveInstance
 from blaxel.core.sandbox import SandboxInstance
+import os
 from tests.helpers import (
     default_image,
     default_labels,
-    default_region,
     unique_name,
     wait_for_sandbox_deletion,
 )
+
+default_region = "us-was-1" if os.environ.get("BL_ENV") != "dev" else "eu-dub-1"
 
 
 class TestDriveOperations:
@@ -689,10 +691,9 @@ class TestDriveFileOperations(TestDriveOperations):
             mount_path="/mnt/files",
         )
 
-        # Create directory structure
         await sandbox.process.exec(
             {
-                "command": "mkdir -p /mnt/files/project/{src,tests,docs} && echo 'code' > /mnt/files/project/src/main.js",
+                "command": "mkdir -p /mnt/files/project/src /mnt/files/project/tests /mnt/files/project/docs && echo 'code' > /mnt/files/project/src/main.js",
                 "wait_for_completion": True,
             }
         )

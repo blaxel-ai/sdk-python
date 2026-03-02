@@ -1,7 +1,5 @@
 from typing import Any, Dict, List
 
-import httpx
-
 from ..types import SandboxConfiguration
 from .action import SyncSandboxAction
 
@@ -29,12 +27,8 @@ class SyncSandboxDrive(SyncSandboxAction):
         Returns:
             Dictionary with success status and mount information
         """
-        # Normalize mount_path to ensure it starts with /
         if not mount_path.startswith("/"):
             mount_path = f"/{mount_path}"
-
-        url = f"{self.url}/drives/mount"
-        headers = self.sandbox_config.headers
 
         payload = {
             "driveName": drive_name,
@@ -42,11 +36,10 @@ class SyncSandboxDrive(SyncSandboxAction):
             "drivePath": drive_path,
         }
 
-        with httpx.Client() as client:
-            response = client.post(url, json=payload, headers=headers)
-            self.handle_response_error(response)
-
-            return response.json()
+        client = self.get_client()
+        response = client.post("/drives/mount", json=payload)
+        self.handle_response_error(response)
+        return response.json()
 
     def unmount(self, mount_path: str) -> Dict[str, Any]:
         """
@@ -58,20 +51,15 @@ class SyncSandboxDrive(SyncSandboxAction):
         Returns:
             Dictionary with success status
         """
-        # Normalize mount_path to ensure it starts with /
         if not mount_path.startswith("/"):
             mount_path = f"/{mount_path}"
 
-        # URL encode the mount path for use in URL
-        encoded_path = mount_path.replace("/", "%2F")
-        url = f"{self.url}/drives/{encoded_path}"
-        headers = self.sandbox_config.headers
+        url_path = mount_path[1:]
 
-        with httpx.Client() as client:
-            response = client.delete(url, headers=headers)
-            self.handle_response_error(response)
-
-            return response.json()
+        client = self.get_client()
+        response = client.delete(f"/drives/mount/{url_path}")
+        self.handle_response_error(response)
+        return response.json()
 
     def list(self) -> List[Dict[str, Any]]:
         """
@@ -80,15 +68,11 @@ class SyncSandboxDrive(SyncSandboxAction):
         Returns:
             List of dictionaries containing mount information for each drive
         """
-        url = f"{self.url}/drives/mount"
-        headers = self.sandbox_config.headers
+        client = self.get_client()
+        response = client.get("/drives/mount")
+        self.handle_response_error(response)
 
-        with httpx.Client() as client:
-            response = client.get(url, headers=headers)
-            self.handle_response_error(response)
-
-            result = response.json()
-            # The API returns {"mounts": [...]}
-            if isinstance(result, dict) and "mounts" in result:
-                return result["mounts"]
-            return []
+        result = response.json()
+        if isinstance(result, dict) and "mounts" in result:
+            return result["mounts"]
+        return []

@@ -15,6 +15,7 @@ from ..client.api.drives.list_drives import sync as list_drives_sync
 from ..client.api.drives.update_drive import asyncio as update_drive
 from ..client.api.drives.update_drive import sync as update_drive_sync
 from ..client.client import client
+from ..client.errors import UnexpectedStatus
 from ..client.models import Drive, DriveSpec, Metadata
 from ..client.models.error import Error
 from ..client.types import UNSET
@@ -238,6 +239,8 @@ class DriveInstance:
     @classmethod
     async def get(cls, drive_name: str) -> "DriveInstance":
         response = await get_drive(drive_name=drive_name, client=client)
+        if response is None:
+            raise DriveAPIError(f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND")
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -256,10 +259,14 @@ class DriveInstance:
         """Create a drive if it doesn't exist, otherwise return existing."""
         try:
             return await cls.create(config)
-        except DriveAPIError as e:
-            # Check if it's a 409 conflict error (drive already exists)
-            if e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]:
-                # Extract name from different configuration types
+        except (DriveAPIError, UnexpectedStatus) as e:
+            is_conflict = False
+            if isinstance(e, DriveAPIError):
+                is_conflict = e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]
+            elif isinstance(e, UnexpectedStatus):
+                is_conflict = e.status_code == 409
+
+            if is_conflict:
                 if isinstance(config, DriveCreateConfiguration):
                     name = config.name
                 elif isinstance(config, dict):
@@ -272,8 +279,7 @@ class DriveInstance:
                 if not name:
                     raise ValueError("Drive name is required")
 
-                drive_instance = await cls.get(name)
-                return drive_instance
+                return await cls.get(name)
             raise
 
 
@@ -385,6 +391,8 @@ class SyncDriveInstance:
     def get(cls, drive_name: str) -> "SyncDriveInstance":
         """Get a drive by name synchronously."""
         response = get_drive_sync(drive_name=drive_name, client=client)
+        if response is None:
+            raise DriveAPIError(f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND")
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -404,10 +412,14 @@ class SyncDriveInstance:
         """Create a drive if it doesn't exist, otherwise return existing."""
         try:
             return cls.create(config)
-        except DriveAPIError as e:
-            # Check if it's a 409 conflict error (drive already exists)
-            if e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]:
-                # Extract name from different configuration types
+        except (DriveAPIError, UnexpectedStatus) as e:
+            is_conflict = False
+            if isinstance(e, DriveAPIError):
+                is_conflict = e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]
+            elif isinstance(e, UnexpectedStatus):
+                is_conflict = e.status_code == 409
+
+            if is_conflict:
                 if isinstance(config, DriveCreateConfiguration):
                     name = config.name
                 elif isinstance(config, dict):
@@ -420,8 +432,7 @@ class SyncDriveInstance:
                 if not name:
                     raise ValueError("Drive name is required")
 
-                drive_instance = cls.get(name)
-                return drive_instance
+                return cls.get(name)
             raise
 
 
