@@ -43,6 +43,7 @@ from .subdirectory import Subdirectory
 from .success_response import SuccessResponse
 from .tree_request import TreeRequest
 from .tree_request_files import TreeRequestFiles
+from .tunnel_config_request import TunnelConfigRequest
 from .upgrade_request import UpgradeRequest
 from .upgrade_status import UpgradeStatus
 
@@ -88,6 +89,7 @@ __all__ = (
     "SuccessResponse",
     "TreeRequest",
     "TreeRequestFiles",
+    "TunnelConfigRequest",
     "UpgradeRequest",
     "UpgradeStatus",
 )

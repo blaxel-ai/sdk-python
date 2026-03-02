@@ -1,32 +1,20 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-T = TypeVar("T", bound="DriveState")
+T = TypeVar("T", bound="RegionAgentDrivePublicUrl")
 
 
 @_attrs_define
-class DriveState:
-    """Current runtime state of the drive
+class RegionAgentDrivePublicUrl:
+    """S3-compatible endpoint URL for drive storage in this region. Use {s3Endpoint}/{bucketName} to access drive contents."""
 
-    Attributes:
-        s_3_url (Union[Unset, str]): S3-compatible endpoint URL for accessing drive contents
-    """
-
-    s_3_url: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        s_3_url = self.s_3_url
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if s_3_url is not UNSET:
-            field_dict["s3Url"] = s_3_url
 
         return field_dict
 
@@ -35,14 +23,10 @@ class DriveState:
         if not src_dict:
             return None
         d = src_dict.copy()
-        s_3_url = d.pop("s3Url", d.pop("s_3_url", UNSET))
+        region_agent_drive_public_url = cls()
 
-        drive_state = cls(
-            s_3_url=s_3_url,
-        )
-
-        drive_state.additional_properties = d
-        return drive_state
+        region_agent_drive_public_url.additional_properties = d
+        return region_agent_drive_public_url
 
     @property
     def additional_keys(self) -> list[str]:

@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class ModelRuntimeGeneration(str, Enum):
+    MK2 = "mk2"
     MK3 = "mk3"
 
     def __str__(self) -> str:
