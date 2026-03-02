@@ -17,7 +17,7 @@ import httpx
 from dockerfile_parse import DockerfileParser  # type: ignore[import-untyped]
 
 from ..client.client import client
-from ..client.models import SandboxRuntime, Sandbox, SandboxSpec, MetadataLabels, Metadata
+from ..client.models import Metadata, MetadataLabels, Sandbox, SandboxRuntime, SandboxSpec
 from ..client.types import Response
 
 SANDBOX_API_IMAGE = "ghcr.io/blaxel-ai/sandbox"
@@ -117,7 +117,7 @@ class ImageInstance:
         )
 
     @classmethod
-    def from_registry(cls, tag: str) -> "ImageInstance":
+    def from_registry(cls, tag: str) -> ImageInstance:
         """
         Create an image from a Docker registry image.
 
@@ -130,7 +130,7 @@ class ImageInstance:
         context = ImageBuildContext(base_image=tag)
         return cls(context)
 
-    def workdir(self, path: str) -> "ImageInstance":
+    def workdir(self, path: str) -> ImageInstance:
         """
         Set the working directory for subsequent instructions.
 
@@ -144,7 +144,7 @@ class ImageInstance:
         new_context.instructions.append(f"WORKDIR {path}")
         return ImageInstance(new_context)
 
-    def run_commands(self, *commands: str) -> "ImageInstance":
+    def run_commands(self, *commands: str) -> ImageInstance:
         """
         Run shell commands in the image.
 
@@ -167,7 +167,7 @@ class ImageInstance:
         extra_index_url: Optional[str] = None,
         pre: bool = False,
         extra_options: str = "",
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Install Python packages using pip.
 
@@ -214,7 +214,7 @@ class ImageInstance:
         *packages: str,
         update: bool = True,
         clean: bool = True,
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Install packages using apt-get (Debian/Ubuntu).
 
@@ -253,7 +253,7 @@ class ImageInstance:
         update: bool = True,
         no_cache: bool = True,
         clean: bool = True,
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Install packages using apk (Alpine Linux).
 
@@ -293,7 +293,7 @@ class ImageInstance:
         package_manager: str = "npm",
         global_install: bool = False,
         save_dev: bool = False,
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Install Node.js packages using npm, yarn, pnpm, or bun.
 
@@ -325,20 +325,34 @@ class ImageInstance:
 
         # Command builders: (install_cmd, add_cmd_with_packages)
         builders = {
-            "npm": lambda: ("npm install", f"npm install {'-g ' if g else ''}{('--save-dev ' if d else '')}{pkgs}"),
-            "yarn": lambda: ("yarn install", f"yarn {'global add' if g else 'add'} {('--dev ' if d and not g else '')}{pkgs}"),
-            "pnpm": lambda: ("pnpm install", f"pnpm add {'-g ' if g else ''}{('-D ' if d else '')}{pkgs}"),
-            "bun": lambda: ("bun install", f"bun add {'-g ' if g else ''}{('-d ' if d else '')}{pkgs}"),
+            "npm": lambda: (
+                "npm install",
+                f"npm install {'-g ' if g else ''}{('--save-dev ' if d else '')}{pkgs}",
+            ),
+            "yarn": lambda: (
+                "yarn install",
+                f"yarn {'global add' if g else 'add'} {('--dev ' if d and not g else '')}{pkgs}",
+            ),
+            "pnpm": lambda: (
+                "pnpm install",
+                f"pnpm add {'-g ' if g else ''}{('-D ' if d else '')}{pkgs}",
+            ),
+            "bun": lambda: (
+                "bun install",
+                f"bun add {'-g ' if g else ''}{('-d ' if d else '')}{pkgs}",
+            ),
         }
 
         if pm not in builders:
-            raise ValueError(f"Invalid package manager: {pm}. Must be one of {set(builders.keys())}")
+            raise ValueError(
+                f"Invalid package manager: {pm}. Must be one of {set(builders.keys())}"
+            )
 
         install_cmd, add_cmd = builders[pm]()
         cmd = " ".join((add_cmd if packages else install_cmd).split())
         return self.run_commands(cmd)
 
-    def gem_install(self, *packages: str, no_document: bool = True) -> "ImageInstance":
+    def gem_install(self, *packages: str, no_document: bool = True) -> ImageInstance:
         """
         Install Ruby gems.
 
@@ -359,7 +373,7 @@ class ImageInstance:
         cmd = f"gem install {flags}{' '.join(packages)}"
         return self.run_commands(" ".join(cmd.split()))
 
-    def cargo_install(self, *packages: str, locked: bool = False) -> "ImageInstance":
+    def cargo_install(self, *packages: str, locked: bool = False) -> ImageInstance:
         """
         Install Rust packages using cargo.
 
@@ -380,7 +394,7 @@ class ImageInstance:
         cmd = f"cargo install {flags}{' '.join(packages)}"
         return self.run_commands(" ".join(cmd.split()))
 
-    def go_install(self, *packages: str) -> "ImageInstance":
+    def go_install(self, *packages: str) -> ImageInstance:
         """
         Install Go packages.
 
@@ -404,7 +418,7 @@ class ImageInstance:
         *packages: str,
         no_dev: bool = False,
         optimize_autoloader: bool = False,
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Install PHP packages using Composer.
 
@@ -431,7 +445,7 @@ class ImageInstance:
         *packages: str,
         system: bool = True,
         upgrade: bool = False,
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Install Python packages using uv (fast Python package installer).
 
@@ -453,7 +467,7 @@ class ImageInstance:
         cmd = f"uv pip install {flags}{' '.join(packages)}"
         return self.run_commands(" ".join(cmd.split()))
 
-    def pipx_install(self, *packages: str) -> "ImageInstance":
+    def pipx_install(self, *packages: str) -> ImageInstance:
         """
         Install Python CLI applications using pipx.
 
@@ -472,7 +486,7 @@ class ImageInstance:
         commands = [f"pipx install {pkg}" for pkg in packages]
         return self.run_commands(" && ".join(commands))
 
-    def env(self, **variables: str) -> "ImageInstance":
+    def env(self, **variables: str) -> ImageInstance:
         """
         Set environment variables.
 
@@ -490,7 +504,7 @@ class ImageInstance:
             new_context.instructions.append(f'ENV {key}="{value}"')
         return ImageInstance(new_context)
 
-    def copy(self, source: str, destination: str) -> "ImageInstance":
+    def copy(self, source: str, destination: str) -> ImageInstance:
         """
         Copy files or directories from the build context to the image.
 
@@ -507,7 +521,7 @@ class ImageInstance:
 
     def add_local_file(
         self, source_path: str, destination: str, context_name: Optional[str] = None
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Add a local file to the build context and copy it to the image.
 
@@ -530,7 +544,7 @@ class ImageInstance:
 
     def add_local_dir(
         self, source_path: str, destination: str, context_name: Optional[str] = None
-    ) -> "ImageInstance":
+    ) -> ImageInstance:
         """
         Add a local directory to the build context and copy it to the image.
 
@@ -551,7 +565,7 @@ class ImageInstance:
         new_context.instructions.append(f"COPY {context_name} {destination}")
         return ImageInstance(new_context)
 
-    def expose(self, *ports: int) -> "ImageInstance":
+    def expose(self, *ports: int) -> ImageInstance:
         """
         Expose ports.
 
@@ -569,7 +583,7 @@ class ImageInstance:
             new_context.instructions.append(f"EXPOSE {port}")
         return ImageInstance(new_context)
 
-    def entrypoint(self, *args: str) -> "ImageInstance":
+    def entrypoint(self, *args: str) -> ImageInstance:
         """
         Set the entrypoint for the image.
 
@@ -589,7 +603,7 @@ class ImageInstance:
         new_context.has_entrypoint = True
         return ImageInstance(new_context)
 
-    def user(self, user: str) -> "ImageInstance":
+    def user(self, user: str) -> ImageInstance:
         """
         Set the user for subsequent instructions.
 
@@ -603,7 +617,7 @@ class ImageInstance:
         new_context.instructions.append(f"USER {user}")
         return ImageInstance(new_context)
 
-    def label(self, **labels: str) -> "ImageInstance":
+    def label(self, **labels: str) -> ImageInstance:
         """
         Add labels to the image.
 
@@ -621,7 +635,7 @@ class ImageInstance:
             new_context.instructions.append(f'LABEL {key}="{value}"')
         return ImageInstance(new_context)
 
-    def arg(self, name: str, default: Optional[str] = None) -> "ImageInstance":
+    def arg(self, name: str, default: Optional[str] = None) -> ImageInstance:
         """
         Define a build argument.
 
@@ -659,7 +673,7 @@ class ImageInstance:
         dockerfile = self._context.generate_dockerfile()
         return "sandbox-api" in dockerfile or "blaxel-ai/sandbox" in dockerfile
 
-    def _prepare_for_sandbox(self, sandbox_version: str = "latest") -> "ImageInstance":
+    def _prepare_for_sandbox(self, sandbox_version: str = "latest") -> ImageInstance:
         """
         Prepare the image for sandbox deployment by adding sandbox-api.
 
@@ -947,7 +961,9 @@ class ImageInstance:
                 timeout=300.0,  # 5 minute timeout for uploads
             )
             if response.status_code >= 400:
-                raise RuntimeError(f"Upload failed with status {response.status_code}: {response.text}")
+                raise RuntimeError(
+                    f"Upload failed with status {response.status_code}: {response.text}"
+                )
 
     async def _upload_zip(self, upload_url: str, zip_content: bytes) -> None:
         """
@@ -965,7 +981,9 @@ class ImageInstance:
                 timeout=300.0,  # 5 minute timeout for uploads
             )
             if response.status_code >= 400:
-                raise RuntimeError(f"Upload failed with status {response.status_code}: {response.text}")
+                raise RuntimeError(
+                    f"Upload failed with status {response.status_code}: {response.text}"
+                )
 
     def _get_sandbox_status_sync(self, name: str) -> str | None:
         """
@@ -1176,9 +1194,7 @@ class ImageInstance:
             self._upload_zip_sync(upload_url, zip_content)
 
             # Wait for deployment to complete
-            self._wait_for_deployment_sync(
-                name, timeout=timeout, on_status_change=on_status_change
-            )
+            self._wait_for_deployment_sync(name, timeout=timeout, on_status_change=on_status_change)
 
             # Get the final sandbox state
             http_client = client.get_httpx_client()
@@ -1247,9 +1263,7 @@ class ImageInstance:
             sandbox_payload = self._create_sandbox_payload(name, memory)
 
             # Create/update sandbox and get upload URL
-            response, upload_url = await self._create_sandbox_with_upload(
-                sandbox_payload
-            )
+            response, upload_url = await self._create_sandbox_with_upload(sandbox_payload)
 
             if response.status_code.value >= 400:
                 raise RuntimeError(

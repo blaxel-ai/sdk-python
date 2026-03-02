@@ -7,6 +7,7 @@ import pytest_asyncio
 
 from blaxel.core import ImageInstance, SandboxInstance
 
+
 @pytest.mark.asyncio(loop_scope="class")
 class TestImage:
     """Test re-building the same image with an updated spec (update scenario)."""
@@ -72,20 +73,24 @@ class TestImage:
             sandbox_version="latest",
         )
 
-        request.cls.sandbox = await SandboxInstance.create({
-            "image": image_name,
-            "memory": 4096,
-        })
+        request.cls.sandbox = await SandboxInstance.create(
+            {
+                "image": image_name,
+                "memory": 4096,
+            }
+        )
 
         yield
 
         await SandboxInstance.delete(self.sandbox.metadata.name)
 
     async def test_new_python_package_available(self):
-        result = await self.sandbox.process.exec({
-            "command": "python -c \"import aiohttp; print('aiohttp OK')\"",
-            "waitForCompletion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "python -c \"import aiohttp; print('aiohttp OK')\"",
+                "waitForCompletion": True,
+            }
+        )
         process_name = result.name if result.name else "unknown"
         logs = await self.sandbox.process.logs(process_name, "all")
 
@@ -93,10 +98,12 @@ class TestImage:
         assert "aiohttp OK" in logs
 
     async def test_new_apt_package_available(self):
-        result = await self.sandbox.process.exec({
-            "command": "vim --version | head -1",
-            "waitForCompletion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "vim --version | head -1",
+                "waitForCompletion": True,
+            }
+        )
         process_name = result.name if result.name else "unknown"
         logs = await self.sandbox.process.logs(process_name, "all")
 

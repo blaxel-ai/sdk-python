@@ -12,6 +12,7 @@ from .continent import Continent
 from .core_event import CoreEvent
 from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
+from .create_drive_access_token_response_200 import CreateDriveAccessTokenResponse200
 from .create_job_execution_output import CreateJobExecutionOutput
 from .create_job_execution_output_tasks_item import CreateJobExecutionOutputTasksItem
 from .create_job_execution_request import CreateJobExecutionRequest
@@ -24,9 +25,13 @@ from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_status import CustomDomainSpecStatus
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
+from .delete_drive_response_200 import DeleteDriveResponse200
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
+from .drive import Drive
+from .drive_spec import DriveSpec
+from .drive_state import DriveState
 from .egress_gateway import EgressGateway
 from .egress_gateway_metadata import EgressGatewayMetadata
 from .egress_gateway_spec import EgressGatewaySpec
@@ -53,6 +58,8 @@ from .function_runtime import FunctionRuntime
 from .function_runtime_generation import FunctionRuntimeGeneration
 from .function_runtime_transport import FunctionRuntimeTransport
 from .function_spec import FunctionSpec
+from .get_drive_jwks_response_200 import GetDriveJWKSResponse200
+from .get_drive_jwks_response_200_keys_item import GetDriveJWKSResponse200KeysItem
 from .get_workspace_features_response_200 import GetWorkspaceFeaturesResponse200
 from .get_workspace_features_response_200_features import GetWorkspaceFeaturesResponse200Features
 from .get_workspace_service_accounts_response_200_item import (
@@ -136,6 +143,7 @@ from .private_location import PrivateLocation
 from .public_ip import PublicIp
 from .public_ips import PublicIps
 from .region import Region
+from .region_agent_drive_public_url import RegionAgentDrivePublicUrl
 from .repository import Repository
 from .revision_configuration import RevisionConfiguration
 from .revision_metadata import RevisionMetadata
@@ -191,6 +199,7 @@ __all__ = (
     "CoreEvent",
     "Country",
     "CreateApiKeyForServiceAccountBody",
+    "CreateDriveAccessTokenResponse200",
     "CreateJobExecutionOutput",
     "CreateJobExecutionOutputTasksItem",
     "CreateJobExecutionRequest",
@@ -203,9 +212,13 @@ __all__ = (
     "CustomDomainSpec",
     "CustomDomainSpecStatus",
     "CustomDomainSpecTxtRecords",
+    "DeleteDriveResponse200",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteVolumeTemplateVersionResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
+    "Drive",
+    "DriveSpec",
+    "DriveState",
     "EgressGateway",
     "EgressGatewayMetadata",
     "EgressGatewaySpec",
@@ -232,6 +245,8 @@ __all__ = (
     "FunctionRuntimeGeneration",
     "FunctionRuntimeTransport",
     "FunctionSpec",
+    "GetDriveJWKSResponse200",
+    "GetDriveJWKSResponse200KeysItem",
     "GetWorkspaceFeaturesResponse200",
     "GetWorkspaceFeaturesResponse200Features",
     "GetWorkspaceServiceAccountsResponse200Item",
@@ -311,6 +326,7 @@ __all__ = (
     "PublicIp",
     "PublicIps",
     "Region",
+    "RegionAgentDrivePublicUrl",
     "Repository",
     "RevisionConfiguration",
     "RevisionMetadata",

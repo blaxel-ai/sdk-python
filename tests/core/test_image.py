@@ -57,8 +57,7 @@ class TestImageFromRegistry:
             "namanjain12/numpy_final:05aa44d53f4f9528847a0c014fe4bda5caa5fd3d"
         )
         assert (
-            image.base_image
-            == "namanjain12/numpy_final:05aa44d53f4f9528847a0c014fe4bda5caa5fd3d"
+            image.base_image == "namanjain12/numpy_final:05aa44d53f4f9528847a0c014fe4bda5caa5fd3d"
         )
 
     def test_from_registry_dockerfile_content(self):
@@ -156,7 +155,7 @@ class TestImageRunCommands:
     def test_run_commands_with_multiline_heredoc(self):
         """Test run_commands with heredoc-style content."""
         image = ImageInstance.from_registry("python:3.11").run_commands(
-            "cat > /app/config.json << 'EOF'\n{\"key\": \"value\"}\nEOF"
+            'cat > /app/config.json << \'EOF\'\n{"key": "value"}\nEOF'
         )
         assert "cat > /app/config.json" in image.dockerfile
 
@@ -444,7 +443,9 @@ class TestImagePipInstall:
 
     def test_pip_install_multiple_packages(self):
         """Test pip_install with multiple packages."""
-        image = ImageInstance.from_registry("python:3.11").pip_install("requests", "pandas", "numpy")
+        image = ImageInstance.from_registry("python:3.11").pip_install(
+            "requests", "pandas", "numpy"
+        )
         assert "RUN pip install requests pandas numpy" in image.dockerfile
 
     def test_pip_install_with_find_links(self):
@@ -551,12 +552,16 @@ class TestImageApkAdd:
 
     def test_apk_add_without_no_cache_with_clean(self):
         """Test apk_add without no-cache but with clean."""
-        image = ImageInstance.from_registry("alpine:3.18").apk_add("git", no_cache=False, clean=True)
+        image = ImageInstance.from_registry("alpine:3.18").apk_add(
+            "git", no_cache=False, clean=True
+        )
         assert "rm -rf /var/cache/apk/*" in image.dockerfile
 
     def test_apk_add_without_update(self):
         """Test apk_add without update (when no_cache=False)."""
-        image = ImageInstance.from_registry("alpine:3.18").apk_add("git", no_cache=False, update=False)
+        image = ImageInstance.from_registry("alpine:3.18").apk_add(
+            "git", no_cache=False, update=False
+        )
         assert "apk update" not in image.dockerfile
 
     def test_apk_add_empty_returns_same(self):
@@ -583,7 +588,9 @@ class TestImageNpmInstall:
 
     def test_npm_install_global(self):
         """Test npm_install with global flag."""
-        image = ImageInstance.from_registry("node:18").npm_install("typescript", global_install=True)
+        image = ImageInstance.from_registry("node:18").npm_install(
+            "typescript", global_install=True
+        )
         assert "-g" in image.dockerfile
         assert "typescript" in image.dockerfile
 
@@ -599,7 +606,9 @@ class TestImageNpmInstall:
 
     def test_npm_install_with_yarn_add(self):
         """Test npm_install with yarn adding packages."""
-        image = ImageInstance.from_registry("node:18").npm_install("express", package_manager="yarn")
+        image = ImageInstance.from_registry("node:18").npm_install(
+            "express", package_manager="yarn"
+        )
         assert "yarn add express" in image.dockerfile
 
     def test_npm_install_with_yarn_global(self):
@@ -616,7 +625,9 @@ class TestImageNpmInstall:
 
     def test_npm_install_with_pnpm_add(self):
         """Test npm_install with pnpm adding packages."""
-        image = ImageInstance.from_registry("node:18").npm_install("express", package_manager="pnpm")
+        image = ImageInstance.from_registry("node:18").npm_install(
+            "express", package_manager="pnpm"
+        )
         assert "pnpm add express" in image.dockerfile
 
     def test_npm_install_with_bun(self):
@@ -626,7 +637,9 @@ class TestImageNpmInstall:
 
     def test_npm_install_with_bun_add(self):
         """Test npm_install with bun adding packages."""
-        image = ImageInstance.from_registry("oven/bun:latest").npm_install("elysia", package_manager="bun")
+        image = ImageInstance.from_registry("oven/bun:latest").npm_install(
+            "elysia", package_manager="bun"
+        )
         assert "bun add elysia" in image.dockerfile
 
     def test_npm_install_invalid_package_manager(self):
@@ -695,7 +708,10 @@ class TestImageGoInstall:
         image = ImageInstance.from_registry("golang:1.21").go_install(
             "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
         )
-        assert "go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest" in image.dockerfile
+        assert (
+            "go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+            in image.dockerfile
+        )
 
     def test_go_install_multiple_packages(self):
         """Test go_install with multiple packages."""
@@ -1001,13 +1017,13 @@ class TestImageAddLocalDir:
         image = ImageInstance.from_registry("python:3.11").add_local_dir(
             str(temp_source_dir), "/app", context_name="mydir"
         )
-        build_dir = image.write(str(output_dir), name="test-image")
+        _ = image.write(str(output_dir), name="test-image")
 
         # Modify source
         (temp_source_dir / "file1.txt").write_text("modified")
 
         # Build again
-        build_dir = image.write(str(output_dir), name="test-image")
+        _ = image.write(str(output_dir), name="test-image")
         # Note: This should still have old content since we didn't recreate the image
         # But the directory copy should work without errors
 
@@ -1104,7 +1120,10 @@ class TestSandboxApiPreparation:
         image = ImageInstance.from_registry("python:3.11-slim")
         prepared = image._prepare_for_sandbox()
 
-        assert "COPY --from=ghcr.io/blaxel-ai/sandbox:latest /sandbox-api /usr/local/bin/sandbox-api" in prepared.dockerfile
+        assert (
+            "COPY --from=ghcr.io/blaxel-ai/sandbox:latest /sandbox-api /usr/local/bin/sandbox-api"
+            in prepared.dockerfile
+        )
 
     def test_prepare_for_sandbox_adds_default_entrypoint(self):
         """Test that _prepare_for_sandbox adds default entrypoint if not set."""
@@ -1128,14 +1147,15 @@ class TestSandboxApiPreparation:
         image = ImageInstance.from_registry("python:3.11-slim")
         prepared = image._prepare_for_sandbox("v1.2.3")
 
-        assert "COPY --from=ghcr.io/blaxel-ai/sandbox:v1.2.3 /sandbox-api /usr/local/bin/sandbox-api" in prepared.dockerfile
+        assert (
+            "COPY --from=ghcr.io/blaxel-ai/sandbox:v1.2.3 /sandbox-api /usr/local/bin/sandbox-api"
+            in prepared.dockerfile
+        )
 
     def test_prepare_for_sandbox_does_not_duplicate_sandbox_api(self):
         """Test that sandbox-api is not duplicated if already present."""
         # Image that does NOT have sandbox-api
-        image = ImageInstance.from_registry("python:3.11-slim").run_commands(
-            "echo 'hello world'"
-        )
+        image = ImageInstance.from_registry("python:3.11-slim").run_commands("echo 'hello world'")
         # This image doesn't have sandbox-api
         assert not image._has_sandbox_api()
 
@@ -1225,7 +1245,9 @@ class TestSandboxApiPreparation:
 
         lines = [line for line in prepared.dockerfile.split("\n") if line.strip()]
         # COPY sandbox-api should be near the end
-        copy_idx = next(i for i, line in enumerate(lines) if "COPY --from=" in line and "sandbox-api" in line)
+        copy_idx = next(
+            i for i, line in enumerate(lines) if "COPY --from=" in line and "sandbox-api" in line
+        )
         entrypoint_idx = next(i for i, line in enumerate(lines) if "ENTRYPOINT" in line)
 
         # Both should be after the RUN command

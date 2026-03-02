@@ -422,7 +422,11 @@ class StreamHandle:
             handle.close()
     """
 
-    def __init__(self, close_func: Callable[[], None], wait_func: Optional[Callable[[Optional[float]], None]] = None):
+    def __init__(
+        self,
+        close_func: Callable[[], None],
+        wait_func: Optional[Callable[[Optional[float]], None]] = None,
+    ):
         self._close_func = close_func
         self._wait_func = wait_func
         self._closed = False
@@ -480,7 +484,11 @@ class AsyncStreamHandle:
             handle.close()
     """
 
-    def __init__(self, close_func: Callable[[], None], wait_func: Optional[Callable[[], Awaitable[None]]] = None):
+    def __init__(
+        self,
+        close_func: Callable[[], None],
+        wait_func: Optional[Callable[[], Awaitable[None]]] = None,
+    ):
         self._close_func = close_func
         self._wait_func = wait_func
         self._closed = False

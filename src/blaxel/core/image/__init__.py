@@ -1,8 +1,8 @@
 from .image import (
     SANDBOX_API_IMAGE,
     SANDBOX_API_PATH,
-    ImageInstance,
     ImageBuildContext,
+    ImageInstance,
     LocalFile,
 )
 
