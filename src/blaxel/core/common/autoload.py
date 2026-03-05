@@ -1,6 +1,4 @@
 import logging
-import threading
-from urllib.parse import urlparse
 
 from ..client import client
 from ..client.response_interceptor import (
@@ -46,27 +44,3 @@ def autoload() -> None:
         telemetry()
     except Exception:
         pass
-
-    # Pre-warm H3 connection to API endpoint in background.
-    # Import is lazy so that aioquic is not loaded unless really needed.
-    try:
-        api_hostname = urlparse(settings.base_url).hostname
-        if api_hostname:
-            _warm_api_h3(api_hostname)
-    except Exception:
-        pass
-
-
-def _warm_api_h3(hostname: str) -> None:
-    """Pre-warm the H3 pool for the API endpoint in a background thread."""
-
-    def _do_warm() -> None:
-        try:
-            from .h3transport import pool as h3_pool
-
-            h3_pool.get_sync_transport(hostname, 443)
-        except Exception:
-            pass
-
-    thread = threading.Thread(target=_do_warm, daemon=True)
-    thread.start()
