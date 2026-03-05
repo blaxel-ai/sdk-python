@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
 
+from ...common.h3transport import get_sync_transport_for_url
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
@@ -123,7 +124,11 @@ class SyncSandboxProcess(SyncSandboxAction):
             url = f"{self.url}/process/{identifier}/logs/stream"
             headers = {**settings.headers, **self.sandbox_config.headers}
             try:
-                with httpx.Client() as client_instance:
+                transport = get_sync_transport_for_url(url)
+                stream_kw: dict = {}
+                if transport is not None:
+                    stream_kw["transport"] = transport
+                with httpx.Client(**stream_kw) as client_instance:
                     with client_instance.stream("GET", url, headers=headers) as response:
                         if response.status_code != 200:
                             raise Exception(f"Failed to stream logs: {response.text}")
@@ -242,7 +247,11 @@ class SyncSandboxProcess(SyncSandboxAction):
             else {**settings.headers, **self.sandbox_config.headers}
         )
 
-        with httpx.Client() as client_instance:
+        transport = get_sync_transport_for_url(self.url)
+        exec_kw: dict = {}
+        if transport is not None:
+            exec_kw["transport"] = transport
+        with httpx.Client(**exec_kw) as client_instance:
             with client_instance.stream(
                 "POST",
                 f"{self.url}/process",

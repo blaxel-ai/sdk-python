@@ -49,14 +49,20 @@ class SyncSandboxAction:
         return None
 
     def get_client(self) -> httpx.Client:
+        transport = getattr(self.sandbox_config, "h3_transport", None)
+        kwargs: dict = {}
+        if transport is not None:
+            kwargs["transport"] = transport
         if self.sandbox_config.force_url:
             return httpx.Client(
                 base_url=self.sandbox_config.force_url,
                 headers=self.sandbox_config.headers,
+                **kwargs,
             )
         return httpx.Client(
             base_url=self.url,
             headers={**settings.headers, **self.sandbox_config.headers},
+            **kwargs,
         )
 
     def handle_response_error(self, response: httpx.Response):

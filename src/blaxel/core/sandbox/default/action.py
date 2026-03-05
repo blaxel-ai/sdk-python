@@ -57,14 +57,18 @@ class SandboxAction:
         """Get persistent HTTP client for this sandbox instance."""
         if self._client is None:
             base_url = self.sandbox_config.force_url or self.url
+            transport = getattr(self.sandbox_config, "h3_transport", None)
+            kwargs: dict = {}
+            if transport is not None:
+                kwargs["transport"] = transport
             self._client = httpx.AsyncClient(
                 base_url=base_url,
                 headers=self.sandbox_config.headers
                 if self.sandbox_config.force_url
                 else {**settings.headers, **self.sandbox_config.headers},
-                http2=False,
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
                 timeout=httpx.Timeout(300.0, connect=10.0),
+                **kwargs,
             )
         return self._client
 

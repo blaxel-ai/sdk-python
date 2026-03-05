@@ -24,7 +24,7 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
-from ...common.h3warm import H3WarmSession, establish_h3_best_effort
+from ...common.h3transport import H3Transport, pool as h3_pool
 from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
@@ -62,15 +62,9 @@ class _AsyncDeleteDescriptor:
 
     def __get__(self, instance, owner):
         if instance is None:
-            # Called on the class: SandboxInstance.delete("name")
             return self._delete_func
         else:
-            # Called on an instance: instance.delete()
             async def instance_delete() -> Sandbox:
-                # Close H3 session if present
-                if hasattr(instance, "h3_session") and instance.h3_session is not None:
-                    instance.h3_session.close()
-                    instance.h3_session = None
                 return await self._delete_func(instance.metadata.name)
 
             return instance_delete
@@ -78,7 +72,6 @@ class _AsyncDeleteDescriptor:
 
 class SandboxInstance:
     delete: "_AsyncDeleteDescriptor"
-    h3_session: H3WarmSession | None
 
     def __init__(
         self,
@@ -109,7 +102,6 @@ class SandboxInstance:
         self.codegen = SandboxCodegen(self.config)
         self.system = SandboxSystem(self.config)
         self.drives = SandboxDrive(self.config)
-        self.h3_session = None
 
     @property
     def metadata(self):
@@ -271,37 +263,39 @@ class SandboxInstance:
             # Extract region from existing Sandbox spec
             region = getattr(sandbox.spec, "region", None) or settings.region
 
-        # Start H3 connection warming in parallel with sandbox creation
-        h3_warm_task: asyncio.Task[H3WarmSession | None] | None = None
+        # Pre-warm H3 transport in parallel with sandbox creation
+        h3_warm_task: asyncio.Task[H3Transport | None] | None = None
         if region:
             edge_domain = f"any.{region}.bl.run"
-            h3_warm_task = asyncio.create_task(establish_h3_best_effort(edge_domain))
+            h3_warm_task = asyncio.create_task(h3_pool.get_async_transport(edge_domain))
 
         response = await create_sandbox(
             client=client,
             body=sandbox,
         )
 
-        # Check if response is an error
         if isinstance(response, SandboxError):
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
-            # Clean up H3 warming task if it was started
             if h3_warm_task is not None:
                 h3_warm_task.cancel()
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
         assert response is not None
-        instance = cls(response)
 
-        # Retrieve H3 session from warming task
+        # Await H3 transport so the pool is warm for subsequent data-plane calls
+        h3_transport: H3Transport | None = None
         if h3_warm_task is not None:
             try:
-                instance.h3_session = await h3_warm_task
+                h3_transport = await h3_warm_task
             except Exception:
-                instance.h3_session = None
-        # TODO remove this part once we have a better way to handle this
+                h3_transport = None
+
+        config = SandboxConfiguration(sandbox=response)
+        config.h3_transport = h3_transport
+        instance = cls(config)
+
         if safe:
             try:
                 await instance.fs.ls("/")

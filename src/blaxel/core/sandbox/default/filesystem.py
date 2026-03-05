@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, Union
 
 import httpx
 
+from ...common.h3transport import get_async_transport_for_url
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
 from ..types import (
@@ -394,7 +395,11 @@ class SandboxFileSystem(SandboxAction):
 
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            async with httpx.AsyncClient() as client_instance:
+            transport = await get_async_transport_for_url(url)
+            watch_kwargs: dict = {}
+            if transport is not None:
+                watch_kwargs["transport"] = transport
+            async with httpx.AsyncClient(**watch_kwargs) as client_instance:
                 async with client_instance.stream(
                     "GET", url, params=params, headers=headers
                 ) as response:

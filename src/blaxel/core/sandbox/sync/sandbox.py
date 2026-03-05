@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import threading
 import uuid
@@ -11,20 +10,14 @@ from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
-from ...client.models import (
-    Metadata,
-    Sandbox,
-    SandboxLifecycle,
-    SandboxRuntime,
-    SandboxSpec,
-)
-from ...client.models import (
-    SandboxNetwork as SandboxNetworkModel,
-)
+from ...client.models import Metadata, Sandbox, SandboxLifecycle
+from ...client.models import SandboxNetwork as SandboxNetworkModel
+from ...client.models import SandboxRuntime, SandboxSpec
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
-from ...common.h3warm import H3WarmSession, establish_h3_best_effort
+from ...common.h3transport import SyncH3Transport
+from ...common.h3transport import pool as h3_pool
 from ...common.settings import settings
 from ..default.sandbox import SandboxAPIError
 from ..types import (
@@ -53,15 +46,9 @@ class _SyncDeleteDescriptor:
 
     def __get__(self, instance, owner):
         if instance is None:
-            # Called on the class: SyncSandboxInstance.delete("name")
             return self._delete_func
         else:
-            # Called on an instance: instance.delete()
             def instance_delete() -> Sandbox:
-                # Close H3 session if present
-                if hasattr(instance, "h3_session") and instance.h3_session is not None:
-                    instance.h3_session.close()
-                    instance.h3_session = None
                 return self._delete_func(instance.metadata.name)
 
             return instance_delete
@@ -94,7 +81,6 @@ class SyncSandboxInstance:
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
         self.drives = SyncSandboxDrive(self.config)
-        self.h3_session: H3WarmSession | None = None
 
     @property
     def metadata(self):
@@ -240,19 +226,15 @@ class SyncSandboxInstance:
             # Extract region from existing Sandbox spec
             region = getattr(sandbox.spec, "region", None) or settings.region
 
-        # Start H3 connection warming in a background thread
-        h3_result: dict[str, H3WarmSession | None] = {"session": None}
+        # Pre-warm H3 transport in a background thread
+        h3_result: dict[str, SyncH3Transport | None] = {"transport": None}
         h3_thread: threading.Thread | None = None
         if region:
             edge_domain = f"any.{region}.bl.run"
 
             def _warm_h3() -> None:
                 try:
-                    loop = asyncio.new_event_loop()
-                    h3_result["session"] = loop.run_until_complete(
-                        establish_h3_best_effort(edge_domain)
-                    )
-                    loop.close()
+                    h3_result["transport"] = h3_pool.get_sync_transport(edge_domain)
                 except Exception:
                     pass
 
@@ -264,19 +246,22 @@ class SyncSandboxInstance:
             body=sandbox,
         )
 
-        # Check if response is an error
         if isinstance(response, SandboxError):
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
-        instance = cls(response)
-
-        # Retrieve H3 session from warming thread (non-blocking)
+        # Wait for H3 warmup to finish
+        h3_transport: SyncH3Transport | None = None
         if h3_thread is not None:
             h3_thread.join(timeout=5)
-            instance.h3_session = h3_result["session"]
+            h3_transport = h3_result["transport"]
+
+        config = SandboxConfiguration(sandbox=response)
+        config.h3_transport = h3_transport
+        instance = cls(config)
+
         if safe:
             try:
                 instance.fs.ls("/")
