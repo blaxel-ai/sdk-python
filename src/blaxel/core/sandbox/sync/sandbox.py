@@ -1,5 +1,4 @@
 import logging
-import threading
 import uuid
 import warnings
 from typing import Any, Callable, Dict, List, Union
@@ -224,23 +223,6 @@ class SyncSandboxInstance:
             # Extract region from existing Sandbox spec
             region = getattr(sandbox.spec, "region", None) or settings.region
 
-        # Pre-warm H3 transport in a background thread
-        h3_result: dict = {"transport": None}
-        h3_thread: threading.Thread | None = None
-        if region:
-            edge_domain = f"any.{region}.bl.run"
-
-            def _warm_h3() -> None:
-                try:
-                    from ...common.h3transport import pool as h3_pool
-
-                    h3_result["transport"] = h3_pool.get_sync_transport(edge_domain)
-                except Exception:
-                    pass
-
-            h3_thread = threading.Thread(target=_warm_h3, daemon=True)
-            h3_thread.start()
-
         response = create_sandbox(
             client=client,
             body=sandbox,
@@ -252,15 +234,7 @@ class SyncSandboxInstance:
             message = response.message if response.message else str(response)
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
-        # Wait for H3 warmup to finish
-        h3_transport = None
-        if h3_thread is not None:
-            h3_thread.join(timeout=5)
-            h3_transport = h3_result["transport"]
-
-        config = SandboxConfiguration(sandbox=response)
-        config.h3_transport = h3_transport
-        instance = cls(config)
+        instance = cls(response)
 
         if safe:
             try:
