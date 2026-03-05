@@ -1,4 +1,7 @@
+import asyncio
 import logging
+import threading
+from urllib.parse import urlparse
 
 from ..client import client
 from ..client.response_interceptor import (
@@ -6,10 +9,14 @@ from ..client.response_interceptor import (
     response_interceptors_sync,
 )
 from ..sandbox.client import client as client_sandbox
+from .h3warm import H3WarmSession, establish_h3_best_effort
 from .sentry import init_sentry
 from .settings import settings
 
 logger = logging.getLogger(__name__)
+
+# Module-level H3 session for API endpoint warming
+_api_h3_session: H3WarmSession | None = None
 
 
 def telemetry() -> None:
@@ -47,3 +54,36 @@ def autoload() -> None:
         telemetry()
     except Exception:
         pass
+
+    # Warm H3 connection to API endpoint in background
+    try:
+        api_hostname = urlparse(settings.base_url).hostname
+        if api_hostname:
+            _warm_api_h3(api_hostname)
+    except Exception:
+        pass
+
+
+def _warm_api_h3(hostname: str) -> None:
+    """Start background H3 connection warming for the API endpoint."""
+    global _api_h3_session
+
+    def _do_warm() -> None:
+        global _api_h3_session
+        try:
+            loop = asyncio.new_event_loop()
+            _api_h3_session = loop.run_until_complete(establish_h3_best_effort(hostname))
+            loop.close()
+        except Exception:
+            pass
+
+    thread = threading.Thread(target=_do_warm, daemon=True)
+    thread.start()
+
+
+def close_api_h3_session() -> None:
+    """Close the API H3 warming session. Call this for clean shutdown."""
+    global _api_h3_session
+    if _api_h3_session is not None:
+        _api_h3_session.close()
+        _api_h3_session = None

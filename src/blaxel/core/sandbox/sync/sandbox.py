@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import threading
 import uuid
 import warnings
 from typing import Any, Callable, Dict, List, Union
@@ -22,6 +24,7 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ...common.h3warm import H3WarmSession, establish_h3_best_effort
 from ...common.settings import settings
 from ..default.sandbox import SandboxAPIError
 from ..types import (
@@ -55,6 +58,10 @@ class _SyncDeleteDescriptor:
         else:
             # Called on an instance: instance.delete()
             def instance_delete() -> Sandbox:
+                # Close H3 session if present
+                if hasattr(instance, "h3_session") and instance.h3_session is not None:
+                    instance.h3_session.close()
+                    instance.h3_session = None
                 return self._delete_func(instance.metadata.name)
 
             return instance_delete
@@ -87,6 +94,7 @@ class SyncSandboxInstance:
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
         self.drives = SyncSandboxDrive(self.config)
+        self.h3_session: H3WarmSession | None = None
 
     @property
     def metadata(self):
@@ -228,6 +236,29 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
+
+            # Extract region from existing Sandbox spec
+            region = getattr(sandbox.spec, "region", None) or settings.region
+
+        # Start H3 connection warming in a background thread
+        h3_result: dict[str, H3WarmSession | None] = {"session": None}
+        h3_thread: threading.Thread | None = None
+        if region:
+            edge_domain = f"any.{region}.bl.run"
+
+            def _warm_h3() -> None:
+                try:
+                    loop = asyncio.new_event_loop()
+                    h3_result["session"] = loop.run_until_complete(
+                        establish_h3_best_effort(edge_domain)
+                    )
+                    loop.close()
+                except Exception:
+                    pass
+
+            h3_thread = threading.Thread(target=_warm_h3, daemon=True)
+            h3_thread.start()
+
         response = create_sandbox(
             client=client,
             body=sandbox,
@@ -241,6 +272,11 @@ class SyncSandboxInstance:
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
         instance = cls(response)
+
+        # Retrieve H3 session from warming thread
+        if h3_thread is not None:
+            h3_thread.join(timeout=5.0)
+            instance.h3_session = h3_result["session"]
         if safe:
             try:
                 instance.fs.ls("/")
