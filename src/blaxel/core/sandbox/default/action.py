@@ -1,5 +1,6 @@
 import httpx
 
+from ...common.h3transport import HTTP2_AVAILABLE
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
 from ..types import ResponseError, SandboxConfiguration
@@ -61,6 +62,8 @@ class SandboxAction:
             kwargs: dict = {}
             if transport is not None:
                 kwargs["transport"] = transport
+            elif HTTP2_AVAILABLE:
+                kwargs["http2"] = True
             self._client = httpx.AsyncClient(
                 base_url=base_url,
                 headers=self.sandbox_config.headers

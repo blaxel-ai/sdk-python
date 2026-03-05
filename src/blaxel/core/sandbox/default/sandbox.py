@@ -24,7 +24,7 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
-from ...common.h3transport import H3Transport, pool as h3_pool
+from ...common.h3transport import pool as h3_pool
 from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
@@ -264,7 +264,7 @@ class SandboxInstance:
             region = getattr(sandbox.spec, "region", None) or settings.region
 
         # Pre-warm H3 transport in parallel with sandbox creation
-        h3_warm_task: asyncio.Task[H3Transport | None] | None = None
+        h3_warm_task: asyncio.Task | None = None
         if region:
             edge_domain = f"any.{region}.bl.run"
             h3_warm_task = asyncio.create_task(h3_pool.get_async_transport(edge_domain))
@@ -285,7 +285,7 @@ class SandboxInstance:
         assert response is not None
 
         # Await H3 transport so the pool is warm for subsequent data-plane calls
-        h3_transport: H3Transport | None = None
+        h3_transport = None
         if h3_warm_task is not None:
             try:
                 h3_transport = await h3_warm_task

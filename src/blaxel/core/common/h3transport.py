@@ -3,14 +3,17 @@
 Provides an async H3Transport (httpx.AsyncBaseTransport) and a sync
 SyncH3Transport (httpx.BaseTransport) backed by a shared connection pool
 keyed by (host, port).
+
+When UDP is blocked or an H3 connection fails mid-session, callers
+automatically fall back to HTTP/2 (or HTTP/1.1 if h2 is unavailable).
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import socket
 import threading
+import time
 from collections import deque
 from typing import AsyncIterator, Deque
 from urllib.parse import urlparse
@@ -27,11 +30,20 @@ logging.getLogger("quic").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 _H3_CONNECT_TIMEOUT = 5.0
+_H3_FAIL_TTL = 300.0  # remember failures for 5 min before retrying
+
+try:
+    import h2 as _h2  # noqa: F401
+
+    HTTP2_AVAILABLE = True
+except ImportError:
+    HTTP2_AVAILABLE = False
 
 
 # ---------------------------------------------------------------------------
 # Async H3 transport (one QUIC connection per instance)
 # ---------------------------------------------------------------------------
+
 
 class _H3ByteStream(httpx.AsyncByteStream):
     def __init__(self, aiterator: AsyncIterator[bytes]):
@@ -42,7 +54,7 @@ class _H3ByteStream(httpx.AsyncByteStream):
             yield part
 
 
-class H3Transport(QuicConnectionProtocol, httpx.AsyncBaseTransport):
+class _H3Transport(QuicConnectionProtocol, httpx.AsyncBaseTransport):
     """httpx async transport over a single QUIC/H3 connection."""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -140,13 +152,14 @@ class H3Transport(QuicConnectionProtocol, httpx.AsyncBaseTransport):
 
 
 # ---------------------------------------------------------------------------
-# Sync H3 transport (bridges async transport via a background event loop)
+# Sync H3 bridge (delegates to the async _H3Transport via a bg loop)
 # ---------------------------------------------------------------------------
 
-class SyncH3Transport(httpx.BaseTransport):
-    """Sync httpx transport that delegates to an async H3Transport."""
 
-    def __init__(self, async_transport: H3Transport, loop: asyncio.AbstractEventLoop):
+class _SyncH3Transport(httpx.BaseTransport):
+    """Sync httpx transport that delegates to an async _H3Transport."""
+
+    def __init__(self, async_transport: _H3Transport, loop: asyncio.AbstractEventLoop):
         self._async_transport = async_transport
         self._loop = loop
 
@@ -162,19 +175,97 @@ class SyncH3Transport(httpx.BaseTransport):
 
 
 # ---------------------------------------------------------------------------
+# Fallback transports: try H3, auto-downgrade to HTTP/2 on failure
+# ---------------------------------------------------------------------------
+
+
+class AsyncH3FallbackTransport(httpx.AsyncBaseTransport):
+    """Async transport that tries H3 and falls back to HTTP/2 on failure."""
+
+    def __init__(self, h3: _H3Transport, host: str, port: int):
+        self._h3 = h3
+        self._host = host
+        self._port = port
+        self._h2_fallback: httpx.AsyncHTTPTransport | None = None
+        self._use_fallback = False
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        if self._use_fallback:
+            return await self._ensure_h2().handle_async_request(request)
+        try:
+            return await self._h3.handle_async_request(request)
+        except Exception:
+            logger.info(
+                "H3 request to %s:%d failed, downgrading to HTTP/2",
+                self._host,
+                self._port,
+            )
+            self._use_fallback = True
+            pool._mark_failed(self._host, self._port)
+            return await self._ensure_h2().handle_async_request(request)
+
+    def _ensure_h2(self) -> httpx.AsyncHTTPTransport:
+        if self._h2_fallback is None:
+            self._h2_fallback = httpx.AsyncHTTPTransport(http2=HTTP2_AVAILABLE)
+        return self._h2_fallback
+
+    async def aclose(self) -> None:
+        if self._h2_fallback is not None:
+            await self._h2_fallback.aclose()
+
+
+class SyncH3FallbackTransport(httpx.BaseTransport):
+    """Sync transport that tries H3 and falls back to HTTP/2 on failure."""
+
+    def __init__(self, sync_h3: _SyncH3Transport, host: str, port: int):
+        self._sync_h3 = sync_h3
+        self._host = host
+        self._port = port
+        self._h2_fallback: httpx.HTTPTransport | None = None
+        self._use_fallback = False
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        if self._use_fallback:
+            return self._ensure_h2().handle_request(request)
+        try:
+            return self._sync_h3.handle_request(request)
+        except Exception:
+            logger.info(
+                "H3 request to %s:%d failed, downgrading to HTTP/2",
+                self._host,
+                self._port,
+            )
+            self._use_fallback = True
+            pool._mark_failed(self._host, self._port)
+            return self._ensure_h2().handle_request(request)
+
+    def _ensure_h2(self) -> httpx.HTTPTransport:
+        if self._h2_fallback is None:
+            self._h2_fallback = httpx.HTTPTransport(http2=HTTP2_AVAILABLE)
+        return self._h2_fallback
+
+    def close(self) -> None:
+        if self._h2_fallback is not None:
+            self._h2_fallback.close()
+
+
+# ---------------------------------------------------------------------------
 # Connection pool
 # ---------------------------------------------------------------------------
+
 
 class H3Pool:
     """Global pool of H3 transports keyed by (host, port).
 
     Manages a background event loop thread for sync callers and QUIC
-    connection lifecycle.
+    connection lifecycle.  Failed hosts are remembered for ``_H3_FAIL_TTL``
+    seconds so that repeated connection attempts don't add latency.
     """
 
     def __init__(self) -> None:
-        self._async_transports: dict[tuple[str, int], H3Transport] = {}
+        self._async_transports: dict[tuple[str, int], _H3Transport] = {}
         self._connect_contexts: dict[tuple[str, int], object] = {}
+        self._failed_hosts: dict[tuple[str, int], float] = {}
         self._lock = threading.Lock()
         self._async_lock: asyncio.Lock | None = None
         self._bg_loop: asyncio.AbstractEventLoop | None = None
@@ -184,6 +275,26 @@ class H3Pool:
         if self._async_lock is None:
             self._async_lock = asyncio.Lock()
         return self._async_lock
+
+    # -- negative cache ------------------------------------------------------
+
+    def _is_failed(self, host: str, port: int) -> bool:
+        key = (host, port)
+        with self._lock:
+            ts = self._failed_hosts.get(key)
+            if ts is None:
+                return False
+            if time.monotonic() - ts > _H3_FAIL_TTL:
+                del self._failed_hosts[key]
+                return False
+            return True
+
+    def _mark_failed(self, host: str, port: int) -> None:
+        key = (host, port)
+        with self._lock:
+            self._failed_hosts[key] = time.monotonic()
+            self._connect_contexts.pop(key, None)
+        self._async_transports.pop(key, None)
 
     # -- background event loop for sync callers ------------------------------
 
@@ -204,16 +315,10 @@ class H3Pool:
                 ready.wait(timeout=5)
             return self._bg_loop  # type: ignore[return-value]
 
-    # -- async API -----------------------------------------------------------
+    # -- internal: raw H3 connection -----------------------------------------
 
-    async def get_async_transport(
-        self, host: str, port: int = 443
-    ) -> H3Transport | None:
-        """Get or create an H3Transport for the given host.
-
-        Returns None if the QUIC handshake fails (caller should fall back
-        to TCP).
-        """
+    async def _get_or_connect(self, host: str, port: int) -> _H3Transport | None:
+        """Get a cached _H3Transport or establish a new QUIC connection."""
         key = (host, port)
         async with self._get_async_lock():
             transport = self._async_transports.get(key)
@@ -227,10 +332,11 @@ class H3Pool:
                 self._async_transports[key] = transport
             return transport
         except Exception:
-            logger.debug("H3 connection to %s:%d failed, falling back to TCP", host, port)
+            logger.debug("H3 connection to %s:%d failed", host, port)
+            self._mark_failed(host, port)
             return None
 
-    async def _connect(self, host: str, port: int) -> H3Transport:
+    async def _connect(self, host: str, port: int) -> _H3Transport:
         configuration = QuicConfiguration(
             is_client=True,
             alpn_protocols=H3_ALPN,
@@ -240,33 +346,55 @@ class H3Pool:
             host,
             port,
             configuration=configuration,
-            create_protocol=H3Transport,
+            create_protocol=_H3Transport,
         )
         transport = await ctx.__aenter__()
         with self._lock:
             self._connect_contexts[(host, port)] = ctx
         return transport  # type: ignore[return-value]
 
-    # -- sync API (dispatches to bg loop) ------------------------------------
+    # -- public async API ----------------------------------------------------
+
+    async def get_async_transport(
+        self, host: str, port: int = 443
+    ) -> AsyncH3FallbackTransport | None:
+        """Get an H3 transport with automatic HTTP/2 fallback for the host.
+
+        Returns None if the QUIC handshake fails (caller should fall back
+        to HTTP/2 or use ``get_async_transport_for_url`` which does this
+        automatically).
+        """
+        if self._is_failed(host, port):
+            return None
+        raw = await self._get_or_connect(host, port)
+        if raw is None:
+            return None
+        return AsyncH3FallbackTransport(raw, host, port)
+
+    # -- public sync API (dispatches to bg loop) -----------------------------
 
     def get_sync_transport(
         self, host: str, port: int = 443
-    ) -> SyncH3Transport | None:
-        """Get or create a SyncH3Transport for the given host.
+    ) -> SyncH3FallbackTransport | None:
+        """Get a sync H3 transport with automatic HTTP/2 fallback.
 
-        Returns None on failure (caller should fall back to TCP).
+        Returns None on failure (caller should fall back to HTTP/2 or use
+        ``get_sync_transport_for_url``).
         """
+        if self._is_failed(host, port):
+            return None
         loop = self._ensure_bg_loop()
         future = asyncio.run_coroutine_threadsafe(
-            self.get_async_transport(host, port), loop
+            self._get_or_connect(host, port), loop
         )
         try:
-            async_transport = future.result(timeout=_H3_CONNECT_TIMEOUT + 1)
+            raw = future.result(timeout=_H3_CONNECT_TIMEOUT + 1)
         except Exception:
+            self._mark_failed(host, port)
             return None
-        if async_transport is None:
+        if raw is None:
             return None
-        return SyncH3Transport(async_transport, loop)
+        return SyncH3FallbackTransport(_SyncH3Transport(raw, loop), host, port)
 
     # -- shutdown ------------------------------------------------------------
 
@@ -298,8 +426,9 @@ pool = H3Pool()
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Helpers — return the best available transport (H3 → HTTP/2 → None)
 # ---------------------------------------------------------------------------
+
 
 def _parse_host_port(url: str) -> tuple[str, int]:
     parsed = urlparse(url)
@@ -308,15 +437,27 @@ def _parse_host_port(url: str) -> tuple[str, int]:
     return host, port
 
 
-async def get_async_transport_for_url(url: str) -> H3Transport | None:
+async def get_async_transport_for_url(url: str) -> httpx.AsyncBaseTransport | None:
+    """Best-effort transport for *url*: H3 with fallback, else HTTP/2, else None."""
     host, port = _parse_host_port(url)
     if not host:
         return None
-    return await pool.get_async_transport(host, port)
+    transport = await pool.get_async_transport(host, port)
+    if transport is not None:
+        return transport
+    if HTTP2_AVAILABLE:
+        return httpx.AsyncHTTPTransport(http2=True)
+    return None
 
 
-def get_sync_transport_for_url(url: str) -> SyncH3Transport | None:
+def get_sync_transport_for_url(url: str) -> httpx.BaseTransport | None:
+    """Best-effort transport for *url*: H3 with fallback, else HTTP/2, else None."""
     host, port = _parse_host_port(url)
     if not host:
         return None
-    return pool.get_sync_transport(host, port)
+    transport = pool.get_sync_transport(host, port)
+    if transport is not None:
+        return transport
+    if HTTP2_AVAILABLE:
+        return httpx.HTTPTransport(http2=True)
+    return None

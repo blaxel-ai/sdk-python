@@ -16,7 +16,6 @@ from ...client.models import SandboxRuntime, SandboxSpec
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
-from ...common.h3transport import SyncH3Transport
 from ...common.h3transport import pool as h3_pool
 from ...common.settings import settings
 from ..default.sandbox import SandboxAPIError
@@ -227,7 +226,7 @@ class SyncSandboxInstance:
             region = getattr(sandbox.spec, "region", None) or settings.region
 
         # Pre-warm H3 transport in a background thread
-        h3_result: dict[str, SyncH3Transport | None] = {"transport": None}
+        h3_result: dict = {"transport": None}
         h3_thread: threading.Thread | None = None
         if region:
             edge_domain = f"any.{region}.bl.run"
@@ -253,7 +252,7 @@ class SyncSandboxInstance:
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
         # Wait for H3 warmup to finish
-        h3_transport: SyncH3Transport | None = None
+        h3_transport = None
         if h3_thread is not None:
             h3_thread.join(timeout=5)
             h3_transport = h3_result["transport"]
