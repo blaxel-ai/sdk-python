@@ -12,7 +12,7 @@ import argparse
 import asyncio
 import statistics
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, default_region, unique_name
@@ -98,18 +98,31 @@ def fmt(seconds: float) -> str:
     return f"{seconds * 1000:.0f}ms"
 
 
+def percentile(values: list[float], p: float) -> float:
+    sorted_v = sorted(values)
+    k = (len(sorted_v) - 1) * (p / 100)
+    f = int(k)
+    c = f + 1
+    if c >= len(sorted_v):
+        return sorted_v[f]
+    return sorted_v[f] + (k - f) * (sorted_v[c] - sorted_v[f])
+
+
+
 def format_stats(values: list[float], label: str) -> str:
     if not values:
         return f"  {label}: no data"
     mean = statistics.mean(values)
-    med = statistics.median(values)
+    p50 = percentile(values, 50)
+    p90 = percentile(values, 90)
+    p99 = percentile(values, 99)
     mn = min(values)
     mx = max(values)
-    std = statistics.stdev(values) if len(values) > 1 else 0.0
     return (
         f"  {label:16s}  "
-        f"mean={fmt(mean):>7s}  med={fmt(med):>7s}  "
-        f"min={fmt(mn):>7s}  max={fmt(mx):>7s}  std={fmt(std):>7s}"
+        f"mean={fmt(mean):>7s}  p50={fmt(p50):>7s}  "
+        f"p90={fmt(p90):>7s}  p99={fmt(p99):>7s}  "
+        f"min={fmt(mn):>7s}  max={fmt(mx):>7s}"
     )
 
 
