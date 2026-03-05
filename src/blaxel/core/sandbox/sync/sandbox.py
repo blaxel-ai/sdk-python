@@ -273,9 +273,9 @@ class SyncSandboxInstance:
 
         instance = cls(response)
 
-        # Retrieve H3 session from warming thread
+        # Retrieve H3 session from warming thread (non-blocking)
         if h3_thread is not None:
-            h3_thread.join(timeout=5.0)
+            h3_thread.join(timeout=0)
             instance.h3_session = h3_result["session"]
         if safe:
             try:

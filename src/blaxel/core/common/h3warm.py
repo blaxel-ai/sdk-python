@@ -22,10 +22,15 @@ class H3WarmSession:
         self._client = client
 
     def close(self) -> None:
-        """Close the QUIC connection."""
+        """Close the QUIC connection by properly exiting the async context manager."""
         try:
-            if self._client is not None:
-                self._client.close()  # type: ignore[union-attr]
+            if self._ctx is not None:
+                loop = asyncio.new_event_loop()
+                try:
+                    loop.run_until_complete(self._ctx.__aexit__(None, None, None))
+                finally:
+                    loop.close()
+                self._ctx = None
                 self._client = None
         except Exception:
             pass
@@ -49,8 +54,6 @@ async def establish_h3(hostname: str, port: int = 443) -> H3WarmSession:
         alpn_protocols=["h3"],
         server_name=hostname,
     )
-    configuration.verify_mode = False
-
     ctx = connect(hostname, port, configuration=configuration)
     client = await ctx.__aenter__()
 
