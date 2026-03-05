@@ -3,7 +3,6 @@ from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
 
-from ...common.h3transport import get_async_transport_for_url
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
@@ -155,6 +154,8 @@ class SandboxProcess(SandboxAction):
             headers = {**settings.headers, **self.sandbox_config.headers}
 
             try:
+                from ...common.h3transport import get_async_transport_for_url
+
                 transport = await get_async_transport_for_url(url)
                 kwargs: dict = {}
                 if transport is not None:
@@ -300,6 +301,8 @@ class SandboxProcess(SandboxAction):
             if self.sandbox_config.force_url
             else {**settings.headers, **self.sandbox_config.headers}
         )
+
+        from ...common.h3transport import get_async_transport_for_url
 
         transport = await get_async_transport_for_url(self.url)
         stream_kwargs: dict = {}

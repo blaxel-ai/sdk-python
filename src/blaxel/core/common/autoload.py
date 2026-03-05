@@ -8,7 +8,6 @@ from ..client.response_interceptor import (
     response_interceptors_sync,
 )
 from ..sandbox.client import client as client_sandbox
-from .h3transport import pool as h3_pool
 from .sentry import init_sentry
 from .settings import settings
 
@@ -48,7 +47,8 @@ def autoload() -> None:
     except Exception:
         pass
 
-    # Pre-warm H3 connection to API endpoint in background
+    # Pre-warm H3 connection to API endpoint in background.
+    # Import is lazy so that aioquic is not loaded unless really needed.
     try:
         api_hostname = urlparse(settings.base_url).hostname
         if api_hostname:
@@ -62,6 +62,8 @@ def _warm_api_h3(hostname: str) -> None:
 
     def _do_warm() -> None:
         try:
+            from .h3transport import pool as h3_pool
+
             h3_pool.get_sync_transport(hostname, 443)
         except Exception:
             pass

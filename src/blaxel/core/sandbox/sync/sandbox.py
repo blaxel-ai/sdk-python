@@ -16,7 +16,6 @@ from ...client.models import SandboxRuntime, SandboxSpec
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
-from ...common.h3transport import pool as h3_pool
 from ...common.settings import settings
 from ..default.sandbox import SandboxAPIError
 from ..types import (
@@ -233,6 +232,8 @@ class SyncSandboxInstance:
 
             def _warm_h3() -> None:
                 try:
+                    from ...common.h3transport import pool as h3_pool
+
                     h3_result["transport"] = h3_pool.get_sync_transport(edge_domain)
                 except Exception:
                     pass

@@ -7,7 +7,6 @@ from typing import Any, Callable, Dict, List, Union
 
 import httpx
 
-from ...common.h3transport import get_async_transport_for_url
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
 from ..types import (
@@ -395,6 +394,8 @@ class SandboxFileSystem(SandboxAction):
 
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
+            from ...common.h3transport import get_async_transport_for_url
+
             transport = await get_async_transport_for_url(url)
             watch_kwargs: dict = {}
             if transport is not None:

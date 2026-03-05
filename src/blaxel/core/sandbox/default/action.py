@@ -1,8 +1,14 @@
 import httpx
 
-from ...common.h3transport import HTTP2_AVAILABLE
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
+
+try:
+    import h2 as _h2  # noqa: F401
+
+    HTTP2_AVAILABLE = True
+except ImportError:
+    HTTP2_AVAILABLE = False
 from ..types import ResponseError, SandboxConfiguration
 
 
@@ -55,7 +61,11 @@ class SandboxAction:
         return None
 
     def get_client(self) -> httpx.AsyncClient:
-        """Get persistent HTTP client for this sandbox instance."""
+        """Get persistent HTTP client for this sandbox instance.
+
+        Headers are injected via an event hook so that token refreshes are
+        picked up automatically without recreating the client.
+        """
         if self._client is None:
             base_url = self.sandbox_config.force_url or self.url
             transport = getattr(self.sandbox_config, "h3_transport", None)
@@ -64,11 +74,21 @@ class SandboxAction:
                 kwargs["transport"] = transport
             elif HTTP2_AVAILABLE:
                 kwargs["http2"] = True
+
+            sandbox_config = self.sandbox_config
+
+            async def _inject_headers(request: httpx.Request) -> None:
+                """Inject fresh headers before every request."""
+                if sandbox_config.force_url:
+                    fresh = sandbox_config.headers
+                else:
+                    fresh = {**settings.headers, **sandbox_config.headers}
+                for key, value in fresh.items():
+                    request.headers[key] = value
+
             self._client = httpx.AsyncClient(
                 base_url=base_url,
-                headers=self.sandbox_config.headers
-                if self.sandbox_config.force_url
-                else {**settings.headers, **self.sandbox_config.headers},
+                event_hooks={"request": [_inject_headers]},
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
                 timeout=httpx.Timeout(300.0, connect=10.0),
                 **kwargs,

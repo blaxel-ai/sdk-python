@@ -4,7 +4,6 @@ from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
 
-from ...common.h3transport import get_sync_transport_for_url
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
@@ -124,6 +123,8 @@ class SyncSandboxProcess(SyncSandboxAction):
             url = f"{self.url}/process/{identifier}/logs/stream"
             headers = {**settings.headers, **self.sandbox_config.headers}
             try:
+                from ...common.h3transport import get_sync_transport_for_url
+
                 transport = get_sync_transport_for_url(url)
                 stream_kw: dict = {}
                 if transport is not None:
@@ -246,6 +247,8 @@ class SyncSandboxProcess(SyncSandboxAction):
             if self.sandbox_config.force_url
             else {**settings.headers, **self.sandbox_config.headers}
         )
+
+        from ...common.h3transport import get_sync_transport_for_url
 
         transport = get_sync_transport_for_url(self.url)
         exec_kw: dict = {}
