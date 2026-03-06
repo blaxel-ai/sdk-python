@@ -1,4 +1,3 @@
-
 from ...common.settings import settings
 from ..client.api.system.get_health import asyncio as get_health
 from ..client.api.system.post_upgrade import asyncio as post_upgrade

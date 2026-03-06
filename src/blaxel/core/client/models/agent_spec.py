@@ -23,6 +23,8 @@ class AgentSpec:
         enabled (Union[Unset, bool]): When false, the agent is disabled and will not serve inference requests Default:
             True. Example: True.
         policies (Union[Unset, list[str]]):
+        public (Union[Unset, bool]): When true, the agent is publicly accessible without authentication. Only available
+            for mk3 generation. Default: False.
         repository (Union[Unset, Repository]): Repository
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, AgentRuntime]): Runtime configuration defining how the AI agent is deployed and scaled
@@ -32,6 +34,7 @@ class AgentSpec:
 
     enabled: Union[Unset, bool] = True
     policies: Union[Unset, list[str]] = UNSET
+    public: Union[Unset, bool] = False
     repository: Union[Unset, "Repository"] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "AgentRuntime"] = UNSET
@@ -44,6 +47,8 @@ class AgentSpec:
         policies: Union[Unset, list[str]] = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
+
+        public = self.public
 
         repository: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -92,6 +97,8 @@ class AgentSpec:
             field_dict["enabled"] = enabled
         if policies is not UNSET:
             field_dict["policies"] = policies
+        if public is not UNSET:
+            field_dict["public"] = public
         if repository is not UNSET:
             field_dict["repository"] = repository
         if revision is not UNSET:
@@ -116,6 +123,8 @@ class AgentSpec:
         enabled = d.pop("enabled", UNSET)
 
         policies = cast(list[str], d.pop("policies", UNSET))
+
+        public = d.pop("public", UNSET)
 
         _repository = d.pop("repository", UNSET)
         repository: Union[Unset, Repository]
@@ -150,6 +159,7 @@ class AgentSpec:
         agent_spec = cls(
             enabled=enabled,
             policies=policies,
+            public=public,
             repository=repository,
             revision=revision,
             runtime=runtime,

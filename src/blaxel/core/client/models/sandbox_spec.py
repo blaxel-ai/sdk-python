@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.sandbox_lifecycle import SandboxLifecycle
+    from ..models.sandbox_network import SandboxNetwork
     from ..models.sandbox_runtime import SandboxRuntime
     from ..models.volume_attachment import VolumeAttachment
 
@@ -23,6 +24,8 @@ class SandboxSpec:
             Example: True.
         lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
             on idle time, max age, or specific dates
+        network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including egress IP binding. All
+            three fields (vpcName, egressGatewayName, egressIpName) must be specified together to assign a dedicated IP.
         region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
             specified, defaults to the region closest to the user. Example: us-pdx-1.
         runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its
@@ -32,6 +35,7 @@ class SandboxSpec:
 
     enabled: Union[Unset, bool] = True
     lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
+    network: Union[Unset, "SandboxNetwork"] = UNSET
     region: Union[Unset, str] = UNSET
     runtime: Union[Unset, "SandboxRuntime"] = UNSET
     volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
@@ -49,6 +53,16 @@ class SandboxSpec:
             lifecycle = self.lifecycle.to_dict()
         elif self.lifecycle and isinstance(self.lifecycle, dict):
             lifecycle = self.lifecycle
+
+        network: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.network
+            and not isinstance(self.network, Unset)
+            and not isinstance(self.network, dict)
+        ):
+            network = self.network.to_dict()
+        elif self.network and isinstance(self.network, dict):
+            network = self.network
 
         region = self.region
 
@@ -83,6 +97,8 @@ class SandboxSpec:
             field_dict["enabled"] = enabled
         if lifecycle is not UNSET:
             field_dict["lifecycle"] = lifecycle
+        if network is not UNSET:
+            field_dict["network"] = network
         if region is not UNSET:
             field_dict["region"] = region
         if runtime is not UNSET:
@@ -95,6 +111,7 @@ class SandboxSpec:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.sandbox_lifecycle import SandboxLifecycle
+        from ..models.sandbox_network import SandboxNetwork
         from ..models.sandbox_runtime import SandboxRuntime
         from ..models.volume_attachment import VolumeAttachment
 
@@ -109,6 +126,13 @@ class SandboxSpec:
             lifecycle = UNSET
         else:
             lifecycle = SandboxLifecycle.from_dict(_lifecycle)
+
+        _network = d.pop("network", UNSET)
+        network: Union[Unset, SandboxNetwork]
+        if isinstance(_network, Unset):
+            network = UNSET
+        else:
+            network = SandboxNetwork.from_dict(_network)
 
         region = d.pop("region", UNSET)
 
@@ -131,6 +155,7 @@ class SandboxSpec:
         sandbox_spec = cls(
             enabled=enabled,
             lifecycle=lifecycle,
+            network=network,
             region=region,
             runtime=runtime,
             volumes=volumes,

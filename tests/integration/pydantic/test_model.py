@@ -3,7 +3,9 @@
 pytest_plugins = []
 import pytest  # noqa: E402
 
-pytest.importorskip("pydantic_ai", reason="pydantic-ai not installed (install with: blaxel[pydantic])")
+pytest.importorskip(
+    "pydantic_ai", reason="pydantic-ai not installed (install with: blaxel[pydantic])"
+)
 
 from pydantic_ai import Agent  # noqa: E402
 

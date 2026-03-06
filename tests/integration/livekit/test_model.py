@@ -3,7 +3,9 @@
 pytest_plugins = []
 import pytest  # noqa: E402
 
-pytest.importorskip("livekit.agents", reason="livekit-agents not installed (install with: blaxel[livekit])")
+pytest.importorskip(
+    "livekit.agents", reason="livekit-agents not installed (install with: blaxel[livekit])"
+)
 
 from livekit.agents.llm import ChatContext  # noqa: E402
 

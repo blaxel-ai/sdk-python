@@ -16,6 +16,9 @@ from ...client.models import (
     SandboxRuntime,
     SandboxSpec,
 )
+from ...client.models import (
+    SandboxNetwork as SandboxNetworkModel,
+)
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
@@ -28,6 +31,7 @@ from ..types import (
     SessionWithToken,
 )
 from .codegen import SyncSandboxCodegen
+from .drive import SyncSandboxDrive
 from .filesystem import SyncSandboxFileSystem
 from .network import SyncSandboxNetwork
 from .preview import SyncSandboxPreviews
@@ -82,6 +86,7 @@ class SyncSandboxInstance:
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
+        self.drives = SyncSandboxDrive(self.config)
 
     @property
     def metadata(self):
@@ -117,7 +122,7 @@ class SyncSandboxInstance:
     def create(
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
-        safe: bool = True,
+        safe: bool = False,
     ) -> "SyncSandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -139,6 +144,7 @@ class SyncSandboxInstance:
                     or "expires" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "region" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "lifecycle" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "network" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
@@ -171,6 +177,8 @@ class SyncSandboxInstance:
                     stacklevel=2,
                 )
             lifecycle = config.lifecycle
+            network = config.network
+            snapshot_enabled = config.snapshot_enabled
             sandbox = Sandbox(
                 metadata=Metadata(name=name, labels=config.labels),
                 spec=SandboxSpec(
@@ -198,6 +206,13 @@ class SyncSandboxInstance:
                     sandbox.spec.lifecycle = lifecycle
                 else:
                     raise ValueError(f"Invalid lifecycle type: {type(lifecycle)}")
+            if network:
+                if isinstance(network, dict):
+                    network = SandboxNetworkModel.from_dict(network)
+                    assert network is not None
+                sandbox.spec.network = network
+            if snapshot_enabled is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime["snapshotEnabled"] = snapshot_enabled
         else:
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)

@@ -199,9 +199,7 @@ class TokenRefreshingLLM(FunctionCallingLLM):
         self._refresh_token()
         return await self._wrapped.acomplete(prompt, formatted=formatted, **kwargs)
 
-    def stream_chat(
-        self, messages: Sequence[ChatMessage], **kwargs: Any
-    ) -> ChatResponseGen:
+    def stream_chat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponseGen:
         self._refresh_token()
         return self._wrapped.stream_chat(messages, **kwargs)
 

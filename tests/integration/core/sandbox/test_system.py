@@ -295,7 +295,9 @@ class TestSystemUpgrade(TestSystemOperations):
 
         # Verify the process completed in roughly the expected time (within 15 seconds tolerance)
         total_duration = time.time() - process_start
-        print(f"[TEST] Total duration from process start to completion: {total_duration * 1000:.0f}ms")
+        print(
+            f"[TEST] Total duration from process start to completion: {total_duration * 1000:.0f}ms"
+        )
         print(f"[TEST] Expected duration: ~{expected_total_duration * 1000:.0f}ms")
 
         # The process should have completed close to the expected time

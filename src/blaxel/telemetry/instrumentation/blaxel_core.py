@@ -6,6 +6,7 @@ from opentelemetry.trace import Tracer, get_tracer
 
 import blaxel.core.agents
 import blaxel.core.jobs
+import blaxel.core.tools
 from blaxel.telemetry.span import SpanManager
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
 
     def _patch_agent(self, tracer: Tracer):
         orig_run = blaxel.core.agents.BlAgent.run
+        orig_arun = blaxel.core.agents.BlAgent.arun
 
         def traced_run(self, *args, **kwargs):
             attributes = {
@@ -45,10 +47,28 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
                     span.set_attribute("agent.run.error", str(e))
                     raise
 
+        async def traced_arun(self, *args, **kwargs):
+            attributes = {
+                "agent.name": self.name,
+                "agent.args": str(args),
+                "span.type": "agent.run",
+                **SpanManager.get_default_attributes(),
+            }
+            with tracer.start_span(self.name, attributes=attributes) as span:
+                try:
+                    result = await orig_arun(self, *args, **kwargs)
+                    span.set_attribute("agent.run.result", result)
+                    return result
+                except Exception as e:
+                    span.set_attribute("agent.run.error", str(e))
+                    raise
+
         blaxel.core.agents.BlAgent.run = traced_run
+        blaxel.core.agents.BlAgent.arun = traced_arun
 
     def _patch_job(self, tracer: Tracer):
         orig_run = blaxel.core.jobs.BlJob.run
+        orig_arun = blaxel.core.jobs.BlJob.arun
 
         def traced_run(self, *args, **kwargs):
             attributes = {
@@ -65,7 +85,23 @@ class BlaxelCoreInstrumentor(BaseInstrumentor):
                     span.set_attribute("job.run.error", str(e))
                     raise
 
+        async def traced_arun(self, *args, **kwargs):
+            attributes = {
+                "job.name": self.name,
+                "span.type": "job.run",
+                **SpanManager.get_default_attributes(),
+            }
+            with tracer.start_span(self.name, attributes=attributes) as span:
+                try:
+                    result = await orig_arun(self, *args, **kwargs)
+                    span.set_attribute("job.run.result", result)
+                    return result
+                except Exception as e:
+                    span.set_attribute("job.run.error", str(e))
+                    raise
+
         blaxel.core.jobs.BlJob.run = traced_run
+        blaxel.core.jobs.BlJob.arun = traced_arun
 
     def _patch_tools(self, tracer: Tracer):
         # Patch PersistentMcpClient.list_tools

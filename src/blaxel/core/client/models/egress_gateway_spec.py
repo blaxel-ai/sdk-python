@@ -1,0 +1,61 @@
+from typing import Any, TypeVar
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+
+T = TypeVar("T", bound="EgressGatewaySpec")
+
+
+@_attrs_define
+class EgressGatewaySpec:
+    """Specification for an egress gateway including region and capacity configuration
+
+    Attributes:
+        region (str): Region where the egress gateway is provisioned (e.g. us-pdx-1, eu-lon-1) Example: us-pdx-1.
+    """
+
+    region: str
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        region = self.region
+
+        field_dict: dict[str, Any] = {}
+        field_dict.update(self.additional_properties)
+        field_dict.update(
+            {
+                "region": region,
+            }
+        )
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        if not src_dict:
+            return None
+        d = src_dict.copy()
+        region = d.pop("region")
+
+        egress_gateway_spec = cls(
+            region=region,
+        )
+
+        egress_gateway_spec.additional_properties = d
+        return egress_gateway_spec
+
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties

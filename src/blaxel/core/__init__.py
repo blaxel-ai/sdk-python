@@ -11,6 +11,8 @@ from .common import (
     verify_webhook_from_request,
     verify_webhook_signature,
 )
+from .drive import DriveAPIError, DriveCreateConfiguration, DriveInstance, SyncDriveInstance
+from .image import ImageBuildContext, ImageInstance, LocalFile
 from .jobs import BlJobWrapper
 from .mcp import BlaxelMcpServerTransport, websocket_client
 from .models import BLModel, bl_model
@@ -67,6 +69,13 @@ __all__ = [
     "VolumeInstance",
     "SyncVolumeInstance",
     "VolumeCreateConfiguration",
+    "DriveInstance",
+    "SyncDriveInstance",
+    "DriveCreateConfiguration",
+    "DriveAPIError",
     "verify_webhook_signature",
     "verify_webhook_from_request",
+    "ImageInstance",
+    "ImageBuildContext",
+    "LocalFile",
 ]

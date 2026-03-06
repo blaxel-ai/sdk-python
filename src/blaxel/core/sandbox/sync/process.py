@@ -103,7 +103,11 @@ class SyncSandboxProcess(SyncSandboxAction):
                 current_stream = None
             seen_logs.clear()
 
-        return StreamHandle(close)
+        def wait_func(timeout=None):
+            if current_stream:
+                current_stream.wait(timeout=timeout)
+
+        return StreamHandle(close, wait_func)
 
     def _stream_logs(
         self,
@@ -159,7 +163,10 @@ class SyncSandboxProcess(SyncSandboxAction):
         def close():
             closed.set()
 
-        return StreamHandle(close)
+        def wait_func(timeout=None):
+            thread.join(timeout=timeout)
+
+        return StreamHandle(close, wait_func)
 
     def exec(
         self,
