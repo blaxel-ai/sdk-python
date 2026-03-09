@@ -183,8 +183,7 @@ class PersistentMcpClient:
 
                 sandbox_response = await get_sandbox_api(self.name, client=bl_client)
                 if not isinstance(sandbox_response, BLError) and sandbox_response is not None:
-                    meta = getattr(sandbox_response, "metadata", None)
-                    url = getattr(meta, "url", None) if meta else None
+                    url = sandbox_response.metadata.url
                     if url and url is not UNSET and url != "":
                         self._resolved_url = str(url).rstrip("/")
                         logger.debug(f"Resolved sandbox MCP URL for {self.name}: {self._resolved_url}")
