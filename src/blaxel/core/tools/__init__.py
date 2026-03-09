@@ -191,8 +191,8 @@ class PersistentMcpClient:
                 logger.warning(f"Failed to resolve sandbox URL for {self.name}: {e}")
 
         # Determine the URL to probe for transport type: use the resolved sandbox URL
-        # if available, otherwise fall back to the standard computed URL.
-        probe_url = self._resolved_url if self._resolved_url else self._url
+        # if available and not in fallback mode, otherwise fall back to the standard computed URL.
+        probe_url = (self._resolved_url if self._resolved_url and not self.use_fallback_url else None) or self._url
 
         # Make a request to the / endpoint to determine transport type
         try:

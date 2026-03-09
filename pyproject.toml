@@ -16,7 +16,6 @@ dependencies = [
   "websockets<16.0.0",
   "attrs>=21.3.0",
   "httpx>=0.27.0",
-  "aioquic>=1.2.0",
   "mcp>=1.9.4",
   "dockerfile-parse>=2.0.0",
 ]
@@ -24,6 +23,9 @@ dependencies = [
 [project.optional-dependencies]
 # Core functionality (always include blaxel.core dependencies)
 core = []
+
+# HTTP/3 (QUIC) transport support
+h3 = ["aioquic>=1.2.0"]
 
 # Telemetry module
 telemetry = [

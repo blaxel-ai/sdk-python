@@ -294,7 +294,7 @@ class H3Pool:
         with self._lock:
             self._failed_hosts[key] = time.monotonic()
             self._connect_contexts.pop(key, None)
-        self._async_transports.pop(key, None)
+            self._async_transports.pop(key, None)
 
     # -- background event loop for sync callers ------------------------------
 
