@@ -19,12 +19,18 @@ from typing import AsyncIterator, Deque
 from urllib.parse import urlparse
 
 import httpx
-from aioquic.asyncio.client import connect
-from aioquic.asyncio.protocol import QuicConnectionProtocol
-from aioquic.h3.connection import H3_ALPN, H3Connection
-from aioquic.h3.events import DataReceived, H3Event, HeadersReceived
-from aioquic.quic.configuration import QuicConfiguration
-from aioquic.quic.events import QuicEvent
+
+try:
+    from aioquic.asyncio.client import connect
+    from aioquic.asyncio.protocol import QuicConnectionProtocol
+    from aioquic.h3.connection import H3_ALPN, H3Connection
+    from aioquic.h3.events import DataReceived, H3Event, HeadersReceived
+    from aioquic.quic.configuration import QuicConfiguration
+    from aioquic.quic.events import QuicEvent
+
+    AIOQUIC_AVAILABLE = True
+except ImportError:
+    AIOQUIC_AVAILABLE = False
 
 logging.getLogger("quic").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -422,7 +428,7 @@ class H3Pool:
 # Module-level singleton
 # ---------------------------------------------------------------------------
 
-pool = H3Pool()
+pool = H3Pool() if AIOQUIC_AVAILABLE else None
 
 
 # ---------------------------------------------------------------------------
@@ -442,9 +448,10 @@ async def get_async_transport_for_url(url: str) -> httpx.AsyncBaseTransport | No
     host, port = _parse_host_port(url)
     if not host:
         return None
-    transport = await pool.get_async_transport(host, port)
-    if transport is not None:
-        return transport
+    if pool is not None:
+        transport = await pool.get_async_transport(host, port)
+        if transport is not None:
+            return transport
     if HTTP2_AVAILABLE:
         return httpx.AsyncHTTPTransport(http2=True)
     return None
@@ -455,9 +462,10 @@ def get_sync_transport_for_url(url: str) -> httpx.BaseTransport | None:
     host, port = _parse_host_port(url)
     if not host:
         return None
-    transport = pool.get_sync_transport(host, port)
-    if transport is not None:
-        return transport
+    if pool is not None:
+        transport = pool.get_sync_transport(host, port)
+        if transport is not None:
+            return transport
     if HTTP2_AVAILABLE:
         return httpx.HTTPTransport(http2=True)
     return None
