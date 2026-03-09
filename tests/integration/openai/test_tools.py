@@ -10,7 +10,12 @@ from agents import Agent, Runner  # noqa: E402
 
 from blaxel.core.sandbox import SandboxInstance  # noqa: E402
 from blaxel.openai import bl_model, bl_tools  # noqa: E402
-from tests.helpers import default_image, default_labels, unique_name  # noqa: E402
+from tests.helpers import (  # noqa: E402
+    default_image,
+    default_labels,
+    unique_name,
+    wait_for_sandbox_deployed,
+)
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -32,6 +37,7 @@ class TestBlTools:
                 "labels": default_labels,
             }
         )
+        await wait_for_sandbox_deployed(request.cls.sandbox_name)
 
         yield
 

@@ -56,6 +56,7 @@ class PersistentMcpClient:
         self.use_fallback_url = False
         self.transport_name = transport
         self.metas = {}
+        self._resolved_url: str | None = None
 
     @property
     def _internal_url(self):
@@ -169,7 +170,30 @@ class PersistentMcpClient:
         if self.transport_name:
             return self.transport_name
 
-        # Make a request to the / endpoint to determine transport type
+        if self.type == "sandbox" and not self._resolved_url:
+            # For sandboxes, the MCP server runs at sandbox.metadata.url/mcp — a direct URL
+            # like https://sbx-{name}-{workspace}.{region}.bl.run/mcp, NOT at the API gateway
+            # path used by PersistentMcpClient._external_url. Fetch the sandbox metadata via
+            # the management API to get the correct direct URL.
+            try:
+                from ..client.api.compute.get_sandbox import asyncio as get_sandbox_api
+                from ..client.client import client as bl_client
+                from ..client.models.error import Error as BLError
+                from ..client.types import UNSET
+
+                sandbox_response = await get_sandbox_api(self.name, client=bl_client)
+                if not isinstance(sandbox_response, BLError) and sandbox_response is not None:
+                    meta = getattr(sandbox_response, "metadata", None)
+                    url = getattr(meta, "url", None) if meta else None
+                    if url and url is not UNSET and url != "":
+                        self._resolved_url = str(url).rstrip("/")
+                        logger.debug(f"Resolved sandbox MCP URL for {self.name}: {self._resolved_url}")
+            except Exception as e:
+                logger.warning(f"Failed to resolve sandbox URL for {self.name}: {e}")
+            self.transport_name = "http-stream"
+            return self.transport_name
+
+        # Make a request to the / endpoint to determine transport type for non-sandbox resources
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as http_client:
                 # Make a GET request to the root endpoint
@@ -192,10 +216,15 @@ class PersistentMcpClient:
 
     async def _get_transport(self, url: str = None):
         """Get the appropriate transport for the connection."""
-        if url is None:
-            url = self._url
-
         transport_type = await self._get_transport_type()
+
+        if url is None:
+            # Use the resolved URL if available (e.g. sandbox direct URL from metadata),
+            # falling back to the computed URL. Skip resolved URL when in fallback mode.
+            if self._resolved_url and not self.use_fallback_url:
+                url = self._resolved_url
+            else:
+                url = self._url
 
         if transport_type == "http-stream":
             # Use streamablehttp_client for http-stream
