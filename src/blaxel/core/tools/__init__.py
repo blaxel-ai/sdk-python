@@ -171,10 +171,10 @@ class PersistentMcpClient:
             return self.transport_name
 
         if self.type == "sandbox" and not self._resolved_url:
-            # For sandboxes, the MCP server runs at sandbox.metadata.url/mcp — a direct URL
-            # like https://sbx-{name}-{workspace}.{region}.bl.run/mcp, NOT at the API gateway
-            # path used by PersistentMcpClient._external_url. Fetch the sandbox metadata via
-            # the management API to get the correct direct URL.
+            # For sandboxes, the MCP server may run at sandbox.metadata.url — a direct
+            # data-plane URL like https://sbx-{name}-{workspace}.{region}.bl.run, which
+            # differs from the API gateway path in _external_url. Resolve the direct URL
+            # from sandbox metadata so transport detection probes the right endpoint.
             try:
                 from ..client.api.compute.get_sandbox import asyncio as get_sandbox_api
                 from ..client.client import client as bl_client
@@ -189,14 +189,15 @@ class PersistentMcpClient:
                         logger.debug(f"Resolved sandbox MCP URL for {self.name}: {self._resolved_url}")
             except Exception as e:
                 logger.warning(f"Failed to resolve sandbox URL for {self.name}: {e}")
-            self.transport_name = "http-stream"
-            return self.transport_name
 
-        # Make a request to the / endpoint to determine transport type for non-sandbox resources
+        # Determine the URL to probe for transport type: use the resolved sandbox URL
+        # if available, otherwise fall back to the standard computed URL.
+        probe_url = self._resolved_url if self._resolved_url else self._url
+
+        # Make a request to the / endpoint to determine transport type
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as http_client:
-                # Make a GET request to the root endpoint
-                response = await http_client.get(self._url + "/", headers=settings.headers)
+                response = await http_client.get(probe_url + "/", headers=settings.headers)
                 if "websocket" in response.text.lower():
                     self.transport_name = "websocket"
                 else:
