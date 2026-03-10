@@ -331,23 +331,31 @@ if AIOQUIC_AVAILABLE:
         async def _get_or_connect(
             self, host: str, port: int
         ) -> _H3Transport | None:
-            """Get a cached _H3Transport or establish a new QUIC connection."""
+            """Get a cached _H3Transport or establish a new QUIC connection.
+
+            Holds the async lock across the entire check+connect+store
+            sequence to prevent two concurrent callers from both creating
+            connections for the same (host, port), which would leak the
+            first QUIC connection context.
+            """
             key = (host, port)
             async with self._get_async_lock():
                 transport = self._async_transports.get(key)
                 if transport is not None:
                     return transport
-            try:
-                transport = await asyncio.wait_for(
-                    self._connect(host, port), timeout=_H3_CONNECT_TIMEOUT
-                )
-                async with self._get_async_lock():
+                try:
+                    transport = await asyncio.wait_for(
+                        self._connect(host, port),
+                        timeout=_H3_CONNECT_TIMEOUT,
+                    )
                     self._async_transports[key] = transport
-                return transport
-            except Exception:
-                logger.debug("H3 connection to %s:%d failed", host, port)
-                self._mark_failed(host, port)
-                return None
+                    return transport
+                except Exception:
+                    logger.debug(
+                        "H3 connection to %s:%d failed", host, port
+                    )
+                    self._mark_failed(host, port)
+                    return None
 
         async def _connect(self, host: str, port: int) -> _H3Transport:
             configuration = QuicConfiguration(

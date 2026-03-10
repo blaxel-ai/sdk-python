@@ -258,8 +258,10 @@ class SandboxInstance:
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
 
-            # Extract region from existing Sandbox spec
-            region = getattr(sandbox.spec, "region", None) or settings.region
+            # Extract region from existing Sandbox spec and apply it
+            region = sandbox.spec.region or settings.region
+            if region:
+                sandbox.spec.region = region
 
         response = await create_sandbox(
             client=client,
