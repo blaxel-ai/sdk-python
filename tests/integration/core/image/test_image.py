@@ -1,5 +1,6 @@
 """Integration tests for Image build functionality."""
 
+import os
 import uuid
 
 import pytest
@@ -7,7 +8,10 @@ import pytest_asyncio
 
 from blaxel.core import ImageInstance, SandboxInstance
 
+IMAGE_BUILD = os.environ.get("IMAGE_BUILD", "").lower() == "true"
 
+
+@pytest.mark.skipif(not IMAGE_BUILD, reason="IMAGE_BUILD environment variable is not set to true")
 @pytest.mark.asyncio(loop_scope="class")
 class TestImage:
     """Test re-building the same image with an updated spec (update scenario)."""
