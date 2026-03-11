@@ -368,9 +368,7 @@ class SyncDriveInstance:
         if not drive.metadata.name:
             drive.metadata.name = default_name
         if not drive.spec:
-            drive.spec = DriveSpec(size=default_size)
-        if not drive.spec.size:
-            drive.spec.size = default_size
+            drive.spec = DriveSpec()
 
         # Warn if region is not set
         if not drive.spec.region or drive.spec.region is UNSET:
