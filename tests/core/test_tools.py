@@ -1,6 +1,5 @@
 """Tests for tools functionality."""
 
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -34,13 +33,8 @@ async def test_bl_tools_with_timeout():
 
 
 @pytest.mark.asyncio
-@patch("blaxel.core.tools.websocket_client")
-async def test_bl_tools_framework_conversions(mock_websocket):
+async def test_bl_tools_framework_conversions():
     """Test tools framework conversions."""
-    # Mock websocket and tools
-    mock_session = AsyncMock()
-    mock_session.list_tools.return_value.tools = []
-
     tools = bl_tools(["blaxel-search"])
 
     # Test that conversion methods would exist after initialization
