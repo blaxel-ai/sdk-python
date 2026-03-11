@@ -532,3 +532,89 @@ class TestRestartOnFailure(TestProcessOperations):
 
         assert type(result.restart_count) == int and result.restart_count > 0
         assert type(result.restart_count) == int and result.restart_count <= 3
+
+
+SKIP_KEEP_ALIVE = True
+
+
+@pytest.mark.asyncio(loop_scope="class")
+@pytest.mark.skipif(SKIP_KEEP_ALIVE, reason="keepAlive tests are skipped by default")
+class TestKeepAlive(TestProcessOperations):
+    """Test keepAlive operations."""
+
+    async def test_executes_process_with_keep_alive_enabled(self):
+        """Test executing a process with keepAlive enabled."""
+        result = await self.sandbox.process.exec(
+            {
+                "name": "keepalive-basic",
+                "command": "echo 'keepalive test'",
+                "keep_alive": True,
+                "wait_for_completion": True,
+            }
+        )
+
+        assert result.status == "completed"
+        assert "keepalive test" in result.logs
+
+    async def test_executes_process_with_keep_alive_and_custom_timeout(self):
+        """Test executing a process with keepAlive and custom timeout."""
+        result = await self.sandbox.process.exec(
+            {
+                "name": "keepalive-timeout",
+                "command": "sleep 2 && echo 'done with timeout'",
+                "keep_alive": True,
+                "timeout": 60,
+                "wait_for_completion": True,
+            }
+        )
+
+        assert result.status == "completed"
+        assert "done with timeout" in result.logs
+
+    async def test_kills_process_when_timeout_expires(self):
+        """Test that process is killed when timeout expires."""
+        await self.sandbox.process.exec(
+            {
+                "name": "keepalive-timeout-kill",
+                "command": "sleep 120",
+                "keep_alive": True,
+                "timeout": 3,
+                "wait_for_completion": False,
+            }
+        )
+
+        # Wait for the process to be killed by timeout
+        await async_sleep(5)
+
+        process = await self.sandbox.process.get("keepalive-timeout-kill")
+
+        # Process should be killed/failed, not running
+        assert process.status in ["killed", "failed", "completed"]
+
+    async def test_allows_infinite_timeout_with_timeout_0(self):
+        """Test that timeout 0 means infinite (no auto-kill)."""
+        result = await self.sandbox.process.exec(
+            {
+                "name": "keepalive-infinite",
+                "command": "sleep 2 && echo 'infinite timeout done'",
+                "keep_alive": True,
+                "timeout": 0,
+                "wait_for_completion": True,
+            }
+        )
+
+        assert result.status == "completed"
+        assert "infinite timeout done" in result.logs
+
+    async def test_runs_without_keep_alive_by_default(self):
+        """Test that process runs without keepAlive by default."""
+        result = await self.sandbox.process.exec(
+            {
+                "name": "no-keepalive",
+                "command": "echo 'no keepalive'",
+                "wait_for_completion": True,
+            }
+        )
+
+        assert result.status == "completed"
+        assert "no keepalive" in result.logs
