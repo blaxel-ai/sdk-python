@@ -154,7 +154,13 @@ class SandboxProcess(SandboxAction):
             headers = {**settings.headers, **self.sandbox_config.headers}
 
             try:
-                async with httpx.AsyncClient() as client_instance:
+                from ...common.h3transport import get_async_transport_for_url
+
+                transport = await get_async_transport_for_url(url)
+                kwargs: dict = {}
+                if transport is not None:
+                    kwargs["transport"] = transport
+                async with httpx.AsyncClient(**kwargs) as client_instance:
                     async with client_instance.stream("GET", url, headers=headers) as response:
                         if response.status_code != 200:
                             raise Exception(f"Failed to stream logs: {await response.aread()}")
@@ -296,7 +302,13 @@ class SandboxProcess(SandboxAction):
             else {**settings.headers, **self.sandbox_config.headers}
         )
 
-        async with httpx.AsyncClient() as client_instance:
+        from ...common.h3transport import get_async_transport_for_url
+
+        transport = await get_async_transport_for_url(self.url)
+        stream_kwargs: dict = {}
+        if transport is not None:
+            stream_kwargs["transport"] = transport
+        async with httpx.AsyncClient(**stream_kwargs) as client_instance:
             async with client_instance.stream(
                 "POST",
                 f"{self.url}/process",

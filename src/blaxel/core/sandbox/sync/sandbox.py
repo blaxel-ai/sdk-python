@@ -9,16 +9,9 @@ from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
-from ...client.models import (
-    Metadata,
-    Sandbox,
-    SandboxLifecycle,
-    SandboxRuntime,
-    SandboxSpec,
-)
-from ...client.models import (
-    SandboxNetwork as SandboxNetworkModel,
-)
+from ...client.models import Metadata, Sandbox, SandboxLifecycle
+from ...client.models import SandboxNetwork as SandboxNetworkModel
+from ...client.models import SandboxRuntime, SandboxSpec
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
@@ -50,10 +43,8 @@ class _SyncDeleteDescriptor:
 
     def __get__(self, instance, owner):
         if instance is None:
-            # Called on the class: SyncSandboxInstance.delete("name")
             return self._delete_func
         else:
-            # Called on an instance: instance.delete()
             def instance_delete() -> Sandbox:
                 return self._delete_func(instance.metadata.name)
 
@@ -228,12 +219,17 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
+
+            # Extract region from existing Sandbox spec and apply it
+            region = sandbox.spec.region or settings.region
+            if region:
+                sandbox.spec.region = region
+
         response = create_sandbox(
             client=client,
             body=sandbox,
         )
 
-        # Check if response is an error
         if isinstance(response, SandboxError):
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
@@ -241,6 +237,7 @@ class SyncSandboxInstance:
             raise SandboxAPIError(message, status_code=status_code, code=code)
 
         instance = cls(response)
+
         if safe:
             try:
                 instance.fs.ls("/")

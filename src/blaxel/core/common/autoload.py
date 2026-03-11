@@ -22,9 +22,6 @@ def autoload() -> None:
     client.with_base_url(settings.base_url)
     client.with_auth(settings.auth)
 
-    # Register response interceptors for authentication error handling
-    # Access the underlying httpx clients and add event hooks
-    # Use sync interceptors for sync clients and async interceptors for async clients
     httpx_client = client.get_httpx_client()
     httpx_client.event_hooks["response"] = response_interceptors_sync
 

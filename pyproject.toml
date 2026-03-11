@@ -24,6 +24,9 @@ dependencies = [
 # Core functionality (always include blaxel.core dependencies)
 core = []
 
+# HTTP/3 (QUIC) transport support
+h3 = ["aioquic>=1.2.0"]
+
 # Telemetry module
 telemetry = [
   "opentelemetry-exporter-otlp>=1.28.0",
