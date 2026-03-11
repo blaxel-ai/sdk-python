@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 
 import httpx
 from attrs import define as _attrs_define
@@ -425,7 +425,7 @@ class StreamHandle:
     def __init__(
         self,
         close_func: Callable[[], None],
-        wait_func: Optional[Callable[[Optional[float]], None]] = None,
+        wait_func: Callable[[float | None], None] | None = None,
     ):
         self._close_func = close_func
         self._wait_func = wait_func
@@ -437,7 +437,7 @@ class StreamHandle:
             self._close_func()
             self._closed = True
 
-    def wait(self, timeout: Optional[float] = None) -> None:
+    def wait(self, timeout: float | None = None) -> None:
         """Wait for the stream to complete.
 
         Args:
@@ -487,7 +487,7 @@ class AsyncStreamHandle:
     def __init__(
         self,
         close_func: Callable[[], None],
-        wait_func: Optional[Callable[[], Awaitable[None]]] = None,
+        wait_func: Callable[[], Awaitable[None]] | None = None,
     ):
         self._close_func = close_func
         self._wait_func = wait_func
@@ -499,7 +499,7 @@ class AsyncStreamHandle:
             self._close_func()
             self._closed = True
 
-    async def wait(self, timeout: Optional[float] = None) -> None:
+    async def wait(self, timeout: float | None = None) -> None:
         """Wait for the stream to complete.
 
         Args:

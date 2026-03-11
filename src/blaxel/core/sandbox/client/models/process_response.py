@@ -24,6 +24,7 @@ class ProcessResponse:
         stderr (str):  Example: stderr output.
         stdout (str):  Example: stdout output.
         working_dir (str):  Example: /home/user.
+        keep_alive (Union[Unset, bool]): Whether scale-to-zero is disabled for this process
         max_restarts (Union[Unset, int]):  Example: 3.
         restart_count (Union[Unset, int]):  Example: 2.
         restart_on_failure (Union[Unset, bool]):  Example: True.
@@ -40,6 +41,7 @@ class ProcessResponse:
     stderr: str
     stdout: str
     working_dir: str
+    keep_alive: Union[Unset, bool] = UNSET
     max_restarts: Union[Unset, int] = UNSET
     restart_count: Union[Unset, int] = UNSET
     restart_on_failure: Union[Unset, bool] = UNSET
@@ -68,6 +70,8 @@ class ProcessResponse:
 
         working_dir = self.working_dir
 
+        keep_alive = self.keep_alive
+
         max_restarts = self.max_restarts
 
         restart_count = self.restart_count
@@ -91,6 +95,8 @@ class ProcessResponse:
                 "workingDir": working_dir,
             }
         )
+        if keep_alive is not UNSET:
+            field_dict["keepAlive"] = keep_alive
         if max_restarts is not UNSET:
             field_dict["maxRestarts"] = max_restarts
         if restart_count is not UNSET:
@@ -127,6 +133,8 @@ class ProcessResponse:
 
         working_dir = d.pop("workingDir") if "workingDir" in d else d.pop("working_dir")
 
+        keep_alive = d.pop("keepAlive", d.pop("keep_alive", UNSET))
+
         max_restarts = d.pop("maxRestarts", d.pop("max_restarts", UNSET))
 
         restart_count = d.pop("restartCount", d.pop("restart_count", UNSET))
@@ -145,6 +153,7 @@ class ProcessResponse:
             stderr=stderr,
             stdout=stdout,
             working_dir=working_dir,
+            keep_alive=keep_alive,
             max_restarts=max_restarts,
             restart_count=restart_count,
             restart_on_failure=restart_on_failure,
