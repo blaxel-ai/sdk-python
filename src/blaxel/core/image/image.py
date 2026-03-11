@@ -11,7 +11,7 @@ import zipfile
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 import httpx
 from dockerfile_parse import DockerfileParser  # type: ignore[import-untyped]
@@ -162,9 +162,9 @@ class ImageInstance:
     def pip_install(
         self,
         *packages: str,
-        find_links: Optional[str] = None,
-        index_url: Optional[str] = None,
-        extra_index_url: Optional[str] = None,
+        find_links: str | None = None,
+        index_url: str | None = None,
+        extra_index_url: str | None = None,
         pre: bool = False,
         extra_options: str = "",
     ) -> ImageInstance:
@@ -520,7 +520,7 @@ class ImageInstance:
         return ImageInstance(new_context)
 
     def add_local_file(
-        self, source_path: str, destination: str, context_name: Optional[str] = None
+        self, source_path: str, destination: str, context_name: str | None = None
     ) -> ImageInstance:
         """
         Add a local file to the build context and copy it to the image.
@@ -543,7 +543,7 @@ class ImageInstance:
         return ImageInstance(new_context)
 
     def add_local_dir(
-        self, source_path: str, destination: str, context_name: Optional[str] = None
+        self, source_path: str, destination: str, context_name: str | None = None
     ) -> ImageInstance:
         """
         Add a local directory to the build context and copy it to the image.
@@ -635,7 +635,7 @@ class ImageInstance:
             new_context.instructions.append(f'LABEL {key}="{value}"')
         return ImageInstance(new_context)
 
-    def arg(self, name: str, default: Optional[str] = None) -> ImageInstance:
+    def arg(self, name: str, default: str | None = None) -> ImageInstance:
         """
         Define a build argument.
 
@@ -701,7 +701,7 @@ class ImageInstance:
 
         return ImageInstance(new_context)
 
-    def write(self, output_path: str, name: Optional[str] = None) -> Path:
+    def write(self, output_path: str, name: str | None = None) -> Path:
         """
         Write the image to a deployable folder structure.
 
@@ -1030,7 +1030,7 @@ class ImageInstance:
         name: str,
         timeout: float = 900.0,
         poll_interval: float = 3.0,
-        on_status_change: Optional[Callable[[str], None]] = None,
+        on_status_change: Callable[[str], None] | None = None,
     ) -> str:
         """
         Wait for a sandbox deployment to complete.
@@ -1084,7 +1084,7 @@ class ImageInstance:
         name: str,
         timeout: float = 900.0,
         poll_interval: float = 3.0,
-        on_status_change: Optional[Callable[[str], None]] = None,
+        on_status_change: Callable[[str], None] | None = None,
     ) -> str:
         """
         Wait for a sandbox deployment to complete (async).
@@ -1138,7 +1138,7 @@ class ImageInstance:
         name: str,
         memory: int = 4096,
         timeout: float = 900.0,
-        on_status_change: Optional[Callable[[str], None]] = None,
+        on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
     ) -> Sandbox:
         """
@@ -1221,7 +1221,7 @@ class ImageInstance:
         name: str,
         memory: int = 4096,
         timeout: float = 900.0,
-        on_status_change: Optional[Callable[[str], None]] = None,
+        on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
     ) -> Sandbox:
         """
