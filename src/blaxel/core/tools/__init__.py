@@ -5,7 +5,6 @@ from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
 
-import httpx
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import (
@@ -16,9 +15,13 @@ from mcp.types import (
 )
 from mcp.types import Tool as MCPTool
 
-from ..common.internal import get_forced_url, get_global_unique_hash
+from ..client.api.compute.get_sandbox import asyncio as get_sandbox
+from ..client.api.functions.get_function import asyncio as get_function
+from ..client.client import client
+from ..client.models.error import Error
+from ..client.types import Unset
+from ..common.internal import get_forced_url
 from ..common.settings import settings
-from ..mcp.client import websocket_client
 from .types import Tool
 
 logger = getLogger(__name__)
@@ -34,7 +37,7 @@ class PersistentMcpClient:
         name: str,
         timeout: int = DEFAULT_TIMEOUT,
         timeout_enabled: bool = True,
-        transport: str = None,
+        transport: str | None = None,
     ):
         self.name = name
         self.timeout = timeout
@@ -46,58 +49,58 @@ class PersistentMcpClient:
             self.pluralType = "sandboxes"
         self.session_exit_stack = AsyncExitStack()
         self.client_exit_stack = AsyncExitStack()
-        self.session: ClientSession = None
+        self.session: ClientSession | None = None
         self.timer_task = None
         self.tools_cache = []
         if settings.bl_cloud:
             self.timeout_enabled = False
         else:
             self.timeout_enabled = timeout_enabled
-        self.use_fallback_url = False
         self.transport_name = transport
         self.metas = {}
-        self._resolved_url: str | None = None
+        self._metadata_url: str | None = None
 
     @property
-    def _internal_url(self):
-        """Get the internal URL for the agent using a hash of workspace and agent name."""
-        hash = get_global_unique_hash(settings.workspace, self.type, self.name)
-        return f"{settings.run_internal_protocol}://bl-{settings.env}-{hash}.{settings.run_internal_hostname}"
-
-    @property
-    def _forced_url(self):
-        """Get the forced URL from environment variables if set."""
+    def _forced_url(self) -> str | None:
         return get_forced_url(self.type, self.name)
 
     @property
-    def _external_url(self):
+    def _external_url(self) -> str:
         return f"{settings.run_url}/{settings.workspace}/{self.pluralType}/{self.name}"
 
-    @property
-    def _fallback_url(self):
-        # Compute the primary URL without fallback to avoid recursion
-        primary_url = self._external_url  # default
-        if self._forced_url:
-            primary_url = self._forced_url
-        elif settings.run_internal_hostname:
-            primary_url = self._internal_url
-
-        if self._external_url != primary_url:
-            return self._external_url
+    async def _fetch_metadata_url(self) -> str | None:
+        """Fetch the resource from the API and return metadata.url if available."""
+        try:
+            if self.type == "sandbox":
+                resource = await get_sandbox(self.name, client=client)
+            else:
+                resource = await get_function(self.name, client=client)
+            if (
+                resource
+                and not isinstance(resource, Error)
+                and resource.metadata
+            ):
+                url = resource.metadata.url
+                if not isinstance(url, Unset) and url:
+                    return url
+        except Exception as e:
+            logger.debug(f"Failed to fetch metadata URL for {self.name}: {e}")
         return None
 
-    @property
-    def _url(self):
-        if self.use_fallback_url:
-            return self._fallback_url
-        logger.debug(f"Getting URL for {self.name}")
+    async def _resolve_url(self) -> str:
+        """Resolve the URL: forced > metadata.url > external (run v1 fallback)."""
         if self._forced_url:
-            logger.debug(f"Forced URL found for {self.name}: {self._forced_url}")
+            logger.debug(f"Forced URL for {self.name}: {self._forced_url}")
             return self._forced_url
-        if settings.run_internal_hostname:
-            logger.debug(f"Internal hostname found for {self.name}: {self._internal_url}")
-            return self._internal_url
-        logger.debug(f"No URL found for {self.name}, using external URL")
+
+        if self._metadata_url is None:
+            self._metadata_url = await self._fetch_metadata_url()
+
+        if self._metadata_url:
+            logger.debug(f"Using metadata URL for {self.name}: {self._metadata_url}")
+            return self._metadata_url
+
+        logger.debug(f"Falling back to external URL for {self.name}: {self._external_url}")
         return self._external_url
 
     def with_metas(self, metas: dict[str, Any]):
@@ -165,99 +168,50 @@ class PersistentMcpClient:
     def get_tools(self):
         return self.tools_cache
 
-    async def _get_transport_type(self) -> str:
-        """Get the transport type for this function by checking the / endpoint."""
-        if self.transport_name:
-            return self.transport_name
-
-        if self.type == "sandbox" and not self._resolved_url:
-            # For sandboxes, the MCP server may run at sandbox.metadata.url — a direct
-            # data-plane URL like https://sbx-{name}-{workspace}.{region}.bl.run, which
-            # differs from the API gateway path in _external_url. Resolve the direct URL
-            # from sandbox metadata so transport detection probes the right endpoint.
-            try:
-                from ..client.api.compute.get_sandbox import asyncio as get_sandbox_api
-                from ..client.client import client as bl_client
-                from ..client.models.error import Error as BLError
-                from ..client.types import UNSET
-
-                sandbox_response = await get_sandbox_api(self.name, client=bl_client)
-                if not isinstance(sandbox_response, BLError) and sandbox_response is not None:
-                    url = sandbox_response.metadata.url
-                    if url and url is not UNSET and url != "":
-                        self._resolved_url = str(url).rstrip("/")
-                        logger.debug(f"Resolved sandbox MCP URL for {self.name}: {self._resolved_url}")
-            except Exception as e:
-                logger.warning(f"Failed to resolve sandbox URL for {self.name}: {e}")
-
-        # Determine the URL to probe for transport type: use the resolved sandbox URL
-        # if available and not in fallback mode, otherwise fall back to the standard computed URL.
-        probe_url = (self._resolved_url if self._resolved_url and not self.use_fallback_url else None) or self._url
-
-        # Make a request to the / endpoint to determine transport type
-        try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as http_client:
-                response = await http_client.get(probe_url + "/", headers=settings.headers)
-                if "websocket" in response.text.lower():
-                    self.transport_name = "websocket"
-                else:
-                    self.transport_name = "http-stream"
-
-                logger.debug(f"Detected transport type for {self.name}: {self.transport_name}")
-
-        except Exception as e:
-            # Default to websocket if we can't determine the transport type
-            logger.warning(
-                f"Failed to detect transport type for {self.name}: {e}. Defaulting to websocket."
-            )
-            self.transport_name = "websocket"
-
-        return self.transport_name
-
-    async def _get_transport(self, url: str = None):
+    async def _get_transport(self):
         """Get the appropriate transport for the connection."""
-        transport_type = await self._get_transport_type()
+        url = await self._resolve_url()
 
-        if url is None:
-            # Use the resolved URL if available (e.g. sandbox direct URL from metadata),
-            # falling back to the computed URL. Skip resolved URL when in fallback mode.
-            if self._resolved_url and not self.use_fallback_url:
-                url = self._resolved_url
-            else:
-                url = self._url
+        result = await self.client_exit_stack.enter_async_context(
+            streamablehttp_client(url + "/mcp", settings.headers)
+        )
+        return result[0], result[1]
 
-        if transport_type == "http-stream":
-            # Use streamablehttp_client for http-stream
-            result = await self.client_exit_stack.enter_async_context(
-                streamablehttp_client(url + "/mcp", settings.headers)
-            )
-            # streamablehttp_client returns (read_stream, write_stream, get_session_id)
-            # We only need the first two for ClientSession
-            return result[0], result[1]
-        else:
-            # Use websocket transport (default)
-            return await self.client_exit_stack.enter_async_context(
-                websocket_client(url, settings.headers)
-            )
-
-    async def initialize(self, fallback: bool = False):
-        if not self.session:
+    async def initialize(self, retries: int = 3, retry_delay: float = 2.0):
+        if self.session:
+            return
+        last_error: Exception | None = None
+        for attempt in range(retries + 1):
             try:
-                logger.debug(f"Initializing client for {self._url}")
-                # Both transports now return a tuple of (read, write)
+                url = await self._resolve_url()
+                logger.debug(f"Initializing client for {url} (attempt {attempt + 1}/{retries + 1})")
                 read, write = await self._get_transport()
-
                 self.session = cast(
                     ClientSession,
                     await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
                 )
                 await self.session.initialize()
+                return
             except Exception as e:
-                if not fallback and self._fallback_url is not None:
-                    self.use_fallback_url = True
-                    self.transport_name = None
-                    return await self.initialize(fallback=True)
-                raise e
+                last_error = e
+                self.session = None
+                old_session_stack = self.session_exit_stack
+                old_client_stack = self.client_exit_stack
+                self.session_exit_stack = AsyncExitStack()
+                self.client_exit_stack = AsyncExitStack()
+                try:
+                    await old_session_stack.aclose()
+                except Exception:
+                    pass
+                try:
+                    await old_client_stack.aclose()
+                except Exception:
+                    pass
+                if attempt < retries:
+                    logger.debug(f"Connection failed for {self.name}, retrying in {retry_delay:.1f}s: {e}")
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2
+        raise last_error  # type: ignore[misc]
 
     def _reset_timer(self):
         self._remove_timer()
@@ -273,7 +227,7 @@ class PersistentMcpClient:
         self.session = None
 
     async def _close(self):
-        logger.debug(f"Closing websocket client {self._url}")
+        logger.debug(f"Closing client for {self.name}")
         if self.session:
             self.session = None
             # Swap exit stacks to fresh ones BEFORE closing the old ones.

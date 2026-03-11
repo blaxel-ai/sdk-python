@@ -328,7 +328,6 @@ class SyncDriveInstance:
         """Create a new drive synchronously."""
         # Generate default values
         default_name = f"drive-{uuid.uuid4().hex[:8]}"
-        default_size = 10  # 10GB
 
         # Handle different configuration types
         if isinstance(config, Drive):
@@ -341,7 +340,7 @@ class SyncDriveInstance:
                     labels=config.labels,
                 ),
                 spec=DriveSpec(
-                    size=config.size or default_size,
+                    size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
                 ),
             )
@@ -354,7 +353,7 @@ class SyncDriveInstance:
                     labels=drive_config.labels,
                 ),
                 spec=DriveSpec(
-                    size=drive_config.size or default_size,
+                    size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
                 ),
             )
