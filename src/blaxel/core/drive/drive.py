@@ -175,7 +175,6 @@ class DriveInstance:
     ) -> "DriveInstance":
         # Generate default values
         default_name = f"drive-{uuid.uuid4().hex[:8]}"
-        default_size = 10  # 10GB
 
         # Handle different configuration types
         if isinstance(config, Drive):
@@ -188,7 +187,7 @@ class DriveInstance:
                     labels=config.labels,
                 ),
                 spec=DriveSpec(
-                    size=config.size or default_size,
+                    size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
                 ),
             )
@@ -201,7 +200,7 @@ class DriveInstance:
                     labels=drive_config.labels,
                 ),
                 spec=DriveSpec(
-                    size=drive_config.size or default_size,
+                    size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
                 ),
             )
@@ -216,9 +215,7 @@ class DriveInstance:
         if not drive.metadata.name:
             drive.metadata.name = default_name
         if not drive.spec:
-            drive.spec = DriveSpec(size=default_size)
-        if not drive.spec.size:
-            drive.spec.size = default_size
+            drive.spec = DriveSpec()
 
         # Warn if region is not set
         if not drive.spec.region or drive.spec.region is UNSET:
@@ -368,9 +365,7 @@ class SyncDriveInstance:
         if not drive.metadata.name:
             drive.metadata.name = default_name
         if not drive.spec:
-            drive.spec = DriveSpec(size=default_size)
-        if not drive.spec.size:
-            drive.spec.size = default_size
+            drive.spec = DriveSpec()
 
         # Warn if region is not set
         if not drive.spec.region or drive.spec.region is UNSET:
