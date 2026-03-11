@@ -177,17 +177,41 @@ class PersistentMcpClient:
         )
         return result[0], result[1]
 
-    async def initialize(self):
-        if not self.session:
-            url = await self._resolve_url()
-            logger.debug(f"Initializing client for {url}")
-            read, write = await self._get_transport()
-
-            self.session = cast(
-                ClientSession,
-                await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
-            )
-            await self.session.initialize()
+    async def initialize(self, retries: int = 3, retry_delay: float = 2.0):
+        if self.session:
+            return
+        last_error: Exception | None = None
+        for attempt in range(retries + 1):
+            try:
+                url = await self._resolve_url()
+                logger.debug(f"Initializing client for {url} (attempt {attempt + 1}/{retries + 1})")
+                read, write = await self._get_transport()
+                self.session = cast(
+                    ClientSession,
+                    await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
+                )
+                await self.session.initialize()
+                return
+            except Exception as e:
+                last_error = e
+                self.session = None
+                old_session_stack = self.session_exit_stack
+                old_client_stack = self.client_exit_stack
+                self.session_exit_stack = AsyncExitStack()
+                self.client_exit_stack = AsyncExitStack()
+                try:
+                    await old_session_stack.aclose()
+                except Exception:
+                    pass
+                try:
+                    await old_client_stack.aclose()
+                except Exception:
+                    pass
+                if attempt < retries:
+                    logger.debug(f"Connection failed for {self.name}, retrying in {retry_delay:.1f}s: {e}")
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2
+        raise last_error  # type: ignore[misc]
 
     def _reset_timer(self):
         self._remove_timer()
