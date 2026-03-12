@@ -38,8 +38,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.put(f"/filesystem/{path}", json=body.to_dict())
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             return SuccessResponse.from_dict(data)
         finally:
             await response.aclose()
@@ -61,8 +62,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.put(f"/filesystem/{path}", json=body.to_dict())
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             return SuccessResponse.from_dict(data)
         finally:
             await response.aclose()
@@ -143,8 +145,9 @@ class SandboxFileSystem(SandboxAction):
             headers={"Content-Type": "application/json"},
         )
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             return Directory.from_dict(data)
         finally:
             await response.aclose()
@@ -155,8 +158,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.get(f"/filesystem/{path}")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             if "content" in data:
                 return data["content"]
             raise Exception("Unsupported file type")
@@ -210,8 +214,9 @@ class SandboxFileSystem(SandboxAction):
         params = {"recursive": "true"} if recursive else {}
         response = await client.delete(f"/filesystem/{path}", params=params)
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             return SuccessResponse.from_dict(data)
         finally:
             await response.aclose()
@@ -222,8 +227,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.get(f"/filesystem/{path}")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             if not ("files" in data or "subdirectories" in data):
                 raise Exception('{"error": "Directory not found"}')
             return Directory.from_dict(data)
@@ -272,8 +278,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.get(url, params=params, headers=headers)
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
 
             from ..client.models.find_response import FindResponse
 
@@ -325,8 +332,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.get(url, params=params, headers=headers)
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
 
             from ..client.models.content_search_response import ContentSearchResponse
 
@@ -480,8 +488,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.post(url, json=body, headers=headers)
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             return data
         finally:
             await response.aclose()
@@ -498,9 +507,10 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.put(url, files=files, params=params, headers=headers)
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
-            return data
+            result_data = json.loads(content_bytes)
+            return result_data
         finally:
             await response.aclose()
 
@@ -515,8 +525,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.post(url, json=body, headers=headers)
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             return SuccessResponse.from_dict(data)
         finally:
             await response.aclose()

@@ -310,7 +310,10 @@ class SandboxProcess(SandboxAction):
             ) as response:
                 if response.status_code >= 400:
                     error_text = await response.aread()
-                    raise Exception(f"Failed to execute process: {error_text}")
+                    raise Exception(
+                        f"Process execution failed with status {response.status_code}: "
+                        f"{error_text.decode('utf-8', errors='replace') if isinstance(error_text, bytes) else error_text}"
+                    )
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type
@@ -420,8 +423,9 @@ class SandboxProcess(SandboxAction):
         client = self.get_client()
         response = await client.get(f"/process/{identifier}")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             result = ProcessResponse.from_dict(data)
             assert result is not None
             return result
@@ -434,8 +438,9 @@ class SandboxProcess(SandboxAction):
         client = self.get_client()
         response = await client.get("/process")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             results = []
             for item in data:
                 result = ProcessResponse.from_dict(item)
@@ -451,8 +456,9 @@ class SandboxProcess(SandboxAction):
         client = self.get_client()
         response = await client.delete(f"/process/{identifier}")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             result = SuccessResponse.from_dict(data)
             assert result is not None
             return result
@@ -465,8 +471,9 @@ class SandboxProcess(SandboxAction):
         client = self.get_client()
         response = await client.delete(f"/process/{identifier}/kill")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             result = SuccessResponse.from_dict(data)
             assert result is not None
             return result
@@ -483,8 +490,9 @@ class SandboxProcess(SandboxAction):
         client = self.get_client()
         response = await client.get(f"/process/{identifier}/logs")
         try:
-            data = json.loads(await response.aread())
+            content_bytes = await response.aread()
             self.handle_response_error(response)
+            data = json.loads(content_bytes)
             if log_type == "all":
                 return data.get("logs", "")
             elif log_type == "stdout":
