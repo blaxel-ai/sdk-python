@@ -73,7 +73,8 @@ def sync_detailed(
     Args:
         drive_name (str):
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
+            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
+            runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -109,7 +110,8 @@ def sync(
     Args:
         drive_name (str):
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
+            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
+            runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -140,7 +142,8 @@ async def asyncio_detailed(
     Args:
         drive_name (str):
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
+            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
+            runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -174,7 +177,8 @@ async def asyncio(
     Args:
         drive_name (str):
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
+            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
+            runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

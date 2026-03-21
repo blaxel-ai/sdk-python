@@ -47,7 +47,7 @@ def sync_detailed(
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
-    Other S3-compatible storage can use this endpoint to validate Bearer tokens.
+    SeaweedFS or other S3-compatible storage can use this endpoint to validate Bearer tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -73,7 +73,7 @@ def sync(
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
-    Other S3-compatible storage can use this endpoint to validate Bearer tokens.
+    SeaweedFS or other S3-compatible storage can use this endpoint to validate Bearer tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -95,7 +95,7 @@ async def asyncio_detailed(
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
-    Other S3-compatible storage can use this endpoint to validate Bearer tokens.
+    SeaweedFS or other S3-compatible storage can use this endpoint to validate Bearer tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -119,7 +119,7 @@ async def asyncio(
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
-    Other S3-compatible storage can use this endpoint to validate Bearer tokens.
+    SeaweedFS or other S3-compatible storage can use this endpoint to validate Bearer tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

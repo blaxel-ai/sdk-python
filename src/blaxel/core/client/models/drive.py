@@ -17,8 +17,8 @@ T = TypeVar("T", bound="Drive")
 
 @_attrs_define
 class Drive:
-    """Drive providing persistent storage that can be attached to agents, functions, and sandboxes. Drives can be mounted
-    at runtime via the sbx API.
+    """Drive providing persistent storage that can be attached to agents, functions, and sandboxes. Drives are backed by
+    SeaweedFS buckets and can be mounted at runtime via the sbx API.
 
         Attributes:
             metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
@@ -37,7 +37,6 @@ class Drive:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:

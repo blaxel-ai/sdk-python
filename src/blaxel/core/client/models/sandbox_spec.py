@@ -25,7 +25,7 @@ class SandboxSpec:
         lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
             on idle time, max age, or specific dates
         network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including egress IP binding. All
-            fields (vpcName, egressGatewayName) must be specified together to assign a dedicated IP.
+            three fields (vpcName, egressGatewayName, egressIpName) must be specified together to assign a dedicated IP.
         region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
             specified, defaults to the region closest to the user. Example: us-pdx-1.
         runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its
@@ -42,7 +42,6 @@ class SandboxSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
         lifecycle: Union[Unset, dict[str, Any]] = UNSET

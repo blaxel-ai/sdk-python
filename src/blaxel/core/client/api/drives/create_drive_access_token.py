@@ -61,7 +61,7 @@ def sync_detailed(
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
-    authentication for direct S3 operations against the drive's bucket.
+    authentication for direct S3 operations against the drive's SeaweedFS bucket.
 
     Args:
         drive_name (str):
@@ -93,7 +93,7 @@ def sync(
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
-    authentication for direct S3 operations against the drive's bucket.
+    authentication for direct S3 operations against the drive's SeaweedFS bucket.
 
     Args:
         drive_name (str):
@@ -120,7 +120,7 @@ async def asyncio_detailed(
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
-    authentication for direct S3 operations against the drive's bucket.
+    authentication for direct S3 operations against the drive's SeaweedFS bucket.
 
     Args:
         drive_name (str):
@@ -150,7 +150,7 @@ async def asyncio(
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
-    authentication for direct S3 operations against the drive's bucket.
+    authentication for direct S3 operations against the drive's SeaweedFS bucket.
 
     Args:
         drive_name (str):
