@@ -4,27 +4,27 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.integration_connection_spec import IntegrationConnectionSpec
-    from ..models.metadata import Metadata
+    from ..models.sso_domain_metadata import SSODomainMetadata
+    from ..models.sso_domain_spec import SSODomainSpec
 
 
-T = TypeVar("T", bound="IntegrationConnection")
+T = TypeVar("T", bound="SSODomain")
 
 
 @_attrs_define
-class IntegrationConnection:
-    """Configured connection to an external service (LLM provider, API, SaaS, database) storing credentials and settings
-    for use by workspace resources.
+class SSODomain:
+    """SSO domain for SAML-based Single Sign-On
+    An SSO domain links an email domain (e.g., acme.com) to a workspace so that
+    users with that email domain are redirected to the workspace's
+    SSO/SAML identity provider during login.
 
         Attributes:
-            metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
-                and ownership information
-            spec (IntegrationConnectionSpec): Specification defining the integration type, configuration parameters, and
-                encrypted credentials
+            metadata (SSODomainMetadata): SSO domain metadata
+            spec (SSODomainSpec): SSO domain specification
     """
 
-    metadata: "Metadata"
-    spec: "IntegrationConnectionSpec"
+    metadata: "SSODomainMetadata"
+    spec: "SSODomainSpec"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -52,23 +52,23 @@ class IntegrationConnection:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.integration_connection_spec import IntegrationConnectionSpec
-        from ..models.metadata import Metadata
+        from ..models.sso_domain_metadata import SSODomainMetadata
+        from ..models.sso_domain_spec import SSODomainSpec
 
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = SSODomainMetadata.from_dict(d.pop("metadata"))
 
-        spec = IntegrationConnectionSpec.from_dict(d.pop("spec"))
+        spec = SSODomainSpec.from_dict(d.pop("spec"))
 
-        integration_connection = cls(
+        sso_domain = cls(
             metadata=metadata,
             spec=spec,
         )
 
-        integration_connection.additional_properties = d
-        return integration_connection
+        sso_domain.additional_properties = d
+        return sso_domain
 
     @property
     def additional_keys(self) -> list[str]:

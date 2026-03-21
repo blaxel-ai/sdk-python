@@ -65,6 +65,8 @@ from .get_workspace_features_response_200_features import GetWorkspaceFeaturesRe
 from .get_workspace_service_accounts_response_200_item import (
     GetWorkspaceServiceAccountsResponse200Item,
 )
+from .group_workspace_mapping import GroupWorkspaceMapping
+from .group_workspace_mapping_role import GroupWorkspaceMappingRole
 from .image import Image
 from .image_metadata import ImageMetadata
 from .image_spec import ImageSpec
@@ -156,6 +158,10 @@ from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_spec import SandboxSpec
+from .sso_domain import SSODomain
+from .sso_domain_metadata import SSODomainMetadata
+from .sso_domain_spec import SSODomainSpec
+from .sso_domain_spec_status import SSODomainSpecStatus
 from .status import Status
 from .template import Template
 from .template_variable import TemplateVariable
@@ -185,6 +191,7 @@ from .workspace import Workspace
 from .workspace_runtime import WorkspaceRuntime
 from .workspace_status import WorkspaceStatus
 from .workspace_user import WorkspaceUser
+from .workspace_user_source import WorkspaceUserSource
 
 __all__ = (
     "Agent",
@@ -250,6 +257,8 @@ __all__ = (
     "GetWorkspaceFeaturesResponse200",
     "GetWorkspaceFeaturesResponse200Features",
     "GetWorkspaceServiceAccountsResponse200Item",
+    "GroupWorkspaceMapping",
+    "GroupWorkspaceMappingRole",
     "Image",
     "ImageMetadata",
     "ImageSpec",
@@ -339,6 +348,10 @@ __all__ = (
     "SandboxNetwork",
     "SandboxRuntime",
     "SandboxSpec",
+    "SSODomain",
+    "SSODomainMetadata",
+    "SSODomainSpec",
+    "SSODomainSpecStatus",
     "Status",
     "Template",
     "TemplateVariable",
@@ -368,4 +381,5 @@ __all__ = (
     "WorkspaceRuntime",
     "WorkspaceStatus",
     "WorkspaceUser",
+    "WorkspaceUserSource",
 )

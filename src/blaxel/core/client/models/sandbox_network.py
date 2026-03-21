@@ -8,14 +8,14 @@ T = TypeVar("T", bound="SandboxNetwork")
 
 @_attrs_define
 class SandboxNetwork:
-    """Network configuration for a sandbox including egress IP binding. All three fields (vpcName, egressGatewayName,
-    egressIpName) must be specified together to assign a dedicated IP.
+    """Network configuration for a sandbox including egress IP binding. All fields (vpcName, egressGatewayName) must be
+    specified together to assign a dedicated IP.
 
         Attributes:
-            egress_gateway_name (str): Name of the egress gateway in the VPC. Must be specified together with vpcName and
-                egressIpName. Example: my-egress-gateway.
+            egress_gateway_name (str): Name of the egress gateway in the VPC. Must be specified together with vpcName.
+                Example: my-egress-gateway.
             vpc_name (str): Name of the VPC where the egress gateway is provisioned. Must be specified together with
-                egressGatewayName and egressIpName. Example: my-vpc.
+                egressGatewayName. Example: my-vpc.
     """
 
     egress_gateway_name: str

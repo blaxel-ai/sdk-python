@@ -19,12 +19,16 @@ class SandboxLifecycle:
     Attributes:
         expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies. Multiple policies can
             be combined; whichever condition is met first triggers the action.
+        terminated_retention (Union[Unset, str]): Duration to keep the sandbox record after termination for log access
+            (e.g., '1h', '24h', '7d'). Defaults to 5m. Subject to maximum quota limits. Example: 24h.
     """
 
     expiration_policies: Union[Unset, list["ExpirationPolicy"]] = UNSET
+    terminated_retention: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         expiration_policies: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.expiration_policies, Unset):
             expiration_policies = []
@@ -35,11 +39,15 @@ class SandboxLifecycle:
                     expiration_policies_item = expiration_policies_item_data.to_dict()
                 expiration_policies.append(expiration_policies_item)
 
+        terminated_retention = self.terminated_retention
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
         if expiration_policies is not UNSET:
             field_dict["expirationPolicies"] = expiration_policies
+        if terminated_retention is not UNSET:
+            field_dict["terminatedRetention"] = terminated_retention
 
         return field_dict
 
@@ -57,8 +65,11 @@ class SandboxLifecycle:
 
             expiration_policies.append(expiration_policies_item)
 
+        terminated_retention = d.pop("terminatedRetention", d.pop("terminated_retention", UNSET))
+
         sandbox_lifecycle = cls(
             expiration_policies=expiration_policies,
+            terminated_retention=terminated_retention,
         )
 
         sandbox_lifecycle.additional_properties = d

@@ -25,6 +25,8 @@ class FunctionSpec:
         policies (Union[Unset, list[str]]):
         public (Union[Unset, bool]): When true, the function is publicly accessible without authentication. Only
             available for mk3 generation. Default: False.
+        region (Union[Unset, str]): Region where the function should be deployed (e.g. us-pdx-1, eu-lon-1). If not
+            specified, the function is deployed based on policy locations. Example: us-pdx-1.
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, FunctionRuntime]): Runtime configuration defining how the MCP server function is deployed
             and scaled
@@ -35,12 +37,14 @@ class FunctionSpec:
     integration_connections: Union[Unset, list[str]] = UNSET
     policies: Union[Unset, list[str]] = UNSET
     public: Union[Unset, bool] = False
+    region: Union[Unset, str] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "FunctionRuntime"] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         enabled = self.enabled
 
         integration_connections: Union[Unset, list[str]] = UNSET
@@ -52,6 +56,8 @@ class FunctionSpec:
             policies = self.policies
 
         public = self.public
+
+        region = self.region
 
         revision: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -94,6 +100,8 @@ class FunctionSpec:
             field_dict["policies"] = policies
         if public is not UNSET:
             field_dict["public"] = public
+        if region is not UNSET:
+            field_dict["region"] = region
         if revision is not UNSET:
             field_dict["revision"] = revision
         if runtime is not UNSET:
@@ -121,6 +129,8 @@ class FunctionSpec:
         policies = cast(list[str], d.pop("policies", UNSET))
 
         public = d.pop("public", UNSET)
+
+        region = d.pop("region", UNSET)
 
         _revision = d.pop("revision", UNSET)
         revision: Union[Unset, RevisionConfiguration]
@@ -150,6 +160,7 @@ class FunctionSpec:
             integration_connections=integration_connections,
             policies=policies,
             public=public,
+            region=region,
             revision=revision,
             runtime=runtime,
             triggers=triggers,
