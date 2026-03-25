@@ -25,7 +25,7 @@ class SandboxSpec:
         lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
             on idle time, max age, or specific dates
         network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including egress IP binding. All
-            three fields (vpcName, egressGatewayName, egressIpName) must be specified together to assign a dedicated IP.
+            fields (vpcName, egressGatewayName) must be specified together to assign a dedicated IP.
         region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
             specified, defaults to the region closest to the user. Example: us-pdx-1.
         runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its

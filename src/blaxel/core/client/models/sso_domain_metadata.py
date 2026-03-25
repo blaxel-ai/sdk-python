@@ -5,34 +5,30 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="PendingInvitation")
+T = TypeVar("T", bound="SSODomainMetadata")
 
 
 @_attrs_define
-class PendingInvitation:
-    """Pending invitation in workspace
+class SSODomainMetadata:
+    """SSO domain metadata
 
     Attributes:
         created_at (Union[Unset, str]): The date and time when the resource was created
         updated_at (Union[Unset, str]): The date and time when the resource was updated
         created_by (Union[Unset, str]): The user or service account who created the resource
         updated_by (Union[Unset, str]): The user or service account who updated the resource
-        email (Union[Unset, str]): User email
-        expires_at (Union[Unset, str]): The date and time when the invitation expires
-        invited_by (Union[Unset, str]): User sub
-        role (Union[Unset, str]): ACL role
-        workspace (Union[Unset, str]): Workspace name
+        account_id (Union[Unset, str]): Account ID
+        display_name (Union[Unset, str]): Display name for the SSO domain Example: Acme Corp.
+        name (Union[Unset, str]): Domain name (e.g., "acme.com") Example: acme.com.
     """
 
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     created_by: Union[Unset, str] = UNSET
     updated_by: Union[Unset, str] = UNSET
-    email: Union[Unset, str] = UNSET
-    expires_at: Union[Unset, str] = UNSET
-    invited_by: Union[Unset, str] = UNSET
-    role: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    account_id: Union[Unset, str] = UNSET
+    display_name: Union[Unset, str] = UNSET
+    name: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -44,15 +40,11 @@ class PendingInvitation:
 
         updated_by = self.updated_by
 
-        email = self.email
+        account_id = self.account_id
 
-        expires_at = self.expires_at
+        display_name = self.display_name
 
-        invited_by = self.invited_by
-
-        role = self.role
-
-        workspace = self.workspace
+        name = self.name
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -65,16 +57,12 @@ class PendingInvitation:
             field_dict["createdBy"] = created_by
         if updated_by is not UNSET:
             field_dict["updatedBy"] = updated_by
-        if email is not UNSET:
-            field_dict["email"] = email
-        if expires_at is not UNSET:
-            field_dict["expiresAt"] = expires_at
-        if invited_by is not UNSET:
-            field_dict["invitedBy"] = invited_by
-        if role is not UNSET:
-            field_dict["role"] = role
-        if workspace is not UNSET:
-            field_dict["workspace"] = workspace
+        if account_id is not UNSET:
+            field_dict["accountId"] = account_id
+        if display_name is not UNSET:
+            field_dict["displayName"] = display_name
+        if name is not UNSET:
+            field_dict["name"] = name
 
         return field_dict
 
@@ -91,30 +79,24 @@ class PendingInvitation:
 
         updated_by = d.pop("updatedBy", d.pop("updated_by", UNSET))
 
-        email = d.pop("email", UNSET)
+        account_id = d.pop("accountId", d.pop("account_id", UNSET))
 
-        expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))
+        display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
-        invited_by = d.pop("invitedBy", d.pop("invited_by", UNSET))
+        name = d.pop("name", UNSET)
 
-        role = d.pop("role", UNSET)
-
-        workspace = d.pop("workspace", UNSET)
-
-        pending_invitation = cls(
+        sso_domain_metadata = cls(
             created_at=created_at,
             updated_at=updated_at,
             created_by=created_by,
             updated_by=updated_by,
-            email=email,
-            expires_at=expires_at,
-            invited_by=invited_by,
-            role=role,
-            workspace=workspace,
+            account_id=account_id,
+            display_name=display_name,
+            name=name,
         )
 
-        pending_invitation.additional_properties = d
-        return pending_invitation
+        sso_domain_metadata.additional_properties = d
+        return sso_domain_metadata
 
     @property
     def additional_keys(self) -> list[str]:
