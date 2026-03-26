@@ -460,6 +460,8 @@ Or add to `~/.blaxel/config.yaml`:
 tracking: false
 ```
 
+Where both settings exist, the `DO_NOT_TRACK` variable takes precedence.
+
 ### Telemetry
 
 Telemetry, delivered via OpenTelemetry, is controlled by the `BL_ENABLE_OPENTELEMETRY` environment variable.
