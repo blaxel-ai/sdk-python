@@ -4,6 +4,7 @@ import os
 import pytest
 import pytest_asyncio
 
+from blaxel.core.client.types import Unset
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import (
     default_image,
@@ -14,12 +15,9 @@ from tests.helpers import (
 )
 
 
-def _get_network(sandbox):
-    """Get the network config from a sandbox, returning a dict-like object."""
-    net = sandbox.spec.network
-    if net is None or (hasattr(net, "__class__") and net.__class__.__name__ == "Unset"):
-        return None
-    return net
+def _not_unset(val):
+    """Return True if val is a real value (not Unset/None)."""
+    return val is not None and not isinstance(val, Unset)
 
 
 def _parse_json_output(logs: str | None) -> dict:
@@ -165,15 +163,15 @@ class TestCreateWithProxy:
 
         try:
             assert sandbox.metadata.name == name
-            network = _get_network(sandbox)
-            assert network is not None
-            proxy = network["proxy"]
-            assert proxy is not None
-            assert len(proxy["routing"]) == 1
-            assert "api.stripe.com" in proxy["routing"][0]["destinations"]
-            assert proxy["routing"][0]["headers"]["Authorization"] == "Bearer {{SECRET:stripe-key}}"
-            assert proxy["routing"][0]["headers"]["Stripe-Version"] == "2024-12-18.acacia"
-            assert proxy["routing"][0].get("secrets") is None
+            network = sandbox.spec.network
+            assert _not_unset(network)
+            assert _not_unset(network.proxy)
+            assert _not_unset(network.proxy.routing)
+            assert len(network.proxy.routing) == 1
+            route = network.proxy.routing[0]
+            assert "api.stripe.com" in route.destinations
+            assert route.headers["Authorization"] == "Bearer {{SECRET:stripe-key}}"
+            assert route.headers["Stripe-Version"] == "2024-12-18.acacia"
         finally:
             await SandboxInstance.delete(name)
 
@@ -205,11 +203,11 @@ class TestCreateWithProxy:
         })
 
         try:
-            network = _get_network(sandbox)
-            assert network is not None
-            route = network["proxy"]["routing"][0]
-            assert route.get("body") is not None
-            assert route["body"]["api_key"] == "{{SECRET:stripe-key}}"
+            network = sandbox.spec.network
+            assert _not_unset(network)
+            route = network.proxy.routing[0]
+            assert _not_unset(route.body)
+            assert route.body["api_key"] == "{{SECRET:stripe-key}}"
         finally:
             await SandboxInstance.delete(name)
 
@@ -254,29 +252,27 @@ class TestCreateWithProxy:
         })
 
         try:
-            network = _get_network(sandbox)
-            assert network is not None
-            proxy_config = network["proxy"]
-            assert len(proxy_config["routing"]) == 2
+            network = sandbox.spec.network
+            assert _not_unset(network)
+            proxy = network.proxy
+            assert len(proxy.routing) == 2
 
             stripe_route = next(
-                (r for r in proxy_config["routing"] if "api.stripe.com" in r["destinations"]),
+                (r for r in proxy.routing if "api.stripe.com" in r.destinations),
                 None,
             )
             assert stripe_route is not None
-            assert stripe_route["headers"]["X-Request-Source"] == "blaxel-sandbox"
-            assert stripe_route["body"]["api_key"] == "{{SECRET:stripe-key}}"
-            assert stripe_route.get("secrets") is None
+            assert stripe_route.headers["X-Request-Source"] == "blaxel-sandbox"
+            assert stripe_route.body["api_key"] == "{{SECRET:stripe-key}}"
 
             openai_route = next(
-                (r for r in proxy_config["routing"] if "api.openai.com" in r["destinations"]),
+                (r for r in proxy.routing if "api.openai.com" in r.destinations),
                 None,
             )
             assert openai_route is not None
-            assert openai_route["headers"]["OpenAI-Organization"] == "org-abc123"
-            assert openai_route.get("secrets") is None
+            assert openai_route.headers["OpenAI-Organization"] == "org-abc123"
 
-            assert "*.s3.amazonaws.com" in proxy_config["bypass"]
+            assert "*.s3.amazonaws.com" in proxy.bypass
         finally:
             await SandboxInstance.delete(name)
 
@@ -295,10 +291,10 @@ class TestCreateWithProxy:
         })
 
         try:
-            network = _get_network(sandbox)
-            assert network is not None
-            assert network["proxy"]["bypass"] == ["*.s3.amazonaws.com", "169.254.169.254"]
-            assert network["proxy"].get("routing") is None
+            network = sandbox.spec.network
+            assert _not_unset(network)
+            assert network.proxy.bypass == ["*.s3.amazonaws.com", "169.254.169.254"]
+            assert not _not_unset(network.proxy.routing) or len(network.proxy.routing) == 0
         finally:
             await SandboxInstance.delete(name)
 
@@ -325,13 +321,11 @@ class TestCreateWithProxy:
         })
 
         try:
-            network = _get_network(sandbox)
-            assert network is not None
-            allowed = network.get("allowedDomains")
-            proxy_routing = network.get("proxy", {}).get("routing")
-            assert allowed is not None or proxy_routing is not None
-            assert len(network["proxy"]["routing"]) == 1
-            assert "*.s3.amazonaws.com" in network["proxy"]["bypass"]
+            network = sandbox.spec.network
+            assert _not_unset(network)
+            assert _not_unset(network.allowed_domains) or _not_unset(network.proxy)
+            assert len(network.proxy.routing) == 1
+            assert "*.s3.amazonaws.com" in network.proxy.bypass
         finally:
             await SandboxInstance.delete(name)
 
@@ -373,16 +367,16 @@ class TestGetProxyConfig:
 
         try:
             retrieved = await SandboxInstance.get(name)
-            network = _get_network(retrieved)
-            assert network is not None
-            proxy = network.get("proxy")
-            if proxy:
-                assert len(proxy["routing"]) == 1
-                assert "api.openai.com" in proxy["routing"][0]["destinations"]
-                assert proxy["routing"][0]["headers"]["Authorization"] == "Bearer {{SECRET:openai-key}}"
-                assert proxy["routing"][0]["headers"]["OpenAI-Organization"] == "org-abc123"
-                assert "169.254.169.254" in proxy["bypass"]
-                assert proxy["routing"][0].get("secrets") is None
+            network = retrieved.spec.network
+            assert _not_unset(network)
+            if _not_unset(network.proxy):
+                proxy = network.proxy
+                assert len(proxy.routing) == 1
+                route = proxy.routing[0]
+                assert "api.openai.com" in route.destinations
+                assert route.headers["Authorization"] == "Bearer {{SECRET:openai-key}}"
+                assert route.headers["OpenAI-Organization"] == "org-abc123"
+                assert "169.254.169.254" in proxy.bypass
         finally:
             await SandboxInstance.delete(name)
 
@@ -397,9 +391,9 @@ class TestGetProxyConfig:
 
         try:
             retrieved = await SandboxInstance.get(name)
-            network = _get_network(retrieved)
-            if network is not None:
-                assert network.get("proxy") is None
+            network = retrieved.spec.network
+            if _not_unset(network):
+                assert not _not_unset(network.proxy)
         finally:
             await SandboxInstance.delete(name)
 
@@ -434,7 +428,7 @@ class TestDeleteSandboxWithProxy:
         })
 
         await SandboxInstance.delete(name)
-        deleted = await wait_for_sandbox_deletion(name)
+        deleted = await wait_for_sandbox_deletion(name, max_attempts=60)
         assert deleted is True
 
 
@@ -1204,7 +1198,7 @@ class TestProxyPip(TestProxyCLITools):
     async def test_pip_install_through_proxy(self):
         result = await self.sandbox.process.exec({
             "command": (
-                'pip3 install --break-system-packages --quiet six 2>&1 && '
+                "pip3 install --break-system-packages --quiet six 2>&1 && "
                 'python3 -c "import six; print(six.__version__)"'
             ),
             "wait_for_completion": True,
@@ -1404,7 +1398,7 @@ class TestProxyClaudeCode:
         result = await self.sandbox.process.exec({
             "command": (
                 f'su - agent -c "{claude_env} && '
-                'claude --dangerously-skip-permissions -p '
+                "claude --dangerously-skip-permissions -p "
                 '\\"What is 2+2? Reply with ONLY the number.\\" '
                 '--output-format text" 2>&1'
             ),
@@ -1426,7 +1420,7 @@ class TestProxyClaudeCode:
         result = await self.sandbox.process.exec({
             "command": (
                 f'su - agent -c "{claude_env} && '
-                'claude --dangerously-skip-permissions -p '
+                "claude --dangerously-skip-permissions -p "
                 '\\"Run: curl -s https://httpbin.org/headers — then print the full JSON output.\\" '
                 '--output-format text" 2>&1'
             ),

@@ -32,6 +32,7 @@ from .delete_workspace_service_account_response_200 import DeleteWorkspaceServic
 from .drive import Drive
 from .drive_spec import DriveSpec
 from .drive_state import DriveState
+from .egress_config import EgressConfig
 from .egress_gateway import EgressGateway
 from .egress_gateway_metadata import EgressGatewayMetadata
 from .egress_gateway_spec import EgressGatewaySpec
@@ -39,6 +40,7 @@ from .egress_ip import EgressIP
 from .egress_ip_metadata import EgressIPMetadata
 from .egress_ip_spec import EgressIPSpec
 from .egress_ip_spec_ip_family import EgressIPSpecIpFamily
+from .egress_policy import EgressPolicy
 from .entrypoint import Entrypoint
 from .entrypoint_args_item import EntrypointArgsItem
 from .entrypoint_env import EntrypointEnv
@@ -112,6 +114,7 @@ from .model_runtime import ModelRuntime
 from .model_runtime_generation import ModelRuntimeGeneration
 from .model_runtime_type import ModelRuntimeType
 from .model_spec import ModelSpec
+from .network_firewall import NetworkFirewall
 from .o_auth import OAuth
 from .o_auth_scope_item import OAuthScopeItem
 from .owner_fields import OwnerFields
@@ -142,6 +145,11 @@ from .preview_token import PreviewToken
 from .preview_token_metadata import PreviewTokenMetadata
 from .preview_token_spec import PreviewTokenSpec
 from .private_location import PrivateLocation
+from .proxy_config import ProxyConfig
+from .proxy_target import ProxyTarget
+from .proxy_target_body import ProxyTargetBody
+from .proxy_target_headers import ProxyTargetHeaders
+from .proxy_target_secrets import ProxyTargetSecrets
 from .public_ip import PublicIp
 from .public_ips import PublicIps
 from .region import Region
@@ -226,6 +234,7 @@ __all__ = (
     "Drive",
     "DriveSpec",
     "DriveState",
+    "EgressConfig",
     "EgressGateway",
     "EgressGatewayMetadata",
     "EgressGatewaySpec",
@@ -233,6 +242,7 @@ __all__ = (
     "EgressIPMetadata",
     "EgressIPSpec",
     "EgressIPSpecIpFamily",
+    "EgressPolicy",
     "Entrypoint",
     "EntrypointArgsItem",
     "EntrypointEnv",
@@ -304,6 +314,7 @@ __all__ = (
     "ModelRuntimeGeneration",
     "ModelRuntimeType",
     "ModelSpec",
+    "NetworkFirewall",
     "OAuth",
     "OAuthScopeItem",
     "OwnerFields",
@@ -332,6 +343,11 @@ __all__ = (
     "PreviewTokenMetadata",
     "PreviewTokenSpec",
     "PrivateLocation",
+    "ProxyConfig",
+    "ProxyTarget",
+    "ProxyTargetBody",
+    "ProxyTargetHeaders",
+    "ProxyTargetSecrets",
     "PublicIp",
     "PublicIps",
     "Region",

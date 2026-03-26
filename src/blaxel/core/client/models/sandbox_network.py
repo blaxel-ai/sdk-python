@@ -1,58 +1,109 @@
-from typing import Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+if TYPE_CHECKING:
+    from ..models.egress_config import EgressConfig
+    from ..models.proxy_config import ProxyConfig
+
+
 T = TypeVar("T", bound="SandboxNetwork")
 
 
 @_attrs_define
 class SandboxNetwork:
-    """Network configuration for a sandbox including egress IP binding, proxy routing, and firewall rules.
+    """Network configuration for a sandbox including domain filtering, egress IP binding, and proxy settings
 
     Attributes:
-        egress_gateway_name (Union[Unset, str]): Name of the egress gateway in the VPC.
-            Must be specified together with vpcName. Example: my-egress-gateway.
-        vpc_name (Union[Unset, str]): Name of the VPC where the egress gateway is provisioned.
-            Must be specified together with egressGatewayName. Example: my-vpc.
+        allowed_domains (Union[Unset, list[str]]): List of allowed external domains (allowlist). When set, only these
+            domains are reachable. Supports wildcards (e.g. *.s3.amazonaws.com). Example: ["api.stripe.com",
+            "api.openai.com", "*.s3.amazonaws.com"].
+        egress (Union[Unset, EgressConfig]): Egress configuration for routing sandbox outbound traffic through a
+            dedicated IP gateway
+        forbidden_domains (Union[Unset, list[str]]): List of forbidden external domains (denylist). When set, all
+            domains except these are reachable. Supports wildcards (e.g. *.malware.com). If both allowedDomains and
+            forbiddenDomains are set, allowedDomains takes precedence. Example: ["*.malware.com", "evil.example.org"].
+        proxy (Union[Unset, ProxyConfig]): Proxy configuration for routing sandbox HTTP traffic through the platform
+            proxy with MITM inspection and per-destination header/body injection
     """
 
-    egress_gateway_name: Union[Unset, str] = UNSET
-    vpc_name: Union[Unset, str] = UNSET
+    allowed_domains: Union[Unset, list[str]] = UNSET
+    egress: Union[Unset, "EgressConfig"] = UNSET
+    forbidden_domains: Union[Unset, list[str]] = UNSET
+    proxy: Union[Unset, "ProxyConfig"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        allowed_domains: Union[Unset, list[str]] = UNSET
+        if not isinstance(self.allowed_domains, Unset):
+            allowed_domains = self.allowed_domains
+
+        egress: Union[Unset, dict[str, Any]] = UNSET
+        if self.egress and not isinstance(self.egress, Unset) and not isinstance(self.egress, dict):
+            egress = self.egress.to_dict()
+        elif self.egress and isinstance(self.egress, dict):
+            egress = self.egress
+
+        forbidden_domains: Union[Unset, list[str]] = UNSET
+        if not isinstance(self.forbidden_domains, Unset):
+            forbidden_domains = self.forbidden_domains
+
+        proxy: Union[Unset, dict[str, Any]] = UNSET
+        if self.proxy and not isinstance(self.proxy, Unset) and not isinstance(self.proxy, dict):
+            proxy = self.proxy.to_dict()
+        elif self.proxy and isinstance(self.proxy, dict):
+            proxy = self.proxy
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        if not isinstance(self.egress_gateway_name, Unset):
-            field_dict["egressGatewayName"] = self.egress_gateway_name
-        if not isinstance(self.vpc_name, Unset):
-            field_dict["vpcName"] = self.vpc_name
+        field_dict.update({})
+        if allowed_domains is not UNSET:
+            field_dict["allowedDomains"] = allowed_domains
+        if egress is not UNSET:
+            field_dict["egress"] = egress
+        if forbidden_domains is not UNSET:
+            field_dict["forbiddenDomains"] = forbidden_domains
+        if proxy is not UNSET:
+            field_dict["proxy"] = proxy
+
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.egress_config import EgressConfig
+        from ..models.proxy_config import ProxyConfig
+
         if not src_dict:
             return None
         d = src_dict.copy()
+        allowed_domains = cast(list[str], d.pop("allowedDomains", d.pop("allowed_domains", UNSET)))
 
-        egress_gateway_name: Union[Unset, str] = UNSET
-        if "egressGatewayName" in d:
-            egress_gateway_name = d.pop("egressGatewayName")
-        elif "egress_gateway_name" in d:
-            egress_gateway_name = d.pop("egress_gateway_name")
+        _egress = d.pop("egress", UNSET)
+        egress: Union[Unset, EgressConfig]
+        if isinstance(_egress, Unset):
+            egress = UNSET
+        else:
+            egress = EgressConfig.from_dict(_egress)
 
-        vpc_name: Union[Unset, str] = UNSET
-        if "vpcName" in d:
-            vpc_name = d.pop("vpcName")
-        elif "vpc_name" in d:
-            vpc_name = d.pop("vpc_name")
+        forbidden_domains = cast(
+            list[str], d.pop("forbiddenDomains", d.pop("forbidden_domains", UNSET))
+        )
+
+        _proxy = d.pop("proxy", UNSET)
+        proxy: Union[Unset, ProxyConfig]
+        if isinstance(_proxy, Unset):
+            proxy = UNSET
+        else:
+            proxy = ProxyConfig.from_dict(_proxy)
 
         sandbox_network = cls(
-            egress_gateway_name=egress_gateway_name,
-            vpc_name=vpc_name,
+            allowed_domains=allowed_domains,
+            egress=egress,
+            forbidden_domains=forbidden_domains,
+            proxy=proxy,
         )
 
         sandbox_network.additional_properties = d
@@ -61,9 +112,6 @@ class SandboxNetwork:
     @property
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
-
-    def get(self, key: str, default: Any = None) -> Any:
-        return self.additional_properties.get(key, default)
 
     def __getitem__(self, key: str) -> Any:
         return self.additional_properties[key]
