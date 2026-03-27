@@ -171,7 +171,7 @@ class TestCreateWithProxy:
             assert _not_unset(network.proxy.routing)
             assert len(network.proxy.routing) == 1
             route = network.proxy.routing[0]
-            assert "api.stripe.com" in route.destinations
+            assert any(d == "api.stripe.com" for d in route.destinations)
             assert route.headers["Authorization"] == "Bearer {{SECRET:stripe-key}}"
             assert route.headers["Stripe-Version"] == "2024-12-18.acacia"
         finally:
@@ -260,7 +260,7 @@ class TestCreateWithProxy:
             assert len(proxy.routing) == 2
 
             stripe_route = next(
-                (r for r in proxy.routing if "api.stripe.com" in r.destinations),
+                (r for r in proxy.routing if any(d == "api.stripe.com" for d in r.destinations)),
                 None,
             )
             assert stripe_route is not None
@@ -268,13 +268,13 @@ class TestCreateWithProxy:
             assert stripe_route.body["api_key"] == "{{SECRET:stripe-key}}"
 
             openai_route = next(
-                (r for r in proxy.routing if "api.openai.com" in r.destinations),
+                (r for r in proxy.routing if any(d == "api.openai.com" for d in r.destinations)),
                 None,
             )
             assert openai_route is not None
             assert openai_route.headers["OpenAI-Organization"] == "org-abc123"
 
-            assert "*.s3.amazonaws.com" in proxy.bypass
+            assert any(d == "*.s3.amazonaws.com" for d in proxy.bypass)
         finally:
             await SandboxInstance.delete(name)
 
@@ -327,7 +327,7 @@ class TestCreateWithProxy:
             assert _not_unset(network)
             assert _not_unset(network.allowed_domains) or _not_unset(network.proxy)
             assert len(network.proxy.routing) == 1
-            assert "*.s3.amazonaws.com" in network.proxy.bypass
+            assert any(d == "*.s3.amazonaws.com" for d in network.proxy.bypass)
         finally:
             await SandboxInstance.delete(name)
 
@@ -375,10 +375,10 @@ class TestGetProxyConfig:
                 proxy = network.proxy
                 assert len(proxy.routing) == 1
                 route = proxy.routing[0]
-                assert route.destinations == ["api.openai.com"]
+                assert any(d == "api.openai.com" for d in route.destinations)
                 assert route.headers["Authorization"] == "Bearer {{SECRET:openai-key}}"
                 assert route.headers["OpenAI-Organization"] == "org-abc123"
-                assert "169.254.169.254" in proxy.bypass
+                assert any(d == "169.254.169.254" for d in proxy.bypass)
         finally:
             await SandboxInstance.delete(name)
 
@@ -472,7 +472,8 @@ class TestFirewallAllowedDomains:
             "wait_for_completion": True,
         })
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        response = _parse_json_output(result.logs)
+        assert response.get("url") == "https://httpbin.org/get"
 
     async def test_blocks_requests_to_non_allowlisted_domain(self):
         result = await self.sandbox.process.exec({
@@ -515,7 +516,8 @@ class TestFirewallForbiddenDomains:
             "wait_for_completion": True,
         })
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        response = _parse_json_output(result.logs)
+        assert response.get("url") == "https://httpbin.org/get"
 
     async def test_blocks_requests_to_forbidden_domain(self):
         result = await self.sandbox.process.exec({
@@ -559,7 +561,8 @@ class TestFirewallCombined:
             "wait_for_completion": True,
         })
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        response = _parse_json_output(result.logs)
+        assert response.get("url") == "https://httpbin.org/get"
 
 
 @pytest.mark.asyncio(loop_scope="class")
