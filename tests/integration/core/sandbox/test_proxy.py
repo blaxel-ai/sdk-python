@@ -9,10 +9,12 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import (
     default_image,
     default_labels,
-    default_region,
     unique_name,
     wait_for_sandbox_deletion,
 )
+
+env = os.environ.get("BL_ENV", "prod")
+default_region = "eu-dub-1" if env == "dev" else "us-was-1"
 
 
 def _not_unset(val):
