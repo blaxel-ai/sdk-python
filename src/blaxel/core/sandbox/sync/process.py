@@ -256,7 +256,10 @@ class SyncSandboxProcess(SyncSandboxAction):
             ) as response:
                 if response.status_code >= 400:
                     error_text = response.read()
-                    raise Exception(f"Failed to execute process: {error_text}")
+                    raise Exception(
+                        f"Process execution failed with status {response.status_code}: "
+                        f"{error_text.decode('utf-8', errors='replace') if isinstance(error_text, bytes) else error_text}"
+                    )
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type
