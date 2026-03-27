@@ -375,7 +375,7 @@ class TestGetProxyConfig:
                 proxy = network.proxy
                 assert len(proxy.routing) == 1
                 route = proxy.routing[0]
-                assert "api.openai.com" in route.destinations
+                assert route.destinations == ["api.openai.com"]
                 assert route.headers["Authorization"] == "Bearer {{SECRET:openai-key}}"
                 assert route.headers["OpenAI-Organization"] == "org-abc123"
                 assert "169.254.169.254" in proxy.bypass
