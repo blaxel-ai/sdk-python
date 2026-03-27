@@ -62,13 +62,12 @@ def sync_detailed(
 ) -> Response[Union[Any, Drive]]:
     """Create a drive
 
-     Creates a new drive in the workspace. Drives are backed by SeaweedFS buckets and can be mounted at
-    runtime to sandboxes.
+     Creates a new drive in the workspace. Drives can be buckets and can be mounted at runtime to
+    sandboxes.
 
     Args:
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
-            runtime via the sbx API.
+            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -96,13 +95,12 @@ def sync(
 ) -> Union[Any, Drive] | None:
     """Create a drive
 
-     Creates a new drive in the workspace. Drives are backed by SeaweedFS buckets and can be mounted at
-    runtime to sandboxes.
+     Creates a new drive in the workspace. Drives can be buckets and can be mounted at runtime to
+    sandboxes.
 
     Args:
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
-            runtime via the sbx API.
+            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -125,13 +123,12 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, Drive]]:
     """Create a drive
 
-     Creates a new drive in the workspace. Drives are backed by SeaweedFS buckets and can be mounted at
-    runtime to sandboxes.
+     Creates a new drive in the workspace. Drives can be buckets and can be mounted at runtime to
+    sandboxes.
 
     Args:
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
-            runtime via the sbx API.
+            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -157,13 +154,12 @@ async def asyncio(
 ) -> Union[Any, Drive] | None:
     """Create a drive
 
-     Creates a new drive in the workspace. Drives are backed by SeaweedFS buckets and can be mounted at
-    runtime to sandboxes.
+     Creates a new drive in the workspace. Drives can be buckets and can be mounted at runtime to
+    sandboxes.
 
     Args:
         body (Drive): Drive providing persistent storage that can be attached to agents,
-            functions, and sandboxes. Drives are backed by SeaweedFS buckets and can be mounted at
-            runtime via the sbx API.
+            functions, and sandboxes. Drives can be mounted at runtime via the sbx API.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

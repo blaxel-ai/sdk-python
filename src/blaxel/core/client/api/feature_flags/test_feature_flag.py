@@ -7,15 +7,24 @@ from ... import errors
 from ...client import Client
 from ...models.error import Error
 from ...models.test_feature_flag_response_200 import TestFeatureFlagResponse200
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     feature_key: str,
+    *,
+    account: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["account"] = account
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/features/{feature_key}",
+        "params": params,
     }
 
     return _kwargs
@@ -61,6 +70,7 @@ def sync_detailed(
     feature_key: str,
     *,
     client: Client,
+    account: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, TestFeatureFlagResponse200]]:
     """Retrieve feature flag evaluation for workspace
 
@@ -69,6 +79,7 @@ def sync_detailed(
 
     Args:
         feature_key (str):
+        account (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -80,6 +91,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         feature_key=feature_key,
+        account=account,
     )
 
     response = client.get_httpx_client().request(
@@ -93,6 +105,7 @@ def sync(
     feature_key: str,
     *,
     client: Client,
+    account: Union[Unset, str] = UNSET,
 ) -> Union[Error, TestFeatureFlagResponse200] | None:
     """Retrieve feature flag evaluation for workspace
 
@@ -101,6 +114,7 @@ def sync(
 
     Args:
         feature_key (str):
+        account (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -113,6 +127,7 @@ def sync(
     return sync_detailed(
         feature_key=feature_key,
         client=client,
+        account=account,
     ).parsed
 
 
@@ -120,6 +135,7 @@ async def asyncio_detailed(
     feature_key: str,
     *,
     client: Client,
+    account: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, TestFeatureFlagResponse200]]:
     """Retrieve feature flag evaluation for workspace
 
@@ -128,6 +144,7 @@ async def asyncio_detailed(
 
     Args:
         feature_key (str):
+        account (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -139,6 +156,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         feature_key=feature_key,
+        account=account,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -150,6 +168,7 @@ async def asyncio(
     feature_key: str,
     *,
     client: Client,
+    account: Union[Unset, str] = UNSET,
 ) -> Union[Error, TestFeatureFlagResponse200] | None:
     """Retrieve feature flag evaluation for workspace
 
@@ -158,6 +177,7 @@ async def asyncio(
 
     Args:
         feature_key (str):
+        account (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -171,5 +191,6 @@ async def asyncio(
         await asyncio_detailed(
             feature_key=feature_key,
             client=client,
+            account=account,
         )
     ).parsed

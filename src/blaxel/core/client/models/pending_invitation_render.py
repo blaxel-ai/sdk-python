@@ -20,6 +20,7 @@ class PendingInvitationRender:
 
     Attributes:
         email (Union[Unset, str]): User email
+        expires_at (Union[Unset, str]): The date and time when the invitation expires
         invited_at (Union[Unset, str]): Invitation date
         invited_by (Union[Unset, PendingInvitationRenderInvitedBy]): Invited by
         role (Union[Unset, str]): ACL role
@@ -28,6 +29,7 @@ class PendingInvitationRender:
     """
 
     email: Union[Unset, str] = UNSET
+    expires_at: Union[Unset, str] = UNSET
     invited_at: Union[Unset, str] = UNSET
     invited_by: Union[Unset, "PendingInvitationRenderInvitedBy"] = UNSET
     role: Union[Unset, str] = UNSET
@@ -37,6 +39,8 @@ class PendingInvitationRender:
 
     def to_dict(self) -> dict[str, Any]:
         email = self.email
+
+        expires_at = self.expires_at
 
         invited_at = self.invited_at
 
@@ -77,6 +81,8 @@ class PendingInvitationRender:
         field_dict.update({})
         if email is not UNSET:
             field_dict["email"] = email
+        if expires_at is not UNSET:
+            field_dict["expiresAt"] = expires_at
         if invited_at is not UNSET:
             field_dict["invitedAt"] = invited_at
         if invited_by is not UNSET:
@@ -100,6 +106,8 @@ class PendingInvitationRender:
             return None
         d = src_dict.copy()
         email = d.pop("email", UNSET)
+
+        expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))
 
         invited_at = d.pop("invitedAt", d.pop("invited_at", UNSET))
 
@@ -128,6 +136,7 @@ class PendingInvitationRender:
 
         pending_invitation_render = cls(
             email=email,
+            expires_at=expires_at,
             invited_at=invited_at,
             invited_by=invited_by,
             role=role,

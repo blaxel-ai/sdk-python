@@ -1,6 +1,5 @@
 """Tests for tools functionality."""
 
-
 import pytest
 
 from blaxel.core.tools import bl_tools

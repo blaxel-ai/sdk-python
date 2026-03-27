@@ -43,7 +43,6 @@ class HealthResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         arch = self.arch
 
         build_time = self.build_time

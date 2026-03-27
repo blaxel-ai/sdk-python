@@ -75,11 +75,7 @@ class PersistentMcpClient:
                 resource = await get_sandbox(self.name, client=client)
             else:
                 resource = await get_function(self.name, client=client)
-            if (
-                resource
-                and not isinstance(resource, Error)
-                and resource.metadata
-            ):
+            if resource and not isinstance(resource, Error) and resource.metadata:
                 url = resource.metadata.url
                 if not isinstance(url, Unset) and url:
                     return url

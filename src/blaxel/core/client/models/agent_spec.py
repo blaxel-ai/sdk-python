@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ..models.repository import Repository
     from ..models.revision_configuration import RevisionConfiguration
     from ..models.trigger import Trigger
+    from ..models.volume_attachment import VolumeAttachment
 
 
 T = TypeVar("T", bound="AgentSpec")
@@ -25,20 +26,25 @@ class AgentSpec:
         policies (Union[Unset, list[str]]):
         public (Union[Unset, bool]): When true, the agent is publicly accessible without authentication. Only available
             for mk3 generation. Default: False.
+        region (Union[Unset, str]): Region where the agent should be deployed (e.g. us-pdx-1, eu-lon-1). Required when
+            volumes are attached. Example: us-pdx-1.
         repository (Union[Unset, Repository]): Repository
         revision (Union[Unset, RevisionConfiguration]): Revision configuration
         runtime (Union[Unset, AgentRuntime]): Runtime configuration defining how the AI agent is deployed and scaled
             globally
         triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
+        volumes (Union[Unset, list['VolumeAttachment']]):
     """
 
     enabled: Union[Unset, bool] = True
     policies: Union[Unset, list[str]] = UNSET
     public: Union[Unset, bool] = False
+    region: Union[Unset, str] = UNSET
     repository: Union[Unset, "Repository"] = UNSET
     revision: Union[Unset, "RevisionConfiguration"] = UNSET
     runtime: Union[Unset, "AgentRuntime"] = UNSET
     triggers: Union[Unset, list["Trigger"]] = UNSET
+    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -49,6 +55,8 @@ class AgentSpec:
             policies = self.policies
 
         public = self.public
+
+        region = self.region
 
         repository: Union[Unset, dict[str, Any]] = UNSET
         if (
@@ -90,6 +98,20 @@ class AgentSpec:
                     componentsschemas_triggers_item = componentsschemas_triggers_item_data.to_dict()
                 triggers.append(componentsschemas_triggers_item)
 
+        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.volumes, Unset):
+            volumes = []
+            for componentsschemas_volume_attachments_item_data in self.volumes:
+                if type(componentsschemas_volume_attachments_item_data) is dict:
+                    componentsschemas_volume_attachments_item = (
+                        componentsschemas_volume_attachments_item_data
+                    )
+                else:
+                    componentsschemas_volume_attachments_item = (
+                        componentsschemas_volume_attachments_item_data.to_dict()
+                    )
+                volumes.append(componentsschemas_volume_attachments_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -99,6 +121,8 @@ class AgentSpec:
             field_dict["policies"] = policies
         if public is not UNSET:
             field_dict["public"] = public
+        if region is not UNSET:
+            field_dict["region"] = region
         if repository is not UNSET:
             field_dict["repository"] = repository
         if revision is not UNSET:
@@ -107,6 +131,8 @@ class AgentSpec:
             field_dict["runtime"] = runtime
         if triggers is not UNSET:
             field_dict["triggers"] = triggers
+        if volumes is not UNSET:
+            field_dict["volumes"] = volumes
 
         return field_dict
 
@@ -116,6 +142,7 @@ class AgentSpec:
         from ..models.repository import Repository
         from ..models.revision_configuration import RevisionConfiguration
         from ..models.trigger import Trigger
+        from ..models.volume_attachment import VolumeAttachment
 
         if not src_dict:
             return None
@@ -125,6 +152,8 @@ class AgentSpec:
         policies = cast(list[str], d.pop("policies", UNSET))
 
         public = d.pop("public", UNSET)
+
+        region = d.pop("region", UNSET)
 
         _repository = d.pop("repository", UNSET)
         repository: Union[Unset, Repository]
@@ -156,14 +185,25 @@ class AgentSpec:
 
             triggers.append(componentsschemas_triggers_item)
 
+        volumes = []
+        _volumes = d.pop("volumes", UNSET)
+        for componentsschemas_volume_attachments_item_data in _volumes or []:
+            componentsschemas_volume_attachments_item = VolumeAttachment.from_dict(
+                componentsschemas_volume_attachments_item_data
+            )
+
+            volumes.append(componentsschemas_volume_attachments_item)
+
         agent_spec = cls(
             enabled=enabled,
             policies=policies,
             public=public,
+            region=region,
             repository=repository,
             revision=revision,
             runtime=runtime,
             triggers=triggers,
+            volumes=volumes,
         )
 
         agent_spec.additional_properties = d

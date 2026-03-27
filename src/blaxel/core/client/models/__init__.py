@@ -32,6 +32,7 @@ from .delete_workspace_service_account_response_200 import DeleteWorkspaceServic
 from .drive import Drive
 from .drive_spec import DriveSpec
 from .drive_state import DriveState
+from .egress_config import EgressConfig
 from .egress_gateway import EgressGateway
 from .egress_gateway_metadata import EgressGatewayMetadata
 from .egress_gateway_spec import EgressGatewaySpec
@@ -39,6 +40,7 @@ from .egress_ip import EgressIP
 from .egress_ip_metadata import EgressIPMetadata
 from .egress_ip_spec import EgressIPSpec
 from .egress_ip_spec_ip_family import EgressIPSpecIpFamily
+from .egress_policy import EgressPolicy
 from .entrypoint import Entrypoint
 from .entrypoint_args_item import EntrypointArgsItem
 from .entrypoint_env import EntrypointEnv
@@ -65,6 +67,8 @@ from .get_workspace_features_response_200_features import GetWorkspaceFeaturesRe
 from .get_workspace_service_accounts_response_200_item import (
     GetWorkspaceServiceAccountsResponse200Item,
 )
+from .group_workspace_mapping import GroupWorkspaceMapping
+from .group_workspace_mapping_role import GroupWorkspaceMappingRole
 from .image import Image
 from .image_metadata import ImageMetadata
 from .image_spec import ImageSpec
@@ -110,6 +114,7 @@ from .model_runtime import ModelRuntime
 from .model_runtime_generation import ModelRuntimeGeneration
 from .model_runtime_type import ModelRuntimeType
 from .model_spec import ModelSpec
+from .network_firewall import NetworkFirewall
 from .o_auth import OAuth
 from .o_auth_scope_item import OAuthScopeItem
 from .owner_fields import OwnerFields
@@ -140,6 +145,11 @@ from .preview_token import PreviewToken
 from .preview_token_metadata import PreviewTokenMetadata
 from .preview_token_spec import PreviewTokenSpec
 from .private_location import PrivateLocation
+from .proxy_config import ProxyConfig
+from .proxy_target import ProxyTarget
+from .proxy_target_body import ProxyTargetBody
+from .proxy_target_headers import ProxyTargetHeaders
+from .proxy_target_secrets import ProxyTargetSecrets
 from .public_ip import PublicIp
 from .public_ips import PublicIps
 from .region import Region
@@ -156,6 +166,10 @@ from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_spec import SandboxSpec
+from .sso_domain import SSODomain
+from .sso_domain_metadata import SSODomainMetadata
+from .sso_domain_spec import SSODomainSpec
+from .sso_domain_spec_status import SSODomainSpecStatus
 from .status import Status
 from .template import Template
 from .template_variable import TemplateVariable
@@ -185,6 +199,7 @@ from .workspace import Workspace
 from .workspace_runtime import WorkspaceRuntime
 from .workspace_status import WorkspaceStatus
 from .workspace_user import WorkspaceUser
+from .workspace_user_source import WorkspaceUserSource
 
 __all__ = (
     "Agent",
@@ -219,6 +234,7 @@ __all__ = (
     "Drive",
     "DriveSpec",
     "DriveState",
+    "EgressConfig",
     "EgressGateway",
     "EgressGatewayMetadata",
     "EgressGatewaySpec",
@@ -226,6 +242,7 @@ __all__ = (
     "EgressIPMetadata",
     "EgressIPSpec",
     "EgressIPSpecIpFamily",
+    "EgressPolicy",
     "Entrypoint",
     "EntrypointArgsItem",
     "EntrypointEnv",
@@ -250,6 +267,8 @@ __all__ = (
     "GetWorkspaceFeaturesResponse200",
     "GetWorkspaceFeaturesResponse200Features",
     "GetWorkspaceServiceAccountsResponse200Item",
+    "GroupWorkspaceMapping",
+    "GroupWorkspaceMappingRole",
     "Image",
     "ImageMetadata",
     "ImageSpec",
@@ -295,6 +314,7 @@ __all__ = (
     "ModelRuntimeGeneration",
     "ModelRuntimeType",
     "ModelSpec",
+    "NetworkFirewall",
     "OAuth",
     "OAuthScopeItem",
     "OwnerFields",
@@ -323,6 +343,11 @@ __all__ = (
     "PreviewTokenMetadata",
     "PreviewTokenSpec",
     "PrivateLocation",
+    "ProxyConfig",
+    "ProxyTarget",
+    "ProxyTargetBody",
+    "ProxyTargetHeaders",
+    "ProxyTargetSecrets",
     "PublicIp",
     "PublicIps",
     "Region",
@@ -339,6 +364,10 @@ __all__ = (
     "SandboxNetwork",
     "SandboxRuntime",
     "SandboxSpec",
+    "SSODomain",
+    "SSODomainMetadata",
+    "SSODomainSpec",
+    "SSODomainSpecStatus",
     "Status",
     "Template",
     "TemplateVariable",
@@ -368,4 +397,5 @@ __all__ = (
     "WorkspaceRuntime",
     "WorkspaceStatus",
     "WorkspaceUser",
+    "WorkspaceUserSource",
 )
