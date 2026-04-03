@@ -60,10 +60,8 @@ class _AsyncDeleteDescriptor:
 
     def __get__(self, instance, owner):
         if instance is None:
-            # Called on the class: SandboxInstance.delete("name")
             return self._delete_func
         else:
-            # Called on an instance: instance.delete()
             async def instance_delete() -> Sandbox:
                 return await self._delete_func(instance.metadata.name)
 
@@ -260,12 +258,16 @@ class SandboxInstance:
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
 
+            # Extract region from existing Sandbox spec and apply it
+            region = sandbox.spec.region or settings.region
+            if region:
+                sandbox.spec.region = region
+
         response = await create_sandbox(
             client=client,
             body=sandbox,
         )
 
-        # Check if response is an error
         if isinstance(response, SandboxError):
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
@@ -274,7 +276,7 @@ class SandboxInstance:
 
         assert response is not None
         instance = cls(response)
-        # TODO remove this part once we have a better way to handle this
+
         if safe:
             try:
                 await instance.fs.ls("/")
