@@ -13,6 +13,8 @@ from .core_event import CoreEvent
 from .country import Country
 from .create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
 from .create_drive_access_token_response_200 import CreateDriveAccessTokenResponse200
+from .create_image_body import CreateImageBody
+from .create_image_response_200 import CreateImageResponse200
 from .create_job_execution_output import CreateJobExecutionOutput
 from .create_job_execution_output_tasks_item import CreateJobExecutionOutputTasksItem
 from .create_job_execution_request import CreateJobExecutionRequest
@@ -67,6 +69,7 @@ from .get_workspace_features_response_200_features import GetWorkspaceFeaturesRe
 from .get_workspace_service_accounts_response_200_item import (
     GetWorkspaceServiceAccountsResponse200Item,
 )
+from .github_runner_config import GithubRunnerConfig
 from .group_workspace_mapping import GroupWorkspaceMapping
 from .group_workspace_mapping_role import GroupWorkspaceMappingRole
 from .image import Image
@@ -104,6 +107,8 @@ from .job_execution_task_status import JobExecutionTaskStatus
 from .job_runtime import JobRuntime
 from .job_runtime_generation import JobRuntimeGeneration
 from .job_spec import JobSpec
+from .job_volume import JobVolume
+from .job_volume_type import JobVolumeType
 from .location_response import LocationResponse
 from .mcp_definition import MCPDefinition
 from .mcp_definition_categories_item import MCPDefinitionCategoriesItem
@@ -121,6 +126,7 @@ from .owner_fields import OwnerFields
 from .pending_invitation import PendingInvitation
 from .pending_invitation_accept import PendingInvitationAccept
 from .pending_invitation_render import PendingInvitationRender
+from .pending_invitation_render_account import PendingInvitationRenderAccount
 from .pending_invitation_render_invited_by import PendingInvitationRenderInvitedBy
 from .pending_invitation_render_workspace import PendingInvitationRenderWorkspace
 from .pending_invitation_workspace_details import PendingInvitationWorkspaceDetails
@@ -215,6 +221,8 @@ __all__ = (
     "Country",
     "CreateApiKeyForServiceAccountBody",
     "CreateDriveAccessTokenResponse200",
+    "CreateImageBody",
+    "CreateImageResponse200",
     "CreateJobExecutionOutput",
     "CreateJobExecutionOutputTasksItem",
     "CreateJobExecutionRequest",
@@ -267,6 +275,7 @@ __all__ = (
     "GetWorkspaceFeaturesResponse200",
     "GetWorkspaceFeaturesResponse200Features",
     "GetWorkspaceServiceAccountsResponse200Item",
+    "GithubRunnerConfig",
     "GroupWorkspaceMapping",
     "GroupWorkspaceMappingRole",
     "Image",
@@ -304,6 +313,8 @@ __all__ = (
     "JobRuntime",
     "JobRuntimeGeneration",
     "JobSpec",
+    "JobVolume",
+    "JobVolumeType",
     "LocationResponse",
     "MCPDefinition",
     "MCPDefinitionCategoriesItem",
@@ -321,6 +332,7 @@ __all__ = (
     "PendingInvitation",
     "PendingInvitationAccept",
     "PendingInvitationRender",
+    "PendingInvitationRenderAccount",
     "PendingInvitationRenderInvitedBy",
     "PendingInvitationRenderWorkspace",
     "PendingInvitationWorkspaceDetails",

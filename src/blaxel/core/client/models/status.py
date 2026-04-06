@@ -3,6 +3,7 @@ from enum import Enum
 
 class Status(str, Enum):
     BUILDING = "BUILDING"
+    BUILT = "BUILT"
     DEACTIVATED = "DEACTIVATED"
     DEACTIVATING = "DEACTIVATING"
     DELETING = "DELETING"

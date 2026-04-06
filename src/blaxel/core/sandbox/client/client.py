@@ -1,3 +1,4 @@
+import asyncio
 import ssl
 from typing import Any, Union
 
@@ -50,6 +51,7 @@ class Client:
     _httpx_args: dict[str, Any] = field(factory=dict, kw_only=True, alias="httpx_args")
     _client: httpx.Client | None = field(default=None, init=False)
     _async_client: httpx.AsyncClient | None = field(default=None, init=False)
+    _async_client_loop: asyncio.AbstractEventLoop | None = field(default=None, init=False)
 
     def with_base_url(self, base_url: str) -> "Client":
         """Get a new client matching this one with a new base URL"""
@@ -138,6 +140,15 @@ class Client:
 
     def get_async_httpx_client(self) -> httpx.AsyncClient:
         """Get the underlying httpx.AsyncClient, constructing a new one if not previously set"""
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self._async_client is not None and current_loop is not self._async_client_loop:
+            self._async_client = None
+            self._async_client_loop = None
+
         if self._async_client is None:
             self._async_client = httpx.AsyncClient(
                 base_url=self._base_url,
@@ -149,6 +160,7 @@ class Client:
                 auth=self._auth,
                 **self._httpx_args,
             )
+            self._async_client_loop = current_loop
         return self._async_client
 
     async def __aenter__(self) -> "Client":
