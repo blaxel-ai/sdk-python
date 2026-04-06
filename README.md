@@ -32,6 +32,8 @@ bl login YOUR-WORKSPACE
 
 When you deploy on Blaxel, authentication is handled automatically.
 
+The SDK resolves credentials in this order: Blaxel CLI session → `.env` file → system environment variables → `~/.blaxel/config.yaml`.
+
 ## Installation
 
 ```bash
