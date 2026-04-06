@@ -29,6 +29,8 @@ class Region:
         info_generation (Union[Unset, str]): Region display name
         location (Union[Unset, str]): Region display name
         name (Union[Unset, str]): Region name
+        proxy_available (Union[Unset, bool]): Proxy availability status - indicates if the proxy plane is configured for
+            the region
     """
 
     agent_drive_public_url: Union[Unset, "RegionAgentDrivePublicUrl"] = UNSET
@@ -40,6 +42,7 @@ class Region:
     info_generation: Union[Unset, str] = UNSET
     location: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
+    proxy_available: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -69,6 +72,8 @@ class Region:
 
         name = self.name
 
+        proxy_available = self.proxy_available
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -90,6 +95,8 @@ class Region:
             field_dict["location"] = location
         if name is not UNSET:
             field_dict["name"] = name
+        if proxy_available is not UNSET:
+            field_dict["proxyAvailable"] = proxy_available
 
         return field_dict
 
@@ -125,6 +132,8 @@ class Region:
 
         name = d.pop("name", UNSET)
 
+        proxy_available = d.pop("proxyAvailable", d.pop("proxy_available", UNSET))
+
         region = cls(
             agent_drive_public_url=agent_drive_public_url,
             allowed=allowed,
@@ -135,6 +144,7 @@ class Region:
             info_generation=info_generation,
             location=location,
             name=name,
+            proxy_available=proxy_available,
         )
 
         region.additional_properties = d

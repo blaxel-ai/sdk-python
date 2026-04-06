@@ -18,10 +18,13 @@ class ProcessRequest:
     Attributes:
         command (str):  Example: ls -la.
         env (Union[Unset, ProcessRequestEnv]):  Example: {'{"PORT"': ' "3000"}'}.
+        keep_alive (Union[Unset, bool]): Disable scale-to-zero while process runs. Default timeout is 600s (10 minutes).
+            Set timeout to 0 for infinite.
         max_restarts (Union[Unset, int]):  Example: 3.
         name (Union[Unset, str]):  Example: my-process.
         restart_on_failure (Union[Unset, bool]):  Example: True.
-        timeout (Union[Unset, int]):  Example: 30.
+        timeout (Union[Unset, int]): Timeout in seconds. When keepAlive is true, defaults to 600s (10 minutes). Set to 0
+            for infinite (no auto-kill). Example: 30.
         wait_for_completion (Union[Unset, bool]):
         wait_for_ports (Union[Unset, list[int]]):  Example: [3000, 8080].
         working_dir (Union[Unset, str]):  Example: /home/user.
@@ -29,6 +32,7 @@ class ProcessRequest:
 
     command: str
     env: Union[Unset, "ProcessRequestEnv"] = UNSET
+    keep_alive: Union[Unset, bool] = UNSET
     max_restarts: Union[Unset, int] = UNSET
     name: Union[Unset, str] = UNSET
     restart_on_failure: Union[Unset, bool] = UNSET
@@ -46,6 +50,8 @@ class ProcessRequest:
             env = self.env.to_dict()
         elif self.env and isinstance(self.env, dict):
             env = self.env
+
+        keep_alive = self.keep_alive
 
         max_restarts = self.max_restarts
 
@@ -72,6 +78,8 @@ class ProcessRequest:
         )
         if env is not UNSET:
             field_dict["env"] = env
+        if keep_alive is not UNSET:
+            field_dict["keepAlive"] = keep_alive
         if max_restarts is not UNSET:
             field_dict["maxRestarts"] = max_restarts
         if name is not UNSET:
@@ -105,6 +113,8 @@ class ProcessRequest:
         else:
             env = ProcessRequestEnv.from_dict(_env)
 
+        keep_alive = d.pop("keepAlive", d.pop("keep_alive", UNSET))
+
         max_restarts = d.pop("maxRestarts", d.pop("max_restarts", UNSET))
 
         name = d.pop("name", UNSET)
@@ -122,6 +132,7 @@ class ProcessRequest:
         process_request = cls(
             command=command,
             env=env,
+            keep_alive=keep_alive,
             max_restarts=max_restarts,
             name=name,
             restart_on_failure=restart_on_failure,

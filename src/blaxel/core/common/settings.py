@@ -148,7 +148,7 @@ class Settings:
         Priority:
         1. Environment variable DO_NOT_TRACK (true/1 to disable, false/0 to enable)
         2. config.yaml tracking field
-        3. Default: true
+        3. Default: false (opt-in tracking)
         """
         env_value = os.environ.get("DO_NOT_TRACK")
         if env_value is not None:
@@ -164,7 +164,7 @@ class Settings:
         except Exception:
             pass
 
-        return True
+        return False
 
     @property
     def region(self) -> str | None:
