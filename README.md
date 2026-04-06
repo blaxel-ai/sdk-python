@@ -35,6 +35,8 @@ When running Blaxel SDK from a remote server that is not Blaxel-hosted, we recom
 
 Sandboxes are secure, instant-launching compute environments that scale to zero after inactivity and resume in under 25ms.
 
+> **Base image contents:** The default `blaxel/base-image:latest` is Alpine Linux with **Node.js 22** and **git** pre-installed. It does **not** include Python or other language runtimes. To use Python, either specify `blaxel/py-app:latest` as your image (Python 3.12) or install it in the base image with `apk add --no-cache python3 py3-pip`.
+
 ```python
 import asyncio
 from blaxel.core import SandboxInstance
