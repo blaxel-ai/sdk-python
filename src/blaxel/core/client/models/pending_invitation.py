@@ -18,6 +18,7 @@ class PendingInvitation:
         created_by (Union[Unset, str]): The user or service account who created the resource
         updated_by (Union[Unset, str]): The user or service account who updated the resource
         email (Union[Unset, str]): User email
+        expires_at (Union[Unset, str]): The date and time when the invitation expires
         invited_by (Union[Unset, str]): User sub
         role (Union[Unset, str]): ACL role
         workspace (Union[Unset, str]): Workspace name
@@ -28,6 +29,7 @@ class PendingInvitation:
     created_by: Union[Unset, str] = UNSET
     updated_by: Union[Unset, str] = UNSET
     email: Union[Unset, str] = UNSET
+    expires_at: Union[Unset, str] = UNSET
     invited_by: Union[Unset, str] = UNSET
     role: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
@@ -43,6 +45,8 @@ class PendingInvitation:
         updated_by = self.updated_by
 
         email = self.email
+
+        expires_at = self.expires_at
 
         invited_by = self.invited_by
 
@@ -63,6 +67,8 @@ class PendingInvitation:
             field_dict["updatedBy"] = updated_by
         if email is not UNSET:
             field_dict["email"] = email
+        if expires_at is not UNSET:
+            field_dict["expiresAt"] = expires_at
         if invited_by is not UNSET:
             field_dict["invitedBy"] = invited_by
         if role is not UNSET:
@@ -87,6 +93,8 @@ class PendingInvitation:
 
         email = d.pop("email", UNSET)
 
+        expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))
+
         invited_by = d.pop("invitedBy", d.pop("invited_by", UNSET))
 
         role = d.pop("role", UNSET)
@@ -99,6 +107,7 @@ class PendingInvitation:
             created_by=created_by,
             updated_by=updated_by,
             email=email,
+            expires_at=expires_at,
             invited_by=invited_by,
             role=role,
             workspace=workspace,

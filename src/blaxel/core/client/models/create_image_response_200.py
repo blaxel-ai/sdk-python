@@ -5,42 +5,45 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="VolumeAttachment")
+T = TypeVar("T", bound="CreateImageResponse200")
 
 
 @_attrs_define
-class VolumeAttachment:
-    """Configuration for attaching a persistent volume to a sandbox at a specific filesystem path
-
+class CreateImageResponse200:
+    """
     Attributes:
-        mount_path (Union[Unset, str]): Absolute filesystem path where the volume will be mounted inside the sandbox
-            Example: /mnt/data.
-        name (Union[Unset, str]): Name of the volume resource to attach (must exist in the same workspace and region)
-            Example: my-volume.
-        read_only (Union[Unset, bool]): If true, the volume is mounted read-only and cannot be modified by the sandbox
+        image (Union[Unset, str]): The registered image reference (only present when image was provided in request)
+        message (Union[Unset, str]): Status message
+        name (Union[Unset, str]): Name of the image
+        resource_type (Union[Unset, str]): Resource type
     """
 
-    mount_path: Union[Unset, str] = UNSET
+    image: Union[Unset, str] = UNSET
+    message: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
-    read_only: Union[Unset, bool] = UNSET
+    resource_type: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        mount_path = self.mount_path
+        image = self.image
+
+        message = self.message
 
         name = self.name
 
-        read_only = self.read_only
+        resource_type = self.resource_type
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if mount_path is not UNSET:
-            field_dict["mountPath"] = mount_path
+        if image is not UNSET:
+            field_dict["image"] = image
+        if message is not UNSET:
+            field_dict["message"] = message
         if name is not UNSET:
             field_dict["name"] = name
-        if read_only is not UNSET:
-            field_dict["readOnly"] = read_only
+        if resource_type is not UNSET:
+            field_dict["resourceType"] = resource_type
 
         return field_dict
 
@@ -49,20 +52,23 @@ class VolumeAttachment:
         if not src_dict:
             return None
         d = src_dict.copy()
-        mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
+        image = d.pop("image", UNSET)
+
+        message = d.pop("message", UNSET)
 
         name = d.pop("name", UNSET)
 
-        read_only = d.pop("readOnly", d.pop("read_only", UNSET))
+        resource_type = d.pop("resourceType", d.pop("resource_type", UNSET))
 
-        volume_attachment = cls(
-            mount_path=mount_path,
+        create_image_response_200 = cls(
+            image=image,
+            message=message,
             name=name,
-            read_only=read_only,
+            resource_type=resource_type,
         )
 
-        volume_attachment.additional_properties = d
-        return volume_attachment
+        create_image_response_200.additional_properties = d
+        return create_image_response_200
 
     @property
     def additional_keys(self) -> list[str]:

@@ -19,6 +19,8 @@ class JobRuntime:
     """Runtime configuration defining how batch job tasks are executed with parallelism and retry settings
 
     Attributes:
+        disk_percent (Union[Unset, int]): Percentage of VM RAM allocated for disk storage (tmpfs overlay). Valid range
+            10-95, default 50. Only applies to mk3.1 (microVM) generation. Example: 80.
         envs (Union[Unset, list['Env']]): Environment variables injected into job tasks. Supports Kubernetes EnvVar
             format with valueFrom references.
         generation (Union[Unset, JobRuntimeGeneration]): Infrastructure generation: mk2 (containers, 2-10s cold starts)
@@ -35,6 +37,7 @@ class JobRuntime:
         timeout (Union[Unset, int]): Maximum execution time in seconds before a task is terminated Example: 3600.
     """
 
+    disk_percent: Union[Unset, int] = UNSET
     envs: Union[Unset, list["Env"]] = UNSET
     generation: Union[Unset, JobRuntimeGeneration] = UNSET
     image: Union[Unset, str] = UNSET
@@ -46,6 +49,8 @@ class JobRuntime:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        disk_percent = self.disk_percent
+
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
@@ -83,6 +88,8 @@ class JobRuntime:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if disk_percent is not UNSET:
+            field_dict["diskPercent"] = disk_percent
         if envs is not UNSET:
             field_dict["envs"] = envs
         if generation is not UNSET:
@@ -110,6 +117,8 @@ class JobRuntime:
         if not src_dict:
             return None
         d = src_dict.copy()
+        disk_percent = d.pop("diskPercent", d.pop("disk_percent", UNSET))
+
         envs = []
         _envs = d.pop("envs", UNSET)
         for envs_item_data in _envs or []:
@@ -142,6 +151,7 @@ class JobRuntime:
         timeout = d.pop("timeout", UNSET)
 
         job_runtime = cls(
+            disk_percent=disk_percent,
             envs=envs,
             generation=generation,
             image=image,
