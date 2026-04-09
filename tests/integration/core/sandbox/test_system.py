@@ -280,14 +280,14 @@ class TestSystemUpgrade(TestSystemOperations):
 
         # If the process is still running, wait for it to complete
         if process_after_upgrade.status == "running":
-            # Wait for the process to complete with some buffer (5 seconds extra)
-            wait_time = max(remaining_time + 5000, 5000)
-            print(f"[TEST] Waiting {wait_time * 1000:.0f}ms for process to complete...")
+            # remaining_time is in seconds; process.wait() expects milliseconds
+            wait_time_ms = max(int((remaining_time + 5) * 1000), 5000)
+            print(f"[TEST] Waiting {wait_time_ms}ms for process to complete...")
 
             completed_process = await sandbox.process.wait(
                 "test-sleep",
-                max_wait=wait_time,
-                interval=1,
+                max_wait=wait_time_ms,
+                interval=1000,
             )
             print(
                 f"[TEST] Process completed with status: {completed_process.status}, exitCode: {completed_process.exit_code}"
