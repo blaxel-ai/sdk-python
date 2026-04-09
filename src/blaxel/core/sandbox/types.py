@@ -95,6 +95,7 @@ class SandboxConfiguration:
         self.force_url = force_url
         self.headers = headers or {}
         self.params = params or {}
+        self.h3_transport: Any = None
 
     @property
     def metadata(self):
