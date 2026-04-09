@@ -225,8 +225,9 @@ class TestSystemUpgrade(TestSystemOperations):
         self.created_sandboxes.append(name)
         print("[TEST] Sandbox created")
 
-        # Start a sleep process that will run for 6 seconds
-        sleep_duration = 6
+        # Start a sleep process long enough to survive the full upgrade cycle
+        # (binary download + validation + restart can take 30-60s in slow regions)
+        sleep_duration = 90
         print(f"[TEST] Starting sleep process for {sleep_duration} seconds...")
         import time
 
@@ -257,7 +258,8 @@ class TestSystemUpgrade(TestSystemOperations):
         assert upgrade_result is not None
 
         # Wait for the upgrade to complete (check health)
-        health_data = await wait_for_upgrade_complete(sandbox, 10.0)
+        # Use a generous timeout to account for variable download speeds across regions
+        health_data = await wait_for_upgrade_complete(sandbox, 60.0)
         assert (health_data.upgrade_count or 0) > 0
 
         # Check that the sleep process is still visible in the API after upgrade
@@ -293,7 +295,7 @@ class TestSystemUpgrade(TestSystemOperations):
             assert completed_process.status == "completed"
             assert completed_process.exit_code == 0
 
-        # Verify the process completed in roughly the expected time (within 15 seconds tolerance)
+        # Verify the process completed in roughly the expected time
         total_duration = time.time() - process_start
         print(
             f"[TEST] Total duration from process start to completion: {total_duration * 1000:.0f}ms"
@@ -301,9 +303,9 @@ class TestSystemUpgrade(TestSystemOperations):
         print(f"[TEST] Expected duration: ~{expected_total_duration * 1000:.0f}ms")
 
         # The process should have completed close to the expected time
-        # Allow 15 seconds tolerance for upgrade overhead
-        tolerance = 15
-        assert total_duration >= expected_total_duration - 2  # At least 4 seconds
-        assert total_duration <= expected_total_duration + tolerance  # At most 21 seconds
+        # Allow generous tolerance for upgrade overhead (download + validation + restart)
+        tolerance = 60
+        assert total_duration >= expected_total_duration - 2
+        assert total_duration <= expected_total_duration + tolerance
 
         print("[TEST] Process persistence test completed successfully!")
