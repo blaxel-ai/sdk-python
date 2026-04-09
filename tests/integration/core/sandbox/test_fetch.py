@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
-from tests.helpers import default_labels, unique_name
+from tests.helpers import default_labels, default_region, unique_name
 
 
 NODE_SERVER_COMMAND = """sleep 2 && node -e "
@@ -33,6 +33,7 @@ class TestFetch:
                 "image": "blaxel/node:latest",
                 "memory": 2048,
                 "ports": [{"target": 3000}],
+                "region": default_region,
                 "labels": default_labels,
             }
         )
