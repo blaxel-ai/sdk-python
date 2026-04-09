@@ -29,6 +29,7 @@ class SyncCodeInterpreter(SyncSandboxInstance):
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = True,
+        create_if_not_exist: bool = False,
     ) -> "SyncCodeInterpreter":
         """
         Create a sandbox instance using the jupyter-server image.
@@ -72,7 +73,7 @@ class SyncCodeInterpreter(SyncSandboxInstance):
             if sandbox.spec and getattr(sandbox.spec, "region", None):
                 payload["region"] = sandbox.spec.region
 
-        base_instance = SyncSandboxInstance.create(payload, safe=safe)
+        base_instance = SyncSandboxInstance.create(payload, safe=safe, create_if_not_exist=create_if_not_exist)
         return cls(
             sandbox=base_instance.sandbox,
             force_url=base_instance.config.force_url,
