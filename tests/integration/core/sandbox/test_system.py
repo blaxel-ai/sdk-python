@@ -303,8 +303,8 @@ class TestSystemUpgrade(TestSystemOperations):
         print(f"[TEST] Expected duration: ~{expected_total_duration * 1000:.0f}ms")
 
         # The process should have completed close to the expected time
-        # Allow generous tolerance for upgrade overhead (download + validation + restart)
-        tolerance = 60
+        # Cap at 2x sleep duration to catch hangs while tolerating upgrade overhead
+        tolerance = sleep_duration
         assert total_duration >= expected_total_duration - 2
         assert total_duration <= expected_total_duration + tolerance
 
