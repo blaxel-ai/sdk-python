@@ -3,6 +3,8 @@ import uuid
 import warnings
 from typing import Any, Callable, Dict, List, Union
 
+import httpx
+
 from ...client.api.compute.create_sandbox import sync as create_sandbox
 from ...client.api.compute.delete_sandbox import sync as delete_sandbox
 from ...client.api.compute.get_sandbox import sync as get_sandbox
@@ -111,6 +113,19 @@ class SyncSandboxInstance:
     @property
     def expires_in(self):
         return self.sandbox.expires_in
+
+    def fetch(
+        self, port: int, path: str = "/", method: str = "GET", **kwargs
+    ) -> "httpx.Response":
+        """Fetch a resource served on a sandbox port.
+
+        Args:
+            port: The port number inside the sandbox
+            path: Optional path appended after the port (default: "/")
+            method: HTTP method (default: "GET")
+            **kwargs: Additional arguments forwarded to httpx (e.g. headers, content)
+        """
+        return self.network.fetch(port, path, method, **kwargs)
 
     def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SyncSandboxInstance":
         logger.warning(
