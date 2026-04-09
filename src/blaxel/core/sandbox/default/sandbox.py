@@ -1,9 +1,10 @@
 import logging
 import uuid
 import warnings
-from typing import Any, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
 
-import httpx
+if TYPE_CHECKING:
+    import httpx
 
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox

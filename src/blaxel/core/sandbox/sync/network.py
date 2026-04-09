@@ -23,5 +23,5 @@ class SyncSandboxNetwork(SyncSandboxAction):
         """
         normalized_path = path if path.startswith("/") else f"/{path}"
         url = f"/port/{port}{normalized_path}"
-        client = self.get_client()
-        return client.request(method, url, **kwargs)
+        with self.get_client() as client:
+            return client.request(method, url, **kwargs)
