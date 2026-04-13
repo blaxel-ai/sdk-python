@@ -1,5 +1,4 @@
 import logging
-import time
 import uuid
 import warnings
 from typing import Any, Callable, Dict, List, Union
@@ -391,8 +390,6 @@ class SyncSandboxInstance:
                     name = None
                 if not name:
                     raise ValueError("Sandbox name is required")
-                # Brief delay to handle parallel-creation race condition
-                time.sleep(2)
                 sandbox_instance = cls.get(name)
                 if sandbox_instance.status == "TERMINATED":
                     return cls.create(sandbox, create_if_not_exist=True)

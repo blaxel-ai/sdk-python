@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import uuid
 import warnings
@@ -454,9 +453,6 @@ class SandboxInstance:
 
                 if not name:
                     raise ValueError("Sandbox name is required")
-
-                # Brief delay to handle parallel-creation race condition
-                await asyncio.sleep(2)
 
                 # Get the existing sandbox to check its status
                 sandbox_instance = await cls.get(name)

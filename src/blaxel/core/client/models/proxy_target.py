@@ -39,6 +39,7 @@ class ProxyTarget:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         body: Union[Unset, dict[str, Any]] = UNSET
         if self.body and not isinstance(self.body, Unset) and not isinstance(self.body, dict):
             body = self.body.to_dict()

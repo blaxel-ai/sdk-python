@@ -24,6 +24,8 @@ class ImageMetadata:
             tags).
         name (Union[Unset, str]): The name of the image (repository name).
         resource_type (Union[Unset, str]): The resource type of the image.
+        source_workspace (Union[Unset, str]): If this image is shared from another workspace, this field contains the
+            name of the source workspace. Empty for non-shared images.
         status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
         updated_at (Union[Unset, str]): The date and time when the image was last updated.
         workspace (Union[Unset, str]): The workspace of the image.
@@ -35,12 +37,14 @@ class ImageMetadata:
     last_deployed_at: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     resource_type: Union[Unset, str] = UNSET
+    source_workspace: Union[Unset, str] = UNSET
     status: Union[Unset, Status] = UNSET
     updated_at: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         created_at = self.created_at
 
         display_name = self.display_name
@@ -62,6 +66,8 @@ class ImageMetadata:
         name = self.name
 
         resource_type = self.resource_type
+
+        source_workspace = self.source_workspace
 
         status: Union[Unset, str] = UNSET
         if not isinstance(self.status, Unset):
@@ -86,6 +92,8 @@ class ImageMetadata:
             field_dict["name"] = name
         if resource_type is not UNSET:
             field_dict["resourceType"] = resource_type
+        if source_workspace is not UNSET:
+            field_dict["sourceWorkspace"] = source_workspace
         if status is not UNSET:
             field_dict["status"] = status
         if updated_at is not UNSET:
@@ -121,6 +129,8 @@ class ImageMetadata:
 
         resource_type = d.pop("resourceType", d.pop("resource_type", UNSET))
 
+        source_workspace = d.pop("sourceWorkspace", d.pop("source_workspace", UNSET))
+
         _status = d.pop("status", UNSET)
         status: Union[Unset, Status]
         if isinstance(_status, Unset):
@@ -139,6 +149,7 @@ class ImageMetadata:
             last_deployed_at=last_deployed_at,
             name=name,
             resource_type=resource_type,
+            source_workspace=source_workspace,
             status=status,
             updated_at=updated_at,
             workspace=workspace,

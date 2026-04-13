@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.sandbox_state import SandboxState
 from ..models.status import Status
 from ..types import UNSET, Unset
 
@@ -29,6 +30,7 @@ class Sandbox:
             expires_in (Union[Unset, int]): Time in seconds until the sandbox is automatically deleted based on TTL and
                 lifecycle policies. Only present for sandboxes with lifecycle configured.
             last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
+            state (Union[Unset, SandboxState]): Current state of the sandbox (read-only, managed by the system)
             status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
 
@@ -37,10 +39,12 @@ class Sandbox:
     events: Union[Unset, list["CoreEvent"]] = UNSET
     expires_in: Union[Unset, int] = UNSET
     last_used_at: Union[Unset, str] = UNSET
+    state: Union[Unset, SandboxState] = UNSET
     status: Union[Unset, Status] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -67,6 +71,10 @@ class Sandbox:
 
         last_used_at = self.last_used_at
 
+        state: Union[Unset, str] = UNSET
+        if not isinstance(self.state, Unset):
+            state = self.state.value
+
         status: Union[Unset, str] = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
@@ -85,6 +93,8 @@ class Sandbox:
             field_dict["expiresIn"] = expires_in
         if last_used_at is not UNSET:
             field_dict["lastUsedAt"] = last_used_at
+        if state is not UNSET:
+            field_dict["state"] = state
         if status is not UNSET:
             field_dict["status"] = status
 
@@ -116,6 +126,13 @@ class Sandbox:
 
         last_used_at = d.pop("lastUsedAt", d.pop("last_used_at", UNSET))
 
+        _state = d.pop("state", UNSET)
+        state: Union[Unset, SandboxState]
+        if isinstance(_state, Unset):
+            state = UNSET
+        else:
+            state = SandboxState(_state)
+
         _status = d.pop("status", UNSET)
         status: Union[Unset, Status]
         if isinstance(_status, Unset):
@@ -129,6 +146,7 @@ class Sandbox:
             events=events,
             expires_in=expires_in,
             last_used_at=last_used_at,
+            state=state,
             status=status,
         )
 

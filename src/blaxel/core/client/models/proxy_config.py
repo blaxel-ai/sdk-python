@@ -31,6 +31,7 @@ class ProxyConfig:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         bypass: Union[Unset, list[str]] = UNSET
         if not isinstance(self.bypass, Unset):
             bypass = self.bypass
