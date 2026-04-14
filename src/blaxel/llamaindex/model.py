@@ -40,6 +40,32 @@ DEFAULT_CONTEXT_WINDOW = 128000
 DEFAULT_NUM_OUTPUT = 4096
 
 
+def _make_safe_openai_class():
+    """Create an OpenAI subclass that gracefully handles unknown model names.
+
+    LlamaIndex's OpenAI class validates model names against a hardcoded list
+    in its metadata property. When using Blaxel gateway models, the model name
+    may not be in that list, causing ValueError inside the LLM's internal methods.
+    """
+    from llama_index.llms.openai import OpenAI  # type: ignore[import-not-found]
+
+    class SafeOpenAI(OpenAI):
+        @property
+        def metadata(self) -> LLMMetadata:
+            try:
+                return super().metadata
+            except (ValueError, KeyError):
+                return LLMMetadata(
+                    context_window=DEFAULT_CONTEXT_WINDOW,
+                    num_output=self.max_tokens or DEFAULT_NUM_OUTPUT,
+                    is_chat_model=True,
+                    is_function_calling_model=True,
+                    model_name=self.model,
+                )
+
+    return SafeOpenAI
+
+
 class TokenRefreshingLLM(FunctionCallingLLM):
     """Wrapper for LlamaIndex LLMs that refreshes token before each call.
 
@@ -156,14 +182,13 @@ class TokenRefreshingLLM(FunctionCallingLLM):
                 **kwargs,
             )
         else:
-            from llama_index.llms.openai import OpenAI  # type: ignore[import-not-found]
-
             if model_type != "openai":
                 logger.warning(
                     f"Model {model} is not supported by LlamaIndex, defaulting to OpenAI"
                 )
 
-            return OpenAI(
+            SafeOpenAI = _make_safe_openai_class()
+            return SafeOpenAI(
                 model=model,
                 api_key=settings.auth.token,
                 api_base=f"{url}/v1",
