@@ -27,13 +27,13 @@ async def wait_for_upgrade_complete(
     poll_interval = 0.5
     retries = 0
     health_data = None
-    deadline = asyncio.get_event_loop().time() + max_wait_time
+    deadline = asyncio.get_running_loop().time() + max_wait_time
 
-    while asyncio.get_event_loop().time() < deadline:
+    while asyncio.get_running_loop().time() < deadline:
         try:
             health_data = await sandbox.system.health()
             upgrade_count = health_data.upgrade_count or 0
-            elapsed = max_wait_time - (deadline - asyncio.get_event_loop().time())
+            elapsed = max_wait_time - (deadline - asyncio.get_running_loop().time())
             print(
                 f"[TEST] Health check - upgradeCount: {upgrade_count} (elapsed: {elapsed * 1000:.0f}ms)"
             )
