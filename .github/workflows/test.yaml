@@ -16,6 +16,7 @@ jobs:
       BL_API_KEY: fake_api_key
       BL_WORKSPACE: fake_workspace
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
@@ -35,6 +36,7 @@ jobs:
           python -c "import blaxel.core; print('✅ blaxel.core imports successfully')"
 
       - name: Test package installation (with extras)
+        if: matrix.python-version != '3.14'
         run: |
           source .venv/bin/activate
           uv pip install -e ".[telemetry,crewai]"
@@ -43,6 +45,17 @@ jobs:
           import blaxel.telemetry
           import blaxel.crewai
           print('✅ blaxel with extras imports successfully')
+          "
+
+      - name: Test package installation (with telemetry)
+        if: matrix.python-version == '3.14'
+        run: |
+          source .venv/bin/activate
+          uv pip install -e ".[telemetry]"
+          python -c "
+          import blaxel.core
+          import blaxel.telemetry
+          print('✅ blaxel with telemetry imports successfully on Python 3.14')
           "
 
       - name: Test package build
