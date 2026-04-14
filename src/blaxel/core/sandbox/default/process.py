@@ -105,7 +105,7 @@ class SandboxProcess(SandboxAction):
                     if is_running:
                         start_stream()
 
-                reconnect_timer = asyncio.get_event_loop().call_later(
+                reconnect_timer = asyncio.get_running_loop().call_later(
                     reconnect_interval, schedule_reconnect
                 )
 
@@ -397,7 +397,7 @@ class SandboxProcess(SandboxAction):
         self, identifier: str, max_wait: int = 60000, interval: int = 1000
     ) -> ProcessResponse:
         """Wait for a process to complete."""
-        start_time = asyncio.get_event_loop().time() * 1000  # Convert to milliseconds
+        start_time = asyncio.get_running_loop().time() * 1000  # Convert to milliseconds
         status = "running"
         data = await self.get(identifier)
 
@@ -409,7 +409,7 @@ class SandboxProcess(SandboxAction):
             except:
                 break
 
-            if (asyncio.get_event_loop().time() * 1000) - start_time > max_wait:
+            if (asyncio.get_running_loop().time() * 1000) - start_time > max_wait:
                 raise Exception("Process did not finish in time")
 
         return data

@@ -63,14 +63,12 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "deepseek":
-            from langchain_deepseek import (  # type: ignore[import-not-found]
-                ChatDeepSeek,
-            )
+            from langchain_openai import ChatOpenAI  # type: ignore[import-not-found]
 
-            return ChatDeepSeek(
+            return ChatOpenAI(
                 api_key=settings.auth.token,
                 model=model,
-                api_base=f"{url}/v1",
+                base_url=f"{url}/v1",
                 **kwargs,
             )
         elif model_type == "anthropic":
@@ -98,11 +96,9 @@ class TokenRefreshingWrapper:
                 **kwargs,
             )
         elif model_type == "cerebras":
-            from langchain_cerebras import (  # type: ignore[import-not-found]
-                ChatCerebras,
-            )
+            from langchain_openai import ChatOpenAI  # type: ignore[import-not-found]
 
-            return ChatCerebras(
+            return ChatOpenAI(
                 api_key=settings.auth.token,
                 model=model,
                 base_url=f"{url}/v1",

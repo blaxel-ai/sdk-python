@@ -3,16 +3,25 @@ import queue
 import threading
 
 from opentelemetry.context import attach, create_key, detach, set_value
-from opentelemetry.sdk._logs import LogData, LogRecordProcessor
+from opentelemetry.sdk._logs import LogRecordProcessor
 from opentelemetry.sdk._logs._internal.export import LogExporter
 
 _logger = logging.getLogger(__name__)
 
+# opentelemetry-sdk >=1.35 renamed emit(LogData) to on_emit(ReadWriteLogRecord)
+# and removed the LogData class. Detect which API to use.
+try:
+    from opentelemetry.sdk._logs import LogData as _LogData
+
+    _USE_LEGACY_EMIT = True
+except ImportError:
+    _USE_LEGACY_EMIT = False
+
 
 class AsyncLogRecordProcessor(LogRecordProcessor):
     """This is an implementation of LogRecordProcessor which passes
-    received logs in the export-friendly LogData representation to the
-    configured LogExporter asynchronously using a background thread.
+    received logs to the configured LogExporter asynchronously using
+    a background thread.
     """
 
     def __init__(self, exporter: LogExporter):
@@ -33,10 +42,10 @@ class AsyncLogRecordProcessor(LogRecordProcessor):
         """Process logs from the queue in the background thread."""
         while not self._shutdown:
             try:
-                log_data = self._queue.get(timeout=1.0)
+                log_record = self._queue.get(timeout=1.0)
                 token = attach(set_value(create_key("suppress_instrumentation"), True))
                 try:
-                    self._exporter.export((log_data,))
+                    self._exporter.export((log_record,))
                 except Exception:  # pylint: disable=broad-exception-caught
                     _logger.exception("Exception while exporting logs.")
                 finally:
@@ -45,10 +54,20 @@ class AsyncLogRecordProcessor(LogRecordProcessor):
             except queue.Empty:
                 continue
 
-    def emit(self, log_data: LogData):
+    def _enqueue(self, record):
         if self._shutdown:
             return
-        self._queue.put(log_data)
+        self._queue.put(record)
+
+    if _USE_LEGACY_EMIT:
+
+        def emit(self, log_data: "_LogData"):
+            self._enqueue(log_data)
+
+    else:
+
+        def on_emit(self, log_record, *args, **kwargs):
+            self._enqueue(log_record)
 
     def shutdown(self):
         """Shutdown the processor and wait for pending exports to complete."""

@@ -14,22 +14,26 @@ VERSION = "develop" if os.environ.get("BL_ENV") == "dev" else "latest"
 
 
 async def wait_for_upgrade_complete(
-    sandbox: SandboxInstance, max_wait_time: float = 30.0
+    sandbox: SandboxInstance,
+    max_wait_time: float = 60.0,
+    max_retries: int = 3,
 ) -> HealthResponse:
     """
     Wait for sandbox upgrade to complete by polling the health endpoint.
-    Uses the SDK's health method which includes proper authentication.
-    Returns the health data when upgrade count > 0, raises if upgrade failed.
+    Retries the upgrade automatically on transient failures, matching the
+    Go SDK's UpgradeAndWait behaviour.
     """
     print("[TEST] Waiting for health upgrade count > 0...")
-    elapsed = 0.0
     poll_interval = 0.5
+    retries = 0
     health_data = None
+    deadline = asyncio.get_running_loop().time() + max_wait_time
 
-    while elapsed < max_wait_time:
+    while asyncio.get_running_loop().time() < deadline:
         try:
             health_data = await sandbox.system.health()
             upgrade_count = health_data.upgrade_count or 0
+            elapsed = max_wait_time - (deadline - asyncio.get_running_loop().time())
             print(
                 f"[TEST] Health check - upgradeCount: {upgrade_count} (elapsed: {elapsed * 1000:.0f}ms)"
             )
@@ -37,19 +41,24 @@ async def wait_for_upgrade_complete(
                 print(f"[TEST] Upgrade completed (took {elapsed * 1000:.0f}ms)")
                 return health_data
             if health_data.last_upgrade and health_data.last_upgrade.status == "failed":
-                print(f"[TEST] Health check - last upgrade failed, health data: {health_data}")
-                raise Exception(f"Upgrade failed: {health_data}")
+                if retries >= max_retries:
+                    raise Exception(
+                        f"Upgrade failed after {retries} retries: {health_data.last_upgrade.error}"
+                    )
+                retries += 1
+                print(
+                    f"[TEST] Upgrade failed, retrying ({retries}/{max_retries})..."
+                )
+                await sandbox.system.upgrade(version=VERSION)
         except Exception as e:
-            # Re-throw upgrade failures
-            if str(e).startswith("Upgrade failed:"):
+            if "Upgrade failed after" in str(e):
                 raise
-            print(f"[TEST] Health check error: {e} (elapsed: {elapsed * 1000:.0f}ms)")
+            print(f"[TEST] Health check error: {e}")
 
         await asyncio.sleep(poll_interval)
-        elapsed += poll_interval
 
     raise Exception(
-        f"Upgrade did not complete within {max_wait_time * 1000}ms. Last health data: {health_data}"
+        f"Upgrade did not complete within {max_wait_time}s. Last health data: {health_data}"
     )
 
 

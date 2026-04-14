@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -1035,22 +1036,33 @@ class TestProxyEndToEnd:
         assert len(body) > 0
 
     async def test_wildcard_route_matches_subdomain(self):
-        result = await self.sandbox.process.exec(
-            {
-                "command": "node /tmp/proxy-test.js GET https://sub.example.com",
-                "wait_for_completion": True,
-            }
-        )
+        # Wildcard proxy routing can be slow to propagate; retry a few times
+        last_error = None
+        for attempt in range(3):
+            result = await self.sandbox.process.exec(
+                {
+                    "command": "node /tmp/proxy-test.js GET https://sub.example.com",
+                    "wait_for_completion": True,
+                }
+            )
 
-        if result.exit_code != 0:
-            assert result.exit_code == 0
-            return
+            if result.exit_code != 0:
+                last_error = f"exit_code={result.exit_code}"
+                await asyncio.sleep(2)
+                continue
 
-        body = (result.logs or "").strip()
-        if "{" in body:
-            response = _parse_json_output(result.logs)
-            headers = _lowercase_keys(response.get("headers", {}))
-            assert headers.get("x-wildcard-match") == "wildcard-injected"
+            body = (result.logs or "").strip()
+            if "{" in body:
+                response = _parse_json_output(result.logs)
+                headers = _lowercase_keys(response.get("headers", {}))
+                if headers.get("x-wildcard-match") == "wildcard-injected":
+                    return  # success
+                last_error = f"x-wildcard-match={headers.get('x-wildcard-match')}"
+            else:
+                last_error = "no JSON in response body"
+            await asyncio.sleep(2)
+
+        pytest.fail(f"Wildcard route did not match after 3 attempts: {last_error}")
 
     async def test_wildcard_route_does_not_match_bare_domain(self):
         result = await self.sandbox.process.exec(

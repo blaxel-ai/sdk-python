@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "Blaxel - AI development platform SDK"
 readme = "README.md"
 authors = [{ name = "cploujoux", email = "cploujoux@blaxel.ai" }]
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<3.15"
 dependencies = [
   # Core dependencies that are always needed
   "pydantic>=2.0.0",
@@ -27,18 +27,18 @@ core = []
 # Telemetry module
 telemetry = [
   "opentelemetry-exporter-otlp>=1.28.0",
-  "opentelemetry-instrumentation-anthropic==0.41.0",
-  "opentelemetry-instrumentation-cohere==0.41.0",
-  "opentelemetry-instrumentation-fastapi==0.55b0",
-  "opentelemetry-instrumentation-google-generativeai==0.41.0",
-  "opentelemetry-instrumentation-ollama==0.41.0",
-  "opentelemetry-instrumentation-openai==0.41.0",
+  "opentelemetry-instrumentation-anthropic>=0.41.0",
+  "opentelemetry-instrumentation-cohere>=0.41.0",
+  "opentelemetry-instrumentation-fastapi>=0.55b0",
+  "opentelemetry-instrumentation-google-generativeai>=0.41.0",
+  "opentelemetry-instrumentation-ollama>=0.41.0",
+  "opentelemetry-instrumentation-openai>=0.41.0",
 ]
 
 # CrewAI module
 crewai = [
-  "crewai[litellm]==1.9.3",
-  "opentelemetry-instrumentation-crewai==0.41.0",
+  "crewai[litellm]>=1.9.3",
+  "opentelemetry-instrumentation-crewai>=0.41.0",
 ]
 
 # OpenAI module
@@ -46,15 +46,13 @@ openai = ["openai-agents>=0.0.19"]
 
 # LangGraph module
 langgraph = [
-  "langgraph>=0.2.40,<0.3.0",
+  "langgraph>=0.2.40",
   "langchain-cohere>=0.4.3",
-  "langchain-community>=0.3.3,<0.4.0",
-  "langchain-core>=0.3.13,<0.4.0",
-  "langchain-deepseek-official>=0.1.0.post1",
+  "langchain-community>=0.3.3",
+  "langchain-core>=0.3.13",
   "langchain-openai>=0.3.10",
   "langchain-xai>=0.2.2",
   "langchain-anthropic>=0.3.10",
-  "langchain-cerebras>=0.5.0,<0.6.0",
   "opentelemetry-instrumentation-langchain>=0.35.0",
   "pillow>=10.0.0",
 ]
@@ -74,7 +72,7 @@ llamaindex = [
   "llama-index-llms-deepseek>=0.1.1",
   "llama-index-llms-google-genai>=0.1.13",
   "llama-index-llms-groq>=0.3.1",
-  "llama-index-llms-mistralai>=0.4.0",
+  "llama-index-llms-mistralai>=0.4.0,<0.10.0",
   "llama-index-llms-openai>=0.3.42",
   "opentelemetry-instrumentation-llamaindex>=0.40.7",
 ]
