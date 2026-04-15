@@ -1,5 +1,19 @@
-from typing import Any, Dict, List
+from typing import List
 
+from ...common.settings import settings
+from ..client.api.drive.delete_drives_mount_mount_path import (
+    asyncio as delete_drives_mount,
+)
+from ..client.api.drive.get_drives_mount import asyncio as get_drives_mount
+from ..client.api.drive.post_drives_mount import asyncio as post_drives_mount
+from ..client.client import Client
+from ..client.models import (
+    DriveMountInfo,
+    DriveMountRequest,
+    DriveMountResponse,
+    DriveUnmountResponse,
+    ErrorResponse,
+)
 from ..types import SandboxConfiguration
 from .action import SandboxAction
 
@@ -15,7 +29,7 @@ class SandboxDrive(SandboxAction):
         drive_name: str,
         mount_path: str,
         drive_path: str = "/",
-    ) -> Dict[str, Any]:
+    ) -> DriveMountResponse:
         """
         Mount a drive to the sandbox at the specified mount path.
 
@@ -25,23 +39,28 @@ class SandboxDrive(SandboxAction):
             drive_path: Path within the drive to mount (default: "/")
 
         Returns:
-            Dictionary with success status and mount information
+            DriveMountResponse with success status and mount information
         """
-        if not mount_path.startswith("/"):
-            mount_path = f"/{mount_path}"
+        body = DriveMountRequest(
+            drive_name=drive_name,
+            mount_path=mount_path,
+            drive_path=drive_path,
+        )
 
-        payload = {
-            "driveName": drive_name,
-            "mountPath": mount_path,
-            "drivePath": drive_path,
-        }
+        client = Client(
+            base_url=self.url,
+            headers={**settings.headers, **self.sandbox_config.headers},
+        )
 
-        client = self.get_client()
-        response = await client.post("/drives/mount", json=payload)
-        self.handle_response_error(response)
-        return response.json()
+        async with client:
+            response = await post_drives_mount(client=client, body=body)
+            if response is None:
+                raise Exception("Failed to mount drive")
+            if isinstance(response, ErrorResponse):
+                raise Exception(f"Mount drive failed: {response.error}")
+            return response
 
-    async def unmount(self, mount_path: str) -> Dict[str, Any]:
+    async def unmount(self, mount_path: str) -> DriveUnmountResponse:
         """
         Unmount a drive from the sandbox.
 
@@ -49,30 +68,41 @@ class SandboxDrive(SandboxAction):
             mount_path: Path where the drive is currently mounted
 
         Returns:
-            Dictionary with success status
+            DriveUnmountResponse with success status
         """
-        if not mount_path.startswith("/"):
-            mount_path = f"/{mount_path}"
+        # Strip leading slash for the path parameter since the URL template
+        # already includes the slash: /drives/mount/{mountPath}
+        param_path = mount_path[1:] if mount_path.startswith("/") else mount_path
 
-        url_path = mount_path[1:]
+        client = Client(
+            base_url=self.url,
+            headers={**settings.headers, **self.sandbox_config.headers},
+        )
 
-        client = self.get_client()
-        response = await client.delete(f"/drives/mount/{url_path}")
-        self.handle_response_error(response)
-        return response.json()
+        async with client:
+            response = await delete_drives_mount(param_path, client=client)
+            if response is None:
+                raise Exception("Failed to unmount drive")
+            if isinstance(response, ErrorResponse):
+                raise Exception(f"Unmount drive failed: {response.error}")
+            return response
 
-    async def list(self) -> List[Dict[str, Any]]:
+    async def list(self) -> List[DriveMountInfo]:
         """
         List all currently mounted drives in the sandbox.
 
         Returns:
-            List of dictionaries containing mount information for each drive
+            List of DriveMountInfo for each mounted drive
         """
-        client = self.get_client()
-        response = await client.get("/drives/mount")
-        self.handle_response_error(response)
+        client = Client(
+            base_url=self.url,
+            headers={**settings.headers, **self.sandbox_config.headers},
+        )
 
-        result = response.json()
-        if isinstance(result, dict) and "mounts" in result:
-            return result["mounts"]
-        return []
+        async with client:
+            response = await get_drives_mount(client=client)
+            if response is None:
+                raise Exception("Failed to list drives")
+            if isinstance(response, ErrorResponse):
+                raise Exception(f"List drives failed: {response.error}")
+            return list(response.mounts) if response.mounts else []

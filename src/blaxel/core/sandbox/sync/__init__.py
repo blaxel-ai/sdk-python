@@ -1,3 +1,4 @@
+from .drive import SyncSandboxDrive
 from .interpreter import SyncCodeInterpreter
 from .sandbox import (
     SyncSandboxCodegen,
@@ -15,5 +16,6 @@ __all__ = [
     "SyncSandboxProcess",
     "SyncSandboxCodegen",
     "SyncSandboxSystem",
+    "SyncSandboxDrive",
     "SyncCodeInterpreter",
 ]

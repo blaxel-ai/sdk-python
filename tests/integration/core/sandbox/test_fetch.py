@@ -4,7 +4,6 @@ import pytest_asyncio
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_labels, default_region, unique_name
 
-
 NODE_SERVER_COMMAND = """sleep 2 && node -e "
 const http = require('http');
 const server = http.createServer((req, res) => {

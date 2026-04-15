@@ -172,6 +172,8 @@ from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_spec import SandboxSpec
+from .sandbox_state import SandboxState
+from .share_image_body import ShareImageBody
 from .sso_domain import SSODomain
 from .sso_domain_metadata import SSODomainMetadata
 from .sso_domain_spec import SSODomainSpec
@@ -376,6 +378,8 @@ __all__ = (
     "SandboxNetwork",
     "SandboxRuntime",
     "SandboxSpec",
+    "SandboxState",
+    "ShareImageBody",
     "SSODomain",
     "SSODomainMetadata",
     "SSODomainSpec",

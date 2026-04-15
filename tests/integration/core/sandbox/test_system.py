@@ -46,9 +46,7 @@ async def wait_for_upgrade_complete(
                         f"Upgrade failed after {retries} retries: {health_data.last_upgrade.error}"
                     )
                 retries += 1
-                print(
-                    f"[TEST] Upgrade failed, retrying ({retries}/{max_retries})..."
-                )
+                print(f"[TEST] Upgrade failed, retrying ({retries}/{max_retries})...")
                 await sandbox.system.upgrade(version=VERSION)
         except Exception as e:
             if "Upgrade failed after" in str(e):

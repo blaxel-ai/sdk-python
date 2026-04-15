@@ -115,9 +115,7 @@ class SyncSandboxInstance:
     def expires_in(self):
         return self.sandbox.expires_in
 
-    def fetch(
-        self, port: int, path: str = "/", method: str = "GET", **kwargs
-    ) -> "httpx.Response":
+    def fetch(self, port: int, path: str = "/", method: str = "GET", **kwargs) -> "httpx.Response":
         """Fetch a resource served on a sandbox port.
 
         Args:

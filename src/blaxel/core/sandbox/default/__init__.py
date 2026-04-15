@@ -1,3 +1,4 @@
+from .drive import SandboxDrive
 from .interpreter import CodeInterpreter
 from .sandbox import (
     SandboxAPIError,
@@ -17,5 +18,6 @@ __all__ = [
     "SandboxProcess",
     "SandboxCodegen",
     "SandboxSystem",
+    "SandboxDrive",
     "CodeInterpreter",
 ]
