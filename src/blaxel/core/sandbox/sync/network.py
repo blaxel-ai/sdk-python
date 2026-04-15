@@ -8,9 +8,7 @@ class SyncSandboxNetwork(SyncSandboxAction):
     def __init__(self, sandbox_config: SandboxConfiguration):
         super().__init__(sandbox_config)
 
-    def fetch(
-        self, port: int, path: str = "/", method: str = "GET", **kwargs
-    ) -> httpx.Response:
+    def fetch(self, port: int, path: str = "/", method: str = "GET", **kwargs) -> httpx.Response:
         """Fetch a resource served on a sandbox port.
 
         The request is proxied through the sandbox's /port/{port} endpoint.

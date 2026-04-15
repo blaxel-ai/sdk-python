@@ -27,8 +27,6 @@ class JobRuntime:
             or mk3 (microVMs, sub-25ms cold starts) Example: mk3.
         image (Union[Unset, str]): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
             populated during deployment.
-        max_concurrent_tasks (Union[Unset, int]): Maximum number of tasks that can run simultaneously within a single
-            execution Example: 10.
         max_retries (Union[Unset, int]): Number of automatic retry attempts for failed tasks before marking as failed
             Example: 3.
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
@@ -41,7 +39,6 @@ class JobRuntime:
     envs: Union[Unset, list["Env"]] = UNSET
     generation: Union[Unset, JobRuntimeGeneration] = UNSET
     image: Union[Unset, str] = UNSET
-    max_concurrent_tasks: Union[Unset, int] = UNSET
     max_retries: Union[Unset, int] = UNSET
     memory: Union[Unset, int] = UNSET
     ports: Union[Unset, list["Port"]] = UNSET
@@ -66,8 +63,6 @@ class JobRuntime:
             generation = self.generation.value
 
         image = self.image
-
-        max_concurrent_tasks = self.max_concurrent_tasks
 
         max_retries = self.max_retries
 
@@ -96,8 +91,6 @@ class JobRuntime:
             field_dict["generation"] = generation
         if image is not UNSET:
             field_dict["image"] = image
-        if max_concurrent_tasks is not UNSET:
-            field_dict["maxConcurrentTasks"] = max_concurrent_tasks
         if max_retries is not UNSET:
             field_dict["maxRetries"] = max_retries
         if memory is not UNSET:
@@ -135,8 +128,6 @@ class JobRuntime:
 
         image = d.pop("image", UNSET)
 
-        max_concurrent_tasks = d.pop("maxConcurrentTasks", d.pop("max_concurrent_tasks", UNSET))
-
         max_retries = d.pop("maxRetries", d.pop("max_retries", UNSET))
 
         memory = d.pop("memory", UNSET)
@@ -155,7 +146,6 @@ class JobRuntime:
             envs=envs,
             generation=generation,
             image=image,
-            max_concurrent_tasks=max_concurrent_tasks,
             max_retries=max_retries,
             memory=memory,
             ports=ports,

@@ -8,6 +8,11 @@ from .delete_network_process_pid_monitor_response_200 import (
     DeleteNetworkProcessPidMonitorResponse200,
 )
 from .directory import Directory
+from .drive_list_response import DriveListResponse
+from .drive_mount_info import DriveMountInfo
+from .drive_mount_request import DriveMountRequest
+from .drive_mount_response import DriveMountResponse
+from .drive_unmount_response import DriveUnmountResponse
 from .error_response import ErrorResponse
 from .file import File
 from .file_request import FileRequest
@@ -54,6 +59,11 @@ __all__ = (
     "ContentSearchResponse",
     "DeleteNetworkProcessPidMonitorResponse200",
     "Directory",
+    "DriveListResponse",
+    "DriveMountInfo",
+    "DriveMountRequest",
+    "DriveMountResponse",
+    "DriveUnmountResponse",
     "ErrorResponse",
     "File",
     "FileRequest",

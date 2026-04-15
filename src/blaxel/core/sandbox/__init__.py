@@ -1,6 +1,10 @@
 from .client.models import (
     ApplyEditRequest,
     ApplyEditResponse,
+    DriveMountInfo,
+    DriveMountRequest,
+    DriveMountResponse,
+    DriveUnmountResponse,
     RankedFile,
     RerankingResponse,
 )
@@ -8,6 +12,7 @@ from .default import (
     CodeInterpreter,
     SandboxAPIError,
     SandboxCodegen,
+    SandboxDrive,
     SandboxFileSystem,
     SandboxInstance,
     SandboxPreviews,
@@ -17,6 +22,7 @@ from .default import (
 from .sync import (
     SyncCodeInterpreter,
     SyncSandboxCodegen,
+    SyncSandboxDrive,
     SyncSandboxFileSystem,
     SyncSandboxInstance,
     SyncSandboxPreviews,
@@ -59,6 +65,11 @@ __all__ = [
     "SandboxProcess",
     "SandboxCodegen",
     "SandboxSystem",
+    "SandboxDrive",
+    "DriveMountRequest",
+    "DriveMountResponse",
+    "DriveMountInfo",
+    "DriveUnmountResponse",
     "ProcessRequestWithLog",
     "ProcessResponseWithLog",
     "ApplyEditRequest",
@@ -71,6 +82,7 @@ __all__ = [
     "SyncSandboxPreviews",
     "SyncSandboxProcess",
     "SyncSandboxSystem",
+    "SyncSandboxDrive",
     "SyncCodeInterpreter",
     "CodeInterpreter",
 ]

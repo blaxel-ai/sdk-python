@@ -242,9 +242,9 @@ class TestSandboxDriveMounting(TestDriveOperations):
             drive_path="/",
         )
 
-        assert result["success"] is True
-        assert result["driveName"] == drive_name
-        assert result["mountPath"] == "/mnt/test"
+        assert result.success is True
+        assert result.drive_name == drive_name
+        assert result.mount_path == "/mnt/test"
 
     async def test_lists_mounted_drives(self):
         """Test listing mounted drives."""
@@ -282,10 +282,10 @@ class TestSandboxDriveMounting(TestDriveOperations):
         mounts = await sandbox.drives.list()
         assert isinstance(mounts, list)
 
-        found = next((m for m in mounts if m["driveName"] == drive_name), None)
+        found = next((m for m in mounts if m.drive_name == drive_name), None)
         assert found is not None
-        assert found["mountPath"] == "/mnt/data"
-        assert found["drivePath"] == "/"
+        assert found.mount_path == "/mnt/data"
+        assert found.drive_path == "/"
 
     async def test_writes_and_reads_from_mounted_drive(self):
         """Test writing and reading from a mounted drive."""
@@ -371,17 +371,17 @@ class TestSandboxDriveMounting(TestDriveOperations):
 
         # Verify it's mounted
         mounts_before = await sandbox.drives.list()
-        found_before = next((m for m in mounts_before if m["driveName"] == drive_name), None)
+        found_before = next((m for m in mounts_before if m.drive_name == drive_name), None)
         assert found_before is not None
 
         # Unmount drive
         unmount_result = await sandbox.drives.unmount("/mnt/temp")
-        assert unmount_result["success"] is True
-        assert unmount_result["mountPath"] == "/mnt/temp"
+        assert unmount_result.success is True
+        assert unmount_result.mount_path == "/mnt/temp"
 
         # Verify it's unmounted
         mounts_after = await sandbox.drives.list()
-        found_after = next((m for m in mounts_after if m["driveName"] == drive_name), None)
+        found_after = next((m for m in mounts_after if m.drive_name == drive_name), None)
         assert found_after is None
 
     async def test_mounts_drive_subdirectory(self):
@@ -432,7 +432,7 @@ class TestSandboxDriveMounting(TestDriveOperations):
             drive_path="/subdir",
         )
 
-        assert mount_result["drivePath"] == "/subdir"
+        assert mount_result.drive_path == "/subdir"
 
         # Verify we can access the file from the subdirectory mount
         result = await sandbox.process.exec(
@@ -579,8 +579,8 @@ class TestMultipleDrives(TestDriveOperations):
         mounts = await sandbox.drives.list()
         assert len(mounts) >= 2
 
-        found1 = next((m for m in mounts if m["driveName"] == drive1_name), None)
-        found2 = next((m for m in mounts if m["driveName"] == drive2_name), None)
+        found1 = next((m for m in mounts if m.drive_name == drive1_name), None)
+        found2 = next((m for m in mounts if m.drive_name == drive2_name), None)
         assert found1 is not None
         assert found2 is not None
 
@@ -646,13 +646,13 @@ class TestDriveMountPathHandling(TestDriveOperations):
             mount_path="/mnt/test",
         )
 
-        assert result["success"] is True
+        assert result.success is True
 
         # Unmount should also work without leading slash
         await sandbox.drives.unmount("mnt/test")
 
         mounts = await sandbox.drives.list()
-        found = next((m for m in mounts if m["driveName"] == drive_name), None)
+        found = next((m for m in mounts if m.drive_name == drive_name), None)
         assert found is None
 
 
