@@ -41,6 +41,9 @@ class SyncSandboxDrive(SyncSandboxAction):
         Returns:
             DriveMountResponse with success status and mount information
         """
+        if not mount_path.startswith("/"):
+            mount_path = f"/{mount_path}"
+
         body = DriveMountRequest(
             drive_name=drive_name,
             mount_path=mount_path,
