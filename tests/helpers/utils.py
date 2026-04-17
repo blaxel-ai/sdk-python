@@ -51,7 +51,11 @@ async def wait_for_sandbox_deployed(sandbox_name: str, max_attempts: int = 30) -
 
 async def wait_for_sandbox_deletion(sandbox_name: str, max_attempts: int = 30) -> bool:
     """
-    Wait for a sandbox deletion to fully complete by polling until the sandbox no longer exists.
+    Wait for a sandbox deletion to complete by polling until the sandbox either
+    (a) no longer exists (GET raises) or (b) has transitioned to the
+    ``TERMINATED`` status — which the SDK itself treats as "not existing"
+    (see ``SandboxInstance.create_if_not_exists``). This avoids waiting for the
+    backend tombstone after the sandbox is already semantically gone.
 
     Args:
         sandbox_name: The name of the sandbox to wait for deletion
@@ -64,12 +68,12 @@ async def wait_for_sandbox_deletion(sandbox_name: str, max_attempts: int = 30) -
 
     while attempts < max_attempts:
         try:
-            await SandboxInstance.get(sandbox_name)
-            # If we get here, sandbox still exists, wait and try again
+            sandbox = await SandboxInstance.get(sandbox_name)
+            if getattr(sandbox, "status", None) == "TERMINATED":
+                return True
             await async_sleep(1)
             attempts += 1
         except Exception:
-            # If get throws an error, the sandbox no longer exists
             return True
 
     print(f"Timeout waiting for {sandbox_name} deletion to complete")
