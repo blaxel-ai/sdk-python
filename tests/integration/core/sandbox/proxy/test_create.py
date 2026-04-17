@@ -39,7 +39,7 @@ async def test_creates_sandbox_with_proxy_routing_and_header_injection(created_s
     assert not_unset(proxy)
     assert len(proxy.routing) == 1
     route = proxy.routing[0]
-    assert "api.stripe.com" in route.destinations
+    assert route.destinations == ["api.stripe.com"]
     assert route.headers["Authorization"] == "Bearer {{SECRET:stripe-key}}"
     assert route.headers["Stripe-Version"] == "2024-12-18.acacia"
 
@@ -109,11 +109,11 @@ async def test_creates_sandbox_with_multiple_proxy_routing_rules(created_sandbox
     proxy = sandbox.spec.network.proxy
     assert len(proxy.routing) == 2
 
-    stripe_route = next(r for r in proxy.routing if "api.stripe.com" in r.destinations)
+    stripe_route = next(r for r in proxy.routing if r.destinations == ["api.stripe.com"])
     assert stripe_route.headers["X-Request-Source"] == "blaxel-sandbox"
     assert stripe_route.body["api_key"] == "{{SECRET:stripe-key}}"
 
-    openai_route = next(r for r in proxy.routing if "api.openai.com" in r.destinations)
+    openai_route = next(r for r in proxy.routing if r.destinations == ["api.openai.com"])
     assert openai_route.headers["OpenAI-Organization"] == "org-abc123"
 
     assert "*.s3.amazonaws.com" in proxy.bypass

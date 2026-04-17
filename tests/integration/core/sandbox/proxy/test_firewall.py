@@ -1,5 +1,8 @@
 """Firewall e2e tests (allowedDomains / forbiddenDomains)."""
 
+import re
+from urllib.parse import urlparse
+
 import pytest
 import pytest_asyncio
 
@@ -12,6 +15,13 @@ from .helpers import (
     lowercase_keys,
     parse_json_output,
 )
+
+
+def _logs_contain_host(logs: str | None, expected_host: str) -> bool:
+    for token in re.findall(r"https?://[^\s\"'<>]+", logs or ""):
+        if urlparse(token).hostname == expected_host:
+            return True
+    return False
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -47,7 +57,7 @@ class TestFirewallAllowedDomains:
             "wait_for_completion": True,
         })
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        assert _logs_contain_host(result.logs, "httpbin.org")
 
     async def test_blocks_requests_to_non_allowlisted_domain(self):
         result = await self.sandbox.process.exec({
@@ -90,7 +100,7 @@ class TestFirewallForbiddenDomains:
             "wait_for_completion": True,
         })
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        assert _logs_contain_host(result.logs, "httpbin.org")
 
     async def test_blocks_requests_to_forbidden_domain(self):
         result = await self.sandbox.process.exec({
