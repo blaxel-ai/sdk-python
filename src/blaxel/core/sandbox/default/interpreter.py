@@ -36,6 +36,7 @@ class CodeInterpreter(SandboxInstance):
         cls,
         sandbox: Sandbox | SandboxCreateConfiguration | Dict[str, Any] | None = None,
         safe: bool = True,
+        create_if_not_exist: bool = False,
     ) -> CodeInterpreter:
         """
         Create a sandbox instance using the jupyter-server image.
@@ -83,7 +84,9 @@ class CodeInterpreter(SandboxInstance):
             if sandbox.spec and getattr(sandbox.spec, "region", None):
                 payload["region"] = sandbox.spec.region
 
-        base_instance = await SandboxInstance.create(payload, safe=safe)
+        base_instance = await SandboxInstance.create(
+            payload, safe=safe, create_if_not_exist=create_if_not_exist
+        )
         return cls(
             sandbox=base_instance.sandbox,
             force_url=base_instance.config.force_url,

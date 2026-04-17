@@ -154,6 +154,7 @@ class SandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -279,6 +280,7 @@ class SandboxInstance:
         response = await create_sandbox(
             client=client,
             body=sandbox,
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -446,7 +448,7 @@ class SandboxInstance:
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
         try:
-            return await cls.create(sandbox)
+            return await cls.create(sandbox, create_if_not_exist=True)
         except SandboxAPIError as e:
             # Check if it's a 409 conflict error (sandbox already exists)
             if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
@@ -474,7 +476,7 @@ class SandboxInstance:
                 # If the sandbox is TERMINATED, treat it as not existing
                 if sandbox_instance.status == "TERMINATED":
                     # Create a new sandbox - backend will handle cleanup of the terminated one
-                    return await cls.create(sandbox)
+                    return await cls.create(sandbox, create_if_not_exist=True)
 
                 # Otherwise return the existing active sandbox
                 return sandbox_instance

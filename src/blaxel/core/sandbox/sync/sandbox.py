@@ -137,6 +137,7 @@ class SyncSandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SyncSandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -245,6 +246,7 @@ class SyncSandboxInstance:
         response = create_sandbox(
             client=client,
             body=sandbox,
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -384,7 +386,7 @@ class SyncSandboxInstance:
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
         try:
-            return cls.create(sandbox)
+            return cls.create(sandbox, create_if_not_exist=True)
         except SandboxAPIError as e:
             if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
                 if isinstance(sandbox, SandboxCreateConfiguration):
@@ -404,7 +406,7 @@ class SyncSandboxInstance:
                     raise ValueError("Sandbox name is required")
                 sandbox_instance = cls.get(name)
                 if sandbox_instance.status == "TERMINATED":
-                    return cls.create(sandbox)
+                    return cls.create(sandbox, create_if_not_exist=True)
                 return sandbox_instance
             raise
 
