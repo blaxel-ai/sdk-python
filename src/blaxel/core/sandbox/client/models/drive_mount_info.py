@@ -15,11 +15,13 @@ class DriveMountInfo:
         drive_name (Union[Unset, str]):
         drive_path (Union[Unset, str]):
         mount_path (Union[Unset, str]):
+        read_only (Union[Unset, bool]):
     """
 
     drive_name: Union[Unset, str] = UNSET
     drive_path: Union[Unset, str] = UNSET
     mount_path: Union[Unset, str] = UNSET
+    read_only: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -28,6 +30,8 @@ class DriveMountInfo:
         drive_path = self.drive_path
 
         mount_path = self.mount_path
+
+        read_only = self.read_only
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -38,6 +42,8 @@ class DriveMountInfo:
             field_dict["drivePath"] = drive_path
         if mount_path is not UNSET:
             field_dict["mountPath"] = mount_path
+        if read_only is not UNSET:
+            field_dict["readOnly"] = read_only
 
         return field_dict
 
@@ -52,10 +58,13 @@ class DriveMountInfo:
 
         mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
+        read_only = d.pop("readOnly", d.pop("read_only", UNSET))
+
         drive_mount_info = cls(
             drive_name=drive_name,
             drive_path=drive_path,
             mount_path=mount_path,
+            read_only=read_only,
         )
 
         drive_mount_info.additional_properties = d

@@ -29,6 +29,7 @@ class SyncSandboxDrive(SyncSandboxAction):
         drive_name: str,
         mount_path: str,
         drive_path: str = "/",
+        read_only: bool = False,
     ) -> DriveMountResponse:
         """
         Mount a drive to the sandbox at the specified mount path.
@@ -37,6 +38,7 @@ class SyncSandboxDrive(SyncSandboxAction):
             drive_name: Name of the drive to mount
             mount_path: Path in the sandbox where the drive should be mounted
             drive_path: Path within the drive to mount (default: "/")
+            read_only: If True, mount the drive as read-only (default: False)
 
         Returns:
             DriveMountResponse with success status and mount information
@@ -48,6 +50,7 @@ class SyncSandboxDrive(SyncSandboxAction):
             drive_name=drive_name,
             mount_path=mount_path,
             drive_path=drive_path,
+            read_only=read_only,
         )
 
         client = Client(

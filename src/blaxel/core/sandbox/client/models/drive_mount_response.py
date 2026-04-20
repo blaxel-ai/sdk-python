@@ -16,6 +16,7 @@ class DriveMountResponse:
         drive_path (Union[Unset, str]):
         message (Union[Unset, str]):
         mount_path (Union[Unset, str]):
+        read_only (Union[Unset, bool]):
         success (Union[Unset, bool]):
     """
 
@@ -23,6 +24,7 @@ class DriveMountResponse:
     drive_path: Union[Unset, str] = UNSET
     message: Union[Unset, str] = UNSET
     mount_path: Union[Unset, str] = UNSET
+    read_only: Union[Unset, bool] = UNSET
     success: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,6 +36,8 @@ class DriveMountResponse:
         message = self.message
 
         mount_path = self.mount_path
+
+        read_only = self.read_only
 
         success = self.success
 
@@ -48,6 +52,8 @@ class DriveMountResponse:
             field_dict["message"] = message
         if mount_path is not UNSET:
             field_dict["mountPath"] = mount_path
+        if read_only is not UNSET:
+            field_dict["readOnly"] = read_only
         if success is not UNSET:
             field_dict["success"] = success
 
@@ -66,6 +72,8 @@ class DriveMountResponse:
 
         mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
+        read_only = d.pop("readOnly", d.pop("read_only", UNSET))
+
         success = d.pop("success", UNSET)
 
         drive_mount_response = cls(
@@ -73,6 +81,7 @@ class DriveMountResponse:
             drive_path=drive_path,
             message=message,
             mount_path=mount_path,
+            read_only=read_only,
             success=success,
         )
 
