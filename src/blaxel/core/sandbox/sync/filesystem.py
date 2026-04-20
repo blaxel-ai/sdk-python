@@ -191,7 +191,13 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 params["ignore"] = ",".join(options["ignore"])
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            with httpx.Client() as client_instance:
+            from ...common.h3transport import get_sync_transport_for_url
+
+            transport = get_sync_transport_for_url(url)
+            watch_kw: dict = {}
+            if transport is not None:
+                watch_kw["transport"] = transport
+            with httpx.Client(**watch_kw) as client_instance:
                 with client_instance.stream("GET", url, params=params, headers=headers) as response:
                     if not response.is_success:
                         raise Exception(f"Failed to start watching: {response.status_code}")
