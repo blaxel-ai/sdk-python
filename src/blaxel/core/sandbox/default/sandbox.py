@@ -18,6 +18,7 @@ from ...client.models import (
     Sandbox,
     SandboxLifecycle,
     SandboxRuntime,
+    SandboxRuntimeExtraArgs,
     SandboxSpec,
 )
 from ...client.models import (
@@ -214,6 +215,7 @@ class SandboxInstance:
             lifecycle = config.lifecycle
             network = config.network
             snapshot_enabled = config.snapshot_enabled
+            extra_args = config.extra_args
 
             labels = MetadataLabels.from_dict(config.labels) if config.labels else UNSET
             if labels is None:
@@ -256,6 +258,10 @@ class SandboxInstance:
                 sandbox.spec.network = network
             if snapshot_enabled is not None and sandbox.spec.runtime:
                 sandbox.spec.runtime["snapshotEnabled"] = snapshot_enabled
+            if extra_args and sandbox.spec.runtime:
+                ea = SandboxRuntimeExtraArgs()
+                ea.additional_properties = extra_args
+                sandbox.spec.runtime.extra_args = ea
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):

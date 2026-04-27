@@ -6,6 +6,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.image import Image
+from ...models.pending_image_share import PendingImageShare
 from ...models.share_image_body import ShareImageBody
 from ...types import Response
 
@@ -35,24 +36,35 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Image] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Any, Image, PendingImageShare] | None:
     if response.status_code == 200:
         response_200 = Image.from_dict(response.json())
 
         return response_200
+    if response.status_code == 202:
+        response_202 = PendingImageShare.from_dict(response.json())
+
+        return response_202
     if response.status_code == 400:
         response_400 = cast(Any, None)
         return response_400
     if response.status_code == 404:
         response_404 = cast(Any, None)
         return response_404
+    if response.status_code == 409:
+        response_409 = cast(Any, None)
+        return response_409
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Image]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Any, Image, PendingImageShare]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,11 +79,13 @@ def sync_detailed(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Response[Union[Any, Image]]:
+) -> Response[Union[Any, Image, PendingImageShare]]:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
-    storage (S3) data is not duplicated. The target workspace must belong to the same account.
+    storage (S3) data is not duplicated. For same-account targets the share is applied immediately. For
+    cross-account targets, a pending image share is created and must be explicitly accepted by an admin
+    of the target workspace; the correct target account ID must be supplied as an anti-spam measure.
 
     Args:
         resource_type (str):
@@ -83,7 +97,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image]]
+        Response[Union[Any, Image, PendingImageShare]]
     """
 
     kwargs = _get_kwargs(
@@ -105,11 +119,13 @@ def sync(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Union[Any, Image] | None:
+) -> Union[Any, Image, PendingImageShare] | None:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
-    storage (S3) data is not duplicated. The target workspace must belong to the same account.
+    storage (S3) data is not duplicated. For same-account targets the share is applied immediately. For
+    cross-account targets, a pending image share is created and must be explicitly accepted by an admin
+    of the target workspace; the correct target account ID must be supplied as an anti-spam measure.
 
     Args:
         resource_type (str):
@@ -121,7 +137,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image]
+        Union[Any, Image, PendingImageShare]
     """
 
     return sync_detailed(
@@ -138,11 +154,13 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Response[Union[Any, Image]]:
+) -> Response[Union[Any, Image, PendingImageShare]]:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
-    storage (S3) data is not duplicated. The target workspace must belong to the same account.
+    storage (S3) data is not duplicated. For same-account targets the share is applied immediately. For
+    cross-account targets, a pending image share is created and must be explicitly accepted by an admin
+    of the target workspace; the correct target account ID must be supplied as an anti-spam measure.
 
     Args:
         resource_type (str):
@@ -154,7 +172,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image]]
+        Response[Union[Any, Image, PendingImageShare]]
     """
 
     kwargs = _get_kwargs(
@@ -174,11 +192,13 @@ async def asyncio(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Union[Any, Image] | None:
+) -> Union[Any, Image, PendingImageShare] | None:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
-    storage (S3) data is not duplicated. The target workspace must belong to the same account.
+    storage (S3) data is not duplicated. For same-account targets the share is applied immediately. For
+    cross-account targets, a pending image share is created and must be explicitly accepted by an admin
+    of the target workspace; the correct target account ID must be supplied as an anti-spam measure.
 
     Args:
         resource_type (str):
@@ -190,7 +210,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image]
+        Union[Any, Image, PendingImageShare]
     """
 
     return (

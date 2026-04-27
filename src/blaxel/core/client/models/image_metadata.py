@@ -44,6 +44,7 @@ class ImageMetadata:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         created_at = self.created_at
 
         display_name = self.display_name
