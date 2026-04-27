@@ -2,6 +2,7 @@ import pytest
 
 from blaxel.core import SandboxInstance
 from blaxel.core.client.types import Unset
+from blaxel.core.sandbox.types import SandboxUpdateMetadata
 from tests.helpers import (
     default_image,
     default_labels,
@@ -106,7 +107,8 @@ class TestSandboxExtraArgs:
 
         try:
             await SandboxInstance.update_metadata(
-                name, {"labels": {**default_labels, "updated": "true"}}
+                name,
+                SandboxUpdateMetadata(labels={**default_labels, "updated": "true"}),
             )
             retrieved = await SandboxInstance.get(name)
             assert retrieved.spec.runtime.extra_args["iptables"] == "enabled"
