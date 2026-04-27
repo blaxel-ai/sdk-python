@@ -74,6 +74,7 @@ from .group_workspace_mapping import GroupWorkspaceMapping
 from .group_workspace_mapping_role import GroupWorkspaceMappingRole
 from .image import Image
 from .image_metadata import ImageMetadata
+from .image_share_target import ImageShareTarget
 from .image_spec import ImageSpec
 from .image_tag import ImageTag
 from .integration import Integration
@@ -109,6 +110,7 @@ from .job_runtime_generation import JobRuntimeGeneration
 from .job_spec import JobSpec
 from .job_volume import JobVolume
 from .job_volume_type import JobVolumeType
+from .list_pending_image_shares_direction import ListPendingImageSharesDirection
 from .location_response import LocationResponse
 from .mcp_definition import MCPDefinition
 from .mcp_definition_categories_item import MCPDefinitionCategoriesItem
@@ -123,6 +125,8 @@ from .network_firewall import NetworkFirewall
 from .o_auth import OAuth
 from .o_auth_scope_item import OAuthScopeItem
 from .owner_fields import OwnerFields
+from .pending_image_share import PendingImageShare
+from .pending_image_share_render import PendingImageShareRender
 from .pending_invitation import PendingInvitation
 from .pending_invitation_accept import PendingInvitationAccept
 from .pending_invitation_render import PendingInvitationRender
@@ -171,6 +175,7 @@ from .sandbox_error_details import SandboxErrorDetails
 from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
+from .sandbox_runtime_extra_args import SandboxRuntimeExtraArgs
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
 from .share_image_body import ShareImageBody
@@ -204,6 +209,8 @@ from .volume_template_version_status import VolumeTemplateVersionStatus
 from .vpc import VPC
 from .vpc_spec import VPCSpec
 from .workspace import Workspace
+from .workspace_availability import WorkspaceAvailability
+from .workspace_availability_reason import WorkspaceAvailabilityReason
 from .workspace_runtime import WorkspaceRuntime
 from .workspace_status import WorkspaceStatus
 from .workspace_user import WorkspaceUser
@@ -282,6 +289,7 @@ __all__ = (
     "GroupWorkspaceMappingRole",
     "Image",
     "ImageMetadata",
+    "ImageShareTarget",
     "ImageSpec",
     "ImageTag",
     "Integration",
@@ -317,6 +325,7 @@ __all__ = (
     "JobSpec",
     "JobVolume",
     "JobVolumeType",
+    "ListPendingImageSharesDirection",
     "LocationResponse",
     "MCPDefinition",
     "MCPDefinitionCategoriesItem",
@@ -331,6 +340,8 @@ __all__ = (
     "OAuth",
     "OAuthScopeItem",
     "OwnerFields",
+    "PendingImageShare",
+    "PendingImageShareRender",
     "PendingInvitation",
     "PendingInvitationAccept",
     "PendingInvitationRender",
@@ -377,6 +388,7 @@ __all__ = (
     "SandboxLifecycle",
     "SandboxNetwork",
     "SandboxRuntime",
+    "SandboxRuntimeExtraArgs",
     "SandboxSpec",
     "SandboxState",
     "ShareImageBody",
@@ -410,6 +422,8 @@ __all__ = (
     "VPC",
     "VPCSpec",
     "Workspace",
+    "WorkspaceAvailability",
+    "WorkspaceAvailabilityReason",
     "WorkspaceRuntime",
     "WorkspaceStatus",
     "WorkspaceUser",

@@ -165,6 +165,7 @@ class SandboxCreateConfiguration:
         network: Union[SandboxNetwork, Dict[str, Any]] | None = None,
         snapshot_enabled: bool | None = None,
         labels: Dict[str, str] | None = None,
+        extra_args: Dict[str, str] | None = None,
     ):
         self.name = name
         self.image = image
@@ -179,6 +180,7 @@ class SandboxCreateConfiguration:
         self.network = network
         self.snapshot_enabled = snapshot_enabled
         self.labels = labels
+        self.extra_args = extra_args
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -208,6 +210,7 @@ class SandboxCreateConfiguration:
             network=network,
             snapshot_enabled=data.get("snapshot_enabled"),
             labels=data.get("labels"),
+            extra_args=data.get("extra_args"),
         )
 
     def _normalize_ports(self) -> List[Port] | None:
