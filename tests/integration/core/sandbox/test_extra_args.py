@@ -1,6 +1,7 @@
 import pytest
 
 from blaxel.core import SandboxInstance
+from blaxel.core.client.types import Unset
 from tests.helpers import (
     default_image,
     default_labels,
@@ -83,7 +84,11 @@ class TestSandboxExtraArgs:
         try:
             retrieved = await SandboxInstance.get(name)
             extra_args = retrieved.spec.runtime.extra_args
-            assert extra_args is None or len(extra_args.additional_properties) == 0
+            assert (
+                extra_args is None
+                or isinstance(extra_args, Unset)
+                or len(extra_args.additional_properties) == 0
+            )
         finally:
             await SandboxInstance.delete(name)
 
@@ -100,7 +105,9 @@ class TestSandboxExtraArgs:
         )
 
         try:
-            await SandboxInstance.update(name, {"labels": {**default_labels, "updated": "true"}})
+            await SandboxInstance.update_metadata(
+                name, {"labels": {**default_labels, "updated": "true"}}
+            )
             retrieved = await SandboxInstance.get(name)
             assert retrieved.spec.runtime.extra_args["iptables"] == "enabled"
         finally:
