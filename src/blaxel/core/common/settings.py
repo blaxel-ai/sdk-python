@@ -8,6 +8,8 @@ import yaml
 from ..authentication import BlaxelAuth, auth
 from .logger import init_logger
 
+BLAXEL_API_VERSION = "2026-04-16"
+
 
 def _get_os_arch() -> str:
     """Get OS and architecture information."""
@@ -91,11 +93,17 @@ class Settings:
         return blaxel.__commit__ or "unknown"
 
     @property
+    def api_version(self) -> str:
+        """Get the API version sent in the Blaxel-Version header."""
+        return os.environ.get("BL_API_VERSION", BLAXEL_API_VERSION)
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Get the headers for API requests."""
         headers = self.auth.get_headers()
         os_arch = _get_os_arch()
         headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
+        headers["Blaxel-Version"] = self.api_version
         return headers
 
     @property
