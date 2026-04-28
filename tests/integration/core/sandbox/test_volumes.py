@@ -261,7 +261,12 @@ class TestVolumeResize(TestVolumeOperations):
                 "wait_for_completion": True,
             }
         )
-        usage_percent1 = int(disk_check1.logs.strip())
+        try:
+            usage_percent1 = int(disk_check1.logs.strip())
+        except ValueError as e:
+            raise AssertionError(
+                f"Could not parse df output for baseline disk usage: {disk_check1.logs!r}"
+            ) from e
         assert usage_percent1 > 60
 
         # Delete first sandbox
