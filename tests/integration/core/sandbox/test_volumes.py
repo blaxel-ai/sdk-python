@@ -253,6 +253,17 @@ class TestVolumeResize(TestVolumeOperations):
         )
         assert "large-file-1.bin" in check_result1.logs
 
+        # Capture disk usage on the 512MB volume so we can later assert the
+        # resize actually took effect (usage should drop on the 1GB volume).
+        disk_check1 = await sandbox1.process.exec(
+            {
+                "command": "df /data | tail -1 | awk '{print $5}' | sed 's/%//'",
+                "wait_for_completion": True,
+            }
+        )
+        usage_percent1 = int(disk_check1.logs.strip())
+        assert usage_percent1 > 60
+
         # Delete first sandbox
         await SandboxInstance.delete(sandbox1_name)
         await wait_for_sandbox_deletion(sandbox1_name)
@@ -282,6 +293,33 @@ class TestVolumeResize(TestVolumeOperations):
             }
         )
         assert "large-file-1.bin" in check_result2.logs
+
+        # Poll disk usage until the resize is visible in the mounted filesystem.
+        # Volume resize is event-based on the backend, so reconciliation can take
+        # noticeably longer than a few seconds. Wait up to 3 minutes for usage to
+        # drop below the pre-resize value before asserting.
+        resize_deadline = time.time() + 180
+        usage_percent2 = usage_percent1
+        while time.time() < resize_deadline:
+            disk_check2 = await sandbox2.process.exec(
+                {
+                    "command": "df /data | tail -1 | awk '{print $5}' | sed 's/%//'",
+                    "wait_for_completion": True,
+                }
+            )
+            try:
+                usage_percent2 = int(disk_check2.logs.strip())
+            except ValueError:
+                # Empty or malformed df output: retry rather than spin idle.
+                await asyncio.sleep(5)
+                continue
+            if usage_percent2 < usage_percent1:
+                break
+            await asyncio.sleep(5)
+        # After resize from 512MB to 1024MB, usage should drop meaningfully.
+        # Use a relative comparison rather than a fixed threshold to tolerate
+        # filesystem overhead and async reconciliation timing.
+        assert usage_percent2 < usage_percent1
 
         # Write another ~400MB file (would fail if volume wasn't resized)
         write_result = await sandbox2.process.exec(
