@@ -9,6 +9,21 @@ from blaxel.core import settings
 
 logger = getLogger(__name__)
 
+GPT_54_REASONING_MODELS = {"gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"}
+
+
+def _provider_type_value(provider_type):
+    return getattr(provider_type, "value", provider_type)
+
+
+def _set_default_reasoning_effort(provider_type, model: str, kwargs: dict):
+    if (
+        _provider_type_value(provider_type) == "openai"
+        and model in GPT_54_REASONING_MODELS
+        and "reasoning_effort" not in kwargs
+    ):
+        kwargs["reasoning_effort"] = "none"
+
 
 class DynamicHeadersHTTPClient(httpx.AsyncClient):
     """Custom HTTP client that dynamically updates headers on each request."""
@@ -31,6 +46,8 @@ class DynamicHeadersHTTPClient(httpx.AsyncClient):
 
 
 async def get_livekit_model(url: str, type: str, model: str, **kwargs):
+    _set_default_reasoning_effort(type, model, kwargs)
+
     # Create custom HTTP client with dynamic headers
     http_client = AsyncOpenAI(
         base_url=f"{url}/v1",

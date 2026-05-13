@@ -1,6 +1,8 @@
 """LiveKit Model Integration Tests."""
 
 pytest_plugins = []
+from unittest.mock import Mock, patch
+
 import pytest  # noqa: E402
 
 pytest.importorskip(
@@ -10,10 +12,50 @@ pytest.importorskip(
 from livekit.agents.llm import ChatContext  # noqa: E402
 
 from blaxel.livekit import bl_model  # noqa: E402
+from blaxel.livekit.model import get_livekit_model  # noqa: E402
 
 TEST_MODELS = [
     "sandbox-openai",
 ]
+
+
+async def _created_livekit_kwargs(provider_type: str, model: str, **kwargs):
+    llm = Mock(name="llm")
+    http_client = Mock(name="http_client")
+    openai_client = Mock(name="openai_client")
+
+    with (
+        patch("blaxel.livekit.model.DynamicHeadersHTTPClient", return_value=http_client),
+        patch("blaxel.livekit.model.AsyncOpenAI", return_value=openai_client),
+        patch("blaxel.livekit.model.openai.LLM", return_value=llm) as llm_factory,
+    ):
+        result = await get_livekit_model("https://example.com/models/test", provider_type, model, **kwargs)
+
+    assert result is llm
+    return llm_factory.call_args.kwargs
+
+
+@pytest.mark.asyncio
+async def test_gpt54_openai_models_default_reasoning_effort_to_none():
+    for model_name in ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]:
+        kwargs = await _created_livekit_kwargs("openai", model_name)
+
+        assert kwargs["model"] == model_name
+        assert kwargs["reasoning_effort"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_livekit_reasoning_effort_override_is_preserved():
+    kwargs = await _created_livekit_kwargs("openai", "gpt-5.4-mini", reasoning_effort="low")
+
+    assert kwargs["reasoning_effort"] == "low"
+
+
+@pytest.mark.asyncio
+async def test_livekit_non_openai_provider_does_not_default_reasoning_effort():
+    kwargs = await _created_livekit_kwargs("xai", "gpt-5.4-mini")
+
+    assert "reasoning_effort" not in kwargs
 
 
 @pytest.mark.asyncio(loop_scope="class")
