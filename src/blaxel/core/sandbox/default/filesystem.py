@@ -21,7 +21,7 @@ from .action import SandboxAction
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
-MAX_PARALLEL_UPLOADS = 20  # Number of parallel part uploads
+MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
 
 logger = logging.getLogger(__name__)
 
@@ -480,8 +480,8 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.post(url, json=body, headers=headers)
         try:
-            data = json.loads(await response.aread())
             self.handle_response_error(response)
+            data = json.loads(await response.aread())
             return data
         finally:
             await response.aclose()
@@ -498,9 +498,9 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.put(url, files=files, params=params, headers=headers)
         try:
-            data = json.loads(await response.aread())
             self.handle_response_error(response)
-            return data
+            result = json.loads(await response.aread())
+            return result
         finally:
             await response.aclose()
 
@@ -515,8 +515,8 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.post(url, json=body, headers=headers)
         try:
-            data = json.loads(await response.aread())
             self.handle_response_error(response)
+            data = json.loads(await response.aread())
             return SuccessResponse.from_dict(data)
         finally:
             await response.aclose()
@@ -531,7 +531,7 @@ class SandboxFileSystem(SandboxAction):
         try:
             # Don't raise error if abort fails - we want to throw the original error
             if not response.is_success:
-                print(f"Warning: Failed to abort multipart upload: {response.status_code}")
+                logger.warning(f"Failed to abort multipart upload: {response.status_code}")
         finally:
             await response.aclose()
 
