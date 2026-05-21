@@ -4,6 +4,7 @@ from .agents import BlAgent, bl_agent
 from .authentication import BlaxelAuth, auth, get_credentials
 from .cache import find_from_cache
 from .client.client import client
+from .client.errors import ControlPlaneError
 from .common import (
     autoload,
     env,
@@ -12,6 +13,7 @@ from .common import (
     verify_webhook_signature,
 )
 from .drive import DriveAPIError, DriveCreateConfiguration, DriveInstance, SyncDriveInstance
+from .errors import BlaxelAPIError
 from .image import ImageBuildContext, ImageInstance, LocalFile
 from .jobs import BlJobWrapper
 from .mcp import BlaxelMcpServerTransport, websocket_client
@@ -35,6 +37,8 @@ from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
 from .volume import SyncVolumeInstance, VolumeCreateConfiguration, VolumeInstance
 
 __all__ = [
+    "BlaxelAPIError",
+    "ControlPlaneError",
     "BlAgent",
     "bl_agent",
     "BlaxelAuth",

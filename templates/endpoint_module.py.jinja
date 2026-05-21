@@ -79,6 +79,10 @@ def _parse_response(*, client: Client, response: httpx.Response) -> {{ return_st
         {% else %}
         {{ response.prop.python_name }} = cast({{ response.prop.get_type_string() }}, {{ response.source.attribute }})
         {% endif %}
+        {% if response.prop.get_type_string() == "Error" %}
+        if client.raise_on_error:
+            raise errors.ControlPlaneError({{ response.prop.python_name }}, response)
+        {% endif %}
         return {{ response.prop.python_name }}
         {% else %}
         return None
@@ -149,4 +153,3 @@ async def asyncio(
     return (await asyncio_detailed(
         {{ kwargs(endpoint) }}
     )).parsed
-{% endif %}

@@ -29,18 +29,26 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
+        if client.raise_on_error:
+            raise errors.ControlPlaneError(response_401, response)
         return response_401
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
+        if client.raise_on_error:
+            raise errors.ControlPlaneError(response_403, response)
         return response_403
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
+        if client.raise_on_error:
+            raise errors.ControlPlaneError(response_404, response)
         return response_404
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
+        if client.raise_on_error:
+            raise errors.ControlPlaneError(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)

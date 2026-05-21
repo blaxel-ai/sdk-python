@@ -15,18 +15,19 @@ from ..client.api.volumes.list_volumes import sync as list_volumes_sync
 from ..client.api.volumes.update_volume import asyncio as update_volume
 from ..client.api.volumes.update_volume import sync as update_volume_sync
 from ..client.client import client
+from ..client.errors import ControlPlaneError
 from ..client.models import Metadata, Volume, VolumeSpec
 from ..client.models.error import Error
 from ..client.types import UNSET
 from ..common.settings import settings
+from ..errors import BlaxelAPIError
 
 
-class VolumeAPIError(Exception):
+class VolumeAPIError(BlaxelAPIError):
     """Exception raised when volume API returns an error."""
 
     def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
+        super().__init__(message=message, status_code=status_code, error_code=code)
         self.code = code
 
 
@@ -237,7 +238,10 @@ class VolumeInstance:
                 stacklevel=2,
             )
 
-        response = await create_volume(client=client, body=volume)
+        try:
+            response = await create_volume(client=client, body=volume)
+        except ControlPlaneError as e:
+            raise VolumeAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -246,7 +250,10 @@ class VolumeInstance:
 
     @classmethod
     async def get(cls, volume_name: str) -> "VolumeInstance":
-        response = await get_volume(volume_name=volume_name, client=client)
+        try:
+            response = await get_volume(volume_name=volume_name, client=client)
+        except ControlPlaneError as e:
+            raise VolumeAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -389,7 +396,10 @@ class SyncVolumeInstance:
                 stacklevel=2,
             )
 
-        response = create_volume_sync(client=client, body=volume)
+        try:
+            response = create_volume_sync(client=client, body=volume)
+        except ControlPlaneError as e:
+            raise VolumeAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -399,7 +409,10 @@ class SyncVolumeInstance:
     @classmethod
     def get(cls, volume_name: str) -> "SyncVolumeInstance":
         """Get a volume by name synchronously."""
-        response = get_volume_sync(volume_name=volume_name, client=client)
+        try:
+            response = get_volume_sync(volume_name=volume_name, client=client)
+        except ControlPlaneError as e:
+            raise VolumeAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -520,7 +533,10 @@ async def _update_volume_by_name(
         spec=merged_spec,
     )
 
-    response = await update_volume(volume_name=volume_name, client=client, body=body)
+    try:
+        response = await update_volume(volume_name=volume_name, client=client, body=body)
+    except ControlPlaneError as e:
+        raise VolumeAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
@@ -598,7 +614,10 @@ def _update_volume_by_name_sync(
         spec=merged_spec,
     )
 
-    response = update_volume_sync(volume_name=volume_name, client=client, body=body)
+    try:
+        response = update_volume_sync(volume_name=volume_name, client=client, body=body)
+    except ControlPlaneError as e:
+        raise VolumeAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error

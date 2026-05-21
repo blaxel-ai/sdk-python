@@ -39,6 +39,7 @@ class Client:
     """
 
     raise_on_unexpected_status: bool = field(default=True, kw_only=True)
+    raise_on_error: bool = field(default=True, kw_only=True)
     _base_url: str = field(alias="base_url", default="")
     _cookies: dict[str, str] = field(factory=dict, kw_only=True, alias="cookies")
     _headers: dict[str, str] = field(factory=dict, kw_only=True, alias="headers")

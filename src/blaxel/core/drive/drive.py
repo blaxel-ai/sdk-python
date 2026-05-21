@@ -15,19 +15,19 @@ from ..client.api.drives.list_drives import sync as list_drives_sync
 from ..client.api.drives.update_drive import asyncio as update_drive
 from ..client.api.drives.update_drive import sync as update_drive_sync
 from ..client.client import client
-from ..client.errors import UnexpectedStatus
+from ..client.errors import ControlPlaneError, UnexpectedStatus
 from ..client.models import Drive, DriveSpec, Metadata
 from ..client.models.error import Error
 from ..client.types import UNSET
 from ..common.settings import settings
+from ..errors import BlaxelAPIError
 
 
-class DriveAPIError(Exception):
+class DriveAPIError(BlaxelAPIError):
     """Exception raised when drive API returns an error."""
 
     def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
+        super().__init__(message=message, status_code=status_code, error_code=code)
         self.code = code
 
 
@@ -226,7 +226,10 @@ class DriveInstance:
                 stacklevel=2,
             )
 
-        response = await create_drive(client=client, body=drive)
+        try:
+            response = await create_drive(client=client, body=drive)
+        except ControlPlaneError as e:
+            raise DriveAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -235,7 +238,10 @@ class DriveInstance:
 
     @classmethod
     async def get(cls, drive_name: str) -> "DriveInstance":
-        response = await get_drive(drive_name=drive_name, client=client)
+        try:
+            response = await get_drive(drive_name=drive_name, client=client)
+        except ControlPlaneError as e:
+            raise DriveAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if response is None:
             raise DriveAPIError(
                 f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND"
@@ -376,7 +382,10 @@ class SyncDriveInstance:
                 stacklevel=2,
             )
 
-        response = create_drive_sync(client=client, body=drive)
+        try:
+            response = create_drive_sync(client=client, body=drive)
+        except ControlPlaneError as e:
+            raise DriveAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
@@ -386,7 +395,10 @@ class SyncDriveInstance:
     @classmethod
     def get(cls, drive_name: str) -> "SyncDriveInstance":
         """Get a drive by name synchronously."""
-        response = get_drive_sync(drive_name=drive_name, client=client)
+        try:
+            response = get_drive_sync(drive_name=drive_name, client=client)
+        except ControlPlaneError as e:
+            raise DriveAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         if response is None:
             raise DriveAPIError(
                 f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND"
@@ -509,7 +521,10 @@ async def _update_drive_by_name(
         spec=merged_spec,
     )
 
-    response = await update_drive(drive_name=drive_name, client=client, body=body)
+    try:
+        response = await update_drive(drive_name=drive_name, client=client, body=body)
+    except ControlPlaneError as e:
+        raise DriveAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
@@ -582,7 +597,10 @@ def _update_drive_by_name_sync(
         spec=merged_spec,
     )
 
-    response = update_drive_sync(drive_name=drive_name, client=client, body=body)
+    try:
+        response = update_drive_sync(drive_name=drive_name, client=client, body=body)
+    except ControlPlaneError as e:
+        raise DriveAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
