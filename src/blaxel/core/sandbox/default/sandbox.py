@@ -55,6 +55,35 @@ class SandboxAPIError(Exception):
 
 logger = logging.getLogger(__name__)
 
+NON_REUSABLE_SANDBOX_STATUSES = {
+    "FAILED",
+    "TERMINATED",
+    "TERMINATING",
+    "DELETING",
+    "DEACTIVATING",
+}
+
+
+def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
+    return error.status_code == 409 or error.code in {409, "409", "SANDBOX_ALREADY_EXISTS"}
+
+
+def _sandbox_name(
+    sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
+) -> str | None:
+    if isinstance(sandbox, SandboxCreateConfiguration):
+        return sandbox.name
+    if isinstance(sandbox, dict):
+        if "name" in sandbox:
+            return sandbox["name"]
+        metadata = sandbox.get("metadata")
+        if isinstance(metadata, dict):
+            return metadata.get("name")
+        return getattr(metadata, "name", None)
+    if isinstance(sandbox, Sandbox):
+        return sandbox.metadata.name if sandbox.metadata else None
+    return None
+
 
 class _AsyncDeleteDescriptor:
     """Descriptor that provides both class-level and instance-level delete functionality."""
@@ -155,6 +184,7 @@ class SandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -285,6 +315,7 @@ class SandboxInstance:
         response = await create_sandbox(
             client=client,
             body=sandbox,
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -451,40 +482,23 @@ class SandboxInstance:
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
-        try:
-            return await cls.create(sandbox)
-        except SandboxAPIError as e:
-            # Check if it's a 409 conflict error (sandbox already exists)
-            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
-                # Extract name from different configuration types
-                if isinstance(sandbox, SandboxCreateConfiguration):
-                    name = sandbox.name
-                elif isinstance(sandbox, dict):
-                    if "name" in sandbox:
-                        name = sandbox["name"]
-                    elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
-                        name = sandbox["metadata"].get("name")
-                    else:
-                        name = None
-                elif isinstance(sandbox, Sandbox):
-                    name = sandbox.metadata.name if sandbox.metadata else None
-                else:
-                    name = None
+        attempts = 3
+        for _ in range(attempts):
+            try:
+                return await cls.create(sandbox, create_if_not_exist=True)
+            except SandboxAPIError as e:
+                if not _is_sandbox_conflict(e):
+                    raise
 
+                name = _sandbox_name(sandbox)
                 if not name:
                     raise ValueError("Sandbox name is required")
 
-                # Get the existing sandbox to check its status
                 sandbox_instance = await cls.get(name)
+                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
+                    return sandbox_instance
 
-                # If the sandbox is TERMINATED, treat it as not existing
-                if sandbox_instance.status == "TERMINATED":
-                    # Create a new sandbox - backend will handle cleanup of the terminated one
-                    return await cls.create(sandbox)
-
-                # Otherwise return the existing active sandbox
-                return sandbox_instance
-            raise
+        raise RuntimeError(f"Unable to create sandbox after {attempts} attempts.")
 
     @classmethod
     async def from_session(

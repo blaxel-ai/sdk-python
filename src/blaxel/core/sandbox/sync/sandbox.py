@@ -27,7 +27,12 @@ from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
 from ...common.settings import settings
-from ..default.sandbox import SandboxAPIError
+from ..default.sandbox import (
+    NON_REUSABLE_SANDBOX_STATUSES,
+    SandboxAPIError,
+    _is_sandbox_conflict,
+    _sandbox_name,
+)
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -138,6 +143,7 @@ class SyncSandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SyncSandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -251,6 +257,7 @@ class SyncSandboxInstance:
         response = create_sandbox(
             client=client,
             body=sandbox,
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -389,30 +396,23 @@ class SyncSandboxInstance:
     def create_if_not_exists(
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
-        try:
-            return cls.create(sandbox)
-        except SandboxAPIError as e:
-            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
-                if isinstance(sandbox, SandboxCreateConfiguration):
-                    name = sandbox.name
-                elif isinstance(sandbox, dict):
-                    if "name" in sandbox:
-                        name = sandbox["name"]
-                    elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
-                        name = sandbox["metadata"].get("name")
-                    else:
-                        name = None
-                elif isinstance(sandbox, Sandbox):
-                    name = sandbox.metadata.name if sandbox.metadata else None
-                else:
-                    name = None
+        attempts = 3
+        for _ in range(attempts):
+            try:
+                return cls.create(sandbox, create_if_not_exist=True)
+            except SandboxAPIError as e:
+                if not _is_sandbox_conflict(e):
+                    raise
+
+                name = _sandbox_name(sandbox)
                 if not name:
                     raise ValueError("Sandbox name is required")
+
                 sandbox_instance = cls.get(name)
-                if sandbox_instance.status == "TERMINATED":
-                    return cls.create(sandbox)
-                return sandbox_instance
-            raise
+                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
+                    return sandbox_instance
+
+        raise RuntimeError(f"Unable to create sandbox after {attempts} attempts.")
 
     @classmethod
     def from_session(
