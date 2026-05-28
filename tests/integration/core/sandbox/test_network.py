@@ -34,8 +34,7 @@ class TestSandboxUpdateNetwork:
                 SandboxUpdateNetwork(network={"allowedDomains": ["httpbin.org", "*.httpbin.org"]}),
             )
             assert updated.spec.network is not None
-            assert "httpbin.org" in updated.spec.network.allowed_domains
-            assert "*.httpbin.org" in updated.spec.network.allowed_domains
+            assert set(updated.spec.network.allowed_domains) == {"httpbin.org", "*.httpbin.org"}
         finally:
             await SandboxInstance.delete(name)
 
@@ -58,8 +57,7 @@ class TestSandboxUpdateNetwork:
                 ),
             )
             assert updated.spec.network is not None
-            assert "httpbin.org" in updated.spec.network.forbidden_domains
-            assert "*.httpbin.org" in updated.spec.network.forbidden_domains
+            assert set(updated.spec.network.forbidden_domains) == {"httpbin.org", "*.httpbin.org"}
         finally:
             await SandboxInstance.delete(name)
 
@@ -85,7 +83,7 @@ class TestSandboxUpdateNetwork:
                 SandboxUpdateNetwork(network=network_config),
             )
             assert updated.spec.network is not None
-            assert "httpbin.org" in updated.spec.network.allowed_domains
+            assert updated.spec.network.allowed_domains == ["httpbin.org"]
         finally:
             await SandboxInstance.delete(name)
 
