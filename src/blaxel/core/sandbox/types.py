@@ -146,6 +146,16 @@ class SandboxUpdateMetadata:
         self.display_name = display_name
 
 
+class SandboxUpdateNetwork:
+    """Configuration for updating sandbox network configuration."""
+
+    def __init__(
+        self,
+        network: Union[SandboxNetwork, Dict[str, Any]] | None = None,
+    ):
+        self.network = network
+
+
 class SandboxCreateConfiguration:
     """Simplified configuration for creating sandboxes with default values."""
 

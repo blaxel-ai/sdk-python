@@ -37,6 +37,7 @@ from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxUpdateMetadata,
+    SandboxUpdateNetwork,
     SessionWithToken,
 )
 from .codegen import SyncSandboxCodegen
@@ -384,6 +385,42 @@ class SyncSandboxInstance:
         updated_sandbox.spec.lifecycle = lifecycle
 
         # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=updated_sandbox,
+        )
+
+        return cls(response)
+
+    @classmethod
+    def update_network(
+        cls, sandbox_name: str, network: SandboxUpdateNetwork
+    ) -> "SyncSandboxInstance":
+        """Update sandbox network configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            network: The new network configuration
+
+        Returns:
+            A new SyncSandboxInstance with updated network configuration
+        """
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
+        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
+        if updated_sandbox.spec is None:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+
+        if network.network is not None:
+            if isinstance(network.network, dict):
+                updated_sandbox.spec.network = SandboxNetworkModel.from_dict(network.network)
+            else:
+                updated_sandbox.spec.network = network.network
+        else:
+            updated_sandbox.spec.network = UNSET
+
         response = update_sandbox(
             sandbox_name=sandbox_name,
             client=client,
