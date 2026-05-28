@@ -75,13 +75,13 @@ jobs:
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No definition changes detected"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Definition changes detected:"
-            git diff --stat
+            git status --short
           fi
 
       - name: Create pull request
