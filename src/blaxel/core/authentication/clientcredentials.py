@@ -40,12 +40,13 @@ class ClientCredentials(BlaxelAuth):
         Raises:
             Exception: If token refresh fails.
         """
+        workspace = self._ensure_workspace()
         err = self.get_token()
         if err:
             raise err
         return {
             "X-Blaxel-Authorization": f"Bearer {self.credentials.access_token}",
-            "X-Blaxel-Workspace": self.workspace_name,
+            "X-Blaxel-Workspace": workspace,
         }
 
     def _request_token(self, remaining_retries: int = 3) -> Exception | None:
@@ -108,9 +109,10 @@ class ClientCredentials(BlaxelAuth):
         Raises:
             Exception: If token refresh fails.
         """
+        workspace = self._ensure_workspace()
         self.get_token()
         request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.access_token}"
-        request.headers["X-Blaxel-Workspace"] = self.workspace_name
+        request.headers["X-Blaxel-Workspace"] = workspace
         yield request
 
     @property
