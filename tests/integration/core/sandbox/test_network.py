@@ -18,7 +18,7 @@ class TestSandboxUpdateNetwork:
     """Test sandbox update_network operations."""
 
     async def test_updates_sandbox_network_with_allowed_domains(self):
-        """Test updating sandbox network with allowed domains."""
+        """Test updating sandbox network with allowed domains using httpbin."""
         name = unique_name("update-net-allow")
         await SandboxInstance.create(
             {
@@ -31,18 +31,16 @@ class TestSandboxUpdateNetwork:
         try:
             updated = await SandboxInstance.update_network(
                 name,
-                SandboxUpdateNetwork(
-                    network={"allowedDomains": ["api.openai.com", "api.stripe.com"]}
-                ),
+                SandboxUpdateNetwork(network={"allowedDomains": ["httpbin.org", "*.httpbin.org"]}),
             )
             assert updated.spec.network is not None
-            assert "api.openai.com" in updated.spec.network.allowed_domains
-            assert "api.stripe.com" in updated.spec.network.allowed_domains
+            assert "httpbin.org" in updated.spec.network.allowed_domains
+            assert "*.httpbin.org" in updated.spec.network.allowed_domains
         finally:
             await SandboxInstance.delete(name)
 
     async def test_updates_sandbox_network_with_forbidden_domains(self):
-        """Test updating sandbox network with forbidden domains."""
+        """Test updating sandbox network with forbidden domains using httpbin."""
         name = unique_name("update-net-forbid")
         await SandboxInstance.create(
             {
@@ -56,12 +54,12 @@ class TestSandboxUpdateNetwork:
             updated = await SandboxInstance.update_network(
                 name,
                 SandboxUpdateNetwork(
-                    network={"forbiddenDomains": ["*.malware.com", "evil.example.org"]}
+                    network={"forbiddenDomains": ["httpbin.org", "*.httpbin.org"]}
                 ),
             )
             assert updated.spec.network is not None
-            assert "*.malware.com" in updated.spec.network.forbidden_domains
-            assert "evil.example.org" in updated.spec.network.forbidden_domains
+            assert "httpbin.org" in updated.spec.network.forbidden_domains
+            assert "*.httpbin.org" in updated.spec.network.forbidden_domains
         finally:
             await SandboxInstance.delete(name)
 
@@ -80,14 +78,14 @@ class TestSandboxUpdateNetwork:
 
         try:
             network_config = SandboxNetwork(
-                allowed_domains=["api.example.com"],
+                allowed_domains=["httpbin.org"],
             )
             updated = await SandboxInstance.update_network(
                 name,
                 SandboxUpdateNetwork(network=network_config),
             )
             assert updated.spec.network is not None
-            assert "api.example.com" in updated.spec.network.allowed_domains
+            assert "httpbin.org" in updated.spec.network.allowed_domains
         finally:
             await SandboxInstance.delete(name)
 
@@ -98,7 +96,7 @@ class TestSandboxUpdateNetwork:
             {
                 "name": name,
                 "image": default_image,
-                "network": {"allowedDomains": ["api.example.com"]},
+                "network": {"allowedDomains": ["httpbin.org"]},
                 "labels": default_labels,
             }
         )
@@ -108,7 +106,6 @@ class TestSandboxUpdateNetwork:
                 name,
                 SandboxUpdateNetwork(network=None),
             )
-            # Network should be cleared (UNSET)
             from blaxel.core.client.types import UNSET
 
             assert updated.spec.network is UNSET or updated.spec.network is None
