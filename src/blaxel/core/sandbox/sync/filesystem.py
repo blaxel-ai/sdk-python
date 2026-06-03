@@ -9,6 +9,7 @@ import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
+from ..transient_retry import retry_on_transient_reset
 from ..types import (
     CopyResponse,
     SandboxConfiguration,
@@ -60,22 +61,29 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             content = bytes(content)
         if len(content) > MULTIPART_THRESHOLD:
             return self._upload_with_multipart(path, content, "0644")
-        binary_file = io.BytesIO(content)
-        files = {
-            "file": (
-                "binary-file.bin",
-                binary_file,
-                "application/octet-stream",
-            ),
-        }
-        data = {"permissions": "0644", "path": path}
         url = f"{self.url}/filesystem/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
-        with self.get_client() as client_instance:
-            response = client_instance.put(url, files=files, data=data, headers=headers)
-            if not response.is_success:
-                raise Exception(f"Failed to write binary: {response.status_code} {response.text}")
-            return SuccessResponse.from_dict(response.json())
+
+        def put_once() -> SuccessResponse:
+            files = {
+                "file": (
+                    "binary-file.bin",
+                    io.BytesIO(content),
+                    "application/octet-stream",
+                ),
+            }
+            data = {"permissions": "0644", "path": path}
+            with self.get_client() as client_instance:
+                response = client_instance.put(url, files=files, data=data, headers=headers)
+                if not response.is_success:
+                    raise Exception(
+                        f"Failed to write binary: {response.status_code} {response.text}"
+                    )
+                result = SuccessResponse.from_dict(response.json())
+                assert result is not None
+                return result
+
+        return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 
     def write_tree(
         self,
@@ -99,13 +107,17 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
     def read(self, path: str) -> str:
         path = self.format_path(path)
-        with self.get_client() as client_instance:
-            response = client_instance.get(f"/filesystem/{path}")
-            self.handle_response_error(response)
-            data = response.json()
-            if "content" in data:
-                return data["content"]
-            raise Exception("Unsupported file type")
+
+        def read_once() -> str:
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/filesystem/{path}")
+                self.handle_response_error(response)
+                data = response.json()
+                if "content" in data:
+                    return data["content"]
+                raise Exception("Unsupported file type")
+
+        return retry_on_transient_reset(read_once)
 
     def read_binary(self, path: str) -> bytes:
         path = self.format_path(path)
@@ -115,10 +127,14 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             **self.sandbox_config.headers,
             "Accept": "application/octet-stream",
         }
-        with self.get_client() as client_instance:
-            response = client_instance.get(url, headers=headers)
-            self.handle_response_error(response)
-            return response.content
+
+        def read_once() -> bytes:
+            with self.get_client() as client_instance:
+                response = client_instance.get(url, headers=headers)
+                self.handle_response_error(response)
+                return response.content
+
+        return retry_on_transient_reset(read_once)
 
     def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
         content = self.read_binary(src)
@@ -136,13 +152,19 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
     def ls(self, path: str) -> Directory:
         path = self.format_path(path)
-        with self.get_client() as client_instance:
-            response = client_instance.get(f"/filesystem/{path}")
-            self.handle_response_error(response)
-            data = response.json()
-            if not ("files" in data or "subdirectories" in data):
-                raise Exception('{"error": "Directory not found"}')
-            return Directory.from_dict(data)
+
+        def ls_once() -> Directory:
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/filesystem/{path}")
+                self.handle_response_error(response)
+                data = response.json()
+                if not ("files" in data or "subdirectories" in data):
+                    raise Exception('{"error": "Directory not found"}')
+                result = Directory.from_dict(data)
+                assert result is not None
+                return result
+
+        return retry_on_transient_reset(ls_once)
 
     def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         if not self.process:
@@ -262,11 +284,15 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         url = f"{self.url}/filesystem-multipart/{upload_id}/part"
         headers = {**settings.headers, **self.sandbox_config.headers}
         params = {"partNumber": part_number}
-        files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
-        with self.get_client() as client_instance:
-            response = client_instance.put(url, files=files, params=params, headers=headers)
-            self.handle_response_error(response)
-            return response.json()
+
+        def put_once() -> Dict[str, Any]:
+            files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+            with self.get_client() as client_instance:
+                response = client_instance.put(url, files=files, params=params, headers=headers)
+                self.handle_response_error(response)
+                return response.json()
+
+        return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 
     def _complete_multipart_upload(
         self, upload_id: str, parts: List[Dict[str, Any]]

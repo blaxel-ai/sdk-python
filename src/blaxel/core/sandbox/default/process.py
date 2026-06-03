@@ -6,6 +6,7 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
+from ..transient_retry import retry_on_transient_reset_async
 from ..types import (
     AsyncStreamHandle,
     ProcessRequestWithLog,
@@ -417,33 +418,39 @@ class SandboxProcess(SandboxAction):
     async def get(self, identifier: str) -> ProcessResponse:
         import json
 
-        client = self.get_client()
-        response = await client.get(f"/process/{identifier}")
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            result = ProcessResponse.from_dict(data)
-            assert result is not None
-            return result
-        finally:
-            await response.aclose()
+        async def get_once() -> ProcessResponse:
+            client = self.get_client()
+            response = await client.get(f"/process/{identifier}")
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
+                result = ProcessResponse.from_dict(data)
+                assert result is not None
+                return result
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(get_once)
 
     async def list(self) -> list[ProcessResponse]:
         import json
 
-        client = self.get_client()
-        response = await client.get("/process")
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            results = []
-            for item in data:
-                result = ProcessResponse.from_dict(item)
-                assert result is not None
-                results.append(result)
-            return results
-        finally:
-            await response.aclose()
+        async def list_once() -> list[ProcessResponse]:
+            client = self.get_client()
+            response = await client.get("/process")
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
+                results = []
+                for item in data:
+                    result = ProcessResponse.from_dict(item)
+                    assert result is not None
+                    results.append(result)
+                return results
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(list_once)
 
     async def stop(self, identifier: str) -> SuccessResponse:
         import json
@@ -480,18 +487,21 @@ class SandboxProcess(SandboxAction):
     ) -> str:
         import json
 
-        client = self.get_client()
-        response = await client.get(f"/process/{identifier}/logs")
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            if log_type == "all":
-                return data.get("logs", "")
-            elif log_type == "stdout":
-                return data.get("stdout", "")
-            elif log_type == "stderr":
-                return data.get("stderr", "")
+        async def logs_once() -> str:
+            client = self.get_client()
+            response = await client.get(f"/process/{identifier}/logs")
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
+                if log_type == "all":
+                    return data.get("logs", "")
+                elif log_type == "stdout":
+                    return data.get("stdout", "")
+                elif log_type == "stderr":
+                    return data.get("stderr", "")
 
-            raise Exception("Unsupported log type")
-        finally:
-            await response.aclose()
+                raise Exception("Unsupported log type")
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(logs_once)

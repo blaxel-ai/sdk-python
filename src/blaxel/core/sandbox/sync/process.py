@@ -7,6 +7,7 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
+from ..transient_retry import retry_on_transient_reset
 from ..types import (
     ProcessRequestWithLog,
     ProcessResponseWithLog,
@@ -354,16 +355,29 @@ class SyncSandboxProcess(SyncSandboxAction):
         return data
 
     def get(self, identifier: str) -> ProcessResponse:
-        with self.get_client() as client_instance:
-            response = client_instance.get(f"/process/{identifier}")
-            self.handle_response_error(response)
-            return ProcessResponse.from_dict(response.json())
+        def get_once() -> ProcessResponse:
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/process/{identifier}")
+                self.handle_response_error(response)
+                result = ProcessResponse.from_dict(response.json())
+                assert result is not None
+                return result
+
+        return retry_on_transient_reset(get_once)
 
     def list(self) -> list[ProcessResponse]:
-        with self.get_client() as client_instance:
-            response = client_instance.get("/process")
-            self.handle_response_error(response)
-            return [ProcessResponse.from_dict(item) for item in response.json()]
+        def list_once() -> list[ProcessResponse]:
+            with self.get_client() as client_instance:
+                response = client_instance.get("/process")
+                self.handle_response_error(response)
+                results = []
+                for item in response.json():
+                    result = ProcessResponse.from_dict(item)
+                    assert result is not None
+                    results.append(result)
+                return results
+
+        return retry_on_transient_reset(list_once)
 
     def stop(self, identifier: str) -> SuccessResponse:
         with self.get_client() as client_instance:
@@ -382,14 +396,17 @@ class SyncSandboxProcess(SyncSandboxAction):
         identifier: str,
         log_type: Literal["stdout", "stderr", "all"] = "all",
     ) -> str:
-        with self.get_client() as client_instance:
-            response = client_instance.get(f"/process/{identifier}/logs")
-            self.handle_response_error(response)
-            data = response.json()
-            if log_type == "all":
-                return data.get("logs", "")
-            elif log_type == "stdout":
-                return data.get("stdout", "")
-            elif log_type == "stderr":
-                return data.get("stderr", "")
-            raise Exception("Unsupported log type")
+        def logs_once() -> str:
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/process/{identifier}/logs")
+                self.handle_response_error(response)
+                data = response.json()
+                if log_type == "all":
+                    return data.get("logs", "")
+                elif log_type == "stdout":
+                    return data.get("stdout", "")
+                elif log_type == "stderr":
+                    return data.get("stderr", "")
+                raise Exception("Unsupported log type")
+
+        return retry_on_transient_reset(logs_once)

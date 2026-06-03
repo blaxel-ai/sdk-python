@@ -11,6 +11,16 @@ from .logger import init_logger
 BLAXEL_API_VERSION = "2026-04-16"
 
 
+def _get_int_env(name: str, default: int) -> int:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
 def _get_os_arch() -> str:
     """Get OS and architecture information."""
     try:
@@ -96,6 +106,16 @@ class Settings:
     def api_version(self) -> str:
         """Get the API version sent in the Blaxel-Version header."""
         return os.environ.get("BL_API_VERSION", BLAXEL_API_VERSION)
+
+    @property
+    def fs_part_retries(self) -> int:
+        """Retry budget for idempotent filesystem upload PUTs."""
+        return _get_int_env("BL_FS_PART_RETRIES", 3)
+
+    @property
+    def sandbox_read_retries(self) -> int:
+        """Retry budget for idempotent sandbox read/list operations."""
+        return _get_int_env("BL_SANDBOX_READ_RETRIES", 5)
 
     @property
     def headers(self) -> Dict[str, str]:
