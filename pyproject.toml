@@ -13,7 +13,7 @@ dependencies = [
   "pyyaml>=6.0.0",
   "requests>=2.32.3",
   "tomli>=2.0.2",
-  "websockets<16.0.0",
+  "websockets<17.0.0",
   "attrs>=21.3.0",
   "httpx>=0.27.0",
   "mcp>=1.9.4",
@@ -72,7 +72,7 @@ llamaindex = [
   "llama-index-llms-deepseek>=0.1.1",
   "llama-index-llms-google-genai>=0.1.13",
   "llama-index-llms-groq>=0.3.1",
-  "llama-index-llms-mistralai>=0.4.0,<0.10.0",
+  "llama-index-llms-mistralai>=0.4.0,<0.11.0",
   "llama-index-llms-openai>=0.3.42",
   "opentelemetry-instrumentation-llamaindex>=0.40.7",
 ]
@@ -137,7 +137,7 @@ packages = ["src/blaxel"]
 [dependency-groups]
 dev = [
   "nest-asyncio>=1.6.0",
-  "asgi-correlation-id>=4.3.4,<5.0.0",
+  "asgi-correlation-id>=4.3.4",
   "fastapi>=0.115.12",
   "pdoc3>=0.11.5",
   "python-dotenv>=1.1.0",
