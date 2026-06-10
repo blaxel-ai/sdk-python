@@ -52,6 +52,25 @@ class TestSandboxExtraArgs:
         finally:
             await SandboxInstance.delete(name)
 
+    async def test_creates_sandbox_with_nfs_enabled(self):
+        """Test creating a sandbox with nfs extra arg."""
+        name = unique_name("extra-args-nfs")
+        await SandboxInstance.create(
+            {
+                "name": name,
+                "image": default_image,
+                "extra_args": {"nfs": "enabled"},
+                "labels": default_labels,
+            }
+        )
+
+        try:
+            retrieved = await SandboxInstance.get(name)
+            assert retrieved.spec.runtime.extra_args is not None
+            assert retrieved.spec.runtime.extra_args["nfs"] == "enabled"
+        finally:
+            await SandboxInstance.delete(name)
+
     async def test_creates_sandbox_with_both_iptables_and_nvme(self):
         """Test creating a sandbox with both iptables and nvme enabled."""
         name = unique_name("extra-args-both")
