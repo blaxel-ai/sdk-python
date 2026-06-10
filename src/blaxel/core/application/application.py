@@ -436,12 +436,20 @@ class SyncApplicationInstance:
 async def _delete_application_by_name(application_name: str) -> Application:
     """Delete an application by name (async)."""
     response = await delete_application(application_name=application_name, client=client)
+    if isinstance(response, Error):
+        status_code = int(response.code) if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise ApplicationAPIError(message, status_code=status_code, code=response.error)
     return response
 
 
 def _delete_application_by_name_sync(application_name: str) -> Application:
     """Delete an application by name (sync)."""
     response = delete_application_sync(application_name=application_name, client=client)
+    if isinstance(response, Error):
+        status_code = int(response.code) if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise ApplicationAPIError(message, status_code=status_code, code=response.error)
     return response
 
 
