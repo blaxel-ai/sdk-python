@@ -17,7 +17,6 @@ class IntegrationEndpoints:
     additional_properties: dict[str, "IntegrationEndpoint"] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         field_dict: dict[str, Any] = {}
         for prop_name, prop in self.additional_properties.items():
             if type(prop) is dict:
@@ -35,7 +34,6 @@ class IntegrationEndpoints:
             return None
         d = src_dict.copy()
         integration_endpoints = cls()
-
 
         additional_properties = {}
         for prop_name, prop_dict in d.items():

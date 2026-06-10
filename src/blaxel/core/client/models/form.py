@@ -30,7 +30,6 @@ class Form:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         config: Union[Unset, dict[str, Any]] = UNSET
         if self.config and not isinstance(self.config, Unset) and not isinstance(self.config, dict):
             config = self.config.to_dict()
