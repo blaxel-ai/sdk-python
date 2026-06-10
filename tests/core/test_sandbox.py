@@ -251,11 +251,8 @@ async def test_create_if_not_exists_accepts_conflict_error_codes(code):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "status",
-    ["FAILED", "TERMINATED", "TERMINATING", "DELETING", "DEACTIVATING"],
-)
-async def test_create_if_not_exists_retries_for_non_reusable_statuses(status):
+@pytest.mark.parametrize("status", ["FAILED", "TERMINATED"])
+async def test_create_if_not_exists_retries_immediately_for_terminal_statuses(status):
     replacement = sandbox_instance("stale")
 
     with (
@@ -268,10 +265,99 @@ async def test_create_if_not_exists_retries_for_non_reusable_statuses(status):
         result = await SandboxInstance.create_if_not_exists({"name": "stale"})
 
         assert result is replacement
+        assert mock_get.await_count == 1
         assert mock_create.await_args_list == [
             call({"name": "stale"}, create_if_not_exist=True),
             call({"name": "stale"}, create_if_not_exist=True),
         ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["TERMINATING", "DELETING", "DEACTIVATING"])
+async def test_create_if_not_exists_waits_out_dying_record_before_retrying(status, monkeypatch):
+    import blaxel.core.sandbox.default.sandbox as default_sandbox
+
+    monkeypatch.setattr(default_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    replacement = sandbox_instance("dying")
+
+    with (
+        patch.object(SandboxInstance, "create", new_callable=AsyncMock) as mock_create,
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error(), replacement]
+        mock_get.side_effect = [
+            sandbox_instance("dying", status),
+            sandbox_instance("dying", status),
+            sandbox_instance("dying", "TERMINATED"),
+            sandbox_instance("dying", "TERMINATED"),
+        ]
+
+        result = await SandboxInstance.create_if_not_exists({"name": "dying"})
+
+        assert result is replacement
+        assert mock_create.await_count == 2
+        # initial status check plus at least one poll while the record was dying
+        assert mock_get.await_count >= 2
+
+
+@pytest.mark.asyncio
+async def test_create_if_not_exists_retries_when_record_vanishes_before_status_check(
+    monkeypatch,
+):
+    import blaxel.core.sandbox.default.sandbox as default_sandbox
+
+    monkeypatch.setattr(default_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    replacement = sandbox_instance("vanished")
+
+    with (
+        patch.object(SandboxInstance, "create", new_callable=AsyncMock) as mock_create,
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error(), replacement]
+        mock_get.side_effect = SandboxAPIError("Sandbox not found", status_code=404)
+
+        result = await SandboxInstance.create_if_not_exists({"name": "vanished"})
+
+        assert result is replacement
+        assert mock_create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_create_if_not_exists_propagates_non_404_status_check_errors():
+    with (
+        patch.object(SandboxInstance, "create", new_callable=AsyncMock) as mock_create,
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error()]
+        mock_get.side_effect = SandboxAPIError("internal error", status_code=500)
+
+        with pytest.raises(SandboxAPIError, match="internal error"):
+            await SandboxInstance.create_if_not_exists({"name": "broken"})
+
+
+@pytest.mark.asyncio
+async def test_create_if_not_exists_retries_promptly_when_dying_record_disappears(
+    monkeypatch,
+):
+    import blaxel.core.sandbox.default.sandbox as default_sandbox
+
+    monkeypatch.setattr(default_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    replacement = sandbox_instance("gone")
+
+    with (
+        patch.object(SandboxInstance, "create", new_callable=AsyncMock) as mock_create,
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error(), replacement]
+        mock_get.side_effect = [
+            sandbox_instance("gone", "DELETING"),
+            SandboxAPIError("not found", status_code=404),
+        ]
+
+        result = await SandboxInstance.create_if_not_exists({"name": "gone"})
+
+        assert result is replacement
+        assert mock_create.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -290,6 +376,26 @@ async def test_create_if_not_exists_handles_recreate_race_after_terminal_status(
         assert result is winner
         assert mock_create.await_count == 2
         assert mock_get.await_args_list == [call("race"), call("race")]
+
+
+@pytest.mark.asyncio
+async def test_create_if_not_exists_gives_up_when_record_stays_dying(monkeypatch):
+    import blaxel.core.sandbox.default.sandbox as default_sandbox
+
+    monkeypatch.setattr(default_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    monkeypatch.setattr(default_sandbox, "TRANSIENT_STATUS_MAX_WAIT_SECONDS", 0.01)
+
+    with (
+        patch.object(SandboxInstance, "create", new_callable=AsyncMock) as mock_create,
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+    ):
+        mock_create.side_effect = conflict_error()
+        mock_get.return_value = sandbox_instance("stuck", "DELETING")
+
+        with pytest.raises(RuntimeError, match="Last conflicting status: DELETING"):
+            await SandboxInstance.create_if_not_exists({"name": "stuck"})
+
+        assert mock_create.await_count == 3
 
 
 @pytest.mark.asyncio
@@ -415,11 +521,8 @@ def test_sync_create_if_not_exists_accepts_conflict_error_codes(code):
         mock_get.assert_called_once_with("existing")
 
 
-@pytest.mark.parametrize(
-    "status",
-    ["FAILED", "TERMINATED", "TERMINATING", "DELETING", "DEACTIVATING"],
-)
-def test_sync_create_if_not_exists_retries_for_non_reusable_statuses(status):
+@pytest.mark.parametrize("status", ["FAILED", "TERMINATED"])
+def test_sync_create_if_not_exists_retries_immediately_for_terminal_statuses(status):
     replacement = sandbox_instance("stale", cls=SyncSandboxInstance)
 
     with (
@@ -432,10 +535,62 @@ def test_sync_create_if_not_exists_retries_for_non_reusable_statuses(status):
         result = SyncSandboxInstance.create_if_not_exists({"name": "stale"})
 
         assert result is replacement
+        assert mock_get.call_count == 1
         assert mock_create.call_args_list == [
             call({"name": "stale"}, create_if_not_exist=True),
             call({"name": "stale"}, create_if_not_exist=True),
         ]
+
+
+@pytest.mark.parametrize("status", ["TERMINATING", "DELETING", "DEACTIVATING"])
+def test_sync_create_if_not_exists_waits_out_dying_record_before_retrying(status, monkeypatch):
+    import blaxel.core.sandbox.sync.sandbox as sync_sandbox
+
+    monkeypatch.setattr(sync_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    replacement = sandbox_instance("dying", cls=SyncSandboxInstance)
+
+    with (
+        patch.object(SyncSandboxInstance, "create") as mock_create,
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error(), replacement]
+        mock_get.side_effect = [
+            sandbox_instance("dying", status, cls=SyncSandboxInstance),
+            sandbox_instance("dying", status, cls=SyncSandboxInstance),
+            sandbox_instance("dying", "TERMINATED", cls=SyncSandboxInstance),
+            sandbox_instance("dying", "TERMINATED", cls=SyncSandboxInstance),
+        ]
+
+        result = SyncSandboxInstance.create_if_not_exists({"name": "dying"})
+
+        assert result is replacement
+        assert mock_create.call_count == 2
+        # initial status check plus at least one poll while the record was dying
+        assert mock_get.call_count >= 2
+
+
+def test_sync_create_if_not_exists_retries_promptly_when_dying_record_disappears(
+    monkeypatch,
+):
+    import blaxel.core.sandbox.sync.sandbox as sync_sandbox
+
+    monkeypatch.setattr(sync_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    replacement = sandbox_instance("gone", cls=SyncSandboxInstance)
+
+    with (
+        patch.object(SyncSandboxInstance, "create") as mock_create,
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error(), replacement]
+        mock_get.side_effect = [
+            sandbox_instance("gone", "DELETING", cls=SyncSandboxInstance),
+            SandboxAPIError("Sandbox not found", status_code=404),
+        ]
+
+        result = SyncSandboxInstance.create_if_not_exists({"name": "gone"})
+
+        assert result is replacement
+        assert mock_create.call_count == 2
 
 
 def test_sync_create_if_not_exists_handles_recreate_race_after_terminal_status():
@@ -456,6 +611,58 @@ def test_sync_create_if_not_exists_handles_recreate_race_after_terminal_status()
         assert result is winner
         assert mock_create.call_count == 2
         assert mock_get.call_args_list == [call("race"), call("race")]
+
+
+def test_sync_create_if_not_exists_retries_when_record_vanishes_before_status_check(
+    monkeypatch,
+):
+    import blaxel.core.sandbox.sync.sandbox as sync_sandbox
+
+    monkeypatch.setattr(sync_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    replacement = sandbox_instance("vanished", cls=SyncSandboxInstance)
+
+    with (
+        patch.object(SyncSandboxInstance, "create") as mock_create,
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error(), replacement]
+        mock_get.side_effect = SandboxAPIError("Sandbox not found", status_code=404)
+
+        result = SyncSandboxInstance.create_if_not_exists({"name": "vanished"})
+
+        assert result is replacement
+        assert mock_create.call_count == 2
+
+
+def test_sync_create_if_not_exists_propagates_non_404_status_check_errors():
+    with (
+        patch.object(SyncSandboxInstance, "create") as mock_create,
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+    ):
+        mock_create.side_effect = [conflict_error()]
+        mock_get.side_effect = SandboxAPIError("internal error", status_code=500)
+
+        with pytest.raises(SandboxAPIError, match="internal error"):
+            SyncSandboxInstance.create_if_not_exists({"name": "broken"})
+
+
+def test_sync_create_if_not_exists_gives_up_when_record_stays_dying(monkeypatch):
+    import blaxel.core.sandbox.sync.sandbox as sync_sandbox
+
+    monkeypatch.setattr(sync_sandbox, "TRANSIENT_STATUS_POLL_SECONDS", 0.001)
+    monkeypatch.setattr(sync_sandbox, "TRANSIENT_STATUS_MAX_WAIT_SECONDS", 0.01)
+
+    with (
+        patch.object(SyncSandboxInstance, "create") as mock_create,
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+    ):
+        mock_create.side_effect = conflict_error()
+        mock_get.return_value = sandbox_instance("stuck", "DELETING", cls=SyncSandboxInstance)
+
+        with pytest.raises(RuntimeError, match="Last conflicting status: DELETING"):
+            SyncSandboxInstance.create_if_not_exists({"name": "stuck"})
+
+        assert mock_create.call_count == 3
 
 
 def test_sync_create_if_not_exists_stops_after_bounded_attempts():

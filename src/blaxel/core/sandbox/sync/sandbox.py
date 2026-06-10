@@ -1,4 +1,5 @@
 import logging
+import time
 import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
@@ -29,8 +30,12 @@ from ...client.types import UNSET
 from ...common.settings import settings
 from ..default.sandbox import (
     NON_REUSABLE_SANDBOX_STATUSES,
+    TRANSIENT_SANDBOX_STATUSES,
+    TRANSIENT_STATUS_MAX_WAIT_SECONDS,
+    TRANSIENT_STATUS_POLL_SECONDS,
     SandboxAPIError,
     _is_sandbox_conflict,
+    _is_sandbox_not_found,
     _sandbox_name,
 )
 from ..types import (
@@ -297,6 +302,10 @@ class SyncSandboxInstance:
     @classmethod
     def list(cls) -> List["SyncSandboxInstance"]:
         response = list_sandboxes(client=client)
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
         return [cls(sandbox) for sandbox in response]
 
     @classmethod
@@ -434,7 +443,9 @@ class SyncSandboxInstance:
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
         attempts = 3
-        for _ in range(attempts):
+        last_status = "unknown"
+        for attempt in range(attempts):
+            final_attempt = attempt == attempts - 1
             try:
                 return cls.create(sandbox, create_if_not_exist=True)
             except SandboxAPIError as e:
@@ -445,11 +456,56 @@ class SyncSandboxInstance:
                 if not name:
                     raise ValueError("Sandbox name is required")
 
-                sandbox_instance = cls.get(name)
+                try:
+                    sandbox_instance = cls.get(name)
+                except SandboxAPIError as get_error:
+                    if _is_sandbox_not_found(get_error):
+                        # The record vanished between the create conflict and this status
+                        # check (its deletion just finished); give the control plane a
+                        # beat and retry.
+                        last_status = "vanished"
+                        if not final_attempt:
+                            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+                        continue
+                    raise
+
                 if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
                     return sandbox_instance
 
-        raise RuntimeError(f"Unable to create sandbox after {attempts} attempts.")
+                # A delete or deactivation in flight rejects creates until it finishes;
+                # wait it out instead of burning the remaining attempts inside the window.
+                # No point waiting after the last attempt: nothing will use the result.
+                last_status = str(sandbox_instance.status)
+                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
+                    cls._wait_while_dying(name)
+
+        raise RuntimeError(
+            f"Unable to create sandbox after {attempts} attempts."
+            f" Last conflicting status: {last_status}."
+        )
+
+    @classmethod
+    def _wait_while_dying(cls, name: str) -> None:
+        """Poll until an in-flight delete/deactivation settles or the record disappears.
+
+        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
+        the record is gone) end the wait: the caller's create retry decides next.
+        """
+        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
+        while time.monotonic() < deadline:
+            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+            try:
+                current = cls.get(name)
+            except Exception:
+                return
+            status = str(current.status)
+            if status not in TRANSIENT_SANDBOX_STATUSES:
+                return
+            logger.debug(
+                "Sandbox %s still %s; waiting for the record to settle before recreating",
+                name,
+                status,
+            )
 
     @classmethod
     def from_session(
