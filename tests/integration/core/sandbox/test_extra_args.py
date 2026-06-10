@@ -58,6 +58,7 @@ class TestSandboxExtraArgs:
         Skips gracefully if the controlplane hasn't deployed nfs support yet.
         """
         name = unique_name("extra-args-nfs")
+        created = False
         try:
             await SandboxInstance.create(
                 {
@@ -67,17 +68,18 @@ class TestSandboxExtraArgs:
                     "labels": default_labels,
                 }
             )
+            created = True
+
+            retrieved = await SandboxInstance.get(name)
+            assert retrieved.spec.runtime.extra_args is not None
+            assert retrieved.spec.runtime.extra_args["nfs"] == "enabled"
         except Exception as e:
             if 'unsupported extraArgs key "nfs"' in str(e):
                 pytest.skip("controlplane hasn't deployed nfs support yet")
             raise
-
-        try:
-            retrieved = await SandboxInstance.get(name)
-            assert retrieved.spec.runtime.extra_args is not None
-            assert retrieved.spec.runtime.extra_args["nfs"] == "enabled"
         finally:
-            await SandboxInstance.delete(name)
+            if created:
+                await SandboxInstance.delete(name)
 
     async def test_creates_sandbox_with_both_iptables_and_nvme(self):
         """Test creating a sandbox with both iptables and nvme enabled."""
