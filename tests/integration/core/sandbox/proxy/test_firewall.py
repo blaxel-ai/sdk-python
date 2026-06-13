@@ -196,3 +196,54 @@ class TestFirewallWithProxyRouting:
             "wait_for_completion": True,
         })
         assert result.exit_code != 0
+
+
+@pytest.mark.asyncio(loop_scope="class")
+class TestFirewallNoProxyBypass:
+    """firewall ruleset "proxy": egress is enforced at the network level, so the
+    proxy cannot be bypassed by unsetting proxy env vars."""
+
+    sandbox: SandboxInstance
+    sandbox_name: str
+
+    @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
+    async def setup_sandbox(self, request):
+        request.cls.sandbox_name = unique_name("fw-bypass")
+        request.cls.sandbox = await SandboxInstance.create({
+            "name": request.cls.sandbox_name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "firewall": {"rulesets": ["proxy"]},
+                "allowedDomains": ["httpbin.org"],
+                "proxy": {"routing": []},
+            },
+        })
+        await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        # Warm up the proxy path so the first real assertion isn't racing setup.
+        await request.cls.sandbox.process.exec({
+            "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+            "wait_for_completion": True,
+        })
+        yield
+        try:
+            await SandboxInstance.delete(request.cls.sandbox_name)
+        except Exception:
+            pass
+
+    async def test_blocks_requests_even_when_proxy_env_vars_are_unset(self):
+        # Strip every proxy hint so the helper attempts a direct connection,
+        # bypassing the proxy entirely. With the "proxy" firewall ruleset egress is
+        # enforced at the network level by dropping packets, so a direct connection
+        # won't be refused -- it just hangs. `timeout` turns that hang into a
+        # non-zero exit (124), proving the bypass is blocked rather than silently
+        # succeeding.
+        result = await self.sandbox.process.exec({
+            "command": (
+                "timeout 10 env -u HTTP_PROXY -u http_proxy -u HTTPS_PROXY "
+                "-u https_proxy node /tmp/proxy-test.js GET https://httpbin.org/get"
+            ),
+            "wait_for_completion": True,
+        })
+        assert result.exit_code != 0, result.logs

@@ -21,16 +21,24 @@ from .create_job_execution_request import CreateJobExecutionRequest
 from .create_job_execution_request_env import CreateJobExecutionRequestEnv
 from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
-from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
+from .create_workspace_service_account_response_200 import (
+    CreateWorkspaceServiceAccountResponse200,
+)
 from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_status import CustomDomainSpecStatus
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
 from .delete_drive_response_200 import DeleteDriveResponse200
-from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
-from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
-from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
+from .delete_sandbox_preview_token_response_200 import (
+    DeleteSandboxPreviewTokenResponse200,
+)
+from .delete_volume_template_version_response_200 import (
+    DeleteVolumeTemplateVersionResponse200,
+)
+from .delete_workspace_service_account_response_200 import (
+    DeleteWorkspaceServiceAccountResponse200,
+)
 from .drive import Drive
 from .drive_spec import DriveSpec
 from .drive_state import DriveState
@@ -52,6 +60,7 @@ from .error import Error
 from .expiration_policy import ExpirationPolicy
 from .expiration_policy_action import ExpirationPolicyAction
 from .expiration_policy_type import ExpirationPolicyType
+from .firewall_config import FirewallConfig
 from .flavor import Flavor
 from .flavor_type import FlavorType
 from .form import Form
@@ -65,7 +74,9 @@ from .function_spec import FunctionSpec
 from .get_drive_jwks_response_200 import GetDriveJWKSResponse200
 from .get_drive_jwks_response_200_keys_item import GetDriveJWKSResponse200KeysItem
 from .get_workspace_features_response_200 import GetWorkspaceFeaturesResponse200
-from .get_workspace_features_response_200_features import GetWorkspaceFeaturesResponse200Features
+from .get_workspace_features_response_200_features import (
+    GetWorkspaceFeaturesResponse200Features,
+)
 from .get_workspace_service_accounts_response_200_item import (
     GetWorkspaceServiceAccountsResponse200Item,
 )
@@ -194,7 +205,9 @@ from .trigger_configuration import TriggerConfiguration
 from .trigger_configuration_task import TriggerConfigurationTask
 from .trigger_type import TriggerType
 from .update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
-from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
+from .update_workspace_service_account_response_200 import (
+    UpdateWorkspaceServiceAccountResponse200,
+)
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .volume import Volume
 from .volume_attachment import VolumeAttachment
@@ -269,6 +282,7 @@ __all__ = (
     "ExpirationPolicy",
     "ExpirationPolicyAction",
     "ExpirationPolicyType",
+    "FirewallConfig",
     "Flavor",
     "FlavorType",
     "Form",
