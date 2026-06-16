@@ -14,12 +14,13 @@ from blaxel.core import SandboxInstance
 from blaxel.core.client.api.compute.get_sandbox_by_external_id import (
     asyncio as get_sandbox_by_external_id,
 )
-from blaxel.core.client.api.compute.list_sandboxes import asyncio as list_sandboxes
+from blaxel.core.client.api.compute.list_sandboxes import (
+    asyncio_detailed as list_sandboxes_detailed,
+)
 from blaxel.core.client.client import client
 from blaxel.core.client.models import Metadata, Sandbox, SandboxRuntime, SandboxSpec
 from blaxel.core.client.models.error import Error
 from blaxel.core.client.models.metadata_labels import MetadataLabels
-from blaxel.core.client.types import UNSET
 from tests.helpers import (
     default_image,
     default_labels,
@@ -118,18 +119,24 @@ class TestSandboxExternalId:
         assert not isinstance(response, Error), f"Create failed: {response}"
 
         try:
-            # List sandboxes filtered by externalId
-            result = await list_sandboxes(client=client, external_id=external_id)
-            assert not isinstance(result, Error), f"List failed: {result}"
-            assert result is not None
+            # Use detailed response to handle both bare-array and paginated formats
+            resp = await list_sandboxes_detailed(client=client, external_id=external_id)
+            assert resp.status_code == 200, f"List returned {resp.status_code}"
+            body = resp.content
+            import json
 
-            # Unwrap paginated response
-            sandboxes = result.data if hasattr(result, "data") else result
-            assert sandboxes is not None and sandboxes is not UNSET
-            sandbox_list = list(sandboxes)
-            assert len(sandbox_list) == 1
-            assert sandbox_list[0].metadata.name == name
-            assert sandbox_list[0].metadata.external_id == external_id
+            raw = json.loads(body)
+
+            # Handle both formats: bare array or {data: [...], meta: {...}}
+            if isinstance(raw, list):
+                sandbox_dicts = raw
+            else:
+                sandbox_dicts = raw.get("data", [])
+
+            sandboxes = [Sandbox.from_dict(s) for s in sandbox_dicts]
+            assert len(sandboxes) == 1
+            assert sandboxes[0].metadata.name == name
+            assert sandboxes[0].metadata.external_id == external_id
         finally:
             await SandboxInstance.delete(name)
 
