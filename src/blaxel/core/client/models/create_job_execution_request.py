@@ -40,6 +40,7 @@ class CreateJobExecutionRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         env: Union[Unset, dict[str, Any]] = UNSET
         if self.env and not isinstance(self.env, Unset) and not isinstance(self.env, dict):
             env = self.env.to_dict()
