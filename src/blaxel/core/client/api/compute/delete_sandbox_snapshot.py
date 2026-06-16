@@ -1,42 +1,45 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union, cast
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.app_revision import AppRevision
+from ...models.error import Error
 from ...types import Response
 
 
 def _get_kwargs(
-    application_name: str,
+    sandbox_name: str,
+    snapshot_id: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": f"/applications/{application_name}/revisions",
+        "method": "delete",
+        "url": f"/sandboxes/{sandbox_name}/snapshots/{snapshot_id}",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["AppRevision"] | None:
-    if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = AppRevision.from_dict(response_200_item_data)
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Error] | None:
+    if response.status_code == 204:
+        response_204 = cast(Any, None)
+        return response_204
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
 
-            response_200.append(response_200_item)
+        return response_404
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
 
-        return response_200
+        return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["AppRevision"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Error]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,25 +49,30 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 
 
 def sync_detailed(
-    application_name: str,
+    sandbox_name: str,
+    snapshot_id: str,
     *,
     client: Client,
-) -> Response[list["AppRevision"]]:
-    """List all application revisions
+) -> Response[Union[Any, Error]]:
+    """Delete sandbox snapshot
+
+     Deletes a snapshot of a sandbox by its ID.
 
     Args:
-        application_name (str):
+        sandbox_name (str):
+        snapshot_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['AppRevision']]
+        Response[Union[Any, Error]]
     """
 
     kwargs = _get_kwargs(
-        application_name=application_name,
+        sandbox_name=sandbox_name,
+        snapshot_id=snapshot_id,
     )
 
     response = client.get_httpx_client().request(
@@ -75,49 +83,59 @@ def sync_detailed(
 
 
 def sync(
-    application_name: str,
+    sandbox_name: str,
+    snapshot_id: str,
     *,
     client: Client,
-) -> list["AppRevision"] | None:
-    """List all application revisions
+) -> Union[Any, Error] | None:
+    """Delete sandbox snapshot
+
+     Deletes a snapshot of a sandbox by its ID.
 
     Args:
-        application_name (str):
+        sandbox_name (str):
+        snapshot_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['AppRevision']
+        Union[Any, Error]
     """
 
     return sync_detailed(
-        application_name=application_name,
+        sandbox_name=sandbox_name,
+        snapshot_id=snapshot_id,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    application_name: str,
+    sandbox_name: str,
+    snapshot_id: str,
     *,
     client: Client,
-) -> Response[list["AppRevision"]]:
-    """List all application revisions
+) -> Response[Union[Any, Error]]:
+    """Delete sandbox snapshot
+
+     Deletes a snapshot of a sandbox by its ID.
 
     Args:
-        application_name (str):
+        sandbox_name (str):
+        snapshot_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['AppRevision']]
+        Response[Union[Any, Error]]
     """
 
     kwargs = _get_kwargs(
-        application_name=application_name,
+        sandbox_name=sandbox_name,
+        snapshot_id=snapshot_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -126,26 +144,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    application_name: str,
+    sandbox_name: str,
+    snapshot_id: str,
     *,
     client: Client,
-) -> list["AppRevision"] | None:
-    """List all application revisions
+) -> Union[Any, Error] | None:
+    """Delete sandbox snapshot
+
+     Deletes a snapshot of a sandbox by its ID.
 
     Args:
-        application_name (str):
+        sandbox_name (str):
+        snapshot_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['AppRevision']
+        Union[Any, Error]
     """
 
     return (
         await asyncio_detailed(
-            application_name=application_name,
+            sandbox_name=sandbox_name,
+            snapshot_id=snapshot_id,
             client=client,
         )
     ).parsed
