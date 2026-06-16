@@ -6,6 +6,7 @@ Tests:
 - Filtering sandboxes by externalId via the list endpoint
 """
 
+import json
 import uuid
 
 import pytest
@@ -14,9 +15,7 @@ from blaxel.core import SandboxInstance
 from blaxel.core.client.api.compute.get_sandbox_by_external_id import (
     asyncio as get_sandbox_by_external_id,
 )
-from blaxel.core.client.api.compute.list_sandboxes import (
-    asyncio_detailed as list_sandboxes_detailed,
-)
+from blaxel.core.client.api.compute.list_sandboxes import _get_kwargs as _list_sandboxes_kwargs
 from blaxel.core.client.client import client
 from blaxel.core.client.models import Metadata, Sandbox, SandboxRuntime, SandboxSpec
 from blaxel.core.client.models.error import Error
@@ -119,13 +118,13 @@ class TestSandboxExternalId:
         assert not isinstance(response, Error), f"Create failed: {response}"
 
         try:
-            # Use detailed response to handle both bare-array and paginated formats
-            resp = await list_sandboxes_detailed(client=client, external_id=external_id)
+            # Make raw HTTP request to bypass generated parser that chokes on bare arrays
+            kwargs = _list_sandboxes_kwargs(external_id=external_id)
+            httpx_client = client.get_async_httpx_client()
+            resp = await httpx_client.request(**kwargs)
             assert resp.status_code == 200, f"List returned {resp.status_code}"
-            body = resp.content
-            import json
 
-            raw = json.loads(body)
+            raw = json.loads(resp.content)
 
             # Handle both formats: bare array or {data: [...], meta: {...}}
             if isinstance(raw, list):
