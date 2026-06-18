@@ -456,7 +456,7 @@ class SandboxInstance:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
         # Update TTL (None or empty string clears the TTL)
-        updated_sandbox.spec.runtime.ttl = ttl if ttl else None
+        updated_sandbox.spec.runtime.ttl = None if ttl is None or ttl == "" else ttl
 
         # Call the update API
         response = await update_sandbox(
