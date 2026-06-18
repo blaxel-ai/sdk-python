@@ -436,12 +436,12 @@ class SandboxInstance:
         return cls(response)
 
     @classmethod
-    async def update_ttl(cls, sandbox_name: str, ttl: str) -> "SandboxInstance":
+    async def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SandboxInstance":
         """Update sandbox TTL without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
 
         Returns:
             A new SandboxInstance with updated TTL
@@ -455,8 +455,8 @@ class SandboxInstance:
         if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update TTL
-        updated_sandbox.spec.runtime.ttl = ttl
+        # Update TTL (None or empty string clears the TTL)
+        updated_sandbox.spec.runtime.ttl = ttl if ttl else None
 
         # Call the update API
         response = await update_sandbox(
@@ -469,13 +469,13 @@ class SandboxInstance:
 
     @classmethod
     async def update_lifecycle(
-        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle | None
     ) -> "SandboxInstance":
         """Update sandbox lifecycle configuration without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            lifecycle: The new lifecycle configuration
+            lifecycle: The new lifecycle configuration, or None to clear
 
         Returns:
             A new SandboxInstance with updated lifecycle
@@ -484,19 +484,17 @@ class SandboxInstance:
         sandbox_instance = await cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
 
-        # Prepare the updated sandbox object
-        updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
-        if updated_sandbox.spec is None:
+        # Use dict approach to properly serialize null lifecycle
+        body = sandbox.to_dict()
+        if "spec" not in body:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
-
-        # Update lifecycle
-        updated_sandbox.spec.lifecycle = lifecycle
+        body["spec"]["lifecycle"] = lifecycle.to_dict() if lifecycle is not None else None
 
         # Call the update API
         response = await update_sandbox(
             sandbox_name=sandbox_name,
             client=client,
-            body=updated_sandbox,
+            body=body,
         )
 
         return cls(response)
