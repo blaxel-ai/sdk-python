@@ -23,7 +23,9 @@ class TestBlModel:
     @pytest.mark.parametrize("model_name", TEST_MODELS)
     async def test_can_chat_with_model(self, model_name: str):
         """Test chatting with a model."""
-        model = await bl_model(model_name)
+        # temperature=1: the sandbox-openai model is a reasoning model that only
+        # accepts the default temperature (1); LlamaIndex otherwise defaults to 0.1.
+        model = await bl_model(model_name, temperature=1)
         result = await model.achat([ChatMessage(role="user", content="Say hello in one word")])
 
         assert result is not None

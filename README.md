@@ -31,6 +31,49 @@ When running Blaxel SDK from a remote server that is not Blaxel-hosted, we recom
 
 ## Usage
 
+### Paginated list responses
+
+Control plane list methods return one page at a time. The return value behaves like a list for the current page and also exposes pagination helpers:
+
+```python
+from blaxel.core import SandboxInstance
+
+page = await SandboxInstance.list(limit=50)
+
+for sandbox in page.data:
+    print(sandbox.metadata.name)
+
+if page.has_more:
+    next_page = await page.next_page()
+    print(next_page.next_cursor)
+```
+
+Use `auto_paging_iter()` only when you explicitly want the SDK to walk every page for you:
+
+```python
+page = await SandboxInstance.list(limit=50)
+
+async for sandbox in page.auto_paging_iter():
+    print(sandbox.metadata.name)
+```
+
+The same shape is used by `DriveInstance.list()`, `VolumeInstance.list()`, and job execution listing. Sync APIs expose the same fields, with a synchronous `next_page()`:
+
+```python
+from blaxel.core import SyncDriveInstance
+
+page = SyncDriveInstance.list(limit=50)
+
+while True:
+    for drive in page.data:
+        print(drive.name)
+
+    if not page.has_more:
+        break
+
+    page = page.next_page()
+```
+
 ### Sandboxes
 
 Sandboxes are secure, instant-launching compute environments that scale to zero after inactivity and resume in under 25ms.
@@ -250,8 +293,10 @@ async def main():
         ]
     })
 
-    # List volumes
-    volumes = await VolumeInstance.list()
+    # List the first page of volumes
+    volumes = await VolumeInstance.list(limit=50)
+    for listed_volume in volumes.data:
+        print(listed_volume.name)
 
     # Delete volume (using class)
     await VolumeInstance.delete("my-volume")
@@ -303,8 +348,10 @@ async def main():
     except Exception as error:
         print(f"Timeout: {error}")
 
-    # List all executions
-    executions = await job.alist_executions()
+    # List one page of executions
+    executions = await job.alist_executions(limit=20)
+    for execution in executions.data:
+        print(execution.metadata.id)
 
     # Delete an execution
     await job.acancel_execution(execution_id)

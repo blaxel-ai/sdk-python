@@ -1,4 +1,5 @@
 """Tests for the Blaxel-Version header in Settings."""
+
 import os
 
 from blaxel.core.common.settings import BLAXEL_API_VERSION, settings
@@ -8,7 +9,7 @@ def test_default_api_version():
     """Blaxel-Version defaults to the module constant when BL_API_VERSION is unset."""
     os.environ.pop("BL_API_VERSION", None)
     assert settings.api_version == BLAXEL_API_VERSION
-    assert settings.api_version == "2026-04-16"
+    assert settings.api_version == "2026-04-28"
 
 
 def test_env_override_api_version():

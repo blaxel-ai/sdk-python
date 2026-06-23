@@ -21,6 +21,11 @@ def telemetry() -> None:
 def autoload() -> None:
     client.with_base_url(settings.base_url)
     client.with_auth(settings.auth)
+    # Send the Blaxel-Version header on every control-plane request so list
+    # endpoints return cursor-paginated `{data, meta}` responses (>= 2026-04-28).
+    # Without it the API falls back to legacy bare-array listings and pagination
+    # (limit/cursor/next_page) is silently ignored.
+    client.with_headers({"Blaxel-Version": settings.api_version})
 
     # Register response interceptors for authentication error handling
     # Access the underlying httpx clients and add event hooks

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..pagination import split_list_response
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -57,13 +58,14 @@ class AgentList:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: dict[str, Any] | list[Any]) -> T | None:
         from ..models.agent import Agent
         from ..models.pagination_meta import PaginationMeta
 
-        if not src_dict:
+        _data, _meta, additional_properties = split_list_response(src_dict)
+        if not _data and not additional_properties and isinstance(_meta, Unset):
             return None
-        d = src_dict.copy()
+        d = {"data": _data, "meta": _meta}
         data = []
         _data = d.pop("data", UNSET)
         for data_item_data in _data or []:
@@ -83,7 +85,7 @@ class AgentList:
             meta=meta,
         )
 
-        agent_list.additional_properties = d
+        agent_list.additional_properties = additional_properties
         return agent_list
 
     @property

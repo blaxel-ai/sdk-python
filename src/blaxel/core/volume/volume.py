@@ -2,7 +2,7 @@ import asyncio
 import time
 import uuid
 import warnings
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, Union
 
 from ..client.api.volumes.create_volume import asyncio as create_volume
 from ..client.api.volumes.create_volume import sync as create_volume_sync
@@ -17,6 +17,13 @@ from ..client.api.volumes.update_volume import sync as update_volume_sync
 from ..client.client import client
 from ..client.models import Metadata, Volume, VolumeSpec
 from ..client.models.error import Error
+from ..client.pagination import (
+    AsyncPaginatedList,
+    PaginatedList,
+    make_async_paginated_list,
+    make_paginated_list,
+    normalize_cursor,
+)
 from ..client.types import UNSET
 from ..common.settings import settings
 
@@ -254,10 +261,47 @@ class VolumeInstance:
         return cls(response)
 
     @classmethod
-    async def list(cls) -> list["VolumeInstance"]:
-        response = await list_volumes(client=client)
-        volumes = response.data if hasattr(response, "data") else response
-        return [cls(volume) for volume in volumes or []]
+    async def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> AsyncPaginatedList["VolumeInstance"]:
+        """List one page of volumes.
+
+        Args:
+            limit: Maximum number of volumes to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            AsyncPaginatedList[VolumeInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = await VolumeInstance.list(limit=50)
+
+            for volume in page.data:
+                print(volume.name)
+
+            if page.has_more:
+                next_page = await page.next_page()
+
+            async for volume in page.auto_paging_iter():
+                print(volume.name)
+            ```
+        """
+
+        async def fetch_page(page_cursor: str | None):
+            response = await list_volumes(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise VolumeAPIError(message, status_code=status_code, code=response.error)
+            return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return await fetch_page(cursor)
 
     @classmethod
     async def create_if_not_exists(
@@ -408,11 +452,47 @@ class SyncVolumeInstance:
         return cls(response)
 
     @classmethod
-    def list(cls) -> List["SyncVolumeInstance"]:
-        """List all volumes synchronously."""
-        response = list_volumes_sync(client=client)
-        volumes = response.data if hasattr(response, "data") else response
-        return [cls(volume) for volume in volumes or []]
+    def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> PaginatedList["SyncVolumeInstance"]:
+        """List one page of volumes synchronously.
+
+        Args:
+            limit: Maximum number of volumes to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            PaginatedList[SyncVolumeInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = SyncVolumeInstance.list(limit=50)
+
+            for volume in page.data:
+                print(volume.name)
+
+            if page.has_more:
+                next_page = page.next_page()
+
+            for volume in page.auto_paging_iter():
+                print(volume.name)
+            ```
+        """
+
+        def fetch_page(page_cursor: str | None):
+            response = list_volumes_sync(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise VolumeAPIError(message, status_code=status_code, code=response.error)
+            return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return fetch_page(cursor)
 
     @classmethod
     def create_if_not_exists(

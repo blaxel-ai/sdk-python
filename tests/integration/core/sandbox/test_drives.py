@@ -129,8 +129,47 @@ class TestDriveInstanceCRUD(TestDriveOperations):
         drives = await DriveInstance.list()
         assert isinstance(drives, list)
 
-        found = next((d for d in drives if d.name == name), None)
+        found = None
+        async for d in (await DriveInstance.list()).auto_paging_iter():
+            if d.name == name:
+                found = d
+                break
         assert found is not None
+
+    async def test_paginates_drives_with_cursor_and_auto_paging(self):
+        """Cursor pagination really splits results into pages and walks them all."""
+        # Ensure at least two drives exist so a page size of 1 spans multiple pages
+        a = unique_name("drive-page-a")
+        b = unique_name("drive-page-b")
+        for n in (a, b):
+            await DriveInstance.create(
+                {"name": n, "size": 10, "region": default_region, "labels": default_labels}
+            )
+            self.created_drives.append(n)
+
+        # First page with limit 1 must report more pages and expose a cursor
+        page1 = await DriveInstance.list(limit=1)
+        assert len(page1.data) == 1
+        assert page1.has_more is True
+        assert page1.next_cursor
+
+        # Next page must be a different item (no repeated cursor, no duplicate)
+        page2 = await page1.next_page()
+        assert len(page2.data) >= 1
+        assert page1.data[0].name != page2.data[0].name
+
+        # Auto-paging with a small page size walks across pages without duplicates
+        # and surfaces every item. Both drives we created land on different pages
+        # (page size is 1), so finding both proves the auto-pager advances past the
+        # first page. We deliberately do NOT compare against a second unbounded
+        # listing: the workspace is shared, so concurrent create/delete from other
+        # tests makes an exact total count flaky.
+        walked = [d async for d in (await DriveInstance.list(limit=1)).auto_paging_iter()]
+        names = [d.name for d in walked]
+        assert len(set(names)) == len(names)  # no duplicates across pages
+        assert a in names
+        assert b in names
+        assert len(walked) > 1  # auto-pager advanced past the first page
 
     async def test_updates_a_drive(self):
         """Test updating a drive."""

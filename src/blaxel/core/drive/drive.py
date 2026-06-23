@@ -2,7 +2,7 @@ import asyncio
 import time
 import uuid
 import warnings
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, Union
 
 from ..client.api.drives.create_drive import asyncio as create_drive
 from ..client.api.drives.create_drive import sync as create_drive_sync
@@ -18,6 +18,13 @@ from ..client.client import client
 from ..client.errors import UnexpectedStatus
 from ..client.models import Drive, DriveSpec, Metadata
 from ..client.models.error import Error
+from ..client.pagination import (
+    AsyncPaginatedList,
+    PaginatedList,
+    make_async_paginated_list,
+    make_paginated_list,
+    normalize_cursor,
+)
 from ..client.types import UNSET
 from ..common.settings import settings
 
@@ -247,10 +254,47 @@ class DriveInstance:
         return cls(response)
 
     @classmethod
-    async def list(cls) -> list["DriveInstance"]:
-        response = await list_drives(client=client)
-        drives = response.data if hasattr(response, "data") else response
-        return [cls(drive) for drive in drives or []]
+    async def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> AsyncPaginatedList["DriveInstance"]:
+        """List one page of drives.
+
+        Args:
+            limit: Maximum number of drives to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            AsyncPaginatedList[DriveInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = await DriveInstance.list(limit=50)
+
+            for drive in page.data:
+                print(drive.name)
+
+            if page.has_more:
+                next_page = await page.next_page()
+
+            async for drive in page.auto_paging_iter():
+                print(drive.name)
+            ```
+        """
+
+        async def fetch_page(page_cursor: str | None):
+            response = await list_drives(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise DriveAPIError(message, status_code=status_code, code=response.error)
+            return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return await fetch_page(cursor)
 
     @classmethod
     async def create_if_not_exists(
@@ -399,11 +443,45 @@ class SyncDriveInstance:
         return cls(response)
 
     @classmethod
-    def list(cls) -> List["SyncDriveInstance"]:
-        """List all drives synchronously."""
-        response = list_drives_sync(client=client)
-        drives = response.data if hasattr(response, "data") else response
-        return [cls(drive) for drive in drives or []]
+    def list(cls, limit: int = 50, cursor: str | None = None) -> PaginatedList["SyncDriveInstance"]:
+        """List one page of drives synchronously.
+
+        Args:
+            limit: Maximum number of drives to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            PaginatedList[SyncDriveInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = SyncDriveInstance.list(limit=50)
+
+            for drive in page.data:
+                print(drive.name)
+
+            if page.has_more:
+                next_page = page.next_page()
+
+            for drive in page.auto_paging_iter():
+                print(drive.name)
+            ```
+        """
+
+        def fetch_page(page_cursor: str | None):
+            response = list_drives_sync(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise DriveAPIError(message, status_code=status_code, code=response.error)
+            return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return fetch_page(cursor)
 
     @classmethod
     def create_if_not_exists(

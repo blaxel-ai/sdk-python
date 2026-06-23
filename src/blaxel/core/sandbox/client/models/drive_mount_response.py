@@ -14,24 +14,30 @@ class DriveMountResponse:
     Attributes:
         drive_name (Union[Unset, str]):
         drive_path (Union[Unset, str]):
+        gid_map (Union[Unset, str]): The local GID used for this mount
         message (Union[Unset, str]):
         mount_path (Union[Unset, str]):
         read_only (Union[Unset, bool]):
         success (Union[Unset, bool]):
+        uid_map (Union[Unset, str]): The local UID used for this mount
     """
 
     drive_name: Union[Unset, str] = UNSET
     drive_path: Union[Unset, str] = UNSET
+    gid_map: Union[Unset, str] = UNSET
     message: Union[Unset, str] = UNSET
     mount_path: Union[Unset, str] = UNSET
     read_only: Union[Unset, bool] = UNSET
     success: Union[Unset, bool] = UNSET
+    uid_map: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         drive_name = self.drive_name
 
         drive_path = self.drive_path
+
+        gid_map = self.gid_map
 
         message = self.message
 
@@ -41,6 +47,8 @@ class DriveMountResponse:
 
         success = self.success
 
+        uid_map = self.uid_map
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -48,6 +56,8 @@ class DriveMountResponse:
             field_dict["driveName"] = drive_name
         if drive_path is not UNSET:
             field_dict["drivePath"] = drive_path
+        if gid_map is not UNSET:
+            field_dict["gidMap"] = gid_map
         if message is not UNSET:
             field_dict["message"] = message
         if mount_path is not UNSET:
@@ -56,6 +66,8 @@ class DriveMountResponse:
             field_dict["readOnly"] = read_only
         if success is not UNSET:
             field_dict["success"] = success
+        if uid_map is not UNSET:
+            field_dict["uidMap"] = uid_map
 
         return field_dict
 
@@ -68,6 +80,8 @@ class DriveMountResponse:
 
         drive_path = d.pop("drivePath", d.pop("drive_path", UNSET))
 
+        gid_map = d.pop("gidMap", d.pop("gid_map", UNSET))
+
         message = d.pop("message", UNSET)
 
         mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
@@ -76,13 +90,17 @@ class DriveMountResponse:
 
         success = d.pop("success", UNSET)
 
+        uid_map = d.pop("uidMap", d.pop("uid_map", UNSET))
+
         drive_mount_response = cls(
             drive_name=drive_name,
             drive_path=drive_path,
+            gid_map=gid_map,
             message=message,
             mount_path=mount_path,
             read_only=read_only,
             success=success,
+            uid_map=uid_map,
         )
 
         drive_mount_response.additional_properties = d

@@ -2,7 +2,7 @@ import logging
 import time
 import uuid
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 if TYPE_CHECKING:
     import httpx
@@ -26,6 +26,7 @@ from ...client.models import (
 )
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
+from ...client.pagination import PaginatedList, make_paginated_list, normalize_cursor
 from ...client.types import UNSET
 from ...common.settings import settings
 from ..default.sandbox import (
@@ -300,14 +301,47 @@ class SyncSandboxInstance:
         return cls(response)
 
     @classmethod
-    def list(cls) -> List["SyncSandboxInstance"]:
-        response = list_sandboxes(client=client)
-        if isinstance(response, Error):
-            status_code = response.code if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise SandboxAPIError(message, status_code=status_code, code=response.error)
-        sandboxes = response.data if hasattr(response, "data") else response
-        return [cls(sandbox) for sandbox in sandboxes or []]
+    def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> PaginatedList["SyncSandboxInstance"]:
+        """List one page of sandboxes synchronously.
+
+        Args:
+            limit: Maximum number of sandboxes to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            PaginatedList[SyncSandboxInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = SyncSandboxInstance.list(limit=50)
+
+            for sandbox in page.data:
+                print(sandbox.metadata.name)
+
+            if page.has_more:
+                next_page = page.next_page()
+
+            for sandbox in page.auto_paging_iter():
+                print(sandbox.metadata.name)
+            ```
+        """
+
+        def fetch_page(page_cursor: str | None):
+            response = list_sandboxes(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = response.code if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise SandboxAPIError(message, status_code=status_code, code=response.error)
+            return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return fetch_page(cursor)
 
     @classmethod
     def update_metadata(

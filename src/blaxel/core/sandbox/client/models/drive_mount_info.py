@@ -14,14 +14,18 @@ class DriveMountInfo:
     Attributes:
         drive_name (Union[Unset, str]):
         drive_path (Union[Unset, str]):
+        gid_map (Union[Unset, str]): The local GID used for this mount
         mount_path (Union[Unset, str]):
         read_only (Union[Unset, bool]):
+        uid_map (Union[Unset, str]): The local UID used for this mount
     """
 
     drive_name: Union[Unset, str] = UNSET
     drive_path: Union[Unset, str] = UNSET
+    gid_map: Union[Unset, str] = UNSET
     mount_path: Union[Unset, str] = UNSET
     read_only: Union[Unset, bool] = UNSET
+    uid_map: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -29,9 +33,13 @@ class DriveMountInfo:
 
         drive_path = self.drive_path
 
+        gid_map = self.gid_map
+
         mount_path = self.mount_path
 
         read_only = self.read_only
+
+        uid_map = self.uid_map
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -40,10 +48,14 @@ class DriveMountInfo:
             field_dict["driveName"] = drive_name
         if drive_path is not UNSET:
             field_dict["drivePath"] = drive_path
+        if gid_map is not UNSET:
+            field_dict["gidMap"] = gid_map
         if mount_path is not UNSET:
             field_dict["mountPath"] = mount_path
         if read_only is not UNSET:
             field_dict["readOnly"] = read_only
+        if uid_map is not UNSET:
+            field_dict["uidMap"] = uid_map
 
         return field_dict
 
@@ -56,15 +68,21 @@ class DriveMountInfo:
 
         drive_path = d.pop("drivePath", d.pop("drive_path", UNSET))
 
+        gid_map = d.pop("gidMap", d.pop("gid_map", UNSET))
+
         mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
         read_only = d.pop("readOnly", d.pop("read_only", UNSET))
 
+        uid_map = d.pop("uidMap", d.pop("uid_map", UNSET))
+
         drive_mount_info = cls(
             drive_name=drive_name,
             drive_path=drive_path,
+            gid_map=gid_map,
             mount_path=mount_path,
             read_only=read_only,
+            uid_map=uid_map,
         )
 
         drive_mount_info.additional_properties = d

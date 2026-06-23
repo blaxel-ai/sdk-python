@@ -8,7 +8,7 @@ import yaml
 from ..authentication import BlaxelAuth, auth
 from .logger import init_logger
 
-BLAXEL_API_VERSION = "2026-04-16"
+BLAXEL_API_VERSION = "2026-04-28"
 
 
 def _get_int_env(name: str, default: int) -> int:

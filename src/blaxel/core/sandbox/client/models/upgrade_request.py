@@ -14,8 +14,8 @@ class UpgradeRequest:
     Attributes:
         base_url (Union[Unset, str]): Base URL for releases (useful for forks) Example: https://github.com/blaxel-
             ai/sandbox/releases.
-        version (Union[Unset, str]): Version to upgrade to: "develop", "main", "latest", or specific tag like "v1.0.0"
-            Example: develop.
+        version (Union[Unset, str]): Version to upgrade to: "latest" (default), "develop", "main", or specific tag like
+            "v1.0.0" Example: latest.
     """
 
     base_url: Union[Unset, str] = UNSET

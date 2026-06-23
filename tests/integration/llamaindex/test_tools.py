@@ -45,7 +45,9 @@ class TestBlTools:
 
     async def test_agent_can_use_tools(self):
         """Test that an agent can use sandbox tools to list files."""
-        model = await bl_model("sandbox-openai")
+        # temperature=1: the sandbox-openai model only accepts the default
+        # temperature (1); LlamaIndex otherwise defaults to 0.1.
+        model = await bl_model("sandbox-openai", temperature=1)
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
         agent = ReActAgent(
