@@ -58,6 +58,17 @@ _OPTIONAL_INTEGRATION_PACKAGES = (
     "blaxel.telemetry",
 )
 
+_OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES = {
+    "blaxel.langgraph": ("model", "tools"),
+    "blaxel.llamaindex": ("model", "tools"),
+    "blaxel.openai": ("model", "tools"),
+    "blaxel.crewai": ("model", "tools"),
+    "blaxel.googleadk": ("model", "tools"),
+    "blaxel.livekit": ("model", "tools"),
+    "blaxel.pydantic": ("model", "tools"),
+    "blaxel.telemetry": ("exporters", "instrumentation", "log", "manager", "span"),
+}
+
 # Filesystem fragments used to detect an import error raised while loading one of
 # the optional integration packages above (covers both POSIX and Windows paths).
 _OPTIONAL_INTEGRATION_PATHS = tuple(
@@ -216,11 +227,22 @@ def _get_exception_key(exc_type, exc_value, frame) -> str:
 def _has_optional_integration_frame(exc_value) -> bool:
     """Check whether an exception traceback passed through an integration module."""
     tb = getattr(exc_value, "__traceback__", None)
-    while tb:
+    while tb is not None:
         filename = tb.tb_frame.f_code.co_filename
         if any(path in filename for path in _OPTIONAL_INTEGRATION_PATHS):
             return True
         tb = tb.tb_next
+    return False
+
+
+def _is_optional_integration_entrypoint_missing(missing: str) -> bool:
+    """Check whether the missing module is a public optional integration entrypoint."""
+    if missing in _OPTIONAL_INTEGRATION_PACKAGES:
+        return True
+
+    for package, entrypoints in _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES.items():
+        if any(missing == f"{package}.{entrypoint}" for entrypoint in entrypoints):
+            return True
     return False
 
 
@@ -247,12 +269,12 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     # (e.g. "blaxel.openai.model", "agents", "opentelemetry.exporter.otlp").
     missing = getattr(exc_value, "name", None) or ""
 
-    # 1) The optional integration subpackage itself is unavailable -- e.g. a
-    #    stripped/partial install missing ``blaxel/openai/model.py``, surfacing as
-    #    ModuleNotFoundError("No module named 'blaxel.openai.model'").
-    if any(
-        missing == pkg or missing.startswith(f"{pkg}.") for pkg in _OPTIONAL_INTEGRATION_PACKAGES
-    ):
+    # 1) A public optional integration entrypoint itself is unavailable -- e.g.
+    #    a stripped/partial install missing ``blaxel/openai/model.py``,
+    #    surfacing as ModuleNotFoundError("No module named 'blaxel.openai.model'").
+    #    Do not suppress deeper ``blaxel.<integration>.*`` misses: those may be
+    #    real SDK packaging or internal import bugs and should still reach Sentry.
+    if _is_optional_integration_entrypoint_missing(missing):
         return True
 
     # 2) A known optional third-party dependency could not be imported.

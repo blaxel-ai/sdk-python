@@ -7,16 +7,14 @@ stripped/partial install is missing the integration's modules) are environment
 issues, not SDK defects, and must be filtered out before reaching Sentry.
 """
 
-from blaxel.core.common.sentry import _is_optional_dependency_error
+from blaxel.core.common.sentry import (
+    _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
+    _is_optional_dependency_error,
+)
 
 
 def _raise_in_file(filename: str, code: str) -> Exception:
-    """Execute ``code`` as if it lived in ``filename`` and return the exception.
-
-    Using ``compile`` with an explicit filename makes the resulting traceback
-    contain a frame whose ``co_filename`` is ``filename``, which lets us simulate
-    an error raised from inside a given package path.
-    """
+    """Execute ``code`` as if it lived in ``filename`` and return the exception."""
     try:
         exec(compile(code, filename, "exec"), {})
     except Exception as e:  # noqa: BLE001 - we want the raised exception object
@@ -45,18 +43,16 @@ class TestIsOptionalDependencyError:
         assert _is_optional_dependency_error(type(exc), exc) is True
 
     def test_each_optional_integration_package_is_covered(self):
-        for pkg in (
-            "blaxel.langgraph",
-            "blaxel.llamaindex",
-            "blaxel.openai",
-            "blaxel.crewai",
-            "blaxel.googleadk",
-            "blaxel.livekit",
-            "blaxel.pydantic",
-            "blaxel.telemetry",
-        ):
-            exc = ModuleNotFoundError(f"No module named '{pkg}.model'", name=f"{pkg}.model")
+        for pkg in _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES:
+            exc = ModuleNotFoundError(f"No module named '{pkg}'", name=pkg)
             assert _is_optional_dependency_error(type(exc), exc) is True, pkg
+
+    def test_each_optional_integration_entrypoint_module_is_covered(self):
+        for pkg, entrypoints in _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES.items():
+            for entrypoint in entrypoints:
+                missing = f"{pkg}.{entrypoint}"
+                exc = ModuleNotFoundError(f"No module named '{missing}'", name=missing)
+                assert _is_optional_dependency_error(type(exc), exc) is True, missing
 
     def test_opentelemetry_dependency_is_optional(self):
         """Existing behavior: opentelemetry import errors are still suppressed."""
@@ -71,23 +67,26 @@ class TestIsOptionalDependencyError:
         )
         assert _is_optional_dependency_error(type(exc), exc) is True
 
+    def test_missing_nested_blaxel_module_inside_integration_is_not_optional(self):
+        """Internal integration packaging/import bugs must still reach Sentry."""
+        exc = ModuleNotFoundError(
+            "No module named 'blaxel.pydantic.custom.gemni'",
+            name="blaxel.pydantic.custom.gemni",
+        )
+        assert _is_optional_dependency_error(ModuleNotFoundError, exc) is False
+
     def test_wrapped_integration_import_guard_error_is_optional(self):
         """The friendly optional-extra guard from blaxel.openai stays quiet."""
-        exc = _raise_in_file(
-            "/usr/lib/python3.12/site-packages/blaxel/openai/__init__.py",
-            """
-try:
-    raise ModuleNotFoundError(
-        "No module named 'blaxel.openai.model'",
-        name="blaxel.openai.model",
-    )
-except ImportError as e:
-    raise ImportError(
-        "The openai extra dependencies are required to use the OpenAI Agents integration. "
-        "Install them with: pip install blaxel[openai]"
-    ) from e
-""",
+        cause = ModuleNotFoundError(
+            "No module named 'blaxel.openai.model'",
+            name="blaxel.openai.model",
         )
+        exc = ImportError(
+            "The openai extra dependencies are required to use the OpenAI Agents integration. "
+            "Install them with: pip install blaxel[openai]"
+        )
+        exc.__cause__ = cause
+
         assert _is_optional_dependency_error(type(exc), exc) is True
 
     def test_missing_third_party_dep_outside_integration_is_not_optional(self):
@@ -108,4 +107,10 @@ except ImportError as e:
 
     def test_non_import_error_is_not_optional(self):
         exc = ValueError("not an import error")
+        assert _is_optional_dependency_error(type(exc), exc) is False
+
+    def test_circular_import_error_cause_is_not_optional(self):
+        exc = ImportError("wrapped import failed")
+        exc.__cause__ = exc
+
         assert _is_optional_dependency_error(type(exc), exc) is False
