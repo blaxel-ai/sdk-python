@@ -328,7 +328,7 @@ class BlJob:
                 client=client,
                 cursor=normalize_cursor(page_cursor),
                 limit=limit,
-                offset=offset,
+                offset=offset if page_cursor is None else 0,
             )
 
             if response.status_code != 200:
@@ -375,7 +375,7 @@ class BlJob:
                 client=client,
                 cursor=normalize_cursor(page_cursor),
                 limit=limit,
-                offset=offset,
+                offset=offset if page_cursor is None else 0,
             )
 
             if response.status_code != 200:

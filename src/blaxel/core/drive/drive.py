@@ -288,6 +288,10 @@ class DriveInstance:
                 cursor=normalize_cursor(page_cursor),
                 limit=limit,
             )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise DriveAPIError(message, status_code=status_code, code=response.error)
             return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return await fetch_page(cursor)
@@ -471,6 +475,10 @@ class SyncDriveInstance:
                 cursor=normalize_cursor(page_cursor),
                 limit=limit,
             )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise DriveAPIError(message, status_code=status_code, code=response.error)
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)

@@ -2,8 +2,10 @@ from types import SimpleNamespace
 
 import pytest
 
+from blaxel.core.client.client import Client
 from blaxel.core.client.models import Drive, DriveSpec, Metadata, Sandbox, SandboxSpec
 from blaxel.core.client.models.drive_list import DriveList
+from blaxel.core.client.models.error import Error
 from blaxel.core.client.models.job_execution import JobExecution
 from blaxel.core.client.models.job_execution_list import JobExecutionList
 from blaxel.core.client.models.job_execution_metadata import JobExecutionMetadata
@@ -15,9 +17,10 @@ from blaxel.core.client.models.pagination_meta import PaginationMeta
 from blaxel.core.client.models.sandbox_list import SandboxList
 from blaxel.core.client.models.volume_list import VolumeList
 from blaxel.core.client.types import UNSET
-from blaxel.core.drive.drive import SyncDriveInstance
+from blaxel.core.drive.drive import DriveAPIError, DriveInstance, SyncDriveInstance
 from blaxel.core.jobs import bl_job
 from blaxel.core.sandbox.default.sandbox import SandboxInstance
+from blaxel.core.volume.volume import SyncVolumeInstance, VolumeAPIError, VolumeInstance
 
 
 @pytest.mark.asyncio
@@ -79,6 +82,64 @@ def test_drive_list_returns_page_with_next_page(monkeypatch):
     assert [drive.name for drive in next_page.data] == ["drive-b"]
     assert next_page.has_more is False
     assert calls == [(UNSET, 1), ("cursor-2", 1)]
+
+
+def test_drive_list_raises_api_errors(monkeypatch):
+    def fake_list_drives(*, client, cursor=UNSET, limit=50):
+        return Error(error="boom", code=500, message="drive failed")
+
+    monkeypatch.setattr("blaxel.core.drive.drive.list_drives_sync", fake_list_drives)
+
+    with pytest.raises(DriveAPIError) as exc_info:
+        SyncDriveInstance.list()
+
+    assert str(exc_info.value) == "drive failed"
+    assert exc_info.value.status_code == 500
+    assert exc_info.value.code == "boom"
+
+
+@pytest.mark.asyncio
+async def test_async_drive_list_raises_api_errors(monkeypatch):
+    async def fake_list_drives(*, client, cursor=UNSET, limit=50):
+        return Error(error="boom", code=401, message="async drive failed")
+
+    monkeypatch.setattr("blaxel.core.drive.drive.list_drives", fake_list_drives)
+
+    with pytest.raises(DriveAPIError) as exc_info:
+        await DriveInstance.list()
+
+    assert str(exc_info.value) == "async drive failed"
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.code == "boom"
+
+
+def test_volume_list_raises_api_errors(monkeypatch):
+    def fake_list_volumes(*, client, cursor=UNSET, limit=50):
+        return Error(error="boom", code=403, message="volume failed")
+
+    monkeypatch.setattr("blaxel.core.volume.volume.list_volumes_sync", fake_list_volumes)
+
+    with pytest.raises(VolumeAPIError) as exc_info:
+        SyncVolumeInstance.list()
+
+    assert str(exc_info.value) == "volume failed"
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.code == "boom"
+
+
+@pytest.mark.asyncio
+async def test_async_volume_list_raises_api_errors(monkeypatch):
+    async def fake_list_volumes(*, client, cursor=UNSET, limit=50):
+        return Error(error="boom", code=401, message="async volume failed")
+
+    monkeypatch.setattr("blaxel.core.volume.volume.list_volumes", fake_list_volumes)
+
+    with pytest.raises(VolumeAPIError) as exc_info:
+        await VolumeInstance.list()
+
+    assert str(exc_info.value) == "async volume failed"
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.code == "boom"
 
 
 def test_generated_list_models_accept_legacy_array_responses():
@@ -166,7 +227,9 @@ def test_job_execution_list_supports_explicit_next_page(monkeypatch):
     assert calls[0]["job_id"] == "job-a"
     assert calls[0]["limit"] == 10
     assert calls[0]["cursor"] == "cursor-1"
+    assert calls[0]["offset"] == 0
     assert calls[1]["cursor"] == "cursor-2"
+    assert calls[1]["offset"] == 0
 
 
 def test_job_execution_auto_paging_iter_is_explicit(monkeypatch):
@@ -203,3 +266,54 @@ def test_job_execution_auto_paging_iter_is_explicit(monkeypatch):
     executions = list(bl_job("job-a").list_executions(limit=10).auto_paging_iter())
 
     assert executions == [first_execution, second_execution]
+
+
+def test_job_execution_offset_is_only_sent_on_first_page(monkeypatch):
+    pages = [
+        JobExecutionList(
+            data=[
+                JobExecution(
+                    metadata=JobExecutionMetadata(id="execution-a"),
+                    spec=JobExecutionSpec(),
+                )
+            ],
+            meta=PaginationMeta(has_more=True, next_cursor="cursor-2"),
+        ),
+        JobExecutionList(
+            data=[
+                JobExecution(
+                    metadata=JobExecutionMetadata(id="execution-b"),
+                    spec=JobExecutionSpec(),
+                )
+            ],
+            meta=PaginationMeta(has_more=False),
+        ),
+    ]
+    calls = []
+
+    def fake_list_job_executions(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(
+            status_code=200,
+            parsed=pages.pop(0),
+        )
+
+    monkeypatch.setattr(
+        "blaxel.core.jobs.list_job_executions.sync_detailed",
+        fake_list_job_executions,
+    )
+
+    page = bl_job("job-a").list_executions(limit=10, offset=25)
+    page.next_page()
+
+    assert calls[0]["offset"] == 25
+    assert calls[1]["offset"] == 0
+
+
+def test_client_with_headers_merges_existing_headers():
+    client = Client(headers={"Blaxel-Version": "2026-04-28"})
+
+    updated = client.with_headers({"X-Test": "yes"})
+
+    assert client._headers == {"Blaxel-Version": "2026-04-28", "X-Test": "yes"}
+    assert updated._headers == {"Blaxel-Version": "2026-04-28", "X-Test": "yes"}

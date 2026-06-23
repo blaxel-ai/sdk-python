@@ -64,12 +64,13 @@ class Client:
 
     def with_headers(self, headers: dict[str, str]) -> "Client":
         """Get a new client matching this one with additional headers"""
-        self._headers = headers
+        merged_headers = {**self._headers, **headers}
+        self._headers = merged_headers
         if self._client is not None:
             self._client.headers.update(headers)
         if self._async_client is not None:
             self._async_client.headers.update(headers)
-        return evolve(self, headers={**self._headers, **headers})
+        return evolve(self, headers=merged_headers)
 
     def with_cookies(self, cookies: dict[str, str]) -> "Client":
         """Get a new client matching this one with additional cookies"""
