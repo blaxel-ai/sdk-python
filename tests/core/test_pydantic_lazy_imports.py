@@ -4,10 +4,22 @@ Ensures that the pydantic module uses lazy imports for provider dependencies,
 allowing users to import the module without installing all optional provider packages.
 """
 
+import subprocess
 import sys
-from unittest.mock import patch
+import textwrap
 
 import pytest
+
+
+def _run_import_isolation_check(code: str) -> None:
+    """Run import-state mutation checks outside the main pytest process."""
+    result = subprocess.run(
+        [sys.executable, "-c", textwrap.dedent(code)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
 
 
 class TestPydanticLazyImports:
@@ -15,24 +27,28 @@ class TestPydanticLazyImports:
 
     def test_import_with_missing_dependencies(self):
         """Test that pydantic module imports successfully without optional provider packages."""
-        mock_modules = {
-            "cohere": None,
-            "mistralai": None,
-            "mistralai.sdk": None,
-            "anthropic": None,
-            "pydantic_ai.models.cohere": None,
-            "pydantic_ai.models.mistral": None,
-            "pydantic_ai.models.anthropic": None,
-            "pydantic_ai.models.gemini": None,
-            "pydantic_ai.models.openai": None,
-            "pydantic_ai.providers.cohere": None,
-            "pydantic_ai.providers.mistral": None,
-            "pydantic_ai.providers.anthropic": None,
-            "pydantic_ai.providers.openai": None,
-        }
+        _run_import_isolation_check(
+            """
+            import sys
+            from unittest.mock import patch
 
-        with patch.dict("sys.modules", mock_modules, clear=False):
-            try:
+            mock_modules = {
+                "cohere": None,
+                "mistralai": None,
+                "mistralai.sdk": None,
+                "anthropic": None,
+                "pydantic_ai.models.cohere": None,
+                "pydantic_ai.models.mistral": None,
+                "pydantic_ai.models.anthropic": None,
+                "pydantic_ai.models.gemini": None,
+                "pydantic_ai.models.openai": None,
+                "pydantic_ai.providers.cohere": None,
+                "pydantic_ai.providers.mistral": None,
+                "pydantic_ai.providers.anthropic": None,
+                "pydantic_ai.providers.openai": None,
+            }
+
+            with patch.dict("sys.modules", mock_modules, clear=False):
                 for mod in ["blaxel.pydantic.model", "blaxel.pydantic"]:
                     sys.modules.pop(mod, None)
 
@@ -41,47 +57,47 @@ class TestPydanticLazyImports:
                 assert blaxel.pydantic.model is not None
                 assert hasattr(blaxel.pydantic.model, "TokenRefreshingModel")
                 assert hasattr(blaxel.pydantic.model, "bl_model")
-
-            except ImportError as e:
-                pytest.fail(f"Module import failed without optional dependencies: {e}")
-            finally:
-                for mod in ["blaxel.pydantic.model", "blaxel.pydantic"]:
-                    sys.modules.pop(mod, None)
+            """
+        )
 
     def test_bl_tools_import_without_provider_dependencies(self):
         """Test that bl_tools can be imported without provider-specific packages."""
-        mock_modules = {
-            "cohere": None,
-            "mistralai": None,
-            "mistralai.sdk": None,
-            "anthropic": None,
-        }
+        _run_import_isolation_check(
+            """
+            import sys
+            from unittest.mock import patch
 
-        with patch.dict("sys.modules", mock_modules, clear=False):
-            try:
+            mock_modules = {
+                "cohere": None,
+                "mistralai": None,
+                "mistralai.sdk": None,
+                "anthropic": None,
+            }
+
+            with patch.dict("sys.modules", mock_modules, clear=False):
                 for mod in ["blaxel.pydantic.model", "blaxel.pydantic.tools", "blaxel.pydantic"]:
                     sys.modules.pop(mod, None)
 
                 from blaxel.pydantic import bl_tools
 
                 assert bl_tools is not None
-
-            except ImportError as e:
-                pytest.fail(f"Failed to import bl_tools without optional dependencies: {e}")
-            finally:
-                for mod in ["blaxel.pydantic.model", "blaxel.pydantic.tools", "blaxel.pydantic"]:
-                    sys.modules.pop(mod, None)
+            """
+        )
 
     def test_bl_model_import_without_all_providers(self):
         """Test that bl_model can be imported with only a subset of provider packages."""
-        mock_modules = {
-            "cohere": None,
-            "mistralai": None,
-            "mistralai.sdk": None,
-        }
+        _run_import_isolation_check(
+            """
+            import sys
+            from unittest.mock import patch
 
-        with patch.dict("sys.modules", mock_modules, clear=False):
-            try:
+            mock_modules = {
+                "cohere": None,
+                "mistralai": None,
+                "mistralai.sdk": None,
+            }
+
+            with patch.dict("sys.modules", mock_modules, clear=False):
                 for mod in ["blaxel.pydantic.model", "blaxel.pydantic"]:
                     sys.modules.pop(mod, None)
 
@@ -89,12 +105,8 @@ class TestPydanticLazyImports:
 
                 assert bl_model is not None
                 assert callable(bl_model)
-
-            except ImportError as e:
-                pytest.fail(f"Failed to import bl_model without all providers: {e}")
-            finally:
-                for mod in ["blaxel.pydantic.model", "blaxel.pydantic"]:
-                    sys.modules.pop(mod, None)
+            """
+        )
 
     def test_wrapper_creation_does_not_trigger_imports(self):
         """Test that creating TokenRefreshingModel wrapper doesn't import provider dependencies."""

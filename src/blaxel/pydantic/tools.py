@@ -77,6 +77,7 @@ def get_pydantic_tool(tool: Tool) -> PydanticTool:
 
 
 async def bl_tools(tools_names: list[str], **kwargs) -> list[PydanticTool]:
+    kwargs.setdefault("timeout_enabled", False)
     tools = bl_tools_core(tools_names, **kwargs)
     await tools.initialize()
     return [get_pydantic_tool(tool) for tool in tools.get_tools()]
