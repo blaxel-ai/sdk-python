@@ -17,16 +17,16 @@ executionplane#171).
 import asyncio
 import os
 
-import httpx
 import pytest
 import pytest_asyncio
 
+from blaxel.core.client.api.drives.update_drive import asyncio as update_drive_api
+from blaxel.core.client.client import client
 from blaxel.core.client.models import Drive, DriveSpec, Metadata, MetadataLabels
 from blaxel.core.client.models.drive_permission import DrivePermission
 from blaxel.core.client.models.drive_permission_labels import DrivePermissionLabels
 from blaxel.core.client.models.drive_permission_mode import DrivePermissionMode
 from blaxel.core.client.types import UNSET
-from blaxel.core.common.settings import settings
 from blaxel.core.drive import DriveInstance
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import (
@@ -95,18 +95,17 @@ async def _exec(sbx: SandboxInstance, command: str) -> tuple[bool, str]:
 
 
 async def _update_drive_permissions(drive_name: str, permissions: list[dict]) -> None:
-    await settings.authenticate()
-    url = f"{settings.base_url}/drives/{drive_name}"
-    perm_dicts = [
-        {"labels": p.get("labels", {}), "mode": p.get("mode", "read-write")} for p in permissions
-    ]
-    async with httpx.AsyncClient() as http_client:
-        res = await http_client.put(
-            url,
-            headers={"Content-Type": "application/json", **settings.headers},
-            json={"metadata": {}, "spec": {"permissions": perm_dicts}},
-        )
-        assert res.status_code < 400, f"Update permissions failed: {res.status_code} {res.text}"
+    current = await DriveInstance.get(drive_name)
+    body = Drive(
+        metadata=current.drive.metadata,
+        spec=DriveSpec(
+            region=current.drive.spec.region if current.drive.spec else UNSET,
+            size=current.drive.spec.size if current.drive.spec else UNSET,
+            permissions=_make_permissions(permissions),
+        ),
+    )
+    response = await update_drive_api(drive_name=drive_name, client=client, body=body)
+    assert response is not None, f"Update permissions failed for {drive_name}"
 
 
 def _is_acl_denial(msg: str) -> bool:
