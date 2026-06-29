@@ -604,7 +604,7 @@ async def _update_drive_by_name(
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
         permissions=new_spec.permissions
-        if new_spec and new_spec.permissions and not isinstance(new_spec.permissions, Unset)
+        if new_spec and not isinstance(new_spec.permissions, Unset)
         else (current_drive.spec.permissions if current_drive.spec else UNSET),
     )
 
@@ -682,7 +682,7 @@ def _update_drive_by_name_sync(
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
         permissions=new_spec.permissions
-        if new_spec and new_spec.permissions and not isinstance(new_spec.permissions, Unset)
+        if new_spec and not isinstance(new_spec.permissions, Unset)
         else (current_drive.spec.permissions if current_drive.spec else UNSET),
     )
 
