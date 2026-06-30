@@ -110,6 +110,19 @@ Key points:
 - Each sub-package has its own `__init__.py` with explicit `__all__`
 
 ### Testing
+- Every feature must ship with an integration test exercising it against the real API
+- An integration test must run in **under 1 minute**. If it inherently takes longer
+  (e.g. waiting on async backend behavior), gate it behind a dedicated environment
+  variable so it is skipped by default and only runs when that variable is set:
+  ```python
+  import os
+  import pytest
+
+  @pytest.mark.skipif(
+      not os.environ.get("RUN_SLOW_TESTS"),
+      reason="slow test; set RUN_SLOW_TESTS=1 to enable",
+  )
+  ```
 - Integration tests require `BL_WORKSPACE` and `BL_API_KEY` environment variables
 - Use helpers from `tests/helpers.py` (`unique_name`, `default_labels`, `default_image`, etc.)
 - Always label test resources with `default_labels` for automatic cleanup
