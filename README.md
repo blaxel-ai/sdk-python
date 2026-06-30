@@ -57,7 +57,7 @@ async for sandbox in page.auto_paging_iter():
     print(sandbox.metadata.name)
 ```
 
-The same shape is used by `DriveInstance.list()`, `VolumeInstance.list()`, and job execution listing. Sync APIs expose the same fields, with a synchronous `next_page()`:
+The same shape is used by `DriveInstance.list()`, `VolumeInstance.list()`, job execution listing, and the sandbox-scoped `sandbox.schedules.list()` / `sandbox.schedules.executions()`. Sync APIs expose the same fields, with a synchronous `next_page()`:
 
 ```python
 from blaxel.core import SyncDriveInstance

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Union
 
 from ...client import errors
 from ...client.api.compute.create_sandbox_schedule import (
@@ -26,7 +26,11 @@ from ...client.models import (
     SandboxScheduleEntry,
     SandboxScheduleExecution,
 )
-from ...client.types import Unset
+from ...client.pagination import (
+    AsyncPaginatedList,
+    make_async_paginated_list,
+    normalize_cursor,
+)
 
 
 # A schedule entry is a flat record (id/type/value/input) with no sub-resource
@@ -52,20 +56,36 @@ class SandboxSchedules:
         type_: str | None = None,
         limit: int | None = None,
         cursor: str | None = None,
-    ) -> List[SandboxScheduleEntry]:
-        kwargs: Dict[str, Any] = {}
+    ) -> AsyncPaginatedList[SandboxScheduleEntry]:
+        """List one page of the sandbox's schedules.
+
+        Returns an ``AsyncPaginatedList`` exposing ``.data``, ``.meta``,
+        ``.has_more``, ``.next_cursor``, ``.next_page()`` and
+        ``.auto_paging_iter()``. Filters (``q``, ``type_``, ``limit``) are kept
+        when advancing to the next page.
+        """
+        filters: Dict[str, Any] = {}
         if q is not None:
-            kwargs["q"] = q
+            filters["q"] = q
         if type_ is not None:
-            kwargs["type_"] = ListSandboxSchedulesType(type_)
+            filters["type_"] = ListSandboxSchedulesType(type_)
         if limit is not None:
-            kwargs["limit"] = limit
-        if cursor is not None:
-            kwargs["cursor"] = cursor
-        response = await list_sandbox_schedules(self.sandbox_name, client=client, **kwargs)
-        if response is None:
-            raise errors.UnexpectedStatus(400, b"Failed to list schedules")
-        return [] if isinstance(response.data, Unset) else (response.data or [])
+            filters["limit"] = limit
+
+        async def fetch_page(page_cursor: str | None):
+            response = await list_sandbox_schedules(
+                self.sandbox_name,
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                **filters,
+            )
+            if response is None:
+                raise errors.UnexpectedStatus(400, b"Failed to list schedules")
+            return make_async_paginated_list(
+                response, mapper=lambda item: item, fetch_next=fetch_page
+            )
+
+        return await fetch_page(cursor)
 
     async def create(
         self, schedule: Union[SandboxScheduleEntry, Dict[str, Any]]
@@ -107,17 +127,31 @@ class SandboxSchedules:
         q: str | None = None,
         limit: int | None = None,
         cursor: str | None = None,
-    ) -> List[SandboxScheduleExecution]:
-        kwargs: Dict[str, Any] = {}
+    ) -> AsyncPaginatedList[SandboxScheduleExecution]:
+        """List one page of schedule executions, newest first.
+
+        Returns an ``AsyncPaginatedList`` exposing ``.data``, ``.meta``,
+        ``.has_more``, ``.next_cursor``, ``.next_page()`` and
+        ``.auto_paging_iter()``. Executions are sandbox-scoped across all
+        schedules; filter by ``schedule_id`` on the records to isolate one.
+        """
+        filters: Dict[str, Any] = {}
         if q is not None:
-            kwargs["q"] = q
+            filters["q"] = q
         if limit is not None:
-            kwargs["limit"] = limit
-        if cursor is not None:
-            kwargs["cursor"] = cursor
-        response = await list_sandbox_schedule_executions(
-            self.sandbox_name, client=client, **kwargs
-        )
-        if response is None:
-            raise errors.UnexpectedStatus(400, b"Failed to list schedule executions")
-        return [] if isinstance(response.data, Unset) else (response.data or [])
+            filters["limit"] = limit
+
+        async def fetch_page(page_cursor: str | None):
+            response = await list_sandbox_schedule_executions(
+                self.sandbox_name,
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                **filters,
+            )
+            if response is None:
+                raise errors.UnexpectedStatus(400, b"Failed to list schedule executions")
+            return make_async_paginated_list(
+                response, mapper=lambda item: item, fetch_next=fetch_page
+            )
+
+        return await fetch_page(cursor)

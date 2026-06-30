@@ -310,6 +310,79 @@ def test_job_execution_offset_is_only_sent_on_first_page(monkeypatch):
     assert calls[1]["offset"] == 0
 
 
+@pytest.mark.asyncio
+async def test_sandbox_schedules_list_returns_page_with_next_page(monkeypatch):
+    from blaxel.core.client.models.sandbox_schedule_entry import SandboxScheduleEntry
+    from blaxel.core.client.models.sandbox_schedule_entry_list import (
+        SandboxScheduleEntryList,
+    )
+    from blaxel.core.sandbox.default.schedule import SandboxSchedules
+
+    pages = [
+        SandboxScheduleEntryList(
+            data=[SandboxScheduleEntry(id="schedule-0")],
+            meta=PaginationMeta(has_more=True, next_cursor="cursor-2"),
+        ),
+        SandboxScheduleEntryList(
+            data=[SandboxScheduleEntry(id="schedule-1")],
+            meta=PaginationMeta(has_more=False),
+        ),
+    ]
+    calls = []
+
+    async def fake_list(sandbox_name, *, client, cursor=UNSET, limit=UNSET, **kwargs):
+        calls.append((sandbox_name, cursor, limit))
+        return pages.pop(0)
+
+    monkeypatch.setattr(
+        "blaxel.core.sandbox.default.schedule.list_sandbox_schedules", fake_list
+    )
+
+    schedules = SandboxSchedules(Sandbox(metadata=Metadata(name="sbx"), spec=SandboxSpec()))
+    page = await schedules.list(limit=1)
+    next_page = await page.next_page()
+
+    assert [s.id for s in page.data] == ["schedule-0"]
+    assert page.has_more is True
+    assert page.next_cursor == "cursor-2"
+    assert [s.id for s in next_page.data] == ["schedule-1"]
+    assert next_page.has_more is False
+    assert calls == [("sbx", UNSET, 1), ("sbx", "cursor-2", 1)]
+
+
+def test_sandbox_schedule_executions_auto_paging_iter(monkeypatch):
+    from blaxel.core.client.models.sandbox_schedule_execution import (
+        SandboxScheduleExecution,
+    )
+    from blaxel.core.client.models.sandbox_schedule_execution_list import (
+        SandboxScheduleExecutionList,
+    )
+    from blaxel.core.sandbox.sync.schedule import SyncSandboxSchedules
+
+    pages = [
+        SandboxScheduleExecutionList(
+            data=[SandboxScheduleExecution(id="exec-a")],
+            meta=PaginationMeta(has_more=True, next_cursor="cursor-2"),
+        ),
+        SandboxScheduleExecutionList(
+            data=[SandboxScheduleExecution(id="exec-b")],
+            meta=PaginationMeta(has_more=False),
+        ),
+    ]
+
+    def fake_list(sandbox_name, *, client, cursor=UNSET, limit=UNSET, **kwargs):
+        return pages.pop(0)
+
+    monkeypatch.setattr(
+        "blaxel.core.sandbox.sync.schedule.list_sandbox_schedule_executions", fake_list
+    )
+
+    schedules = SyncSandboxSchedules(Sandbox(metadata=Metadata(name="sbx"), spec=SandboxSpec()))
+    executions = list(schedules.executions(limit=1).auto_paging_iter())
+
+    assert [e.id for e in executions] == ["exec-a", "exec-b"]
+
+
 def test_client_with_headers_merges_existing_headers():
     client = Client(headers={"Blaxel-Version": "2026-04-28"})
 
