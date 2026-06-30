@@ -97,7 +97,7 @@ async def _update_drive_permissions(drive_name: str, permissions: list[dict]) ->
     await DriveInstance.update(
         drive_name,
         Drive(
-            metadata=Metadata(),
+            metadata=Metadata(name=drive_name),
             spec=DriveSpec(permissions=drive_permissions),
         ),
     )
