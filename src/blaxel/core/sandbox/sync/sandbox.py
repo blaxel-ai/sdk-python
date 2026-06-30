@@ -52,6 +52,7 @@ from .filesystem import SyncSandboxFileSystem
 from .network import SyncSandboxNetwork
 from .preview import SyncSandboxPreviews
 from .process import SyncSandboxProcess
+from .schedule import SyncSandboxSchedules
 from .session import SyncSandboxSessions
 from .system import SyncSandboxSystem
 
@@ -98,6 +99,7 @@ class SyncSandboxInstance:
         self.process = SyncSandboxProcess(self.config)
         self.fs = SyncSandboxFileSystem(self.config, self.process)
         self.previews = SyncSandboxPreviews(self.sandbox)
+        self.schedules = SyncSandboxSchedules(self.sandbox)
         self.sessions = SyncSandboxSessions(self.config)
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)

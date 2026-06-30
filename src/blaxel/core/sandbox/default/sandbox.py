@@ -44,6 +44,7 @@ from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
+from .schedule import SandboxSchedules
 from .session import SandboxSessions
 from .system import SandboxSystem
 
@@ -150,6 +151,7 @@ class SandboxInstance:
         self.process = SandboxProcess(self.config)
         self.fs = SandboxFileSystem(self.config, self.process)
         self.previews = SandboxPreviews(self.sandbox)
+        self.schedules = SandboxSchedules(self.sandbox)
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
         self.codegen = SandboxCodegen(self.config)

@@ -1,18 +1,15 @@
 from enum import Enum
 
 
-class PolicyResourceType(str, Enum):
-    AGENT = "agent"
-    APPLICATION = "application"
-    FUNCTION = "function"
-    MODEL = "model"
-    SANDBOX = "sandbox"
+class DrivePermissionMode(str, Enum):
+    READ = "read"
+    READ_WRITE = "read-write"
 
     def __str__(self) -> str:
         return str(self.value)
 
     @classmethod
-    def _missing_(cls, value: object) -> "PolicyResourceType | None":
+    def _missing_(cls, value: object) -> "DrivePermissionMode | None":
         if isinstance(value, str):
             upper_value = value.upper()
             for member in cls:

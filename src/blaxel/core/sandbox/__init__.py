@@ -17,6 +17,7 @@ from .default import (
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+    SandboxSchedules,
     SandboxSystem,
 )
 from .sync import (
@@ -27,6 +28,7 @@ from .sync import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    SyncSandboxSchedules,
     SyncSandboxSystem,
 )
 from .types import (
@@ -64,6 +66,7 @@ __all__ = [
     "Sandbox",
     "SandboxFileSystem",
     "SandboxPreviews",
+    "SandboxSchedules",
     "SandboxProcess",
     "SandboxCodegen",
     "SandboxSystem",
@@ -82,6 +85,7 @@ __all__ = [
     "SyncSandboxFileSystem",
     "SyncSandboxInstance",
     "SyncSandboxPreviews",
+    "SyncSandboxSchedules",
     "SyncSandboxProcess",
     "SyncSandboxSystem",
     "SyncSandboxDrive",

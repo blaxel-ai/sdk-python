@@ -1,0 +1,195 @@
+from http import HTTPStatus
+from typing import Any
+
+import httpx
+
+from ... import errors
+from ...client import Client
+from ...models.custom_domain import CustomDomain
+from ...types import Response
+
+
+def _get_kwargs(
+    application_name: str,
+    *,
+    body: CustomDomain,
+) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
+    _kwargs: dict[str, Any] = {
+        "method": "post",
+        "url": f"/applications/{application_name}/customdomains",
+    }
+
+    if type(body) is dict:
+        _body = body
+    else:
+        _body = body.to_dict()
+
+    _kwargs["json"] = _body
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
+    return _kwargs
+
+
+def _parse_response(*, client: Client, response: httpx.Response) -> CustomDomain | None:
+    if response.status_code == 200:
+        response_200 = CustomDomain.from_dict(response.json())
+
+        return response_200
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(*, client: Client, response: httpx.Response) -> Response[CustomDomain]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    application_name: str,
+    *,
+    client: Client,
+    body: CustomDomain,
+) -> Response[CustomDomain]:
+    """Create application custom domain
+
+     Creates a new custom domain scoped to a specific application. After creation, you must configure DNS
+    records and verify domain ownership before it becomes active.
+
+    Args:
+        application_name (str):
+        body (CustomDomain): Custom domain for preview deployments
+            The custom domain represents a base domain (e.g., example.com) that will be used
+            to serve preview deployments. Each preview will be accessible at a subdomain:
+            <preview-id>.preview.<base-domain> (e.g., abc123.preview.example.com)
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[CustomDomain]
+    """
+
+    kwargs = _get_kwargs(
+        application_name=application_name,
+        body=body,
+    )
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    application_name: str,
+    *,
+    client: Client,
+    body: CustomDomain,
+) -> CustomDomain | None:
+    """Create application custom domain
+
+     Creates a new custom domain scoped to a specific application. After creation, you must configure DNS
+    records and verify domain ownership before it becomes active.
+
+    Args:
+        application_name (str):
+        body (CustomDomain): Custom domain for preview deployments
+            The custom domain represents a base domain (e.g., example.com) that will be used
+            to serve preview deployments. Each preview will be accessible at a subdomain:
+            <preview-id>.preview.<base-domain> (e.g., abc123.preview.example.com)
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        CustomDomain
+    """
+
+    return sync_detailed(
+        application_name=application_name,
+        client=client,
+        body=body,
+    ).parsed
+
+
+async def asyncio_detailed(
+    application_name: str,
+    *,
+    client: Client,
+    body: CustomDomain,
+) -> Response[CustomDomain]:
+    """Create application custom domain
+
+     Creates a new custom domain scoped to a specific application. After creation, you must configure DNS
+    records and verify domain ownership before it becomes active.
+
+    Args:
+        application_name (str):
+        body (CustomDomain): Custom domain for preview deployments
+            The custom domain represents a base domain (e.g., example.com) that will be used
+            to serve preview deployments. Each preview will be accessible at a subdomain:
+            <preview-id>.preview.<base-domain> (e.g., abc123.preview.example.com)
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[CustomDomain]
+    """
+
+    kwargs = _get_kwargs(
+        application_name=application_name,
+        body=body,
+    )
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    application_name: str,
+    *,
+    client: Client,
+    body: CustomDomain,
+) -> CustomDomain | None:
+    """Create application custom domain
+
+     Creates a new custom domain scoped to a specific application. After creation, you must configure DNS
+    records and verify domain ownership before it becomes active.
+
+    Args:
+        application_name (str):
+        body (CustomDomain): Custom domain for preview deployments
+            The custom domain represents a base domain (e.g., example.com) that will be used
+            to serve preview deployments. Each preview will be accessible at a subdomain:
+            <preview-id>.preview.<base-domain> (e.g., abc123.preview.example.com)
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        CustomDomain
+    """
+
+    return (
+        await asyncio_detailed(
+            application_name=application_name,
+            client=client,
+            body=body,
+        )
+    ).parsed

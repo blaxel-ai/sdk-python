@@ -1,18 +1,15 @@
 from enum import Enum
 
 
-class PolicyResourceType(str, Enum):
-    AGENT = "agent"
-    APPLICATION = "application"
-    FUNCTION = "function"
-    MODEL = "model"
-    SANDBOX = "sandbox"
+class ListSandboxSchedulesType(str, Enum):
+    AT = "at"
+    CRON = "cron"
 
     def __str__(self) -> str:
         return str(self.value)
 
     @classmethod
-    def _missing_(cls, value: object) -> "PolicyResourceType | None":
+    def _missing_(cls, value: object) -> "ListSandboxSchedulesType | None":
         if isinstance(value, str):
             upper_value = value.upper()
             for member in cls:

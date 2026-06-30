@@ -6,6 +6,7 @@ from .sandbox import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    SyncSandboxSchedules,
 )
 from .system import SyncSandboxSystem
 
@@ -13,6 +14,7 @@ __all__ = [
     "SyncSandboxInstance",
     "SyncSandboxFileSystem",
     "SyncSandboxPreviews",
+    "SyncSandboxSchedules",
     "SyncSandboxProcess",
     "SyncSandboxCodegen",
     "SyncSandboxSystem",
