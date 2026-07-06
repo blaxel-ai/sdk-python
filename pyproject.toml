@@ -138,7 +138,7 @@ packages = ["src/blaxel"]
 dev = [
   "nest-asyncio>=1.6.0",
   "asgi-correlation-id>=4.3.4,<5.0.0",
-  "fastapi>=0.115.12",
+  "fastapi>=0.138.1",
   "pdoc3>=0.11.5",
   "python-dotenv>=1.1.0",
   "ruff>=0.8.2",
@@ -154,5 +154,5 @@ test = [
   "aiohttp>=3.11.16",
   "flask>=3.0.0",
   "requests>=2.32.0",
-  "pydantic-ai>=0.0.48",
+  "pydantic-ai>=1.0.8",
 ]
