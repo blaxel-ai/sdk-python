@@ -4,6 +4,7 @@ from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 import httpx
 from attrs import define as _attrs_define
 
+from ..client.errors import BlaxelAPIError
 from ..client.models import (
     Env,
     Port,
@@ -342,7 +343,7 @@ class ProcessResponseWithLog:
             setattr(self._process_response, name, value)
 
 
-class ResponseError(Exception):
+class ResponseError(BlaxelAPIError):
     def __init__(self, response: httpx.Response):
         data_error = {}
         data = None
@@ -358,8 +359,11 @@ class ResponseError(Exception):
         if response.reason_phrase:
             data_error["statusText"] = response.reason_phrase
 
-        super().__init__(str(data_error))
-        self.response = response
+        super().__init__(
+            str(data_error),
+            status_code=response.status_code,
+            response=response,
+        )
         self.data = data
         self.error = None
 

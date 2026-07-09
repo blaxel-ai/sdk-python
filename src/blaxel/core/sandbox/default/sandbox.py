@@ -14,6 +14,7 @@ from ...client.api.compute.get_sandbox import asyncio as get_sandbox
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
+from ...client.errors import BlaxelAPIError
 from ...client.models import (
     Metadata,
     MetadataLabels,
@@ -49,12 +50,11 @@ from .session import SandboxSessions
 from .system import SandboxSystem
 
 
-class SandboxAPIError(Exception):
+class SandboxAPIError(BlaxelAPIError):
     """Exception raised when sandbox API returns an error."""
 
     def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
+        super().__init__(message, status_code=status_code, error_code=code)
         self.code = code
 
 

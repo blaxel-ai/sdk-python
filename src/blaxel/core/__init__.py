@@ -4,6 +4,7 @@ from .agents import BlAgent, bl_agent
 from .authentication import BlaxelAuth, auth, get_credentials
 from .cache import find_from_cache
 from .client.client import client
+from .client.errors import BlaxelAPIError, error_to_exception
 from .common import (
     autoload,
     env,
@@ -78,4 +79,6 @@ __all__ = [
     "ImageInstance",
     "ImageBuildContext",
     "LocalFile",
+    "BlaxelAPIError",
+    "error_to_exception",
 ]

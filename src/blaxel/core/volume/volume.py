@@ -15,6 +15,7 @@ from ..client.api.volumes.list_volumes import sync as list_volumes_sync
 from ..client.api.volumes.update_volume import asyncio as update_volume
 from ..client.api.volumes.update_volume import sync as update_volume_sync
 from ..client.client import client
+from ..client.errors import BlaxelAPIError
 from ..client.models import Metadata, Volume, VolumeSpec
 from ..client.models.error import Error
 from ..client.pagination import (
@@ -28,12 +29,11 @@ from ..client.types import UNSET
 from ..common.settings import settings
 
 
-class VolumeAPIError(Exception):
+class VolumeAPIError(BlaxelAPIError):
     """Exception raised when volume API returns an error."""
 
     def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
+        super().__init__(message, status_code=status_code, error_code=code)
         self.code = code
 
 
