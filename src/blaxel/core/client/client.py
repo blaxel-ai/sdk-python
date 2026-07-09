@@ -5,6 +5,16 @@ from typing import Any, Union
 import httpx
 from attrs import define, evolve, field
 
+from .errors import check_gateway_error
+
+
+def _sync_gateway_hook(response: httpx.Response) -> None:
+    check_gateway_error(response)
+
+
+async def _async_gateway_hook(response: httpx.Response) -> None:
+    check_gateway_error(response)
+
 
 @define
 class Client:
@@ -111,6 +121,10 @@ class Client:
     def get_httpx_client(self) -> httpx.Client:
         """Get the underlying httpx.Client, constructing a new one if not previously set"""
         if self._client is None:
+            httpx_args = {**self._httpx_args}
+            hooks = httpx_args.pop("event_hooks", {})
+            response_hooks = list(hooks.get("response", []))
+            response_hooks.insert(0, _sync_gateway_hook)
             self._client = httpx.Client(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -119,7 +133,8 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
-                **self._httpx_args,
+                event_hooks={**hooks, "response": response_hooks},
+                **httpx_args,
             )
         return self._client
 
@@ -152,6 +167,10 @@ class Client:
             self._async_client_loop = None
 
         if self._async_client is None:
+            httpx_args = {**self._httpx_args}
+            hooks = httpx_args.pop("event_hooks", {})
+            response_hooks = list(hooks.get("response", []))
+            response_hooks.insert(0, _async_gateway_hook)
             self._async_client = httpx.AsyncClient(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -160,7 +179,8 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
-                **self._httpx_args,
+                event_hooks={**hooks, "response": response_hooks},
+                **httpx_args,
             )
             self._async_client_loop = current_loop
         return self._async_client

@@ -1,5 +1,6 @@
 import httpx
 
+from ...client.errors import check_gateway_error
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
 from ..types import ResponseError, SandboxConfiguration
@@ -69,5 +70,6 @@ class SandboxAction:
         return self._client
 
     def handle_response_error(self, response: httpx.Response):
+        check_gateway_error(response)
         if not response.is_success:
             raise ResponseError(response)

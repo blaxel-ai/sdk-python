@@ -4,6 +4,19 @@ from .agents import BlAgent, bl_agent
 from .authentication import BlaxelAuth, auth, get_credentials
 from .cache import find_from_cache
 from .client.client import client
+from .client.error_codes import (
+    AUTHENTICATION_FAILED,
+    AUTHENTICATION_REQUIRED,
+    BAD_REQUEST,
+    FORBIDDEN,
+    POLICY_VIOLATION,
+    ROUTE_NOT_FOUND,
+    USAGE_LIMIT_EXCEEDED,
+    WORKLOAD_NOT_FOUND,
+    WORKLOAD_UNAVAILABLE,
+    WORKSPACE_NOT_FOUND,
+)
+from .client.errors import GatewayError, check_gateway_error
 from .common import (
     autoload,
     env,
@@ -73,6 +86,18 @@ __all__ = [
     "SyncDriveInstance",
     "DriveCreateConfiguration",
     "DriveAPIError",
+    "GatewayError",
+    "check_gateway_error",
+    "ROUTE_NOT_FOUND",
+    "WORKLOAD_NOT_FOUND",
+    "WORKSPACE_NOT_FOUND",
+    "WORKLOAD_UNAVAILABLE",
+    "AUTHENTICATION_REQUIRED",
+    "AUTHENTICATION_FAILED",
+    "FORBIDDEN",
+    "BAD_REQUEST",
+    "USAGE_LIMIT_EXCEEDED",
+    "POLICY_VIOLATION",
     "verify_webhook_signature",
     "verify_webhook_from_request",
     "ImageInstance",
