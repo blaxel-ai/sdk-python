@@ -712,3 +712,37 @@ def test_sync_code_interpreter_create_if_not_exists_uses_server_side_param():
             "safe": True,
             "create_if_not_exist": True,
         }
+
+
+def _session_dict() -> dict:
+    return {
+        "name": "my-sandbox-session",
+        "url": "https://preview.example.run.blaxel.ai/sandbox",
+        "token": "super-secret-preview-token",
+        "expires_at": "2999-01-01T00:00:00Z",
+    }
+
+
+@pytest.mark.asyncio
+async def test_from_session_does_not_leak_token_in_params():
+    """The preview token must only travel in the header, never as a URL query param."""
+    session = _session_dict()
+
+    instance = await SandboxInstance.from_session(session)
+
+    assert instance.config.params == {}
+    assert instance.config.headers == {"X-Blaxel-Preview-Token": session["token"]}
+    # The persistent HTTP client must not carry the token as a default query param.
+    client = instance.process.get_client()
+    assert session["token"] not in str(client.params)
+
+
+def test_sync_from_session_does_not_leak_token_in_params():
+    session = _session_dict()
+
+    instance = SyncSandboxInstance.from_session(session)
+
+    assert instance.config.params == {}
+    assert instance.config.headers == {"X-Blaxel-Preview-Token": session["token"]}
+    client = instance.process.get_client()
+    assert session["token"] not in str(client.params)
