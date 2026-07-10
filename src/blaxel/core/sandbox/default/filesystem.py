@@ -2,6 +2,7 @@ import asyncio
 import io
 import json
 import logging
+import shlex
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
 
@@ -364,8 +365,10 @@ class SandboxFileSystem(SandboxAction):
         if not self.process:
             raise Exception("Process instance not available. Cannot execute cp command.")
 
-        # Execute cp -r command
-        process = await self.process.exec({"command": f"cp -r {source} {destination}"})
+        # Execute cp -r command. Quote both paths so the shell treats them as
+        # single literal arguments and cannot interpret injected metacharacters.
+        command = f"cp -r {shlex.quote(source)} {shlex.quote(destination)}"
+        process = await self.process.exec({"command": command})
 
         # Wait for process to complete
         process = await self.process.wait(process.pid, max_wait=max_wait, interval=100)
