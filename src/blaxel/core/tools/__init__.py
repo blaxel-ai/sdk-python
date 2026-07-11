@@ -52,6 +52,7 @@ class PersistentMcpClient:
         self.session: ClientSession | None = None
         self.timer_task = None
         self.tools_cache = []
+        self._stale_stacks: list[AsyncExitStack] = []
         if settings.bl_cloud:
             self.timeout_enabled = False
         else:
@@ -173,7 +174,16 @@ class PersistentMcpClient:
         )
         return result[0], result[1]
 
+    async def _cleanup_stale_stacks(self):
+        while self._stale_stacks:
+            stack = self._stale_stacks.pop()
+            try:
+                await stack.aclose()
+            except Exception as e:
+                logger.debug(f"Error closing stale exit stack: {e}")
+
     async def initialize(self):
+        await self._cleanup_stale_stacks()
         if not self.session:
             url = await self._resolve_url()
             logger.debug(f"Initializing client for {url}")
@@ -195,8 +205,15 @@ class PersistentMcpClient:
 
     async def _close_after_timeout(self):
         await asyncio.sleep(self.timeout)
-        await self._close()
-        self.session = None
+        # Don't close stacks here — wrong task context. Mark as expired and
+        # stash stacks for cleanup by the next caller task.
+        if self.session:
+            self._stale_stacks.append(self.session_exit_stack)
+            self._stale_stacks.append(self.client_exit_stack)
+            self.session = None
+            self.session_exit_stack = AsyncExitStack()
+            self.client_exit_stack = AsyncExitStack()
+            logger.debug(f"Session for {self.name} marked expired (will clean up on next call).")
 
     async def _close(self):
         logger.debug(f"Closing client for {self.name}")
