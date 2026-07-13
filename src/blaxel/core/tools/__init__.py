@@ -59,6 +59,7 @@ class PersistentMcpClient:
         self.transport_name = transport
         self.metas = {}
         self._metadata_url: str | None = None
+        self._active_calls = 0
 
     @property
     def _forced_url(self) -> str | None:
@@ -106,6 +107,7 @@ class PersistentMcpClient:
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         try:
             await self.initialize()
+            self._active_calls += 1
             if self.timeout_enabled:
                 self._remove_timer()
             logger.debug(
@@ -128,10 +130,6 @@ class PersistentMcpClient:
             )
 
             logger.debug(f"Tool {tool_name} returned {call_tool_result}")
-            if self.timeout_enabled:
-                self._reset_timer()
-            else:
-                await self._close()
             return call_tool_result
         except Exception as e:
             logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
@@ -144,22 +142,34 @@ class PersistentMcpClient:
                 ],
                 isError=True,
             )
+        finally:
+            self._active_calls -= 1
+            if self._active_calls == 0:
+                if self.timeout_enabled:
+                    self._reset_timer()
+                else:
+                    await self._close()
 
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
         await self.initialize()
+        self._active_calls += 1
         logger.debug(f"Initialized websocket for {self.name}")
         if self.timeout_enabled:
             self._remove_timer()
         logger.debug("Listing tools")
-        list_tools_result = await self.session.list_tools()
-        self.tools_cache = list_tools_result.tools
-        logger.debug(f"Tools listed: {list_tools_result}")
-        if self.timeout_enabled:
-            self._reset_timer()
-        else:
-            await self._close()
-        return list_tools_result
+        try:
+            list_tools_result = await self.session.list_tools()
+            self.tools_cache = list_tools_result.tools
+            logger.debug(f"Tools listed: {list_tools_result}")
+            return list_tools_result
+        finally:
+            self._active_calls -= 1
+            if self._active_calls == 0:
+                if self.timeout_enabled:
+                    self._reset_timer()
+                else:
+                    await self._close()
 
     def get_tools(self):
         return self.tools_cache
