@@ -550,11 +550,14 @@ class SyncSandboxInstance:
             session = SessionWithToken.from_dict(session)
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
         sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
+        # Authenticate with the preview token header only. The bl_preview_token
+        # query-param transport exists for browser navigation (which cannot set
+        # custom headers); on this programmatic client it would only place the
+        # credential in request URLs where it leaks to logs, Referer, and history.
         return cls(
             sandbox=sandbox,
             force_url=session.url,
             headers={"X-Blaxel-Preview-Token": session.token},
-            params={"bl_preview_token": session.token},
         )
 
 
