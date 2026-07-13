@@ -30,6 +30,8 @@ class Sandbox:
             expires_in (Union[Unset, int]): Time in seconds until the sandbox is automatically deleted based on TTL and
                 lifecycle policies. Only present for sandboxes with lifecycle configured.
             last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
+            node_generation (Union[Unset, str]): Infrastructure generation this sandbox is deployed on (mk3.0 or mk3.1).
+                Read-only.
             state (Union[Unset, SandboxState]): Current state of the sandbox (read-only, managed by the system)
             status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """
@@ -39,11 +41,13 @@ class Sandbox:
     events: Union[Unset, list["CoreEvent"]] = UNSET
     expires_in: Union[Unset, int] = UNSET
     last_used_at: Union[Unset, str] = UNSET
+    node_generation: Union[Unset, str] = UNSET
     state: Union[Unset, SandboxState] = UNSET
     status: Union[Unset, Status] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -70,6 +74,8 @@ class Sandbox:
 
         last_used_at = self.last_used_at
 
+        node_generation = self.node_generation
+
         state: Union[Unset, str] = UNSET
         if not isinstance(self.state, Unset):
             state = self.state.value
@@ -92,6 +98,8 @@ class Sandbox:
             field_dict["expiresIn"] = expires_in
         if last_used_at is not UNSET:
             field_dict["lastUsedAt"] = last_used_at
+        if node_generation is not UNSET:
+            field_dict["nodeGeneration"] = node_generation
         if state is not UNSET:
             field_dict["state"] = state
         if status is not UNSET:
@@ -125,6 +133,8 @@ class Sandbox:
 
         last_used_at = d.pop("lastUsedAt", d.pop("last_used_at", UNSET))
 
+        node_generation = d.pop("nodeGeneration", d.pop("node_generation", UNSET))
+
         _state = d.pop("state", UNSET)
         state: Union[Unset, SandboxState]
         if isinstance(_state, Unset):
@@ -145,6 +155,7 @@ class Sandbox:
             events=events,
             expires_in=expires_in,
             last_used_at=last_used_at,
+            node_generation=node_generation,
             state=state,
             status=status,
         )

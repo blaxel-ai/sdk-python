@@ -23,9 +23,9 @@ class SandboxRuntime:
             format with valueFrom references.
         expires (Union[Unset, str]): Absolute expiration timestamp in ISO 8601 format when the sandbox will be deleted
             Example: 2025-12-31T23:59:59Z.
-        extra_args (Union[Unset, SandboxRuntimeExtraArgs]): Extra arguments for sandbox kernel selection. Supported
-            keys: 'iptables', 'nvme', 'nfs'. Values: 'enabled' or 'disabled'. Determines which kernel variant the sandbox
-            runs on. Immutable after creation.
+        extra_args (Union[Unset, SandboxRuntimeExtraArgs]): Extra arguments for kernel selection. Supported keys:
+            'iptables', 'nfs' (mk3.0), 'tun' (mk3.1). Values: 'enabled' or 'disabled'. Determines which kernel variant the
+            workload runs on. Immutable after creation.
         image (Union[Unset, str]): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest)
             or a custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
@@ -49,6 +49,7 @@ class SandboxRuntime:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []

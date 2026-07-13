@@ -19,6 +19,7 @@ def _get_kwargs(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -39,6 +40,8 @@ def _get_kwargs(
         json_anchor = anchor.value
 
     params["anchor"] = json_anchor
+
+    params["externalId"] = external_id
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -93,6 +96,7 @@ def sync_detailed(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, VolumeList]]:
     """List persistent volumes
 
@@ -107,6 +111,7 @@ def sync_detailed(
         sort (Union[Unset, ListVolumesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListVolumesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -122,6 +127,7 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
     )
 
     response = client.get_httpx_client().request(
@@ -139,6 +145,7 @@ def sync(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, VolumeList] | None:
     """List persistent volumes
 
@@ -153,6 +160,7 @@ def sync(
         sort (Union[Unset, ListVolumesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListVolumesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -169,6 +177,7 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
     ).parsed
 
 
@@ -180,6 +189,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, VolumeList]]:
     """List persistent volumes
 
@@ -194,6 +204,7 @@ async def asyncio_detailed(
         sort (Union[Unset, ListVolumesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListVolumesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -209,6 +220,7 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -224,6 +236,7 @@ async def asyncio(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, VolumeList] | None:
     """List persistent volumes
 
@@ -238,6 +251,7 @@ async def asyncio(
         sort (Union[Unset, ListVolumesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListVolumesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -255,5 +269,6 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
+            external_id=external_id,
         )
     ).parsed

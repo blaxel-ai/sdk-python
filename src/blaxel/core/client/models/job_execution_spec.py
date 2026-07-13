@@ -35,6 +35,7 @@ class JobExecutionSpec:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         env_override: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.env_override

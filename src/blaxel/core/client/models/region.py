@@ -28,6 +28,8 @@ class Region:
             for the region
         info_generation (Union[Unset, str]): Region display name
         location (Union[Unset, str]): Region display name
+        mk_31_available (Union[Unset, bool]): Whether this region supports mk3.1 (blaxel nodes). Required for
+            Application and Job deployments.
         name (Union[Unset, str]): Region name
         proxy_available (Union[Unset, bool]): Proxy availability status - indicates if the proxy plane is configured for
             the region
@@ -41,11 +43,13 @@ class Region:
     egress_available: Union[Unset, bool] = UNSET
     info_generation: Union[Unset, str] = UNSET
     location: Union[Unset, str] = UNSET
+    mk_31_available: Union[Unset, bool] = UNSET
     name: Union[Unset, str] = UNSET
     proxy_available: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         agent_drive_public_url: Union[Unset, dict[str, Any]] = UNSET
         if (
             self.agent_drive_public_url
@@ -70,6 +74,8 @@ class Region:
 
         location = self.location
 
+        mk_31_available = self.mk_31_available
+
         name = self.name
 
         proxy_available = self.proxy_available
@@ -93,6 +99,8 @@ class Region:
             field_dict["infoGeneration"] = info_generation
         if location is not UNSET:
             field_dict["location"] = location
+        if mk_31_available is not UNSET:
+            field_dict["mk31Available"] = mk_31_available
         if name is not UNSET:
             field_dict["name"] = name
         if proxy_available is not UNSET:
@@ -130,6 +138,8 @@ class Region:
 
         location = d.pop("location", UNSET)
 
+        mk_31_available = d.pop("mk31Available", d.pop("mk_31_available", UNSET))
+
         name = d.pop("name", UNSET)
 
         proxy_available = d.pop("proxyAvailable", d.pop("proxy_available", UNSET))
@@ -143,6 +153,7 @@ class Region:
             egress_available=egress_available,
             info_generation=info_generation,
             location=location,
+            mk_31_available=mk_31_available,
             name=name,
             proxy_available=proxy_available,
         )
