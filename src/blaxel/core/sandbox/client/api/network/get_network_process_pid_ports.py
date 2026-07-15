@@ -5,6 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.error_response import ErrorResponse
 from ...models.get_network_process_pid_ports_response_200 import (
     GetNetworkProcessPidPortsResponse200,
@@ -42,6 +43,9 @@ def _parse_response(
         response_500 = ErrorResponse.from_dict(response.json())
 
         return response_500
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

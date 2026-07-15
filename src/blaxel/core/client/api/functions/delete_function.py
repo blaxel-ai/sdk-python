@@ -42,6 +42,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
         response_500 = Error.from_dict(response.json())
 
         return response_500
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

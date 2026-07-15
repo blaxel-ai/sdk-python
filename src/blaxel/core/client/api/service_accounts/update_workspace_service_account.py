@@ -5,6 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
 from ...models.update_workspace_service_account_response_200 import (
     UpdateWorkspaceServiceAccountResponse200,
@@ -43,6 +44,9 @@ def _parse_response(
         response_200 = UpdateWorkspaceServiceAccountResponse200.from_dict(response.json())
 
         return response_200
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

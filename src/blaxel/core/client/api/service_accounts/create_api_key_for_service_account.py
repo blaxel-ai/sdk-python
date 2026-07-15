@@ -7,6 +7,7 @@ from ... import errors
 from ...client import Client
 from ...models.api_key import ApiKey
 from ...models.create_api_key_for_service_account_body import CreateApiKeyForServiceAccountBody
+from ...models.error import Error
 from ...types import Response
 
 
@@ -39,6 +40,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> ApiKey | Non
         response_200 = ApiKey.from_dict(response.json())
 
         return response_200
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
