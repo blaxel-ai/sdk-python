@@ -7,13 +7,23 @@ from ... import errors
 from ...client import Client
 from ...models.error import Error
 from ...models.integration_connection import IntegrationConnection
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    *,
+    external_id: Union[Unset, str] = UNSET,
+) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["externalId"] = external_id
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/integrations/connections",
+        "params": params,
     }
 
     return _kwargs
@@ -63,11 +73,15 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, list["IntegrationConnection"]]]:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
+
+    Args:
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -77,7 +91,9 @@ def sync_detailed(
         Response[Union[Error, list['IntegrationConnection']]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        external_id=external_id,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -89,11 +105,15 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, list["IntegrationConnection"]] | None:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
+
+    Args:
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -105,17 +125,22 @@ def sync(
 
     return sync_detailed(
         client=client,
+        external_id=external_id,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: Client,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, list["IntegrationConnection"]]]:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
+
+    Args:
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -125,7 +150,9 @@ async def asyncio_detailed(
         Response[Union[Error, list['IntegrationConnection']]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        external_id=external_id,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -135,11 +162,15 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, list["IntegrationConnection"]] | None:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
+
+    Args:
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -152,5 +183,6 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
+            external_id=external_id,
         )
     ).parsed
