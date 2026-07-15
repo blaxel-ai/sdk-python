@@ -4,7 +4,6 @@ from typing import Any, Optional, Union, cast
 import httpx
 
 from ...client import Client
-from ...models.error import Error
 from ...types import Response, UNSET
 from ... import errors
 
@@ -86,8 +85,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> {{ return_st
         {% endif %}
     {% endfor %}
     if response.status_code == 429:
-        response_429 = Error.from_dict(response.json())
-        return response_429
+        return None
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

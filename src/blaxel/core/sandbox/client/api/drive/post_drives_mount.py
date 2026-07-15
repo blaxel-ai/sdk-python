@@ -7,7 +7,6 @@ from ... import errors
 from ...client import Client
 from ...models.drive_mount_request import DriveMountRequest
 from ...models.drive_mount_response import DriveMountResponse
-from ...models.error import Error
 from ...models.error_response import ErrorResponse
 from ...types import Response
 
@@ -51,7 +50,7 @@ def _parse_response(
 
         return response_500
     if response.status_code == 429:
-        response_429 = Error.from_dict(response.json())
+        response_429 = ErrorResponse.from_dict(response.json())
         return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
