@@ -746,3 +746,91 @@ def test_sync_from_session_does_not_leak_token_in_params():
     assert instance.config.headers == {"X-Blaxel-Preview-Token": session["token"]}
     client = instance.process.get_client()
     assert session["token"] not in str(client.params)
+
+
+def _body_metadata_name(body):
+    """Read metadata.name from a create body that may be a Sandbox or a dict."""
+    if isinstance(body, dict):
+        return body["metadata"].get("name")
+    return body.metadata.name
+
+
+# ENG-3931: unnamed creations must reach the API without metadata.name so the
+# server can assign one and the request is eligible for warm sandbox pools.
+
+
+@pytest.mark.asyncio
+async def test_create_omits_name_when_no_name_provided():
+    created = sandbox_instance("srv-assigned").sandbox
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.create_sandbox",
+        new_callable=AsyncMock,
+    ) as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        result = await SandboxInstance.create({"image": "custom:latest", "region": "us-pdx-1"})
+
+        body = mock_create_sandbox.await_args.kwargs["body"]
+        assert isinstance(body, dict)
+        assert "name" not in body["metadata"]
+        assert result.metadata.name == "srv-assigned"
+
+
+@pytest.mark.asyncio
+async def test_create_sends_name_when_provided():
+    created = sandbox_instance("mysbx").sandbox
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.create_sandbox",
+        new_callable=AsyncMock,
+    ) as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        await SandboxInstance.create({"name": "mysbx", "region": "us-pdx-1"})
+
+        body = mock_create_sandbox.await_args.kwargs["body"]
+        assert _body_metadata_name(body) == "mysbx"
+
+
+@pytest.mark.asyncio
+async def test_create_raw_model_without_name_omits_name():
+    created = sandbox_instance("srv-assigned").sandbox
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.create_sandbox",
+        new_callable=AsyncMock,
+    ) as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        await SandboxInstance.create(Sandbox(metadata=None, spec=SandboxSpec()))
+
+        body = mock_create_sandbox.await_args.kwargs["body"]
+        assert isinstance(body, dict)
+        assert "name" not in body["metadata"]
+
+
+def test_sync_create_omits_name_when_no_name_provided():
+    created = sandbox_instance("srv-assigned", cls=SyncSandboxInstance).sandbox
+
+    with patch("blaxel.core.sandbox.sync.sandbox.create_sandbox") as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        result = SyncSandboxInstance.create({"image": "custom:latest", "region": "us-pdx-1"})
+
+        body = mock_create_sandbox.call_args.kwargs["body"]
+        assert isinstance(body, dict)
+        assert "name" not in body["metadata"]
+        assert result.metadata.name == "srv-assigned"
+
+
+def test_sync_create_sends_name_when_provided():
+    created = sandbox_instance("mysbx", cls=SyncSandboxInstance).sandbox
+
+    with patch("blaxel.core.sandbox.sync.sandbox.create_sandbox") as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        SyncSandboxInstance.create({"name": "mysbx", "region": "us-pdx-1"})
+
+        body = mock_create_sandbox.call_args.kwargs["body"]
+        assert _body_metadata_name(body) == "mysbx"

@@ -1,6 +1,5 @@
 import logging
 import time
-import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
@@ -35,6 +34,7 @@ from ..default.sandbox import (
     TRANSIENT_STATUS_MAX_WAIT_SECONDS,
     TRANSIENT_STATUS_POLL_SECONDS,
     SandboxAPIError,
+    _create_body,
     _is_sandbox_conflict,
     _is_sandbox_not_found,
     _sandbox_name,
@@ -154,7 +154,9 @@ class SyncSandboxInstance:
         safe: bool = False,
         create_if_not_exist: bool = False,
     ) -> "SyncSandboxInstance":
-        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        # No client-side default name: when the caller omits a name we send the
+        # creation without metadata.name so the server can assign one and unnamed
+        # creations become eligible for warm sandbox pools (ENG-3931).
         default_image = "blaxel/base-image:latest"
         default_memory = 4096
         if (
@@ -190,7 +192,7 @@ class SyncSandboxInstance:
                 config = sandbox
             else:
                 raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
-            name = config.name or default_name
+            name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
             ports = config._normalize_ports() or UNSET
@@ -254,7 +256,7 @@ class SyncSandboxInstance:
             assert isinstance(sandbox, Sandbox)
 
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=default_name)
+                sandbox.metadata = Metadata(name=None)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
                     runtime=SandboxRuntime(image=default_image, memory=default_memory)
@@ -265,7 +267,7 @@ class SyncSandboxInstance:
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
         response = create_sandbox(
             client=client,
-            body=sandbox,
+            body=_create_body(sandbox),
             create_if_not_exist=create_if_not_exist,
         )
 

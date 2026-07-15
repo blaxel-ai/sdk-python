@@ -26,8 +26,10 @@ class TestSandboxCreate:
         sandbox = await SandboxInstance.create({"labels": default_labels})
 
         try:
+            # Unnamed creations no longer generate a client-side name; the
+            # server assigns one (ENG-3931), so we only assert a name came back.
             assert sandbox.metadata.name is not None
-            assert sandbox.metadata.name.startswith("sandbox-")
+            assert sandbox.metadata.name != ""
         finally:
             await SandboxInstance.delete(sandbox.metadata.name)
 

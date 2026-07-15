@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import time
-import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
@@ -106,6 +105,21 @@ def _sandbox_name(
     return None
 
 
+def _create_body(sandbox: Sandbox) -> Union[Sandbox, Dict[str, Any]]:
+    """Build the create request body, omitting metadata.name when unnamed.
+
+    Unnamed creations are sent without ``metadata.name`` so the server assigns
+    a name and the request becomes eligible for warm sandbox pools (ENG-3931).
+    """
+    if sandbox.metadata and sandbox.metadata.name:
+        return sandbox
+    body = sandbox.to_dict()
+    metadata = body.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop("name", None)
+    return body
+
+
 class _AsyncDeleteDescriptor:
     """Descriptor that provides both class-level and instance-level delete functionality."""
 
@@ -208,7 +222,9 @@ class SandboxInstance:
         safe: bool = False,
         create_if_not_exist: bool = False,
     ) -> "SandboxInstance":
-        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        # No client-side default name: when the caller omits a name we send the
+        # creation without metadata.name so the server can assign one and unnamed
+        # creations become eligible for warm sandbox pools (ENG-3931).
         default_image = "blaxel/base-image:latest"
         default_memory = 4096
 
@@ -248,7 +264,7 @@ class SandboxInstance:
                 raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
 
             # Set defaults if not provided
-            name = config.name or default_name
+            name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
             ports = config._normalize_ports() or UNSET
@@ -323,7 +339,7 @@ class SandboxInstance:
             assert isinstance(sandbox, Sandbox)
             # Set defaults for missing fields
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=default_name)
+                sandbox.metadata = Metadata(name=None)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
                     runtime=SandboxRuntime(image=default_image, memory=default_memory)
@@ -336,7 +352,7 @@ class SandboxInstance:
 
         response = await create_sandbox(
             client=client,
-            body=sandbox,
+            body=_create_body(sandbox),
             create_if_not_exist=create_if_not_exist,
         )
 
