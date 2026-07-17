@@ -2,6 +2,7 @@
 
 import pytest
 
+from blaxel.core.tools.types import Tool
 from blaxel.pydantic import tools as pydantic_tools
 
 
@@ -11,6 +12,38 @@ class _DummyBlTools:
 
     def get_tools(self):
         return []
+
+
+@pytest.mark.asyncio
+async def test_pydantic_tools_mark_external_schemas_as_non_strict():
+    async def invoke(**_kwargs):
+        return None
+
+    tool = Tool(
+        name="codegenParallelApply",
+        description="Apply code edits in parallel",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "editRegions": {
+                    "type": ["null", "array"],
+                    "items": {
+                        "type": "object",
+                        "properties": {"path": {"type": "string"}},
+                        "additionalProperties": False,
+                    },
+                }
+            },
+        },
+        coroutine=invoke,
+    )
+
+    converted = pydantic_tools.get_pydantic_tool(tool)
+    assert converted.prepare is not None
+    prepared = await converted.prepare(None, converted.tool_def)
+
+    assert prepared is not None
+    assert prepared.strict is False
 
 
 @pytest.mark.asyncio
