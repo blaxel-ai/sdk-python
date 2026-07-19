@@ -37,7 +37,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         path = self.format_path(path)
         body = FileRequest(is_directory=True, permissions=permissions)
         with self.get_client() as client_instance:
-            response = client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+            response = self._request_with_retry(
+                lambda: client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -49,7 +51,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return self._upload_with_multipart(path, content_bytes, "0644")
         body = FileRequest(content=content)
         with self.get_client() as client_instance:
-            response = client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+            response = self._request_with_retry(
+                lambda: client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -98,10 +102,12 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             files_dict[file.path] = file.content
         path = destination_path or ""
         with self.get_client() as client_instance:
-            response = client_instance.put(
-                f"/filesystem/tree/{path}",
-                json={"files": files_dict},
-                headers={"Content-Type": "application/json"},
+            response = self._request_with_retry(
+                lambda: client_instance.put(
+                    f"/filesystem/tree/{path}",
+                    json={"files": files_dict},
+                    headers={"Content-Type": "application/json"},
+                )
             )
             self.handle_response_error(response)
             return Directory.from_dict(response.json())
@@ -111,7 +117,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         def read_once() -> str:
             with self.get_client() as client_instance:
-                response = client_instance.get(f"/filesystem/{path}")
+                response = self._request_with_retry(
+                    lambda: client_instance.get(f"/filesystem/{path}")
+                )
                 self.handle_response_error(response)
                 data = response.json()
                 if "content" in data:
@@ -131,7 +139,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         def read_once() -> bytes:
             with self.get_client() as client_instance:
-                response = client_instance.get(url, headers=headers)
+                response = self._request_with_retry(
+                    lambda: client_instance.get(url, headers=headers)
+                )
                 self.handle_response_error(response)
                 return response.content
 
@@ -147,7 +157,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         path = self.format_path(path)
         with self.get_client() as client_instance:
             params = {"recursive": "true"} if recursive else {}
-            response = client_instance.delete(f"/filesystem/{path}", params=params)
+            response = self._request_with_retry(
+                lambda: client_instance.delete(f"/filesystem/{path}", params=params)
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -156,7 +168,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         def ls_once() -> Directory:
             with self.get_client() as client_instance:
-                response = client_instance.get(f"/filesystem/{path}")
+                response = self._request_with_retry(
+                    lambda: client_instance.get(f"/filesystem/{path}")
+                )
                 self.handle_response_error(response)
                 data = response.json()
                 if not ("files" in data or "subdirectories" in data):
@@ -280,7 +294,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"permissions": permissions}
         with self.get_client() as client_instance:
-            response = client_instance.post(url, json=body, headers=headers)
+            response = self._request_with_retry(
+                lambda: client_instance.post(url, json=body, headers=headers)
+            )
             self.handle_response_error(response)
             return response.json()
 
@@ -305,7 +321,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"parts": parts}
         with self.get_client() as client_instance:
-            response = client_instance.post(url, json=body, headers=headers)
+            response = self._request_with_retry(
+                lambda: client_instance.post(url, json=body, headers=headers)
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 

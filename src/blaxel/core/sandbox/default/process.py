@@ -249,15 +249,16 @@ class SandboxProcess(SandboxAction):
                 process, on_log=on_log, on_stdout=on_stdout, on_stderr=on_stderr
             )
         else:
-            client = self.get_client()
-            response = await client.post("/process", json=process.to_dict(), timeout=None)
-            try:
-                content_bytes = await response.aread()
-                self.handle_response_error(response)
-                import json
+            import json
 
-                if content_bytes:
-                    response_data = json.loads(content_bytes)
+            client = self.get_client()
+            response = await self._request_with_retry(
+                lambda: client.post("/process", json=process.to_dict(), timeout=None)
+            )
+            try:
+                self.handle_response_error(response)
+                if response.content:
+                    response_data = json.loads(response.content)
                     result = ProcessResponse.from_dict(response_data)
                     assert result is not None
                 else:
@@ -420,9 +421,11 @@ class SandboxProcess(SandboxAction):
 
         async def get_once() -> ProcessResponse:
             client = self.get_client()
-            response = await client.get(f"/process/{identifier}")
+            response = await self._request_with_retry(
+                lambda: client.get(f"/process/{identifier}")
+            )
             try:
-                data = json.loads(await response.aread())
+                data = json.loads(response.content)
                 self.handle_response_error(response)
                 result = ProcessResponse.from_dict(data)
                 assert result is not None
@@ -437,9 +440,11 @@ class SandboxProcess(SandboxAction):
 
         async def list_once() -> list[ProcessResponse]:
             client = self.get_client()
-            response = await client.get("/process")
+            response = await self._request_with_retry(
+                lambda: client.get("/process")
+            )
             try:
-                data = json.loads(await response.aread())
+                data = json.loads(response.content)
                 self.handle_response_error(response)
                 results = []
                 for item in data:
@@ -456,9 +461,11 @@ class SandboxProcess(SandboxAction):
         import json
 
         client = self.get_client()
-        response = await client.delete(f"/process/{identifier}")
+        response = await self._request_with_retry(
+            lambda: client.delete(f"/process/{identifier}")
+        )
         try:
-            data = json.loads(await response.aread())
+            data = json.loads(response.content)
             self.handle_response_error(response)
             result = SuccessResponse.from_dict(data)
             assert result is not None
@@ -470,9 +477,11 @@ class SandboxProcess(SandboxAction):
         import json
 
         client = self.get_client()
-        response = await client.delete(f"/process/{identifier}/kill")
+        response = await self._request_with_retry(
+            lambda: client.delete(f"/process/{identifier}/kill")
+        )
         try:
-            data = json.loads(await response.aread())
+            data = json.loads(response.content)
             self.handle_response_error(response)
             result = SuccessResponse.from_dict(data)
             assert result is not None
@@ -489,9 +498,11 @@ class SandboxProcess(SandboxAction):
 
         async def logs_once() -> str:
             client = self.get_client()
-            response = await client.get(f"/process/{identifier}/logs")
+            response = await self._request_with_retry(
+                lambda: client.get(f"/process/{identifier}/logs")
+            )
             try:
-                data = json.loads(await response.aread())
+                data = json.loads(response.content)
                 self.handle_response_error(response)
                 if log_type == "all":
                     return data.get("logs", "")

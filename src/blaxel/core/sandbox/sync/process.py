@@ -204,7 +204,9 @@ class SyncSandboxProcess(SyncSandboxAction):
             )
         else:
             with self.get_client() as client_instance:
-                response = client_instance.post("/process", json=process.to_dict(), timeout=None)
+                response = self._request_with_retry(
+                    lambda: client_instance.post("/process", json=process.to_dict(), timeout=None)
+                )
                 response_data = None
                 if response.content:
                     try:
@@ -357,7 +359,9 @@ class SyncSandboxProcess(SyncSandboxAction):
     def get(self, identifier: str) -> ProcessResponse:
         def get_once() -> ProcessResponse:
             with self.get_client() as client_instance:
-                response = client_instance.get(f"/process/{identifier}")
+                response = self._request_with_retry(
+                    lambda: client_instance.get(f"/process/{identifier}")
+                )
                 self.handle_response_error(response)
                 result = ProcessResponse.from_dict(response.json())
                 assert result is not None
@@ -368,7 +372,9 @@ class SyncSandboxProcess(SyncSandboxAction):
     def list(self) -> list[ProcessResponse]:
         def list_once() -> list[ProcessResponse]:
             with self.get_client() as client_instance:
-                response = client_instance.get("/process")
+                response = self._request_with_retry(
+                    lambda: client_instance.get("/process")
+                )
                 self.handle_response_error(response)
                 results = []
                 for item in response.json():
@@ -381,13 +387,17 @@ class SyncSandboxProcess(SyncSandboxAction):
 
     def stop(self, identifier: str) -> SuccessResponse:
         with self.get_client() as client_instance:
-            response = client_instance.delete(f"/process/{identifier}")
+            response = self._request_with_retry(
+                lambda: client_instance.delete(f"/process/{identifier}")
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     def kill(self, identifier: str) -> SuccessResponse:
         with self.get_client() as client_instance:
-            response = client_instance.delete(f"/process/{identifier}/kill")
+            response = self._request_with_retry(
+                lambda: client_instance.delete(f"/process/{identifier}/kill")
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -398,7 +408,9 @@ class SyncSandboxProcess(SyncSandboxAction):
     ) -> str:
         def logs_once() -> str:
             with self.get_client() as client_instance:
-                response = client_instance.get(f"/process/{identifier}/logs")
+                response = self._request_with_retry(
+                    lambda: client_instance.get(f"/process/{identifier}/logs")
+                )
                 self.handle_response_error(response)
                 data = response.json()
                 if log_type == "all":
