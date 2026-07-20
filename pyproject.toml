@@ -16,7 +16,7 @@ dependencies = [
   "websockets<16.0.0",
   "attrs>=21.3.0",
   "httpx>=0.27.0",
-  "mcp>=1.9.4",
+  "mcp>=1.28.1",
   "dockerfile-parse>=2.0.0",
 ]
 
@@ -27,18 +27,18 @@ core = []
 # Telemetry module
 telemetry = [
   "opentelemetry-exporter-otlp>=1.28.0",
-  "opentelemetry-instrumentation-anthropic>=0.41.0",
-  "opentelemetry-instrumentation-cohere>=0.41.0",
-  "opentelemetry-instrumentation-fastapi>=0.55b0",
-  "opentelemetry-instrumentation-google-generativeai>=0.41.0",
-  "opentelemetry-instrumentation-ollama>=0.41.0",
-  "opentelemetry-instrumentation-openai>=0.41.0",
+  "opentelemetry-instrumentation-anthropic>=0.62.1",
+  "opentelemetry-instrumentation-cohere>=0.62.1",
+  "opentelemetry-instrumentation-fastapi>=0.62.1",
+  "opentelemetry-instrumentation-google-generativeai>=0.62.1",
+  "opentelemetry-instrumentation-ollama>=0.62.1",
+  "opentelemetry-instrumentation-openai>=0.62.1",
 ]
 
 # CrewAI module
 crewai = [
   "crewai[litellm]>=1.9.3",
-  "opentelemetry-instrumentation-crewai>=0.41.0",
+  "opentelemetry-instrumentation-crewai>=0.62.1",
 ]
 
 # OpenAI module
@@ -53,8 +53,8 @@ langgraph = [
   "langchain-openai>=0.3.10",
   "langchain-xai>=0.2.2",
   "langchain-anthropic>=0.3.10",
-  "opentelemetry-instrumentation-langchain>=0.35.0",
-  "pillow>=10.0.0",
+  "opentelemetry-instrumentation-langchain>=0.62.1",
+  "pillow>=12.3.0",
 ]
 
 # LiveKit module
@@ -74,7 +74,7 @@ llamaindex = [
   "llama-index-llms-groq>=0.3.1",
   "llama-index-llms-mistralai>=0.4.0,<0.10.0",
   "llama-index-llms-openai>=0.3.42",
-  "opentelemetry-instrumentation-llamaindex>=0.40.7",
+  "opentelemetry-instrumentation-llamaindex>=0.62.1",
 ]
 
 # Pydantic module
@@ -138,7 +138,7 @@ packages = ["src/blaxel"]
 dev = [
   "nest-asyncio>=1.6.0",
   "asgi-correlation-id>=4.3.4,<5.0.0",
-  "fastapi>=0.115.12",
+  "fastapi>=0.139.0",
   "pdoc3>=0.11.5",
   "python-dotenv>=1.1.0",
   "ruff>=0.8.2",
@@ -146,13 +146,13 @@ dev = [
 ]
 test = [
   "pytest>=8.0.0",
-  "pytest-asyncio>=0.24.0",
+  "pytest-asyncio>=1.4.0",
   "pytest-cov>=6.0.0",
   "pytest-mock>=3.14.0",
   "pytest-xdist>=3.8.0",
   "coverage>=7.0.0",
   "aiohttp>=3.11.16",
-  "flask>=3.0.0",
+  "flask>=3.1.3",
   "requests>=2.32.0",
   "pydantic-ai>=0.0.48",
 ]
