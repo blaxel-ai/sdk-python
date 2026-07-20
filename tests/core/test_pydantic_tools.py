@@ -1,6 +1,10 @@
 """Tests for the Pydantic AI tools wrapper."""
 
+import inspect
+from typing import cast
+
 import pytest
+from pydantic_ai import RunContext
 
 from blaxel.core.tools.types import Tool
 from blaxel.pydantic import tools as pydantic_tools
@@ -40,7 +44,10 @@ async def test_pydantic_tools_mark_external_schemas_as_non_strict():
 
     converted = pydantic_tools.get_pydantic_tool(tool)
     assert converted.prepare is not None
-    prepared = await converted.prepare(None, converted.tool_def)
+    context = cast(RunContext[object], object())
+    prepared = converted.prepare(context, converted.tool_def)
+    if inspect.isawaitable(prepared):
+        prepared = await prepared
 
     assert prepared is not None
     assert prepared.strict is False
