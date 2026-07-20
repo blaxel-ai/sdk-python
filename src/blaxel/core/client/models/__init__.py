@@ -262,6 +262,7 @@ from .update_workspace_service_account_response_200 import UpdateWorkspaceServic
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .volume import Volume
 from .volume_attachment import VolumeAttachment
+from .volume_attachment_type import VolumeAttachmentType
 from .volume_list import VolumeList
 from .volume_spec import VolumeSpec
 from .volume_state import VolumeState
@@ -542,6 +543,7 @@ __all__ = (
     "UpdateWorkspaceUserRoleBody",
     "Volume",
     "VolumeAttachment",
+    "VolumeAttachmentType",
     "VolumeList",
     "VolumeSpec",
     "VolumeState",
