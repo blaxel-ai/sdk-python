@@ -44,6 +44,7 @@ from .types import (
     SessionCreateOptions,
     SessionWithToken,
     StreamHandle,
+    VolumeBinding,
     WatchEvent,
     WatchHandle,
 )
@@ -55,6 +56,7 @@ __all__ = [
     "SessionWithToken",
     "SandboxConfiguration",
     "SandboxCreateConfiguration",
+    "VolumeBinding",
     "WatchEvent",
     "WatchHandle",
     "AsyncWatchHandle",
