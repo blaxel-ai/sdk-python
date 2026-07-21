@@ -59,7 +59,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, D
         response_401 = cast(Any, None)
         return response_401
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
