@@ -4,6 +4,7 @@ import platform
 import threading
 import uuid
 from pathlib import Path
+from typing import Callable
 
 import httpx
 
@@ -20,6 +21,7 @@ _POSTHOG_HOST = "https://us.i.posthog.com"
 # Telemetry state file path: ~/.blaxel/telemetry.json
 _telemetry_state: dict | None = None
 _telemetry_lock = threading.Lock()
+_pending_sdk_versions: set[tuple[str, str]] = set()
 
 
 def _get_posthog_key() -> str:
@@ -113,11 +115,15 @@ def _get_os_arch() -> str:
         return "unknown/unknown"
 
 
-def _capture_posthog_event(event: str, properties: dict | None = None) -> None:
+def _capture_posthog_event(
+    event: str,
+    properties: dict | None = None,
+    on_complete: Callable[[bool], None] | None = None,
+) -> bool:
     """Fire-and-forget HTTP POST to PostHog capture endpoint."""
     api_key = _get_posthog_key()
     if not api_key:
-        return
+        return False
 
     distinct_id = _get_distinct_id()
     payload = {
@@ -133,19 +139,32 @@ def _capture_posthog_event(event: str, properties: dict | None = None) -> None:
     }
 
     def send() -> None:
+        successful = False
         try:
-            httpx.post(
+            response = httpx.post(
                 f"{_POSTHOG_HOST}/capture/",
                 json=payload,
                 headers={"Content-Type": "application/json"},
                 timeout=5.0,
             )
+            successful = 200 <= response.status_code < 300
         except Exception:
             # Silently fail - telemetry should never break the SDK
             pass
+        finally:
+            if on_complete:
+                try:
+                    on_complete(successful)
+                except Exception:
+                    # Telemetry callbacks must never break the SDK
+                    pass
 
-    thread = threading.Thread(target=send, daemon=True)
-    thread.start()
+    try:
+        thread = threading.Thread(target=send, daemon=True)
+        thread.start()
+        return True
+    except Exception:
+        return False
 
 
 def track_sdk_installed() -> None:
@@ -169,23 +188,42 @@ def track_sdk_installed() -> None:
 
         state = _load_telemetry_state()
         sdk_key = "python"
+        pending_key = (sdk_key, version)
 
-        # Check if we already reported this version
-        if state.get("sdks", {}).get(sdk_key) == version:
-            return
+        # Reserve this version in memory so concurrent calls do not send duplicates.
+        # It is only written to persistent state after PostHog accepts the event.
+        with _telemetry_lock:
+            if state.get("sdks", {}).get(sdk_key) == version:
+                return
+            if pending_key in _pending_sdk_versions:
+                return
+            _pending_sdk_versions.add(pending_key)
 
-        # Update state and save
-        if "sdks" not in state:
-            state["sdks"] = {}
-        state["sdks"][sdk_key] = version
-        _save_telemetry_state(state)
+        def delivery_complete(successful: bool) -> None:
+            with _telemetry_lock:
+                _pending_sdk_versions.discard(pending_key)
+                if not successful:
+                    return
+                if "sdks" not in state:
+                    state["sdks"] = {}
+                state["sdks"][sdk_key] = version
+                _save_telemetry_state(state)
 
-        # Fire event
-        _capture_posthog_event("Installed SDK", {
-            "sdk": "python",
-            "version": version,
-            "environment": settings.env,
-        })
+        try:
+            started = _capture_posthog_event(
+                "Installed SDK",
+                {
+                    "language": "python",
+                    "sdk": "core",
+                    "version": version,
+                },
+                on_complete=delivery_complete,
+            )
+        except Exception:
+            started = False
+        if not started:
+            with _telemetry_lock:
+                _pending_sdk_versions.discard(pending_key)
     except Exception:
         # Silently fail - telemetry should never break the SDK
         pass
