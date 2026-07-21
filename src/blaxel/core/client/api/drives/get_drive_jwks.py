@@ -5,6 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.get_drive_jwks_response_200 import GetDriveJWKSResponse200
 from ...types import Response
 
@@ -23,6 +24,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> GetDriveJWKS
         response_200 = GetDriveJWKSResponse200.from_dict(response.json())
 
         return response_200
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

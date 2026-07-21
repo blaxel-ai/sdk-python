@@ -5,6 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.list_pending_image_shares_direction import ListPendingImageSharesDirection
 from ...models.pending_image_share_render import PendingImageShareRender
 from ...types import UNSET, Response, Unset
@@ -45,6 +46,9 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

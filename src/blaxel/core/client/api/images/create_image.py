@@ -7,6 +7,7 @@ from ... import errors
 from ...client import Client
 from ...models.create_image_body import CreateImageBody
 from ...models.create_image_response_200 import CreateImageResponse200
+from ...models.error import Error
 from ...types import Response
 
 
@@ -43,6 +44,9 @@ def _parse_response(
     if response.status_code == 400:
         response_400 = cast(Any, None)
         return response_400
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

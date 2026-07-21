@@ -84,6 +84,8 @@ def _parse_response(*, client: Client, response: httpx.Response) -> {{ return_st
         return None
         {% endif %}
     {% endfor %}
+    if response.status_code == 429:
+        return None
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:

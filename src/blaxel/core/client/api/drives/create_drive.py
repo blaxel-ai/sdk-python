@@ -6,6 +6,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.drive import Drive
+from ...models.error import Error
 from ...types import Response
 
 
@@ -40,6 +41,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, D
     if response.status_code == 401:
         response_401 = cast(Any, None)
         return response_401
+    if response.status_code == 429:
+        response_429 = Error.from_dict(response.json())
+        return response_429
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
