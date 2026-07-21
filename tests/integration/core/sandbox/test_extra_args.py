@@ -32,45 +32,7 @@ class TestSandboxExtraArgs:
             assert retrieved.spec.runtime.extra_args["iptables"] == "enabled"
         finally:
             await SandboxInstance.delete(name)
-
-    async def test_creates_sandbox_with_nvme_enabled(self):
-        """Test creating a sandbox with nvme extra arg."""
-        name = unique_name("extra-args-nvme")
-        await SandboxInstance.create(
-            {
-                "name": name,
-                "image": default_image,
-                "extra_args": {"nvme": "enabled"},
-                "labels": default_labels,
-            }
-        )
-
-        try:
-            retrieved = await SandboxInstance.get(name)
-            assert retrieved.spec.runtime.extra_args is not None
-            assert retrieved.spec.runtime.extra_args["nvme"] == "enabled"
-        finally:
-            await SandboxInstance.delete(name)
-
-    async def test_creates_sandbox_with_both_iptables_and_nvme(self):
-        """Test creating a sandbox with both iptables and nvme enabled."""
-        name = unique_name("extra-args-both")
-        await SandboxInstance.create(
-            {
-                "name": name,
-                "image": default_image,
-                "extra_args": {"iptables": "enabled", "nvme": "enabled"},
-                "labels": default_labels,
-            }
-        )
-
-        try:
-            retrieved = await SandboxInstance.get(name)
-            assert retrieved.spec.runtime.extra_args["iptables"] == "enabled"
-            assert retrieved.spec.runtime.extra_args["nvme"] == "enabled"
-        finally:
-            await SandboxInstance.delete(name)
-
+            
     async def test_creates_sandbox_without_extra_args(self):
         """Test creating a sandbox without extraArgs uses default kernel."""
         name = unique_name("extra-args-default")

@@ -12,26 +12,28 @@ pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 async def test_creates_sandbox_with_proxy_routing_and_header_injection(created_sandboxes):
     name = unique_name("proxy-hdr")
-    sandbox = await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "proxy": {
-                "routing": [
-                    {
-                        "destinations": ["api.stripe.com"],
-                        "headers": {
-                            "Authorization": "Bearer {{SECRET:stripe-key}}",
-                            "Stripe-Version": "2024-12-18.acacia",
+    sandbox = await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "proxy": {
+                    "routing": [
+                        {
+                            "destinations": ["api.stripe.com"],
+                            "headers": {
+                                "Authorization": "Bearer {{SECRET:stripe-key}}",
+                                "Stripe-Version": "2024-12-18.acacia",
+                            },
+                            "secrets": {"stripe-key": "sk-live-test123"},
                         },
-                        "secrets": {"stripe-key": "sk-live-test123"},
-                    },
-                ],
+                    ],
+                },
             },
-        },
-    })
+        }
+    )
     created_sandboxes.append(name)
 
     assert sandbox.metadata.name == name
@@ -46,24 +48,26 @@ async def test_creates_sandbox_with_proxy_routing_and_header_injection(created_s
 
 async def test_creates_sandbox_with_proxy_body_injection(created_sandboxes):
     name = unique_name("proxy-body")
-    sandbox = await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "proxy": {
-                "routing": [
-                    {
-                        "destinations": ["api.stripe.com"],
-                        "headers": {"Authorization": "Bearer {{SECRET:stripe-key}}"},
-                        "body": {"api_key": "{{SECRET:stripe-key}}"},
-                        "secrets": {"stripe-key": "sk-live-test123"},
-                    },
-                ],
+    sandbox = await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "proxy": {
+                    "routing": [
+                        {
+                            "destinations": ["api.stripe.com"],
+                            "headers": {"Authorization": "Bearer {{SECRET:stripe-key}}"},
+                            "body": {"api_key": "{{SECRET:stripe-key}}"},
+                            "secrets": {"stripe-key": "sk-live-test123"},
+                        },
+                    ],
+                },
             },
-        },
-    })
+        }
+    )
     created_sandboxes.append(name)
 
     route = sandbox.spec.network.proxy.routing[0]
@@ -73,37 +77,39 @@ async def test_creates_sandbox_with_proxy_body_injection(created_sandboxes):
 
 async def test_creates_sandbox_with_multiple_proxy_routing_rules(created_sandboxes):
     name = unique_name("proxy-multi")
-    sandbox = await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "proxy": {
-                "routing": [
-                    {
-                        "destinations": ["api.stripe.com"],
-                        "headers": {
-                            "Authorization": "Bearer {{SECRET:stripe-key}}",
-                            "Stripe-Version": "2024-12-18.acacia",
-                            "X-Request-Source": "blaxel-sandbox",
+    sandbox = await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "proxy": {
+                    "routing": [
+                        {
+                            "destinations": ["api.stripe.com"],
+                            "headers": {
+                                "Authorization": "Bearer {{SECRET:stripe-key}}",
+                                "Stripe-Version": "2024-12-18.acacia",
+                                "X-Request-Source": "blaxel-sandbox",
+                            },
+                            "body": {"api_key": "{{SECRET:stripe-key}}"},
+                            "secrets": {"stripe-key": "sk-live-test123"},
                         },
-                        "body": {"api_key": "{{SECRET:stripe-key}}"},
-                        "secrets": {"stripe-key": "sk-live-test123"},
-                    },
-                    {
-                        "destinations": ["api.openai.com"],
-                        "headers": {
-                            "Authorization": "Bearer {{SECRET:openai-key}}",
-                            "OpenAI-Organization": "org-abc123",
+                        {
+                            "destinations": ["api.openai.com"],
+                            "headers": {
+                                "Authorization": "Bearer {{SECRET:openai-key}}",
+                                "OpenAI-Organization": "org-abc123",
+                            },
+                            "secrets": {"openai-key": "sk-proj-test789"},
                         },
-                        "secrets": {"openai-key": "sk-proj-test789"},
-                    },
-                ],
-                "bypass": ["*.s3.amazonaws.com"],
+                    ],
+                    "bypass": ["*.s3.amazonaws.com"],
+                },
             },
-        },
-    })
+        }
+    )
     created_sandboxes.append(name)
 
     proxy = sandbox.spec.network.proxy
@@ -121,15 +127,17 @@ async def test_creates_sandbox_with_multiple_proxy_routing_rules(created_sandbox
 
 async def test_creates_sandbox_with_proxy_bypass_only(created_sandboxes):
     name = unique_name("proxy-bypass")
-    sandbox = await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "proxy": {"bypass": ["*.s3.amazonaws.com", "169.254.169.254"]},
-        },
-    })
+    sandbox = await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "proxy": {"bypass": ["*.s3.amazonaws.com", "169.254.169.254"]},
+            },
+        }
+    )
     created_sandboxes.append(name)
 
     proxy = sandbox.spec.network.proxy
@@ -139,25 +147,27 @@ async def test_creates_sandbox_with_proxy_bypass_only(created_sandboxes):
 
 async def test_creates_sandbox_with_proxy_and_allowed_domains_combined(created_sandboxes):
     name = unique_name("proxy-fw")
-    sandbox = await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "allowedDomains": ["api.stripe.com", "api.openai.com", "*.s3.amazonaws.com"],
-            "proxy": {
-                "routing": [
-                    {
-                        "destinations": ["api.stripe.com"],
-                        "headers": {"Authorization": "Bearer {{SECRET:stripe-key}}"},
-                        "secrets": {"stripe-key": "sk-live-test123"},
-                    },
-                ],
-                "bypass": ["*.s3.amazonaws.com"],
+    sandbox = await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "allowedDomains": ["api.stripe.com", "api.openai.com", "*.s3.amazonaws.com"],
+                "proxy": {
+                    "routing": [
+                        {
+                            "destinations": ["api.stripe.com"],
+                            "headers": {"Authorization": "Bearer {{SECRET:stripe-key}}"},
+                            "secrets": {"stripe-key": "sk-live-test123"},
+                        },
+                    ],
+                    "bypass": ["*.s3.amazonaws.com"],
+                },
             },
-        },
-    })
+        }
+    )
     created_sandboxes.append(name)
 
     network = sandbox.spec.network

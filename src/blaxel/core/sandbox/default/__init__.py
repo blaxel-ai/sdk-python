@@ -7,6 +7,7 @@ from .sandbox import (
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+    SandboxSchedules,
 )
 from .system import SandboxSystem
 
@@ -15,6 +16,7 @@ __all__ = [
     "SandboxAPIError",
     "SandboxFileSystem",
     "SandboxPreviews",
+    "SandboxSchedules",
     "SandboxProcess",
     "SandboxCodegen",
     "SandboxSystem",

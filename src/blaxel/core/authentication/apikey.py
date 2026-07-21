@@ -21,9 +21,10 @@ class ApiKey(BlaxelAuth):
         Returns:
             dict: A dictionary of headers with API key and workspace.
         """
+        workspace = self._ensure_workspace()
         return {
             "X-Blaxel-Authorization": f"Bearer {self.credentials.api_key}",
-            "X-Blaxel-Workspace": self.workspace_name,
+            "X-Blaxel-Workspace": workspace,
         }
 
     def auth_flow(self, request: Request) -> Generator[Request, Response, None]:
@@ -36,8 +37,9 @@ class ApiKey(BlaxelAuth):
         Yields:
             Request: The authenticated request.
         """
+        workspace = self._ensure_workspace()
         request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.api_key}"
-        request.headers["X-Blaxel-Workspace"] = self.workspace_name
+        request.headers["X-Blaxel-Workspace"] = workspace
         yield request
 
     @property

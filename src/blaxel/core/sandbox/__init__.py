@@ -17,6 +17,7 @@ from .default import (
     SandboxInstance,
     SandboxPreviews,
     SandboxProcess,
+    SandboxSchedules,
     SandboxSystem,
 )
 from .sync import (
@@ -27,6 +28,7 @@ from .sync import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    SyncSandboxSchedules,
     SyncSandboxSystem,
 )
 from .types import (
@@ -38,9 +40,11 @@ from .types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxFilesystemFile,
+    SandboxUpdateNetwork,
     SessionCreateOptions,
     SessionWithToken,
     StreamHandle,
+    VolumeBinding,
     WatchEvent,
     WatchHandle,
 )
@@ -52,6 +56,7 @@ __all__ = [
     "SessionWithToken",
     "SandboxConfiguration",
     "SandboxCreateConfiguration",
+    "VolumeBinding",
     "WatchEvent",
     "WatchHandle",
     "AsyncWatchHandle",
@@ -59,9 +64,11 @@ __all__ = [
     "AsyncStreamHandle",
     "SandboxFilesystemFile",
     "CopyResponse",
+    "SandboxUpdateNetwork",
     "Sandbox",
     "SandboxFileSystem",
     "SandboxPreviews",
+    "SandboxSchedules",
     "SandboxProcess",
     "SandboxCodegen",
     "SandboxSystem",
@@ -80,6 +87,7 @@ __all__ = [
     "SyncSandboxFileSystem",
     "SyncSandboxInstance",
     "SyncSandboxPreviews",
+    "SyncSandboxSchedules",
     "SyncSandboxProcess",
     "SyncSandboxSystem",
     "SyncSandboxDrive",

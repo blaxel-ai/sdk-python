@@ -399,9 +399,18 @@ class TestAsyncDeletion(TestPreviewOperations):
                 "spec": {"port": 3000, "public": True},
             }
         )
+        # A freshly (re)created public preview is eventually consistent at the
+        # edge: the first request can return 401 before the config propagates.
+        # Poll until it serves instead of asserting on the first request.
         async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.get(preview.spec.url)
-        assert response.status_code == 200
+            status = None
+            for _ in range(30):
+                response = await client.get(preview.spec.url)
+                status = response.status_code
+                if status == 200:
+                    break
+                await asyncio.sleep(2)
+        assert status == 200
 
         await self.sandbox.previews.delete("preview-with-many-tokens")
 

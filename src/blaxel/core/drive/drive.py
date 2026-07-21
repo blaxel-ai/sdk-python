@@ -2,7 +2,7 @@ import asyncio
 import time
 import uuid
 import warnings
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, Union
 
 from ..client.api.drives.create_drive import asyncio as create_drive
 from ..client.api.drives.create_drive import sync as create_drive_sync
@@ -18,7 +18,14 @@ from ..client.client import client
 from ..client.errors import UnexpectedStatus
 from ..client.models import Drive, DriveSpec, Metadata
 from ..client.models.error import Error
-from ..client.types import UNSET
+from ..client.pagination import (
+    AsyncPaginatedList,
+    PaginatedList,
+    make_async_paginated_list,
+    make_paginated_list,
+    normalize_cursor,
+)
+from ..client.types import UNSET, Unset
 from ..common.settings import settings
 
 
@@ -117,12 +124,14 @@ class DriveCreateConfiguration:
         labels: Dict[str, str] | None = None,
         size: int | None = None,  # Size in GB
         region: str | None = None,  # Region
+        permissions: list | None = None,
     ):
         self.name = name
         self.display_name = display_name
         self.labels = labels
         self.size = size
         self.region = region
+        self.permissions = permissions
 
     @classmethod
     def from_dict(cls, data: Dict[str, any]) -> "DriveCreateConfiguration":
@@ -132,6 +141,7 @@ class DriveCreateConfiguration:
             labels=data.get("labels"),
             size=data.get("size"),
             region=data.get("region"),
+            permissions=data.get("permissions"),
         )
 
 
@@ -169,6 +179,10 @@ class DriveInstance:
     def region(self):
         return self.drive.spec.region if self.drive.spec else None
 
+    @property
+    def permissions(self):
+        return self.drive.spec.permissions if self.drive.spec else None
+
     @classmethod
     async def create(
         cls, config: Union[DriveCreateConfiguration, Drive, Dict[str, any]]
@@ -189,6 +203,7 @@ class DriveInstance:
                 spec=DriveSpec(
                     size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
+                    permissions=config.permissions if config.permissions is not None else UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -202,6 +217,9 @@ class DriveInstance:
                 spec=DriveSpec(
                     size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
+                    permissions=drive_config.permissions
+                    if drive_config.permissions is not None
+                    else UNSET,
                 ),
             )
         else:
@@ -247,9 +265,47 @@ class DriveInstance:
         return cls(response)
 
     @classmethod
-    async def list(cls) -> list["DriveInstance"]:
-        response = await list_drives(client=client)
-        return [cls(drive) for drive in response or []]
+    async def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> AsyncPaginatedList["DriveInstance"]:
+        """List one page of drives.
+
+        Args:
+            limit: Maximum number of drives to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            AsyncPaginatedList[DriveInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = await DriveInstance.list(limit=50)
+
+            for drive in page.data:
+                print(drive.name)
+
+            if page.has_more:
+                next_page = await page.next_page()
+
+            async for drive in page.auto_paging_iter():
+                print(drive.name)
+            ```
+        """
+
+        async def fetch_page(page_cursor: str | None):
+            response = await list_drives(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise DriveAPIError(message, status_code=status_code, code=response.error)
+            return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return await fetch_page(cursor)
 
     @classmethod
     async def create_if_not_exists(
@@ -318,6 +374,10 @@ class SyncDriveInstance:
     def region(self):
         return self.drive.spec.region if self.drive.spec else None
 
+    @property
+    def permissions(self):
+        return self.drive.spec.permissions if self.drive.spec else None
+
     @classmethod
     def create(
         cls, config: Union[DriveCreateConfiguration, Drive, Dict[str, any]]
@@ -339,6 +399,7 @@ class SyncDriveInstance:
                 spec=DriveSpec(
                     size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
+                    permissions=config.permissions if config.permissions is not None else UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -352,6 +413,9 @@ class SyncDriveInstance:
                 spec=DriveSpec(
                     size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
+                    permissions=drive_config.permissions
+                    if drive_config.permissions is not None
+                    else UNSET,
                 ),
             )
         else:
@@ -398,10 +462,45 @@ class SyncDriveInstance:
         return cls(response)
 
     @classmethod
-    def list(cls) -> List["SyncDriveInstance"]:
-        """List all drives synchronously."""
-        response = list_drives_sync(client=client)
-        return [cls(drive) for drive in response or []]
+    def list(cls, limit: int = 50, cursor: str | None = None) -> PaginatedList["SyncDriveInstance"]:
+        """List one page of drives synchronously.
+
+        Args:
+            limit: Maximum number of drives to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            PaginatedList[SyncDriveInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = SyncDriveInstance.list(limit=50)
+
+            for drive in page.data:
+                print(drive.name)
+
+            if page.has_more:
+                next_page = page.next_page()
+
+            for drive in page.auto_paging_iter():
+                print(drive.name)
+            ```
+        """
+
+        def fetch_page(page_cursor: str | None):
+            response = list_drives_sync(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = int(response.code) if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise DriveAPIError(message, status_code=status_code, code=response.error)
+            return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return fetch_page(cursor)
 
     @classmethod
     def create_if_not_exists(
@@ -467,6 +566,7 @@ async def _update_drive_by_name(
         new_spec = DriveSpec(
             size=updates.size,
             region=updates.region,
+            permissions=updates.permissions,
         )
     elif isinstance(updates, dict):
         config = DriveCreateConfiguration.from_dict(updates)
@@ -478,6 +578,7 @@ async def _update_drive_by_name(
         new_spec = DriveSpec(
             size=config.size,
             region=config.region,
+            permissions=config.permissions,
         )
     else:
         raise ValueError(
@@ -502,6 +603,11 @@ async def _update_drive_by_name(
         region=new_spec.region
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
+        permissions=new_spec.permissions
+        if new_spec
+        and new_spec.permissions is not None
+        and not isinstance(new_spec.permissions, Unset)
+        else (current_drive.spec.permissions if current_drive.spec else UNSET),
     )
 
     body = Drive(
@@ -540,6 +646,7 @@ def _update_drive_by_name_sync(
         new_spec = DriveSpec(
             size=updates.size,
             region=updates.region,
+            permissions=updates.permissions,
         )
     elif isinstance(updates, dict):
         config = DriveCreateConfiguration.from_dict(updates)
@@ -551,6 +658,7 @@ def _update_drive_by_name_sync(
         new_spec = DriveSpec(
             size=config.size,
             region=config.region,
+            permissions=config.permissions,
         )
     else:
         raise ValueError(
@@ -575,6 +683,11 @@ def _update_drive_by_name_sync(
         region=new_spec.region
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
+        permissions=new_spec.permissions
+        if new_spec
+        and new_spec.permissions is not None
+        and not isinstance(new_spec.permissions, Unset)
+        else (current_drive.spec.permissions if current_drive.spec else UNSET),
     )
 
     body = Drive(

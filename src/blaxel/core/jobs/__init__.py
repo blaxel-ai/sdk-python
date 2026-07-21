@@ -18,6 +18,13 @@ from ..client.models.create_job_execution_request import (
     CreateJobExecutionRequest,
 )
 from ..client.models.job_execution import JobExecution
+from ..client.pagination import (
+    AsyncPaginatedList,
+    PaginatedList,
+    make_async_paginated_list,
+    make_paginated_list,
+    normalize_cursor,
+)
 
 
 class BlJobWrapper:
@@ -285,55 +292,99 @@ class BlJob:
 
         return response.parsed
 
-    def list_executions(self, limit: int = 20, offset: int = 0) -> List[JobExecution]:
+    def list_executions(
+        self, limit: int = 20, offset: int = 0, cursor: str | None = None
+    ) -> PaginatedList[JobExecution]:
         """
-        List all executions for this job.
+        List executions for this job.
 
         Args:
-            limit: Maximum number of executions to return
-            offset: Offset for pagination
+            limit: Maximum number of executions to return per page
+            offset: Legacy offset for older API versions
+            cursor: Starting cursor
 
         Returns:
-            List[JobExecution]: List of execution objects
+            PaginatedList[JobExecution]: Page of execution objects
+
+        Example:
+            ```python
+            page = bl_job("my-job").list_executions(limit=20)
+
+            for execution in page.data:
+                print(execution.metadata.id)
+
+            if page.has_more:
+                next_page = page.next_page()
+
+            for execution in page.auto_paging_iter():
+                print(execution.metadata.id)
+            ```
         """
         logger.debug(f"Listing executions for job: {self.name}")
 
-        response = list_job_executions.sync_detailed(
-            job_id=self.name,
-            client=client,
-            limit=limit,
-            offset=offset,
-        )
+        def fetch_page(page_cursor: str | None):
+            response = list_job_executions.sync_detailed(
+                job_id=self.name,
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+                offset=offset if page_cursor is None else 0,
+            )
 
-        if response.status_code != 200:
-            raise Exception(f"Failed to list job executions: {response.status_code}")
+            if response.status_code != 200:
+                raise Exception(f"Failed to list job executions: {response.status_code}")
+            return make_paginated_list(
+                response.parsed, mapper=lambda execution: execution, fetch_next=fetch_page
+            )
 
-        return response.parsed or []
+        return fetch_page(cursor)
 
-    async def alist_executions(self, limit: int = 20, offset: int = 0) -> List[JobExecution]:
+    async def alist_executions(
+        self, limit: int = 20, offset: int = 0, cursor: str | None = None
+    ) -> AsyncPaginatedList[JobExecution]:
         """
-        List all executions for this job (async).
+        List executions for this job (async).
 
         Args:
-            limit: Maximum number of executions to return
-            offset: Offset for pagination
+            limit: Maximum number of executions to return per page
+            offset: Legacy offset for older API versions
+            cursor: Starting cursor
 
         Returns:
-            List[JobExecution]: List of execution objects
+            AsyncPaginatedList[JobExecution]: Page of execution objects
+
+        Example:
+            ```python
+            page = await bl_job("my-job").alist_executions(limit=20)
+
+            for execution in page.data:
+                print(execution.metadata.id)
+
+            if page.has_more:
+                next_page = await page.next_page()
+
+            async for execution in page.auto_paging_iter():
+                print(execution.metadata.id)
+            ```
         """
         logger.debug(f"Listing executions for job: {self.name}")
 
-        response = await list_job_executions.asyncio_detailed(
-            job_id=self.name,
-            client=client,
-            limit=limit,
-            offset=offset,
-        )
+        async def fetch_page(page_cursor: str | None):
+            response = await list_job_executions.asyncio_detailed(
+                job_id=self.name,
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+                offset=offset if page_cursor is None else 0,
+            )
 
-        if response.status_code != 200:
-            raise Exception(f"Failed to list job executions: {response.status_code}")
+            if response.status_code != 200:
+                raise Exception(f"Failed to list job executions: {response.status_code}")
+            return make_async_paginated_list(
+                response.parsed, mapper=lambda execution: execution, fetch_next=fetch_page
+            )
 
-        return response.parsed or []
+        return await fetch_page(cursor)
 
     def get_execution_status(self, execution_id: str) -> str:
         """

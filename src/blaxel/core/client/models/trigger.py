@@ -20,7 +20,8 @@ class Trigger:
     Attributes:
         configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
         enabled (Union[Unset, bool]): Enable or disable the trigger (default: true) Example: True.
-        id (Union[Unset, str]): The id of the trigger Example: trigger-1.
+        id (Union[Unset, str]): Identifier of the trigger. Optional — the server auto-generates a unique id when one is
+            not provided, and disambiguates duplicates within a resource. Example: trigger-1.
         type_ (Union[Unset, TriggerType]): The type of trigger, can be http or http-async Example: http.
     """
 

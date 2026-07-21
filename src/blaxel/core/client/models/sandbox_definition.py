@@ -19,16 +19,16 @@ class SandboxDefinition:
     configurations
 
         Attributes:
-            categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the defintion
+            categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the definition
             coming_soon (Union[Unset, bool]): If the definition is coming soon
-            description (Union[Unset, str]): Description of the defintion Example: Python environment with data science
+            description (Union[Unset, str]): Description of the definition Example: Python environment with data science
                 libraries pre-installed.
             display_name (Union[Unset, str]): Display name of the definition Example: Python Data Science.
             enterprise (Union[Unset, bool]): If the definition is enterprise
             hidden (Union[Unset, bool]): If the definition is hidden
             icon (Union[Unset, str]): Icon of the definition
             image (Union[Unset, str]): Image of the Sandbox definition Example: blaxel/python-data-science:latest.
-            long_description (Union[Unset, str]): Long description of the defintion
+            long_description (Union[Unset, str]): Long description of the definition
             memory (Union[Unset, int]): Memory of the Sandbox definition in MB Example: 2048.
             name (Union[Unset, str]): Name of the artifact Example: python-data-science.
             ports (Union[Unset, list['Port']]): Set of ports for a resource

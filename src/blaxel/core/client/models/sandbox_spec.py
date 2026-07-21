@@ -24,13 +24,14 @@ class SandboxSpec:
             Example: True.
         lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
             on idle time, max age, or specific dates
-        network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including domain filtering, egress
-            IP binding, and proxy settings
+        network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including subnet, firewall rulesets,
+            domain filtering, egress IP binding, and proxy settings
         region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
             specified, defaults to the region closest to the user. Example: us-pdx-1.
         runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its
             resource limits
         volumes (Union[Unset, list['VolumeAttachment']]):
+        vpc (Union[Unset, str]): VPC name for the sandbox. Defaults to "default" when absent. Example: default.
     """
 
     enabled: Union[Unset, bool] = True
@@ -39,6 +40,7 @@ class SandboxSpec:
     region: Union[Unset, str] = UNSET
     runtime: Union[Unset, "SandboxRuntime"] = UNSET
     volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
+    vpc: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -91,6 +93,8 @@ class SandboxSpec:
                     )
                 volumes.append(componentsschemas_volume_attachments_item)
 
+        vpc = self.vpc
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -106,6 +110,8 @@ class SandboxSpec:
             field_dict["runtime"] = runtime
         if volumes is not UNSET:
             field_dict["volumes"] = volumes
+        if vpc is not UNSET:
+            field_dict["vpc"] = vpc
 
         return field_dict
 
@@ -153,6 +159,8 @@ class SandboxSpec:
 
             volumes.append(componentsschemas_volume_attachments_item)
 
+        vpc = d.pop("vpc", UNSET)
+
         sandbox_spec = cls(
             enabled=enabled,
             lifecycle=lifecycle,
@@ -160,6 +168,7 @@ class SandboxSpec:
             region=region,
             runtime=runtime,
             volumes=volumes,
+            vpc=vpc,
         )
 
         sandbox_spec.additional_properties = d

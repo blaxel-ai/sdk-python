@@ -7,9 +7,29 @@ import yaml
 from .apikey import ApiKey
 from .clientcredentials import ClientCredentials
 from .devicemode import DeviceMode
-from .types import BlaxelAuth, CredentialsType
+from .types import BlaxelAuth, CredentialsError, CredentialsType, MissingCredentials
 
 logger = getLogger(__name__)
+
+
+def _missing_credentials_message() -> str:
+    """Build an actionable message naming exactly which piece is missing."""
+    has_workspace = bool(os.environ.get("BL_WORKSPACE"))
+    has_api_key = bool(os.environ.get("BL_API_KEY"))
+    if has_workspace and not has_api_key:
+        return (
+            "Blaxel API key is missing. Set the BL_API_KEY environment variable, "
+            "or run `bl login`, to authenticate (BL_WORKSPACE is already set)."
+        )
+    if has_api_key and not has_workspace:
+        return (
+            "Blaxel workspace is missing. Set the BL_WORKSPACE environment variable, "
+            "or run `bl login`, to authenticate (BL_API_KEY is already set)."
+        )
+    return (
+        "No Blaxel credentials found. Set the BL_API_KEY and BL_WORKSPACE "
+        "environment variables, or run `bl login`."
+    )
 
 
 def get_credentials() -> CredentialsType | None:
@@ -23,11 +43,17 @@ def get_credentials() -> CredentialsType | None:
     def get_workspace():
         if os.environ.get("BL_WORKSPACE"):
             return os.environ.get("BL_WORKSPACE")
-        home_dir = Path.home()
-        config_path = home_dir / ".blaxel" / "config.yaml"
-        with open(config_path, encoding="utf-8") as f:
-            config_json = yaml.safe_load(f)
-        return config_json.get("context", {}).get("workspace")
+        try:
+            home_dir = Path.home()
+            config_path = home_dir / ".blaxel" / "config.yaml"
+            with open(config_path, encoding="utf-8") as f:
+                config_json = yaml.safe_load(f) or {}
+            return config_json.get("context", {}).get("workspace")
+        except Exception:
+            # No config file (e.g. running in a fresh sandbox with only
+            # BL_API_KEY set) must not crash credential resolution; the
+            # missing workspace is reported clearly at request time instead.
+            return None
 
     if os.environ.get("BL_API_KEY"):
         return CredentialsType(api_key=os.environ.get("BL_API_KEY"), workspace=get_workspace())
@@ -82,7 +108,11 @@ def auth(env: str, base_url: str) -> BlaxelAuth:
     credentials = get_credentials()
 
     if not credentials:
-        return None
+        # Never return None: a sentinel that raises a clear CredentialsError on
+        # use keeps `import blaxel` working while turning the old cryptic
+        # AttributeError / server-side "workspace is required" into an
+        # actionable message.
+        return MissingCredentials(base_url, message=_missing_credentials_message())
 
     if credentials.api_key:
         logger.debug("Using API key for authentication")
@@ -99,4 +129,11 @@ def auth(env: str, base_url: str) -> BlaxelAuth:
     return BlaxelAuth(credentials, credentials.workspace, base_url)
 
 
-__all__ = ["BlaxelAuth", "CredentialsType"]
+__all__ = [
+    "BlaxelAuth",
+    "CredentialsError",
+    "CredentialsType",
+    "MissingCredentials",
+    "get_credentials",
+    "auth",
+]

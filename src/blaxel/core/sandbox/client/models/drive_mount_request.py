@@ -15,13 +15,17 @@ class DriveMountRequest:
         drive_name (str):
         mount_path (str):
         drive_path (Union[Unset, str]): Optional, defaults to "/"
+        gid_map (Union[Unset, str]): Optional, local GID to map (filer GID is always 0)
         read_only (Union[Unset, bool]): Optional, defaults to false
+        uid_map (Union[Unset, str]): Optional, local UID to map (filer UID is always 0)
     """
 
     drive_name: str
     mount_path: str
     drive_path: Union[Unset, str] = UNSET
+    gid_map: Union[Unset, str] = UNSET
     read_only: Union[Unset, bool] = UNSET
+    uid_map: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,7 +35,11 @@ class DriveMountRequest:
 
         drive_path = self.drive_path
 
+        gid_map = self.gid_map
+
         read_only = self.read_only
+
+        uid_map = self.uid_map
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -43,8 +51,12 @@ class DriveMountRequest:
         )
         if drive_path is not UNSET:
             field_dict["drivePath"] = drive_path
+        if gid_map is not UNSET:
+            field_dict["gidMap"] = gid_map
         if read_only is not UNSET:
             field_dict["readOnly"] = read_only
+        if uid_map is not UNSET:
+            field_dict["uidMap"] = uid_map
 
         return field_dict
 
@@ -59,13 +71,19 @@ class DriveMountRequest:
 
         drive_path = d.pop("drivePath", d.pop("drive_path", UNSET))
 
+        gid_map = d.pop("gidMap", d.pop("gid_map", UNSET))
+
         read_only = d.pop("readOnly", d.pop("read_only", UNSET))
+
+        uid_map = d.pop("uidMap", d.pop("uid_map", UNSET))
 
         drive_mount_request = cls(
             drive_name=drive_name,
             mount_path=mount_path,
             drive_path=drive_path,
+            gid_map=gid_map,
             read_only=read_only,
+            uid_map=uid_map,
         )
 
         drive_mount_request.additional_properties = d

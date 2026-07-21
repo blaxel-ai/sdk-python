@@ -7,6 +7,7 @@ from google.adk.models.lite_llm import (  # type: ignore[import-not-found]
 
 from blaxel.core import bl_model as bl_model_core
 from blaxel.core import settings
+from blaxel.core.common.logger import suppress_provider_debug_loggers
 
 logger = getLogger(__name__)
 
@@ -26,6 +27,7 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         Returns:
           The model response as a message.
         """
+        suppress_provider_debug_loggers()
         auth_headers = settings.auth.get_headers()
         extra = dict(auth_headers)
         # When auth uses X-Blaxel-Authorization (API keys), override the
@@ -35,12 +37,14 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         if "Authorization" not in auth_headers:
             extra["Authorization"] = ""
         kwargs["extra_headers"] = extra
-        return await super().acompletion(
+        response = await super().acompletion(
             model=model,
             messages=messages,
             tools=tools,
             **kwargs,
         )
+        suppress_provider_debug_loggers()
+        return response
 
     def completion(self, model, messages, tools, stream=False, **kwargs):
         """Synchronously calls completion. This is used for streaming only.
@@ -55,6 +59,7 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         Returns:
           The response from the model.
         """
+        suppress_provider_debug_loggers()
         auth_headers = settings.auth.get_headers()
         extra = dict(auth_headers)
         # When auth uses X-Blaxel-Authorization (API keys), override the
@@ -64,16 +69,19 @@ class AuthenticatedLiteLLMClient(LiteLLMClient):
         if "Authorization" not in auth_headers:
             extra["Authorization"] = ""
         kwargs["extra_headers"] = extra
-        return super().completion(
+        response = super().completion(
             model=model,
             messages=messages,
             tools=tools,
             stream=stream,
             **kwargs,
         )
+        suppress_provider_debug_loggers()
+        return response
 
 
 async def get_google_adk_model(url: str, type: str, model: str, **kwargs):
+    suppress_provider_debug_loggers()
     llm_client = AuthenticatedLiteLLMClient()
     if type == "mistral":
         return LiteLlm(

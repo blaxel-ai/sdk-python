@@ -1,7 +1,7 @@
 import logging
-import uuid
+import time
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 if TYPE_CHECKING:
     import httpx
@@ -25,13 +25,25 @@ from ...client.models import (
 )
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
+from ...client.pagination import PaginatedList, make_paginated_list, normalize_cursor
 from ...client.types import UNSET
 from ...common.settings import settings
-from ..default.sandbox import SandboxAPIError
+from ..default.sandbox import (
+    NON_REUSABLE_SANDBOX_STATUSES,
+    TRANSIENT_SANDBOX_STATUSES,
+    TRANSIENT_STATUS_MAX_WAIT_SECONDS,
+    TRANSIENT_STATUS_POLL_SECONDS,
+    SandboxAPIError,
+    _create_body,
+    _is_sandbox_conflict,
+    _is_sandbox_not_found,
+    _sandbox_name,
+)
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxUpdateMetadata,
+    SandboxUpdateNetwork,
     SessionWithToken,
 )
 from .codegen import SyncSandboxCodegen
@@ -40,6 +52,7 @@ from .filesystem import SyncSandboxFileSystem
 from .network import SyncSandboxNetwork
 from .preview import SyncSandboxPreviews
 from .process import SyncSandboxProcess
+from .schedule import SyncSandboxSchedules
 from .session import SyncSandboxSessions
 from .system import SyncSandboxSystem
 
@@ -86,6 +99,7 @@ class SyncSandboxInstance:
         self.process = SyncSandboxProcess(self.config)
         self.fs = SyncSandboxFileSystem(self.config, self.process)
         self.previews = SyncSandboxPreviews(self.sandbox)
+        self.schedules = SyncSandboxSchedules(self.sandbox)
         self.sessions = SyncSandboxSessions(self.config)
         self.network = SyncSandboxNetwork(self.config)
         self.codegen = SyncSandboxCodegen(self.config)
@@ -138,8 +152,11 @@ class SyncSandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SyncSandboxInstance":
-        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        # No client-side default name: when the caller omits a name we send the
+        # creation without metadata.name so the server can assign one and unnamed
+        # creations become eligible for warm sandbox pools (ENG-3931).
         default_image = "blaxel/base-image:latest"
         default_memory = 4096
         if (
@@ -175,7 +192,7 @@ class SyncSandboxInstance:
                 config = sandbox
             else:
                 raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
-            name = config.name or default_name
+            name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
             ports = config._normalize_ports() or UNSET
@@ -239,7 +256,7 @@ class SyncSandboxInstance:
             assert isinstance(sandbox, Sandbox)
 
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=default_name)
+                sandbox.metadata = Metadata(name=None)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
                     runtime=SandboxRuntime(image=default_image, memory=default_memory)
@@ -250,7 +267,8 @@ class SyncSandboxInstance:
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
         response = create_sandbox(
             client=client,
-            body=sandbox,
+            body=_create_body(sandbox),
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -287,9 +305,47 @@ class SyncSandboxInstance:
         return cls(response)
 
     @classmethod
-    def list(cls) -> List["SyncSandboxInstance"]:
-        response = list_sandboxes(client=client)
-        return [cls(sandbox) for sandbox in response]
+    def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> PaginatedList["SyncSandboxInstance"]:
+        """List one page of sandboxes synchronously.
+
+        Args:
+            limit: Maximum number of sandboxes to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            PaginatedList[SyncSandboxInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = SyncSandboxInstance.list(limit=50)
+
+            for sandbox in page.data:
+                print(sandbox.metadata.name)
+
+            if page.has_more:
+                next_page = page.next_page()
+
+            for sandbox in page.auto_paging_iter():
+                print(sandbox.metadata.name)
+            ```
+        """
+
+        def fetch_page(page_cursor: str | None):
+            response = list_sandboxes(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = response.code if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise SandboxAPIError(message, status_code=status_code, code=response.error)
+            return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return fetch_page(cursor)
 
     @classmethod
     def update_metadata(
@@ -320,12 +376,12 @@ class SyncSandboxInstance:
         return cls(response)
 
     @classmethod
-    def update_ttl(cls, sandbox_name: str, ttl: str) -> "SyncSandboxInstance":
+    def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SyncSandboxInstance":
         """Update sandbox TTL without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
 
         Returns:
             A new SyncSandboxInstance with updated TTL
@@ -339,8 +395,8 @@ class SyncSandboxInstance:
         if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update TTL
-        updated_sandbox.spec.runtime.ttl = ttl
+        # Update TTL (None or empty string clears the TTL)
+        updated_sandbox.spec.runtime.ttl = None if ttl is None or ttl == "" else ttl
 
         # Call the update API
         response = update_sandbox(
@@ -353,13 +409,13 @@ class SyncSandboxInstance:
 
     @classmethod
     def update_lifecycle(
-        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle | None
     ) -> "SyncSandboxInstance":
         """Update sandbox lifecycle configuration without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            lifecycle: The new lifecycle configuration
+            lifecycle: The new lifecycle configuration, or None to clear
 
         Returns:
             A new SyncSandboxInstance with updated lifecycle
@@ -368,15 +424,49 @@ class SyncSandboxInstance:
         sandbox_instance = cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
 
-        # Prepare the updated sandbox object
+        # Use dict approach to properly serialize null lifecycle
+        body = sandbox.to_dict()
+        if "spec" not in body:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+        body["spec"]["lifecycle"] = lifecycle.to_dict() if lifecycle is not None else None
+
+        # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=body,
+        )
+
+        return cls(response)
+
+    @classmethod
+    def update_network(
+        cls, sandbox_name: str, network: SandboxUpdateNetwork
+    ) -> "SyncSandboxInstance":
+        """Update sandbox network configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            network: The new network configuration
+
+        Returns:
+            A new SyncSandboxInstance with updated network configuration
+        """
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
         if updated_sandbox.spec is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update lifecycle
-        updated_sandbox.spec.lifecycle = lifecycle
+        if network.network is not None:
+            if isinstance(network.network, dict):
+                updated_sandbox.spec.network = SandboxNetworkModel.from_dict(network.network)
+            else:
+                updated_sandbox.spec.network = network.network
+        else:
+            updated_sandbox.spec.network = UNSET
 
-        # Call the update API
         response = update_sandbox(
             sandbox_name=sandbox_name,
             client=client,
@@ -389,30 +479,70 @@ class SyncSandboxInstance:
     def create_if_not_exists(
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
-        try:
-            return cls.create(sandbox)
-        except SandboxAPIError as e:
-            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
-                if isinstance(sandbox, SandboxCreateConfiguration):
-                    name = sandbox.name
-                elif isinstance(sandbox, dict):
-                    if "name" in sandbox:
-                        name = sandbox["name"]
-                    elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
-                        name = sandbox["metadata"].get("name")
-                    else:
-                        name = None
-                elif isinstance(sandbox, Sandbox):
-                    name = sandbox.metadata.name if sandbox.metadata else None
-                else:
-                    name = None
+        attempts = 3
+        last_status = "unknown"
+        for attempt in range(attempts):
+            final_attempt = attempt == attempts - 1
+            try:
+                return cls.create(sandbox, create_if_not_exist=True)
+            except SandboxAPIError as e:
+                if not _is_sandbox_conflict(e):
+                    raise
+
+                name = _sandbox_name(sandbox)
                 if not name:
                     raise ValueError("Sandbox name is required")
-                sandbox_instance = cls.get(name)
-                if sandbox_instance.status == "TERMINATED":
-                    return cls.create(sandbox)
-                return sandbox_instance
-            raise
+
+                try:
+                    sandbox_instance = cls.get(name)
+                except SandboxAPIError as get_error:
+                    if _is_sandbox_not_found(get_error):
+                        # The record vanished between the create conflict and this status
+                        # check (its deletion just finished); give the control plane a
+                        # beat and retry.
+                        last_status = "vanished"
+                        if not final_attempt:
+                            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+                        continue
+                    raise
+
+                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
+                    return sandbox_instance
+
+                # A delete or deactivation in flight rejects creates until it finishes;
+                # wait it out instead of burning the remaining attempts inside the window.
+                # No point waiting after the last attempt: nothing will use the result.
+                last_status = str(sandbox_instance.status)
+                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
+                    cls._wait_while_dying(name)
+
+        raise RuntimeError(
+            f"Unable to create sandbox after {attempts} attempts."
+            f" Last conflicting status: {last_status}."
+        )
+
+    @classmethod
+    def _wait_while_dying(cls, name: str) -> None:
+        """Poll until an in-flight delete/deactivation settles or the record disappears.
+
+        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
+        the record is gone) end the wait: the caller's create retry decides next.
+        """
+        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
+        while time.monotonic() < deadline:
+            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+            try:
+                current = cls.get(name)
+            except Exception:
+                return
+            status = str(current.status)
+            if status not in TRANSIENT_SANDBOX_STATUSES:
+                return
+            logger.debug(
+                "Sandbox %s still %s; waiting for the record to settle before recreating",
+                name,
+                status,
+            )
 
     @classmethod
     def from_session(
@@ -422,11 +552,14 @@ class SyncSandboxInstance:
             session = SessionWithToken.from_dict(session)
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
         sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
+        # Authenticate with the preview token header only. The bl_preview_token
+        # query-param transport exists for browser navigation (which cannot set
+        # custom headers); on this programmatic client it would only place the
+        # credential in request URLs where it leaks to logs, Referer, and history.
         return cls(
             sandbox=sandbox,
             force_url=session.url,
             headers={"X-Blaxel-Preview-Token": session.token},
-            params={"bl_preview_token": session.token},
         )
 
 

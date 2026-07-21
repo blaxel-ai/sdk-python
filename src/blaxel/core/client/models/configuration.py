@@ -22,12 +22,15 @@ class Configuration:
     Attributes:
         continents (Union[Unset, list['Continent']]): Continents
         countries (Union[Unset, list['Country']]): Countries
+        detected_region (Union[Unset, str]): Auto-detected closest region based on viewer geolocation (from CloudFront
+            headers). Empty when geo headers are not available.
         private_locations (Union[Unset, list['PrivateLocation']]): Private locations managed with blaxel operator
         regions (Union[Unset, list['Region']]): Regions
     """
 
     continents: Union[Unset, list["Continent"]] = UNSET
     countries: Union[Unset, list["Country"]] = UNSET
+    detected_region: Union[Unset, str] = UNSET
     private_locations: Union[Unset, list["PrivateLocation"]] = UNSET
     regions: Union[Unset, list["Region"]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -53,6 +56,8 @@ class Configuration:
                 else:
                     countries_item = countries_item_data.to_dict()
                 countries.append(countries_item)
+
+        detected_region = self.detected_region
 
         private_locations: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.private_locations, Unset):
@@ -81,6 +86,8 @@ class Configuration:
             field_dict["continents"] = continents
         if countries is not UNSET:
             field_dict["countries"] = countries
+        if detected_region is not UNSET:
+            field_dict["detectedRegion"] = detected_region
         if private_locations is not UNSET:
             field_dict["privateLocations"] = private_locations
         if regions is not UNSET:
@@ -112,6 +119,8 @@ class Configuration:
 
             countries.append(countries_item)
 
+        detected_region = d.pop("detectedRegion", d.pop("detected_region", UNSET))
+
         private_locations = []
         _private_locations = d.pop("privateLocations", d.pop("private_locations", UNSET))
         for private_locations_item_data in _private_locations or []:
@@ -129,6 +138,7 @@ class Configuration:
         configuration = cls(
             continents=continents,
             countries=countries,
+            detected_region=detected_region,
             private_locations=private_locations,
             regions=regions,
         )

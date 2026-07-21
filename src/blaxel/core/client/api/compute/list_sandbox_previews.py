@@ -50,7 +50,7 @@ def sync_detailed(
     *,
     client: Client,
 ) -> Response[list["Preview"]]:
-    """List Sandboxes
+    """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -81,7 +81,7 @@ def sync(
     *,
     client: Client,
 ) -> list["Preview"] | None:
-    """List Sandboxes
+    """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -107,7 +107,7 @@ async def asyncio_detailed(
     *,
     client: Client,
 ) -> Response[list["Preview"]]:
-    """List Sandboxes
+    """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
 
@@ -136,7 +136,7 @@ async def asyncio(
     *,
     client: Client,
 ) -> list["Preview"] | None:
-    """List Sandboxes
+    """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
 

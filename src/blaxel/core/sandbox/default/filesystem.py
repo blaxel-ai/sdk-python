@@ -2,6 +2,7 @@ import asyncio
 import io
 import json
 import logging
+import shlex
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
 
@@ -9,6 +10,7 @@ import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
+from ..transient_retry import retry_on_transient_reset_async
 from ..types import (
     AsyncWatchHandle,
     CopyResponse,
@@ -21,7 +23,7 @@ from .action import SandboxAction
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
-MAX_PARALLEL_UPLOADS = 20  # Number of parallel part uploads
+MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
 
 logger = logging.getLogger(__name__)
 
@@ -93,34 +95,35 @@ class SandboxFileSystem(SandboxAction):
         if len(content) > MULTIPART_THRESHOLD:
             return await self._upload_with_multipart(path, content, "0644")
 
-        # Use regular upload for small files
-        # Wrap binary content in BytesIO to provide file-like interface
-        binary_file = io.BytesIO(content)
-
-        # Prepare multipart form data
-        files = {
-            "file": (
-                "binary-file.bin",
-                binary_file,
-                "application/octet-stream",
-            ),
-        }
-        data = {"permissions": "0644", "path": path}
-
-        # Use the fixed get_client method
         url = f"{self.url}/filesystem/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
-        client = self.get_client()
-        response = await client.put(url, files=files, data=data, headers=headers)
-        try:
-            content_bytes = await response.aread()
-            if not response.is_success:
-                error_text = content_bytes.decode("utf-8", errors="ignore")
-                raise Exception(f"Failed to write binary: {response.status_code} {error_text}")
-            return SuccessResponse.from_dict(json.loads(content_bytes))
-        finally:
-            await response.aclose()
+        async def put_once() -> SuccessResponse:
+            files = {
+                "file": (
+                    "binary-file.bin",
+                    io.BytesIO(content),
+                    "application/octet-stream",
+                ),
+            }
+            data = {"permissions": "0644", "path": path}
+            client = self.get_client()
+            response = await client.put(url, files=files, data=data, headers=headers)
+            try:
+                content_bytes = await response.aread()
+                if not response.is_success:
+                    error_text = content_bytes.decode("utf-8", errors="ignore")
+                    raise Exception(f"Failed to write binary: {response.status_code} {error_text}")
+                result = SuccessResponse.from_dict(json.loads(content_bytes))
+                assert result is not None
+                return result
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(
+            put_once,
+            retries=settings.fs_part_retries,
+        )
 
     async def write_tree(
         self,
@@ -152,16 +155,19 @@ class SandboxFileSystem(SandboxAction):
     async def read(self, path: str) -> str:
         path = self.format_path(path)
 
-        client = self.get_client()
-        response = await client.get(f"/filesystem/{path}")
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            if "content" in data:
-                return data["content"]
-            raise Exception("Unsupported file type")
-        finally:
-            await response.aclose()
+        async def read_once() -> str:
+            client = self.get_client()
+            response = await client.get(f"/filesystem/{path}")
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
+                if "content" in data:
+                    return data["content"]
+                raise Exception("Unsupported file type")
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(read_once)
 
     async def read_binary(self, path: str) -> bytes:
         """Read binary content from a file.
@@ -181,14 +187,17 @@ class SandboxFileSystem(SandboxAction):
             "Accept": "application/octet-stream",
         }
 
-        client = self.get_client()
-        response = await client.get(url, headers=headers)
-        try:
-            content = await response.aread()
-            self.handle_response_error(response)
-            return content
-        finally:
-            await response.aclose()
+        async def read_once() -> bytes:
+            client = self.get_client()
+            response = await client.get(url, headers=headers)
+            try:
+                content = await response.aread()
+                self.handle_response_error(response)
+                return content
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(read_once)
 
     async def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
         """Download a file from the sandbox to the local filesystem.
@@ -219,16 +228,21 @@ class SandboxFileSystem(SandboxAction):
     async def ls(self, path: str) -> Directory:
         path = self.format_path(path)
 
-        client = self.get_client()
-        response = await client.get(f"/filesystem/{path}")
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            if not ("files" in data or "subdirectories" in data):
-                raise Exception('{"error": "Directory not found"}')
-            return Directory.from_dict(data)
-        finally:
-            await response.aclose()
+        async def ls_once() -> Directory:
+            client = self.get_client()
+            response = await client.get(f"/filesystem/{path}")
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
+                if not ("files" in data or "subdirectories" in data):
+                    raise Exception('{"error": "Directory not found"}')
+                result = Directory.from_dict(data)
+                assert result is not None
+                return result
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(ls_once)
 
     async def find(
         self,
@@ -269,17 +283,20 @@ class SandboxFileSystem(SandboxAction):
         url = f"{self.url}/filesystem-find/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
-        client = self.get_client()
-        response = await client.get(url, params=params, headers=headers)
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
+        async def find_once():
+            client = self.get_client()
+            response = await client.get(url, params=params, headers=headers)
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
 
-            from ..client.models.find_response import FindResponse
+                from ..client.models.find_response import FindResponse
 
-            return FindResponse.from_dict(data)
-        finally:
-            await response.aclose()
+                return FindResponse.from_dict(data)
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(find_once)
 
     async def grep(
         self,
@@ -322,17 +339,20 @@ class SandboxFileSystem(SandboxAction):
         url = f"{self.url}/filesystem-content-search/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
-        client = self.get_client()
-        response = await client.get(url, params=params, headers=headers)
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
+        async def grep_once():
+            client = self.get_client()
+            response = await client.get(url, params=params, headers=headers)
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
 
-            from ..client.models.content_search_response import ContentSearchResponse
+                from ..client.models.content_search_response import ContentSearchResponse
 
-            return ContentSearchResponse.from_dict(data)
-        finally:
-            await response.aclose()
+                return ContentSearchResponse.from_dict(data)
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(grep_once)
 
     async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         """Copy files or directories using the cp command.
@@ -345,8 +365,10 @@ class SandboxFileSystem(SandboxAction):
         if not self.process:
             raise Exception("Process instance not available. Cannot execute cp command.")
 
-        # Execute cp -r command
-        process = await self.process.exec({"command": f"cp -r {source} {destination}"})
+        # Execute cp -r command. Quote both paths so the shell treats them as
+        # single literal arguments and cannot interpret injected metacharacters.
+        command = f"cp -r {shlex.quote(source)} {shlex.quote(destination)}"
+        process = await self.process.exec({"command": command})
 
         # Wait for process to complete
         process = await self.process.wait(process.pid, max_wait=max_wait, interval=100)
@@ -480,8 +502,8 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.post(url, json=body, headers=headers)
         try:
-            data = json.loads(await response.aread())
             self.handle_response_error(response)
+            data = json.loads(await response.aread())
             return data
         finally:
             await response.aclose()
@@ -492,17 +514,21 @@ class SandboxFileSystem(SandboxAction):
         headers = {**settings.headers, **self.sandbox_config.headers}
         params = {"partNumber": part_number}
 
-        # Prepare multipart form data with the file chunk
-        files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+        async def put_once() -> Dict[str, Any]:
+            files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+            client = self.get_client()
+            response = await client.put(url, files=files, params=params, headers=headers)
+            try:
+                self.handle_response_error(response)
+                result = json.loads(await response.aread())
+                return result
+            finally:
+                await response.aclose()
 
-        client = self.get_client()
-        response = await client.put(url, files=files, params=params, headers=headers)
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            return data
-        finally:
-            await response.aclose()
+        return await retry_on_transient_reset_async(
+            put_once,
+            retries=settings.fs_part_retries,
+        )
 
     async def _complete_multipart_upload(
         self, upload_id: str, parts: List[Dict[str, Any]]
@@ -515,8 +541,8 @@ class SandboxFileSystem(SandboxAction):
         client = self.get_client()
         response = await client.post(url, json=body, headers=headers)
         try:
-            data = json.loads(await response.aread())
             self.handle_response_error(response)
+            data = json.loads(await response.aread())
             return SuccessResponse.from_dict(data)
         finally:
             await response.aclose()
@@ -531,7 +557,7 @@ class SandboxFileSystem(SandboxAction):
         try:
             # Don't raise error if abort fails - we want to throw the original error
             if not response.is_success:
-                print(f"Warning: Failed to abort multipart upload: {response.status_code}")
+                logger.warning(f"Failed to abort multipart upload: {response.status_code}")
         finally:
             await response.aclose()
 

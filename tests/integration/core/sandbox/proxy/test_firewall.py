@@ -34,16 +34,18 @@ class TestFirewallAllowedDomains:
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
         request.cls.sandbox_name = unique_name("fw-allow")
-        request.cls.sandbox = await SandboxInstance.create({
-            "name": request.cls.sandbox_name,
-            "image": default_image,
-            "region": default_region,
-            "labels": default_labels,
-            "network": {
-                "allowedDomains": ["httpbin.org"],
-                "proxy": {"routing": []},
-            },
-        })
+        request.cls.sandbox = await SandboxInstance.create(
+            {
+                "name": request.cls.sandbox_name,
+                "image": default_image,
+                "region": default_region,
+                "labels": default_labels,
+                "network": {
+                    "allowedDomains": ["httpbin.org"],
+                    "proxy": {"routing": []},
+                },
+            }
+        )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
         yield
         try:
@@ -52,18 +54,22 @@ class TestFirewallAllowedDomains:
             pass
 
     async def test_allows_requests_to_allowlisted_domain(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code == 0
         assert _logs_contain_host(result.logs, "httpbin.org")
 
     async def test_blocks_requests_to_non_allowlisted_domain(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://example.com",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://example.com",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code != 0
 
 
@@ -77,16 +83,18 @@ class TestFirewallForbiddenDomains:
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
         request.cls.sandbox_name = unique_name("fw-deny")
-        request.cls.sandbox = await SandboxInstance.create({
-            "name": request.cls.sandbox_name,
-            "image": default_image,
-            "region": default_region,
-            "labels": default_labels,
-            "network": {
-                "forbiddenDomains": ["example.com"],
-                "proxy": {"routing": []},
-            },
-        })
+        request.cls.sandbox = await SandboxInstance.create(
+            {
+                "name": request.cls.sandbox_name,
+                "image": default_image,
+                "region": default_region,
+                "labels": default_labels,
+                "network": {
+                    "forbiddenDomains": ["example.com"],
+                    "proxy": {"routing": []},
+                },
+            }
+        )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
         yield
         try:
@@ -95,18 +103,22 @@ class TestFirewallForbiddenDomains:
             pass
 
     async def test_allows_requests_to_non_forbidden_domain(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code == 0
         assert _logs_contain_host(result.logs, "httpbin.org")
 
     async def test_blocks_requests_to_forbidden_domain(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://example.com",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://example.com",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code != 0
 
 
@@ -120,17 +132,19 @@ class TestFirewallCombined:
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
         request.cls.sandbox_name = unique_name("fw-combo")
-        request.cls.sandbox = await SandboxInstance.create({
-            "name": request.cls.sandbox_name,
-            "image": default_image,
-            "region": default_region,
-            "labels": default_labels,
-            "network": {
-                "allowedDomains": ["httpbin.org", "example.com"],
-                "forbiddenDomains": ["example.com"],
-                "proxy": {"routing": []},
-            },
-        })
+        request.cls.sandbox = await SandboxInstance.create(
+            {
+                "name": request.cls.sandbox_name,
+                "image": default_image,
+                "region": default_region,
+                "labels": default_labels,
+                "network": {
+                    "allowedDomains": ["httpbin.org", "example.com"],
+                    "forbiddenDomains": ["example.com"],
+                    "proxy": {"routing": []},
+                },
+            }
+        )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
         yield
         try:
@@ -139,10 +153,12 @@ class TestFirewallCombined:
             pass
 
     async def test_allowed_domains_takes_precedence_over_forbidden_domains(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code == 0
         assert "httpbin.org" in (result.logs or "")
 
@@ -157,23 +173,25 @@ class TestFirewallWithProxyRouting:
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
         request.cls.sandbox_name = unique_name("fw-proxy")
-        request.cls.sandbox = await SandboxInstance.create({
-            "name": request.cls.sandbox_name,
-            "image": default_image,
-            "region": default_region,
-            "labels": default_labels,
-            "network": {
-                "allowedDomains": ["httpbin.org"],
-                "proxy": {
-                    "routing": [
-                        {
-                            "destinations": ["httpbin.org"],
-                            "headers": {"X-Firewall-Test": "allowed-and-injected"},
-                        },
-                    ],
+        request.cls.sandbox = await SandboxInstance.create(
+            {
+                "name": request.cls.sandbox_name,
+                "image": default_image,
+                "region": default_region,
+                "labels": default_labels,
+                "network": {
+                    "allowedDomains": ["httpbin.org"],
+                    "proxy": {
+                        "routing": [
+                            {
+                                "destinations": ["httpbin.org"],
+                                "headers": {"X-Firewall-Test": "allowed-and-injected"},
+                            },
+                        ],
+                    },
                 },
-            },
-        })
+            }
+        )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
         yield
         try:
@@ -182,17 +200,78 @@ class TestFirewallWithProxyRouting:
             pass
 
     async def test_injects_headers_for_allowlisted_and_routed_domain(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code == 0
         headers = lowercase_keys(parse_json_output(result.logs)["headers"])
         assert headers["x-firewall-test"] == "allowed-and-injected"
 
     async def test_blocks_non_allowlisted_domain_even_without_routing(self):
-        result = await self.sandbox.process.exec({
-            "command": "node /tmp/proxy-test.js GET https://example.com",
-            "wait_for_completion": True,
-        })
+        result = await self.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://example.com",
+                "wait_for_completion": True,
+            }
+        )
         assert result.exit_code != 0
+
+
+@pytest.mark.asyncio(loop_scope="class")
+class TestFirewallNoProxyBypass:
+    """firewall ruleset "proxy": egress is enforced at the network level, so the
+    proxy cannot be bypassed by unsetting proxy env vars."""
+
+    sandbox: SandboxInstance
+    sandbox_name: str
+
+    @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
+    async def setup_sandbox(self, request):
+        request.cls.sandbox_name = unique_name("fw-bypass")
+        request.cls.sandbox = await SandboxInstance.create(
+            {
+                "name": request.cls.sandbox_name,
+                "image": default_image,
+                "region": default_region,
+                "labels": default_labels,
+                "network": {
+                    "firewall": {"rulesets": ["proxy"]},
+                    "allowedDomains": ["httpbin.org"],
+                    "proxy": {"routing": []},
+                },
+            }
+        )
+        await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        # Warm up the proxy path so the first real assertion isn't racing setup.
+        await request.cls.sandbox.process.exec(
+            {
+                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "wait_for_completion": True,
+            }
+        )
+        yield
+        try:
+            await SandboxInstance.delete(request.cls.sandbox_name)
+        except Exception:
+            pass
+
+    async def test_blocks_requests_even_when_proxy_env_vars_are_unset(self):
+        # Strip every proxy hint so the helper attempts a direct connection,
+        # bypassing the proxy entirely. With the "proxy" firewall ruleset egress is
+        # enforced at the network level by dropping packets, so a direct connection
+        # won't be refused -- it just hangs. `timeout` turns that hang into a
+        # non-zero exit (124), proving the bypass is blocked rather than silently
+        # succeeding.
+        result = await self.sandbox.process.exec(
+            {
+                "command": (
+                    "timeout 10 env -u HTTP_PROXY -u http_proxy -u HTTPS_PROXY "
+                    "-u https_proxy node /tmp/proxy-test.js GET https://httpbin.org/get"
+                ),
+                "wait_for_completion": True,
+            }
+        )
+        assert result.exit_code != 0, result.logs

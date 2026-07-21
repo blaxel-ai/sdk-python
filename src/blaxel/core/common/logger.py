@@ -7,6 +7,41 @@ import json
 import logging
 import os
 
+PROVIDER_DEBUG_LOG_OPT_IN_ENV = "BL_ALLOW_PROVIDER_DEBUG_LOGS"
+PROVIDER_DEBUG_LOGGER_NAMES = (
+    "google_adk",
+    "google_adk.google.adk.models.lite_llm",
+    "LiteLLM",
+    "LiteLLM Proxy",
+    "LiteLLM Router",
+    "openai",
+    "openai._base_client",
+    "httpx",
+    "httpcore",
+)
+
+
+def _is_truthy_env(value: str | None) -> bool:
+    return value is not None and value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def provider_debug_logs_allowed() -> bool:
+    return _is_truthy_env(os.environ.get(PROVIDER_DEBUG_LOG_OPT_IN_ENV))
+
+
+def suppress_provider_debug_loggers() -> None:
+    if provider_debug_logs_allowed():
+        return
+
+    for logger_name in PROVIDER_DEBUG_LOGGER_NAMES:
+        provider_logger = logging.getLogger(logger_name)
+        if provider_logger.level == logging.NOTSET or provider_logger.level < logging.WARNING:
+            provider_logger.setLevel(logging.WARNING)
+        for handler in provider_logger.handlers:
+            if handler.level == logging.NOTSET or handler.level < logging.WARNING:
+                handler.setLevel(logging.WARNING)
+
+
 try:
     from opentelemetry.trace import get_current_span
 
@@ -118,9 +153,11 @@ def init_logger(log_level: str):
     Parameters:
         log_level (str): The logging level to set (e.g., "DEBUG", "INFO").
     """
+    suppress_provider_debug_loggers()
     # Disable urllib3 logging
     logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-    logging.getLogger("httpx").setLevel(logging.CRITICAL)
+    if not provider_debug_logs_allowed():
+        logging.getLogger("httpx").setLevel(logging.CRITICAL)
     handler = logging.StreamHandler()
 
     logger_type = os.environ.get("BL_LOGGER", "http")
@@ -129,3 +166,4 @@ def init_logger(log_level: str):
     else:
         handler.setFormatter(ColoredFormatter("%(levelname)s %(name)s - %(message)s"))
     logging.basicConfig(level=log_level, handlers=[handler])
+    suppress_provider_debug_loggers()

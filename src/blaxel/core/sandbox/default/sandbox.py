@@ -1,7 +1,8 @@
+import asyncio
 import logging
-import uuid
+import time
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 if TYPE_CHECKING:
     import httpx
@@ -26,12 +27,14 @@ from ...client.models import (
 )
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
+from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, normalize_cursor
 from ...client.types import UNSET
 from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxUpdateMetadata,
+    SandboxUpdateNetwork,
     SessionWithToken,
 )
 from .codegen import SandboxCodegen
@@ -40,6 +43,7 @@ from .filesystem import SandboxFileSystem
 from .network import SandboxNetwork
 from .preview import SandboxPreviews
 from .process import SandboxProcess
+from .schedule import SandboxSchedules
 from .session import SandboxSessions
 from .system import SandboxSystem
 
@@ -54,6 +58,66 @@ class SandboxAPIError(Exception):
 
 
 logger = logging.getLogger(__name__)
+
+NON_REUSABLE_SANDBOX_STATUSES = {
+    "FAILED",
+    "TERMINATED",
+    "TERMINATING",
+    "DELETING",
+    "DEACTIVATING",
+}
+
+# Statuses that resolve on their own (a delete or deactivation in flight). The control
+# plane keeps answering 409 to creates while the record is in one of these, so retrying
+# instantly burns the whole attempt budget inside the window. Terminal statuses
+# (FAILED, TERMINATED) accept a create immediately and are not listed here.
+TRANSIENT_SANDBOX_STATUSES = {
+    "TERMINATING",
+    "DELETING",
+    "DEACTIVATING",
+}
+TRANSIENT_STATUS_MAX_WAIT_SECONDS = 30.0
+TRANSIENT_STATUS_POLL_SECONDS = 0.5
+
+
+def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
+    return error.status_code == 409 or error.code in {409, "409", "SANDBOX_ALREADY_EXISTS"}
+
+
+def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
+    return error.status_code == 404 or error.code in {404, "404"}
+
+
+def _sandbox_name(
+    sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
+) -> str | None:
+    if isinstance(sandbox, SandboxCreateConfiguration):
+        return sandbox.name
+    if isinstance(sandbox, dict):
+        if "name" in sandbox:
+            return sandbox["name"]
+        metadata = sandbox.get("metadata")
+        if isinstance(metadata, dict):
+            return metadata.get("name")
+        return getattr(metadata, "name", None)
+    if isinstance(sandbox, Sandbox):
+        return sandbox.metadata.name if sandbox.metadata else None
+    return None
+
+
+def _create_body(sandbox: Sandbox) -> Union[Sandbox, Dict[str, Any]]:
+    """Build the create request body, omitting metadata.name when unnamed.
+
+    Unnamed creations are sent without ``metadata.name`` so the server assigns
+    a name and the request becomes eligible for warm sandbox pools (ENG-3931).
+    """
+    if sandbox.metadata and sandbox.metadata.name:
+        return sandbox
+    body = sandbox.to_dict()
+    metadata = body.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop("name", None)
+    return body
 
 
 class _AsyncDeleteDescriptor:
@@ -101,6 +165,7 @@ class SandboxInstance:
         self.process = SandboxProcess(self.config)
         self.fs = SandboxFileSystem(self.config, self.process)
         self.previews = SandboxPreviews(self.sandbox)
+        self.schedules = SandboxSchedules(self.sandbox)
         self.sessions = SandboxSessions(self.config)
         self.network = SandboxNetwork(self.config)
         self.codegen = SandboxCodegen(self.config)
@@ -155,8 +220,11 @@ class SandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SandboxInstance":
-        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        # No client-side default name: when the caller omits a name we send the
+        # creation without metadata.name so the server can assign one and unnamed
+        # creations become eligible for warm sandbox pools (ENG-3931).
         default_image = "blaxel/base-image:latest"
         default_memory = 4096
 
@@ -196,7 +264,7 @@ class SandboxInstance:
                 raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
 
             # Set defaults if not provided
-            name = config.name or default_name
+            name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
             ports = config._normalize_ports() or UNSET
@@ -271,7 +339,7 @@ class SandboxInstance:
             assert isinstance(sandbox, Sandbox)
             # Set defaults for missing fields
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=default_name)
+                sandbox.metadata = Metadata(name=None)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
                     runtime=SandboxRuntime(image=default_image, memory=default_memory)
@@ -284,7 +352,8 @@ class SandboxInstance:
 
         response = await create_sandbox(
             client=client,
-            body=sandbox,
+            body=_create_body(sandbox),
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -323,9 +392,47 @@ class SandboxInstance:
         return cls(response)
 
     @classmethod
-    async def list(cls) -> List["SandboxInstance"]:
-        response = await list_sandboxes(client=client)
-        return [cls(sandbox) for sandbox in response]
+    async def list(
+        cls, limit: int = 50, cursor: str | None = None
+    ) -> AsyncPaginatedList["SandboxInstance"]:
+        """List one page of sandboxes.
+
+        Args:
+            limit: Maximum number of sandboxes to return in this page.
+            cursor: Cursor from a previous page. Leave unset for the first page.
+
+        Returns:
+            AsyncPaginatedList[SandboxInstance]: A list-like page with `.data`, `.meta`,
+            `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Example:
+            ```python
+            page = await SandboxInstance.list(limit=50)
+
+            for sandbox in page.data:
+                print(sandbox.metadata.name)
+
+            if page.has_more:
+                next_page = await page.next_page()
+
+            async for sandbox in page.auto_paging_iter():
+                print(sandbox.metadata.name)
+            ```
+        """
+
+        async def fetch_page(page_cursor: str | None):
+            response = await list_sandboxes(
+                client=client,
+                cursor=normalize_cursor(page_cursor),
+                limit=limit,
+            )
+            if isinstance(response, Error):
+                status_code = response.code if response.code is not UNSET else None
+                message = response.message if response.message is not UNSET else response.error
+                raise SandboxAPIError(message, status_code=status_code, code=response.error)
+            return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
+
+        return await fetch_page(cursor)
 
     @classmethod
     async def update_metadata(
@@ -381,12 +488,12 @@ class SandboxInstance:
         return cls(response)
 
     @classmethod
-    async def update_ttl(cls, sandbox_name: str, ttl: str) -> "SandboxInstance":
+    async def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SandboxInstance":
         """Update sandbox TTL without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
 
         Returns:
             A new SandboxInstance with updated TTL
@@ -400,8 +507,8 @@ class SandboxInstance:
         if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update TTL
-        updated_sandbox.spec.runtime.ttl = ttl
+        # Update TTL (None or empty string clears the TTL)
+        updated_sandbox.spec.runtime.ttl = None if ttl is None or ttl == "" else ttl
 
         # Call the update API
         response = await update_sandbox(
@@ -414,13 +521,13 @@ class SandboxInstance:
 
     @classmethod
     async def update_lifecycle(
-        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle | None
     ) -> "SandboxInstance":
         """Update sandbox lifecycle configuration without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            lifecycle: The new lifecycle configuration
+            lifecycle: The new lifecycle configuration, or None to clear
 
         Returns:
             A new SandboxInstance with updated lifecycle
@@ -429,15 +536,49 @@ class SandboxInstance:
         sandbox_instance = await cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
 
-        # Prepare the updated sandbox object
+        # Use dict approach to properly serialize null lifecycle
+        body = sandbox.to_dict()
+        if "spec" not in body:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+        body["spec"]["lifecycle"] = lifecycle.to_dict() if lifecycle is not None else None
+
+        # Call the update API
+        response = await update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=body,
+        )
+
+        return cls(response)
+
+    @classmethod
+    async def update_network(
+        cls, sandbox_name: str, network: SandboxUpdateNetwork
+    ) -> "SandboxInstance":
+        """Update sandbox network configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            network: The new network configuration
+
+        Returns:
+            A new SandboxInstance with updated network configuration
+        """
+        sandbox_instance = await cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
         if updated_sandbox.spec is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update lifecycle
-        updated_sandbox.spec.lifecycle = lifecycle
+        if network.network is not None:
+            if isinstance(network.network, dict):
+                updated_sandbox.spec.network = SandboxNetworkModel.from_dict(network.network)
+            else:
+                updated_sandbox.spec.network = network.network
+        else:
+            updated_sandbox.spec.network = UNSET
 
-        # Call the update API
         response = await update_sandbox(
             sandbox_name=sandbox_name,
             client=client,
@@ -451,40 +592,70 @@ class SandboxInstance:
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
-        try:
-            return await cls.create(sandbox)
-        except SandboxAPIError as e:
-            # Check if it's a 409 conflict error (sandbox already exists)
-            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
-                # Extract name from different configuration types
-                if isinstance(sandbox, SandboxCreateConfiguration):
-                    name = sandbox.name
-                elif isinstance(sandbox, dict):
-                    if "name" in sandbox:
-                        name = sandbox["name"]
-                    elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
-                        name = sandbox["metadata"].get("name")
-                    else:
-                        name = None
-                elif isinstance(sandbox, Sandbox):
-                    name = sandbox.metadata.name if sandbox.metadata else None
-                else:
-                    name = None
+        attempts = 3
+        last_status = "unknown"
+        for attempt in range(attempts):
+            final_attempt = attempt == attempts - 1
+            try:
+                return await cls.create(sandbox, create_if_not_exist=True)
+            except SandboxAPIError as e:
+                if not _is_sandbox_conflict(e):
+                    raise
 
+                name = _sandbox_name(sandbox)
                 if not name:
                     raise ValueError("Sandbox name is required")
 
-                # Get the existing sandbox to check its status
-                sandbox_instance = await cls.get(name)
+                try:
+                    sandbox_instance = await cls.get(name)
+                except SandboxAPIError as get_error:
+                    if _is_sandbox_not_found(get_error):
+                        # The record vanished between the create conflict and this status
+                        # check (its deletion just finished); give the control plane a
+                        # beat and retry.
+                        last_status = "vanished"
+                        if not final_attempt:
+                            await asyncio.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+                        continue
+                    raise
 
-                # If the sandbox is TERMINATED, treat it as not existing
-                if sandbox_instance.status == "TERMINATED":
-                    # Create a new sandbox - backend will handle cleanup of the terminated one
-                    return await cls.create(sandbox)
+                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
+                    return sandbox_instance
 
-                # Otherwise return the existing active sandbox
-                return sandbox_instance
-            raise
+                # A delete or deactivation in flight rejects creates until it finishes;
+                # wait it out instead of burning the remaining attempts inside the window.
+                # No point waiting after the last attempt: nothing will use the result.
+                last_status = str(sandbox_instance.status)
+                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
+                    await cls._wait_while_dying(name)
+
+        raise RuntimeError(
+            f"Unable to create sandbox after {attempts} attempts."
+            f" Last conflicting status: {last_status}."
+        )
+
+    @classmethod
+    async def _wait_while_dying(cls, name: str) -> None:
+        """Poll until an in-flight delete/deactivation settles or the record disappears.
+
+        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
+        the record is gone) end the wait: the caller's create retry decides next.
+        """
+        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
+        while time.monotonic() < deadline:
+            await asyncio.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+            try:
+                current = await cls.get(name)
+            except Exception:
+                return
+            status = str(current.status)
+            if status not in TRANSIENT_SANDBOX_STATUSES:
+                return
+            logger.debug(
+                "Sandbox %s still %s; waiting for the record to settle before recreating",
+                name,
+                status,
+            )
 
     @classmethod
     async def from_session(
@@ -498,12 +669,14 @@ class SandboxInstance:
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
         sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
 
-        # Use the constructor with force_url, headers, and params
+        # Authenticate with the preview token header only. The bl_preview_token
+        # query-param transport exists for browser navigation (which cannot set
+        # custom headers); on this programmatic client it would only place the
+        # credential in request URLs where it leaks to logs, Referer, and history.
         return cls(
             sandbox=sandbox,
             force_url=session.url,
             headers={"X-Blaxel-Preview-Token": session.token},
-            params={"bl_preview_token": session.token},
         )
 
 

@@ -10,7 +10,7 @@ T = TypeVar("T", bound="OwnerFields")
 
 @_attrs_define
 class OwnerFields:
-    """Owner fields for Persistance
+    """Owner fields for Persistence
 
     Attributes:
         created_by (Union[Unset, str]): The user or service account who created the resource

@@ -20,7 +20,8 @@ class ProcessRequest:
         env (Union[Unset, ProcessRequestEnv]):  Example: {'{"PORT"': ' "3000"}'}.
         keep_alive (Union[Unset, bool]): Disable scale-to-zero while process runs. Default timeout is 600s (10 minutes).
             Set timeout to 0 for infinite.
-        max_restarts (Union[Unset, int]):  Example: 3.
+        max_restarts (Union[Unset, int]): Maximum number of restarts on failure. Set to a negative value (e.g. -1) for
+            unlimited restarts. Example: 3.
         name (Union[Unset, str]):  Example: my-process.
         restart_on_failure (Union[Unset, bool]):  Example: True.
         timeout (Union[Unset, int]): Timeout in seconds. When keepAlive is true, defaults to 600s (10 minutes). Set to 0

@@ -12,6 +12,7 @@ from ..client.models import (
     SandboxLifecycle,
     SandboxNetwork,
     VolumeAttachment,
+    VolumeAttachmentType,
 )
 from ..client.types import UNSET
 from .client.models.process_request import ProcessRequest
@@ -67,12 +68,26 @@ class SessionWithToken:
 
 
 class VolumeBinding:
-    """Volume binding configuration for sandbox."""
+    """Volume binding configuration for sandbox.
 
-    def __init__(self, name: str, mount_path: str, read_only: bool | None = False):
+    ``type`` defaults to a persistent volume (an existing volume resource). Set it to
+    ``"ephemeral"`` for temporary disk-backed scratch storage created together with the
+    sandbox and destroyed when it stops; ephemeral volumes require a positive ``size_mb``.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        mount_path: str,
+        read_only: bool | None = False,
+        type: str | None = None,
+        size_mb: int | None = None,
+    ):
         self.name = name
         self.mount_path = mount_path
         self.read_only = read_only or False
+        self.type = type
+        self.size_mb = size_mb
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "VolumeBinding":
@@ -80,6 +95,8 @@ class VolumeBinding:
             name=data["name"],
             mount_path=data["mount_path"],
             read_only=data.get("read_only", False),
+            type=data.get("type"),
+            size_mb=data.get("size_mb"),
         )
 
 
@@ -144,6 +161,16 @@ class SandboxUpdateMetadata:
     ):
         self.labels = labels
         self.display_name = display_name
+
+
+class SandboxUpdateNetwork:
+    """Configuration for updating sandbox network configuration."""
+
+    def __init__(
+        self,
+        network: Union[SandboxNetwork, Dict[str, Any]] | None = None,
+    ):
+        self.network = network
 
 
 class SandboxCreateConfiguration:
@@ -260,7 +287,13 @@ class SandboxCreateConfiguration:
         return env_objects
 
     def _normalize_volumes(self) -> List[VolumeAttachment] | None:
-        """Convert volumes to VolumeAttachment objects."""
+        """Convert volumes to VolumeAttachment objects.
+
+        A volume with no ``type`` (or ``type="persistent"``) references an existing volume
+        resource, exactly as before. A volume with ``type="ephemeral"`` is temporary
+        disk-backed scratch storage created together with the sandbox and requires a
+        positive ``size_mb``.
+        """
         if not self.volumes:
             return None
 
@@ -269,13 +302,15 @@ class SandboxCreateConfiguration:
             if isinstance(volume, VolumeAttachment):
                 volume_objects.append(volume)
             elif isinstance(volume, VolumeBinding):
-                # Convert VolumeBinding to VolumeAttachment format
-                volume_attachment = VolumeAttachment(
-                    name=volume.name,
-                    mount_path=volume.mount_path,
-                    read_only=volume.read_only,
+                volume_objects.append(
+                    self._build_volume_attachment(
+                        name=volume.name,
+                        mount_path=volume.mount_path,
+                        read_only=volume.read_only,
+                        type_=volume.type,
+                        size_mb=volume.size_mb,
+                    )
                 )
-                volume_objects.append(volume_attachment)
             elif isinstance(volume, dict):
                 # Validate that the dict has the required keys
                 if "name" not in volume or "mount_path" not in volume:
@@ -287,19 +322,53 @@ class SandboxCreateConfiguration:
                         f"Volume binding 'name' and 'mount_path' must be strings: {volume}"
                     )
 
-                # Convert dict to VolumeAttachment object
-                volume_attachment = VolumeAttachment(
-                    name=volume["name"],
-                    mount_path=volume["mount_path"],
-                    read_only=volume.get("read_only", False),
+                volume_objects.append(
+                    self._build_volume_attachment(
+                        name=volume["name"],
+                        mount_path=volume["mount_path"],
+                        read_only=volume.get("read_only", False),
+                        type_=volume.get("type"),
+                        size_mb=volume.get("size_mb"),
+                    )
                 )
-                volume_objects.append(volume_attachment)
             else:
                 raise ValueError(
                     f"Invalid volume type: {type(volume)}. Expected VolumeAttachment, VolumeBinding, or dict with 'name' and 'mount_path' keys."
                 )
 
         return volume_objects
+
+    @staticmethod
+    def _build_volume_attachment(
+        name: str,
+        mount_path: str,
+        read_only: bool | None,
+        type_: str | VolumeAttachmentType | None,
+        size_mb: int | None,
+    ) -> VolumeAttachment:
+        """Build a VolumeAttachment, resolving the optional type and validating ephemeral size."""
+        volume_attachment = VolumeAttachment(
+            name=name,
+            mount_path=mount_path,
+            read_only=read_only or False,
+        )
+
+        if type_ is not None:
+            resolved_type = (
+                type_ if isinstance(type_, VolumeAttachmentType) else VolumeAttachmentType(type_)
+            )
+            volume_attachment.type_ = resolved_type
+
+        if volume_attachment.type_ == VolumeAttachmentType.EPHEMERAL:
+            if not isinstance(size_mb, int) or isinstance(size_mb, bool) or size_mb <= 0:
+                raise ValueError(
+                    f"Ephemeral volume '{name}' must have a positive 'size_mb': {size_mb}"
+                )
+            volume_attachment.size_mb = size_mb
+        elif size_mb is not None:
+            volume_attachment.size_mb = size_mb
+
+        return volume_attachment
 
 
 @_attrs_define

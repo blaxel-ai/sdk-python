@@ -92,12 +92,13 @@ class DeviceMode(BlaxelAuth):
         Raises:
             Exception: If token refresh fails.
         """
+        workspace = self._ensure_workspace()
         err = self.refresh_if_needed()
         if err:
             raise err
         return {
             "X-Blaxel-Authorization": f"Bearer {self.credentials.access_token}",
-            "X-Blaxel-Workspace": self.workspace_name,
+            "X-Blaxel-Workspace": workspace,
         }
 
     def refresh_if_needed(self) -> Exception | None:
@@ -138,12 +139,13 @@ class DeviceMode(BlaxelAuth):
         Raises:
             Exception: If token refresh fails.
         """
+        workspace = self._ensure_workspace()
         err = self.refresh_if_needed()
         if err:
             return err
 
         request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.access_token}"
-        request.headers["X-Blaxel-Workspace"] = self.workspace_name
+        request.headers["X-Blaxel-Workspace"] = workspace
         yield request
 
     def do_refresh(self) -> Exception | None:

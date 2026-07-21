@@ -10,7 +10,7 @@ T = TypeVar("T", bound="TimeFields")
 
 @_attrs_define
 class TimeFields:
-    """Time fields for Persistance
+    """Time fields for Persistence
 
     Attributes:
         created_at (Union[Unset, str]): The date and time when the resource was created

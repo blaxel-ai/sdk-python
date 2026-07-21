@@ -9,6 +9,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.env import Env
+    from ..models.port import Port
 
 
 T = TypeVar("T", bound="FunctionRuntime")
@@ -30,6 +31,7 @@ class FunctionRuntime:
             in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 2048.
         min_scale (Union[Unset, int]): Minimum instances to keep warm. Set to 1+ to eliminate cold starts, 0 for scale-
             to-zero.
+        ports (Union[Unset, list['Port']]): Set of ports for a resource
         transport (Union[Unset, FunctionRuntimeTransport]): Transport compatibility for the MCP, can be "websocket" or
             "http-stream" Example: http-stream.
     """
@@ -40,6 +42,7 @@ class FunctionRuntime:
     max_scale: Union[Unset, int] = UNSET
     memory: Union[Unset, int] = UNSET
     min_scale: Union[Unset, int] = UNSET
+    ports: Union[Unset, list["Port"]] = UNSET
     transport: Union[Unset, FunctionRuntimeTransport] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -67,6 +70,16 @@ class FunctionRuntime:
 
         min_scale = self.min_scale
 
+        ports: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.ports, Unset):
+            ports = []
+            for componentsschemas_ports_item_data in self.ports:
+                if type(componentsschemas_ports_item_data) is dict:
+                    componentsschemas_ports_item = componentsschemas_ports_item_data
+                else:
+                    componentsschemas_ports_item = componentsschemas_ports_item_data.to_dict()
+                ports.append(componentsschemas_ports_item)
+
         transport: Union[Unset, str] = UNSET
         if not isinstance(self.transport, Unset):
             transport = self.transport.value
@@ -86,6 +99,8 @@ class FunctionRuntime:
             field_dict["memory"] = memory
         if min_scale is not UNSET:
             field_dict["minScale"] = min_scale
+        if ports is not UNSET:
+            field_dict["ports"] = ports
         if transport is not UNSET:
             field_dict["transport"] = transport
 
@@ -94,6 +109,7 @@ class FunctionRuntime:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.env import Env
+        from ..models.port import Port
 
         if not src_dict:
             return None
@@ -120,6 +136,13 @@ class FunctionRuntime:
 
         min_scale = d.pop("minScale", d.pop("min_scale", UNSET))
 
+        ports = []
+        _ports = d.pop("ports", UNSET)
+        for componentsschemas_ports_item_data in _ports or []:
+            componentsschemas_ports_item = Port.from_dict(componentsschemas_ports_item_data)
+
+            ports.append(componentsschemas_ports_item)
+
         _transport = d.pop("transport", UNSET)
         transport: Union[Unset, FunctionRuntimeTransport]
         if isinstance(_transport, Unset):
@@ -134,6 +157,7 @@ class FunctionRuntime:
             max_scale=max_scale,
             memory=memory,
             min_scale=min_scale,
+            ports=ports,
             transport=transport,
         )
 

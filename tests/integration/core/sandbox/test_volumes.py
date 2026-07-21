@@ -204,6 +204,56 @@ class TestMountingVolumesToSandboxes(TestVolumeOperations):
 
 
 @pytest.mark.asyncio(loop_scope="class")
+class TestEphemeralVolumes(TestVolumeOperations):
+    """Test ephemeral (disk-backed scratch) volumes.
+
+    Ephemeral volumes are created together with the sandbox and require no backing
+    Volume resource, so there is nothing to create or delete apart from the sandbox
+    itself. Requires the ``generation_mk31`` feature flag on the workspace.
+    """
+
+    async def test_creates_sandbox_with_ephemeral_volume(self):
+        """An ephemeral volume mounts as scratch space without a Volume resource."""
+        sandbox_name = unique_name("ephemeral-sandbox")
+
+        sandbox = await SandboxInstance.create(
+            {
+                "name": sandbox_name,
+                "image": default_image,
+                "memory": 2048,
+                "region": default_region,
+                "volumes": [
+                    {
+                        "name": "scratch",
+                        "mount_path": "/scratch",
+                        "type": "ephemeral",
+                        "size_mb": 1024,
+                    },
+                ],
+                "labels": default_labels,
+            }
+        )
+        self.created_sandboxes.append(sandbox_name)
+
+        # Verify the scratch disk is mounted and writable.
+        await sandbox.process.exec(
+            {
+                "command": "echo 'ephemeral' > /scratch/test.txt",
+                "wait_for_completion": True,
+            }
+        )
+
+        result = await sandbox.process.exec(
+            {
+                "command": "cat /scratch/test.txt",
+                "wait_for_completion": True,
+            }
+        )
+
+        assert "ephemeral" in result.logs
+
+
+@pytest.mark.asyncio(loop_scope="class")
 class TestVolumeResize(TestVolumeOperations):
     """Test volume resize operations."""
 

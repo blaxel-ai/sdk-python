@@ -14,6 +14,7 @@ from ..client.models import (
     DriveUnmountResponse,
     ErrorResponse,
 )
+from ..transient_retry import retry_on_transient_reset
 from ..types import SandboxConfiguration
 from .action import SyncSandboxAction
 
@@ -100,15 +101,19 @@ class SyncSandboxDrive(SyncSandboxAction):
         Returns:
             List of DriveMountInfo for each mounted drive
         """
-        client = Client(
-            base_url=self.url,
-            headers={**settings.headers, **self.sandbox_config.headers},
-        )
 
-        with client:
-            response = get_drives_mount(client=client)
-            if response is None:
-                raise Exception("Failed to list drives")
-            if isinstance(response, ErrorResponse):
-                raise Exception(f"List drives failed: {response.error}")
-            return list(response.mounts) if response.mounts else []
+        def list_once() -> List[DriveMountInfo]:
+            client = Client(
+                base_url=self.url,
+                headers={**settings.headers, **self.sandbox_config.headers},
+            )
+
+            with client:
+                response = get_drives_mount(client=client)
+                if response is None:
+                    raise Exception("Failed to list drives")
+                if isinstance(response, ErrorResponse):
+                    raise Exception(f"List drives failed: {response.error}")
+                return list(response.mounts) if response.mounts else []
+
+        return retry_on_transient_reset(list_once)

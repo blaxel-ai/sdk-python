@@ -5,7 +5,8 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.job_execution import JobExecution
+from ...models.job_execution_list import JobExecutionList
+from ...models.list_job_executions_sort import ListJobExecutionsSort
 from ...types import UNSET, Response, Unset
 
 
@@ -14,12 +15,25 @@ def _get_kwargs(
     *,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
+    cursor: Union[Unset, str] = UNSET,
+    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
     params["limit"] = limit
 
     params["offset"] = offset
+
+    params["cursor"] = cursor
+
+    json_sort: Union[Unset, str] = UNSET
+    if not isinstance(sort, Unset):
+        json_sort = sort.value
+
+    params["sort"] = json_sort
+
+    params["q"] = q
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -34,14 +48,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, list["JobExecution"]] | None:
+) -> Union[Any, JobExecutionList] | None:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = JobExecution.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = JobExecutionList.from_dict(response.json())
 
         return response_200
     if response.status_code == 400:
@@ -58,7 +67,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, list["JobExecution"]]]:
+) -> Response[Union[Any, JobExecutionList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -73,29 +82,39 @@ def sync_detailed(
     client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
-) -> Response[Union[Any, list["JobExecution"]]]:
+    cursor: Union[Unset, str] = UNSET,
+    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+) -> Response[Union[Any, JobExecutionList]]:
     """List job executions
 
-     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
-    contains status, task counts, and timing information.
+     Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
+    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
+    versions keep the legacy offset/limit contract and return a bare array.
 
     Args:
         job_id (str):
         limit (Union[Unset, int]):  Default: 20.
         offset (Union[Unset, int]):  Default: 0.
+        cursor (Union[Unset, str]):
+        sort (Union[Unset, ListJobExecutionsSort]):
+        q (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, list['JobExecution']]]
+        Response[Union[Any, JobExecutionList]]
     """
 
     kwargs = _get_kwargs(
         job_id=job_id,
         limit=limit,
         offset=offset,
+        cursor=cursor,
+        sort=sort,
+        q=q,
     )
 
     response = client.get_httpx_client().request(
@@ -111,23 +130,30 @@ def sync(
     client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
-) -> Union[Any, list["JobExecution"]] | None:
+    cursor: Union[Unset, str] = UNSET,
+    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+) -> Union[Any, JobExecutionList] | None:
     """List job executions
 
-     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
-    contains status, task counts, and timing information.
+     Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
+    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
+    versions keep the legacy offset/limit contract and return a bare array.
 
     Args:
         job_id (str):
         limit (Union[Unset, int]):  Default: 20.
         offset (Union[Unset, int]):  Default: 0.
+        cursor (Union[Unset, str]):
+        sort (Union[Unset, ListJobExecutionsSort]):
+        q (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, list['JobExecution']]
+        Union[Any, JobExecutionList]
     """
 
     return sync_detailed(
@@ -135,6 +161,9 @@ def sync(
         client=client,
         limit=limit,
         offset=offset,
+        cursor=cursor,
+        sort=sort,
+        q=q,
     ).parsed
 
 
@@ -144,29 +173,39 @@ async def asyncio_detailed(
     client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
-) -> Response[Union[Any, list["JobExecution"]]]:
+    cursor: Union[Unset, str] = UNSET,
+    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+) -> Response[Union[Any, JobExecutionList]]:
     """List job executions
 
-     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
-    contains status, task counts, and timing information.
+     Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
+    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
+    versions keep the legacy offset/limit contract and return a bare array.
 
     Args:
         job_id (str):
         limit (Union[Unset, int]):  Default: 20.
         offset (Union[Unset, int]):  Default: 0.
+        cursor (Union[Unset, str]):
+        sort (Union[Unset, ListJobExecutionsSort]):
+        q (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, list['JobExecution']]]
+        Response[Union[Any, JobExecutionList]]
     """
 
     kwargs = _get_kwargs(
         job_id=job_id,
         limit=limit,
         offset=offset,
+        cursor=cursor,
+        sort=sort,
+        q=q,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -180,23 +219,30 @@ async def asyncio(
     client: Client,
     limit: Union[Unset, int] = 20,
     offset: Union[Unset, int] = 0,
-) -> Union[Any, list["JobExecution"]] | None:
+    cursor: Union[Unset, str] = UNSET,
+    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+) -> Union[Any, JobExecutionList] | None:
     """List job executions
 
-     Returns paginated list of executions for a batch job, sorted by creation time. Each execution
-    contains status, task counts, and timing information.
+     Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
+    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
+    versions keep the legacy offset/limit contract and return a bare array.
 
     Args:
         job_id (str):
         limit (Union[Unset, int]):  Default: 20.
         offset (Union[Unset, int]):  Default: 0.
+        cursor (Union[Unset, str]):
+        sort (Union[Unset, ListJobExecutionsSort]):
+        q (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, list['JobExecution']]
+        Union[Any, JobExecutionList]
     """
 
     return (
@@ -205,5 +251,8 @@ async def asyncio(
             client=client,
             limit=limit,
             offset=offset,
+            cursor=cursor,
+            sort=sort,
+            q=q,
         )
     ).parsed

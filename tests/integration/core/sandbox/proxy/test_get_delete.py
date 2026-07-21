@@ -17,27 +17,29 @@ pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 async def test_retrieves_sandbox_with_proxy_and_validates_config(created_sandboxes):
     name = unique_name("proxy-get")
-    await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "proxy": {
-                "routing": [
-                    {
-                        "destinations": ["api.openai.com"],
-                        "headers": {
-                            "Authorization": "Bearer {{SECRET:openai-key}}",
-                            "OpenAI-Organization": "org-abc123",
+    await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "proxy": {
+                    "routing": [
+                        {
+                            "destinations": ["api.openai.com"],
+                            "headers": {
+                                "Authorization": "Bearer {{SECRET:openai-key}}",
+                                "OpenAI-Organization": "org-abc123",
+                            },
+                            "secrets": {"openai-key": "sk-proj-test789"},
                         },
-                        "secrets": {"openai-key": "sk-proj-test789"},
-                    },
-                ],
-                "bypass": ["169.254.169.254"],
+                    ],
+                    "bypass": ["169.254.169.254"],
+                },
             },
-        },
-    })
+        }
+    )
     created_sandboxes.append(name)
 
     retrieved = await SandboxInstance.get(name)
@@ -55,12 +57,14 @@ async def test_retrieves_sandbox_with_proxy_and_validates_config(created_sandbox
 
 async def test_returns_no_proxy_config_when_sandbox_has_none(created_sandboxes):
     name = unique_name("proxy-none")
-    await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-    })
+    await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+        }
+    )
     created_sandboxes.append(name)
 
     retrieved = await SandboxInstance.get(name)
@@ -71,23 +75,25 @@ async def test_returns_no_proxy_config_when_sandbox_has_none(created_sandboxes):
 
 async def test_deletes_sandbox_with_proxy_configuration():
     name = unique_name("proxy-del")
-    await SandboxInstance.create({
-        "name": name,
-        "image": default_image,
-        "region": default_region,
-        "labels": default_labels,
-        "network": {
-            "proxy": {
-                "routing": [
-                    {
-                        "destinations": ["api.stripe.com"],
-                        "headers": {"Authorization": "Bearer {{SECRET:stripe-key}}"},
-                        "secrets": {"stripe-key": "sk-live-test123"},
-                    },
-                ],
+    await SandboxInstance.create(
+        {
+            "name": name,
+            "image": default_image,
+            "region": default_region,
+            "labels": default_labels,
+            "network": {
+                "proxy": {
+                    "routing": [
+                        {
+                            "destinations": ["api.stripe.com"],
+                            "headers": {"Authorization": "Bearer {{SECRET:stripe-key}}"},
+                            "secrets": {"stripe-key": "sk-live-test123"},
+                        },
+                    ],
+                },
             },
-        },
-    })
+        }
+    )
 
     await SandboxInstance.delete(name)
     deleted = await wait_for_sandbox_deletion(name, max_attempts=60)

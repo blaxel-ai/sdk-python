@@ -1,3 +1,21 @@
+{% set class_name = model.class_info.name %}
+{% set module_name = model.class_info.module_name %}
+{% set paginated_list = namespace(value=false) %}
+{% set has_data = namespace(value=false) %}
+{% set has_meta = namespace(value=false) %}
+{% if class_name.endswith("List") %}
+{% for property in model.required_properties + model.optional_properties %}
+{% if property.python_name == "data" %}
+{% set has_data.value = true %}
+{% endif %}
+{% if property.python_name == "meta" %}
+{% set has_meta.value = true %}
+{% endif %}
+{% endfor %}
+{% if has_data.value and has_meta.value %}
+{% set paginated_list.value = true %}
+{% endif %}
+{% endif %}
 from typing import Any, TypeVar, Optional, BinaryIO, TextIO, TYPE_CHECKING
 
 from attrs import define as _attrs_define
@@ -6,6 +24,9 @@ from attrs import field as _attrs_field
 import json
 {% endif %}
 
+{% if paginated_list.value %}
+from ..pagination import split_list_response
+{% endif %}
 from ..types import UNSET, Unset
 
 {% for relative in model.relative_imports | sort %}
@@ -23,9 +44,6 @@ if TYPE_CHECKING:
 {% if model.additional_properties %}
 {% set additional_property_type = 'Any' if model.additional_properties == True else model.additional_properties.get_type_string(quoted=not model.additional_properties.is_base_type) %}
 {% endif %}
-
-{% set class_name = model.class_info.name %}
-{% set module_name = model.class_info.module_name %}
 
 {% from "helpers.jinja" import safe_docstring %}
 
@@ -129,14 +147,21 @@ return field_dict
 {% endif %}
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]{% if paginated_list.value %} | list[Any]{% endif %}) -> T | None:
     {% for lazy_import in model.lazy_imports %}
         {{ lazy_import }}
     {% endfor %}
 {% if (model.required_properties or model.optional_properties or model.additional_properties) %}
+{% if paginated_list.value %}
+        _data, _meta, additional_properties = split_list_response(src_dict)
+        if not _data and not additional_properties and isinstance(_meta, Unset):
+            return None
+        d = {"data": _data, "meta": _meta}
+{% else %}
         if not src_dict:
             return None
         d = src_dict.copy()
+{% endif %}
 {% for property in model.required_properties + model.optional_properties %}
     {% if property.required %}
         {% if property.name != property.python_name %}
@@ -186,7 +211,11 @@ return field_dict
 
         {{ module_name }}.additional_properties = additional_properties
     {% else %}
+{% if paginated_list.value %}
+        {{ module_name }}.additional_properties = additional_properties
+{% else %}
         {{ module_name }}.additional_properties = d
+{% endif %}
     {% endif %}
 {% endif %}
         return {{ module_name }}

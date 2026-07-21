@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import shlex
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
@@ -9,6 +10,7 @@ import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
+from ..transient_retry import retry_on_transient_reset
 from ..types import (
     CopyResponse,
     SandboxConfiguration,
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
-MAX_PARALLEL_UPLOADS = 20  # Number of parallel part uploads
+MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
 
 
 class SyncSandboxFileSystem(SyncSandboxAction):
@@ -60,22 +62,29 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             content = bytes(content)
         if len(content) > MULTIPART_THRESHOLD:
             return self._upload_with_multipart(path, content, "0644")
-        binary_file = io.BytesIO(content)
-        files = {
-            "file": (
-                "binary-file.bin",
-                binary_file,
-                "application/octet-stream",
-            ),
-        }
-        data = {"permissions": "0644", "path": path}
         url = f"{self.url}/filesystem/{path}"
         headers = {**settings.headers, **self.sandbox_config.headers}
-        with self.get_client() as client_instance:
-            response = client_instance.put(url, files=files, data=data, headers=headers)
-            if not response.is_success:
-                raise Exception(f"Failed to write binary: {response.status_code} {response.text}")
-            return SuccessResponse.from_dict(response.json())
+
+        def put_once() -> SuccessResponse:
+            files = {
+                "file": (
+                    "binary-file.bin",
+                    io.BytesIO(content),
+                    "application/octet-stream",
+                ),
+            }
+            data = {"permissions": "0644", "path": path}
+            with self.get_client() as client_instance:
+                response = client_instance.put(url, files=files, data=data, headers=headers)
+                if not response.is_success:
+                    raise Exception(
+                        f"Failed to write binary: {response.status_code} {response.text}"
+                    )
+                result = SuccessResponse.from_dict(response.json())
+                assert result is not None
+                return result
+
+        return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 
     def write_tree(
         self,
@@ -99,13 +108,17 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
     def read(self, path: str) -> str:
         path = self.format_path(path)
-        with self.get_client() as client_instance:
-            response = client_instance.get(f"/filesystem/{path}")
-            self.handle_response_error(response)
-            data = response.json()
-            if "content" in data:
-                return data["content"]
-            raise Exception("Unsupported file type")
+
+        def read_once() -> str:
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/filesystem/{path}")
+                self.handle_response_error(response)
+                data = response.json()
+                if "content" in data:
+                    return data["content"]
+                raise Exception("Unsupported file type")
+
+        return retry_on_transient_reset(read_once)
 
     def read_binary(self, path: str) -> bytes:
         path = self.format_path(path)
@@ -115,10 +128,14 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             **self.sandbox_config.headers,
             "Accept": "application/octet-stream",
         }
-        with self.get_client() as client_instance:
-            response = client_instance.get(url, headers=headers)
-            self.handle_response_error(response)
-            return response.content
+
+        def read_once() -> bytes:
+            with self.get_client() as client_instance:
+                response = client_instance.get(url, headers=headers)
+                self.handle_response_error(response)
+                return response.content
+
+        return retry_on_transient_reset(read_once)
 
     def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
         content = self.read_binary(src)
@@ -136,18 +153,27 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
     def ls(self, path: str) -> Directory:
         path = self.format_path(path)
-        with self.get_client() as client_instance:
-            response = client_instance.get(f"/filesystem/{path}")
-            self.handle_response_error(response)
-            data = response.json()
-            if not ("files" in data or "subdirectories" in data):
-                raise Exception('{"error": "Directory not found"}')
-            return Directory.from_dict(data)
+
+        def ls_once() -> Directory:
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/filesystem/{path}")
+                self.handle_response_error(response)
+                data = response.json()
+                if not ("files" in data or "subdirectories" in data):
+                    raise Exception('{"error": "Directory not found"}')
+                result = Directory.from_dict(data)
+                assert result is not None
+                return result
+
+        return retry_on_transient_reset(ls_once)
 
     def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         if not self.process:
             raise Exception("Process instance not available. Cannot execute cp command.")
-        process = self.process.exec({"command": f"cp -r {source} {destination}"})
+        # Quote both paths so the shell treats them as single literal arguments
+        # and cannot interpret injected metacharacters.
+        command = f"cp -r {shlex.quote(source)} {shlex.quote(destination)}"
+        process = self.process.exec({"command": command})
         process = self.process.wait(process.pid, max_wait=max_wait, interval=100)
         if process.status == "failed":
             logs = process.logs if hasattr(process, "logs") else "Unknown error"
@@ -262,11 +288,15 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         url = f"{self.url}/filesystem-multipart/{upload_id}/part"
         headers = {**settings.headers, **self.sandbox_config.headers}
         params = {"partNumber": part_number}
-        files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
-        with self.get_client() as client_instance:
-            response = client_instance.put(url, files=files, params=params, headers=headers)
-            self.handle_response_error(response)
-            return response.json()
+
+        def put_once() -> Dict[str, Any]:
+            files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+            with self.get_client() as client_instance:
+                response = client_instance.put(url, files=files, params=params, headers=headers)
+                self.handle_response_error(response)
+                return response.json()
+
+        return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 
     def _complete_multipart_upload(
         self, upload_id: str, parts: List[Dict[str, Any]]
@@ -302,9 +332,18 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             for i in range(0, num_parts, MAX_PARALLEL_UPLOADS):
                 threads = []
                 results: Dict[int, Dict[str, Any]] = {}
+                exceptions: List[Exception] = []
+                results_lock = threading.Lock()
 
                 def make_upload(part_number: int, chunk: bytes):
-                    results[part_number] = self._upload_part(upload_id, part_number, chunk)
+                    try:
+                        result = self._upload_part(upload_id, part_number, chunk)
+                    except Exception as error:
+                        with results_lock:
+                            exceptions.append(error)
+                    else:
+                        with results_lock:
+                            results[part_number] = result
 
                 for j in range(MAX_PARALLEL_UPLOADS):
                     if i + j >= num_parts:
@@ -318,6 +357,8 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                     t.start()
                 for t in threads:
                     t.join()
+                if exceptions:
+                    raise exceptions[0]
                 for part_number, r in results.items():
                     parts.append({"partNumber": part_number, "etag": r.get("etag")})
             parts.sort(key=lambda p: p.get("partNumber", 0))

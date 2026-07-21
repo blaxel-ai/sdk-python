@@ -24,8 +24,8 @@ class SandboxRuntime:
         expires (Union[Unset, str]): Absolute expiration timestamp in ISO 8601 format when the sandbox will be deleted
             Example: 2025-12-31T23:59:59Z.
         extra_args (Union[Unset, SandboxRuntimeExtraArgs]): Extra arguments for sandbox kernel selection. Supported
-            keys: 'iptables', 'nvme'. Values: 'enabled' or 'disabled'. Determines which kernel variant the sandbox runs on.
-            Immutable after creation.
+            keys: 'iptables', 'nvme', 'nfs'. Values: 'enabled' or 'disabled'. Determines which kernel variant the sandbox
+            runs on. Immutable after creation.
         image (Union[Unset, str]): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest)
             or a custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
@@ -33,8 +33,9 @@ class SandboxRuntime:
         ports (Union[Unset, list['Port']]): Set of ports for a resource
         termination_grace_period_seconds (Union[Unset, int]): Duration in seconds the pod needs to terminate gracefully.
             Defaults to 0 for immediate termination. Example: 30.
-        ttl (Union[Unset, str]): Time-to-live duration after which the sandbox is automatically deleted (e.g., '30m',
-            '24h', '7d') Example: 24h.
+        ttl (Union[Unset, str]): Max-age from creation: the sandbox is deleted this long after it is created, regardless
+            of activity (not an idle timeout). Units s, m, h, d, w (e.g., '30m', '24h', '7d', '2w'). For idle-based cleanup,
+            use a lifecycle expiration policy of type ttl-idle. Example: 24h.
     """
 
     envs: Union[Unset, list["Env"]] = UNSET

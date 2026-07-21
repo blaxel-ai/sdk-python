@@ -6,14 +6,46 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.error import Error
-from ...models.function import Function
-from ...types import Response
+from ...models.function_list import FunctionList
+from ...models.list_functions_anchor import ListFunctionsAnchor
+from ...models.list_functions_sort import ListFunctionsSort
+from ...types import UNSET, Response, Unset
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    *,
+    cursor: Union[Unset, str] = UNSET,
+    limit: Union[Unset, int] = 50,
+    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["cursor"] = cursor
+
+    params["limit"] = limit
+
+    json_sort: Union[Unset, str] = UNSET
+    if not isinstance(sort, Unset):
+        json_sort = sort.value
+
+    params["sort"] = json_sort
+
+    params["q"] = q
+
+    json_anchor: Union[Unset, str] = UNSET
+    if not isinstance(anchor, Unset):
+        json_anchor = anchor.value
+
+    params["anchor"] = json_anchor
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/functions",
+        "params": params,
     }
 
     return _kwargs
@@ -21,14 +53,9 @@ def _get_kwargs() -> dict[str, Any]:
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, list["Function"]] | None:
+) -> Union[Error, FunctionList] | None:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = Function.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = FunctionList.from_dict(response.json())
 
         return response_200
     if response.status_code == 401:
@@ -51,7 +78,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, list["Function"]]]:
+) -> Response[Union[Error, FunctionList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,21 +90,41 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Union[Error, list["Function"]]]:
+    cursor: Union[Unset, str] = UNSET,
+    limit: Union[Unset, int] = 50,
+    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+) -> Response[Union[Error, FunctionList]]:
     """List all MCP servers
 
-     Returns all MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL.
+     Returns MCP server functions deployed in the workspace. Each function includes its deployment
+    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
+    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
+    and `limit` query parameters; older versions keep returning a bare array with all functions.
+
+    Args:
+        cursor (Union[Unset, str]):
+        limit (Union[Unset, int]):  Default: 50.
+        sort (Union[Unset, ListFunctionsSort]):
+        q (Union[Unset, str]):
+        anchor (Union[Unset, ListFunctionsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['Function']]]
+        Response[Union[Error, FunctionList]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        cursor=cursor,
+        limit=limit,
+        sort=sort,
+        q=q,
+        anchor=anchor,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -89,43 +136,82 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Union[Error, list["Function"]] | None:
+    cursor: Union[Unset, str] = UNSET,
+    limit: Union[Unset, int] = 50,
+    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+) -> Union[Error, FunctionList] | None:
     """List all MCP servers
 
-     Returns all MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL.
+     Returns MCP server functions deployed in the workspace. Each function includes its deployment
+    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
+    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
+    and `limit` query parameters; older versions keep returning a bare array with all functions.
+
+    Args:
+        cursor (Union[Unset, str]):
+        limit (Union[Unset, int]):  Default: 50.
+        sort (Union[Unset, ListFunctionsSort]):
+        q (Union[Unset, str]):
+        anchor (Union[Unset, ListFunctionsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['Function']]
+        Union[Error, FunctionList]
     """
 
     return sync_detailed(
         client=client,
+        cursor=cursor,
+        limit=limit,
+        sort=sort,
+        q=q,
+        anchor=anchor,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[Union[Error, list["Function"]]]:
+    cursor: Union[Unset, str] = UNSET,
+    limit: Union[Unset, int] = 50,
+    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+) -> Response[Union[Error, FunctionList]]:
     """List all MCP servers
 
-     Returns all MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL.
+     Returns MCP server functions deployed in the workspace. Each function includes its deployment
+    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
+    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
+    and `limit` query parameters; older versions keep returning a bare array with all functions.
+
+    Args:
+        cursor (Union[Unset, str]):
+        limit (Union[Unset, int]):  Default: 50.
+        sort (Union[Unset, ListFunctionsSort]):
+        q (Union[Unset, str]):
+        anchor (Union[Unset, ListFunctionsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['Function']]]
+        Response[Union[Error, FunctionList]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        cursor=cursor,
+        limit=limit,
+        sort=sort,
+        q=q,
+        anchor=anchor,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -135,22 +221,41 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Union[Error, list["Function"]] | None:
+    cursor: Union[Unset, str] = UNSET,
+    limit: Union[Unset, int] = 50,
+    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+) -> Union[Error, FunctionList] | None:
     """List all MCP servers
 
-     Returns all MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL.
+     Returns MCP server functions deployed in the workspace. Each function includes its deployment
+    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
+    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
+    and `limit` query parameters; older versions keep returning a bare array with all functions.
+
+    Args:
+        cursor (Union[Unset, str]):
+        limit (Union[Unset, int]):  Default: 50.
+        sort (Union[Unset, ListFunctionsSort]):
+        q (Union[Unset, str]):
+        anchor (Union[Unset, ListFunctionsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['Function']]
+        Union[Error, FunctionList]
     """
 
     return (
         await asyncio_detailed(
             client=client,
+            cursor=cursor,
+            limit=limit,
+            sort=sort,
+            q=q,
+            anchor=anchor,
         )
     ).parsed

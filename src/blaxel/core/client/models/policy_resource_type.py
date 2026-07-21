@@ -3,6 +3,7 @@ from enum import Enum
 
 class PolicyResourceType(str, Enum):
     AGENT = "agent"
+    APPLICATION = "application"
     FUNCTION = "function"
     MODEL = "model"
     SANDBOX = "sandbox"

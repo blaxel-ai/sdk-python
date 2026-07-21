@@ -25,6 +25,8 @@ class Metadata:
         updated_by (Union[Unset, str]): The user or service account who updated the resource
         display_name (Union[Unset, str]): Human-readable name for display in the UI. Can contain spaces and special
             characters, max 63 characters. Example: My Resource.
+        external_id (Union[Unset, str]): Caller-owned identifier for external lookups. Max 64 chars, alphanumeric +
+            dash. Example: my-session-123.
         labels (Union[Unset, MetadataLabels]): Key-value pairs for organizing and filtering resources. Labels can be
             used to categorize resources by environment, project, team, or any custom taxonomy.
         plan (Union[Unset, str]): Billing plan tier applied to this resource (inherited from workspace account)
@@ -39,6 +41,7 @@ class Metadata:
     created_by: Union[Unset, str] = UNSET
     updated_by: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
+    external_id: Union[Unset, str] = UNSET
     labels: Union[Unset, "MetadataLabels"] = UNSET
     plan: Union[Unset, str] = UNSET
     url: Union[Unset, str] = UNSET
@@ -58,6 +61,8 @@ class Metadata:
         updated_by = self.updated_by
 
         display_name = self.display_name
+
+        external_id = self.external_id
 
         labels: Union[Unset, dict[str, Any]] = UNSET
         if self.labels and not isinstance(self.labels, Unset) and not isinstance(self.labels, dict):
@@ -88,6 +93,8 @@ class Metadata:
             field_dict["updatedBy"] = updated_by
         if display_name is not UNSET:
             field_dict["displayName"] = display_name
+        if external_id is not UNSET:
+            field_dict["externalId"] = external_id
         if labels is not UNSET:
             field_dict["labels"] = labels
         if plan is not UNSET:
@@ -118,6 +125,8 @@ class Metadata:
 
         display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
+        external_id = d.pop("externalId", d.pop("external_id", UNSET))
+
         _labels = d.pop("labels", UNSET)
         labels: Union[Unset, MetadataLabels]
         if isinstance(_labels, Unset):
@@ -138,6 +147,7 @@ class Metadata:
             created_by=created_by,
             updated_by=updated_by,
             display_name=display_name,
+            external_id=external_id,
             labels=labels,
             plan=plan,
             url=url,

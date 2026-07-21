@@ -8,8 +8,8 @@ T = TypeVar("T", bound="SandboxRuntimeExtraArgs")
 
 @_attrs_define
 class SandboxRuntimeExtraArgs:
-    """Extra arguments for sandbox kernel selection. Supported keys: 'iptables', 'nvme'. Values: 'enabled' or 'disabled'.
-    Determines which kernel variant the sandbox runs on. Immutable after creation.
+    """Extra arguments for sandbox kernel selection. Supported keys: 'iptables', 'nvme', 'nfs'. Values: 'enabled' or
+    'disabled'. Determines which kernel variant the sandbox runs on. Immutable after creation.
 
     """
 
