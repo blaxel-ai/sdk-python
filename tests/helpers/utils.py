@@ -13,10 +13,25 @@ env = os.environ.get("BL_ENV", "prod")
 default_region = "eu-dub-1" if env == "dev" else "us-pdx-1"
 default_image = "blaxel/base-image:latest"
 
-# Default labels to identify test sandboxes in the UI
+# Default labels identify both the test owner and this specific test job. The
+# run label prevents one CI job's cleanup from deleting another job's resources
+# when they share a workspace.
+_test_run_id = (
+    "-".join(
+        part
+        for part in (
+            os.environ.get("GITHUB_RUN_ID"),
+            os.environ.get("GITHUB_JOB"),
+            os.environ.get("GITHUB_RUN_ATTEMPT"),
+        )
+        if part
+    )
+    or f"local-{os.getpid()}"
+)
 default_labels = {
     "env": "integration-test",
     "created-by": "pytest",
+    "test-run": _test_run_id,
 }
 
 
