@@ -453,6 +453,8 @@ def _drain_background_capture_queue(capture_queue: Queue[Any]) -> None:
     """Deliver queued hook events serially outside the failing runtime surface."""
     while True:
         item = capture_queue.get()
+        exc_value = None
+        mechanism_type = None
         try:
             if item is _BACKGROUND_CAPTURE_STOP:
                 return
@@ -460,6 +462,11 @@ def _drain_background_capture_queue(capture_queue: Queue[Any]) -> None:
             _capture_unhandled_exception_safely(exc_value, mechanism_type)
         finally:
             capture_queue.task_done()
+            # A worker blocked on its next queue read otherwise keeps the last
+            # exception and traceback alive in frame locals indefinitely.
+            item = None
+            exc_value = None
+            mechanism_type = None
 
 
 def _start_background_capture_worker() -> None:

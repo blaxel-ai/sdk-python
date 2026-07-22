@@ -11,6 +11,7 @@ import json
 import sys
 import threading
 import time
+import weakref
 from queue import Queue
 from types import SimpleNamespace
 from typing import Any, cast
@@ -339,6 +340,40 @@ async def fail():
         _wait_for_background_capture()
 
         assert captured == [(exception, "asyncio") for exception in exceptions]
+
+    def test_background_worker_releases_delivered_exception(self, monkeypatch):
+        class Payload:
+            pass
+
+        payload = Payload()
+        payload_ref = weakref.ref(payload)
+        exc = _raise_in_sdk("core/background.py", "raise RuntimeError('failure')")
+        setattr(exc, "payload", payload)
+        capture_queue = Queue()
+        monkeypatch.setattr(
+            sentry,
+            "_capture_unhandled_exception_safely",
+            lambda _exc, _mechanism: None,
+        )
+        worker = threading.Thread(
+            target=sentry._drain_background_capture_queue,
+            args=(capture_queue,),
+            daemon=True,
+        )
+        worker.start()
+
+        try:
+            capture_queue.put((exc, "asyncio"))
+            capture_queue.join()
+            del exc
+            del payload
+            gc.collect()
+
+            assert payload_ref() is None
+        finally:
+            capture_queue.put(sentry._BACKGROUND_CAPTURE_STOP)
+            capture_queue.join()
+            worker.join(timeout=1)
 
     def test_flush_timeout_does_not_wait_for_in_flight_delivery(
         self, installed_sentry_hooks, monkeypatch
