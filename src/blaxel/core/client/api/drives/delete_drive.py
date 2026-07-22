@@ -34,7 +34,7 @@ def _parse_response(
         response_404 = cast(Any, None)
         return response_404
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
