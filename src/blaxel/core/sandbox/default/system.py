@@ -58,10 +58,12 @@ class SandboxSystem(SandboxAction):
         Returns:
             HealthResponse with system status information
         """
+
         async def health_once():
             client = Client(
                 base_url=self.url,
                 headers={**settings.headers, **self.sandbox_config.headers},
+                raise_on_unexpected_status=False,
             )
 
             async with client:

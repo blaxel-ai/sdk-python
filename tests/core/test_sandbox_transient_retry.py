@@ -1,5 +1,6 @@
 import asyncio
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import Any, cast
 
 import httpx
@@ -7,11 +8,15 @@ import pytest
 
 from blaxel.core.common.settings import settings
 from blaxel.core.sandbox.client.types import Response
+from blaxel.core.sandbox.default.drive import SandboxDrive
 from blaxel.core.sandbox.default.filesystem import SandboxFileSystem
 from blaxel.core.sandbox.default.network import SandboxNetwork
 from blaxel.core.sandbox.default.process import SandboxProcess
+from blaxel.core.sandbox.default.system import SandboxSystem
+from blaxel.core.sandbox.sync.drive import SyncSandboxDrive
 from blaxel.core.sandbox.sync.filesystem import SyncSandboxFileSystem
 from blaxel.core.sandbox.sync.network import SyncSandboxNetwork
+from blaxel.core.sandbox.sync.system import SyncSandboxSystem
 from blaxel.core.sandbox.transient_retry import (
     is_transient_reset_error,
     is_transient_sandbox_read_response,
@@ -337,6 +342,173 @@ async def test_async_network_fetch_retries_resume_gateway_status(monkeypatch):
 
     assert response.status_code == 200
     assert client.calls == 2
+
+
+class GeneratedClientContext:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        return None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return None
+
+
+@pytest.mark.asyncio
+async def test_async_drive_list_exposes_transient_response_to_retry(monkeypatch):
+    from blaxel.core.sandbox.default import drive as drive_module
+
+    clients = []
+    responses = [
+        Response(status_code=503, content=b"", headers={}, parsed=None),
+        Response(
+            status_code=200,
+            content=b"",
+            headers={},
+            parsed=SimpleNamespace(mounts=[]),
+        ),
+    ]
+
+    def make_client(**kwargs):
+        client = GeneratedClientContext(**kwargs)
+        clients.append(client)
+        return client
+
+    async def get_drives_mount(**kwargs):
+        return responses.pop(0)
+
+    monkeypatch.setattr(drive_module, "Client", make_client)
+    monkeypatch.setattr(drive_module, "get_drives_mount", get_drives_mount)
+    monkeypatch.setattr(drive_module, "settings", SimpleNamespace(headers={}))
+    monkeypatch.setenv("BL_SANDBOX_READ_RETRIES", "1")
+
+    drive = cast(Any, object.__new__(SandboxDrive))
+    drive.sandbox_config = SimpleNamespace(
+        force_url="https://sandbox.test",
+        headers={},
+        metadata=None,
+    )
+
+    assert await drive.list() == []
+    assert len(clients) == 2
+    assert all(client.kwargs["raise_on_unexpected_status"] is False for client in clients)
+
+
+def test_sync_drive_list_exposes_transient_response_to_retry(monkeypatch):
+    from blaxel.core.sandbox.sync import drive as drive_module
+
+    clients = []
+    responses = [
+        Response(status_code=502, content=b"", headers={}, parsed=None),
+        Response(
+            status_code=200,
+            content=b"",
+            headers={},
+            parsed=SimpleNamespace(mounts=[]),
+        ),
+    ]
+
+    def make_client(**kwargs):
+        client = GeneratedClientContext(**kwargs)
+        clients.append(client)
+        return client
+
+    def get_drives_mount(**kwargs):
+        return responses.pop(0)
+
+    monkeypatch.setattr(drive_module, "Client", make_client)
+    monkeypatch.setattr(drive_module, "get_drives_mount", get_drives_mount)
+    monkeypatch.setattr(drive_module, "settings", SimpleNamespace(headers={}))
+    monkeypatch.setenv("BL_SANDBOX_READ_RETRIES", "1")
+
+    drive = cast(Any, object.__new__(SyncSandboxDrive))
+    drive.sandbox_config = SimpleNamespace(
+        force_url="https://sandbox.test",
+        headers={},
+        metadata=None,
+    )
+
+    assert drive.list() == []
+    assert len(clients) == 2
+    assert all(client.kwargs["raise_on_unexpected_status"] is False for client in clients)
+
+
+@pytest.mark.asyncio
+async def test_async_health_exposes_transient_response_to_retry(monkeypatch):
+    from blaxel.core.sandbox.default import system as system_module
+
+    clients = []
+    expected = object()
+    responses = [
+        Response(status_code=504, content=b"", headers={}, parsed=None),
+        Response(status_code=200, content=b"", headers={}, parsed=expected),
+    ]
+
+    def make_client(**kwargs):
+        client = GeneratedClientContext(**kwargs)
+        clients.append(client)
+        return client
+
+    async def get_health(**kwargs):
+        return responses.pop(0)
+
+    monkeypatch.setattr(system_module, "Client", make_client)
+    monkeypatch.setattr(system_module, "get_health", get_health)
+    monkeypatch.setattr(system_module, "settings", SimpleNamespace(headers={}))
+    monkeypatch.setenv("BL_SANDBOX_READ_RETRIES", "1")
+
+    system = cast(Any, object.__new__(SandboxSystem))
+    system.sandbox_config = SimpleNamespace(
+        force_url="https://sandbox.test",
+        headers={},
+        metadata=None,
+    )
+
+    assert await system.health() is expected
+    assert len(clients) == 2
+    assert all(client.kwargs["raise_on_unexpected_status"] is False for client in clients)
+
+
+def test_sync_health_exposes_transient_response_to_retry(monkeypatch):
+    from blaxel.core.sandbox.sync import system as system_module
+
+    clients = []
+    expected = object()
+    responses = [
+        Response(status_code=429, content=b"", headers={}, parsed=None),
+        Response(status_code=200, content=b"", headers={}, parsed=expected),
+    ]
+
+    def make_client(**kwargs):
+        client = GeneratedClientContext(**kwargs)
+        clients.append(client)
+        return client
+
+    def get_health(**kwargs):
+        return responses.pop(0)
+
+    monkeypatch.setattr(system_module, "Client", make_client)
+    monkeypatch.setattr(system_module, "get_health", get_health)
+    monkeypatch.setattr(system_module, "settings", SimpleNamespace(headers={}))
+    monkeypatch.setenv("BL_SANDBOX_READ_RETRIES", "1")
+
+    system = cast(Any, object.__new__(SyncSandboxSystem))
+    system.sandbox_config = SimpleNamespace(
+        force_url="https://sandbox.test",
+        headers={},
+        metadata=None,
+    )
+
+    assert system.health() is expected
+    assert len(clients) == 2
+    assert all(client.kwargs["raise_on_unexpected_status"] is False for client in clients)
 
 
 @pytest.mark.asyncio
