@@ -25,6 +25,8 @@ class CustomDomainMetadata:
         labels (Union[Unset, MetadataLabels]): Key-value pairs for organizing and filtering resources. Labels can be
             used to categorize resources by environment, project, team, or any custom taxonomy.
         name (Union[Unset, str]): Domain name (e.g., "example.com") Example: preview.example.com.
+        shared_from_workspace (Union[Unset, str]): If this custom domain is shared from another workspace of the same
+            account, this field contains the name of the source (owning) workspace. Empty for owned domains.
         workspace (Union[Unset, str]): Workspace name
     """
 
@@ -35,6 +37,7 @@ class CustomDomainMetadata:
     display_name: Union[Unset, str] = UNSET
     labels: Union[Unset, "MetadataLabels"] = UNSET
     name: Union[Unset, str] = UNSET
+    shared_from_workspace: Union[Unset, str] = UNSET
     workspace: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -58,6 +61,8 @@ class CustomDomainMetadata:
 
         name = self.name
 
+        shared_from_workspace = self.shared_from_workspace
+
         workspace = self.workspace
 
         field_dict: dict[str, Any] = {}
@@ -77,6 +82,8 @@ class CustomDomainMetadata:
             field_dict["labels"] = labels
         if name is not UNSET:
             field_dict["name"] = name
+        if shared_from_workspace is not UNSET:
+            field_dict["sharedFromWorkspace"] = shared_from_workspace
         if workspace is not UNSET:
             field_dict["workspace"] = workspace
 
@@ -108,6 +115,8 @@ class CustomDomainMetadata:
 
         name = d.pop("name", UNSET)
 
+        shared_from_workspace = d.pop("sharedFromWorkspace", d.pop("shared_from_workspace", UNSET))
+
         workspace = d.pop("workspace", UNSET)
 
         custom_domain_metadata = cls(
@@ -118,6 +127,7 @@ class CustomDomainMetadata:
             display_name=display_name,
             labels=labels,
             name=name,
+            shared_from_workspace=shared_from_workspace,
             workspace=workspace,
         )
 

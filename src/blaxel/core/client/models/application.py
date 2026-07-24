@@ -26,7 +26,6 @@ class Application:
                 deployment region
             events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
             node_generation (Union[Unset, str]): Infrastructure generation this application is deployed on (mk3.0 or mk3.1).
-                Read-only.
             status (Union[Unset, str]): Application status computed from events
     """
 

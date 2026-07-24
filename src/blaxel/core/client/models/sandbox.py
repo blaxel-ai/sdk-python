@@ -31,7 +31,6 @@ class Sandbox:
                 lifecycle policies. Only present for sandboxes with lifecycle configured.
             last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
             node_generation (Union[Unset, str]): Infrastructure generation this sandbox is deployed on (mk3.0 or mk3.1).
-                Read-only.
             state (Union[Unset, SandboxState]): Current state of the sandbox (read-only, managed by the system)
             status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
     """

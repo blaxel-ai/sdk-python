@@ -35,6 +35,7 @@ from .create_workspace_service_account_body import CreateWorkspaceServiceAccount
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
+from .custom_domain_share_target import CustomDomainShareTarget
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_domain_type import CustomDomainSpecDomainType
 from .custom_domain_spec_status import CustomDomainSpecStatus
@@ -252,6 +253,7 @@ from .sandbox_snapshot import SandboxSnapshot
 from .sandbox_snapshot_request import SandboxSnapshotRequest
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
+from .share_custom_domain_body import ShareCustomDomainBody
 from .share_image_body import ShareImageBody
 from .sso_domain import SSODomain
 from .sso_domain_metadata import SSODomainMetadata
@@ -332,6 +334,7 @@ __all__ = (
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
     "CustomDomainMetadata",
+    "CustomDomainShareTarget",
     "CustomDomainSpec",
     "CustomDomainSpecDomainType",
     "CustomDomainSpecStatus",
@@ -543,6 +546,7 @@ __all__ = (
     "SandboxSnapshotRequest",
     "SandboxSpec",
     "SandboxState",
+    "ShareCustomDomainBody",
     "ShareImageBody",
     "SSODomain",
     "SSODomainMetadata",
