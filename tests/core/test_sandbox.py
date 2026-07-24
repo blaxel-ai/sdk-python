@@ -896,6 +896,21 @@ async def test_snapshot_sends_optional_name():
 
 
 @pytest.mark.asyncio
+async def test_delete_snapshot_accepts_none_204_response():
+    sandbox = sandbox_instance("my-sandbox")
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.delete_sandbox_snapshot", new_callable=AsyncMock
+    ) as mock_delete:
+        # Generated client returns None for a successful 204 No Content.
+        mock_delete.return_value = None
+
+        await sandbox.delete_snapshot("snap_abc123")
+
+        assert mock_delete.call_args.args == ("my-sandbox", "snap_abc123")
+
+
+@pytest.mark.asyncio
 async def test_fork_raises_on_error_response():
     from blaxel.core.client.models.error import Error
 

@@ -182,7 +182,7 @@ class SyncSandboxInstance:
             snapshot_id,
             client=client,
         )
-        _unwrap_response(response, "delete snapshot")
+        _unwrap_response(response, "delete snapshot", allow_none=True)
 
     def fork(
         self,

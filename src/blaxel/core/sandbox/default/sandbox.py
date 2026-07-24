@@ -96,17 +96,19 @@ def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
     return error.status_code == 404 or error.code in {404, "404"}
 
 
-def _unwrap_response(response, action: str):
+def _unwrap_response(response, action: str, *, allow_none: bool = False):
     """Raise a SandboxAPIError for error/empty responses, else return the payload.
 
     Shared by the fork/snapshot helpers, which call generated control-plane API
-    functions that return ``Union[Error, T] | None``.
+    functions that return ``Union[Error, T] | None``. Void endpoints (e.g. delete,
+    which returns 204 No Content) legitimately return ``None`` — pass
+    ``allow_none=True`` for those.
     """
     if isinstance(response, Error):
         status_code = response.code if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
         raise SandboxAPIError(message, status_code=status_code, code=response.error)
-    if response is None:
+    if response is None and not allow_none:
         raise SandboxAPIError(f"Failed to {action}")
     return response
 
@@ -264,7 +266,7 @@ class SandboxInstance:
             snapshot_id,
             client=client,
         )
-        _unwrap_response(response, "delete snapshot")
+        _unwrap_response(response, "delete snapshot", allow_none=True)
 
     async def fork(
         self,
