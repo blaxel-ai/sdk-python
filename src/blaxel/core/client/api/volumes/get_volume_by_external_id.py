@@ -1,42 +1,54 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.app_revision import AppRevision
+from ...models.error import Error
+from ...models.volume import Volume
 from ...types import Response
 
 
 def _get_kwargs(
-    application_name: str,
+    external_id: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/applications/{application_name}/revisions",
+        "url": f"/volumes/by-external-id/{external_id}",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["AppRevision"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Volume] | None:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = AppRevision.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = Volume.from_dict(response.json())
 
         return response_200
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        return response_401
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        return response_403
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["AppRevision"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Volume]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,25 +58,27 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 
 
 def sync_detailed(
-    application_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> Response[list["AppRevision"]]:
-    """List all application revisions
+) -> Response[Union[Error, Volume]]:
+    """Get volume by external ID
+
+     Returns an active volume matching the given external ID. If no active volume is found, returns 404.
 
     Args:
-        application_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['AppRevision']]
+        Response[Union[Error, Volume]]
     """
 
     kwargs = _get_kwargs(
-        application_name=application_name,
+        external_id=external_id,
     )
 
     response = client.get_httpx_client().request(
@@ -75,49 +89,53 @@ def sync_detailed(
 
 
 def sync(
-    application_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> list["AppRevision"] | None:
-    """List all application revisions
+) -> Union[Error, Volume] | None:
+    """Get volume by external ID
+
+     Returns an active volume matching the given external ID. If no active volume is found, returns 404.
 
     Args:
-        application_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['AppRevision']
+        Union[Error, Volume]
     """
 
     return sync_detailed(
-        application_name=application_name,
+        external_id=external_id,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    application_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> Response[list["AppRevision"]]:
-    """List all application revisions
+) -> Response[Union[Error, Volume]]:
+    """Get volume by external ID
+
+     Returns an active volume matching the given external ID. If no active volume is found, returns 404.
 
     Args:
-        application_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['AppRevision']]
+        Response[Union[Error, Volume]]
     """
 
     kwargs = _get_kwargs(
-        application_name=application_name,
+        external_id=external_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -126,26 +144,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    application_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> list["AppRevision"] | None:
-    """List all application revisions
+) -> Union[Error, Volume] | None:
+    """Get volume by external ID
+
+     Returns an active volume matching the given external ID. If no active volume is found, returns 404.
 
     Args:
-        application_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['AppRevision']
+        Union[Error, Volume]
     """
 
     return (
         await asyncio_detailed(
-            application_name=application_name,
+            external_id=external_id,
             client=client,
         )
     ).parsed

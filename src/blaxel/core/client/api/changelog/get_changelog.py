@@ -5,29 +5,22 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.app_revision import AppRevision
+from ...models.changelog_response import ChangelogResponse
 from ...types import Response
 
 
-def _get_kwargs(
-    application_name: str,
-) -> dict[str, Any]:
+def _get_kwargs() -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/applications/{application_name}/revisions",
+        "url": "/changelog",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["AppRevision"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> ChangelogResponse | None:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = AppRevision.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = ChangelogResponse.from_dict(response.json())
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -36,7 +29,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["AppRev
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["AppRevision"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[ChangelogResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,26 +39,24 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 
 
 def sync_detailed(
-    application_name: str,
     *,
     client: Client,
-) -> Response[list["AppRevision"]]:
-    """List all application revisions
+) -> Response[ChangelogResponse]:
+    """Get latest changelog entries
 
-    Args:
-        application_name (str):
+     Returns the latest public changelog entries for the controlplane UI. The origin response is
+    intentionally not cached in memory; CloudFront caches this endpoint according to the Cache-Control
+    header.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['AppRevision']]
+        Response[ChangelogResponse]
     """
 
-    kwargs = _get_kwargs(
-        application_name=application_name,
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -75,50 +66,47 @@ def sync_detailed(
 
 
 def sync(
-    application_name: str,
     *,
     client: Client,
-) -> list["AppRevision"] | None:
-    """List all application revisions
+) -> ChangelogResponse | None:
+    """Get latest changelog entries
 
-    Args:
-        application_name (str):
+     Returns the latest public changelog entries for the controlplane UI. The origin response is
+    intentionally not cached in memory; CloudFront caches this endpoint according to the Cache-Control
+    header.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['AppRevision']
+        ChangelogResponse
     """
 
     return sync_detailed(
-        application_name=application_name,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    application_name: str,
     *,
     client: Client,
-) -> Response[list["AppRevision"]]:
-    """List all application revisions
+) -> Response[ChangelogResponse]:
+    """Get latest changelog entries
 
-    Args:
-        application_name (str):
+     Returns the latest public changelog entries for the controlplane UI. The origin response is
+    intentionally not cached in memory; CloudFront caches this endpoint according to the Cache-Control
+    header.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['AppRevision']]
+        Response[ChangelogResponse]
     """
 
-    kwargs = _get_kwargs(
-        application_name=application_name,
-    )
+    kwargs = _get_kwargs()
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -126,26 +114,25 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    application_name: str,
     *,
     client: Client,
-) -> list["AppRevision"] | None:
-    """List all application revisions
+) -> ChangelogResponse | None:
+    """Get latest changelog entries
 
-    Args:
-        application_name (str):
+     Returns the latest public changelog entries for the controlplane UI. The origin response is
+    intentionally not cached in memory; CloudFront caches this endpoint according to the Cache-Control
+    header.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['AppRevision']
+        ChangelogResponse
     """
 
     return (
         await asyncio_detailed(
-            application_name=application_name,
             client=client,
         )
     ).parsed

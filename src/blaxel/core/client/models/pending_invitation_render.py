@@ -24,6 +24,7 @@ class PendingInvitationRender:
             account_admin type)
         email (Union[Unset, str]): User email
         expires_at (Union[Unset, str]): The date and time when the invitation expires
+        invitation_id (Union[Unset, str]): Opaque invitation identifier
         invited_at (Union[Unset, str]): Invitation date
         invited_by (Union[Unset, PendingInvitationRenderInvitedBy]): Invited by
         role (Union[Unset, str]): ACL role
@@ -35,6 +36,7 @@ class PendingInvitationRender:
     account: Union[Unset, "PendingInvitationRenderAccount"] = UNSET
     email: Union[Unset, str] = UNSET
     expires_at: Union[Unset, str] = UNSET
+    invitation_id: Union[Unset, str] = UNSET
     invited_at: Union[Unset, str] = UNSET
     invited_by: Union[Unset, "PendingInvitationRenderInvitedBy"] = UNSET
     role: Union[Unset, str] = UNSET
@@ -58,6 +60,8 @@ class PendingInvitationRender:
         email = self.email
 
         expires_at = self.expires_at
+
+        invitation_id = self.invitation_id
 
         invited_at = self.invited_at
 
@@ -104,6 +108,8 @@ class PendingInvitationRender:
             field_dict["email"] = email
         if expires_at is not UNSET:
             field_dict["expiresAt"] = expires_at
+        if invitation_id is not UNSET:
+            field_dict["invitationId"] = invitation_id
         if invited_at is not UNSET:
             field_dict["invitedAt"] = invited_at
         if invited_by is not UNSET:
@@ -140,6 +146,8 @@ class PendingInvitationRender:
 
         expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))
 
+        invitation_id = d.pop("invitationId", d.pop("invitation_id", UNSET))
+
         invited_at = d.pop("invitedAt", d.pop("invited_at", UNSET))
 
         _invited_by = d.pop("invitedBy", d.pop("invited_by", UNSET))
@@ -171,6 +179,7 @@ class PendingInvitationRender:
             account=account,
             email=email,
             expires_at=expires_at,
+            invitation_id=invitation_id,
             invited_at=invited_at,
             invited_by=invited_by,
             role=role,

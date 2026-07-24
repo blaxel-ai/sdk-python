@@ -17,7 +17,7 @@ class SandboxScheduleExecution:
             created_at (Union[Unset, str]): Creation timestamp (read-only).
             executed_at (Union[Unset, str]): RFC 3339 time at which the command was submitted. Example:
                 2026-07-01T09:00:00Z.
-            id (Union[Unset, str]): Unique id of this execution within the schedule. Example: "00000000000000000042".
+            id (Union[Unset, str]): Unique id of this execution within the schedule. Example: 00000000000000000042.
             process_name (Union[Unset, str]): Name of the process started in the sandbox for this execution, used to look up
                 its logs. Example: training-job.
             schedule_id (Union[Unset, str]): Id of the schedule this execution belongs to. Example: schedule-0.

@@ -15,12 +15,14 @@ class LiteVolumeMetadata:
     Attributes:
         created_at (Union[Unset, str]):
         display_name (Union[Unset, str]):
+        external_id (Union[Unset, str]): Caller-owned identifier for external lookups.
         name (Union[Unset, str]):
         updated_at (Union[Unset, str]):
     """
 
     created_at: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
+    external_id: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -29,6 +31,8 @@ class LiteVolumeMetadata:
         created_at = self.created_at
 
         display_name = self.display_name
+
+        external_id = self.external_id
 
         name = self.name
 
@@ -41,6 +45,8 @@ class LiteVolumeMetadata:
             field_dict["createdAt"] = created_at
         if display_name is not UNSET:
             field_dict["displayName"] = display_name
+        if external_id is not UNSET:
+            field_dict["externalId"] = external_id
         if name is not UNSET:
             field_dict["name"] = name
         if updated_at is not UNSET:
@@ -57,6 +63,8 @@ class LiteVolumeMetadata:
 
         display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
+        external_id = d.pop("externalId", d.pop("external_id", UNSET))
+
         name = d.pop("name", UNSET)
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
@@ -64,6 +72,7 @@ class LiteVolumeMetadata:
         lite_volume_metadata = cls(
             created_at=created_at,
             display_name=display_name,
+            external_id=external_id,
             name=name,
             updated_at=updated_at,
         )

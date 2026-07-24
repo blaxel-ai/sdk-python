@@ -10,8 +10,12 @@ from .app_revision import AppRevision
 from .app_revision_configuration import AppRevisionConfiguration
 from .app_url import AppUrl
 from .application import Application
+from .application_extension import ApplicationExtension
+from .application_extensions import ApplicationExtensions
 from .application_list import ApplicationList
 from .application_spec import ApplicationSpec
+from .changelog_entry import ChangelogEntry
+from .changelog_response import ChangelogResponse
 from .check_workspace_availability_body import CheckWorkspaceAvailabilityBody
 from .cleanup_images_response_200 import CleanupImagesResponse200
 from .configuration import Configuration
@@ -31,7 +35,9 @@ from .create_workspace_service_account_body import CreateWorkspaceServiceAccount
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
+from .custom_domain_share_target import CustomDomainShareTarget
 from .custom_domain_spec import CustomDomainSpec
+from .custom_domain_spec_domain_type import CustomDomainSpecDomainType
 from .custom_domain_spec_status import CustomDomainSpecStatus
 from .custom_domain_spec_subject_alternative_names_item import (
     CustomDomainSpecSubjectAlternativeNamesItem,
@@ -228,6 +234,9 @@ from .sandbox_definition import SandboxDefinition
 from .sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 from .sandbox_error import SandboxError
 from .sandbox_error_details import SandboxErrorDetails
+from .sandbox_fork_request import SandboxForkRequest
+from .sandbox_fork_response import SandboxForkResponse
+from .sandbox_fork_response_type import SandboxForkResponseType
 from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_list import SandboxList
 from .sandbox_network import SandboxNetwork
@@ -240,8 +249,11 @@ from .sandbox_schedule_execution import SandboxScheduleExecution
 from .sandbox_schedule_execution_list import SandboxScheduleExecutionList
 from .sandbox_schedule_input import SandboxScheduleInput
 from .sandbox_schedule_input_env import SandboxScheduleInputEnv
+from .sandbox_snapshot import SandboxSnapshot
+from .sandbox_snapshot_request import SandboxSnapshotRequest
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
+from .share_custom_domain_body import ShareCustomDomainBody
 from .share_image_body import ShareImageBody
 from .sso_domain import SSODomain
 from .sso_domain_metadata import SSODomainMetadata
@@ -294,11 +306,15 @@ __all__ = (
     "AgentSpec",
     "ApiKey",
     "Application",
+    "ApplicationExtension",
+    "ApplicationExtensions",
     "ApplicationList",
     "ApplicationSpec",
     "AppRevision",
     "AppRevisionConfiguration",
     "AppUrl",
+    "ChangelogEntry",
+    "ChangelogResponse",
     "CheckWorkspaceAvailabilityBody",
     "CleanupImagesResponse200",
     "Configuration",
@@ -318,7 +334,9 @@ __all__ = (
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
     "CustomDomainMetadata",
+    "CustomDomainShareTarget",
     "CustomDomainSpec",
+    "CustomDomainSpecDomainType",
     "CustomDomainSpecStatus",
     "CustomDomainSpecSubjectAlternativeNamesItem",
     "CustomDomainSpecTxtRecords",
@@ -509,6 +527,9 @@ __all__ = (
     "SandboxDefinitionCategoriesItem",
     "SandboxError",
     "SandboxErrorDetails",
+    "SandboxForkRequest",
+    "SandboxForkResponse",
+    "SandboxForkResponseType",
     "SandboxLifecycle",
     "SandboxList",
     "SandboxNetwork",
@@ -521,8 +542,11 @@ __all__ = (
     "SandboxScheduleExecutionList",
     "SandboxScheduleInput",
     "SandboxScheduleInputEnv",
+    "SandboxSnapshot",
+    "SandboxSnapshotRequest",
     "SandboxSpec",
     "SandboxState",
+    "ShareCustomDomainBody",
     "ShareImageBody",
     "SSODomain",
     "SSODomainMetadata",
