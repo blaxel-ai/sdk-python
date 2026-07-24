@@ -8,8 +8,12 @@ if TYPE_CHECKING:
     import httpx
 
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
+from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
+from ...client.api.compute.delete_sandbox_snapshot import asyncio as delete_sandbox_snapshot
+from ...client.api.compute.fork_sandbox import asyncio as fork_sandbox
 from ...client.api.compute.get_sandbox import asyncio as get_sandbox
+from ...client.api.compute.list_sandbox_snapshots import asyncio as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
@@ -17,9 +21,13 @@ from ...client.models import (
     Metadata,
     MetadataLabels,
     Sandbox,
+    SandboxForkRequest,
+    SandboxForkResponse,
     SandboxLifecycle,
     SandboxRuntime,
     SandboxRuntimeExtraArgs,
+    SandboxSnapshot,
+    SandboxSnapshotRequest,
     SandboxSpec,
 )
 from ...client.models import (
@@ -86,6 +94,23 @@ def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
 
 def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
     return error.status_code == 404 or error.code in {404, "404"}
+
+
+def _unwrap_response(response, action: str, *, allow_none: bool = False):
+    """Raise a SandboxAPIError for error/empty responses, else return the payload.
+
+    Shared by the fork/snapshot helpers, which call generated control-plane API
+    functions that return ``Union[Error, T] | None``. Void endpoints (e.g. delete,
+    which returns 204 No Content) legitimately return ``None`` — pass
+    ``allow_none=True`` for those.
+    """
+    if isinstance(response, Error):
+        status_code = response.code if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise SandboxAPIError(message, status_code=status_code, code=response.error)
+    if response is None and not allow_none:
+        raise SandboxAPIError(f"Failed to {action}")
+    return response
 
 
 def _sandbox_name(
@@ -208,6 +233,83 @@ class SandboxInstance:
             **kwargs: Additional arguments forwarded to httpx (e.g. headers, content)
         """
         return await self.network.fetch(port, path, method, **kwargs)
+
+    async def snapshot(self, name: str | None = None) -> SandboxSnapshot:
+        """Create a point-in-time snapshot of this sandbox.
+
+        Snapshots capture the sandbox state and can be forked into new sandboxes
+        or applications.
+
+        Args:
+            name: Optional human-readable name for the snapshot.
+        """
+        body = SandboxSnapshotRequest(name=name) if name is not None else SandboxSnapshotRequest()
+        response = await create_sandbox_snapshot(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "create snapshot")
+
+    async def list_snapshots(self) -> list[SandboxSnapshot]:
+        """List the snapshots of this sandbox."""
+        response = await list_sandbox_snapshots(
+            self.metadata.name,
+            client=client,
+        )
+        return _unwrap_response(response, "list snapshots")
+
+    async def delete_snapshot(self, snapshot_id: str) -> None:
+        """Delete a snapshot of this sandbox by its ID."""
+        response = await delete_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        _unwrap_response(response, "delete snapshot", allow_none=True)
+
+    async def fork(
+        self,
+        target_name: str,
+        *,
+        target_type: str = "sandbox",
+        port: int | None = None,
+        traffic: int | None = None,
+        custom_domain: str | None = None,
+        prefix: str | None = None,
+        snapshot_id: str | None = None,
+    ) -> SandboxForkResponse:
+        """Fork this sandbox into a new sandbox or application.
+
+        Pass ``snapshot_id`` to fork from a specific snapshot (create a sandbox
+        from a snapshot) instead of the sandbox's live state.
+
+        Args:
+            target_name: Name of the sandbox/application to create.
+            target_type: Resource type to fork into ("sandbox" or "application").
+            port: Port to expose from the fork.
+            traffic: Canary traffic percentage (0-100) for an application fork.
+            custom_domain: Custom domain for an application fork.
+            prefix: URL prefix for an application fork.
+            snapshot_id: Snapshot ID to fork from.
+        """
+        body = SandboxForkRequest(target_name=target_name, target_type=target_type)
+        if port is not None:
+            body.port = port
+        if traffic is not None:
+            body.traffic = traffic
+        if custom_domain is not None:
+            body.custom_domain = custom_domain
+        if prefix is not None:
+            body.prefix = prefix
+        if snapshot_id is not None:
+            body.snapshot_id = snapshot_id
+        response = await fork_sandbox(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "fork sandbox")
 
     async def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SandboxInstance":
         logger.warning(
