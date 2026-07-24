@@ -16,10 +16,48 @@ from ..client.api.applications.update_application import asyncio as update_appli
 from ..client.api.applications.update_application import sync as update_application_sync
 from ..client.client import client
 from ..client.errors import UnexpectedStatus
-from ..client.models import Application, ApplicationSpec, Metadata
+from ..client.models import Application, ApplicationSpec, Env, Metadata
 from ..client.models.error import Error
 from ..client.types import UNSET
 from ..common.settings import settings
+
+# Spec-level fields that default to UNSET on the generated model, so "is set"
+# is a reliable signal of whether the caller provided them. Booleans like
+# `enabled`/`proxy` default to concrete values (True/False), not UNSET, so they
+# cannot be merged this way and are resolved explicitly by the caller instead.
+_SPEC_MERGEABLE_FIELDS = (
+    "region",
+    "image",
+    "memory",
+    "port",
+    "envs",
+    "urls",
+    "revision",
+    "extensions",
+)
+
+
+def _is_set(value) -> bool:
+    return value is not None and value is not UNSET
+
+
+def _merge_application_spec(new_spec, current_spec, *, enabled, proxy) -> ApplicationSpec:
+    """Merge a new spec over the current one, preserving fields the caller did
+    not explicitly set (so an update never silently drops image/memory/envs/...).
+    `enabled`/`proxy` are passed in already resolved because their generated
+    defaults are indistinguishable from an explicit value."""
+    merged = {"enabled": enabled}
+    if proxy is not None:
+        merged["proxy"] = proxy
+    for attr in _SPEC_MERGEABLE_FIELDS:
+        new_val = getattr(new_spec, attr, UNSET) if new_spec is not None else UNSET
+        if _is_set(new_val):
+            merged[attr] = new_val
+            continue
+        cur_val = getattr(current_spec, attr, UNSET) if current_spec is not None else UNSET
+        if _is_set(cur_val):
+            merged[attr] = cur_val
+    return ApplicationSpec(**merged)
 
 
 class ApplicationAPIError(Exception):
@@ -114,6 +152,9 @@ class ApplicationCreateConfiguration:
         image: str | None = None,
         region: str | None = None,
         enabled: bool | None = None,
+        memory: int | None = None,
+        port: int | None = None,
+        envs: List["Env"] | None = None,
     ):
         self.name = name
         self.display_name = display_name
@@ -121,6 +162,9 @@ class ApplicationCreateConfiguration:
         self.image = image
         self.region = region
         self.enabled = enabled
+        self.memory = memory
+        self.port = port
+        self.envs = envs
 
     @classmethod
     def from_dict(cls, data: Dict[str, any]) -> "ApplicationCreateConfiguration":
@@ -131,7 +175,44 @@ class ApplicationCreateConfiguration:
             image=data.get("image"),
             region=data.get("region"),
             enabled=data.get("enabled"),
+            memory=data.get("memory"),
+            port=data.get("port"),
+            envs=data.get("envs"),
         )
+
+    def to_spec(self) -> ApplicationSpec:
+        """Build an ApplicationSpec from this configuration, setting only the
+        fields the caller actually provided (so unset fields stay UNSET)."""
+        spec_kwargs = {
+            "region": self.region or settings.region or UNSET,
+            "enabled": self.enabled if self.enabled is not None else True,
+        }
+        if self.image is not None:
+            spec_kwargs["image"] = self.image
+        if self.memory is not None:
+            spec_kwargs["memory"] = self.memory
+        if self.port is not None:
+            spec_kwargs["port"] = self.port
+        if self.envs is not None:
+            spec_kwargs["envs"] = self.envs
+        return ApplicationSpec(**spec_kwargs)
+
+    def to_update_spec(self) -> ApplicationSpec:
+        """Build a spec carrying only the compute fields explicitly provided,
+        for use with `_merge_application_spec` (no create-time defaults so unset
+        fields fall back to the current application on update)."""
+        spec_kwargs = {}
+        if self.region is not None:
+            spec_kwargs["region"] = self.region
+        if self.image is not None:
+            spec_kwargs["image"] = self.image
+        if self.memory is not None:
+            spec_kwargs["memory"] = self.memory
+        if self.port is not None:
+            spec_kwargs["port"] = self.port
+        if self.envs is not None:
+            spec_kwargs["envs"] = self.envs
+        return ApplicationSpec(**spec_kwargs)
 
 
 class ApplicationInstance:
@@ -179,10 +260,7 @@ class ApplicationInstance:
                     display_name=config.display_name or config.name or default_name,
                     labels=config.labels,
                 ),
-                spec=ApplicationSpec(
-                    region=config.region or settings.region or UNSET,
-                    enabled=config.enabled if config.enabled is not None else True,
-                ),
+                spec=config.to_spec(),
             )
         elif isinstance(config, dict):
             app_config = ApplicationCreateConfiguration.from_dict(config)
@@ -192,10 +270,7 @@ class ApplicationInstance:
                     display_name=app_config.display_name or app_config.name or default_name,
                     labels=app_config.labels,
                 ),
-                spec=ApplicationSpec(
-                    region=app_config.region or settings.region or UNSET,
-                    enabled=app_config.enabled if app_config.enabled is not None else True,
-                ),
+                spec=app_config.to_spec(),
             )
         else:
             raise ValueError(
@@ -329,10 +404,7 @@ class SyncApplicationInstance:
                     display_name=config.display_name or config.name or default_name,
                     labels=config.labels,
                 ),
-                spec=ApplicationSpec(
-                    region=config.region or settings.region or UNSET,
-                    enabled=config.enabled if config.enabled is not None else True,
-                ),
+                spec=config.to_spec(),
             )
         elif isinstance(config, dict):
             app_config = ApplicationCreateConfiguration.from_dict(config)
@@ -342,10 +414,7 @@ class SyncApplicationInstance:
                     display_name=app_config.display_name or app_config.name or default_name,
                     labels=app_config.labels,
                 ),
-                spec=ApplicationSpec(
-                    region=app_config.region or settings.region or UNSET,
-                    enabled=app_config.enabled if app_config.enabled is not None else True,
-                ),
+                spec=app_config.to_spec(),
             )
         else:
             raise ValueError(
@@ -464,16 +533,29 @@ async def _update_application_by_name(
     if isinstance(updates, Application):
         new_metadata = updates.metadata
         new_spec = updates.spec
+        resolved_enabled = (
+            new_spec.enabled
+            if new_spec is not None and new_spec.enabled is not None
+            else (current_app.spec.enabled if current_app.spec else True)
+        )
+        resolved_proxy = (
+            new_spec.proxy
+            if new_spec is not None
+            else (current_app.spec.proxy if current_app.spec else None)
+        )
     elif isinstance(updates, ApplicationCreateConfiguration):
         new_metadata = Metadata(
             name=current_app.metadata.name if current_app.metadata else application_name,
             display_name=updates.display_name,
             labels=updates.labels,
         )
-        new_spec = ApplicationSpec(
-            region=updates.region,
-            enabled=updates.enabled,
+        new_spec = updates.to_update_spec()
+        resolved_enabled = (
+            updates.enabled
+            if updates.enabled is not None
+            else (current_app.spec.enabled if current_app.spec else True)
         )
+        resolved_proxy = current_app.spec.proxy if current_app.spec else None
     elif isinstance(updates, dict):
         config = ApplicationCreateConfiguration.from_dict(updates)
         new_metadata = Metadata(
@@ -481,10 +563,13 @@ async def _update_application_by_name(
             display_name=config.display_name,
             labels=config.labels,
         )
-        new_spec = ApplicationSpec(
-            region=config.region,
-            enabled=config.enabled,
+        new_spec = config.to_update_spec()
+        resolved_enabled = (
+            config.enabled
+            if config.enabled is not None
+            else (current_app.spec.enabled if current_app.spec else True)
         )
+        resolved_proxy = current_app.spec.proxy if current_app.spec else None
     else:
         raise ValueError(
             f"Invalid updates type: {type(updates)}. Expected ApplicationCreateConfiguration, Application, or dict."
@@ -500,13 +585,11 @@ async def _update_application_by_name(
         else (current_app.metadata.labels if current_app.metadata else None),
     )
 
-    merged_spec = ApplicationSpec(
-        region=new_spec.region
-        if new_spec and new_spec.region
-        else (current_app.spec.region if current_app.spec else None),
-        enabled=new_spec.enabled
-        if new_spec and new_spec.enabled is not None
-        else (current_app.spec.enabled if current_app.spec else True),
+    merged_spec = _merge_application_spec(
+        new_spec,
+        current_app.spec,
+        enabled=resolved_enabled,
+        proxy=resolved_proxy,
     )
 
     body = Application(
@@ -534,16 +617,29 @@ def _update_application_by_name_sync(
     if isinstance(updates, Application):
         new_metadata = updates.metadata
         new_spec = updates.spec
+        resolved_enabled = (
+            new_spec.enabled
+            if new_spec is not None and new_spec.enabled is not None
+            else (current_app.spec.enabled if current_app.spec else True)
+        )
+        resolved_proxy = (
+            new_spec.proxy
+            if new_spec is not None
+            else (current_app.spec.proxy if current_app.spec else None)
+        )
     elif isinstance(updates, ApplicationCreateConfiguration):
         new_metadata = Metadata(
             name=current_app.metadata.name if current_app.metadata else application_name,
             display_name=updates.display_name,
             labels=updates.labels,
         )
-        new_spec = ApplicationSpec(
-            region=updates.region,
-            enabled=updates.enabled,
+        new_spec = updates.to_update_spec()
+        resolved_enabled = (
+            updates.enabled
+            if updates.enabled is not None
+            else (current_app.spec.enabled if current_app.spec else True)
         )
+        resolved_proxy = current_app.spec.proxy if current_app.spec else None
     elif isinstance(updates, dict):
         config = ApplicationCreateConfiguration.from_dict(updates)
         new_metadata = Metadata(
@@ -551,10 +647,13 @@ def _update_application_by_name_sync(
             display_name=config.display_name,
             labels=config.labels,
         )
-        new_spec = ApplicationSpec(
-            region=config.region,
-            enabled=config.enabled,
+        new_spec = config.to_update_spec()
+        resolved_enabled = (
+            config.enabled
+            if config.enabled is not None
+            else (current_app.spec.enabled if current_app.spec else True)
         )
+        resolved_proxy = current_app.spec.proxy if current_app.spec else None
     else:
         raise ValueError(
             f"Invalid updates type: {type(updates)}. Expected ApplicationCreateConfiguration, Application, or dict."
@@ -570,13 +669,11 @@ def _update_application_by_name_sync(
         else (current_app.metadata.labels if current_app.metadata else None),
     )
 
-    merged_spec = ApplicationSpec(
-        region=new_spec.region
-        if new_spec and new_spec.region
-        else (current_app.spec.region if current_app.spec else None),
-        enabled=new_spec.enabled
-        if new_spec and new_spec.enabled is not None
-        else (current_app.spec.enabled if current_app.spec else True),
+    merged_spec = _merge_application_spec(
+        new_spec,
+        current_app.spec,
+        enabled=resolved_enabled,
+        proxy=resolved_proxy,
     )
 
     body = Application(
