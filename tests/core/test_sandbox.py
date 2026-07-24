@@ -834,3 +834,97 @@ def test_sync_create_sends_name_when_provided():
 
         body = mock_create_sandbox.call_args.kwargs["body"]
         assert _body_metadata_name(body) == "mysbx"
+
+
+@pytest.mark.asyncio
+async def test_fork_defaults_to_sandbox_target():
+    sandbox = sandbox_instance("my-sandbox")
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.fork_sandbox", new_callable=AsyncMock
+    ) as mock_fork:
+        mock_fork.return_value = MagicMock(name="my-sandbox-copy", type="sandbox")
+
+        await sandbox.fork("my-sandbox-copy")
+
+        assert mock_fork.call_args.args[0] == "my-sandbox"
+        body = mock_fork.call_args.kwargs["body"]
+        assert body.target_name == "my-sandbox-copy"
+        assert body.target_type == "sandbox"
+
+
+@pytest.mark.asyncio
+async def test_fork_forwards_application_options_and_snapshot():
+    sandbox = sandbox_instance("my-sandbox")
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.fork_sandbox", new_callable=AsyncMock
+    ) as mock_fork:
+        mock_fork.return_value = MagicMock()
+
+        await sandbox.fork(
+            "my-app",
+            target_type="application",
+            traffic=100,
+            port=8080,
+            custom_domain="app.example.com",
+            snapshot_id="snap_abc123",
+        )
+
+        body = mock_fork.call_args.kwargs["body"]
+        assert body.target_name == "my-app"
+        assert body.target_type == "application"
+        assert body.traffic == 100
+        assert body.port == 8080
+        assert body.custom_domain == "app.example.com"
+        assert body.snapshot_id == "snap_abc123"
+
+
+@pytest.mark.asyncio
+async def test_snapshot_sends_optional_name():
+    sandbox = sandbox_instance("my-sandbox")
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.create_sandbox_snapshot", new_callable=AsyncMock
+    ) as mock_snapshot:
+        mock_snapshot.return_value = MagicMock()
+
+        await sandbox.snapshot("before")
+
+        assert mock_snapshot.call_args.args[0] == "my-sandbox"
+        assert mock_snapshot.call_args.kwargs["body"].name == "before"
+
+
+@pytest.mark.asyncio
+async def test_fork_raises_on_error_response():
+    from blaxel.core.client.models.error import Error
+
+    sandbox = sandbox_instance("my-sandbox")
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.fork_sandbox", new_callable=AsyncMock
+    ) as mock_fork:
+        mock_fork.return_value = Error(error="boom", code=400)
+
+        with pytest.raises(SandboxAPIError):
+            await sandbox.fork("my-sandbox-copy")
+
+
+def test_sync_fork_and_snapshot_helpers():
+    sandbox = sandbox_instance("my-sandbox", cls=SyncSandboxInstance)
+
+    with (
+        patch("blaxel.core.sandbox.sync.sandbox.fork_sandbox") as mock_fork,
+        patch("blaxel.core.sandbox.sync.sandbox.create_sandbox_snapshot") as mock_snapshot,
+    ):
+        mock_fork.return_value = MagicMock()
+        mock_snapshot.return_value = MagicMock()
+
+        sandbox.fork("my-sandbox-copy", snapshot_id="snap_abc123")
+        sandbox.snapshot("before")
+
+        fork_body = mock_fork.call_args.kwargs["body"]
+        assert fork_body.target_name == "my-sandbox-copy"
+        assert fork_body.target_type == "sandbox"
+        assert fork_body.snapshot_id == "snap_abc123"
+        assert mock_snapshot.call_args.kwargs["body"].name == "before"
