@@ -75,6 +75,26 @@ def test_merge_overrides_when_new_value_provided():
     assert merged.image == "reg/img:1"
 
 
+def test_from_dict_converts_raw_env_dicts_to_env_and_serializes():
+    cfg = ApplicationCreateConfiguration.from_dict(
+        {
+            "name": "my-app",
+            "image": "reg/img:1",
+            "envs": [
+                {"name": "NODE_ENV", "value": "production"},
+                {"name": "API_KEY", "value": "secret", "secret": True},
+            ],
+        }
+    )
+    assert all(isinstance(e, Env) for e in cfg.envs)
+    # to_dict() must not raise: raw dicts would fail because they lack .to_dict()
+    spec_dict = cfg.to_spec().to_dict()
+    assert spec_dict["envs"] == [
+        {"name": "NODE_ENV", "value": "production"},
+        {"name": "API_KEY", "value": "secret", "secret": True},
+    ]
+
+
 def test_merge_respects_explicit_disabled():
     current = ApplicationSpec(image="reg/img:1", enabled=True)
     new = ApplicationCreateConfiguration(enabled=False).to_update_spec()

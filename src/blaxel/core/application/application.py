@@ -168,6 +168,12 @@ class ApplicationCreateConfiguration:
 
     @classmethod
     def from_dict(cls, data: Dict[str, any]) -> "ApplicationCreateConfiguration":
+        raw_envs = data.get("envs")
+        envs = (
+            [e if isinstance(e, Env) else Env.from_dict(e) for e in raw_envs]
+            if raw_envs is not None
+            else None
+        )
         return cls(
             name=data.get("name"),
             display_name=data.get("display_name"),
@@ -177,7 +183,7 @@ class ApplicationCreateConfiguration:
             enabled=data.get("enabled"),
             memory=data.get("memory"),
             port=data.get("port"),
-            envs=data.get("envs"),
+            envs=envs,
         )
 
     def to_spec(self) -> ApplicationSpec:
