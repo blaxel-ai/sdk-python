@@ -78,7 +78,7 @@ llamaindex = [
 ]
 
 # Pydantic module
-pydantic = ["pydantic-ai>=1.0.8"]
+pydantic = ["pydantic-ai>=2.13.0"]
 
 # Google ADK module
 googleadk = ["google-adk>=1.4.0", "litellm>=1.63.11", "orjson>=3.11.6,<4.0"]
@@ -154,5 +154,5 @@ test = [
   "aiohttp>=3.11.16",
   "flask>=3.0.0",
   "requests>=2.32.0",
-  "pydantic-ai>=0.0.48",
+  "pydantic-ai>=2.13.0",
 ]

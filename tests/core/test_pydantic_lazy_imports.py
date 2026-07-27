@@ -40,7 +40,7 @@ class TestPydanticLazyImports:
                 "pydantic_ai.models.cohere": None,
                 "pydantic_ai.models.mistral": None,
                 "pydantic_ai.models.anthropic": None,
-                "pydantic_ai.models.gemini": None,
+                "pydantic_ai.models.google": None,
                 "pydantic_ai.models.openai": None,
                 "pydantic_ai.providers.cohere": None,
                 "pydantic_ai.providers.mistral": None,

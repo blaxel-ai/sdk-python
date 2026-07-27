@@ -123,9 +123,9 @@ class TokenRefreshingModel(Model):
                 ),
             )
         elif type == "gemini":
-            from pydantic_ai.models.gemini import GeminiModel
+            from pydantic_ai.models.google import GoogleModel
 
-            return GeminiModel(
+            return GoogleModel(
                 model_name=model,
                 provider=GoogleGLAProvider(
                     api_key=settings.auth.token,
