@@ -47,3 +47,20 @@ def test_sync_delete_raises_on_error_response():
 
         with pytest.raises(VolumeAPIError, match="volume not found"):
             SyncVolumeInstance.delete("my-volume")
+
+
+@pytest.mark.asyncio
+async def test_delete_raises_on_empty_response():
+    with patch("blaxel.core.volume.volume.delete_volume", new_callable=AsyncMock) as mock_delete:
+        mock_delete.return_value = None
+
+        with pytest.raises(VolumeAPIError, match="Failed to delete volume my-volume"):
+            await VolumeInstance.delete("my-volume")
+
+
+def test_sync_delete_raises_on_empty_response():
+    with patch("blaxel.core.volume.volume.delete_volume_sync") as mock_delete:
+        mock_delete.return_value = None
+
+        with pytest.raises(VolumeAPIError, match="Failed to delete volume my-volume"):
+            SyncVolumeInstance.delete("my-volume")

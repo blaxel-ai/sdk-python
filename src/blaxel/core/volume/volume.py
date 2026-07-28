@@ -529,6 +529,8 @@ async def _delete_volume_by_name(volume_name: str) -> Volume:
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
         raise VolumeAPIError(message, status_code=status_code, code=response.error)
+    if response is None:
+        raise VolumeAPIError(f"Failed to delete volume {volume_name}")
     return response
 
 
@@ -539,6 +541,8 @@ def _delete_volume_by_name_sync(volume_name: str) -> Volume:
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
         raise VolumeAPIError(message, status_code=status_code, code=response.error)
+    if response is None:
+        raise VolumeAPIError(f"Failed to delete volume {volume_name}")
     return response
 
 
