@@ -459,7 +459,7 @@ class SyncSandboxInstance:
             client=client,
             body=updated_sandbox,
         )
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox metadata"))
 
     @classmethod
     def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SyncSandboxInstance":
@@ -491,7 +491,7 @@ class SyncSandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox TTL"))
 
     @classmethod
     def update_lifecycle(
@@ -523,7 +523,7 @@ class SyncSandboxInstance:
             body=body,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox lifecycle"))
 
     @classmethod
     def update_network(
@@ -559,7 +559,7 @@ class SyncSandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox network"))
 
     @classmethod
     def create_if_not_exists(
@@ -655,7 +655,7 @@ def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         sandbox_name,
         client=client,
     )
-    return response
+    return _unwrap_response(response, f"delete sandbox {sandbox_name}")
 
 
 # Assign the delete descriptor to support both class-level and instance-level calls

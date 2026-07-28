@@ -99,10 +99,12 @@ def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
 def _unwrap_response(response, action: str, *, allow_none: bool = False):
     """Raise a SandboxAPIError for error/empty responses, else return the payload.
 
-    Shared by the fork/snapshot helpers, which call generated control-plane API
-    functions that return ``Union[Error, T] | None``. Void endpoints (e.g. delete,
-    which returns 204 No Content) legitimately return ``None`` — pass
-    ``allow_none=True`` for those.
+    Every generated control-plane API function returns ``Union[Error, T] | None``,
+    so an error status is a *return value*, not an exception. Callers must route
+    the response through here; handing it straight to ``cls(...)`` builds an
+    instance wrapping an ``Error`` and turns a failed write into a silent no-op.
+    Void endpoints (e.g. delete, which returns 204 No Content) legitimately return
+    ``None`` — pass ``allow_none=True`` for those.
     """
     if isinstance(response, Error):
         status_code = response.code if response.code is not UNSET else None
@@ -587,7 +589,7 @@ class SandboxInstance:
         )
 
         # Return new instance with updated sandbox
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox metadata"))
 
     @classmethod
     async def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SandboxInstance":
@@ -619,7 +621,7 @@ class SandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox TTL"))
 
     @classmethod
     async def update_lifecycle(
@@ -651,7 +653,7 @@ class SandboxInstance:
             body=body,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox lifecycle"))
 
     @classmethod
     async def update_network(
@@ -687,7 +689,7 @@ class SandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox network"))
 
     @classmethod
     async def create_if_not_exists(
@@ -788,9 +790,7 @@ async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         sandbox_name,
         client=client,
     )
-    if response is None:
-        raise ValueError(f"Sandbox {sandbox_name} not found")
-    return response
+    return _unwrap_response(response, f"delete sandbox {sandbox_name}")
 
 
 # Assign the delete descriptor to support both class-level and instance-level calls
