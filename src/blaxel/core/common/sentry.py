@@ -523,7 +523,10 @@ def _blaxel_excepthook(exc_type, exc_value, exc_tb) -> None:
         _capture_unhandled_exception_in_background(exc_value, "excepthook")
     finally:
         if _original_excepthook is not None and _original_excepthook is not _blaxel_excepthook:
-            _original_excepthook(exc_type, exc_value, exc_tb)
+            try:
+                _original_excepthook(exc_type, exc_value, exc_tb)
+            except Exception:
+                pass
 
 
 def _blaxel_threading_excepthook(args: Any) -> None:
@@ -535,7 +538,10 @@ def _blaxel_threading_excepthook(args: Any) -> None:
             _original_threading_excepthook is not None
             and _original_threading_excepthook is not _blaxel_threading_excepthook
         ):
-            _original_threading_excepthook(args)
+            try:
+                _original_threading_excepthook(args)
+            except Exception:
+                pass
 
 
 def _blaxel_unraisablehook(args: Any) -> None:
@@ -548,7 +554,10 @@ def _blaxel_unraisablehook(args: Any) -> None:
             _original_unraisablehook is not None
             and _original_unraisablehook is not _blaxel_unraisablehook
         ):
-            _original_unraisablehook(args)
+            try:
+                _original_unraisablehook(args)
+            except Exception:
+                pass
 
 
 def _blaxel_asyncio_call_exception_handler(self: asyncio.BaseEventLoop, context: Any) -> None:
@@ -561,7 +570,10 @@ def _blaxel_asyncio_call_exception_handler(self: asyncio.BaseEventLoop, context:
             and _original_asyncio_call_exception_handler
             is not _blaxel_asyncio_call_exception_handler
         ):
-            _original_asyncio_call_exception_handler(self, context)
+            try:
+                _original_asyncio_call_exception_handler(self, context)
+            except Exception:
+                pass
 
 
 def init_sentry() -> None:
