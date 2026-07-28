@@ -76,3 +76,31 @@ async def test_bl_job_representation():
     # Test string representation
     assert str(job) == "Job test-job"
     assert repr(job) == "Job test-job"
+
+
+def test_bl_start_job_success_returns_normally(monkeypatch):
+    """A task that completes must not raise."""
+    from blaxel.core.jobs import bl_start_job
+
+    monkeypatch.setattr("sys.argv", ["job"])
+    monkeypatch.delenv("BL_EXECUTION_DATA_URL", raising=False)
+
+    calls = []
+    bl_start_job.start(lambda **kwargs: calls.append(kwargs))
+    assert calls == [{}]
+
+
+def test_bl_start_job_failure_exits_nonzero(monkeypatch):
+    """A task that raises must exit the job process with a non-zero code (ENG-4261)."""
+    from blaxel.core.jobs import bl_start_job
+
+    monkeypatch.setattr("sys.argv", ["job"])
+    monkeypatch.delenv("BL_EXECUTION_DATA_URL", raising=False)
+
+    def boom(**kwargs):
+        raise RuntimeError("task failed")
+
+    with pytest.raises(SystemExit) as excinfo:
+        bl_start_job.start(boom)
+    assert excinfo.value.code == 1
+    assert isinstance(excinfo.value.__cause__, RuntimeError)
