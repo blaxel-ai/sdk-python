@@ -14,7 +14,12 @@ from blaxel.core.sandbox import (
     SyncSandboxInstance,
 )
 from blaxel.core.sandbox.default.action import SandboxAction
-from blaxel.core.sandbox.types import ResponseError, SandboxConfiguration
+from blaxel.core.sandbox.types import (
+    ResponseError,
+    SandboxConfiguration,
+    SandboxUpdateMetadata,
+    SandboxUpdateNetwork,
+)
 
 
 def sandbox_instance(name: str, status: str = "DEPLOYED", cls=SandboxInstance):
@@ -943,3 +948,142 @@ def test_sync_fork_and_snapshot_helpers():
         assert fork_body.target_type == "sandbox"
         assert fork_body.snapshot_id == "snap_abc123"
         assert mock_snapshot.call_args.kwargs["body"].name == "before"
+
+
+# --- Control-plane errors must not be returned as if they were sandboxes -------
+#
+# Every generated API function returns ``Union[Error, Sandbox] | None``. The
+# update_*/delete helpers used to hand that straight to ``cls(...)``, so a 403 or
+# 500 produced an instance wrapping an ``Error``: a failed write looked like a
+# success to any caller that did not inspect the return value, and callers that
+# did inspect it hit ``AttributeError`` far away from the real cause.
+
+
+def api_error(code=403, message="insufficient permissions"):
+    from blaxel.core.client.models.error import Error
+
+    return Error(error="FORBIDDEN", code=code, message=message)
+
+
+def updatable_sandbox(name="my-sandbox", cls=SandboxInstance):
+    """An instance the update_* helpers can round-trip through ``to_dict()``.
+
+    ``sandbox_instance`` assigns ``status`` as a plain string, which the generated
+    model cannot serialize; the update helpers re-serialize the fetched sandbox.
+    """
+    return cls(Sandbox(metadata=Metadata(name=name), spec=SandboxSpec()))
+
+
+UPDATE_CALLS = [
+    ("update_metadata", lambda: SandboxUpdateMetadata(labels={"team": "core"})),
+    ("update_ttl", lambda: "10m"),
+    ("update_lifecycle", lambda: None),
+    ("update_network", lambda: SandboxUpdateNetwork(network=None)),
+]
+
+
+@pytest.mark.parametrize("method_name,arg_factory", UPDATE_CALLS)
+@pytest.mark.asyncio
+async def test_update_helpers_raise_on_error_response(method_name, arg_factory):
+    with (
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+        patch(
+            "blaxel.core.sandbox.default.sandbox.update_sandbox", new_callable=AsyncMock
+        ) as mock_update,
+    ):
+        mock_get.return_value = updatable_sandbox()
+        mock_update.return_value = api_error()
+
+        with pytest.raises(SandboxAPIError, match="insufficient permissions") as excinfo:
+            await getattr(SandboxInstance, method_name)("my-sandbox", arg_factory())
+
+    assert excinfo.value.status_code == 403
+
+
+@pytest.mark.parametrize("method_name,arg_factory", UPDATE_CALLS)
+@pytest.mark.asyncio
+async def test_update_helpers_raise_on_empty_response(method_name, arg_factory):
+    with (
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+        patch(
+            "blaxel.core.sandbox.default.sandbox.update_sandbox", new_callable=AsyncMock
+        ) as mock_update,
+    ):
+        mock_get.return_value = updatable_sandbox()
+        mock_update.return_value = None
+
+        with pytest.raises(SandboxAPIError):
+            await getattr(SandboxInstance, method_name)("my-sandbox", arg_factory())
+
+
+@pytest.mark.asyncio
+async def test_update_helpers_still_return_instance_on_success():
+    with (
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+        patch(
+            "blaxel.core.sandbox.default.sandbox.update_sandbox", new_callable=AsyncMock
+        ) as mock_update,
+    ):
+        mock_get.return_value = updatable_sandbox()
+        mock_update.return_value = Sandbox(metadata=Metadata(name="my-sandbox"), spec=SandboxSpec())
+
+        result = await SandboxInstance.update_ttl("my-sandbox", "10m")
+
+        assert isinstance(result, SandboxInstance)
+        assert result.metadata.name == "my-sandbox"
+
+
+@pytest.mark.asyncio
+async def test_delete_raises_on_error_response():
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.delete_sandbox", new_callable=AsyncMock
+    ) as mock_delete:
+        mock_delete.return_value = api_error(code=500, message="control plane exploded")
+
+        with pytest.raises(SandboxAPIError, match="control plane exploded"):
+            await SandboxInstance.delete("my-sandbox")
+
+
+@pytest.mark.asyncio
+async def test_delete_raises_on_empty_response():
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.delete_sandbox", new_callable=AsyncMock
+    ) as mock_delete:
+        mock_delete.return_value = None
+
+        with pytest.raises(SandboxAPIError, match="delete sandbox my-sandbox"):
+            await SandboxInstance.delete("my-sandbox")
+
+
+@pytest.mark.asyncio
+async def test_instance_delete_raises_on_error_response():
+    sandbox = sandbox_instance("my-sandbox")
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.delete_sandbox", new_callable=AsyncMock
+    ) as mock_delete:
+        mock_delete.return_value = api_error(code=404, message="sandbox not found")
+
+        with pytest.raises(SandboxAPIError, match="sandbox not found"):
+            await sandbox.delete()
+
+
+@pytest.mark.parametrize("method_name,arg_factory", UPDATE_CALLS)
+def test_sync_update_helpers_raise_on_error_response(method_name, arg_factory):
+    with (
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+        patch("blaxel.core.sandbox.sync.sandbox.update_sandbox") as mock_update,
+    ):
+        mock_get.return_value = updatable_sandbox(cls=SyncSandboxInstance)
+        mock_update.return_value = api_error()
+
+        with pytest.raises(SandboxAPIError, match="insufficient permissions"):
+            getattr(SyncSandboxInstance, method_name)("my-sandbox", arg_factory())
+
+
+def test_sync_delete_raises_on_error_response():
+    with patch("blaxel.core.sandbox.sync.sandbox.delete_sandbox") as mock_delete:
+        mock_delete.return_value = api_error(code=500, message="control plane exploded")
+
+        with pytest.raises(SandboxAPIError, match="control plane exploded"):
+            SyncSandboxInstance.delete("my-sandbox")
