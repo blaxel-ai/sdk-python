@@ -40,7 +40,7 @@ telemetry = [
 
 # CrewAI module
 crewai = [
-  "crewai[litellm]>=1.9.3",
+  "crewai[litellm]>=1.15.5",
   "opentelemetry-instrumentation-crewai>=0.41.0",
 ]
 
@@ -84,7 +84,7 @@ llamaindex = [
 pydantic = ["pydantic-ai>=1.0.8"]
 
 # Google ADK module
-googleadk = ["google-adk>=1.4.0", "litellm>=1.63.11", "orjson>=3.11.6,<4.0"]
+googleadk = ["google-adk>=1.4.0", "litellm>=1.93.0", "orjson>=3.11.6,<4.0"]
 
 # Development dependencies
 dev = ["ruff", "pyright", "pytest", "uv"]
@@ -154,7 +154,7 @@ test = [
   "pytest-mock>=3.14.0",
   "pytest-xdist>=3.8.0",
   "coverage>=7.0.0",
-  "aiohttp>=3.11.16",
+  "aiohttp>=3.14.2",
   "flask>=3.0.0",
   "requests>=2.32.0",
   "pydantic-ai>=0.0.48",
