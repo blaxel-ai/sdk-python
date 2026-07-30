@@ -45,7 +45,7 @@ crewai = [
 ]
 
 # OpenAI module
-openai = ["openai-agents>=0.0.19"]
+openai = ["openai-agents>=0.18.3"]
 
 # LangGraph module
 langgraph = [
