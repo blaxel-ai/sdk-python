@@ -158,7 +158,7 @@ class TestProxyCLITools:
     async def test_curl_handles_large_response(self):
         result = await self.sandbox.process.exec(
             {
-                "command": f'curl -s -o /dev/null -w "%{{http_code}} %{{size_download}}" "https://{HTTPBIN_HOST}/drip?numbytes=10240&duration=0&delay=0"',
+                "command": f'curl -s -o /dev/null -w "%{{http_code}} %{{size_download}}" "https://{HTTPBIN_HOST}/stream-bytes/10240"',
                 "wait_for_completion": True,
             }
         )
