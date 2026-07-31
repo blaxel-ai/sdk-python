@@ -101,6 +101,8 @@ method = sys.argv[1] if len(sys.argv) > 1 else "GET"
 url = sys.argv[2] if len(sys.argv) > 2 else "https://" + __import__('os').environ.get('HTTPBIN_HOST', 'httpbun.com') + "/headers"
 headers = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
 body = sys.argv[4] if len(sys.argv) > 4 else None
+if body and "Content-Type" not in headers and "content-type" not in headers:
+    headers["Content-Type"] = "application/json"
 resp = requests.request(method, url, headers=headers, data=body, timeout=30)
 print(resp.text)
 """.strip()
