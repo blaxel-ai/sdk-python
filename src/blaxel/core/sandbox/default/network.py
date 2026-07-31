@@ -1,7 +1,10 @@
 import httpx
 
+from ..transient_retry import retry_on_transient_sandbox_read_async
 from ..types import SandboxConfiguration
 from .action import SandboxAction
+
+IDEMPOTENT_READ_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 
 class SandboxNetwork(SandboxAction):
@@ -24,4 +27,7 @@ class SandboxNetwork(SandboxAction):
         normalized_path = path if path.startswith("/") else f"/{path}"
         url = f"/port/{port}{normalized_path}"
         client = self.get_client()
-        return await client.request(method, url, **kwargs)
+        fetch_once = lambda: client.request(method, url, **kwargs)
+        if method.upper() in IDEMPOTENT_READ_METHODS:
+            return await retry_on_transient_sandbox_read_async(fetch_once)
+        return await fetch_once()

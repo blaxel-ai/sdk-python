@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 from collections.abc import Awaitable, Callable, Iterator
+from http import HTTPStatus
 from typing import TypeVar
 
 import httpx
@@ -33,6 +34,13 @@ TRANSIENT_ERROR_CODES = {
 
 DEFAULT_BASE_DELAY_SECONDS = 0.2
 DEFAULT_MAX_DELAY_SECONDS = 2.0
+TRANSIENT_SANDBOX_READ_STATUSES = {
+    425,
+    429,
+    502,
+    503,
+    504,
+}
 
 
 def _walk_error_chain(error: BaseException) -> Iterator[BaseException]:
@@ -87,6 +95,22 @@ def is_transient_reset_error(error: BaseException) -> bool:
     return any(marker in message for message in messages for marker in TRANSIENT_RESET_MARKERS)
 
 
+def _coerce_status_code(status: object) -> int | None:
+    if isinstance(status, HTTPStatus):
+        return int(status.value)
+    if isinstance(status, int):
+        return status
+    return None
+
+
+def is_transient_sandbox_read_response(response: object) -> bool:
+    """True for gateway responses that can happen while a sandbox resumes."""
+    status_code = _coerce_status_code(getattr(response, "status_code", None))
+    if status_code is None:
+        return False
+    return status_code in TRANSIENT_SANDBOX_READ_STATUSES
+
+
 def _backoff_delay_seconds(
     attempt: int,
     base_delay_seconds: float,
@@ -120,6 +144,34 @@ async def retry_on_transient_reset_async(
                 await asyncio.sleep(delay)
 
 
+async def retry_on_transient_sandbox_read_async(
+    fn: Callable[[], Awaitable[T]],
+    *,
+    retries: int | None = None,
+    base_delay_seconds: float = DEFAULT_BASE_DELAY_SECONDS,
+    max_delay_seconds: float = DEFAULT_MAX_DELAY_SECONDS,
+) -> T:
+    retry_budget = settings.sandbox_read_retries if retries is None else retries
+    attempt = 0
+    while True:
+        try:
+            result = await fn()
+        except Exception as error:
+            attempt += 1
+            if retry_budget <= 0 or attempt > retry_budget or not is_transient_reset_error(error):
+                raise
+        else:
+            if not is_transient_sandbox_read_response(result):
+                return result
+            attempt += 1
+            if retry_budget <= 0 or attempt > retry_budget:
+                return result
+
+        delay = _backoff_delay_seconds(attempt, base_delay_seconds, max_delay_seconds)
+        if delay:
+            await asyncio.sleep(delay)
+
+
 def retry_on_transient_reset(
     fn: Callable[[], T],
     *,
@@ -139,3 +191,31 @@ def retry_on_transient_reset(
             delay = _backoff_delay_seconds(attempt, base_delay_seconds, max_delay_seconds)
             if delay:
                 time.sleep(delay)
+
+
+def retry_on_transient_sandbox_read(
+    fn: Callable[[], T],
+    *,
+    retries: int | None = None,
+    base_delay_seconds: float = DEFAULT_BASE_DELAY_SECONDS,
+    max_delay_seconds: float = DEFAULT_MAX_DELAY_SECONDS,
+) -> T:
+    retry_budget = settings.sandbox_read_retries if retries is None else retries
+    attempt = 0
+    while True:
+        try:
+            result = fn()
+        except Exception as error:
+            attempt += 1
+            if retry_budget <= 0 or attempt > retry_budget or not is_transient_reset_error(error):
+                raise
+        else:
+            if not is_transient_sandbox_read_response(result):
+                return result
+            attempt += 1
+            if retry_budget <= 0 or attempt > retry_budget:
+                return result
+
+        delay = _backoff_delay_seconds(attempt, base_delay_seconds, max_delay_seconds)
+        if delay:
+            time.sleep(delay)

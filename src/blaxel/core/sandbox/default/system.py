@@ -1,8 +1,9 @@
 from ...common.settings import settings
-from ..client.api.system.get_health import asyncio as get_health
+from ..client.api.system.get_health import asyncio_detailed as get_health
 from ..client.api.system.post_upgrade import asyncio as post_upgrade
 from ..client.client import Client
 from ..client.models import ErrorResponse, HealthResponse, SuccessResponse, UpgradeRequest
+from ..transient_retry import retry_on_transient_sandbox_read_async
 from ..types import SandboxConfiguration
 from .action import SandboxAction
 
@@ -57,13 +58,18 @@ class SandboxSystem(SandboxAction):
         Returns:
             HealthResponse with system status information
         """
-        client = Client(
-            base_url=self.url,
-            headers={**settings.headers, **self.sandbox_config.headers},
-        )
 
-        async with client:
-            response = await get_health(client=client)
-            if response is None:
-                raise Exception("Failed to get health status")
-            return response
+        async def health_once():
+            client = Client(
+                base_url=self.url,
+                headers={**settings.headers, **self.sandbox_config.headers},
+                raise_on_unexpected_status=False,
+            )
+
+            async with client:
+                return await get_health(client=client)
+
+        api_response = await retry_on_transient_sandbox_read_async(health_once)
+        if api_response.parsed is None:
+            raise Exception("Failed to get health status")
+        return api_response.parsed

@@ -4,7 +4,7 @@ from ...common.settings import settings
 from ..client.api.drive.delete_drives_mount_mount_path import (
     asyncio as delete_drives_mount,
 )
-from ..client.api.drive.get_drives_mount import asyncio as get_drives_mount
+from ..client.api.drive.get_drives_mount import asyncio_detailed as get_drives_mount
 from ..client.api.drive.post_drives_mount import asyncio as post_drives_mount
 from ..client.client import Client
 from ..client.models import (
@@ -14,7 +14,7 @@ from ..client.models import (
     DriveUnmountResponse,
     ErrorResponse,
 )
-from ..transient_retry import retry_on_transient_reset_async
+from ..transient_retry import retry_on_transient_sandbox_read_async
 from ..types import SandboxConfiguration
 from .action import SandboxAction
 
@@ -102,18 +102,20 @@ class SandboxDrive(SandboxAction):
             List of DriveMountInfo for each mounted drive
         """
 
-        async def list_once() -> List[DriveMountInfo]:
+        async def list_once():
             client = Client(
                 base_url=self.url,
                 headers={**settings.headers, **self.sandbox_config.headers},
+                raise_on_unexpected_status=False,
             )
 
             async with client:
-                response = await get_drives_mount(client=client)
-                if response is None:
-                    raise Exception("Failed to list drives")
-                if isinstance(response, ErrorResponse):
-                    raise Exception(f"List drives failed: {response.error}")
-                return list(response.mounts) if response.mounts else []
+                return await get_drives_mount(client=client)
 
-        return await retry_on_transient_reset_async(list_once)
+        api_response = await retry_on_transient_sandbox_read_async(list_once)
+        response = api_response.parsed
+        if response is None:
+            raise Exception("Failed to list drives")
+        if isinstance(response, ErrorResponse):
+            raise Exception(f"List drives failed: {response.error}")
+        return list(response.mounts) if response.mounts else []

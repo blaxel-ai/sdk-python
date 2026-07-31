@@ -4,7 +4,7 @@ from ...common.settings import settings
 from ..client.api.drive.delete_drives_mount_mount_path import (
     sync as delete_drives_mount,
 )
-from ..client.api.drive.get_drives_mount import sync as get_drives_mount
+from ..client.api.drive.get_drives_mount import sync_detailed as get_drives_mount
 from ..client.api.drive.post_drives_mount import sync as post_drives_mount
 from ..client.client import Client
 from ..client.models import (
@@ -14,7 +14,7 @@ from ..client.models import (
     DriveUnmountResponse,
     ErrorResponse,
 )
-from ..transient_retry import retry_on_transient_reset
+from ..transient_retry import retry_on_transient_sandbox_read
 from ..types import SandboxConfiguration
 from .action import SyncSandboxAction
 
@@ -102,18 +102,20 @@ class SyncSandboxDrive(SyncSandboxAction):
             List of DriveMountInfo for each mounted drive
         """
 
-        def list_once() -> List[DriveMountInfo]:
+        def list_once():
             client = Client(
                 base_url=self.url,
                 headers={**settings.headers, **self.sandbox_config.headers},
+                raise_on_unexpected_status=False,
             )
 
             with client:
-                response = get_drives_mount(client=client)
-                if response is None:
-                    raise Exception("Failed to list drives")
-                if isinstance(response, ErrorResponse):
-                    raise Exception(f"List drives failed: {response.error}")
-                return list(response.mounts) if response.mounts else []
+                return get_drives_mount(client=client)
 
-        return retry_on_transient_reset(list_once)
+        api_response = retry_on_transient_sandbox_read(list_once)
+        response = api_response.parsed
+        if response is None:
+            raise Exception("Failed to list drives")
+        if isinstance(response, ErrorResponse):
+            raise Exception(f"List drives failed: {response.error}")
+        return list(response.mounts) if response.mounts else []
