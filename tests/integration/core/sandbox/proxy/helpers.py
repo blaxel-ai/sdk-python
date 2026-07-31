@@ -22,7 +22,7 @@ default_region = "eu-dub-1" if _env == "dev" else "us-was-1"
 # a different service (e.g. httpbin.org for local development).
 HTTPBIN_HOST = os.environ.get("HTTPBIN_HOST", "httpbun.com")
 # Subdomain used for wildcard (*.domain) routing tests.
-HTTPBIN_SUBDOMAIN_HOST = f"ant.{HTTPBIN_HOST}" if "httpbun.com" in HTTPBIN_HOST else f"beta.{HTTPBIN_HOST}"
+HTTPBIN_SUBDOMAIN_HOST = f"ant.{HTTPBIN_HOST}" if HTTPBIN_HOST == "httpbun.com" else f"beta.{HTTPBIN_HOST}"
 
 PROXY_HELPER_SCRIPT = r"""
 const https = require("https");
