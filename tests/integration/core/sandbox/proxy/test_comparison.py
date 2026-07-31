@@ -10,6 +10,7 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import async_sleep, default_image, default_labels, unique_name
 
 from .helpers import (
+    HTTPBIN_HOST,
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
@@ -64,7 +65,7 @@ class TestProxyComparison:
                         "proxy": {
                             "routing": [
                                 {
-                                    "destinations": ["httpbin.org"],
+                                    "destinations": [HTTPBIN_HOST],
                                     "headers": {
                                         "X-Proxy-Compare": "with-proxy",
                                         "X-Api-Key": "{{SECRET:cmp-key}}",
@@ -98,7 +99,7 @@ class TestProxyComparison:
         for _ in range(10):
             warmup = await proxy_sb.process.exec(
                 {
-                    "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                    "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers",
                     "wait_for_completion": True,
                 }
             )
@@ -119,7 +120,7 @@ class TestProxyComparison:
                 pass
 
     async def test_proxy_injects_headers_no_proxy_does_not(self):
-        cmd = "node /tmp/proxy-test.js GET https://httpbin.org/headers"
+        cmd = f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers"
         proxy_result, no_proxy_result = await asyncio.gather(
             _timed_exec(self.proxy_sandbox, cmd),
             _timed_exec(self.no_proxy_sandbox, cmd),
@@ -146,7 +147,7 @@ class TestProxyComparison:
 
     async def test_proxy_injects_body_fields_no_proxy_does_not(self):
         cmd = (
-            """node /tmp/proxy-test.js POST https://httpbin.org/post """
+            f"""node /tmp/proxy-test.js POST https://{HTTPBIN_HOST}/post """
             """'{}' '{"user_data":"original"}'"""
         )
         proxy_result, no_proxy_result = await asyncio.gather(
@@ -197,7 +198,7 @@ class TestProxyComparison:
         assert np_envs["NODE_EXTRA_CA_CERTS"] == "unset"
 
     async def test_both_sandboxes_reach_same_endpoint_successfully(self):
-        cmd = "node /tmp/proxy-test.js GET https://httpbin.org/get"
+        cmd = f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
         last_error: ValueError | None = None
         for attempt in range(3):
             proxy_result, no_proxy_result = await asyncio.gather(
@@ -224,8 +225,8 @@ class TestProxyComparison:
         else:
             raise last_error or AssertionError("comparison did not produce JSON")
 
-        assert proxy_json["url"] == "https://httpbin.org/get"
-        assert no_proxy_json["url"] == "https://httpbin.org/get"
+        assert proxy_json["url"] == f"https://{HTTPBIN_HOST}/get"
+        assert no_proxy_json["url"] == f"https://{HTTPBIN_HOST}/get"
         print(
             f"[compare GET /get] proxy: {proxy_result['duration_ms']}ms, "
             f"no-proxy: {no_proxy_result['duration_ms']}ms, "
@@ -239,10 +240,10 @@ class TestProxyComparison:
         for _ in range(iterations):
             p, np = await asyncio.gather(
                 _timed_exec(
-                    self.proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"
+                    self.proxy_sandbox, f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
                 ),
                 _timed_exec(
-                    self.no_proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"
+                    self.no_proxy_sandbox, f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
                 ),
             )
             assert p["exit_code"] == 0

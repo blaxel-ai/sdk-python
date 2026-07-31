@@ -8,7 +8,7 @@ import pytest_asyncio
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 
-from .helpers import default_region, lowercase_keys, parse_json_output
+from .helpers import HTTPBIN_HOST, default_region, lowercase_keys, parse_json_output
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -31,7 +31,7 @@ class TestProxyCLITools:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [HTTPBIN_HOST],
                                 "headers": {
                                     "X-Proxy-Test": "header-injected",
                                     "X-Api-Key": "{{SECRET:test-api-key}}",
@@ -81,7 +81,7 @@ class TestProxyCLITools:
     async def test_curl_get_with_header_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "curl -s https://httpbin.org/headers",
+                "command": f"curl -s https://{HTTPBIN_HOST}/headers",
                 "wait_for_completion": True,
             }
         )
@@ -94,7 +94,7 @@ class TestProxyCLITools:
     async def test_curl_post_with_body_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """curl -s -X POST https://httpbin.org/post -H "Content-Type: application/json" -d '{"user_data":"from-curl"}'""",
+                "command": f'curl -s -X POST https://{HTTPBIN_HOST}/post -H "Content-Type: application/json" -d \'{{"user_data":"from-curl"}}\'',
                 "wait_for_completion": True,
             }
         )
@@ -110,7 +110,7 @@ class TestProxyCLITools:
     async def test_curl_preserves_user_headers(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -H "X-User-Custom: from-curl" https://httpbin.org/headers',
+                "command": f'curl -s -H "X-User-Custom: from-curl" https://{HTTPBIN_HOST}/headers',
                 "wait_for_completion": True,
             }
         )
@@ -123,7 +123,7 @@ class TestProxyCLITools:
     async def test_curl_follows_redirects(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -L -o /dev/null -w "%{http_code}" https://httpbin.org/redirect/1',
+                "command": f'curl -s -L -o /dev/null -w "%{{http_code}}" https://{HTTPBIN_HOST}/redirect/1',
                 "wait_for_completion": True,
             }
         )
@@ -133,7 +133,7 @@ class TestProxyCLITools:
     async def test_curl_put_through_proxy(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """curl -s -X PUT https://httpbin.org/put -H "Content-Type: application/json" -d '{"update":"from-curl"}'""",
+                "command": f'curl -s -X PUT https://{HTTPBIN_HOST}/put -H "Content-Type: application/json" -d \'{{"update":"from-curl"}}\'',
                 "wait_for_completion": True,
             }
         )
@@ -145,7 +145,7 @@ class TestProxyCLITools:
     async def test_curl_delete_through_proxy(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "curl -s -X DELETE https://httpbin.org/delete",
+                "command": f"curl -s -X DELETE https://{HTTPBIN_HOST}/delete",
                 "wait_for_completion": True,
             }
         )
@@ -158,7 +158,7 @@ class TestProxyCLITools:
     async def test_curl_handles_large_response(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -o /dev/null -w "%{http_code} %{size_download}" https://httpbin.org/bytes/10240',
+                "command": f'curl -s -o /dev/null -w "%{{http_code}} %{{size_download}}" "https://{HTTPBIN_HOST}/stream-bytes/10240"',
                 "wait_for_completion": True,
             }
         )

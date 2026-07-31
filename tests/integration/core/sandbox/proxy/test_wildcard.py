@@ -7,6 +7,7 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 
 from .helpers import (
+    HTTPBIN_HOST,
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
@@ -53,7 +54,7 @@ class TestProxyWildcardDestination:
     async def test_applies_global_rule_to_httpbin(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers",
                 "wait_for_completion": True,
             }
         )

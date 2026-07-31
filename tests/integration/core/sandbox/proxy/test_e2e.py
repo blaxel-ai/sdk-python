@@ -7,6 +7,8 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 
 from .helpers import (
+    HTTPBIN_HOST,
+    HTTPBIN_SUBDOMAIN_HOST,
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
@@ -34,7 +36,7 @@ class TestProxyEndToEnd:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [HTTPBIN_HOST],
                                 "headers": {
                                     "X-Proxy-Test": "header-injected",
                                     "X-Api-Key": "{{SECRET:test-api-key}}",
@@ -46,7 +48,7 @@ class TestProxyEndToEnd:
                                 "secrets": {"test-api-key": "resolved-secret-42"},
                             },
                             {
-                                "destinations": ["*.httpbin.org"],
+                                "destinations": [f"*.{HTTPBIN_HOST}"],
                                 "headers": {"X-Wildcard-Match": "wildcard-injected"},
                             },
                         ],
@@ -64,7 +66,7 @@ class TestProxyEndToEnd:
     async def test_routes_https_requests_through_proxy_with_header_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers",
                 "wait_for_completion": True,
             }
         )
@@ -77,7 +79,7 @@ class TestProxyEndToEnd:
     async def test_routes_post_requests_through_proxy_with_body_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """node /tmp/proxy-test.js POST https://httpbin.org/post '{}' '{"user_data":"original"}'""",
+                "command": f"node /tmp/proxy-test.js POST https://{HTTPBIN_HOST}/post '{{}}' '{{\"user_data\":\"original\"}}'",
                 "wait_for_completion": True,
             }
         )
@@ -94,7 +96,7 @@ class TestProxyEndToEnd:
     async def test_preserves_user_sent_headers_when_routing(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """node /tmp/proxy-test.js GET https://httpbin.org/headers '{"X-User-Custom":"my-value"}'""",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers '{{\"X-User-Custom\":\"my-value\"}}'",
                 "wait_for_completion": True,
             }
         )
@@ -142,7 +144,7 @@ class TestProxyEndToEnd:
     async def test_wildcard_route_matches_subdomain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://beta.httpbin.org/headers",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_SUBDOMAIN_HOST}/headers",
                 "wait_for_completion": True,
             }
         )
@@ -153,7 +155,7 @@ class TestProxyEndToEnd:
     async def test_wildcard_route_does_not_match_bare_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers",
                 "wait_for_completion": True,
             }
         )

@@ -7,6 +7,7 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_labels, unique_name
 
 from .helpers import (
+    HTTPBIN_HOST,
     PYTHON_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
@@ -34,7 +35,7 @@ class TestProxyPythonRequests:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [HTTPBIN_HOST],
                                 "headers": {
                                     "X-Proxy-Test": "header-injected",
                                     "X-Api-Key": "{{SECRET:test-api-key}}",
@@ -71,7 +72,7 @@ class TestProxyPythonRequests:
     async def test_python_requests_get_with_header_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "python3 /tmp/proxy-test.py GET https://httpbin.org/headers 2>&1",
+                "command": f"python3 /tmp/proxy-test.py GET https://{HTTPBIN_HOST}/headers 2>&1",
                 "wait_for_completion": True,
             }
         )
@@ -85,7 +86,7 @@ class TestProxyPythonRequests:
     async def test_python_requests_post_with_body_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """python3 /tmp/proxy-test.py POST https://httpbin.org/post '{}' '{"user_data":"from-python"}'""",
+                "command": f"""python3 /tmp/proxy-test.py POST https://{HTTPBIN_HOST}/post '{{}}' '{{"user_data":"from-python"}}'""",
                 "wait_for_completion": True,
             }
         )
@@ -98,7 +99,7 @@ class TestProxyPythonRequests:
     async def test_python_requests_preserves_user_headers(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """python3 /tmp/proxy-test.py GET https://httpbin.org/headers '{"X-User-Custom":"from-python"}'""",
+                "command": f"""python3 /tmp/proxy-test.py GET https://{HTTPBIN_HOST}/headers '{{"X-User-Custom":"from-python"}}'""",
                 "wait_for_completion": True,
             }
         )
