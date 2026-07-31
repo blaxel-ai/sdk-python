@@ -8,7 +8,7 @@ import pytest_asyncio
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 
-from .helpers import default_region
+from .helpers import HTTPBIN_HOST, default_region
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("ANTHROPIC_API_KEY"),
@@ -51,7 +51,7 @@ class TestProxyClaudeCode:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [HTTPBIN_HOST],
                                 "headers": {"X-Agent-Test": "claude-injected"},
                             },
                         ],
@@ -100,7 +100,7 @@ class TestProxyClaudeCode:
                 "command": (
                     f'su - agent -c "{CLAUDE_ENV} && '
                     "claude --dangerously-skip-permissions -p "
-                    '\\"Run: curl -s https://httpbin.org/headers — then print the full JSON output.\\" '
+                    '\\f"Run: curl -s https://{HTTPBIN_HOST}/headers — then print the full JSON output.\\" '
                     '--output-format text" 2>&1'
                 ),
                 "wait_for_completion": True,

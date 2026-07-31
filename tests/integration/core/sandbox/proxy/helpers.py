@@ -17,11 +17,18 @@ from blaxel.core.client.types import Unset
 _env = os.environ.get("BL_ENV", "prod")
 default_region = "eu-dub-1" if _env == "dev" else "us-was-1"
 
+# Configurable HTTP echo service host. Defaults to httpbun.com which is a more
+# reliable alternative to httpbin.org. Override with HTTPBIN_HOST env var to use
+# a different service (e.g. httpbin.org for local development).
+HTTPBIN_HOST = os.environ.get("HTTPBIN_HOST", "httpbun.com")
+# Subdomain used for wildcard (*.domain) routing tests.
+HTTPBIN_SUBDOMAIN_HOST = f"ant.{HTTPBIN_HOST}" if "httpbun.com" in HTTPBIN_HOST else f"beta.{HTTPBIN_HOST}"
+
 PROXY_HELPER_SCRIPT = r"""
 const https = require("https");
 const tls = require("tls");
 const method = process.argv[2] || "GET";
-const targetUrl = process.argv[3] || "https://httpbin.org/headers";
+const targetUrl = process.argv[3] || "https://" + (process.env.HTTPBIN_HOST || "httpbun.com") + "/headers";
 const extraHeaders = process.argv[4] ? JSON.parse(process.argv[4]) : {};
 const bodyData = process.argv[5] || null;
 const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy ||
@@ -91,7 +98,7 @@ else {
 PYTHON_HELPER_SCRIPT = """
 import sys, json, requests
 method = sys.argv[1] if len(sys.argv) > 1 else "GET"
-url = sys.argv[2] if len(sys.argv) > 2 else "https://httpbin.org/headers"
+url = sys.argv[2] if len(sys.argv) > 2 else "https://" + __import__('os').environ.get('HTTPBIN_HOST', 'httpbun.com') + "/headers"
 headers = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
 body = sys.argv[4] if len(sys.argv) > 4 else None
 resp = requests.request(method, url, headers=headers, data=body, timeout=30)

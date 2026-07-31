@@ -10,6 +10,7 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 
 from .helpers import (
+    HTTPBIN_HOST,
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
@@ -41,7 +42,7 @@ class TestFirewallAllowedDomains:
                 "region": default_region,
                 "labels": default_labels,
                 "network": {
-                    "allowedDomains": ["httpbin.org"],
+                    "allowedDomains": [HTTPBIN_HOST],
                     "proxy": {"routing": []},
                 },
             }
@@ -56,12 +57,12 @@ class TestFirewallAllowedDomains:
     async def test_allows_requests_to_allowlisted_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
-        assert _logs_contain_host(result.logs, "httpbin.org")
+        assert _logs_contain_host(result.logs, HTTPBIN_HOST)
 
     async def test_blocks_requests_to_non_allowlisted_domain(self):
         result = await self.sandbox.process.exec(
@@ -105,12 +106,12 @@ class TestFirewallForbiddenDomains:
     async def test_allows_requests_to_non_forbidden_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
-        assert _logs_contain_host(result.logs, "httpbin.org")
+        assert _logs_contain_host(result.logs, HTTPBIN_HOST)
 
     async def test_blocks_requests_to_forbidden_domain(self):
         result = await self.sandbox.process.exec(
@@ -139,7 +140,7 @@ class TestFirewallCombined:
                 "region": default_region,
                 "labels": default_labels,
                 "network": {
-                    "allowedDomains": ["httpbin.org", "example.com"],
+                    "allowedDomains": [HTTPBIN_HOST, "example.com"],
                     "forbiddenDomains": ["example.com"],
                     "proxy": {"routing": []},
                 },
@@ -155,12 +156,12 @@ class TestFirewallCombined:
     async def test_allowed_domains_takes_precedence_over_forbidden_domains(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        assert HTTPBIN_HOST in (result.logs or "")
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -180,11 +181,11 @@ class TestFirewallWithProxyRouting:
                 "region": default_region,
                 "labels": default_labels,
                 "network": {
-                    "allowedDomains": ["httpbin.org"],
+                    "allowedDomains": [HTTPBIN_HOST],
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [HTTPBIN_HOST],
                                 "headers": {"X-Firewall-Test": "allowed-and-injected"},
                             },
                         ],
@@ -202,7 +203,7 @@ class TestFirewallWithProxyRouting:
     async def test_injects_headers_for_allowlisted_and_routed_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers",
                 "wait_for_completion": True,
             }
         )
@@ -239,7 +240,7 @@ class TestFirewallNoProxyBypass:
                 "labels": default_labels,
                 "network": {
                     "firewall": {"rulesets": ["proxy"]},
-                    "allowedDomains": ["httpbin.org"],
+                    "allowedDomains": [HTTPBIN_HOST],
                     "proxy": {"routing": []},
                 },
             }
@@ -248,7 +249,7 @@ class TestFirewallNoProxyBypass:
         # Warm up the proxy path so the first real assertion isn't racing setup.
         await request.cls.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get",
                 "wait_for_completion": True,
             }
         )
@@ -269,7 +270,7 @@ class TestFirewallNoProxyBypass:
             {
                 "command": (
                     "timeout 10 env -u HTTP_PROXY -u http_proxy -u HTTPS_PROXY "
-                    "-u https_proxy node /tmp/proxy-test.js GET https://httpbin.org/get"
+                    f"-u https_proxy node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
                 ),
                 "wait_for_completion": True,
             }
