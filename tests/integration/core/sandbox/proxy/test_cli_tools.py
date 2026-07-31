@@ -94,7 +94,7 @@ class TestProxyCLITools:
     async def test_curl_post_with_body_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": f"""curl -s -X POST https://{HTTPBIN_HOST}/post -H "Content-Type: application/json" -d '{"user_data":"from-curl"}'""",
+                "command": f'curl -s -X POST https://{HTTPBIN_HOST}/post -H "Content-Type: application/json" -d \'{{"user_data":"from-curl"}}\'',
                 "wait_for_completion": True,
             }
         )
@@ -110,7 +110,7 @@ class TestProxyCLITools:
     async def test_curl_preserves_user_headers(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -H "X-User-Custom: from-curl" https://{HTTPBIN_HOST}/headers',
+                "command": f'curl -s -H "X-User-Custom: from-curl" https://{HTTPBIN_HOST}/headers',
                 "wait_for_completion": True,
             }
         )
@@ -123,7 +123,7 @@ class TestProxyCLITools:
     async def test_curl_follows_redirects(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -L -o /dev/null -w "%{http_code}" https://{HTTPBIN_HOST}/redirect/1',
+                "command": f'curl -s -L -o /dev/null -w "%{{http_code}}" https://{HTTPBIN_HOST}/redirect/1',
                 "wait_for_completion": True,
             }
         )
@@ -133,7 +133,7 @@ class TestProxyCLITools:
     async def test_curl_put_through_proxy(self):
         result = await self.sandbox.process.exec(
             {
-                "command": f"""curl -s -X PUT https://{HTTPBIN_HOST}/put -H "Content-Type: application/json" -d '{"update":"from-curl"}'""",
+                "command": f'curl -s -X PUT https://{HTTPBIN_HOST}/put -H "Content-Type: application/json" -d \'{{"update":"from-curl"}}\'',
                 "wait_for_completion": True,
             }
         )
@@ -158,7 +158,7 @@ class TestProxyCLITools:
     async def test_curl_handles_large_response(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -o /dev/null -w "%{http_code} %{size_download}" https://{HTTPBIN_HOST}/bytes/10240',
+                "command": f'curl -s -o /dev/null -w "%{{http_code}} %{{size_download}}" https://{HTTPBIN_HOST}/bytes/10240',
                 "wait_for_completion": True,
             }
         )

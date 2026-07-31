@@ -120,7 +120,7 @@ class TestProxyComparison:
                 pass
 
     async def test_proxy_injects_headers_no_proxy_does_not(self):
-        cmd = "node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers"
+        cmd = f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/headers"
         proxy_result, no_proxy_result = await asyncio.gather(
             _timed_exec(self.proxy_sandbox, cmd),
             _timed_exec(self.no_proxy_sandbox, cmd),
@@ -198,7 +198,7 @@ class TestProxyComparison:
         assert np_envs["NODE_EXTRA_CA_CERTS"] == "unset"
 
     async def test_both_sandboxes_reach_same_endpoint_successfully(self):
-        cmd = "node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
+        cmd = f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
         last_error: ValueError | None = None
         for attempt in range(3):
             proxy_result, no_proxy_result = await asyncio.gather(
@@ -240,10 +240,10 @@ class TestProxyComparison:
         for _ in range(iterations):
             p, np = await asyncio.gather(
                 _timed_exec(
-                    self.proxy_sandbox, "node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
+                    self.proxy_sandbox, f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
                 ),
                 _timed_exec(
-                    self.no_proxy_sandbox, "node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
+                    self.no_proxy_sandbox, f"node /tmp/proxy-test.js GET https://{HTTPBIN_HOST}/get"
                 ),
             )
             assert p["exit_code"] == 0

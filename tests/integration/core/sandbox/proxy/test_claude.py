@@ -100,7 +100,7 @@ class TestProxyClaudeCode:
                 "command": (
                     f'su - agent -c "{CLAUDE_ENV} && '
                     "claude --dangerously-skip-permissions -p "
-                    '\\f"Run: curl -s https://{HTTPBIN_HOST}/headers — then print the full JSON output.\\" '
+                    f'\\"Run: curl -s https://{HTTPBIN_HOST}/headers — then print the full JSON output.\\" '
                     '--output-format text" 2>&1'
                 ),
                 "wait_for_completion": True,
