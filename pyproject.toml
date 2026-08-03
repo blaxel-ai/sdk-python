@@ -9,9 +9,9 @@ dependencies = [
   # Core dependencies that are always needed
   "pydantic>=2.0.0",
   "pyjwt>=2.0.0",
-  "python-dateutil>=2.8.0",
-  "pyyaml>=6.0.0",
-  "requests>=2.32.3",
+  "python-dateutil>=2.9.0",
+  "pyyaml>=6.0.3",
+  "requests>=2.34.2",
   "tomli>=2.0.2",
   "websockets<16.0.0",
   "attrs>=21.3.0",
@@ -20,7 +20,7 @@ dependencies = [
   # Cap until that surface is migrated; an unbounded range let a major bump
   # break every fresh install (CI resolves outside uv.lock via `uv pip install`).
   "mcp>=1.9.4,<2.0.0",
-  "dockerfile-parse>=2.0.0",
+  "dockerfile-parse>=2.0.1",
 ]
 
 [project.optional-dependencies]
@@ -142,15 +142,15 @@ dev = [
   "nest-asyncio>=1.6.0",
   "asgi-correlation-id>=4.3.4,<5.0.0",
   "fastapi>=0.115.12",
-  "pdoc3>=0.11.5",
+  "pdoc3>=0.11.6",
   "python-dotenv>=1.1.0",
   "ruff>=0.8.2",
   "openapi-python-client==0.25.3",
 ]
 test = [
-  "pytest>=8.0.0",
+  "pytest>=9.1.1",
   "pytest-asyncio>=0.24.0",
-  "pytest-cov>=6.0.0",
+  "pytest-cov>=7.1.0",
   "pytest-mock>=3.14.0",
   "pytest-xdist>=3.8.0",
   "coverage>=7.0.0",
