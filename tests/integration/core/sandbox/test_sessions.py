@@ -180,7 +180,7 @@ class TestFromSession(TestSessionOperations):
             nonlocal change_detected
             change_detected = True
 
-        handle = sandbox_from_session.fs.watch("/", on_change)
+        handle = await sandbox_from_session.fs.watch("/", on_change)
         try:
             await async_sleep(0.5)  # Wait for watch to be established
             await sandbox_from_session.fs.write("/session-test.txt", "content")

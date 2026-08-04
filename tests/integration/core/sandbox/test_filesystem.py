@@ -388,7 +388,7 @@ class TestWatch(TestFilesystemOperations):
             if event.name == "watched-file.txt":
                 change_detected = True
 
-        handle = self.sandbox.fs.watch(dir_path, on_change)
+        handle = await self.sandbox.fs.watch(dir_path, on_change)
 
         try:
             await async_sleep(0.5)

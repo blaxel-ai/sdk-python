@@ -380,7 +380,7 @@ class SandboxFileSystem(SandboxAction):
 
         return CopyResponse(message="Files copied", source=source, destination=destination)
 
-    def watch(
+    async def watch(
         self,
         path: str,
         callback: Callable[[WatchEvent], None],
@@ -396,7 +396,7 @@ class SandboxFileSystem(SandboxAction):
 
         Or manually:
 
-            handle = sandbox.fs.watch(path, callback)
+            handle = await sandbox.fs.watch(path, callback)
             try:
                 # do something
             finally:
