@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from dotenv import load_dotenv
@@ -20,6 +20,7 @@ def setup_test_environment():
         "BL_WORKSPACE": "test-workspace",
         "BL_TYPE": "test",
         "BL_NAME": "test-component",
+        "BL_ENV": "test",
         "BL_DEBUG_TELEMETRY": "false",
         "BL_ENABLE_OPENTELEMETRY": "false",
     }
@@ -42,8 +43,29 @@ def setup_test_environment():
 
 @pytest.fixture
 def mock_client():
-    """Mock the Blaxel client."""
+    """Mock the Blaxel client.
+
+    Pre-configures get_httpx_client().request() and get_async_httpx_client().request()
+    to return responses with integer status_code values, preventing ValueError when
+    auto-generated API code calls HTTPStatus(response.status_code).
+    """
     with patch("blaxel.core.client.client") as mock:
+        # Configure default response for sync httpx client
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b"{}"
+        mock_response.headers = {}
+        mock_response.json.return_value = {}
+        mock.get_httpx_client.return_value.request.return_value = mock_response
+
+        # Configure default response for async httpx client
+        mock_async_response = MagicMock()
+        mock_async_response.status_code = 200
+        mock_async_response.content = b"{}"
+        mock_async_response.headers = {}
+        mock_async_response.json.return_value = {}
+        mock.get_async_httpx_client.return_value.request.return_value = mock_async_response
+
         yield mock
 
 
