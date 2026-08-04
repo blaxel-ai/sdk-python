@@ -23,50 +23,56 @@ from typing import (
 
 import httpx
 import requests
-from langchain_core.callbacks.manager import (  # type: ignore[import-not-found]
-    AsyncCallbackManagerForLLMRun,
-    CallbackManagerForLLMRun,
-)
-from langchain_core.language_models import (  # type: ignore[import-not-found]
-    LanguageModelInput,
-)
-from langchain_core.language_models.chat_models import (  # type: ignore[import-not-found]
-    BaseChatModel,
-    LangSmithParams,
-)
-from langchain_core.messages import (  # type: ignore[import-not-found]
-    AIMessage,
-    AIMessageChunk,
-    BaseMessage,
-    FunctionMessage,
-    HumanMessage,
-    SystemMessage,
-    ToolMessage,
-)
-from langchain_core.messages.ai import UsageMetadata  # type: ignore[import-not-found]
-from langchain_core.messages.tool import (  # type: ignore[import-not-found]
-    invalid_tool_call,
-    tool_call,
-    tool_call_chunk,
-)
-from langchain_core.output_parsers.openai_tools import (  # type: ignore[import-not-found]
-    JsonOutputKeyToolsParser,
-    PydanticToolsParser,
-    parse_tool_calls,
-)
-from langchain_core.outputs import (  # type: ignore[import-not-found]
-    ChatGeneration,
-    ChatGenerationChunk,
-    ChatResult,
-)
-from langchain_core.runnables import (  # type: ignore[import-not-found]
-    Runnable,
-    RunnablePassthrough,
-)
-from langchain_core.tools import BaseTool  # type: ignore[import-not-found]
-from langchain_core.utils.function_calling import (  # type: ignore[import-not-found]
-    convert_to_openai_tool,
-)
+try:
+    from langchain_core.callbacks.manager import (
+        AsyncCallbackManagerForLLMRun,
+        CallbackManagerForLLMRun,
+    )
+    from langchain_core.language_models import (
+        LanguageModelInput,
+    )
+    from langchain_core.language_models.chat_models import (
+        BaseChatModel,
+        LangSmithParams,
+    )
+    from langchain_core.messages import (
+        AIMessage,
+        AIMessageChunk,
+        BaseMessage,
+        FunctionMessage,
+        HumanMessage,
+        SystemMessage,
+        ToolMessage,
+    )
+    from langchain_core.messages.ai import UsageMetadata
+    from langchain_core.messages.tool import (
+        invalid_tool_call,
+        tool_call,
+        tool_call_chunk,
+    )
+    from langchain_core.output_parsers.openai_tools import (
+        JsonOutputKeyToolsParser,
+        PydanticToolsParser,
+        parse_tool_calls,
+    )
+    from langchain_core.outputs import (
+        ChatGeneration,
+        ChatGenerationChunk,
+        ChatResult,
+    )
+    from langchain_core.runnables import (
+        Runnable,
+        RunnablePassthrough,
+    )
+    from langchain_core.tools import BaseTool
+    from langchain_core.utils.function_calling import (
+        convert_to_openai_tool,
+    )
+except ImportError as e:
+    raise ImportError(
+        "The langgraph extra dependencies are required to use Gemini models. "
+        "Install them with: pip install blaxel[langgraph]"
+    ) from e
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from tenacity import (
