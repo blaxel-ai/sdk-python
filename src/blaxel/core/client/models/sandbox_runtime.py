@@ -31,6 +31,8 @@ class SandboxRuntime:
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
             in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 4096.
         ports (Union[Unset, list['Port']]): Set of ports for a resource
+        storage_mb (Union[Unset, int]): Disk-backed root storage capacity in megabytes. When omitted, the sandbox uses
+            the default tmpfs overlay sizing based on its memory allocation. Example: 102400.
         termination_grace_period_seconds (Union[Unset, int]): Duration in seconds the pod needs to terminate gracefully.
             Defaults to 0 for immediate termination. Example: 30.
         ttl (Union[Unset, str]): Max-age from creation: the sandbox is deleted this long after it is created, regardless
@@ -44,12 +46,12 @@ class SandboxRuntime:
     image: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
     ports: Union[Unset, list["Port"]] = UNSET
+    storage_mb: Union[Unset, int] = UNSET
     termination_grace_period_seconds: Union[Unset, int] = UNSET
     ttl: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
@@ -86,6 +88,8 @@ class SandboxRuntime:
                     componentsschemas_ports_item = componentsschemas_ports_item_data.to_dict()
                 ports.append(componentsschemas_ports_item)
 
+        storage_mb = self.storage_mb
+
         termination_grace_period_seconds = self.termination_grace_period_seconds
 
         ttl = self.ttl
@@ -105,6 +109,8 @@ class SandboxRuntime:
             field_dict["memory"] = memory
         if ports is not UNSET:
             field_dict["ports"] = ports
+        if storage_mb is not UNSET:
+            field_dict["storageMb"] = storage_mb
         if termination_grace_period_seconds is not UNSET:
             field_dict["terminationGracePeriodSeconds"] = termination_grace_period_seconds
         if ttl is not UNSET:
@@ -148,6 +154,8 @@ class SandboxRuntime:
 
             ports.append(componentsschemas_ports_item)
 
+        storage_mb = d.pop("storageMb", d.pop("storage_mb", UNSET))
+
         termination_grace_period_seconds = d.pop(
             "terminationGracePeriodSeconds", d.pop("termination_grace_period_seconds", UNSET)
         )
@@ -161,6 +169,7 @@ class SandboxRuntime:
             image=image,
             memory=memory,
             ports=ports,
+            storage_mb=storage_mb,
             termination_grace_period_seconds=termination_grace_period_seconds,
             ttl=ttl,
         )

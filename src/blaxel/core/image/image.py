@@ -804,13 +804,19 @@ class ImageInstance:
         zip_buffer.seek(0)
         return zip_buffer.getvalue()
 
-    def _create_sandbox_payload(self, name: str, memory: int = 4096) -> Sandbox:
+    def _create_sandbox_payload(
+        self,
+        name: str,
+        memory: int = 4096,
+        storage_mb: int | None = None,
+    ) -> Sandbox:
         """
         Create the sandbox payload for deployment.
 
         Args:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
+            storage_mb: Disk-backed root storage capacity in MB
 
         Returns:
             Sandbox object
@@ -824,6 +830,8 @@ class ImageInstance:
         )
 
         runtime = SandboxRuntime(memory=memory)
+        if storage_mb is not None:
+            runtime.storage_mb = storage_mb
         spec = SandboxSpec(runtime=runtime)
 
         return Sandbox(metadata=metadata, spec=spec)
@@ -1137,6 +1145,7 @@ class ImageInstance:
         self,
         name: str,
         memory: int = 4096,
+        storage_mb: int | None = None,
         timeout: float = 900.0,
         on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
@@ -1155,6 +1164,7 @@ class ImageInstance:
         Args:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
+            storage_mb: Disk-backed root storage capacity in MB
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
@@ -1177,7 +1187,7 @@ class ImageInstance:
             zip_content = self._create_zip(build_dir)
 
             # Create sandbox payload
-            sandbox_payload = self._create_sandbox_payload(name, memory)
+            sandbox_payload = self._create_sandbox_payload(name, memory, storage_mb)
 
             # Create/update sandbox and get upload URL
             response, upload_url = self._create_sandbox_with_upload_sync(sandbox_payload)
@@ -1220,6 +1230,7 @@ class ImageInstance:
         self,
         name: str,
         memory: int = 4096,
+        storage_mb: int | None = None,
         timeout: float = 900.0,
         on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
@@ -1238,6 +1249,7 @@ class ImageInstance:
         Args:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
+            storage_mb: Disk-backed root storage capacity in MB
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
@@ -1260,7 +1272,7 @@ class ImageInstance:
             zip_content = self._create_zip(build_dir)
 
             # Create sandbox payload
-            sandbox_payload = self._create_sandbox_payload(name, memory)
+            sandbox_payload = self._create_sandbox_payload(name, memory, storage_mb)
 
             # Create/update sandbox and get upload URL
             response, upload_url = await self._create_sandbox_with_upload(sandbox_payload)

@@ -1256,3 +1256,16 @@ class TestSandboxApiPreparation:
         assert entrypoint_idx > run_idx
         # Entrypoint should be last
         assert entrypoint_idx > copy_idx
+
+    def test_create_sandbox_payload_includes_storage_mb(self):
+        """Test that image builds can request disk-backed root storage."""
+        image = ImageInstance.from_registry("python:3.11-slim")
+
+        payload = image._create_sandbox_payload(
+            "image-build",
+            memory=4096,
+            storage_mb=102400,
+        )
+
+        assert payload.spec.runtime.storage_mb == 102400
+        assert payload.spec.runtime.to_dict()["storageMb"] == 102400

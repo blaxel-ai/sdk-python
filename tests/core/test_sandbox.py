@@ -220,6 +220,40 @@ async def test_create_forwards_create_if_not_exist_to_generated_client():
 
 
 @pytest.mark.asyncio
+async def test_create_forwards_storage_mb_to_runtime():
+    created = sandbox_instance("storage").sandbox
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.create_sandbox",
+        new_callable=AsyncMock,
+    ) as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        await SandboxInstance.create(
+            {"name": "storage", "region": "us-pdx-1", "storage_mb": 102400},
+        )
+
+        body = mock_create_sandbox.await_args.kwargs["body"]
+        assert body.spec.runtime.storage_mb == 102400
+        assert body.spec.runtime.to_dict()["storageMb"] == 102400
+
+
+def test_sync_create_forwards_storage_mb_to_runtime():
+    created = sandbox_instance("sync-storage", cls=SyncSandboxInstance).sandbox
+
+    with patch("blaxel.core.sandbox.sync.sandbox.create_sandbox") as mock_create_sandbox:
+        mock_create_sandbox.return_value = created
+
+        SyncSandboxInstance.create(
+            {"name": "sync-storage", "region": "us-pdx-1", "storage_mb": 102400},
+        )
+
+        body = mock_create_sandbox.call_args.kwargs["body"]
+        assert body.spec.runtime.storage_mb == 102400
+        assert body.spec.runtime.to_dict()["storageMb"] == 102400
+
+
+@pytest.mark.asyncio
 async def test_create_if_not_exists_returns_existing_after_conflict():
     existing = sandbox_instance("existing")
 

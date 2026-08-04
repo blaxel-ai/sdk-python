@@ -255,6 +255,8 @@ class SyncSandboxInstance:
                     or "name" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "image" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "memory" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "storage_mb" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "storageMb" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "ports" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "envs" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "volumes" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
@@ -281,6 +283,7 @@ class SyncSandboxInstance:
             name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
+            storage_mb = config.storage_mb if config.storage_mb is not None else UNSET
             ports = config._normalize_ports() or UNSET
             envs = config._normalize_envs() or UNSET
             volumes = config._normalize_volumes() or UNSET
@@ -304,6 +307,7 @@ class SyncSandboxInstance:
                     runtime=SandboxRuntime(
                         image=image,
                         memory=memory,
+                        storage_mb=storage_mb,
                         ports=ports,
                         envs=envs,
                     ),

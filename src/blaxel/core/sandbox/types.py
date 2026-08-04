@@ -181,6 +181,7 @@ class SandboxCreateConfiguration:
         name: str | None = None,
         image: str | None = None,
         memory: int | None = None,
+        storage_mb: int | None = None,
         ports: Union[List[Port], List[Dict[str, Any]]] | None = None,
         envs: List[Dict[str, str]] | None = None,
         volumes: Union[List[VolumeBinding], List[VolumeAttachment], List[Dict[str, Any]]]
@@ -197,6 +198,7 @@ class SandboxCreateConfiguration:
         self.name = name
         self.image = image
         self.memory = memory
+        self.storage_mb = storage_mb
         self.ports = ports
         self.envs = envs
         self.volumes = volumes
@@ -227,6 +229,7 @@ class SandboxCreateConfiguration:
             name=data.get("name"),
             image=data.get("image"),
             memory=data.get("memory"),
+            storage_mb=data.get("storage_mb", data.get("storageMb")),
             ports=data.get("ports"),
             envs=data.get("envs"),
             volumes=data.get("volumes"),
