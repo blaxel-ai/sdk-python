@@ -110,3 +110,36 @@ def test_settings_headers_clear_error_without_credentials(no_config, clear_auth_
     s = Settings()
     with pytest.raises(CredentialsError):
         _ = s.headers
+
+
+def test_incomplete_credentials_fallback_raises_credentials_error(
+    no_config, clear_auth_env, monkeypatch, tmp_path
+):
+    """Credentials with only refresh_token/access_token must raise CredentialsError, not NotImplementedError."""
+    import yaml
+
+    config_dir = tmp_path / ".blaxel"
+    config_dir.mkdir()
+    config_path = config_dir / "config.yaml"
+    config_path.write_text(
+        yaml.dump(
+            {
+                "context": {"workspace": "my-ws"},
+                "workspaces": [
+                    {
+                        "name": "my-ws",
+                        "credentials": {
+                            "refresh_token": "some-token",
+                            "access_token": "some-access",
+                        },
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+    a = auth("prod", BASE_URL)
+    assert isinstance(a, MissingCredentials)
+    with pytest.raises(CredentialsError) as exc:
+        _ = a.token
+    assert "bl login" in str(exc.value)

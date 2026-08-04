@@ -126,7 +126,14 @@ def auth(env: str, base_url: str) -> BlaxelAuth:
         logger.debug("Using device code for authentication")
         return DeviceMode(credentials, credentials.workspace, base_url)
 
-    return BlaxelAuth(credentials, credentials.workspace, base_url)
+    return MissingCredentials(
+        base_url,
+        message=(
+            "Blaxel credentials were found but no supported authentication method "
+            "could be determined. Your credentials may be incomplete or corrupted. "
+            "Run `bl login` to re-authenticate, or set BL_API_KEY."
+        ),
+    )
 
 
 __all__ = [
