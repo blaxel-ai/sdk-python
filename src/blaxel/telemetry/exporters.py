@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, Dict, Sequence
 
 try:
+    import requests
     from opentelemetry.exporter.otlp.proto.http._log_exporter import (
         OTLPLogExporter,
     )
@@ -26,16 +27,25 @@ except ImportError:
     MetricsData = None
 
 
+class _DynamicHeadersSession(requests.Session):
+    """A requests.Session subclass that injects dynamic headers on every request."""
+
+    def __init__(self, get_headers: Callable[[], Dict[str, str]]):
+        super().__init__()
+        self._get_headers = get_headers
+
+    def post(self, *args, **kwargs):
+        self.headers.update(self._get_headers())
+        return super().post(*args, **kwargs)
+
+
 class DynamicHeadersSpanExporter(OTLPSpanExporter):  # type: ignore[misc]
     """Span exporter with dynamic headers."""
 
     def __init__(self, get_headers: Callable[[], Dict[str, str]]):
         self._get_headers = get_headers
-        super().__init__()
-
-    def export(self, spans):
-        self._session.headers.update(self._get_headers())
-        return super().export(spans)
+        session = _DynamicHeadersSession(get_headers)
+        super().__init__(session=session)
 
 
 class DynamicHeadersMetricExporter(OTLPMetricExporter):  # type: ignore[misc]
@@ -43,16 +53,8 @@ class DynamicHeadersMetricExporter(OTLPMetricExporter):  # type: ignore[misc]
 
     def __init__(self, get_headers: Callable[[], Dict[str, str]]):
         self._get_headers = get_headers
-        super().__init__()
-
-    def export(
-        self,
-        metrics_data: MetricsData,  # type: ignore[reportUnknownReturnType]
-        timeout_millis: float = 10_000,
-        **kwargs,
-    ) -> MetricExportResult:  # type: ignore[reportUnknownReturnType]
-        self._session.headers.update(self._get_headers())
-        return super().export(metrics_data, timeout_millis, **kwargs)
+        session = _DynamicHeadersSession(get_headers)
+        super().__init__(session=session)
 
 
 class DynamicHeadersLogExporter(OTLPLogExporter):  # type: ignore[misc]
@@ -60,8 +62,5 @@ class DynamicHeadersLogExporter(OTLPLogExporter):  # type: ignore[misc]
 
     def __init__(self, get_headers: Callable[[], Dict[str, str]]):
         self._get_headers = get_headers
-        super().__init__()
-
-    def export(self, batch: Sequence[LogData]):  # type: ignore[reportUnknownReturnType]
-        self._session.headers.update(self._get_headers())
-        return super().export(batch)
+        session = _DynamicHeadersSession(get_headers)
+        super().__init__(session=session)
