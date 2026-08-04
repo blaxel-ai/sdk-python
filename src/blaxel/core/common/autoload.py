@@ -6,6 +6,7 @@ from ..client.response_interceptor import (
     response_interceptors_sync,
 )
 from ..sandbox.client import client as client_sandbox
+from .posthog import track_sdk_installed
 from .sentry import init_sentry
 from .settings import settings
 
@@ -45,6 +46,11 @@ def autoload() -> None:
     if settings.tracking:
         try:
             init_sentry()
+        except Exception:
+            pass
+
+        try:
+            track_sdk_installed()
         except Exception:
             pass
 
