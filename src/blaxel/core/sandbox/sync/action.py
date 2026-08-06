@@ -53,10 +53,12 @@ class SyncSandboxAction:
             return httpx.Client(
                 base_url=self.sandbox_config.force_url,
                 headers=self.sandbox_config.headers,
+                timeout=httpx.Timeout(300.0),
             )
         return httpx.Client(
             base_url=self.url,
             headers={**settings.headers, **self.sandbox_config.headers},
+            timeout=httpx.Timeout(300.0),
         )
 
     def handle_response_error(self, response: httpx.Response):
