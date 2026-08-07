@@ -13,6 +13,7 @@ from blaxel.core.sandbox.default.network import SandboxNetwork
 from blaxel.core.sandbox.default.process import SandboxProcess
 from blaxel.core.sandbox.sync.drive import SyncSandboxDrive
 from blaxel.core.sandbox.sync.filesystem import SyncSandboxFileSystem
+from blaxel.core.sandbox.sync.network import SyncSandboxNetwork
 from blaxel.core.sandbox.sync.process import SyncSandboxProcess
 from blaxel.core.sandbox.transient_retry import (
     is_transient_reset_error,
@@ -184,6 +185,7 @@ send_untrusted_workload_unavailable = response_handler(
     SAFE_WORKLOAD_UNAVAILABLE_BODY,
 )
 send_empty_drive_list = response_handler("200 OK", b'{"mounts":[]}')
+send_file_content = response_handler("200 OK", b'{"content":"hello"}')
 send_completed_process = response_handler(
     "200 OK",
     json.dumps(
@@ -205,6 +207,24 @@ send_completed_process = response_handler(
 send_file_written = response_handler(
     "200 OK",
     b'{"message":"written","path":"/file.bin"}',
+)
+send_malformed_workload_unavailable = response_handler(
+    "404 Not Found",
+    b"[]",
+    (
+        b"X-Blaxel-Source: platform",
+        b"X-Blaxel-Error-Code: WORKLOAD_UNAVAILABLE",
+        b"X-Blaxel-Dispatch-State: not_dispatched",
+    ),
+)
+send_wrong_status_workload_unavailable = response_handler(
+    "503 Service Unavailable",
+    SAFE_WORKLOAD_UNAVAILABLE_BODY,
+    (
+        b"X-Blaxel-Source: platform",
+        b"X-Blaxel-Error-Code: WORKLOAD_UNAVAILABLE",
+        b"X-Blaxel-Dispatch-State: not_dispatched",
+    ),
 )
 
 
@@ -296,6 +316,33 @@ async def test_sync_process_exec_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
+async def test_async_filesystem_read_retries_trusted_pre_dispatch_response():
+    async with LoopbackFaultServer(
+        send_safe_workload_unavailable,
+        send_file_content,
+    ) as server:
+        filesystem = SandboxFileSystem(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        assert await filesystem.read("/file.txt") == "hello"
+
+    assert server.requests == 2
+
+
+@pytest.mark.asyncio
+async def test_sync_fetch_retries_trusted_pre_dispatch_response():
+    async with LoopbackFaultServer(
+        send_safe_workload_unavailable,
+        send_ok_response,
+    ) as server:
+        network = SyncSandboxNetwork(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        response = await asyncio.to_thread(network.fetch, 3000, "/health")
+
+    assert response.status_code == 200
+    assert server.requests == 2
+
+
+@pytest.mark.asyncio
 async def test_async_fetch_does_not_replay_one_shot_body():
     async def body():
         yield b"payload"
@@ -320,6 +367,30 @@ async def test_async_drive_list_does_not_retry_untrusted_response():
         with pytest.raises(sandbox_errors.UnexpectedStatus):
             await drive.list()
 
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_async_drive_list_preserves_malformed_trusted_response():
+    async with LoopbackFaultServer(send_malformed_workload_unavailable) as server:
+        drive = SandboxDrive(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        with pytest.raises(sandbox_errors.APIStatusError) as exc_info:
+            await drive.list()
+
+    assert exc_info.value.content == b"[]"
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_async_drive_list_does_not_retry_wrong_status():
+    async with LoopbackFaultServer(send_wrong_status_workload_unavailable) as server:
+        drive = SandboxDrive(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        with pytest.raises(sandbox_errors.APIStatusError) as exc_info:
+            await drive.list()
+
+    assert exc_info.value.status_code == 503
     assert server.requests == 1
 
 
@@ -459,6 +530,17 @@ async def test_async_retry_respects_cancellation():
 
         with pytest.raises(asyncio.CancelledError):
             await task
+
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_sync_process_exec_does_not_retry_ambiguous_transport_failure():
+    async with LoopbackFaultServer(close_without_response) as server:
+        process = SyncSandboxProcess(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        with pytest.raises(httpx.TransportError):
+            await asyncio.to_thread(process.exec, {"command": "echo nope"})
 
     assert server.requests == 1
 

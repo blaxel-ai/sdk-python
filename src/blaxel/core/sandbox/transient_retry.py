@@ -103,12 +103,15 @@ def _has_safe_retry_headers(response: httpx.Response) -> bool:
 
 def is_safe_to_retry_response(response: httpx.Response) -> bool:
     """True only when the gateway proves the request was not dispatched."""
-    if not _has_safe_retry_headers(response):
+    if response.status_code != 404 or not _has_safe_retry_headers(response):
         return False
     try:
-        error = response.json().get("error", {})
+        payload = response.json()
     except (TypeError, ValueError):
         return False
+    if not isinstance(payload, dict):
+        return False
+    error = payload.get("error", {})
     return (
         isinstance(error, dict)
         and error.get("code") == "WORKLOAD_UNAVAILABLE"
@@ -133,30 +136,34 @@ def is_replayable_request(kwargs: dict[str, object]) -> bool:
 async def retry_safe_request_async(
     fn: Callable[[], Awaitable[httpx.Response]],
 ) -> httpx.Response:
-    elapsed = 0.0
+    started = time.monotonic()
+    slept = 0.0
     delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
     while True:
         response = await fn()
+        elapsed = max(time.monotonic() - started, slept)
         if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
             return response
         await response.aclose()
         sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
         await asyncio.sleep(sleep_for)
-        elapsed += sleep_for
+        slept += sleep_for
         delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
 
 
 def retry_safe_request(fn: Callable[[], httpx.Response]) -> httpx.Response:
-    elapsed = 0.0
+    started = time.monotonic()
+    slept = 0.0
     delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
     while True:
         response = fn()
+        elapsed = max(time.monotonic() - started, slept)
         if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
             return response
         response.close()
         sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
         time.sleep(sleep_for)
-        elapsed += sleep_for
+        slept += sleep_for
         delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
 
 
@@ -164,35 +171,39 @@ def retry_safe_request(fn: Callable[[], httpx.Response]) -> httpx.Response:
 async def retry_safe_stream_async(
     fn: Callable[[], AsyncContextManager[httpx.Response]],
 ):
-    elapsed = 0.0
+    started = time.monotonic()
+    slept = 0.0
     delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
     while True:
         async with fn() as response:
             if _has_safe_retry_headers(response):
                 await response.aread()
+            elapsed = max(time.monotonic() - started, slept)
             if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
                 yield response
                 return
         sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
         await asyncio.sleep(sleep_for)
-        elapsed += sleep_for
+        slept += sleep_for
         delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
 
 
 @contextmanager
 def retry_safe_stream(fn: Callable[[], ContextManager[httpx.Response]]):
-    elapsed = 0.0
+    started = time.monotonic()
+    slept = 0.0
     delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
     while True:
         with fn() as response:
             if _has_safe_retry_headers(response):
                 response.read()
+            elapsed = max(time.monotonic() - started, slept)
             if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
                 yield response
                 return
         sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
         time.sleep(sleep_for)
-        elapsed += sleep_for
+        slept += sleep_for
         delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
 
 

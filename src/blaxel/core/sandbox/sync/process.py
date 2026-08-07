@@ -2,9 +2,8 @@ import threading
 import time
 from typing import Any, Callable, Dict, Literal, Union
 
-import httpx
-
 from ...common.settings import settings
+from ..client.client import SandboxHTTPClient
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
 from ..transient_retry import retry_on_transient_reset, retry_safe_stream
@@ -124,7 +123,7 @@ class SyncSandboxProcess(SyncSandboxAction):
             url = f"{self.url}/process/{identifier}/logs/stream"
             headers = {**settings.headers, **self.sandbox_config.headers}
             try:
-                with httpx.Client() as client_instance:
+                with SandboxHTTPClient() as client_instance:
                     with retry_safe_stream(
                         lambda: client_instance.stream("GET", url, headers=headers)
                     ) as response:
@@ -245,7 +244,7 @@ class SyncSandboxProcess(SyncSandboxAction):
             else {**settings.headers, **self.sandbox_config.headers}
         )
 
-        with httpx.Client() as client_instance:
+        with SandboxHTTPClient() as client_instance:
             with retry_safe_stream(
                 lambda: client_instance.stream(
                     "POST",

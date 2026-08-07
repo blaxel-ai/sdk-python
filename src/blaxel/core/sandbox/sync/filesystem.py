@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Union
 import httpx
 
 from ...common.settings import settings
+from ..client.client import SandboxHTTPClient
 from ..client.models import Directory, FileRequest, SuccessResponse
 from ..transient_retry import retry_on_transient_reset, retry_safe_request, retry_safe_stream
 from ..types import (
@@ -223,7 +224,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 params["ignore"] = ",".join(options["ignore"])
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            with httpx.Client() as client_instance:
+            with SandboxHTTPClient() as client_instance:
                 with retry_safe_stream(
                     lambda: client_instance.stream("GET", url, params=params, headers=headers)
                 ) as response:

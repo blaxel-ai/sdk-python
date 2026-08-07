@@ -1,9 +1,8 @@
 import asyncio
 from typing import Any, Callable, Dict, Literal, Union
 
-import httpx
-
 from ...common.settings import settings
+from ..client.client import AsyncSandboxHTTPClient
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
 from ..transient_retry import retry_on_transient_reset_async, retry_safe_stream_async
@@ -155,7 +154,7 @@ class SandboxProcess(SandboxAction):
             headers = {**settings.headers, **self.sandbox_config.headers}
 
             try:
-                async with httpx.AsyncClient(timeout=None) as client_instance:
+                async with AsyncSandboxHTTPClient(timeout=None) as client_instance:
                     async with retry_safe_stream_async(
                         lambda: client_instance.stream("GET", url, headers=headers)
                     ) as response:
@@ -299,7 +298,7 @@ class SandboxProcess(SandboxAction):
             else {**settings.headers, **self.sandbox_config.headers}
         )
 
-        async with httpx.AsyncClient() as client_instance:
+        async with AsyncSandboxHTTPClient() as client_instance:
             async with retry_safe_stream_async(
                 lambda: client_instance.stream(
                     "POST",
