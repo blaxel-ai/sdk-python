@@ -129,7 +129,8 @@ class SyncSandboxProcess(SyncSandboxAction):
                         lambda: client_instance.stream("GET", url, headers=headers)
                     ) as response:
                         if response.status_code != 200:
-                            raise Exception(f"Failed to stream logs: {response.text}")
+                            response.read()
+                            raise ResponseError(response)
                         buffer = ""
                         for chunk in response.iter_text():
                             if closed.is_set():

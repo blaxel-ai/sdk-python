@@ -19,6 +19,7 @@ from ..transient_retry import (
 from ..types import (
     AsyncWatchHandle,
     CopyResponse,
+    ResponseError,
     SandboxConfiguration,
     SandboxFilesystemFile,
     WatchEvent,
@@ -123,9 +124,7 @@ class SandboxFileSystem(SandboxAction):
             response = await retry_safe_request_async(request_once)
             try:
                 content_bytes = await response.aread()
-                if not response.is_success:
-                    error_text = content_bytes.decode("utf-8", errors="ignore")
-                    raise Exception(f"Failed to write binary: {response.status_code} {error_text}")
+                self.handle_response_error(response)
                 result = SuccessResponse.from_dict(json.loads(content_bytes))
                 assert result is not None
                 return result
@@ -433,7 +432,8 @@ class SandboxFileSystem(SandboxAction):
                     lambda: client_instance.stream("GET", url, params=params, headers=headers)
                 ) as response:
                     if not response.is_success:
-                        raise Exception(f"Failed to start watching: {response.status_code}")
+                        await response.aread()
+                        raise ResponseError(response)
                     buffer = ""
                     async for chunk in response.aiter_text():
                         if closed:

@@ -14,6 +14,7 @@ from ..client.models import Directory, FileRequest, SuccessResponse
 from ..transient_retry import retry_on_transient_reset, retry_safe_request, retry_safe_stream
 from ..types import (
     CopyResponse,
+    ResponseError,
     SandboxConfiguration,
     SandboxFilesystemFile,
     WatchEvent,
@@ -81,10 +82,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
             response = retry_safe_request(request_once)
             try:
-                if not response.is_success:
-                    raise Exception(
-                        f"Failed to write binary: {response.status_code} {response.text}"
-                    )
+                self.handle_response_error(response)
                 result = SuccessResponse.from_dict(response.json())
                 assert result is not None
                 return result
@@ -229,7 +227,8 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                     lambda: client_instance.stream("GET", url, params=params, headers=headers)
                 ) as response:
                     if not response.is_success:
-                        raise Exception(f"Failed to start watching: {response.status_code}")
+                        response.read()
+                        raise ResponseError(response)
                     buffer = ""
                     for chunk in response.iter_text():
                         if closed.is_set():

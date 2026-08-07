@@ -623,6 +623,23 @@ async def test_async_write_binary_rebuilds_body_for_safe_retry() -> None:
 
 
 @pytest.mark.asyncio
+async def test_async_write_binary_preserves_final_retryable_error(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "blaxel.core.sandbox.transient_retry.SAFE_RETRY_BUDGET_SECONDS",
+        0,
+    )
+    async with LoopbackFaultServer(send_safe_workload_unavailable) as server:
+        filesystem = SandboxFileSystem(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        with pytest.raises(ResponseError) as exc_info:
+            await filesystem.write_binary("/file.bin", b"payload")
+
+    assert exc_info.value.response.status_code == 404
+    assert exc_info.value.data["error"]["code"] == "WORKLOAD_UNAVAILABLE"
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
 async def test_sync_write_binary_rebuilds_body_for_safe_retry() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
@@ -636,6 +653,25 @@ async def test_sync_write_binary_rebuilds_body_for_safe_retry() -> None:
 
     assert result.path == "/file.bin"
     assert server.requests == 2
+
+
+@pytest.mark.asyncio
+async def test_sync_write_binary_preserves_final_retryable_error(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "blaxel.core.sandbox.transient_retry.SAFE_RETRY_BUDGET_SECONDS",
+        0,
+    )
+    async with LoopbackFaultServer(send_safe_workload_unavailable) as server:
+        filesystem = SyncSandboxFileSystem(
+            SandboxConfiguration(cast(Any, None), force_url=server.url)
+        )
+
+        with pytest.raises(ResponseError) as exc_info:
+            await asyncio.to_thread(filesystem.write_binary, "/file.bin", b"payload")
+
+    assert exc_info.value.response.status_code == 404
+    assert exc_info.value.data["error"]["code"] == "WORKLOAD_UNAVAILABLE"
+    assert server.requests == 1
 
 
 @pytest.mark.asyncio

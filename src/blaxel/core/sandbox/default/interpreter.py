@@ -8,7 +8,7 @@ import httpx
 
 from ...client.models import Sandbox
 from ..transient_retry import retry_safe_stream_async
-from ..types import SandboxCreateConfiguration
+from ..types import ResponseError, SandboxCreateConfiguration
 from .sandbox import SandboxInstance
 
 
@@ -230,22 +230,8 @@ class CodeInterpreter(SandboxInstance):
             )
         ) as response:
             if response.status_code >= 400:
-                try:
-                    body_text = await response.aread()
-                    body_text = body_text.decode(errors="ignore")
-                except Exception:
-                    body_text = "<unavailable>"
-                req = getattr(response, "request", None)
-                method = getattr(req, "method", "UNKNOWN") if req else "UNKNOWN"
-                url = str(getattr(req, "url", "UNKNOWN")) if req else "UNKNOWN"
-                reason = getattr(response, "reason_phrase", "")
-                details = (
-                    "Execution failed\n"
-                    f"- method: {method}\n- url: {url}\n- status: {response.status_code} {reason}\n"
-                    f"- response-headers: {dict(response.headers)}\n- body:\n{body_text}"
-                )
-                self.logger.debug(details)
-                raise RuntimeError(details)
+                await response.aread()
+                raise ResponseError(response)
 
             async for line in response.aiter_lines():
                 if not line:

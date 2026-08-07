@@ -6,7 +6,7 @@ import httpx
 
 from ...client.models import Sandbox
 from ..transient_retry import retry_safe_stream
-from ..types import SandboxCreateConfiguration
+from ..types import ResponseError, SandboxCreateConfiguration
 from .sandbox import SyncSandboxInstance
 
 
@@ -243,9 +243,8 @@ class SyncCodeInterpreter(SyncSandboxInstance):
                 )
             ) as response:
                 if response.status_code >= 400:
-                    details = self._format_http_error("Execution", response)
-                    self.logger.debug(details)
-                    raise RuntimeError(details)
+                    response.read()
+                    raise ResponseError(response)
 
                 for line in response.iter_lines():
                     if not line:
