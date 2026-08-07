@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 from typing import Any, Callable, Dict
 
 import httpx
@@ -13,7 +12,6 @@ from .sandbox import SandboxInstance
 
 
 class CodeInterpreter(SandboxInstance):
-    logger = logging.getLogger(__name__)
     DEFAULT_IMAGE = "blaxel/jupyter-server"
     DEFAULT_PORTS = [
         {"name": "jupyter", "target": 8888, "protocol": "HTTP"},
@@ -280,20 +278,7 @@ class CodeInterpreter(SandboxInstance):
             body_bytes = await response.aread()
 
             if response.status_code >= 400:
-                try:
-                    body_text = body_bytes.decode("utf-8", errors="ignore")
-                except Exception:
-                    body_text = "<unavailable>"
-                method = getattr(response.request, "method", "UNKNOWN")
-                url = str(getattr(response.request, "url", "UNKNOWN"))
-                reason = getattr(response, "reason_phrase", "")
-                details = (
-                    "Create context failed\n"
-                    f"- method: {method}\n- url: {url}\n- status: {response.status_code} {reason}\n"
-                    f"- response-headers: {dict(response.headers)}\n- body:\n{body_text}"
-                )
-                self.logger.debug(details)
-                raise RuntimeError(details)
+                raise ResponseError(response)
 
             data = json.loads(body_bytes)
             return CodeInterpreter.Context.from_json(data)
