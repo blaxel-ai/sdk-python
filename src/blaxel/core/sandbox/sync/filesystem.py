@@ -9,10 +9,12 @@ from typing import Any, Callable, Dict, List, Union
 import httpx
 
 from ...common.settings import settings
+from ..client.client import SandboxHTTPClient
 from ..client.models import Directory, FileRequest, SuccessResponse
-from ..transient_retry import retry_on_transient_reset
+from ..transient_retry import retry_on_transient_reset, retry_safe_request, retry_safe_stream
 from ..types import (
     CopyResponse,
+    ResponseError,
     SandboxConfiguration,
     SandboxFilesystemFile,
     WatchEvent,
@@ -66,23 +68,26 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         headers = {**settings.headers, **self.sandbox_config.headers}
 
         def put_once() -> SuccessResponse:
-            files = {
-                "file": (
-                    "binary-file.bin",
-                    io.BytesIO(content),
-                    "application/octet-stream",
-                ),
-            }
-            data = {"permissions": "0644", "path": path}
-            with self.get_client() as client_instance:
-                response = client_instance.put(url, files=files, data=data, headers=headers)
-                if not response.is_success:
-                    raise Exception(
-                        f"Failed to write binary: {response.status_code} {response.text}"
-                    )
+            def request_once() -> httpx.Response:
+                files = {
+                    "file": (
+                        "binary-file.bin",
+                        io.BytesIO(content),
+                        "application/octet-stream",
+                    ),
+                }
+                data = {"permissions": "0644", "path": path}
+                with self.get_client() as client_instance:
+                    return client_instance.put(url, files=files, data=data, headers=headers)
+
+            response = retry_safe_request(request_once)
+            try:
+                self.handle_response_error(response)
                 result = SuccessResponse.from_dict(response.json())
                 assert result is not None
                 return result
+            finally:
+                response.close()
 
         return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 
@@ -217,10 +222,13 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 params["ignore"] = ",".join(options["ignore"])
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            with httpx.Client() as client_instance:
-                with client_instance.stream("GET", url, params=params, headers=headers) as response:
+            with SandboxHTTPClient() as client_instance:
+                with retry_safe_stream(
+                    lambda: client_instance.stream("GET", url, params=params, headers=headers)
+                ) as response:
                     if not response.is_success:
-                        raise Exception(f"Failed to start watching: {response.status_code}")
+                        response.read()
+                        raise ResponseError(response)
                     buffer = ""
                     for chunk in response.iter_text():
                         if closed.is_set():
@@ -290,11 +298,17 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         params = {"partNumber": part_number}
 
         def put_once() -> Dict[str, Any]:
-            files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
-            with self.get_client() as client_instance:
-                response = client_instance.put(url, files=files, params=params, headers=headers)
+            def request_once() -> httpx.Response:
+                files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+                with self.get_client() as client_instance:
+                    return client_instance.put(url, files=files, params=params, headers=headers)
+
+            response = retry_safe_request(request_once)
+            try:
                 self.handle_response_error(response)
                 return response.json()
+            finally:
+                response.close()
 
         return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 

@@ -1,16 +1,15 @@
 import json
-import logging
 from typing import Any, Callable, Dict, Optional, Union
 
 import httpx
 
 from ...client.models import Sandbox
-from ..types import SandboxCreateConfiguration
+from ..transient_retry import retry_safe_stream
+from ..types import ResponseError, SandboxCreateConfiguration
 from .sandbox import SyncSandboxInstance
 
 
 class SyncCodeInterpreter(SyncSandboxInstance):
-    logger = logging.getLogger(__name__)
     DEFAULT_IMAGE = "blaxel/jupyter-server"
     DEFAULT_PORTS = [
         {"name": "jupyter", "target": 8888, "protocol": "HTTP"},
@@ -169,28 +168,6 @@ class SyncCodeInterpreter(SyncSandboxInstance):
 
         return None
 
-    def _format_http_error(self, where: str, response: httpx.Response) -> str:
-        try:
-            body_text = response.text
-        except Exception:
-            body_text = "<unavailable>"
-        # Limit very large bodies
-        max_len = 4000
-        if len(body_text) > max_len:
-            body_text = body_text[:max_len] + "...<truncated>"
-        req = getattr(response, "request", None)
-        method = getattr(req, "method", "UNKNOWN") if req else "UNKNOWN"
-        url = str(getattr(req, "url", "UNKNOWN")) if req else "UNKNOWN"
-        reason = getattr(response, "reason_phrase", "")
-        return (
-            f"{where} failed\n"
-            f"- method: {method}\n"
-            f"- url: {url}\n"
-            f"- status: {response.status_code} {reason}\n"
-            f"- response-headers: {dict(response.headers)}\n"
-            f"- body:\n{body_text}"
-        )
-
     def run_code(
         self,
         code: str,
@@ -233,16 +210,17 @@ class SyncCodeInterpreter(SyncSandboxInstance):
                 write=write_timeout,
                 pool=pool_timeout,
             )
-            with client.stream(
-                "POST",
-                "/port/8888/execute",
-                json=body,
-                timeout=timeout_cfg,
+            with retry_safe_stream(
+                lambda: client.stream(
+                    "POST",
+                    "/port/8888/execute",
+                    json=body,
+                    timeout=timeout_cfg,
+                )
             ) as response:
                 if response.status_code >= 400:
-                    details = self._format_http_error("Execution", response)
-                    self.logger.debug(details)
-                    raise RuntimeError(details)
+                    response.read()
+                    raise ResponseError(response)
 
                 for line in response.iter_lines():
                     if not line:
@@ -289,8 +267,6 @@ class SyncCodeInterpreter(SyncSandboxInstance):
                 timeout=request_timeout or 10.0,
             )
             if response.status_code >= 400:
-                details = self._format_http_error("Create context", response)
-                self.logger.debug(details)
-                raise RuntimeError(details)
+                raise ResponseError(response)
             data = response.json()
             return SyncCodeInterpreter.Context.from_json(data)

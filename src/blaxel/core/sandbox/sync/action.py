@@ -2,6 +2,7 @@ import httpx
 
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
+from ..client.client import SandboxHTTPClient
 from ..types import ResponseError, SandboxConfiguration
 
 
@@ -50,11 +51,11 @@ class SyncSandboxAction:
 
     def get_client(self) -> httpx.Client:
         if self.sandbox_config.force_url:
-            return httpx.Client(
+            return SandboxHTTPClient(
                 base_url=self.sandbox_config.force_url,
                 headers=self.sandbox_config.headers,
             )
-        return httpx.Client(
+        return SandboxHTTPClient(
             base_url=self.url,
             headers={**settings.headers, **self.sandbox_config.headers},
         )

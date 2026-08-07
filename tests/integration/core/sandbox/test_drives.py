@@ -246,6 +246,41 @@ class TestDriveInstanceCRUD(TestDriveOperations):
 class TestSandboxDriveMounting(TestDriveOperations):
     """Test sandbox drive mounting operations."""
 
+    @pytest.mark.skipif(
+        not os.environ.get("RUN_STANDBY_TESTS"),
+        reason="slow standby test; set RUN_STANDBY_TESTS=1 to enable",
+    )
+    async def test_mounted_drive_recovers_after_standby(self) -> None:
+        drive_name = unique_name("standby-drive")
+        sandbox_name = unique_name("standby-sandbox")
+        await DriveInstance.create(
+            {
+                "name": drive_name,
+                "size": 10,
+                "region": "eu-dub-1",
+                "labels": default_labels,
+            }
+        )
+        self.created_drives.append(drive_name)
+        sandbox = await SandboxInstance.create(
+            {
+                "name": sandbox_name,
+                "image": default_image,
+                "memory": 2048,
+                "region": "eu-dub-1",
+                "labels": default_labels,
+            }
+        )
+        self.created_sandboxes.append(sandbox_name)
+        await sandbox.drives.mount(drive_name, "/mnt/drive")
+        await sandbox.fs.write("/mnt/drive/sentinel.txt", "eng2972")
+
+        await asyncio.sleep(45)
+
+        mounts = await sandbox.drives.list()
+        assert any(mount.drive_name == drive_name for mount in mounts)
+        assert await sandbox.fs.read("/mnt/drive/sentinel.txt") == "eng2972"
+
     async def test_mounts_a_drive_to_a_sandbox(self):
         """Test mounting a drive to a sandbox."""
         drive_name = unique_name("mount-drive")

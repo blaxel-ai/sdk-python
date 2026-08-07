@@ -1,16 +1,16 @@
 import asyncio
 from typing import Any, Callable, Dict, Literal, Union
 
-import httpx
-
 from ...common.settings import settings
+from ..client.client import AsyncSandboxHTTPClient
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..transient_retry import retry_on_transient_reset_async
+from ..transient_retry import retry_on_transient_reset_async, retry_safe_stream_async
 from ..types import (
     AsyncStreamHandle,
     ProcessRequestWithLog,
     ProcessResponseWithLog,
+    ResponseError,
     SandboxConfiguration,
 )
 from .action import SandboxAction
@@ -155,10 +155,13 @@ class SandboxProcess(SandboxAction):
             headers = {**settings.headers, **self.sandbox_config.headers}
 
             try:
-                async with httpx.AsyncClient(timeout=None) as client_instance:
-                    async with client_instance.stream("GET", url, headers=headers) as response:
+                async with AsyncSandboxHTTPClient(timeout=None) as client_instance:
+                    async with retry_safe_stream_async(
+                        lambda: client_instance.stream("GET", url, headers=headers)
+                    ) as response:
                         if response.status_code != 200:
-                            raise Exception(f"Failed to stream logs: {await response.aread()}")
+                            await response.aread()
+                            raise ResponseError(response)
 
                         buffer = ""
                         async for chunk in response.aiter_text():
@@ -297,21 +300,23 @@ class SandboxProcess(SandboxAction):
             else {**settings.headers, **self.sandbox_config.headers}
         )
 
-        async with httpx.AsyncClient() as client_instance:
-            async with client_instance.stream(
-                "POST",
-                f"{self.url}/process",
-                headers={
-                    **headers,
-                    "Content-Type": "application/json",
-                    "Accept": "text/event-stream",
-                },
-                json=process_request.to_dict(),
-                timeout=None,
+        async with AsyncSandboxHTTPClient() as client_instance:
+            async with retry_safe_stream_async(
+                lambda: client_instance.stream(
+                    "POST",
+                    f"{self.url}/process",
+                    headers={
+                        **headers,
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream",
+                    },
+                    json=process_request.to_dict(),
+                    timeout=None,
+                )
             ) as response:
                 if response.status_code >= 400:
-                    error_text = await response.aread()
-                    raise Exception(f"Failed to execute process: {error_text}")
+                    await response.aread()
+                    raise ResponseError(response)
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type

@@ -9,11 +9,17 @@ from typing import Any, Callable, Dict, List, Union
 import httpx
 
 from ...common.settings import settings
+from ..client.client import AsyncSandboxHTTPClient
 from ..client.models import Directory, FileRequest, SuccessResponse
-from ..transient_retry import retry_on_transient_reset_async
+from ..transient_retry import (
+    retry_on_transient_reset_async,
+    retry_safe_request_async,
+    retry_safe_stream_async,
+)
 from ..types import (
     AsyncWatchHandle,
     CopyResponse,
+    ResponseError,
     SandboxConfiguration,
     SandboxFilesystemFile,
     WatchEvent,
@@ -99,21 +105,26 @@ class SandboxFileSystem(SandboxAction):
         headers = {**settings.headers, **self.sandbox_config.headers}
 
         async def put_once() -> SuccessResponse:
-            files = {
-                "file": (
-                    "binary-file.bin",
-                    io.BytesIO(content),
-                    "application/octet-stream",
-                ),
-            }
-            data = {"permissions": "0644", "path": path}
-            client = self.get_client()
-            response = await client.put(url, files=files, data=data, headers=headers)
+            async def request_once() -> httpx.Response:
+                files = {
+                    "file": (
+                        "binary-file.bin",
+                        io.BytesIO(content),
+                        "application/octet-stream",
+                    ),
+                }
+                data = {"permissions": "0644", "path": path}
+                return await self.get_client().put(
+                    url,
+                    files=files,
+                    data=data,
+                    headers=headers,
+                )
+
+            response = await retry_safe_request_async(request_once)
             try:
                 content_bytes = await response.aread()
-                if not response.is_success:
-                    error_text = content_bytes.decode("utf-8", errors="ignore")
-                    raise Exception(f"Failed to write binary: {response.status_code} {error_text}")
+                self.handle_response_error(response)
                 result = SuccessResponse.from_dict(json.loads(content_bytes))
                 assert result is not None
                 return result
@@ -416,12 +427,13 @@ class SandboxFileSystem(SandboxAction):
 
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            async with httpx.AsyncClient() as client_instance:
-                async with client_instance.stream(
-                    "GET", url, params=params, headers=headers
+            async with AsyncSandboxHTTPClient() as client_instance:
+                async with retry_safe_stream_async(
+                    lambda: client_instance.stream("GET", url, params=params, headers=headers)
                 ) as response:
                     if not response.is_success:
-                        raise Exception(f"Failed to start watching: {response.status_code}")
+                        await response.aread()
+                        raise ResponseError(response)
                     buffer = ""
                     async for chunk in response.aiter_text():
                         if closed:
@@ -515,9 +527,16 @@ class SandboxFileSystem(SandboxAction):
         params = {"partNumber": part_number}
 
         async def put_once() -> Dict[str, Any]:
-            files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
-            client = self.get_client()
-            response = await client.put(url, files=files, params=params, headers=headers)
+            async def request_once() -> httpx.Response:
+                files = {"file": ("part", io.BytesIO(data), "application/octet-stream")}
+                return await self.get_client().put(
+                    url,
+                    files=files,
+                    params=params,
+                    headers=headers,
+                )
+
+            response = await retry_safe_request_async(request_once)
             try:
                 self.handle_response_error(response)
                 result = json.loads(await response.aread())

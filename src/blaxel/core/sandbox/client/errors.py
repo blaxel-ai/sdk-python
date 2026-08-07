@@ -147,7 +147,7 @@ def from_response(
         return ConflictError(status_code, content, headers)
     if status_code == HTTPStatus.TOO_MANY_REQUESTS:
         return RateLimitError(status_code, content, headers)
-    return UnexpectedStatus(status_code, content)
+    return APIStatusError(status_code, content, headers)
 
 
 __all__ = [
