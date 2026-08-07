@@ -7,7 +7,7 @@ import httpx
 from ...common.settings import settings
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..transient_retry import retry_on_transient_reset
+from ..transient_retry import retry_on_transient_reset, retry_safe_stream
 from ..types import (
     ProcessRequestWithLog,
     ProcessResponseWithLog,
@@ -125,7 +125,9 @@ class SyncSandboxProcess(SyncSandboxAction):
             headers = {**settings.headers, **self.sandbox_config.headers}
             try:
                 with httpx.Client() as client_instance:
-                    with client_instance.stream("GET", url, headers=headers) as response:
+                    with retry_safe_stream(
+                        lambda: client_instance.stream("GET", url, headers=headers)
+                    ) as response:
                         if response.status_code != 200:
                             raise Exception(f"Failed to stream logs: {response.text}")
                         buffer = ""
@@ -244,16 +246,18 @@ class SyncSandboxProcess(SyncSandboxAction):
         )
 
         with httpx.Client() as client_instance:
-            with client_instance.stream(
-                "POST",
-                f"{self.url}/process",
-                headers={
-                    **headers,
-                    "Content-Type": "application/json",
-                    "Accept": "text/event-stream",
-                },
-                json=process_request.to_dict(),
-                timeout=None,
+            with retry_safe_stream(
+                lambda: client_instance.stream(
+                    "POST",
+                    f"{self.url}/process",
+                    headers={
+                        **headers,
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream",
+                    },
+                    json=process_request.to_dict(),
+                    timeout=None,
+                )
             ) as response:
                 if response.status_code >= 400:
                     error_text = response.read()

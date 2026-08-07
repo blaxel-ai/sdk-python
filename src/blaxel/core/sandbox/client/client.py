@@ -5,6 +5,28 @@ from typing import Any, Union
 import httpx
 from attrs import define, evolve, field
 
+from ..transient_retry import (
+    is_replayable_request,
+    retry_safe_request,
+    retry_safe_request_async,
+)
+
+
+class SandboxHTTPClient(httpx.Client):
+    def request(self, *args: Any, **kwargs: Any) -> httpx.Response:
+        request = super().request
+        if not is_replayable_request(kwargs):
+            return request(*args, **kwargs)
+        return retry_safe_request(lambda: request(*args, **kwargs))
+
+
+class AsyncSandboxHTTPClient(httpx.AsyncClient):
+    async def request(self, *args: Any, **kwargs: Any) -> httpx.Response:
+        request = super().request
+        if not is_replayable_request(kwargs):
+            return await request(*args, **kwargs)
+        return await retry_safe_request_async(lambda: request(*args, **kwargs))
+
 
 @define
 class Client:
@@ -109,7 +131,7 @@ class Client:
     def get_httpx_client(self) -> httpx.Client:
         """Get the underlying httpx.Client, constructing a new one if not previously set"""
         if self._client is None:
-            self._client = httpx.Client(
+            self._client = SandboxHTTPClient(
                 base_url=self._base_url,
                 cookies=self._cookies,
                 headers=self._headers,
@@ -150,7 +172,7 @@ class Client:
             self._async_client_loop = None
 
         if self._async_client is None:
-            self._async_client = httpx.AsyncClient(
+            self._async_client = AsyncSandboxHTTPClient(
                 base_url=self._base_url,
                 cookies=self._cookies,
                 headers=self._headers,

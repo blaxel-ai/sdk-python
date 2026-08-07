@@ -2,7 +2,8 @@ import asyncio
 import random
 import time
 from collections.abc import Awaitable, Callable, Iterator
-from typing import TypeVar
+from contextlib import asynccontextmanager, contextmanager
+from typing import AsyncContextManager, ContextManager, TypeVar
 
 import httpx
 
@@ -33,6 +34,9 @@ TRANSIENT_ERROR_CODES = {
 
 DEFAULT_BASE_DELAY_SECONDS = 0.2
 DEFAULT_MAX_DELAY_SECONDS = 2.0
+SAFE_RETRY_INITIAL_DELAY_SECONDS = 0.5
+SAFE_RETRY_MAX_DELAY_SECONDS = 30.0
+SAFE_RETRY_BUDGET_SECONDS = 60.0
 
 
 def _walk_error_chain(error: BaseException) -> Iterator[BaseException]:
@@ -85,6 +89,111 @@ def is_transient_reset_error(error: BaseException) -> bool:
     if any(code in TRANSIENT_ERROR_CODES for code in codes):
         return True
     return any(marker in message for message in messages for marker in TRANSIENT_RESET_MARKERS)
+
+
+def _has_safe_retry_headers(response: httpx.Response) -> bool:
+    if response.headers.get("X-Blaxel-Source") != "platform":
+        return False
+    if response.headers.get("X-Blaxel-Error-Code") != "WORKLOAD_UNAVAILABLE":
+        return False
+    if response.headers.get("X-Blaxel-Dispatch-State") != "not_dispatched":
+        return False
+    return True
+
+
+def is_safe_to_retry_response(response: httpx.Response) -> bool:
+    """True only when the gateway proves the request was not dispatched."""
+    if not _has_safe_retry_headers(response):
+        return False
+    try:
+        error = response.json().get("error", {})
+    except (TypeError, ValueError):
+        return False
+    return (
+        isinstance(error, dict)
+        and error.get("code") == "WORKLOAD_UNAVAILABLE"
+        and error.get("origin") == "platform"
+        and error.get("retryable") is True
+        and error.get("dispatch_state") == "not_dispatched"
+        and error.get("safe_to_retry_request") is True
+    )
+
+
+def is_replayable_request(kwargs: dict[str, object]) -> bool:
+    """Whether httpx can rebuild the same request body for another attempt."""
+    if kwargs.get("files") is not None:
+        return False
+    content = kwargs.get("content")
+    if content is not None and not isinstance(content, bytes | str):
+        return False
+    data = kwargs.get("data")
+    return data is None or isinstance(data, bytes | str | dict | list | tuple)
+
+
+async def retry_safe_request_async(
+    fn: Callable[[], Awaitable[httpx.Response]],
+) -> httpx.Response:
+    elapsed = 0.0
+    delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
+    while True:
+        response = await fn()
+        if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
+            return response
+        await response.aclose()
+        sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
+        await asyncio.sleep(sleep_for)
+        elapsed += sleep_for
+        delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
+
+
+def retry_safe_request(fn: Callable[[], httpx.Response]) -> httpx.Response:
+    elapsed = 0.0
+    delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
+    while True:
+        response = fn()
+        if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
+            return response
+        response.close()
+        sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
+        time.sleep(sleep_for)
+        elapsed += sleep_for
+        delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
+
+
+@asynccontextmanager
+async def retry_safe_stream_async(
+    fn: Callable[[], AsyncContextManager[httpx.Response]],
+):
+    elapsed = 0.0
+    delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
+    while True:
+        async with fn() as response:
+            if _has_safe_retry_headers(response):
+                await response.aread()
+            if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
+                yield response
+                return
+        sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
+        await asyncio.sleep(sleep_for)
+        elapsed += sleep_for
+        delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
+
+
+@contextmanager
+def retry_safe_stream(fn: Callable[[], ContextManager[httpx.Response]]):
+    elapsed = 0.0
+    delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
+    while True:
+        with fn() as response:
+            if _has_safe_retry_headers(response):
+                response.read()
+            if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
+                yield response
+                return
+        sleep_for = min(delay, SAFE_RETRY_BUDGET_SECONDS - elapsed)
+        time.sleep(sleep_for)
+        elapsed += sleep_for
+        delay = min(delay * 2, SAFE_RETRY_MAX_DELAY_SECONDS)
 
 
 def _backoff_delay_seconds(

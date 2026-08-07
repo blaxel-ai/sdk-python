@@ -2,6 +2,7 @@ import httpx
 
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
+from ..client.client import AsyncSandboxHTTPClient
 from ..types import ResponseError, SandboxConfiguration
 
 
@@ -57,7 +58,7 @@ class SandboxAction:
         """Get persistent HTTP client for this sandbox instance."""
         if self._client is None:
             base_url = self.sandbox_config.force_url or self.url
-            self._client = httpx.AsyncClient(
+            self._client = AsyncSandboxHTTPClient(
                 base_url=base_url,
                 headers=self.sandbox_config.headers
                 if self.sandbox_config.force_url

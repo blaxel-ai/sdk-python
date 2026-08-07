@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict
 import httpx
 
 from ...client.models import Sandbox
+from ..transient_retry import retry_safe_stream_async
 from ..types import SandboxCreateConfiguration
 from .sandbox import SandboxInstance
 
@@ -220,11 +221,13 @@ class CodeInterpreter(SandboxInstance):
             write=write_timeout,
             pool=pool_timeout,
         )
-        async with client.stream(
-            "POST",
-            "/port/8888/execute",
-            json=body,
-            timeout=timeout_cfg,
+        async with retry_safe_stream_async(
+            lambda: client.stream(
+                "POST",
+                "/port/8888/execute",
+                json=body,
+                timeout=timeout_cfg,
+            )
         ) as response:
             if response.status_code >= 400:
                 try:

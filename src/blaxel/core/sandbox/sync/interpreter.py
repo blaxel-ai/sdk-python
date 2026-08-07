@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, Optional, Union
 import httpx
 
 from ...client.models import Sandbox
+from ..transient_retry import retry_safe_stream
 from ..types import SandboxCreateConfiguration
 from .sandbox import SyncSandboxInstance
 
@@ -233,11 +234,13 @@ class SyncCodeInterpreter(SyncSandboxInstance):
                 write=write_timeout,
                 pool=pool_timeout,
             )
-            with client.stream(
-                "POST",
-                "/port/8888/execute",
-                json=body,
-                timeout=timeout_cfg,
+            with retry_safe_stream(
+                lambda: client.stream(
+                    "POST",
+                    "/port/8888/execute",
+                    json=body,
+                    timeout=timeout_cfg,
+                )
             ) as response:
                 if response.status_code >= 400:
                     details = self._format_http_error("Execution", response)
