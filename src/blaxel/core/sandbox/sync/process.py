@@ -260,6 +260,7 @@ class SyncSandboxProcess(SyncSandboxAction):
                 )
             ) as response:
                 if response.status_code >= 400:
+                    response.read()
                     raise ResponseError(response)
 
                 content_type = response.headers.get("Content-Type", "")

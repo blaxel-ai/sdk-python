@@ -314,6 +314,7 @@ class SandboxProcess(SandboxAction):
                 )
             ) as response:
                 if response.status_code >= 400:
+                    await response.aread()
                     raise ResponseError(response)
 
                 content_type = response.headers.get("Content-Type", "")

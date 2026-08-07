@@ -186,6 +186,7 @@ send_untrusted_workload_unavailable = response_handler(
 )
 send_empty_drive_list = response_handler("200 OK", b'{"mounts":[]}')
 send_file_content = response_handler("200 OK", b'{"content":"hello"}')
+send_bad_request = response_handler("400 Bad Request", b'{"error":"bad request"}')
 send_completed_process = response_handler(
     "200 OK",
     json.dumps(
@@ -473,6 +474,25 @@ async def test_async_streaming_process_preserves_final_retryable_error(monkeypat
 
     assert exc_info.value.response.status_code == 404
     assert exc_info.value.data["error"]["code"] == "WORKLOAD_UNAVAILABLE"
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_streaming_process_preserves_non_retryable_error():
+    async with LoopbackFaultServer(send_bad_request) as server:
+        process = SandboxProcess(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        with pytest.raises(ResponseError) as exc_info:
+            await process.exec(
+                {
+                    "command": "echo nope",
+                    "wait_for_completion": True,
+                    "on_log": lambda _: None,
+                }
+            )
+
+    assert exc_info.value.response.status_code == 400
+    assert exc_info.value.data["error"] == "bad request"
     assert server.requests == 1
 
 
