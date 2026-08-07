@@ -10,6 +10,7 @@ from ..types import (
     AsyncStreamHandle,
     ProcessRequestWithLog,
     ProcessResponseWithLog,
+    ResponseError,
     SandboxConfiguration,
 )
 from .action import SandboxAction
@@ -313,8 +314,7 @@ class SandboxProcess(SandboxAction):
                 )
             ) as response:
                 if response.status_code >= 400:
-                    error_text = await response.aread()
-                    raise Exception(f"Failed to execute process: {error_text}")
+                    raise ResponseError(response)
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type

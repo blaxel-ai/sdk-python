@@ -10,6 +10,7 @@ from ..transient_retry import retry_on_transient_reset, retry_safe_stream
 from ..types import (
     ProcessRequestWithLog,
     ProcessResponseWithLog,
+    ResponseError,
     SandboxConfiguration,
     StreamHandle,
 )
@@ -259,8 +260,7 @@ class SyncSandboxProcess(SyncSandboxAction):
                 )
             ) as response:
                 if response.status_code >= 400:
-                    error_text = response.read()
-                    raise Exception(f"Failed to execute process: {error_text}")
+                    raise ResponseError(response)
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type

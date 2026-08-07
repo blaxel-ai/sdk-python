@@ -107,7 +107,7 @@ def is_safe_to_retry_response(response: httpx.Response) -> bool:
         return False
     try:
         payload = response.json()
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):
         return False
     if not isinstance(payload, dict):
         return False
