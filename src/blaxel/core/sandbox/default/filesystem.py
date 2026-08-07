@@ -462,7 +462,7 @@ class SandboxFileSystem(SandboxAction):
 
                                         content = await self.read(file_path)
                                         file_event.content = content
-                                    except:
+                                    except Exception:
                                         file_event.content = None
 
                                 await callback(file_event)

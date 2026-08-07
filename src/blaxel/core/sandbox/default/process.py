@@ -407,7 +407,7 @@ class SandboxProcess(SandboxAction):
             try:
                 data = await self.get(identifier)
                 status = data.status or "running"
-            except:
+            except Exception:
                 break
 
             if (asyncio.get_running_loop().time() * 1000) - start_time > max_wait:
