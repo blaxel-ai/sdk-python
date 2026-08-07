@@ -1,5 +1,7 @@
 import asyncio
+import io
 import json
+from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
 import httpx
@@ -149,7 +151,8 @@ def response_handler(
     status: str,
     content: bytes,
     headers: tuple[bytes, ...] = (),
-):
+    content_type: bytes = b"application/json",
+) -> Callable[[asyncio.StreamReader, asyncio.StreamWriter], Awaitable[None]]:
     async def send(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         try:
             await read_request(reader)
@@ -157,7 +160,9 @@ def response_handler(
             pass
         writer.write(
             f"HTTP/1.1 {status}\r\n".encode()
-            + b"Content-Type: application/json\r\n"
+            + b"Content-Type: "
+            + content_type
+            + b"\r\n"
             + b"".join(header + b"\r\n" for header in headers)
             + f"Content-Length: {len(content)}\r\n".encode()
             + b"Connection: close\r\n\r\n"
@@ -204,6 +209,38 @@ send_completed_process = response_handler(
             "workingDir": "/tmp",
         }
     ).encode(),
+)
+send_streamed_process_with_reserved_headers = response_handler(
+    "200 OK",
+    (
+        json.dumps(
+            {
+                "type": "result",
+                "data": json.dumps(
+                    {
+                        "command": "echo ok",
+                        "completedAt": "now",
+                        "exitCode": 0,
+                        "logs": "ok",
+                        "name": "test",
+                        "pid": "1",
+                        "startedAt": "now",
+                        "status": "completed",
+                        "stderr": "",
+                        "stdout": "ok",
+                        "workingDir": "/tmp",
+                    }
+                ),
+            }
+        )
+        + "\n"
+    ).encode(),
+    (
+        b"X-Blaxel-Source: platform",
+        b"X-Blaxel-Error-Code: WORKLOAD_UNAVAILABLE",
+        b"X-Blaxel-Dispatch-State: not_dispatched",
+    ),
+    b"application/x-ndjson",
 )
 send_file_written = response_handler(
     "200 OK",
@@ -260,7 +297,7 @@ def test_classifier_rejects_application_responses():
 
 
 @pytest.mark.asyncio
-async def test_async_drive_list_retries_trusted_pre_dispatch_response():
+async def test_async_drive_list_retries_trusted_pre_dispatch_response() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_empty_drive_list,
@@ -273,7 +310,7 @@ async def test_async_drive_list_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
-async def test_async_process_exec_retries_trusted_pre_dispatch_response():
+async def test_async_process_exec_retries_trusted_pre_dispatch_response() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_completed_process,
@@ -287,7 +324,7 @@ async def test_async_process_exec_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
-async def test_sync_drive_list_retries_trusted_pre_dispatch_response():
+async def test_sync_drive_list_retries_trusted_pre_dispatch_response() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_empty_drive_list,
@@ -300,7 +337,7 @@ async def test_sync_drive_list_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
-async def test_sync_process_exec_retries_trusted_pre_dispatch_response():
+async def test_sync_process_exec_retries_trusted_pre_dispatch_response() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_completed_process,
@@ -317,7 +354,7 @@ async def test_sync_process_exec_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
-async def test_async_filesystem_read_retries_trusted_pre_dispatch_response():
+async def test_async_filesystem_read_retries_trusted_pre_dispatch_response() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_file_content,
@@ -330,7 +367,7 @@ async def test_async_filesystem_read_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
-async def test_sync_fetch_retries_trusted_pre_dispatch_response():
+async def test_sync_fetch_retries_trusted_pre_dispatch_response() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_ok_response,
@@ -344,7 +381,7 @@ async def test_sync_fetch_retries_trusted_pre_dispatch_response():
 
 
 @pytest.mark.asyncio
-async def test_async_fetch_does_not_replay_one_shot_body():
+async def test_async_fetch_does_not_replay_one_shot_body() -> None:
     async def body():
         yield b"payload"
 
@@ -361,7 +398,65 @@ async def test_async_fetch_does_not_replay_one_shot_body():
 
 
 @pytest.mark.asyncio
-async def test_async_drive_list_does_not_retry_untrusted_response():
+async def test_async_fetch_retries_bytes_backed_multipart_body() -> None:
+    async with LoopbackFaultServer(
+        send_safe_workload_unavailable,
+        send_ok_response,
+    ) as server:
+        network = SandboxNetwork(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        response = await network.fetch(
+            3000,
+            "/upload",
+            method="POST",
+            files={"file": ("payload.txt", b"payload")},
+        )
+
+    assert response.status_code == 200
+    assert server.requests == 2
+
+
+@pytest.mark.asyncio
+async def test_sync_fetch_retries_bytes_backed_multipart_body() -> None:
+    async with LoopbackFaultServer(
+        send_safe_workload_unavailable,
+        send_ok_response,
+    ) as server:
+        network = SyncSandboxNetwork(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        response = await asyncio.to_thread(
+            network.fetch,
+            3000,
+            "/upload",
+            "POST",
+            files={"file": ("payload.txt", b"payload")},
+        )
+
+    assert response.status_code == 200
+    assert server.requests == 2
+
+
+@pytest.mark.asyncio
+async def test_async_fetch_does_not_replay_file_object() -> None:
+    async with LoopbackFaultServer(
+        send_safe_workload_unavailable,
+        send_ok_response,
+    ) as server:
+        network = SandboxNetwork(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        response = await network.fetch(
+            3000,
+            "/upload",
+            method="POST",
+            files={"file": ("payload.txt", io.BytesIO(b"payload"))},
+        )
+
+    assert response.status_code == 404
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_async_drive_list_does_not_retry_untrusted_response() -> None:
     async with LoopbackFaultServer(send_untrusted_workload_unavailable) as server:
         drive = SandboxDrive(SandboxConfiguration(cast(Any, None), force_url=server.url))
 
@@ -372,7 +467,7 @@ async def test_async_drive_list_does_not_retry_untrusted_response():
 
 
 @pytest.mark.asyncio
-async def test_async_drive_list_preserves_malformed_trusted_response():
+async def test_async_drive_list_preserves_malformed_trusted_response() -> None:
     async with LoopbackFaultServer(send_malformed_workload_unavailable) as server:
         drive = SandboxDrive(SandboxConfiguration(cast(Any, None), force_url=server.url))
 
@@ -384,7 +479,7 @@ async def test_async_drive_list_preserves_malformed_trusted_response():
 
 
 @pytest.mark.asyncio
-async def test_async_drive_list_does_not_retry_wrong_status():
+async def test_async_drive_list_does_not_retry_wrong_status() -> None:
     async with LoopbackFaultServer(send_wrong_status_workload_unavailable) as server:
         drive = SandboxDrive(SandboxConfiguration(cast(Any, None), force_url=server.url))
 
@@ -396,7 +491,7 @@ async def test_async_drive_list_does_not_retry_wrong_status():
 
 
 @pytest.mark.asyncio
-async def test_async_drive_list_preserves_final_retryable_error(monkeypatch):
+async def test_async_drive_list_preserves_final_retryable_error(monkeypatch) -> None:
     monkeypatch.setattr(
         "blaxel.core.sandbox.transient_retry.SAFE_RETRY_BUDGET_SECONDS",
         0,
@@ -414,7 +509,7 @@ async def test_async_drive_list_preserves_final_retryable_error(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_async_streaming_process_exec_retries_before_dispatch():
+async def test_async_streaming_process_exec_retries_before_dispatch() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_completed_process,
@@ -434,7 +529,24 @@ async def test_async_streaming_process_exec_retries_before_dispatch():
 
 
 @pytest.mark.asyncio
-async def test_sync_streaming_process_exec_retries_before_dispatch():
+async def test_async_streaming_process_does_not_consume_non_404_response() -> None:
+    async with LoopbackFaultServer(send_streamed_process_with_reserved_headers) as server:
+        process = SandboxProcess(SandboxConfiguration(cast(Any, None), force_url=server.url))
+
+        result = await process.exec(
+            {
+                "command": "echo ok",
+                "wait_for_completion": True,
+                "on_log": lambda _: None,
+            }
+        )
+
+    assert result.logs == "ok"
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_sync_streaming_process_exec_retries_before_dispatch() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_completed_process,
@@ -455,7 +567,7 @@ async def test_sync_streaming_process_exec_retries_before_dispatch():
 
 
 @pytest.mark.asyncio
-async def test_async_streaming_process_preserves_final_retryable_error(monkeypatch):
+async def test_async_streaming_process_preserves_final_retryable_error(monkeypatch) -> None:
     monkeypatch.setattr(
         "blaxel.core.sandbox.transient_retry.SAFE_RETRY_BUDGET_SECONDS",
         0,
@@ -478,7 +590,7 @@ async def test_async_streaming_process_preserves_final_retryable_error(monkeypat
 
 
 @pytest.mark.asyncio
-async def test_streaming_process_preserves_non_retryable_error():
+async def test_streaming_process_preserves_non_retryable_error() -> None:
     async with LoopbackFaultServer(send_bad_request) as server:
         process = SandboxProcess(SandboxConfiguration(cast(Any, None), force_url=server.url))
 
@@ -497,7 +609,7 @@ async def test_streaming_process_preserves_non_retryable_error():
 
 
 @pytest.mark.asyncio
-async def test_async_write_binary_rebuilds_body_for_safe_retry():
+async def test_async_write_binary_rebuilds_body_for_safe_retry() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_file_written,
@@ -511,7 +623,7 @@ async def test_async_write_binary_rebuilds_body_for_safe_retry():
 
 
 @pytest.mark.asyncio
-async def test_sync_write_binary_rebuilds_body_for_safe_retry():
+async def test_sync_write_binary_rebuilds_body_for_safe_retry() -> None:
     async with LoopbackFaultServer(
         send_safe_workload_unavailable,
         send_file_written,
@@ -527,7 +639,7 @@ async def test_sync_write_binary_rebuilds_body_for_safe_retry():
 
 
 @pytest.mark.asyncio
-async def test_sync_retry_uses_bounded_exponential_backoff(monkeypatch):
+async def test_sync_retry_uses_bounded_exponential_backoff(monkeypatch) -> None:
     sleeps = []
     monkeypatch.setattr("blaxel.core.sandbox.transient_retry.time.sleep", sleeps.append)
     async with LoopbackFaultServer(
@@ -544,7 +656,7 @@ async def test_sync_retry_uses_bounded_exponential_backoff(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_sync_retry_returns_final_error_when_budget_expires(monkeypatch):
+async def test_sync_retry_returns_final_error_when_budget_expires(monkeypatch) -> None:
     sleeps = []
     monkeypatch.setattr("blaxel.core.sandbox.transient_retry.time.sleep", sleeps.append)
     monkeypatch.setattr(
@@ -562,7 +674,7 @@ async def test_sync_retry_returns_final_error_when_budget_expires(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_async_retry_respects_cancellation():
+async def test_async_retry_respects_cancellation() -> None:
     async with LoopbackFaultServer(send_safe_workload_unavailable) as server:
         drive = SandboxDrive(SandboxConfiguration(cast(Any, None), force_url=server.url))
         task = asyncio.create_task(drive.list())
@@ -578,7 +690,7 @@ async def test_async_retry_respects_cancellation():
 
 
 @pytest.mark.asyncio
-async def test_sync_process_exec_does_not_retry_ambiguous_transport_failure():
+async def test_sync_process_exec_does_not_retry_ambiguous_transport_failure() -> None:
     async with LoopbackFaultServer(close_without_response) as server:
         process = SyncSandboxProcess(SandboxConfiguration(cast(Any, None), force_url=server.url))
 

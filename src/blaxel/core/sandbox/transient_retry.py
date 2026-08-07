@@ -1,7 +1,7 @@
 import asyncio
 import random
 import time
-from collections.abc import Awaitable, Callable, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from typing import AsyncContextManager, ContextManager, TypeVar
 
@@ -124,13 +124,32 @@ def is_safe_to_retry_response(response: httpx.Response) -> bool:
 
 def is_replayable_request(kwargs: dict[str, object]) -> bool:
     """Whether httpx can rebuild the same request body for another attempt."""
-    if kwargs.get("files") is not None:
+    files = kwargs.get("files")
+    if files is not None and not _is_replayable_files(files):
         return False
     content = kwargs.get("content")
     if content is not None and not isinstance(content, bytes | str):
         return False
     data = kwargs.get("data")
     return data is None or isinstance(data, bytes | str | dict | list | tuple)
+
+
+def _is_replayable_files(files: object) -> bool:
+    if isinstance(files, dict):
+        values = files.values()
+    elif isinstance(files, list | tuple):
+        if not all(isinstance(item, tuple) and len(item) == 2 for item in files):
+            return False
+        values = (item[1] for item in files)
+    else:
+        return False
+    return all(_is_replayable_file(value) for value in values)
+
+
+def _is_replayable_file(value: object) -> bool:
+    if isinstance(value, bytes):
+        return True
+    return isinstance(value, tuple) and len(value) >= 2 and isinstance(value[1], bytes)
 
 
 async def retry_safe_request_async(
@@ -170,13 +189,13 @@ def retry_safe_request(fn: Callable[[], httpx.Response]) -> httpx.Response:
 @asynccontextmanager
 async def retry_safe_stream_async(
     fn: Callable[[], AsyncContextManager[httpx.Response]],
-):
+) -> AsyncIterator[httpx.Response]:
     started = time.monotonic()
     slept = 0.0
     delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
     while True:
         async with fn() as response:
-            if _has_safe_retry_headers(response):
+            if response.status_code == 404 and _has_safe_retry_headers(response):
                 await response.aread()
             elapsed = max(time.monotonic() - started, slept)
             if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:
@@ -189,13 +208,15 @@ async def retry_safe_stream_async(
 
 
 @contextmanager
-def retry_safe_stream(fn: Callable[[], ContextManager[httpx.Response]]):
+def retry_safe_stream(
+    fn: Callable[[], ContextManager[httpx.Response]],
+) -> Iterator[httpx.Response]:
     started = time.monotonic()
     slept = 0.0
     delay = SAFE_RETRY_INITIAL_DELAY_SECONDS
     while True:
         with fn() as response:
-            if _has_safe_retry_headers(response):
+            if response.status_code == 404 and _has_safe_retry_headers(response):
                 response.read()
             elapsed = max(time.monotonic() - started, slept)
             if not is_safe_to_retry_response(response) or elapsed >= SAFE_RETRY_BUDGET_SECONDS:

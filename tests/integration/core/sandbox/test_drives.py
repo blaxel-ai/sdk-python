@@ -250,7 +250,7 @@ class TestSandboxDriveMounting(TestDriveOperations):
         not os.environ.get("RUN_STANDBY_TESTS"),
         reason="slow standby test; set RUN_STANDBY_TESTS=1 to enable",
     )
-    async def test_mounted_drive_recovers_after_standby(self):
+    async def test_mounted_drive_recovers_after_standby(self) -> None:
         drive_name = unique_name("standby-drive")
         sandbox_name = unique_name("standby-sandbox")
         await DriveInstance.create(
