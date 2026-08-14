@@ -341,8 +341,8 @@ class SyncSandboxProcess(SyncSandboxAction):
 
     def wait(self, identifier: str, max_wait: int = 60000, interval: int = 1000) -> ProcessResponse:
         start_time = time.monotonic() * 1000
-        status = "running"
         data = self.get(identifier)
+        status = data.status or "running"
         while status == "running":
             time.sleep(interval / 1000)
             try:
