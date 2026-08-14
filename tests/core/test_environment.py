@@ -123,6 +123,19 @@ def test_autoload_functionality():
             raise
 
 
+def test_autoload_sets_control_plane_user_agent():
+    """Control-plane requests should carry the Python SDK User-Agent."""
+    from blaxel.core.client import client
+    from blaxel.core.common.autoload import autoload
+    from blaxel.core.common.settings import settings
+
+    autoload()
+
+    assert client._headers["Blaxel-Version"] == settings.api_version
+    assert client._headers["User-Agent"] == settings.headers["User-Agent"]
+    assert client._headers["User-Agent"].startswith("blaxel/sdk/python/")
+
+
 def test_settings_properties():
     """Test that settings has the expected properties."""
     from blaxel.core.common.settings import settings

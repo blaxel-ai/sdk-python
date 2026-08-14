@@ -399,8 +399,8 @@ class SandboxProcess(SandboxAction):
     ) -> ProcessResponse:
         """Wait for a process to complete."""
         start_time = asyncio.get_running_loop().time() * 1000  # Convert to milliseconds
-        status = "running"
         data = await self.get(identifier)
+        status = data.status or "running"
 
         while status == "running":
             await asyncio.sleep(interval / 1000)  # Convert to seconds
