@@ -249,21 +249,26 @@ class SandboxProcess(SandboxAction):
                 process, on_log=on_log, on_stdout=on_stdout, on_stderr=on_stderr
             )
         else:
-            client = self.get_client()
-            response = await client.post("/process", json=process.to_dict(), timeout=None)
-            try:
-                content_bytes = await response.aread()
-                self.handle_response_error(response)
-                import json
 
-                if content_bytes:
-                    response_data = json.loads(content_bytes)
-                    result = ProcessResponse.from_dict(response_data)
-                    assert result is not None
-                else:
-                    raise Exception("No content received from response")
-            finally:
-                await response.aclose()
+            async def exec_once():
+                client = self.get_client()
+                response = await client.post("/process", json=process.to_dict(), timeout=None)
+                try:
+                    content_bytes = await response.aread()
+                    self.handle_response_error(response)
+                    import json
+
+                    if content_bytes:
+                        response_data = json.loads(content_bytes)
+                        exec_result = ProcessResponse.from_dict(response_data)
+                        assert exec_result is not None
+                    else:
+                        raise Exception("No content received from response")
+                finally:
+                    await response.aclose()
+                return exec_result
+
+            result = await retry_on_transient_reset_async(exec_once)
 
             if on_log or on_stdout or on_stderr:
                 stream_options: dict[str, Callable[[str], None]] = {}
