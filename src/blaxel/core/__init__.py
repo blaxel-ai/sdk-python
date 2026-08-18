@@ -1,6 +1,12 @@
 """Blaxel core module."""
 
 from .agents import BlAgent, bl_agent
+from .application import (
+    ApplicationAPIError,
+    ApplicationCreateConfiguration,
+    ApplicationInstance,
+    SyncApplicationInstance,
+)
 from .authentication import BlaxelAuth, auth, get_credentials
 from .cache import find_from_cache
 from .client.client import client
@@ -73,6 +79,10 @@ __all__ = [
     "SyncDriveInstance",
     "DriveCreateConfiguration",
     "DriveAPIError",
+    "ApplicationInstance",
+    "SyncApplicationInstance",
+    "ApplicationCreateConfiguration",
+    "ApplicationAPIError",
     "verify_webhook_signature",
     "verify_webhook_from_request",
     "ImageInstance",

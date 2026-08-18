@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import time
-import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
@@ -9,8 +8,12 @@ if TYPE_CHECKING:
     import httpx
 
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
+from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
+from ...client.api.compute.delete_sandbox_snapshot import asyncio as delete_sandbox_snapshot
+from ...client.api.compute.fork_sandbox import asyncio as fork_sandbox
 from ...client.api.compute.get_sandbox import asyncio as get_sandbox
+from ...client.api.compute.list_sandbox_snapshots import asyncio as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
@@ -18,9 +21,13 @@ from ...client.models import (
     Metadata,
     MetadataLabels,
     Sandbox,
+    SandboxForkRequest,
+    SandboxForkResponse,
     SandboxLifecycle,
     SandboxRuntime,
     SandboxRuntimeExtraArgs,
+    SandboxSnapshot,
+    SandboxSnapshotRequest,
     SandboxSpec,
 )
 from ...client.models import (
@@ -89,6 +96,25 @@ def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
     return error.status_code == 404 or error.code in {404, "404"}
 
 
+def _unwrap_response(response, action: str, *, allow_none: bool = False):
+    """Raise a SandboxAPIError for error/empty responses, else return the payload.
+
+    Every generated control-plane API function returns ``Union[Error, T] | None``,
+    so an error status is a *return value*, not an exception. Callers must route
+    the response through here; handing it straight to ``cls(...)`` builds an
+    instance wrapping an ``Error`` and turns a failed write into a silent no-op.
+    Void endpoints (e.g. delete, which returns 204 No Content) legitimately return
+    ``None`` — pass ``allow_none=True`` for those.
+    """
+    if isinstance(response, Error):
+        status_code = response.code if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise SandboxAPIError(message, status_code=status_code, code=response.error)
+    if response is None and not allow_none:
+        raise SandboxAPIError(f"Failed to {action}")
+    return response
+
+
 def _sandbox_name(
     sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
 ) -> str | None:
@@ -104,6 +130,21 @@ def _sandbox_name(
     if isinstance(sandbox, Sandbox):
         return sandbox.metadata.name if sandbox.metadata else None
     return None
+
+
+def _create_body(sandbox: Sandbox) -> Union[Sandbox, Dict[str, Any]]:
+    """Build the create request body, omitting metadata.name when unnamed.
+
+    Unnamed creations are sent without ``metadata.name`` so the server assigns
+    a name and the request becomes eligible for warm sandbox pools (ENG-3931).
+    """
+    if sandbox.metadata and sandbox.metadata.name:
+        return sandbox
+    body = sandbox.to_dict()
+    metadata = body.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop("name", None)
+    return body
 
 
 class _AsyncDeleteDescriptor:
@@ -195,6 +236,83 @@ class SandboxInstance:
         """
         return await self.network.fetch(port, path, method, **kwargs)
 
+    async def snapshot(self, name: str | None = None) -> SandboxSnapshot:
+        """Create a point-in-time snapshot of this sandbox.
+
+        Snapshots capture the sandbox state and can be forked into new sandboxes
+        or applications.
+
+        Args:
+            name: Optional human-readable name for the snapshot.
+        """
+        body = SandboxSnapshotRequest(name=name) if name is not None else SandboxSnapshotRequest()
+        response = await create_sandbox_snapshot(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "create snapshot")
+
+    async def list_snapshots(self) -> list[SandboxSnapshot]:
+        """List the snapshots of this sandbox."""
+        response = await list_sandbox_snapshots(
+            self.metadata.name,
+            client=client,
+        )
+        return _unwrap_response(response, "list snapshots")
+
+    async def delete_snapshot(self, snapshot_id: str) -> None:
+        """Delete a snapshot of this sandbox by its ID."""
+        response = await delete_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        _unwrap_response(response, "delete snapshot", allow_none=True)
+
+    async def fork(
+        self,
+        target_name: str,
+        *,
+        target_type: str = "sandbox",
+        port: int | None = None,
+        traffic: int | None = None,
+        custom_domain: str | None = None,
+        prefix: str | None = None,
+        snapshot_id: str | None = None,
+    ) -> SandboxForkResponse:
+        """Fork this sandbox into a new sandbox or application.
+
+        Pass ``snapshot_id`` to fork from a specific snapshot (create a sandbox
+        from a snapshot) instead of the sandbox's live state.
+
+        Args:
+            target_name: Name of the sandbox/application to create.
+            target_type: Resource type to fork into ("sandbox" or "application").
+            port: Port to expose from the fork.
+            traffic: Canary traffic percentage (0-100) for an application fork.
+            custom_domain: Custom domain for an application fork.
+            prefix: URL prefix for an application fork.
+            snapshot_id: Snapshot ID to fork from.
+        """
+        body = SandboxForkRequest(target_name=target_name, target_type=target_type)
+        if port is not None:
+            body.port = port
+        if traffic is not None:
+            body.traffic = traffic
+        if custom_domain is not None:
+            body.custom_domain = custom_domain
+        if prefix is not None:
+            body.prefix = prefix
+        if snapshot_id is not None:
+            body.snapshot_id = snapshot_id
+        response = await fork_sandbox(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "fork sandbox")
+
     async def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SandboxInstance":
         logger.warning(
             "⚠️  Warning: sandbox.wait() is deprecated. You don't need to wait for the sandbox to be deployed anymore."
@@ -208,7 +326,9 @@ class SandboxInstance:
         safe: bool = False,
         create_if_not_exist: bool = False,
     ) -> "SandboxInstance":
-        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        # No client-side default name: when the caller omits a name we send the
+        # creation without metadata.name so the server can assign one and unnamed
+        # creations become eligible for warm sandbox pools (ENG-3931).
         default_image = "blaxel/base-image:latest"
         default_memory = 4096
 
@@ -248,7 +368,7 @@ class SandboxInstance:
                 raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
 
             # Set defaults if not provided
-            name = config.name or default_name
+            name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
             ports = config._normalize_ports() or UNSET
@@ -323,7 +443,7 @@ class SandboxInstance:
             assert isinstance(sandbox, Sandbox)
             # Set defaults for missing fields
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=default_name)
+                sandbox.metadata = Metadata(name=None)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
                     runtime=SandboxRuntime(image=default_image, memory=default_memory)
@@ -336,7 +456,7 @@ class SandboxInstance:
 
         response = await create_sandbox(
             client=client,
-            body=sandbox,
+            body=_create_body(sandbox),
             create_if_not_exist=create_if_not_exist,
         )
 
@@ -469,7 +589,7 @@ class SandboxInstance:
         )
 
         # Return new instance with updated sandbox
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox metadata"))
 
     @classmethod
     async def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SandboxInstance":
@@ -501,7 +621,7 @@ class SandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox TTL"))
 
     @classmethod
     async def update_lifecycle(
@@ -533,7 +653,7 @@ class SandboxInstance:
             body=body,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox lifecycle"))
 
     @classmethod
     async def update_network(
@@ -569,7 +689,7 @@ class SandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox network"))
 
     @classmethod
     async def create_if_not_exists(
@@ -653,12 +773,14 @@ class SandboxInstance:
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
         sandbox = Sandbox(metadata=Metadata(name=sandbox_name), spec=SandboxSpec())
 
-        # Use the constructor with force_url, headers, and params
+        # Authenticate with the preview token header only. The bl_preview_token
+        # query-param transport exists for browser navigation (which cannot set
+        # custom headers); on this programmatic client it would only place the
+        # credential in request URLs where it leaks to logs, Referer, and history.
         return cls(
             sandbox=sandbox,
             force_url=session.url,
             headers={"X-Blaxel-Preview-Token": session.token},
-            params={"bl_preview_token": session.token},
         )
 
 
@@ -668,9 +790,7 @@ async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         sandbox_name,
         client=client,
     )
-    if response is None:
-        raise ValueError(f"Sandbox {sandbox_name} not found")
-    return response
+    return _unwrap_response(response, f"delete sandbox {sandbox_name}")
 
 
 # Assign the delete descriptor to support both class-level and instance-level calls

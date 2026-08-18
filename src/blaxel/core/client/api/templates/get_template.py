@@ -5,33 +5,33 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.pending_invitation import PendingInvitation
+from ...models.template import Template
 from ...types import Response
 
 
 def _get_kwargs(
-    workspace_name: str,
+    template_name: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": f"/workspaces/{workspace_name}/decline",
+        "method": "get",
+        "url": f"/templates/{template_name}",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> PendingInvitation | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Template | None:
     if response.status_code == 200:
-        response_200 = PendingInvitation.from_dict(response.json())
+        response_200 = Template.from_dict(response.json())
 
         return response_200
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[PendingInvitation]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Template]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -41,27 +41,28 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Pen
 
 
 def sync_detailed(
-    workspace_name: str,
+    template_name: str,
     *,
     client: Client,
-) -> Response[PendingInvitation]:
-    """Decline invitation to workspace
+) -> Response[Template]:
+    """Get template
 
-     Declines an invitation to a workspace.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
-        workspace_name (str):
+        template_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[PendingInvitation]
+        Response[Template]
     """
 
     kwargs = _get_kwargs(
-        workspace_name=workspace_name,
+        template_name=template_name,
     )
 
     response = client.get_httpx_client().request(
@@ -72,53 +73,55 @@ def sync_detailed(
 
 
 def sync(
-    workspace_name: str,
+    template_name: str,
     *,
     client: Client,
-) -> PendingInvitation | None:
-    """Decline invitation to workspace
+) -> Template | None:
+    """Get template
 
-     Declines an invitation to a workspace.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
-        workspace_name (str):
+        template_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        PendingInvitation
+        Template
     """
 
     return sync_detailed(
-        workspace_name=workspace_name,
+        template_name=template_name,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    workspace_name: str,
+    template_name: str,
     *,
     client: Client,
-) -> Response[PendingInvitation]:
-    """Decline invitation to workspace
+) -> Response[Template]:
+    """Get template
 
-     Declines an invitation to a workspace.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
-        workspace_name (str):
+        template_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[PendingInvitation]
+        Response[Template]
     """
 
     kwargs = _get_kwargs(
-        workspace_name=workspace_name,
+        template_name=template_name,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -127,28 +130,29 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    workspace_name: str,
+    template_name: str,
     *,
     client: Client,
-) -> PendingInvitation | None:
-    """Decline invitation to workspace
+) -> Template | None:
+    """Get template
 
-     Declines an invitation to a workspace.
+     Returns detailed information about a deployment template including its configuration, source code
+    reference, and available parameters.
 
     Args:
-        workspace_name (str):
+        template_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        PendingInvitation
+        Template
     """
 
     return (
         await asyncio_detailed(
-            workspace_name=workspace_name,
+            template_name=template_name,
             client=client,
         )
     ).parsed

@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import shlex
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
@@ -169,7 +170,10 @@ class SyncSandboxFileSystem(SyncSandboxAction):
     def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
         if not self.process:
             raise Exception("Process instance not available. Cannot execute cp command.")
-        process = self.process.exec({"command": f"cp -r {source} {destination}"})
+        # Quote both paths so the shell treats them as single literal arguments
+        # and cannot interpret injected metacharacters.
+        command = f"cp -r {shlex.quote(source)} {shlex.quote(destination)}"
+        process = self.process.exec({"command": command})
         process = self.process.wait(process.pid, max_wait=max_wait, interval=100)
         if process.status == "failed":
             logs = process.logs if hasattr(process, "logs") else "Unknown error"

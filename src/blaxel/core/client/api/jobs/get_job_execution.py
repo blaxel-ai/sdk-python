@@ -36,7 +36,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, J
         response_500 = cast(Any, None)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 

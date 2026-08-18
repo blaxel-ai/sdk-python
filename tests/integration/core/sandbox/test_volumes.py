@@ -1,9 +1,16 @@
 import asyncio
+import os
 import time
 
 import pytest
 import pytest_asyncio
 
+from blaxel.core.client.api.workspaces.get_workspace_features import (
+    asyncio as get_workspace_features,
+)
+from blaxel.core.client.client import client
+from blaxel.core.client.models.error import Error
+from blaxel.core.client.types import Unset
 from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.volume import VolumeInstance
 from tests.helpers import (
@@ -15,6 +22,25 @@ from tests.helpers import (
     wait_for_volume_deletion,
 )
 
+_MK31_FEATURE = "generation_mk31"
+_REQUIRE_MK31_ENV = "BL_REQUIRE_GENERATION_MK31"
+
+
+async def _workspace_feature_enabled(feature: str) -> bool:
+    response = await get_workspace_features(client=client)
+    if response is None:
+        pytest.fail(f"Could not determine whether workspace feature {feature!r} is enabled")
+    if isinstance(response, Error):
+        pytest.fail(
+            f"Could not determine whether workspace feature {feature!r} is enabled: "
+            f"{response.code}: {response.error}"
+        )
+
+    features = response.features
+    if isinstance(features, Unset) or features is None:
+        return False
+    return features.additional_properties.get(feature) is True
+
 
 class TestVolumeOperations:
     """Base class for volume tests with cleanup tracking."""
@@ -23,7 +49,8 @@ class TestVolumeOperations:
     created_volumes: list[str] = []
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
-    async def cleanup(self, request):
+    @classmethod
+    async def cleanup(cls, request):
         """Clean up all resources after each test class."""
         # Reset lists for this class
         request.cls.created_sandboxes = []
@@ -32,31 +59,39 @@ class TestVolumeOperations:
         yield
 
         # Clean up sandboxes first (they depend on volumes)
-        await asyncio.gather(
-            *[self._safe_delete_sandbox(name) for name in request.cls.created_sandboxes],
+        cleanup_results = await asyncio.gather(
+            *[cls._safe_delete_sandbox(name) for name in request.cls.created_sandboxes],
             return_exceptions=True,
         )
 
         # Then clean up volumes
-        await asyncio.gather(
-            *[self._safe_delete_volume(name) for name in request.cls.created_volumes],
-            return_exceptions=True,
+        cleanup_results.extend(
+            await asyncio.gather(
+                *[cls._safe_delete_volume(name) for name in request.cls.created_volumes],
+                return_exceptions=True,
+            )
         )
 
-    async def _safe_delete_sandbox(self, name: str) -> None:
-        """Safely delete a sandbox, ignoring errors."""
-        try:
-            await SandboxInstance.delete(name)
-            await wait_for_sandbox_deletion(name)
-        except Exception:
-            pass
+        cleanup_errors = [result for result in cleanup_results if isinstance(result, BaseException)]
+        if cleanup_errors:
+            pytest.fail(
+                "Tracked resource cleanup failed:\n"
+                + "\n".join(f"- {type(error).__name__}: {error}" for error in cleanup_errors)
+            )
 
-    async def _safe_delete_volume(self, name: str) -> None:
-        """Safely delete a volume, ignoring errors."""
-        try:
-            await VolumeInstance.delete(name)
-        except Exception:
-            pass
+    @staticmethod
+    async def _safe_delete_sandbox(name: str) -> None:
+        """Delete a tracked sandbox and verify that deletion completes."""
+        await SandboxInstance.delete(name)
+        if not await wait_for_sandbox_deletion(name):
+            raise AssertionError(f"Timed out deleting sandbox {name}")
+
+    @staticmethod
+    async def _safe_delete_volume(name: str) -> None:
+        """Delete a tracked volume and verify that deletion completes."""
+        await VolumeInstance.delete(name)
+        if not await wait_for_volume_deletion(name):
+            raise AssertionError(f"Timed out deleting volume {name}")
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -204,6 +239,66 @@ class TestMountingVolumesToSandboxes(TestVolumeOperations):
 
 
 @pytest.mark.asyncio(loop_scope="class")
+class TestEphemeralVolumes(TestVolumeOperations):
+    """Test ephemeral (disk-backed scratch) volumes.
+
+    Ephemeral volumes are created together with the sandbox and require no backing
+    Volume resource, so there is nothing to create or delete apart from the sandbox
+    itself. Requires the ``generation_mk31`` feature flag on the workspace.
+    """
+
+    async def test_creates_sandbox_with_ephemeral_volume(self):
+        """An ephemeral volume mounts as scratch space without a Volume resource."""
+        if not await _workspace_feature_enabled(_MK31_FEATURE):
+            message = (
+                "ephemeral volumes require the generation_mk31 workspace feature; "
+                f"set {_REQUIRE_MK31_ENV}=1 in the MK3.1 lane to make absence a failure"
+            )
+            if os.environ.get(_REQUIRE_MK31_ENV) == "1":
+                pytest.fail(message)
+            pytest.skip(message)
+
+        sandbox_name = unique_name("ephemeral-sandbox")
+
+        sandbox = await SandboxInstance.create(
+            {
+                "name": sandbox_name,
+                "image": default_image,
+                "memory": 2048,
+                "region": default_region,
+                "volumes": [
+                    {
+                        "name": "scratch",
+                        "mount_path": "/scratch",
+                        "type": "ephemeral",
+                        "size_mb": 1024,
+                    },
+                ],
+                "labels": default_labels,
+            }
+        )
+        self.created_sandboxes.append(sandbox_name)
+
+        # Verify the scratch disk is mounted and writable.
+        write_result = await sandbox.process.exec(
+            {
+                "command": "echo 'ephemeral' > /scratch/test.txt",
+                "wait_for_completion": True,
+            }
+        )
+        assert write_result.exit_code == 0, write_result.logs
+
+        result = await sandbox.process.exec(
+            {
+                "command": "cat /scratch/test.txt",
+                "wait_for_completion": True,
+            }
+        )
+
+        assert "ephemeral" in result.logs
+
+
+@pytest.mark.asyncio(loop_scope="class")
 class TestVolumeResize(TestVolumeOperations):
     """Test volume resize operations."""
 
@@ -235,6 +330,7 @@ class TestVolumeResize(TestVolumeOperations):
                 "labels": default_labels,
             }
         )
+        self.created_sandboxes.append(sandbox1_name)
 
         # Write ~400MB of data to the volume
         await sandbox1.process.exec(
@@ -271,7 +367,8 @@ class TestVolumeResize(TestVolumeOperations):
 
         # Delete first sandbox
         await SandboxInstance.delete(sandbox1_name)
-        await wait_for_sandbox_deletion(sandbox1_name)
+        assert await wait_for_sandbox_deletion(sandbox1_name)
+        self.created_sandboxes.remove(sandbox1_name)
 
         # Resize volume to 1GB
         updated_volume = await VolumeInstance.update(volume_name, {"size": 1024})
@@ -417,6 +514,7 @@ class TestVolumePersistence(TestVolumeOperations):
                 "labels": default_labels,
             }
         )
+        self.created_sandboxes.append(sandbox1_name)
 
         await sandbox1.process.exec(
             {
@@ -427,7 +525,8 @@ class TestVolumePersistence(TestVolumeOperations):
 
         # Delete first sandbox and wait for full deletion
         await SandboxInstance.delete(sandbox1_name)
-        await wait_for_sandbox_deletion(sandbox1_name)
+        assert await wait_for_sandbox_deletion(sandbox1_name)
+        self.created_sandboxes.remove(sandbox1_name)
 
         # Second sandbox - read data
         sandbox2_name = unique_name("persist-2")

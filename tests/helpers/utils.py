@@ -128,6 +128,8 @@ def resource_labels(resource) -> dict:
     """Labels of a sandbox/volume, or an empty dict when the API omits them."""
     metadata = getattr(resource, "metadata", None)
     labels = getattr(metadata, "labels", None) if metadata else None
+    if isinstance(labels, dict):
+        return labels
     return getattr(labels, "additional_properties", {}) or {}
 
 

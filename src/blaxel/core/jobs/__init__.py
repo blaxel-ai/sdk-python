@@ -70,6 +70,7 @@ class BlJobWrapper:
                 func(**parsed_args)
         except Exception as error:
             logger.error(f"Job execution failed: {error}")
+            raise SystemExit(1) from error
 
 
 logger = getLogger(__name__)
