@@ -1,31 +1,6 @@
 """Pytest configuration for core integration tests."""
 
 import asyncio
-from datetime import datetime, timedelta, timezone
-
-# Orphans older than this were left behind by a crashed run, never by a live one.
-ORPHAN_MAX_AGE = timedelta(hours=2)
-
-
-def _labels(resource) -> dict:
-    metadata = getattr(resource, "metadata", None)
-    labels = getattr(metadata, "labels", None) if metadata else None
-    return getattr(labels, "additional_properties", {}) or {}
-
-
-def _is_stale_orphan(resource) -> bool:
-    """True for a pytest resource old enough that no live run still needs it."""
-    created_at = getattr(getattr(resource, "metadata", None), "created_at", None)
-    if not isinstance(created_at, str):
-        return False
-    try:
-        # Timestamps come back with nanosecond precision, which fromisoformat
-        # rejects on older Pythons -- truncate to microseconds.
-        head, _, tail = created_at.partition(".")
-        created = datetime.fromisoformat(f"{head}.{tail[:6]}+00:00" if tail else f"{head}+00:00")
-    except ValueError:
-        return False
-    return datetime.now(timezone.utc) - created > ORPHAN_MAX_AGE
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -45,13 +20,13 @@ def pytest_sessionfinish(session, exitstatus):
 
     from blaxel.core.client.client import client
     from blaxel.core.sandbox import SandboxInstance
-    from tests.helpers import run_id
+    from tests.helpers import is_stale_orphan, resource_labels, run_id
 
     def is_ours(resource) -> bool:
-        labels = _labels(resource)
+        labels = resource_labels(resource)
         if labels.get("run-id") == run_id:
             return True
-        return labels.get("created-by") == "pytest" and _is_stale_orphan(resource)
+        return labels.get("created-by") == "pytest" and is_stale_orphan(resource)
 
     async def cleanup_test_resources():
         """Delete this run's sandboxes, plus stale orphans."""
@@ -65,12 +40,15 @@ def pytest_sessionfinish(session, exitstatus):
         # GET per volume. Volume tests delete what they create in their own
         # class-level fixtures.
         try:
-            sandboxes = await SandboxInstance.list()
+            page = await SandboxInstance.list()
+            # Walk every page: one page holds 50 sandboxes and the shared
+            # workspace routinely holds more than that.
+            ours = [sb async for sb in page.auto_paging_iter() if is_ours(sb)]
         except Exception as e:
             print(f"  Error listing sandboxes: {e}")
-            sandboxes = []
+            ours = []
         await asyncio.gather(
-            *(sb.delete() for sb in sandboxes if is_ours(sb)),
+            *(sb.delete() for sb in ours),
             return_exceptions=True,
         )
 

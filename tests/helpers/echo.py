@@ -13,6 +13,7 @@ test are exercised exactly the same way.
 
 from __future__ import annotations
 
+import asyncio
 from urllib.parse import urlparse
 
 from blaxel.core.sandbox import SandboxInstance
@@ -66,6 +67,7 @@ _ECHO_PORT = 3000
 # Cached for the lifetime of the pytest process: every test class reuses the
 # same endpoint instead of paying the setup again.
 _echo_url: str | None = None
+_echo_lock = asyncio.Lock()
 
 
 async def echo_url() -> str:
@@ -78,6 +80,14 @@ async def echo_url() -> str:
     if _echo_url is not None:
         return _echo_url
 
+    async with _echo_lock:
+        if _echo_url is not None:
+            return _echo_url
+        _echo_url = await _create_echo_sandbox()
+    return _echo_url
+
+
+async def _create_echo_sandbox() -> str:
     sandbox = await SandboxInstance.create_if_not_exists(
         {
             "name": unique_name("echo"),
@@ -100,9 +110,7 @@ async def echo_url() -> str:
             "spec": {"port": _ECHO_PORT, "public": True},
         }
     )
-
-    _echo_url = preview.spec.url
-    return _echo_url
+    return preview.spec.url
 
 
 async def echo_host() -> str:
