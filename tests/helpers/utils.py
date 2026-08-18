@@ -13,10 +13,17 @@ env = os.environ.get("BL_ENV", "prod")
 default_region = "eu-dub-1" if env == "dev" else "us-pdx-1"
 default_image = "blaxel/base-image:latest"
 
+# Unique per pytest process. CI runs of several PRs share one workspace, so the
+# end-of-session cleanup must only delete what *this* run created -- deleting by
+# ``env=integration-test`` alone tears down sandboxes a concurrent run is still
+# using, which is a large part of the suite's cross-run flakiness.
+run_id = uuid.uuid4().hex[:12]
+
 # Default labels to identify test sandboxes in the UI
 default_labels = {
     "env": "integration-test",
     "created-by": "pytest",
+    "run-id": run_id,
 }
 
 
@@ -105,6 +112,21 @@ async def wait_for_volume_deletion(volume_name: str, max_attempts: int = 30) -> 
 
     print(f"Timeout waiting for {volume_name} deletion to complete")
     return False
+
+
+async def wait_until(predicate, timeout: float = 10.0, interval: float = 0.1) -> bool:
+    """Poll ``predicate`` until it is true or ``timeout`` elapses.
+
+    Callbacks (watch events, log streams) usually fire in well under a second,
+    but a fixed sleep turns a slow round-trip into a test failure. Polling keeps
+    the fast path fast and the slow path green.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        await asyncio.sleep(interval)
+    return predicate()
 
 
 def sleep(seconds: float) -> None:

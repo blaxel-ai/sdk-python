@@ -405,7 +405,12 @@ class TestAsyncDeletion(TestPreviewOperations):
         async with httpx.AsyncClient(timeout=60.0) as client:
             status = None
             for _ in range(30):
-                response = await client.get(preview.spec.url)
+                try:
+                    response = await client.get(preview.spec.url)
+                except httpx.HTTPError:
+                    # Edge hiccup while the preview propagates: keep polling.
+                    await asyncio.sleep(2)
+                    continue
                 status = response.status_code
                 if status == 200:
                     break
