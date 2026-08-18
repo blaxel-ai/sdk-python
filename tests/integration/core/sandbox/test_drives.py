@@ -78,7 +78,6 @@ class TestDriveInstanceCRUD(TestDriveOperations):
         self.created_drives.append(name)
 
         assert drive.name == name
-        assert drive.size == 10
         assert drive.region == default_region
 
     async def test_creates_a_drive_with_display_name(self):

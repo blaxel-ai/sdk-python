@@ -10,6 +10,7 @@ import json
 import os
 
 from blaxel.core.client.types import Unset
+from tests.helpers.echo import echo_url
 
 # The proxy/network routing feature is only available in specific regions, so
 # these tests override ``tests.helpers.default_region`` (which points at
@@ -20,8 +21,9 @@ default_region = "eu-dub-1" if _env == "dev" else "us-was-1"
 PROXY_HELPER_SCRIPT = r"""
 const https = require("https");
 const tls = require("tls");
+const RESPONSE_HEADERS_MARKER = "__RESPONSE_HEADERS__";
 const method = process.argv[2] || "GET";
-const targetUrl = process.argv[3] || "https://httpbin.org/headers";
+const targetUrl = process.argv[3];
 const extraHeaders = process.argv[4] ? JSON.parse(process.argv[4]) : {};
 const bodyData = process.argv[5] || null;
 const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy ||
@@ -41,7 +43,11 @@ function fire(socket) {
   }
   const req = https.request(opts, (r) => {
     let d = ""; r.on("data", c => d += c);
-    r.on("end", () => { process.stdout.write(d); process.exit(0); });
+    r.on("end", () => {
+      process.stdout.write(d);
+      process.stdout.write("\n" + RESPONSE_HEADERS_MARKER + JSON.stringify(r.headers));
+      process.exit(0);
+    });
   });
   req.on("error", (e) => { process.stderr.write("REQ ERR: " + e.message + "\n"); process.exit(1); });
   if (bodyData) req.write(bodyData);
@@ -91,12 +97,26 @@ else {
 PYTHON_HELPER_SCRIPT = """
 import sys, json, requests
 method = sys.argv[1] if len(sys.argv) > 1 else "GET"
-url = sys.argv[2] if len(sys.argv) > 2 else "https://httpbin.org/headers"
+url = sys.argv[2]
 headers = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
 body = sys.argv[4] if len(sys.argv) > 4 else None
 resp = requests.request(method, url, headers=headers, data=body, timeout=30)
 print(resp.text)
+print("__RESPONSE_HEADERS__" + json.dumps(dict(resp.headers)))
 """.strip()
+
+
+# Each test sandbox gets the echo server base URL in this file, and the test
+# commands read it back with ``$(cat /tmp/echo-url)``. Commands stay plain
+# string literals this way -- no f-strings fighting with the JSON braces they
+# already contain.
+ECHO_URL_FILE = "/tmp/echo-url"
+
+
+async def write_echo_url(sandbox) -> None:
+    """Make the echo base URL readable as ``ECHO`` from commands in this sandbox."""
+    sandbox_echo_url = await echo_url()
+    await sandbox.fs.write(ECHO_URL_FILE, sandbox_echo_url)
 
 
 def not_unset(val) -> bool:
@@ -125,6 +145,24 @@ def parse_json_output(logs: str | None) -> dict:
     if end == -1:
         raise ValueError(f"Unterminated JSON in output: {trimmed[:300]}")
     return json.loads(trimmed[start:end])
+
+
+RESPONSE_HEADERS_MARKER = "__RESPONSE_HEADERS__"
+
+
+def parse_response_headers(logs: str | None) -> dict[str, str]:
+    """Headers of the HTTP response as the client inside the sandbox saw them.
+
+    The proxy stamps ``X-Blaxel-Request-Id`` on the response it hands back, so
+    this is where that header is observable. It never reaches the upstream
+    server: the cluster gateway strips inbound ``x-blaxel-*`` headers before
+    forwarding, by design.
+    """
+    marker_at = (logs or "").rfind(RESPONSE_HEADERS_MARKER)
+    if marker_at == -1:
+        raise ValueError(f"No response headers in output: {(logs or '')[:200]}")
+    raw = logs[marker_at + len(RESPONSE_HEADERS_MARKER) :].strip()
+    return lowercase_keys(json.loads(raw))
 
 
 def lowercase_keys(obj: dict[str, str]) -> dict[str, str]:

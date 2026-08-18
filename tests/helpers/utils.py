@@ -4,6 +4,7 @@ import asyncio
 import os
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.volume import VolumeInstance
@@ -13,25 +14,22 @@ env = os.environ.get("BL_ENV", "prod")
 default_region = "eu-dub-1" if env == "dev" else "us-pdx-1"
 default_image = "blaxel/base-image:latest"
 
-# Default labels identify both the test owner and this specific test job. The
-# run label prevents one CI job's cleanup from deleting another job's resources
-# when they share a workspace.
-_test_run_id = (
-    "-".join(
-        part
-        for part in (
-            os.environ.get("GITHUB_RUN_ID"),
-            os.environ.get("GITHUB_JOB"),
-            os.environ.get("GITHUB_RUN_ATTEMPT"),
-        )
-        if part
-    )
-    or f"local-{os.getpid()}"
-)
+# Unique per pytest run. CI runs of several PRs share one workspace, so the
+# end-of-session cleanup must only delete what *this* run created -- deleting by
+# ``env=integration-test`` alone tears down sandboxes a concurrent run is still
+# using, which is a large part of the suite's cross-run flakiness.
+#
+# Kept in the environment rather than in module state so that pytest-xdist
+# workers, which import this module in their own process, share the master's id
+# instead of minting one each. Otherwise the master's teardown -- the only one
+# that runs -- would match nothing the workers created.
+run_id = os.environ.setdefault("BL_TEST_RUN_ID", uuid.uuid4().hex[:12])
+
+# Default labels to identify test sandboxes in the UI
 default_labels = {
     "env": "integration-test",
     "created-by": "pytest",
-    "test-run": _test_run_id,
+    "run-id": run_id,
 }
 
 
@@ -120,6 +118,50 @@ async def wait_for_volume_deletion(volume_name: str, max_attempts: int = 30) -> 
 
     print(f"Timeout waiting for {volume_name} deletion to complete")
     return False
+
+
+# Orphans older than this were left behind by a crashed run, never by a live one.
+ORPHAN_MAX_AGE = timedelta(hours=2)
+
+
+def resource_labels(resource) -> dict:
+    """Labels of a sandbox/volume, or an empty dict when the API omits them."""
+    metadata = getattr(resource, "metadata", None)
+    labels = getattr(metadata, "labels", None) if metadata else None
+    if isinstance(labels, dict):
+        return labels
+    return getattr(labels, "additional_properties", {}) or {}
+
+
+def is_stale_orphan(resource, now: datetime | None = None) -> bool:
+    """True for a pytest resource old enough that no live run still needs it."""
+    created_at = getattr(getattr(resource, "metadata", None), "created_at", None)
+    if not isinstance(created_at, str):
+        return False
+    try:
+        # Timestamps arrive as RFC3339 with a trailing Z and up to nanosecond
+        # precision, both of which fromisoformat rejects on Python 3.10: drop
+        # the Z and truncate the fraction to microseconds.
+        head, _, tail = created_at.rstrip("Zz").partition(".")
+        created = datetime.fromisoformat(f"{head}.{tail[:6]}+00:00" if tail else f"{head}+00:00")
+    except ValueError:
+        return False
+    return (now or datetime.now(timezone.utc)) - created > ORPHAN_MAX_AGE
+
+
+async def wait_until(predicate, timeout: float = 10.0, interval: float = 0.1) -> bool:
+    """Poll ``predicate`` until it is true or ``timeout`` elapses.
+
+    Callbacks (watch events, log streams) usually fire in well under a second,
+    but a fixed sleep turns a slow round-trip into a test failure. Polling keeps
+    the fast path fast and the slow path green.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        await asyncio.sleep(interval)
+    return predicate()
 
 
 def sleep(seconds: float) -> None:

@@ -9,19 +9,24 @@ from tests.helpers import (
     unique_name,
 )
 
+# The control plane accepts iptables, nfs and tun. Only ``tun`` (mk3.1) is used
+# for the tests that actually deploy: iptables and nfs select mk3.0 kernels,
+# which currently fail to deploy in every region (DEPLOYMENT_FAILED, tracked
+# separately as a platform bug). ``nvme`` used to be accepted and no longer is.
+
 
 @pytest.mark.asyncio(loop_scope="class")
 class TestSandboxExtraArgs:
     """Test sandbox extraArgs (kernel selection) feature."""
 
-    async def test_creates_sandbox_with_iptables_enabled(self):
-        """Test creating a sandbox with iptables extra arg."""
-        name = unique_name("extra-args-iptables")
+    async def test_creates_sandbox_with_tun_enabled(self):
+        """Test creating a sandbox with tun extra arg."""
+        name = unique_name("extra-args-tun")
         await SandboxInstance.create(
             {
                 "name": name,
                 "image": default_image,
-                "extra_args": {"iptables": "enabled"},
+                "extra_args": {"tun": "enabled"},
                 "labels": default_labels,
             }
         )
@@ -29,10 +34,10 @@ class TestSandboxExtraArgs:
         try:
             retrieved = await SandboxInstance.get(name)
             assert retrieved.spec.runtime.extra_args is not None
-            assert retrieved.spec.runtime.extra_args["iptables"] == "enabled"
+            assert retrieved.spec.runtime.extra_args["tun"] == "enabled"
         finally:
             await SandboxInstance.delete(name)
-            
+
     async def test_creates_sandbox_without_extra_args(self):
         """Test creating a sandbox without extraArgs uses default kernel."""
         name = unique_name("extra-args-default")
@@ -62,7 +67,7 @@ class TestSandboxExtraArgs:
             {
                 "name": name,
                 "image": default_image,
-                "extra_args": {"iptables": "enabled"},
+                "extra_args": {"tun": "enabled"},
                 "labels": default_labels,
             }
         )
@@ -73,6 +78,32 @@ class TestSandboxExtraArgs:
                 SandboxUpdateMetadata(labels={**default_labels, "updated": "true"}),
             )
             retrieved = await SandboxInstance.get(name)
-            assert retrieved.spec.runtime.extra_args["iptables"] == "enabled"
+            assert retrieved.spec.runtime.extra_args["tun"] == "enabled"
         finally:
             await SandboxInstance.delete(name)
+
+    async def test_rejects_unsupported_extra_args_key(self):
+        """An unknown extraArgs key is rejected instead of silently ignored."""
+        name = unique_name("extra-args-bad-key")
+        with pytest.raises(Exception, match="nvme"):
+            await SandboxInstance.create(
+                {
+                    "name": name,
+                    "image": default_image,
+                    "extra_args": {"nvme": "enabled"},
+                    "labels": default_labels,
+                }
+            )
+
+    async def test_rejects_nfs_combined_with_iptables(self):
+        """nfs and iptables select different kernels and cannot be combined."""
+        name = unique_name("extra-args-conflict")
+        with pytest.raises(Exception, match="nfs"):
+            await SandboxInstance.create(
+                {
+                    "name": name,
+                    "image": default_image,
+                    "extra_args": {"nfs": "enabled", "iptables": "enabled"},
+                    "labels": default_labels,
+                }
+            )

@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
-from tests.helpers import async_sleep, default_image, default_labels, unique_name
+from tests.helpers import async_sleep, default_image, default_labels, unique_name, wait_until
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -395,9 +395,7 @@ class TestWatch(TestFilesystemOperations):
             # Trigger a file change
             await self.sandbox.fs.write(f"{dir_path}/watched-file.txt", "new content")
 
-            # Wait for callback
-            await async_sleep(0.5)
-            assert change_detected is True
+            assert await wait_until(lambda: change_detected)
         finally:
             handle.close()
 

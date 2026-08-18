@@ -7,10 +7,10 @@ import pytest
 from blaxel.core.client.models.get_workspace_features_response_200 import (
     GetWorkspaceFeaturesResponse200,
 )
+from tests.helpers import resource_labels
 from tests.integration.core.conftest import (
     _TEST_RESOURCE_LABELS,
     _is_test_resource,
-    _resource_labels,
 )
 from tests.integration.core.sandbox import test_volumes
 
@@ -18,7 +18,7 @@ from tests.integration.core.sandbox import test_volumes
 def test_lite_volume_without_labels_is_not_treated_as_a_test_resource():
     listed_volume = SimpleNamespace(metadata=SimpleNamespace(name="volume-from-list"))
 
-    assert _resource_labels(listed_volume) == {}
+    assert resource_labels(listed_volume) == {}
     assert _is_test_resource(listed_volume) is False
 
 

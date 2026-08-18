@@ -4,23 +4,25 @@ import asyncio
 
 import pytest
 
-from tests.helpers import default_labels
+from tests.helpers import default_labels, is_stale_orphan, resource_labels
 
 _TEST_RESOURCE_LABELS = default_labels.copy()
 
 
-def _resource_labels(resource) -> dict[str, str]:
-    """Return resource labels without assuming every list projection includes them."""
-    metadata = getattr(resource, "metadata", None)
-    labels = getattr(metadata, "labels", None)
-    if isinstance(labels, dict):
-        return labels
-    return getattr(labels, "additional_properties", {}) or {}
-
-
 def _is_test_resource(resource) -> bool:
-    labels = _resource_labels(resource)
+    labels = resource_labels(resource)
     return all(labels.get(key) == value for key, value in _TEST_RESOURCE_LABELS.items())
+
+
+def _is_sweepable_sandbox(resource) -> bool:
+    """This run's sandboxes, plus orphans a crashed run left behind.
+
+    ``_TEST_RESOURCE_LABELS`` carries a per-run id, so an exact match alone would
+    leak every sandbox of a run that died before its teardown.
+    """
+    if _is_test_resource(resource):
+        return True
+    return resource_labels(resource).get("created-by") == "pytest" and is_stale_orphan(resource)
 
 
 def _api_error(response) -> str | None:
@@ -93,7 +95,7 @@ def pytest_sessionfinish(session, exitstatus):
             sandboxes = [
                 sandbox
                 async for sandbox in sandbox_page.auto_paging_iter()
-                if _is_test_resource(sandbox)
+                if _is_sweepable_sandbox(sandbox)
             ]
         except Exception as error:
             cleanup_errors.append(f"listing sandboxes: {error}")
