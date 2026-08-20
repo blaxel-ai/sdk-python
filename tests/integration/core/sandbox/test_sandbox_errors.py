@@ -3,8 +3,8 @@
 The compute plane matches configured patterns in the microVM logs and signals
 them to the control plane, which appends them to ``sandbox.errors``
 (controlplane#5198). A healthy sandbox has none, so what is asserted here is the
-shape of the accessor: always a list, entries typed, and never carried by a
-listing (the projection drops the field, so it reads as empty too).
+contract of the accessor: always a list, and never carried by a listing (the
+projection drops the field, so it reads as empty too).
 """
 
 import pytest
@@ -32,15 +32,11 @@ class TestSandboxErrors:
         try:
             sandbox = await SandboxInstance.get(name)
 
+            # The shape of an entry (code, fatal, instance, message, time) is
+            # not exercisable here: covering it would mean provoking a real
+            # infrastructure failure on the compute plane.
             assert isinstance(sandbox.errors, list)
             assert sandbox.errors == []
-
-            # Every entry is normalized: a stable code, whether it was terminal,
-            # the instance it was reported for, and a reason that never carries
-            # raw microVM log lines.
-            for error in sandbox.errors:
-                assert isinstance(error.code, str)
-                assert isinstance(error.time, str)
         finally:
             await SandboxInstance.delete(name)
 
