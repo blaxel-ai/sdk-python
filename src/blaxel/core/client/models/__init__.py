@@ -237,6 +237,7 @@ from .sandbox_error_details import SandboxErrorDetails
 from .sandbox_fork_request import SandboxForkRequest
 from .sandbox_fork_response import SandboxForkResponse
 from .sandbox_fork_response_type import SandboxForkResponseType
+from .sandbox_infrastructure_error import SandboxInfrastructureError
 from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_list import SandboxList
 from .sandbox_network import SandboxNetwork
@@ -530,6 +531,7 @@ __all__ = (
     "SandboxForkRequest",
     "SandboxForkResponse",
     "SandboxForkResponseType",
+    "SandboxInfrastructureError",
     "SandboxLifecycle",
     "SandboxList",
     "SandboxNetwork",

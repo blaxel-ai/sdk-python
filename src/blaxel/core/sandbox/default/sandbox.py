@@ -23,6 +23,7 @@ from ...client.models import (
     Sandbox,
     SandboxForkRequest,
     SandboxForkResponse,
+    SandboxInfrastructureError,
     SandboxLifecycle,
     SandboxRuntime,
     SandboxRuntimeExtraArgs,
@@ -36,7 +37,7 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, normalize_cursor
-from ...client.types import UNSET
+from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
@@ -214,6 +215,17 @@ class SandboxInstance:
     @property
     def spec(self):
         return self.sandbox.spec
+
+    @property
+    def errors(self) -> list[SandboxInfrastructureError]:
+        """Infrastructure failures the compute plane recorded for this sandbox, oldest first.
+
+        Entries with ``fatal`` set are the ones that moved the sandbox to FAILED; the
+        others (e.g. a microVM that exited and restarted) are informational. Only
+        returned when a single sandbox is read, never in listings.
+        """
+        errors = self.sandbox.errors
+        return list(errors) if not isinstance(errors, Unset) and errors else []
 
     @property
     def last_used_at(self):
