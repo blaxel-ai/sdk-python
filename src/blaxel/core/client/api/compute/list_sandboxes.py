@@ -20,6 +20,7 @@ def _get_kwargs(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
     external_id: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
@@ -43,6 +44,8 @@ def _get_kwargs(
         json_anchor = anchor.value
 
     params["anchor"] = json_anchor
+
+    params["status"] = status
 
     params["externalId"] = external_id
 
@@ -102,6 +105,7 @@ def sync_detailed(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
     external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, SandboxList]]:
     """List sandboxes
@@ -119,6 +123,7 @@ def sync_detailed(
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListSandboxesAnchor]):
+        status (Union[Unset, str]):
         external_id (Union[Unset, str]):
 
     Raises:
@@ -136,6 +141,7 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        status=status,
         external_id=external_id,
     )
 
@@ -155,6 +161,7 @@ def sync(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
     external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, SandboxList] | None:
     """List sandboxes
@@ -172,6 +179,7 @@ def sync(
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListSandboxesAnchor]):
+        status (Union[Unset, str]):
         external_id (Union[Unset, str]):
 
     Raises:
@@ -190,6 +198,7 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
+        status=status,
         external_id=external_id,
     ).parsed
 
@@ -203,6 +212,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
     external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, SandboxList]]:
     """List sandboxes
@@ -220,6 +230,7 @@ async def asyncio_detailed(
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListSandboxesAnchor]):
+        status (Union[Unset, str]):
         external_id (Union[Unset, str]):
 
     Raises:
@@ -237,6 +248,7 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        status=status,
         external_id=external_id,
     )
 
@@ -254,6 +266,7 @@ async def asyncio(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
     external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, SandboxList] | None:
     """List sandboxes
@@ -271,6 +284,7 @@ async def asyncio(
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListSandboxesAnchor]):
+        status (Union[Unset, str]):
         external_id (Union[Unset, str]):
 
     Raises:
@@ -290,6 +304,7 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
+            status=status,
             external_id=external_id,
         )
     ).parsed

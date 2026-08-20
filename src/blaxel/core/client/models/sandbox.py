@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_event import CoreEvent
     from ..models.metadata import Metadata
+    from ..models.sandbox_infrastructure_error import SandboxInfrastructureError
     from ..models.sandbox_spec import SandboxSpec
 
 
@@ -26,6 +27,8 @@ class Sandbox:
                 and ownership information
             spec (SandboxSpec): Configuration for a sandbox including its image, memory, ports, region, and lifecycle
                 policies
+            errors (Union[Unset, list['SandboxInfrastructureError']]): Infrastructure failures recorded on the sandbox,
+                oldest first (read-only, managed by the system)
             events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
             expires_in (Union[Unset, int]): Time in seconds until the sandbox is automatically deleted based on TTL and
                 lifecycle policies. Only present for sandboxes with lifecycle configured.
@@ -37,6 +40,7 @@ class Sandbox:
 
     metadata: "Metadata"
     spec: "SandboxSpec"
+    errors: Union[Unset, list["SandboxInfrastructureError"]] = UNSET
     events: Union[Unset, list["CoreEvent"]] = UNSET
     expires_in: Union[Unset, int] = UNSET
     last_used_at: Union[Unset, str] = UNSET
@@ -56,6 +60,16 @@ class Sandbox:
             spec = self.spec
         else:
             spec = self.spec.to_dict()
+
+        errors: Union[Unset, list[dict[str, Any]]] = UNSET
+        if not isinstance(self.errors, Unset):
+            errors = []
+            for errors_item_data in self.errors:
+                if type(errors_item_data) is dict:
+                    errors_item = errors_item_data
+                else:
+                    errors_item = errors_item_data.to_dict()
+                errors.append(errors_item)
 
         events: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.events, Unset):
@@ -91,6 +105,8 @@ class Sandbox:
                 "spec": spec,
             }
         )
+        if errors is not UNSET:
+            field_dict["errors"] = errors
         if events is not UNSET:
             field_dict["events"] = events
         if expires_in is not UNSET:
@@ -110,6 +126,7 @@ class Sandbox:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
+        from ..models.sandbox_infrastructure_error import SandboxInfrastructureError
         from ..models.sandbox_spec import SandboxSpec
 
         if not src_dict:
@@ -118,6 +135,13 @@ class Sandbox:
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = SandboxSpec.from_dict(d.pop("spec"))
+
+        errors = []
+        _errors = d.pop("errors", UNSET)
+        for errors_item_data in _errors or []:
+            errors_item = SandboxInfrastructureError.from_dict(errors_item_data)
+
+            errors.append(errors_item)
 
         events = []
         _events = d.pop("events", UNSET)
@@ -151,6 +175,7 @@ class Sandbox:
         sandbox = cls(
             metadata=metadata,
             spec=spec,
+            errors=errors,
             events=events,
             expires_in=expires_in,
             last_used_at=last_used_at,
