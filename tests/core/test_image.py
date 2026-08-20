@@ -1,14 +1,18 @@
 """Tests for Image builder functionality."""
 
+import importlib
 import json
 import os
 import shutil
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from blaxel.core.image import ImageBuildContext, ImageInstance, LocalFile
+
+image_module = importlib.import_module("blaxel.core.image.image")
 
 
 @pytest.fixture
@@ -1256,3 +1260,52 @@ class TestSandboxApiPreparation:
         assert entrypoint_idx > run_idx
         # Entrypoint should be last
         assert entrypoint_idx > copy_idx
+
+
+def test_build_archive_and_context_hash_are_content_stable(temp_dir):
+    first = temp_dir / "first"
+    second = temp_dir / "second"
+    first.mkdir()
+    second.mkdir()
+    for directory in (first, second):
+        (directory / "b.txt").write_text("second")
+        (directory / "a.txt").write_text("first")
+
+    os.utime(first / "a.txt", (1_700_000_000, 1_700_000_000))
+    os.utime(second / "a.txt", (1_800_000_000, 1_800_000_000))
+
+    image = ImageInstance.from_registry("python:3.11")
+    first_zip = image._create_zip(first)
+    second_zip = image._create_zip(second)
+
+    assert first_zip == second_zip
+    assert image._context_hash(first_zip) == image._context_hash(second_zip)
+    assert image._context_hash(first_zip).startswith("sha256-")
+    assert len(image._context_hash(first_zip)) == 71
+
+
+def test_upload_request_carries_context_hash(monkeypatch):
+    calls = []
+
+    class FakeClient:
+        def request(self, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(
+                status_code=200,
+                headers={"x-blaxel-upload-url": "https://upload.example"},
+                content=b"{}",
+                json=lambda: {},
+            )
+
+    monkeypatch.setattr(type(image_module.client), "get_httpx_client", lambda _self: FakeClient())
+    image = ImageInstance.from_registry("python:3.11")
+    sandbox = image._create_sandbox_payload("cached")
+    context_hash = f"sha256-{'a' * 64}"
+
+    _, upload_url = image._create_sandbox_with_upload_sync(sandbox, context_hash)
+
+    assert upload_url == "https://upload.example"
+    assert calls[0]["params"] == {
+        "upload": "true",
+        "contextHash": context_hash,
+    }

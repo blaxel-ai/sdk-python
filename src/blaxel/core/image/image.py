@@ -786,7 +786,7 @@ class ImageInstance:
         build_dir = build_dir.resolve()
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-            for file_path in build_dir.rglob("*"):
+            for file_path in sorted(build_dir.rglob("*")):
                 if file_path.is_file():
                     # Resolve to handle symlinks and get the real path
                     resolved_path = file_path.resolve()
@@ -799,10 +799,21 @@ class ImageInstance:
                             f"Path traversal detected: {file_path} resolves outside build directory"
                         )
 
-                    arcname = file_path.relative_to(build_dir)
-                    zf.write(resolved_path, arcname)
+                    # ZIP headers normally include source mtimes and traversal order,
+                    # making byte-identical contexts produce different archives. Pin
+                    # those fields so the archive checksum is a stable content key.
+                    arcname = file_path.relative_to(build_dir).as_posix()
+                    info = zipfile.ZipInfo(arcname, date_time=(1980, 1, 1, 0, 0, 0))
+                    info.compress_type = zipfile.ZIP_DEFLATED
+                    info.external_attr = (resolved_path.stat().st_mode & 0xFFFF) << 16
+                    with resolved_path.open("rb") as source, zf.open(info, "w") as target:
+                        shutil.copyfileobj(source, target, length=1024 * 1024)
         zip_buffer.seek(0)
         return zip_buffer.getvalue()
+
+    @staticmethod
+    def _context_hash(zip_content: bytes) -> str:
+        return f"sha256-{hashlib.sha256(zip_content).hexdigest()}"
 
     def _create_sandbox_payload(self, name: str, memory: int = 4096) -> Sandbox:
         """
@@ -829,7 +840,7 @@ class ImageInstance:
         return Sandbox(metadata=metadata, spec=spec)
 
     def _create_sandbox_with_upload_sync(
-        self, sandbox: Sandbox
+        self, sandbox: Sandbox, context_hash: str | None = None
     ) -> tuple[Response[Sandbox], str | None]:
         """
         Create or update a sandbox with the upload query parameter.
@@ -842,6 +853,9 @@ class ImageInstance:
         """
         name = sandbox.metadata.name if sandbox.metadata else ""
         body = sandbox.to_dict()
+        params = {"upload": "true"}
+        if context_hash:
+            params["contextHash"] = context_hash
 
         # Try PUT first (update), fall back to POST (create)
         http_client = client.get_httpx_client()
@@ -851,7 +865,7 @@ class ImageInstance:
             method="put",
             url=f"/sandboxes/{name}",
             json=body,
-            params={"upload": "true"},
+            params=params,
             headers={"Content-Type": "application/json"},
         )
 
@@ -861,7 +875,7 @@ class ImageInstance:
                 method="post",
                 url="/sandboxes",
                 json=body,
-                params={"upload": "true"},
+                params=params,
                 headers={"Content-Type": "application/json"},
             )
 
@@ -887,7 +901,7 @@ class ImageInstance:
         return result, upload_url
 
     async def _create_sandbox_with_upload(
-        self, sandbox: Sandbox
+        self, sandbox: Sandbox, context_hash: str | None = None
     ) -> tuple[Response[Sandbox], str | None]:
         """
         Create or update a sandbox with the upload query parameter (async).
@@ -900,6 +914,9 @@ class ImageInstance:
         """
         name = sandbox.metadata.name if sandbox.metadata else ""
         body = sandbox.to_dict()
+        params = {"upload": "true"}
+        if context_hash:
+            params["contextHash"] = context_hash
 
         # Try PUT first (update), fall back to POST (create)
         http_client = client.get_async_httpx_client()
@@ -909,7 +926,7 @@ class ImageInstance:
             method="put",
             url=f"/sandboxes/{name}",
             json=body,
-            params={"upload": "true"},
+            params=params,
             headers={"Content-Type": "application/json"},
         )
 
@@ -919,7 +936,7 @@ class ImageInstance:
                 method="post",
                 url="/sandboxes",
                 json=body,
-                params={"upload": "true"},
+                params=params,
                 headers={"Content-Type": "application/json"},
             )
 
@@ -1175,12 +1192,15 @@ class ImageInstance:
         try:
             # Create zip
             zip_content = self._create_zip(build_dir)
+            context_hash = self._context_hash(zip_content)
 
             # Create sandbox payload
             sandbox_payload = self._create_sandbox_payload(name, memory)
 
             # Create/update sandbox and get upload URL
-            response, upload_url = self._create_sandbox_with_upload_sync(sandbox_payload)
+            response, upload_url = self._create_sandbox_with_upload_sync(
+                sandbox_payload, context_hash
+            )
 
             if response.status_code.value >= 400:
                 raise RuntimeError(
@@ -1258,12 +1278,15 @@ class ImageInstance:
         try:
             # Create zip (sync, as it's file I/O)
             zip_content = self._create_zip(build_dir)
+            context_hash = self._context_hash(zip_content)
 
             # Create sandbox payload
             sandbox_payload = self._create_sandbox_payload(name, memory)
 
             # Create/update sandbox and get upload URL
-            response, upload_url = await self._create_sandbox_with_upload(sandbox_payload)
+            response, upload_url = await self._create_sandbox_with_upload(
+                sandbox_payload, context_hash
+            )
 
             if response.status_code.value >= 400:
                 raise RuntimeError(
