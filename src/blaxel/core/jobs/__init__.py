@@ -86,6 +86,7 @@ class BlJob:
         env: Dict[str, str] | None = None,
         memory: int | None = None,
         execution_id: str | None = None,
+        allow_queue: bool | None = None,
     ) -> str:
         """
         Run the job with the provided tasks and optional overrides.
@@ -95,6 +96,10 @@ class BlJob:
             env: Optional environment variable overrides (merged with job's environment)
             memory: Optional memory override in megabytes (must be <= job's configured memory)
             execution_id: Optional custom execution ID
+            allow_queue: When False, capacity is checked synchronously and the request is
+                rejected immediately with a 429 error if the execution cannot start right
+                now, instead of being queued and retried in the background. Omitted or
+                True keeps the queue-and-retry behavior.
 
         Returns:
             str: The execution ID
@@ -111,6 +116,8 @@ class BlJob:
             request.memory = memory
         if execution_id is not None:
             request.execution_id = execution_id
+        if allow_queue is not None:
+            request.allow_queue = allow_queue
 
         return self.create_execution(request)
 
@@ -120,6 +127,7 @@ class BlJob:
         env: Dict[str, str] | None = None,
         memory: int | None = None,
         execution_id: str | None = None,
+        allow_queue: bool | None = None,
     ) -> str:
         """
         Run the job with the provided tasks and optional overrides (async).
@@ -129,6 +137,10 @@ class BlJob:
             env: Optional environment variable overrides (merged with job's environment)
             memory: Optional memory override in megabytes (must be <= job's configured memory)
             execution_id: Optional custom execution ID
+            allow_queue: When False, capacity is checked synchronously and the request is
+                rejected immediately with a 429 error if the execution cannot start right
+                now, instead of being queued and retried in the background. Omitted or
+                True keeps the queue-and-retry behavior.
 
         Returns:
             str: The execution ID
@@ -145,6 +157,8 @@ class BlJob:
             request.memory = memory
         if execution_id is not None:
             request.execution_id = execution_id
+        if allow_queue is not None:
+            request.allow_queue = allow_queue
 
         return await self.acreate_execution(request)
 
