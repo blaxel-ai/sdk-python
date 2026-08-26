@@ -131,7 +131,7 @@ class _SyncSandboxCallDescriptor:
 
     def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
         deadline = time.time() + timeout
-        entry_deadline = time.time() + ARCHIVE_ENTRY_MAX_WAIT_SECONDS
+        entry_deadline = time.time() + min(ARCHIVE_ENTRY_MAX_WAIT_SECONDS, timeout)
         started = False
         while True:
             time.sleep(interval)
