@@ -61,6 +61,46 @@ async def test_archive_raises_when_the_sandbox_leaves_the_archive(mock_archive, 
 @pytest.mark.asyncio
 @patch("blaxel.core.sandbox.default.sandbox.get_sandbox", new_callable=AsyncMock)
 @patch("blaxel.core.sandbox.default.sandbox.archive_sandbox", new_callable=AsyncMock)
+async def test_archive_tolerates_the_status_it_starts_from(mock_archive, mock_get):
+    # The export is launched before the record moves, so the sandbox is still
+    # read as DEPLOYED for a moment.
+    mock_archive.return_value = sandbox("DEPLOYED")
+    mock_get.side_effect = [sandbox("DEPLOYED"), sandbox("ARCHIVING"), sandbox("ARCHIVED")]
+    instance = SandboxInstance(sandbox("DEPLOYED"))
+
+    await instance.archive(interval=0)
+
+    assert instance.status == "ARCHIVED"
+
+
+@pytest.mark.asyncio
+@patch("blaxel.core.sandbox.default.sandbox.get_sandbox", new_callable=AsyncMock)
+@patch("blaxel.core.sandbox.default.sandbox.archive_sandbox", new_callable=AsyncMock)
+async def test_archive_fails_when_the_sandbox_is_given_back_deployed(mock_archive, mock_get):
+    # A failed export hands the sandbox back as DEPLOYED: once it has started
+    # archiving, reading DEPLOYED again means it is over, not still running.
+    mock_archive.return_value = sandbox("ARCHIVING")
+    mock_get.side_effect = [sandbox("ARCHIVING"), sandbox("DEPLOYED")]
+    instance = SandboxInstance(sandbox("DEPLOYED"))
+
+    with pytest.raises(SandboxAPIError, match="DEPLOYED"):
+        await instance.archive(interval=0)
+
+
+@pytest.mark.asyncio
+@patch("blaxel.core.sandbox.default.sandbox.get_sandbox", new_callable=AsyncMock)
+@patch("blaxel.core.sandbox.default.sandbox.unarchive_sandbox", new_callable=AsyncMock)
+async def test_unarchive_fails_when_the_sandbox_stays_archived(mock_unarchive, mock_get):
+    mock_unarchive.return_value = sandbox("UNARCHIVING")
+    mock_get.side_effect = [sandbox("UNARCHIVING"), sandbox("ARCHIVED")]
+
+    with pytest.raises(SandboxAPIError, match="ARCHIVED"):
+        await SandboxInstance.unarchive("test-sandbox", interval=0)
+
+
+@pytest.mark.asyncio
+@patch("blaxel.core.sandbox.default.sandbox.get_sandbox", new_callable=AsyncMock)
+@patch("blaxel.core.sandbox.default.sandbox.archive_sandbox", new_callable=AsyncMock)
 async def test_archive_gives_up_once_the_timeout_is_spent(mock_archive, mock_get):
     mock_archive.return_value = sandbox("ARCHIVING")
     mock_get.return_value = sandbox("ARCHIVING")

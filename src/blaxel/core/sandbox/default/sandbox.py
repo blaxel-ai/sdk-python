@@ -95,11 +95,18 @@ TRANSIENT_STATUS_POLL_SECONDS = 0.5
 ARCHIVE_WAIT_TIMEOUT_SECONDS = 1800.0
 ARCHIVE_WAIT_POLL_SECONDS = 2.0
 # An archive is done when the sandbox is ARCHIVED; it is still under way while
-# the record holds one of these (the export is launched before the status moves).
-ARCHIVING_STATUSES = {"DEPLOYED", "ARCHIVING"}
+# the record holds one of these.
+ARCHIVING_STATUSES = {"ARCHIVING"}
 # A restore is done when the sandbox is DEPLOYED again; the instance is recreated
 # before the archived filesystem is written back over its image.
-UNARCHIVING_STATUSES = {"ARCHIVED", "UNARCHIVING", "DEPLOYING", "BUILDING", "UPLOADING"}
+UNARCHIVING_STATUSES = {"UNARCHIVING", "DEPLOYING", "BUILDING", "UPLOADING"}
+# The status the sandbox holds before the operation moves it, tolerated only
+# while the operation is starting: an archive that fails hands the sandbox back
+# as DEPLOYED, and a restore that fails leaves it ARCHIVED, so reading the entry
+# status again once the operation has begun means it is over, not still running.
+ARCHIVE_ENTRY_STATUS = "DEPLOYED"
+UNARCHIVE_ENTRY_STATUS = "ARCHIVED"
+ARCHIVE_ENTRY_MAX_WAIT_SECONDS = 30.0
 
 
 def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
@@ -199,12 +206,14 @@ class _AsyncSandboxCallDescriptor:
         action: str,
         target: str,
         pending: set[str],
+        entry: str,
         doc: str,
     ):
         self._api_call = api_call
         self._action = action
         self._target = target
         self._pending = pending
+        self._entry = entry
         self.__doc__ = doc
 
     async def _call(
@@ -218,6 +227,8 @@ class _AsyncSandboxCallDescriptor:
 
     async def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
         deadline = time.time() + timeout
+        entry_deadline = time.time() + ARCHIVE_ENTRY_MAX_WAIT_SECONDS
+        started = False
         while True:
             await asyncio.sleep(interval)
             response = await get_sandbox(sandbox_name, client=client)
@@ -225,6 +236,10 @@ class _AsyncSandboxCallDescriptor:
             status = _status_of(sandbox)
             if status == self._target:
                 return sandbox
+            if status in self._pending:
+                started = True
+            elif status == self._entry and not started and time.time() < entry_deadline:
+                continue
             if status not in self._pending:
                 raise SandboxAPIError(
                     f"Sandbox {sandbox_name} is {status} while it should {self._action}"
@@ -920,6 +935,7 @@ SandboxInstance.archive = _AsyncSandboxCallDescriptor(
     "archive",
     "ARCHIVED",
     ARCHIVING_STATUSES,
+    ARCHIVE_ENTRY_STATUS,
     """Archive a sandbox: keep its filesystem, release its compute.
 
     The filesystem changes made over the image are exported to the archive store
@@ -934,6 +950,7 @@ SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
     "unarchive",
     "DEPLOYED",
     UNARCHIVING_STATUSES,
+    UNARCHIVE_ENTRY_STATUS,
     """Recreate an archived sandbox from its archive.
 
     The sandbox answers, and its terminal is reachable, while the archived
