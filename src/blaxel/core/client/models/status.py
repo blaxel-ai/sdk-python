@@ -2,6 +2,8 @@ from enum import Enum
 
 
 class Status(str, Enum):
+    ARCHIVED = "ARCHIVED"
+    ARCHIVING = "ARCHIVING"
     BUILDING = "BUILDING"
     BUILT = "BUILT"
     DEACTIVATED = "DEACTIVATED"
@@ -11,6 +13,7 @@ class Status(str, Enum):
     DEPLOYING = "DEPLOYING"
     FAILED = "FAILED"
     TERMINATED = "TERMINATED"
+    UNARCHIVING = "UNARCHIVING"
     UPLOADING = "UPLOADING"
 
     def __str__(self) -> str:

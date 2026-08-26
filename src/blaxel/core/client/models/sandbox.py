@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.core_event import CoreEvent
     from ..models.metadata import Metadata
+    from ..models.sandbox_archive import SandboxArchive
     from ..models.sandbox_infrastructure_error import SandboxInfrastructureError
     from ..models.sandbox_spec import SandboxSpec
 
@@ -27,6 +28,9 @@ class Sandbox:
                 and ownership information
             spec (SandboxSpec): Configuration for a sandbox including its image, memory, ports, region, and lifecycle
                 policies
+            archive (Union[Unset, SandboxArchive]): State of the filesystem archive of a sandbox. An archive holds the
+                writable filesystem changes and the process configurations of the sandbox, not its memory, so restoring it
+                produces a sandbox with the same disk state and freshly started processes.
             errors (Union[Unset, list['SandboxInfrastructureError']]): Infrastructure failures recorded on the sandbox,
                 oldest first (read-only, managed by the system)
             events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
@@ -40,6 +44,7 @@ class Sandbox:
 
     metadata: "Metadata"
     spec: "SandboxSpec"
+    archive: Union[Unset, "SandboxArchive"] = UNSET
     errors: Union[Unset, list["SandboxInfrastructureError"]] = UNSET
     events: Union[Unset, list["CoreEvent"]] = UNSET
     expires_in: Union[Unset, int] = UNSET
@@ -60,6 +65,16 @@ class Sandbox:
             spec = self.spec
         else:
             spec = self.spec.to_dict()
+
+        archive: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.archive
+            and not isinstance(self.archive, Unset)
+            and not isinstance(self.archive, dict)
+        ):
+            archive = self.archive.to_dict()
+        elif self.archive and isinstance(self.archive, dict):
+            archive = self.archive
 
         errors: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.errors, Unset):
@@ -105,6 +120,8 @@ class Sandbox:
                 "spec": spec,
             }
         )
+        if archive is not UNSET:
+            field_dict["archive"] = archive
         if errors is not UNSET:
             field_dict["errors"] = errors
         if events is not UNSET:
@@ -126,6 +143,7 @@ class Sandbox:
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.core_event import CoreEvent
         from ..models.metadata import Metadata
+        from ..models.sandbox_archive import SandboxArchive
         from ..models.sandbox_infrastructure_error import SandboxInfrastructureError
         from ..models.sandbox_spec import SandboxSpec
 
@@ -135,6 +153,13 @@ class Sandbox:
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = SandboxSpec.from_dict(d.pop("spec"))
+
+        _archive = d.pop("archive", UNSET)
+        archive: Union[Unset, SandboxArchive]
+        if isinstance(_archive, Unset):
+            archive = UNSET
+        else:
+            archive = SandboxArchive.from_dict(_archive)
 
         errors = []
         _errors = d.pop("errors", UNSET)
@@ -175,6 +200,7 @@ class Sandbox:
         sandbox = cls(
             metadata=metadata,
             spec=spec,
+            archive=archive,
             errors=errors,
             events=events,
             expires_in=expires_in,

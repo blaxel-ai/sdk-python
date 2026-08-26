@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 if TYPE_CHECKING:
     import httpx
 
+from ...client.api.compute.archive_sandbox import sync as archive_sandbox
 from ...client.api.compute.create_sandbox import sync as create_sandbox
 from ...client.api.compute.create_sandbox_snapshot import sync as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import sync as delete_sandbox
@@ -14,6 +15,7 @@ from ...client.api.compute.fork_sandbox import sync as fork_sandbox
 from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandbox_snapshots import sync as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
+from ...client.api.compute.unarchive_sandbox import sync as unarchive_sandbox
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
 from ...client.models import (
@@ -38,15 +40,20 @@ from ...client.pagination import PaginatedList, make_paginated_list, normalize_c
 from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ..default.sandbox import (
+    ARCHIVE_WAIT_POLL_SECONDS,
+    ARCHIVE_WAIT_TIMEOUT_SECONDS,
+    ARCHIVING_STATUSES,
     NON_REUSABLE_SANDBOX_STATUSES,
     TRANSIENT_SANDBOX_STATUSES,
     TRANSIENT_STATUS_MAX_WAIT_SECONDS,
     TRANSIENT_STATUS_POLL_SECONDS,
+    UNARCHIVING_STATUSES,
     SandboxAPIError,
     _create_body,
     _is_sandbox_conflict,
     _is_sandbox_not_found,
     _sandbox_name,
+    _status_of,
     _unwrap_response,
 )
 from ..types import (
@@ -87,7 +94,88 @@ class _SyncDeleteDescriptor:
             return instance_delete
 
 
+class _SyncSandboxCallDescriptor:
+    """Expose an operation as both ``SyncSandboxInstance.op("name")`` and ``instance.op()``.
+
+    Both forms answer a ``SyncSandboxInstance``; the instance form refreshes the
+    record it was called on. The archive of a filesystem and its restore run in
+    the background, so both forms wait for the sandbox to reach ``target`` unless
+    ``wait=False``.
+    """
+
+    def __init__(
+        self,
+        api_call: Callable,
+        action: str,
+        target: str,
+        pending: set[str],
+        doc: str,
+    ):
+        self._api_call = api_call
+        self._action = action
+        self._target = target
+        self._pending = pending
+        self.__doc__ = doc
+
+    def _call(self, sandbox_name: str, wait: bool, timeout: float, interval: float) -> Sandbox:
+        response = self._api_call(sandbox_name)
+        sandbox = _unwrap_response(response, f"{self._action} sandbox {sandbox_name}")
+        if not wait or _status_of(sandbox) == self._target:
+            return sandbox
+        return self._wait(sandbox_name, timeout, interval)
+
+    def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
+        deadline = time.time() + timeout
+        while True:
+            time.sleep(interval)
+            response = get_sandbox(sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            status = _status_of(sandbox)
+            if status == self._target:
+                return sandbox
+            if status not in self._pending:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is {status} while it should {self._action}"
+                )
+            if time.time() >= deadline:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is still {status} "
+                    f"after waiting {timeout:.0f}s for it to {self._action}"
+                )
+
+    def __get__(self, instance, owner):
+        if instance is None:
+
+            def class_call(
+                sandbox_name: str,
+                *,
+                wait: bool = True,
+                timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
+                interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+            ) -> "SyncSandboxInstance":
+                return SyncSandboxInstance(self._call(sandbox_name, wait, timeout, interval))
+
+            class_call.__doc__ = self.__doc__
+            return class_call
+
+        def instance_call(
+            *,
+            wait: bool = True,
+            timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
+            interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+        ) -> "SyncSandboxInstance":
+            instance.sandbox = self._call(instance.metadata.name, wait, timeout, interval)
+            instance.config.sandbox = instance.sandbox
+            return instance
+
+        instance_call.__doc__ = self.__doc__
+        return instance_call
+
+
 class SyncSandboxInstance:
+    archive: "_SyncSandboxCallDescriptor"
+    unarchive: "_SyncSandboxCallDescriptor"
+
     def __init__(
         self,
         sandbox: Union[Sandbox, SandboxConfiguration],
@@ -661,6 +749,14 @@ class SyncSandboxInstance:
         )
 
 
+def _archive_sandbox_by_name(sandbox_name: str):
+    return archive_sandbox(sandbox_name, client=client)
+
+
+def _unarchive_sandbox_by_name(sandbox_name: str):
+    return unarchive_sandbox(sandbox_name, client=client)
+
+
 def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
     """Delete a sandbox by name."""
     response = delete_sandbox(
@@ -672,3 +768,30 @@ def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
 
 # Assign the delete descriptor to support both class-level and instance-level calls
 SyncSandboxInstance.delete = _SyncDeleteDescriptor(_delete_sandbox_by_name)
+SyncSandboxInstance.archive = _SyncSandboxCallDescriptor(
+    _archive_sandbox_by_name,
+    "archive",
+    "ARCHIVED",
+    ARCHIVING_STATUSES,
+    """Archive a sandbox: keep its filesystem, release its compute.
+
+    The filesystem changes made over the image are exported to the archive store
+    and the sandbox is shut down; memory and running processes are lost, and the
+    saved processes start again from their configuration when the sandbox is
+    unarchived. The export runs in the background: this waits until the sandbox
+    is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+    """,
+)
+SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
+    _unarchive_sandbox_by_name,
+    "unarchive",
+    "DEPLOYED",
+    UNARCHIVING_STATUSES,
+    """Recreate an archived sandbox from its archive.
+
+    The sandbox answers, and its terminal is reachable, while the archived
+    filesystem is written back over its image. This waits until the restore is
+    done and the saved processes are running again; pass ``wait=False`` to return
+    while the sandbox is still UNARCHIVING.
+    """,
+)

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 if TYPE_CHECKING:
     import httpx
 
+from ...client.api.compute.archive_sandbox import asyncio as archive_sandbox
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
 from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
@@ -15,6 +16,7 @@ from ...client.api.compute.fork_sandbox import asyncio as fork_sandbox
 from ...client.api.compute.get_sandbox import asyncio as get_sandbox
 from ...client.api.compute.list_sandbox_snapshots import asyncio as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
+from ...client.api.compute.unarchive_sandbox import asyncio as unarchive_sandbox
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
 from ...client.models import (
@@ -87,6 +89,17 @@ TRANSIENT_SANDBOX_STATUSES = {
 }
 TRANSIENT_STATUS_MAX_WAIT_SECONDS = 30.0
 TRANSIENT_STATUS_POLL_SECONDS = 0.5
+
+# Archiving a filesystem, and restoring it, take as long as that filesystem is
+# big — minutes for a few gigabytes.
+ARCHIVE_WAIT_TIMEOUT_SECONDS = 1800.0
+ARCHIVE_WAIT_POLL_SECONDS = 2.0
+# An archive is done when the sandbox is ARCHIVED; it is still under way while
+# the record holds one of these (the export is launched before the status moves).
+ARCHIVING_STATUSES = {"DEPLOYED", "ARCHIVING"}
+# A restore is done when the sandbox is DEPLOYED again; the instance is recreated
+# before the archived filesystem is written back over its image.
+UNARCHIVING_STATUSES = {"ARCHIVED", "UNARCHIVING", "DEPLOYING", "BUILDING", "UPLOADING"}
 
 
 def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
@@ -166,8 +179,95 @@ class _AsyncDeleteDescriptor:
             return instance_delete
 
 
+def _status_of(sandbox: Sandbox) -> str | None:
+    status = sandbox.status
+    return None if isinstance(status, Unset) else str(status) if status else None
+
+
+class _AsyncSandboxCallDescriptor:
+    """Expose an operation as both ``SandboxInstance.op("name")`` and ``instance.op()``.
+
+    Both forms answer a ``SandboxInstance``; the instance form refreshes the
+    record it was called on. The archive of a filesystem and its restore run in
+    the background, so both forms wait for the sandbox to reach ``target`` unless
+    ``wait=False``.
+    """
+
+    def __init__(
+        self,
+        api_call: Callable,
+        action: str,
+        target: str,
+        pending: set[str],
+        doc: str,
+    ):
+        self._api_call = api_call
+        self._action = action
+        self._target = target
+        self._pending = pending
+        self.__doc__ = doc
+
+    async def _call(
+        self, sandbox_name: str, wait: bool, timeout: float, interval: float
+    ) -> Sandbox:
+        response = await self._api_call(sandbox_name)
+        sandbox = _unwrap_response(response, f"{self._action} sandbox {sandbox_name}")
+        if not wait or _status_of(sandbox) == self._target:
+            return sandbox
+        return await self._wait(sandbox_name, timeout, interval)
+
+    async def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
+        deadline = time.time() + timeout
+        while True:
+            await asyncio.sleep(interval)
+            response = await get_sandbox(sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            status = _status_of(sandbox)
+            if status == self._target:
+                return sandbox
+            if status not in self._pending:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is {status} while it should {self._action}"
+                )
+            if time.time() >= deadline:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is still {status} "
+                    f"after waiting {timeout:.0f}s for it to {self._action}"
+                )
+
+    def __get__(self, instance, owner):
+        if instance is None:
+
+            async def class_call(
+                sandbox_name: str,
+                *,
+                wait: bool = True,
+                timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
+                interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+            ) -> "SandboxInstance":
+                return SandboxInstance(await self._call(sandbox_name, wait, timeout, interval))
+
+            class_call.__doc__ = self.__doc__
+            return class_call
+
+        async def instance_call(
+            *,
+            wait: bool = True,
+            timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
+            interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+        ) -> "SandboxInstance":
+            instance.sandbox = await self._call(instance.metadata.name, wait, timeout, interval)
+            instance.config.sandbox = instance.sandbox
+            return instance
+
+        instance_call.__doc__ = self.__doc__
+        return instance_call
+
+
 class SandboxInstance:
     delete: "_AsyncDeleteDescriptor"
+    archive: "_AsyncSandboxCallDescriptor"
+    unarchive: "_AsyncSandboxCallDescriptor"
 
     def __init__(
         self,
@@ -805,5 +905,40 @@ async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
     return _unwrap_response(response, f"delete sandbox {sandbox_name}")
 
 
+async def _archive_sandbox_by_name(sandbox_name: str):
+    return await archive_sandbox(sandbox_name, client=client)
+
+
+async def _unarchive_sandbox_by_name(sandbox_name: str):
+    return await unarchive_sandbox(sandbox_name, client=client)
+
+
 # Assign the delete descriptor to support both class-level and instance-level calls
 SandboxInstance.delete = _AsyncDeleteDescriptor(_delete_sandbox_by_name)
+SandboxInstance.archive = _AsyncSandboxCallDescriptor(
+    _archive_sandbox_by_name,
+    "archive",
+    "ARCHIVED",
+    ARCHIVING_STATUSES,
+    """Archive a sandbox: keep its filesystem, release its compute.
+
+    The filesystem changes made over the image are exported to the archive store
+    and the sandbox is shut down; memory and running processes are lost, and the
+    saved processes start again from their configuration when the sandbox is
+    unarchived. The export runs in the background: this waits until the sandbox
+    is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+    """,
+)
+SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
+    _unarchive_sandbox_by_name,
+    "unarchive",
+    "DEPLOYED",
+    UNARCHIVING_STATUSES,
+    """Recreate an archived sandbox from its archive.
+
+    The sandbox answers, and its terminal is reachable, while the archived
+    filesystem is written back over its image. This waits until the restore is
+    done and the saved processes are running again; pass ``wait=False`` to return
+    while the sandbox is still UNARCHIVING.
+    """,
+)

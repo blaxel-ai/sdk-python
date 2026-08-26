@@ -230,6 +230,9 @@ from .repository import Repository
 from .revision_configuration import RevisionConfiguration
 from .revision_metadata import RevisionMetadata
 from .sandbox import Sandbox
+from .sandbox_archive import SandboxArchive
+from .sandbox_archive_restore import SandboxArchiveRestore
+from .sandbox_archive_restore_state import SandboxArchiveRestoreState
 from .sandbox_definition import SandboxDefinition
 from .sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 from .sandbox_error import SandboxError
@@ -524,6 +527,9 @@ __all__ = (
     "RevisionConfiguration",
     "RevisionMetadata",
     "Sandbox",
+    "SandboxArchive",
+    "SandboxArchiveRestore",
+    "SandboxArchiveRestoreState",
     "SandboxDefinition",
     "SandboxDefinitionCategoriesItem",
     "SandboxError",
