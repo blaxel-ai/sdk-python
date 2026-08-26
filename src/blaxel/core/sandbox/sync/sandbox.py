@@ -40,10 +40,10 @@ from ...client.pagination import PaginatedList, make_paginated_list, normalize_c
 from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ..default.sandbox import (
-    ARCHIVE_ENTRY_MAX_WAIT_SECONDS,
+    ARCHIVE_ENTRY_MAX_WAIT_MS,
     ARCHIVE_ENTRY_STATUS,
-    ARCHIVE_WAIT_POLL_SECONDS,
-    ARCHIVE_WAIT_TIMEOUT_SECONDS,
+    ARCHIVE_MAX_WAIT_MS,
+    ARCHIVE_WAIT_POLL_MS,
     ARCHIVING_STATUSES,
     NON_REUSABLE_SANDBOX_STATUSES,
     TRANSIENT_SANDBOX_STATUSES,
@@ -122,19 +122,19 @@ class _SyncSandboxCallDescriptor:
         self._entry = entry
         self.__doc__ = doc
 
-    def _call(self, sandbox_name: str, wait: bool, timeout: float, interval: float) -> Sandbox:
+    def _call(self, sandbox_name: str, wait: bool, max_wait: int, interval: int) -> Sandbox:
         response = self._api_call(sandbox_name)
         sandbox = _unwrap_response(response, f"{self._action} sandbox {sandbox_name}")
         if not wait or _status_of(sandbox) == self._target:
             return sandbox
-        return self._wait(sandbox_name, timeout, interval)
+        return self._wait(sandbox_name, max_wait, interval)
 
-    def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
-        deadline = time.monotonic() + timeout
-        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_SECONDS, timeout)
+    def _wait(self, sandbox_name: str, max_wait: int, interval: int) -> Sandbox:
+        deadline = time.monotonic() + max_wait / 1000
+        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
         started = False
         while True:
-            time.sleep(interval)
+            time.sleep(interval / 1000)
             response = get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
@@ -151,7 +151,7 @@ class _SyncSandboxCallDescriptor:
             if time.monotonic() >= deadline:
                 raise SandboxAPIError(
                     f"Sandbox {sandbox_name} is still {status} "
-                    f"after waiting {timeout:.0f}s for it to {self._action}"
+                    f"after waiting {max_wait / 1000:.0f}s for it to {self._action}"
                 )
 
     def __get__(self, instance, owner):
@@ -161,10 +161,10 @@ class _SyncSandboxCallDescriptor:
                 sandbox_name: str,
                 *,
                 wait: bool = True,
-                timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
-                interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+                max_wait: int = ARCHIVE_MAX_WAIT_MS,
+                interval: int = ARCHIVE_WAIT_POLL_MS,
             ) -> "SyncSandboxInstance":
-                return SyncSandboxInstance(self._call(sandbox_name, wait, timeout, interval))
+                return SyncSandboxInstance(self._call(sandbox_name, wait, max_wait, interval))
 
             class_call.__doc__ = self.__doc__
             return class_call
@@ -172,10 +172,10 @@ class _SyncSandboxCallDescriptor:
         def instance_call(
             *,
             wait: bool = True,
-            timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
-            interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+            max_wait: int = ARCHIVE_MAX_WAIT_MS,
+            interval: int = ARCHIVE_WAIT_POLL_MS,
         ) -> "SyncSandboxInstance":
-            instance.sandbox = self._call(instance.metadata.name, wait, timeout, interval)
+            instance.sandbox = self._call(instance.metadata.name, wait, max_wait, interval)
             instance.config.sandbox = instance.sandbox
             return instance
 
@@ -785,7 +785,7 @@ SyncSandboxInstance.archive = _SyncSandboxCallDescriptor(
     "ARCHIVED",
     ARCHIVING_STATUSES,
     ARCHIVE_ENTRY_STATUS,
-    """Archive a sandbox: keep its filesystem, release its compute.
+    """Archive a sandbox: keep its filesystem, stop the sandbox.
 
     The filesystem changes made over the image are exported to the archive store
     and the sandbox is shut down; memory and running processes are lost, and the
@@ -802,7 +802,8 @@ SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
     UNARCHIVE_ENTRY_STATUS,
     """Recreate an archived sandbox from its archive.
 
-    The sandbox answers, and its terminal is reachable, while the archived
+    The sandbox is started again from its image, and the archived filesystem is
+    written back over it. The sandbox answers, and its terminal is reachable, while the archived
     filesystem is written back over its image. This waits until the restore is
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.

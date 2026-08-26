@@ -107,7 +107,7 @@ async def test_archive_gives_up_once_the_timeout_is_spent(mock_archive, mock_get
     instance = SandboxInstance(sandbox("DEPLOYED"))
 
     with pytest.raises(SandboxAPIError, match="still ARCHIVING"):
-        await instance.archive(timeout=0, interval=0)
+        await instance.archive(max_wait=0, interval=0)
 
 
 @pytest.mark.asyncio
@@ -121,7 +121,7 @@ async def test_archive_does_not_wait_for_the_first_move_past_the_timeout(mock_ar
     instance = SandboxInstance(sandbox("DEPLOYED"))
 
     with pytest.raises(SandboxAPIError, match="DEPLOYED"):
-        await instance.archive(timeout=0, interval=0)
+        await instance.archive(max_wait=0, interval=0)
 
     assert mock_get.await_count == 1
 

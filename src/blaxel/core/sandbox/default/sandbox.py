@@ -92,8 +92,10 @@ TRANSIENT_STATUS_POLL_SECONDS = 0.5
 
 # Archiving a filesystem, and restoring it, take as long as that filesystem is
 # big — minutes for a few gigabytes.
-ARCHIVE_WAIT_TIMEOUT_SECONDS = 1800.0
-ARCHIVE_WAIT_POLL_SECONDS = 2.0
+# Waits are expressed in milliseconds, like every other wait option of this SDK
+# (e.g. ``process.wait(max_wait=..., interval=...)``).
+ARCHIVE_MAX_WAIT_MS = 1_800_000
+ARCHIVE_WAIT_POLL_MS = 2_000
 # An archive is done when the sandbox is ARCHIVED; it is still under way while
 # the record holds one of these.
 ARCHIVING_STATUSES = {"ARCHIVING"}
@@ -106,7 +108,7 @@ UNARCHIVING_STATUSES = {"UNARCHIVING", "DEPLOYING", "BUILDING", "UPLOADING"}
 # status again once the operation has begun means it is over, not still running.
 ARCHIVE_ENTRY_STATUS = "DEPLOYED"
 UNARCHIVE_ENTRY_STATUS = "ARCHIVED"
-ARCHIVE_ENTRY_MAX_WAIT_SECONDS = 30.0
+ARCHIVE_ENTRY_MAX_WAIT_MS = 30_000
 
 
 def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
@@ -216,21 +218,19 @@ class _AsyncSandboxCallDescriptor:
         self._entry = entry
         self.__doc__ = doc
 
-    async def _call(
-        self, sandbox_name: str, wait: bool, timeout: float, interval: float
-    ) -> Sandbox:
+    async def _call(self, sandbox_name: str, wait: bool, max_wait: int, interval: int) -> Sandbox:
         response = await self._api_call(sandbox_name)
         sandbox = _unwrap_response(response, f"{self._action} sandbox {sandbox_name}")
         if not wait or _status_of(sandbox) == self._target:
             return sandbox
-        return await self._wait(sandbox_name, timeout, interval)
+        return await self._wait(sandbox_name, max_wait, interval)
 
-    async def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
-        deadline = time.monotonic() + timeout
-        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_SECONDS, timeout)
+    async def _wait(self, sandbox_name: str, max_wait: int, interval: int) -> Sandbox:
+        deadline = time.monotonic() + max_wait / 1000
+        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
         started = False
         while True:
-            await asyncio.sleep(interval)
+            await asyncio.sleep(interval / 1000)
             response = await get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
@@ -247,7 +247,7 @@ class _AsyncSandboxCallDescriptor:
             if time.monotonic() >= deadline:
                 raise SandboxAPIError(
                     f"Sandbox {sandbox_name} is still {status} "
-                    f"after waiting {timeout:.0f}s for it to {self._action}"
+                    f"after waiting {max_wait / 1000:.0f}s for it to {self._action}"
                 )
 
     def __get__(self, instance, owner):
@@ -257,10 +257,10 @@ class _AsyncSandboxCallDescriptor:
                 sandbox_name: str,
                 *,
                 wait: bool = True,
-                timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
-                interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+                max_wait: int = ARCHIVE_MAX_WAIT_MS,
+                interval: int = ARCHIVE_WAIT_POLL_MS,
             ) -> "SandboxInstance":
-                return SandboxInstance(await self._call(sandbox_name, wait, timeout, interval))
+                return SandboxInstance(await self._call(sandbox_name, wait, max_wait, interval))
 
             class_call.__doc__ = self.__doc__
             return class_call
@@ -268,10 +268,10 @@ class _AsyncSandboxCallDescriptor:
         async def instance_call(
             *,
             wait: bool = True,
-            timeout: float = ARCHIVE_WAIT_TIMEOUT_SECONDS,
-            interval: float = ARCHIVE_WAIT_POLL_SECONDS,
+            max_wait: int = ARCHIVE_MAX_WAIT_MS,
+            interval: int = ARCHIVE_WAIT_POLL_MS,
         ) -> "SandboxInstance":
-            instance.sandbox = await self._call(instance.metadata.name, wait, timeout, interval)
+            instance.sandbox = await self._call(instance.metadata.name, wait, max_wait, interval)
             instance.config.sandbox = instance.sandbox
             return instance
 
@@ -936,7 +936,7 @@ SandboxInstance.archive = _AsyncSandboxCallDescriptor(
     "ARCHIVED",
     ARCHIVING_STATUSES,
     ARCHIVE_ENTRY_STATUS,
-    """Archive a sandbox: keep its filesystem, release its compute.
+    """Archive a sandbox: keep its filesystem, stop the sandbox.
 
     The filesystem changes made over the image are exported to the archive store
     and the sandbox is shut down; memory and running processes are lost, and the
@@ -953,7 +953,8 @@ SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
     UNARCHIVE_ENTRY_STATUS,
     """Recreate an archived sandbox from its archive.
 
-    The sandbox answers, and its terminal is reachable, while the archived
+    The sandbox is started again from its image, and the archived filesystem is
+    written back over it. The sandbox answers, and its terminal is reachable, while the archived
     filesystem is written back over its image. This waits until the restore is
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.
