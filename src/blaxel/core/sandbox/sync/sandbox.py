@@ -130,8 +130,8 @@ class _SyncSandboxCallDescriptor:
         return self._wait(sandbox_name, timeout, interval)
 
     def _wait(self, sandbox_name: str, timeout: float, interval: float) -> Sandbox:
-        deadline = time.time() + timeout
-        entry_deadline = time.time() + min(ARCHIVE_ENTRY_MAX_WAIT_SECONDS, timeout)
+        deadline = time.monotonic() + timeout
+        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_SECONDS, timeout)
         started = False
         while True:
             time.sleep(interval)
@@ -142,13 +142,13 @@ class _SyncSandboxCallDescriptor:
                 return sandbox
             if status in self._pending:
                 started = True
-            elif status == self._entry and not started and time.time() < entry_deadline:
+            elif status == self._entry and not started and time.monotonic() < entry_deadline:
                 continue
             if status not in self._pending:
                 raise SandboxAPIError(
                     f"Sandbox {sandbox_name} is {status} while it should {self._action}"
                 )
-            if time.time() >= deadline:
+            if time.monotonic() >= deadline:
                 raise SandboxAPIError(
                     f"Sandbox {sandbox_name} is still {status} "
                     f"after waiting {timeout:.0f}s for it to {self._action}"
