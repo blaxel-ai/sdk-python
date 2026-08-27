@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ListSandboxScheduleExecutionsSort(str, Enum):
+class ListSchedulesSort(str, Enum):
     CREATEDATASC = "createdAt:asc"
     CREATEDATDESC = "createdAt:desc"
 
@@ -9,7 +9,7 @@ class ListSandboxScheduleExecutionsSort(str, Enum):
         return str(self.value)
 
     @classmethod
-    def _missing_(cls, value: object) -> "ListSandboxScheduleExecutionsSort | None":
+    def _missing_(cls, value: object) -> "ListSchedulesSort | None":
         if isinstance(value, str):
             upper_value = value.upper()
             for member in cls:

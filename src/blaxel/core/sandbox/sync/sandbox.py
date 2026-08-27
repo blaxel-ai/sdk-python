@@ -15,6 +15,7 @@ from ...client.api.compute.fork_sandbox import sync as fork_sandbox
 from ...client.api.compute.get_sandbox import sync as get_sandbox
 from ...client.api.compute.list_sandbox_snapshots import sync as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
+from ...client.api.compute.restore_sandbox_snapshot import sync as restore_sandbox_snapshot
 from ...client.api.compute.unarchive_sandbox import sync as unarchive_sandbox
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
@@ -25,6 +26,7 @@ from ...client.models import (
     SandboxForkResponse,
     SandboxInfrastructureError,
     SandboxLifecycle,
+    SandboxRestoreResponse,
     SandboxRuntime,
     SandboxRuntimeExtraArgs,
     SandboxSnapshot,
@@ -294,6 +296,27 @@ class SyncSandboxInstance:
             client=client,
         )
         _unwrap_response(response, "delete snapshot", allow_none=True)
+
+    def restore(self, snapshot_id: str) -> SandboxRestoreResponse:
+        """Restore this sandbox to one of its own snapshots.
+
+        The sandbox keeps its name, its URLs and its previews: the running
+        instance is torn down and rebuilt from the snapshot, so everything
+        written since the snapshot was taken is lost unless it was snapshotted
+        too.
+
+        The restore is asked for without waiting on the instance, the same way a
+        fork is: connections to a sandbox still resuming are retried.
+
+        Args:
+            snapshot_id: ID of the snapshot to restore this sandbox to.
+        """
+        response = restore_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        return _unwrap_response(response, "restore snapshot")
 
     def fork(
         self,

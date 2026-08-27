@@ -25,6 +25,7 @@ class SandboxScheduleEntry:
             input_ (Union[Unset, SandboxScheduleInput]): Process execution configuration for a scheduled sandbox task
             max_executions (Union[Unset, int]): Maximum number of execution records kept for this schedule. Once reached,
                 recording a new execution deletes the oldest. Defaults to 100. Example: 100.
+            sandbox (Union[Unset, str]): Name of the sandbox this schedule belongs to.
             type_ (Union[Unset, SandboxScheduleEntryType]): Type of schedule timing. 'cron' for recurring (5-field
                 expression), 'at' for a specific RFC 3339 datetime, 'sleep' for a duration from now (resolved to 'at' on
                 creation). Example: cron.
@@ -37,6 +38,7 @@ class SandboxScheduleEntry:
     id: Union[Unset, str] = UNSET
     input_: Union[Unset, "SandboxScheduleInput"] = UNSET
     max_executions: Union[Unset, int] = UNSET
+    sandbox: Union[Unset, str] = UNSET
     type_: Union[Unset, SandboxScheduleEntryType] = UNSET
     value: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -55,6 +57,8 @@ class SandboxScheduleEntry:
 
         max_executions = self.max_executions
 
+        sandbox = self.sandbox
+
         type_: Union[Unset, str] = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
@@ -72,6 +76,8 @@ class SandboxScheduleEntry:
             field_dict["input"] = input_
         if max_executions is not UNSET:
             field_dict["maxExecutions"] = max_executions
+        if sandbox is not UNSET:
+            field_dict["sandbox"] = sandbox
         if type_ is not UNSET:
             field_dict["type"] = type_
         if value is not UNSET:
@@ -99,6 +105,8 @@ class SandboxScheduleEntry:
 
         max_executions = d.pop("maxExecutions", d.pop("max_executions", UNSET))
 
+        sandbox = d.pop("sandbox", UNSET)
+
         _type_ = d.pop("type", d.pop("type_", UNSET))
         type_: Union[Unset, SandboxScheduleEntryType]
         if isinstance(_type_, Unset):
@@ -113,6 +121,7 @@ class SandboxScheduleEntry:
             id=id,
             input_=input_,
             max_executions=max_executions,
+            sandbox=sandbox,
             type_=type_,
             value=value,
         )
