@@ -5,7 +5,12 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
-from tests.helpers import default_image, default_labels, unique_name
+from tests.helpers import (
+    default_image,
+    default_labels,
+    skip_unless_generation_mk31,
+    unique_name,
+)
 
 # A restore tears the running instance down and builds it back from the
 # snapshot, so it costs a full sandbox start on top of taking the snapshot —
@@ -31,6 +36,9 @@ class TestSandboxSnapshotRestore:
             pass
 
     async def test_puts_the_filesystem_back_to_the_snapshot_it_restores(self):
+        # Snapshots, and therefore restores, only exist on mk3.1 sandboxes.
+        await skip_unless_generation_mk31("snapshots and restores")
+
         sandbox = await SandboxInstance.create(
             {
                 "name": TestSandboxSnapshotRestore.name,

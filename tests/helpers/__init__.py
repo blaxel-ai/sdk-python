@@ -1,7 +1,9 @@
 """Test helpers and utilities."""
 
 from .utils import (
+    GENERATION_MK31_FEATURE,
     ORPHAN_MAX_AGE,
+    REQUIRE_GENERATION_MK31_ENV,
     async_sleep,
     default_image,
     default_labels,
@@ -10,16 +12,20 @@ from .utils import (
     is_stale_orphan,
     resource_labels,
     run_id,
+    skip_unless_generation_mk31,
     sleep,
     unique_name,
     wait_for_sandbox_deletion,
     wait_for_sandbox_deployed,
     wait_for_volume_deletion,
     wait_until,
+    workspace_feature_enabled,
 )
 
 __all__ = [
+    "GENERATION_MK31_FEATURE",
     "ORPHAN_MAX_AGE",
+    "REQUIRE_GENERATION_MK31_ENV",
     "async_sleep",
     "default_image",
     "default_labels",
@@ -28,10 +34,12 @@ __all__ = [
     "is_stale_orphan",
     "resource_labels",
     "run_id",
+    "skip_unless_generation_mk31",
     "sleep",
     "unique_name",
     "wait_for_sandbox_deletion",
     "wait_for_sandbox_deployed",
     "wait_for_volume_deletion",
     "wait_until",
+    "workspace_feature_enabled",
 ]

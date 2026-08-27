@@ -6,8 +6,23 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from blaxel.core.client.api.workspaces.get_workspace_features import (
+    asyncio as get_workspace_features,
+)
+from blaxel.core.client.client import client
+from blaxel.core.client.models.error import Error
+from blaxel.core.client.types import Unset
 from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.volume import VolumeInstance
+
+# Sandboxes run on mk3.0 unless the workspace is granted mk3.1, and features
+# that only exist on mk3.1 (snapshots, ephemeral volumes, ...) must be skipped
+# rather than failed on a mk3.0 workspace. Set BL_REQUIRE_GENERATION_MK31=1 in
+# a lane that is meant to run on mk3.1 to turn the skip into a failure.
+GENERATION_MK31_FEATURE = "generation_mk31"
+REQUIRE_GENERATION_MK31_ENV = "BL_REQUIRE_GENERATION_MK31"
 
 # Environment-aware configuration
 env = os.environ.get("BL_ENV", "prod")
@@ -36,6 +51,41 @@ default_labels = {
 def unique_name(prefix: str = "test") -> str:
     """Generate a unique sandbox/volume name for testing."""
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
+
+
+async def workspace_feature_enabled(feature: str) -> bool:
+    """Whether a workspace feature flag is enabled for the tested workspace."""
+    response = await get_workspace_features(client=client)
+    if response is None:
+        pytest.fail(f"Could not determine whether workspace feature {feature!r} is enabled")
+    if isinstance(response, Error):
+        pytest.fail(
+            f"Could not determine whether workspace feature {feature!r} is enabled: "
+            f"{response.code}: {response.error}"
+        )
+
+    features = response.features
+    if isinstance(features, Unset) or features is None:
+        return False
+    return features.additional_properties.get(feature) is True
+
+
+async def skip_unless_generation_mk31(what: str) -> None:
+    """Skip the calling test when the workspace does not run on mk3.1.
+
+    Args:
+        what: the mk3.1-only capability the test exercises, used in the message.
+    """
+    if await workspace_feature_enabled(GENERATION_MK31_FEATURE):
+        return
+
+    message = (
+        f"{what} require the {GENERATION_MK31_FEATURE} workspace feature; "
+        f"set {REQUIRE_GENERATION_MK31_ENV}=1 in the MK3.1 lane to make absence a failure"
+    )
+    if os.environ.get(REQUIRE_GENERATION_MK31_ENV) == "1":
+        pytest.fail(message)
+    pytest.skip(message)
 
 
 async def wait_for_sandbox_deployed(sandbox_name: str, max_attempts: int = 30) -> bool:
