@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 
 import pytest
 import pytest_asyncio
@@ -8,6 +9,7 @@ from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import (
     default_image,
     default_labels,
+    default_region,
     skip_unless_generation_mk31,
     unique_name,
 )
@@ -39,26 +41,38 @@ class TestSandboxSnapshotRestore:
         # Snapshots, and therefore restores, only exist on mk3.1 sandboxes.
         await skip_unless_generation_mk31("snapshots and restores")
 
+        # Timed step by step: a restore is only ever as slow as one of create,
+        # snapshot-ready or instance-back-up, and the logs must say which.
+        started_at = time.monotonic()
+
+        def step(label: str) -> None:
+            print(f"[restore] {label} +{time.monotonic() - started_at:.1f}s")
+
         sandbox = await SandboxInstance.create(
             {
                 "name": TestSandboxSnapshotRestore.name,
                 "image": default_image,
+                "region": default_region,
                 "labels": default_labels,
             }
         )
+        step("sandbox created")
+
         await sandbox.fs.write("/blaxel/snapshotted.txt", "kept")
 
         snapshot = await sandbox.snapshot("restore-point")
         assert snapshot.id
+        step("snapshot asked for")
 
         # Only a ready snapshot holds the filesystem it captured.
-        for _ in range(60):
+        for _ in range(300):
             snapshots = await sandbox.list_snapshots()
             if any(s.id == snapshot.id and s.status == "ready" for s in snapshots):
                 break
-            await asyncio.sleep(2)
+            await asyncio.sleep(0.25)
         else:
             pytest.fail(f"snapshot {snapshot.id} never became ready")
+        step("snapshot ready")
 
         # Written after the snapshot: the restore is expected to lose it.
         await sandbox.fs.write("/blaxel/after-snapshot.txt", "lost")
@@ -66,17 +80,19 @@ class TestSandboxSnapshotRestore:
         restored = await sandbox.restore(snapshot.id)
         assert restored.name == TestSandboxSnapshotRestore.name
         assert restored.snapshot_id == snapshot.id
+        step("restore asked for")
 
-        # The restore is asked for without waiting on the instance, so the
-        # sandbox answers again only once it is back up.
-        for _ in range(60):
+        # The restore is asked for without waiting on the guest, so the sandbox
+        # answers again only once its instance is back up.
+        for _ in range(300):
             try:
                 assert await sandbox.fs.read("/blaxel/snapshotted.txt") == "kept"
                 break
             except Exception:
-                await asyncio.sleep(2)
+                await asyncio.sleep(0.25)
         else:
             pytest.fail("the restored sandbox never served its snapshotted filesystem")
+        step("sandbox back up on the snapshot")
 
         with pytest.raises(Exception):
             await sandbox.fs.read("/blaxel/after-snapshot.txt")

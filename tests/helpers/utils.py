@@ -26,7 +26,7 @@ REQUIRE_GENERATION_MK31_ENV = "BL_REQUIRE_GENERATION_MK31"
 
 # Environment-aware configuration
 env = os.environ.get("BL_ENV", "prod")
-default_region = "eu-dub-1" if env == "dev" else "us-pdx-1"
+default_region = os.environ.get("BL_REGION") or ("eu-dub-1" if env == "dev" else "us-pdx-1")
 default_image = "blaxel/base-image:latest"
 
 # Unique per pytest run. CI runs of several PRs share one workspace, so the
