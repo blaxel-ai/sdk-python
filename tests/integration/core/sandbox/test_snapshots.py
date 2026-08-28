@@ -83,15 +83,32 @@ class TestSandboxSnapshotRestore:
         step("restore asked for")
 
         # The restore is asked for without waiting on the guest, so the sandbox
-        # answers again only once its instance is back up.
-        for _ in range(300):
+        # answers again only once its instance is back up. A read issued while
+        # it is down is held open by the edge until its own minute-long
+        # timeout, so each attempt is abandoned after a few seconds instead of
+        # waiting on it.
+        deadline = time.monotonic() + 45
+        while True:
             try:
-                assert await sandbox.fs.read("/blaxel/snapshotted.txt") == "kept"
+                content = await asyncio.wait_for(
+                    sandbox.fs.read("/blaxel/snapshotted.txt"), timeout=3
+                )
+                assert content == "kept"
                 break
-            except Exception:
-                await asyncio.sleep(0.25)
-        else:
-            pytest.fail("the restored sandbox never served its snapshotted filesystem")
+            except Exception as err:
+                failure = f"{type(err).__name__}: {err}" if str(err) else type(err).__name__
+                # The record's status separates "the guest is still coming
+                # back" from "the sandbox is up but the connection is stale".
+                try:
+                    status = (await SandboxInstance.get(TestSandboxSnapshotRestore.name)).status
+                except Exception:
+                    status = "unreadable"
+                step(f"sandbox not back yet (record {status}): {failure}")
+                if time.monotonic() >= deadline:
+                    pytest.fail(
+                        f"the restored sandbox never served its snapshotted filesystem: {failure}"
+                    )
+                await asyncio.sleep(0.5)
         step("sandbox back up on the snapshot")
 
         with pytest.raises(Exception):
