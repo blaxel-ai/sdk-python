@@ -5,38 +5,39 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ApplyEditRequest")
+T = TypeVar("T", bound="HandlerReloadResponse")
 
 
 @_attrs_define
-class ApplyEditRequest:
+class HandlerReloadResponse:
     """
     Attributes:
-        code_edit (str):  Example: // Add world parameter
-            function hello(world) {
-              console.log('Hello', world);
-            }.
-        model (Union[Unset, str]):  Example: relace-apply-3.
+        applied (Union[Unset, int]):
+        generation (Union[Unset, int]):
+        removed (Union[Unset, int]):
     """
 
-    code_edit: str
-    model: Union[Unset, str] = UNSET
+    applied: Union[Unset, int] = UNSET
+    generation: Union[Unset, int] = UNSET
+    removed: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        code_edit = self.code_edit
+        applied = self.applied
 
-        model = self.model
+        generation = self.generation
+
+        removed = self.removed
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "codeEdit": code_edit,
-            }
-        )
-        if model is not UNSET:
-            field_dict["model"] = model
+        field_dict.update({})
+        if applied is not UNSET:
+            field_dict["applied"] = applied
+        if generation is not UNSET:
+            field_dict["generation"] = generation
+        if removed is not UNSET:
+            field_dict["removed"] = removed
 
         return field_dict
 
@@ -45,17 +46,20 @@ class ApplyEditRequest:
         if not src_dict:
             return None
         d = src_dict.copy()
-        code_edit = d.pop("codeEdit") if "codeEdit" in d else d.pop("code_edit")
+        applied = d.pop("applied", UNSET)
 
-        model = d.pop("model", UNSET)
+        generation = d.pop("generation", UNSET)
 
-        apply_edit_request = cls(
-            code_edit=code_edit,
-            model=model,
+        removed = d.pop("removed", UNSET)
+
+        handler_reload_response = cls(
+            applied=applied,
+            generation=generation,
+            removed=removed,
         )
 
-        apply_edit_request.additional_properties = d
-        return apply_edit_request
+        handler_reload_response.additional_properties = d
+        return handler_reload_response
 
     @property
     def additional_keys(self) -> list[str]:

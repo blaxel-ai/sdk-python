@@ -391,6 +391,31 @@ class SyncSandboxProcess(SyncSandboxAction):
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
+    def write_stdin(self, identifier: str, data: Union[str, bytes]) -> SuccessResponse:
+        """Write raw bytes to the stdin of a process started with ``stdin=True``.
+
+        Bytes are forwarded verbatim, so include the trailing newline your protocol
+        expects. Not retried: a duplicate write would corrupt the stream.
+        """
+        with self.get_client() as client_instance:
+            response = client_instance.post(
+                f"/process/{identifier}/stdin",
+                content=data.encode() if isinstance(data, str) else data,
+                headers={"Content-Type": "application/octet-stream"},
+            )
+            self.handle_response_error(response)
+            return SuccessResponse.from_dict(response.json())
+
+    def close_stdin(self, identifier: str) -> SuccessResponse:
+        """Close the process's stdin (EOF). Idempotent.
+
+        For stdio protocols such as MCP this is the clean shutdown path.
+        """
+        with self.get_client() as client_instance:
+            response = client_instance.delete(f"/process/{identifier}/stdin")
+            self.handle_response_error(response)
+            return SuccessResponse.from_dict(response.json())
+
     def logs(
         self,
         identifier: str,

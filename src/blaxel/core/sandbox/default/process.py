@@ -480,6 +480,47 @@ class SandboxProcess(SandboxAction):
         finally:
             await response.aclose()
 
+    async def write_stdin(self, identifier: str, data: Union[str, bytes]) -> SuccessResponse:
+        """Write raw bytes to the stdin of a process started with ``stdin=True``.
+
+        Bytes are forwarded verbatim, so include the trailing newline your protocol
+        expects. Not retried: a duplicate write would corrupt the stream.
+        """
+        import json
+
+        client = self.get_client()
+        response = await client.post(
+            f"/process/{identifier}/stdin",
+            content=data.encode() if isinstance(data, str) else data,
+            headers={"Content-Type": "application/octet-stream"},
+        )
+        try:
+            content_bytes = await response.aread()
+            self.handle_response_error(response)
+            result = SuccessResponse.from_dict(json.loads(content_bytes))
+            assert result is not None
+            return result
+        finally:
+            await response.aclose()
+
+    async def close_stdin(self, identifier: str) -> SuccessResponse:
+        """Close the process's stdin (EOF). Idempotent.
+
+        For stdio protocols such as MCP this is the clean shutdown path.
+        """
+        import json
+
+        client = self.get_client()
+        response = await client.delete(f"/process/{identifier}/stdin")
+        try:
+            content_bytes = await response.aread()
+            self.handle_response_error(response)
+            result = SuccessResponse.from_dict(json.loads(content_bytes))
+            assert result is not None
+            return result
+        finally:
+            await response.aclose()
+
     async def logs(
         self,
         identifier: str,

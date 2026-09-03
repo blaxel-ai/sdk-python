@@ -3,40 +3,44 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.archive_change_kind import ArchiveChangeKind
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ApplyEditRequest")
+T = TypeVar("T", bound="ArchiveChange")
 
 
 @_attrs_define
-class ApplyEditRequest:
+class ArchiveChange:
     """
     Attributes:
-        code_edit (str):  Example: // Add world parameter
-            function hello(world) {
-              console.log('Hello', world);
-            }.
-        model (Union[Unset, str]):  Example: relace-apply-3.
+        kind (ArchiveChangeKind):
+        path (str): Path is relative to the root, without a leading slash. Example: usr/bin/curl.
+        size (Union[Unset, int]): Size is the file content size in bytes, 0 for anything but a regular file. Example:
+            256216.
     """
 
-    code_edit: str
-    model: Union[Unset, str] = UNSET
+    kind: ArchiveChangeKind
+    path: str
+    size: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        code_edit = self.code_edit
+        kind = self.kind.value
 
-        model = self.model
+        path = self.path
+
+        size = self.size
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "codeEdit": code_edit,
+                "kind": kind,
+                "path": path,
             }
         )
-        if model is not UNSET:
-            field_dict["model"] = model
+        if size is not UNSET:
+            field_dict["size"] = size
 
         return field_dict
 
@@ -45,17 +49,20 @@ class ApplyEditRequest:
         if not src_dict:
             return None
         d = src_dict.copy()
-        code_edit = d.pop("codeEdit") if "codeEdit" in d else d.pop("code_edit")
+        kind = ArchiveChangeKind(d.pop("kind"))
 
-        model = d.pop("model", UNSET)
+        path = d.pop("path")
 
-        apply_edit_request = cls(
-            code_edit=code_edit,
-            model=model,
+        size = d.pop("size", UNSET)
+
+        archive_change = cls(
+            kind=kind,
+            path=path,
+            size=size,
         )
 
-        apply_edit_request.additional_properties = d
-        return apply_edit_request
+        archive_change.additional_properties = d
+        return archive_change
 
     @property
     def additional_keys(self) -> list[str]:
