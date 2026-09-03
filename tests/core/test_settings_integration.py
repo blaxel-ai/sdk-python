@@ -71,3 +71,20 @@ def test_other_headers_are_untouched():
     with_token.pop("User-Agent")
     without_token.pop("User-Agent")
     assert with_token == without_token
+
+
+def test_control_plane_client_sends_sdk_user_agent(monkeypatch):
+
+    from blaxel.core.client.client import client
+    from blaxel.core.common.autoload import autoload
+
+    monkeypatch.setenv("BL_INTEGRATION", "my-integration/1.2.0")
+    autoload()
+    httpx_client = client.get_httpx_client()
+    request = httpx_client.build_request("GET", "https://example.invalid/v0/sandboxes")
+    for hook in httpx_client.event_hooks["request"]:
+        hook(request)
+    ua = request.headers["User-Agent"]
+    assert ua.startswith("blaxel/sdk/python/")
+    assert ua.endswith(" my-integration/1.2.0")
+    assert "python-httpx" not in ua

@@ -18,6 +18,15 @@ def telemetry() -> None:
     telemetry_manager.initialize(settings)
 
 
+def _set_user_agent(request) -> None:
+    # Resolved per request so a later `settings.integration = ...` is honored.
+    request.headers["User-Agent"] = settings.user_agent
+
+
+async def _set_user_agent_async(request) -> None:
+    _set_user_agent(request)
+
+
 def autoload() -> None:
     client.with_base_url(settings.base_url)
     client.with_auth(settings.auth)
@@ -31,9 +40,11 @@ def autoload() -> None:
     # Access the underlying httpx clients and add event hooks
     # Use sync interceptors for sync clients and async interceptors for async clients
     httpx_client = client.get_httpx_client()
+    httpx_client.event_hooks["request"] = [_set_user_agent]
     httpx_client.event_hooks["response"] = response_interceptors_sync
 
     httpx_async_client = client.get_async_httpx_client()
+    httpx_async_client.event_hooks["request"] = [_set_user_agent_async]
     httpx_async_client.event_hooks["response"] = response_interceptors_async
 
     httpx_sandbox_client = client_sandbox.get_httpx_client()

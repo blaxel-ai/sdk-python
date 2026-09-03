@@ -155,15 +155,20 @@ class Settings:
         self._integration = value
 
     @property
-    def headers(self) -> Dict[str, str]:
-        """Get the headers for API requests."""
-        headers = self.auth.get_headers()
+    def user_agent(self) -> str:
+        """User-Agent sent on every request: SDK token, then the integration token if set."""
         os_arch = _get_os_arch()
         user_agent = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
         integration = self.integration
         if integration:
             user_agent = f"{user_agent} {integration}"
-        headers["User-Agent"] = user_agent
+        return user_agent
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        """Get the headers for API requests."""
+        headers = self.auth.get_headers()
+        headers["User-Agent"] = self.user_agent
         headers["Blaxel-Version"] = self.api_version
         return headers
 
