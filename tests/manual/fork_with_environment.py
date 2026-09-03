@@ -23,8 +23,10 @@ Credentials are picked up automatically via blaxel.core autoload (local
 ``bl login`` config / env), so BL_WORKSPACE / BL_API_KEY are not required here.
 BL_ENV=dev targets api.blaxel.dev.
 
-Run:
+Install and run (``uv sync`` without extras: the framework extras conflict with
+each other and this only needs blaxel.core):
 
+    uv sync
     uv run python tests/manual/fork_with_environment.py
 
 Env vars:
