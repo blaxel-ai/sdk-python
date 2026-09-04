@@ -5,6 +5,12 @@ from typing import Any, Callable, Dict, Literal, Union
 import httpx
 
 from ...common.settings import settings
+from ..client.api.process.delete_process_identifier_stdin import (
+    sync_detailed as delete_process_stdin,
+)
+from ..client.api.process.post_process_identifier_stdin import (
+    sync_detailed as post_process_stdin,
+)
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
 from ..transient_retry import retry_on_transient_reset
@@ -13,6 +19,7 @@ from ..types import (
     ProcessResponseWithLog,
     SandboxConfiguration,
     StreamHandle,
+    api_result,
 )
 from .action import SyncSandboxAction
 
@@ -397,24 +404,19 @@ class SyncSandboxProcess(SyncSandboxAction):
         Bytes are forwarded verbatim, so include the trailing newline your protocol
         expects. Not retried: a duplicate write would corrupt the stream.
         """
-        with self.get_client() as client_instance:
-            response = client_instance.post(
-                f"/process/{identifier}/stdin",
-                content=data.encode() if isinstance(data, str) else data,
-                headers={"Content-Type": "application/octet-stream"},
-            )
-            self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+        with self.get_api_client() as client:
+            # str or bytes, sent as-is with the octet-stream content type.
+            response = post_process_stdin(identifier, client=client, body=data)
+        return api_result(response, SuccessResponse)
 
     def close_stdin(self, identifier: str) -> SuccessResponse:
         """Close the process's stdin (EOF). Idempotent.
 
         For stdio protocols such as MCP this is the clean shutdown path.
         """
-        with self.get_client() as client_instance:
-            response = client_instance.delete(f"/process/{identifier}/stdin")
-            self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+        with self.get_api_client() as client:
+            response = delete_process_stdin(identifier, client=client)
+        return api_result(response, SuccessResponse)
 
     def logs(
         self,

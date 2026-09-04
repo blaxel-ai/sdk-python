@@ -9,11 +9,14 @@ from typing import Any, cast
 import httpx
 import pytest
 
+from blaxel.core.sandbox.client.api.process import post_process_identifier_stdin
+from blaxel.core.sandbox.client.client import Client
 from blaxel.core.sandbox.client.models import SuccessResponse
 from blaxel.core.sandbox.default.process import SandboxProcess
 from blaxel.core.sandbox.sync.process import SyncSandboxProcess
 from blaxel.core.sandbox.types import ResponseError
 
+BASE_URL = "http://sandbox"
 LINE = '{"jsonrpc":"2.0","id":1,"method":"ping"}\n'
 
 
@@ -35,15 +38,25 @@ class RecordingTransport(httpx.MockTransport):
         return self.requests[-1]
 
 
+def api_client(transport: httpx.MockTransport) -> Client:
+    """Generated client whose sync and async httpx clients both use ``transport``."""
+    return Client(
+        base_url=BASE_URL,
+        headers={},
+        raise_on_unexpected_status=False,
+        httpx_args={"transport": transport},
+    )
+
+
 def async_process(transport: httpx.MockTransport) -> Any:
     process = cast(Any, object.__new__(SandboxProcess))
-    process.get_client = lambda: httpx.AsyncClient(transport=transport, base_url="http://sandbox")
+    process.get_api_client = lambda: api_client(transport)
     return process
 
 
 def sync_process(transport: httpx.MockTransport) -> Any:
     process = cast(Any, object.__new__(SyncSandboxProcess))
-    process.get_client = lambda: httpx.Client(transport=transport, base_url="http://sandbox")
+    process.get_api_client = lambda: api_client(transport)
     return process
 
 
@@ -58,6 +71,14 @@ def assert_stdin_close(request: httpx.Request) -> None:
     assert request.method == "DELETE"
     assert request.url.path == "/process/mcp/stdin"
     assert request.content == b""
+
+
+def test_generated_stdin_endpoint_sends_a_str_body():
+    """The generated octet-stream helper must accept a plain str (no ``.payload``)."""
+    transport = RecordingTransport()
+    result = post_process_identifier_stdin.sync("mcp", client=api_client(transport), body=LINE)
+    assert_stdin_write(transport.last, LINE.encode())
+    assert isinstance(result, SuccessResponse)
 
 
 async def test_async_write_stdin_sends_body_verbatim():
@@ -85,6 +106,13 @@ async def test_async_write_stdin_surfaces_409():
     with pytest.raises(ResponseError) as raised:
         await async_process(transport).write_stdin("mcp", LINE)
     assert raised.value.response.status_code == 409
+
+
+async def test_async_write_stdin_surfaces_undocumented_502():
+    transport = RecordingTransport(502, {})
+    with pytest.raises(ResponseError) as raised:
+        await async_process(transport).write_stdin("mcp", LINE)
+    assert raised.value.response.status_code == 502
 
 
 def test_sync_write_stdin_sends_body_verbatim():

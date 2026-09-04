@@ -2,6 +2,7 @@ import httpx
 
 from ...common.internal import get_forced_url, get_global_unique_hash
 from ...common.settings import settings
+from ..client.client import Client
 from ..types import ResponseError, SandboxConfiguration
 
 
@@ -57,6 +58,20 @@ class SyncSandboxAction:
         return httpx.Client(
             base_url=self.url,
             headers={**settings.headers, **self.sandbox_config.headers},
+        )
+
+    def get_api_client(self) -> Client:
+        """Generated-client handle sharing ``get_client()``'s URL and headers.
+
+        Undocumented statuses come back as a ``Response`` instead of raising, so
+        callers apply one error path through ``ResponseError``.
+        """
+        return Client(
+            base_url=self.sandbox_config.force_url or self.url,
+            headers=self.sandbox_config.headers
+            if self.sandbox_config.force_url
+            else {**settings.headers, **self.sandbox_config.headers},
+            raise_on_unexpected_status=False,
         )
 
     def handle_response_error(self, response: httpx.Response):

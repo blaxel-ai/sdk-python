@@ -4,6 +4,12 @@ from typing import Any, Callable, Dict, Literal, Union
 import httpx
 
 from ...common.settings import settings
+from ..client.api.process.delete_process_identifier_stdin import (
+    asyncio_detailed as delete_process_stdin,
+)
+from ..client.api.process.post_process_identifier_stdin import (
+    asyncio_detailed as post_process_stdin,
+)
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
 from ..transient_retry import retry_on_transient_reset_async
@@ -12,6 +18,7 @@ from ..types import (
     ProcessRequestWithLog,
     ProcessResponseWithLog,
     SandboxConfiguration,
+    api_result,
 )
 from .action import SandboxAction
 
@@ -486,40 +493,19 @@ class SandboxProcess(SandboxAction):
         Bytes are forwarded verbatim, so include the trailing newline your protocol
         expects. Not retried: a duplicate write would corrupt the stream.
         """
-        import json
-
-        client = self.get_client()
-        response = await client.post(
-            f"/process/{identifier}/stdin",
-            content=data.encode() if isinstance(data, str) else data,
-            headers={"Content-Type": "application/octet-stream"},
-        )
-        try:
-            content_bytes = await response.aread()
-            self.handle_response_error(response)
-            result = SuccessResponse.from_dict(json.loads(content_bytes))
-            assert result is not None
-            return result
-        finally:
-            await response.aclose()
+        async with self.get_api_client() as client:
+            # str or bytes, sent as-is with the octet-stream content type.
+            response = await post_process_stdin(identifier, client=client, body=data)
+        return api_result(response, SuccessResponse)
 
     async def close_stdin(self, identifier: str) -> SuccessResponse:
         """Close the process's stdin (EOF). Idempotent.
 
         For stdio protocols such as MCP this is the clean shutdown path.
         """
-        import json
-
-        client = self.get_client()
-        response = await client.delete(f"/process/{identifier}/stdin")
-        try:
-            content_bytes = await response.aread()
-            self.handle_response_error(response)
-            result = SuccessResponse.from_dict(json.loads(content_bytes))
-            assert result is not None
-            return result
-        finally:
-            await response.aclose()
+        async with self.get_api_client() as client:
+            response = await delete_process_stdin(identifier, client=client)
+        return api_result(response, SuccessResponse)
 
     async def logs(
         self,

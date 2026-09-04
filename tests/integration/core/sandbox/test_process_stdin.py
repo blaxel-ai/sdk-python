@@ -196,12 +196,26 @@ class TestProcessStdin:
         """initialize, tools/list, then shutdown on EOF."""
         self.require_stdin()
         name = "mcp-fs"
+        # `npx -y @modelcontextprotocol/server-filesystem /tmp` is what a user types,
+        # but `npm exec` has been seen to stall past a minute on a fresh sandbox even
+        # with a warm cache, so install once (measured 6 to 10 seconds) and start the
+        # server binary directly.
+        install = await exec_retrying(
+            self.sandbox,
+            {
+                "name": "mcp-fs-install",
+                "command": "mkdir -p /tmp/mcp && cd /tmp/mcp"
+                " && npm install --no-save @modelcontextprotocol/server-filesystem",
+                "wait_for_completion": True,
+            },
+        )
+        assert install.exit_code == 0, install.logs
         await exec_retrying(
             self.sandbox,
             {
                 "name": name,
                 "stdin": True,
-                "command": "npx -y @modelcontextprotocol/server-filesystem /tmp",
+                "command": "node /tmp/mcp/node_modules/.bin/mcp-server-filesystem /tmp",
             },
         )
         reader = JsonRpcReader(self.sandbox, name)
@@ -217,10 +231,7 @@ class TestProcessStdin:
                 },
             }
             await self.sandbox.process.write_stdin(name, json.dumps(initialize) + "\n")
-            # The first npx run downloads the package: measured 4 to 8 seconds on a
-            # fresh prod base-image sandbox (the one-minute budget holds there), but
-            # 30 to 70 seconds on dev, whose egress is slower.
-            init = await reader.reply(1, timeout=90.0)
+            init = await reader.reply(1)
             assert "error" not in init
             assert init["result"]["serverInfo"]["name"]
 

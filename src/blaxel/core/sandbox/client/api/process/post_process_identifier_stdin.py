@@ -22,7 +22,7 @@ def _get_kwargs(
         "url": f"/process/{identifier}/stdin",
     }
 
-    _body = body.payload
+    _body = body
 
     _kwargs["content"] = _body
     headers["Content-Type"] = "application/octet-stream"
