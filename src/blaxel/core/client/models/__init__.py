@@ -162,6 +162,8 @@ from .list_schedule_executions_sort import ListScheduleExecutionsSort
 from .list_schedule_executions_status import ListScheduleExecutionsStatus
 from .list_schedules_sort import ListSchedulesSort
 from .list_schedules_type import ListSchedulesType
+from .list_snapshots_anchor import ListSnapshotsAnchor
+from .list_snapshots_sort import ListSnapshotsSort
 from .list_volumes_anchor import ListVolumesAnchor
 from .list_volumes_sort import ListVolumesSort
 from .lite_volume import LiteVolume
@@ -262,7 +264,12 @@ from .sandbox_schedule_input import SandboxScheduleInput
 from .sandbox_schedule_input_env import SandboxScheduleInputEnv
 from .sandbox_schedule_metrics import SandboxScheduleMetrics
 from .sandbox_snapshot import SandboxSnapshot
+from .sandbox_snapshot_list import SandboxSnapshotList
 from .sandbox_snapshot_request import SandboxSnapshotRequest
+from .sandbox_snapshot_source import SandboxSnapshotSource
+from .sandbox_snapshot_source_kind import SandboxSnapshotSourceKind
+from .sandbox_snapshot_spec import SandboxSnapshotSpec
+from .sandbox_snapshot_spec_generation import SandboxSnapshotSpecGeneration
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
 from .share_custom_domain_body import ShareCustomDomainBody
@@ -469,6 +476,8 @@ __all__ = (
     "ListScheduleExecutionsStatus",
     "ListSchedulesSort",
     "ListSchedulesType",
+    "ListSnapshotsAnchor",
+    "ListSnapshotsSort",
     "ListVolumesAnchor",
     "ListVolumesSort",
     "LiteVolume",
@@ -567,7 +576,12 @@ __all__ = (
     "SandboxScheduleInputEnv",
     "SandboxScheduleMetrics",
     "SandboxSnapshot",
+    "SandboxSnapshotList",
     "SandboxSnapshotRequest",
+    "SandboxSnapshotSource",
+    "SandboxSnapshotSourceKind",
+    "SandboxSnapshotSpec",
+    "SandboxSnapshotSpecGeneration",
     "SandboxSpec",
     "SandboxState",
     "ShareCustomDomainBody",

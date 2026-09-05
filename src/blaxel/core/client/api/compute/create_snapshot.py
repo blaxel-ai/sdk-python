@@ -12,7 +12,6 @@ from ...types import Response
 
 
 def _get_kwargs(
-    sandbox_name: str,
     *,
     body: SandboxSnapshotRequest,
 ) -> dict[str, Any]:
@@ -20,7 +19,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/sandboxes/{sandbox_name}/snapshots",
+        "url": "/snapshots",
     }
 
     if type(body) is dict:
@@ -68,19 +67,17 @@ def _build_response(
 
 
 def sync_detailed(
-    sandbox_name: str,
     *,
     client: Client,
     body: SandboxSnapshotRequest,
 ) -> Response[Union[Error, SandboxSnapshot]]:
-    """Create sandbox snapshot
+    """Create snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Captures a snapshot from a source object. The snapshot belongs to the workspace rather than to its
+    source, so it survives the deletion of the object it was captured from, and carries what creating a
+    sandbox or an application from it needs.
 
     Args:
-        sandbox_name (str):
         body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
             required at the root endpoint and implied by the path on the nested one.
 
@@ -93,7 +90,6 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
-        sandbox_name=sandbox_name,
         body=body,
     )
 
@@ -105,19 +101,17 @@ def sync_detailed(
 
 
 def sync(
-    sandbox_name: str,
     *,
     client: Client,
     body: SandboxSnapshotRequest,
 ) -> Union[Error, SandboxSnapshot] | None:
-    """Create sandbox snapshot
+    """Create snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Captures a snapshot from a source object. The snapshot belongs to the workspace rather than to its
+    source, so it survives the deletion of the object it was captured from, and carries what creating a
+    sandbox or an application from it needs.
 
     Args:
-        sandbox_name (str):
         body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
             required at the root endpoint and implied by the path on the nested one.
 
@@ -130,26 +124,23 @@ def sync(
     """
 
     return sync_detailed(
-        sandbox_name=sandbox_name,
         client=client,
         body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    sandbox_name: str,
     *,
     client: Client,
     body: SandboxSnapshotRequest,
 ) -> Response[Union[Error, SandboxSnapshot]]:
-    """Create sandbox snapshot
+    """Create snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Captures a snapshot from a source object. The snapshot belongs to the workspace rather than to its
+    source, so it survives the deletion of the object it was captured from, and carries what creating a
+    sandbox or an application from it needs.
 
     Args:
-        sandbox_name (str):
         body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
             required at the root endpoint and implied by the path on the nested one.
 
@@ -162,7 +153,6 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
-        sandbox_name=sandbox_name,
         body=body,
     )
 
@@ -172,19 +162,17 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    sandbox_name: str,
     *,
     client: Client,
     body: SandboxSnapshotRequest,
 ) -> Union[Error, SandboxSnapshot] | None:
-    """Create sandbox snapshot
+    """Create snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Captures a snapshot from a source object. The snapshot belongs to the workspace rather than to its
+    source, so it survives the deletion of the object it was captured from, and carries what creating a
+    sandbox or an application from it needs.
 
     Args:
-        sandbox_name (str):
         body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
             required at the root endpoint and implied by the path on the nested one.
 
@@ -198,7 +186,6 @@ async def asyncio(
 
     return (
         await asyncio_detailed(
-            sandbox_name=sandbox_name,
             client=client,
             body=body,
         )

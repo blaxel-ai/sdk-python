@@ -59,6 +59,7 @@ from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .schedule import SandboxSchedules
 from .session import SandboxSessions
+from .snapshot import SandboxSnapshots
 from .system import SandboxSystem
 
 
@@ -317,6 +318,7 @@ class SandboxInstance:
         self.codegen = SandboxCodegen(self.config)
         self.system = SandboxSystem(self.config)
         self.drives = SandboxDrive(self.config)
+        self.snapshots = SandboxSnapshots(self.sandbox, _unwrap_response)
 
     @property
     def metadata(self):
@@ -374,6 +376,8 @@ class SandboxInstance:
 
         Args:
             name: Optional human-readable name for the snapshot.
+
+        .. deprecated:: Use ``sandbox.snapshots.create(name)``.
         """
         body = SandboxSnapshotRequest(name=name) if name is not None else SandboxSnapshotRequest()
         response = await create_sandbox_snapshot(
@@ -384,7 +388,10 @@ class SandboxInstance:
         return _unwrap_response(response, "create snapshot")
 
     async def list_snapshots(self) -> list[SandboxSnapshot]:
-        """List the snapshots of this sandbox."""
+        """List the snapshots of this sandbox.
+
+        .. deprecated:: Use ``sandbox.snapshots.list()``.
+        """
         response = await list_sandbox_snapshots(
             self.metadata.name,
             client=client,
@@ -392,7 +399,10 @@ class SandboxInstance:
         return _unwrap_response(response, "list snapshots")
 
     async def delete_snapshot(self, snapshot_id: str) -> None:
-        """Delete a snapshot of this sandbox by its ID."""
+        """Delete a snapshot of this sandbox by its ID.
+
+        .. deprecated:: Use ``sandbox.snapshots.delete(name)``.
+        """
         response = await delete_sandbox_snapshot(
             self.metadata.name,
             snapshot_id,
@@ -413,6 +423,8 @@ class SandboxInstance:
 
         Args:
             snapshot_id: ID of the snapshot to restore this sandbox to.
+
+        .. deprecated:: Use ``sandbox.snapshots.restore(name)``.
         """
         response = await restore_sandbox_snapshot(
             self.metadata.name,
