@@ -7,31 +7,17 @@ from ... import errors
 from ...client import Client
 from ...models.error import Error
 from ...models.sandbox_snapshot import SandboxSnapshot
-from ...models.sandbox_snapshot_request import SandboxSnapshotRequest
 from ...types import Response
 
 
 def _get_kwargs(
-    sandbox_name: str,
-    *,
-    body: SandboxSnapshotRequest,
+    snapshot_name: str,
 ) -> dict[str, Any]:
-    headers: dict[str, Any] = {}
-
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": f"/sandboxes/{sandbox_name}/snapshots",
+        "method": "get",
+        "url": f"/snapshots/{snapshot_name}",
     }
 
-    if type(body) is dict:
-        _body = body
-    else:
-        _body = body.to_dict()
-
-    _kwargs["json"] = _body
-    headers["Content-Type"] = "application/json"
-
-    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -46,10 +32,6 @@ def _parse_response(
         response_404 = Error.from_dict(response.json())
 
         return response_404
-    if response.status_code == 500:
-        response_500 = Error.from_dict(response.json())
-
-        return response_500
     if client.raise_on_unexpected_status:
         raise errors.from_response(response.status_code, response.content, response.headers)
     else:
@@ -68,21 +50,16 @@ def _build_response(
 
 
 def sync_detailed(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
 ) -> Response[Union[Error, SandboxSnapshot]]:
-    """Create sandbox snapshot
+    """Get snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Returns a snapshot of the workspace by name.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -93,8 +70,7 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
-        sandbox_name=sandbox_name,
-        body=body,
+        snapshot_name=snapshot_name,
     )
 
     response = client.get_httpx_client().request(
@@ -105,21 +81,16 @@ def sync_detailed(
 
 
 def sync(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
 ) -> Union[Error, SandboxSnapshot] | None:
-    """Create sandbox snapshot
+    """Get snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Returns a snapshot of the workspace by name.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -130,28 +101,22 @@ def sync(
     """
 
     return sync_detailed(
-        sandbox_name=sandbox_name,
+        snapshot_name=snapshot_name,
         client=client,
-        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
 ) -> Response[Union[Error, SandboxSnapshot]]:
-    """Create sandbox snapshot
+    """Get snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Returns a snapshot of the workspace by name.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -162,8 +127,7 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
-        sandbox_name=sandbox_name,
-        body=body,
+        snapshot_name=snapshot_name,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -172,21 +136,16 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
 ) -> Union[Error, SandboxSnapshot] | None:
-    """Create sandbox snapshot
+    """Get snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Returns a snapshot of the workspace by name.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -198,8 +157,7 @@ async def asyncio(
 
     return (
         await asyncio_detailed(
-            sandbox_name=sandbox_name,
+            snapshot_name=snapshot_name,
             client=client,
-            body=body,
         )
     ).parsed

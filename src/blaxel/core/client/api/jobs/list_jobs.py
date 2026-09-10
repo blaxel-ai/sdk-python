@@ -18,6 +18,7 @@ def _get_kwargs(
     sort: Union[Unset, ListJobsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListJobsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
@@ -39,6 +40,8 @@ def _get_kwargs(
         json_anchor = anchor.value
 
     params["anchor"] = json_anchor
+
+    params["externalId"] = external_id
 
     params["status"] = status
 
@@ -81,6 +84,7 @@ def sync_detailed(
     sort: Union[Unset, ListJobsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListJobsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> Response[JobList]:
     """List batch jobs
@@ -96,6 +100,7 @@ def sync_detailed(
         sort (Union[Unset, ListJobsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListJobsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -112,6 +117,7 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
         status=status,
     )
 
@@ -130,6 +136,7 @@ def sync(
     sort: Union[Unset, ListJobsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListJobsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> JobList | None:
     """List batch jobs
@@ -145,6 +152,7 @@ def sync(
         sort (Union[Unset, ListJobsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListJobsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -162,6 +170,7 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
         status=status,
     ).parsed
 
@@ -174,6 +183,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListJobsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListJobsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> Response[JobList]:
     """List batch jobs
@@ -189,6 +199,7 @@ async def asyncio_detailed(
         sort (Union[Unset, ListJobsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListJobsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -205,6 +216,7 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
         status=status,
     )
 
@@ -221,6 +233,7 @@ async def asyncio(
     sort: Union[Unset, ListJobsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListJobsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> JobList | None:
     """List batch jobs
@@ -236,6 +249,7 @@ async def asyncio(
         sort (Union[Unset, ListJobsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListJobsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -254,6 +268,7 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
+            external_id=external_id,
             status=status,
         )
     ).parsed

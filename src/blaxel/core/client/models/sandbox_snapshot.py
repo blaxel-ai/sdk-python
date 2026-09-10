@@ -1,34 +1,45 @@
-from typing import Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+if TYPE_CHECKING:
+    from ..models.sandbox_snapshot_source import SandboxSnapshotSource
+    from ..models.sandbox_snapshot_spec import SandboxSnapshotSpec
+
+
 T = TypeVar("T", bound="SandboxSnapshot")
 
 
 @_attrs_define
 class SandboxSnapshot:
-    """A point-in-time snapshot of a sandbox that can be used for forking into a new sandbox or application.
+    """A point-in-time snapshot of a sandbox. It is a workspace-level object: it outlives the sandbox it was captured from,
+    and can be restored onto a sandbox or forked into a new sandbox or application on its own.
 
-    Attributes:
-        created_at (str): When the snapshot was created
-        id (str): Unique snapshot identifier Example: snap_abc123.
-        sandbox_name (str): Name of the source sandbox
-        status (str): Status of the snapshot (pending, ready, failed) Example: ready.
-        workspace (str): Workspace of the source sandbox
-        created_by (Union[Unset, str]): Who created the snapshot
-        name (Union[Unset, str]): Optional human-readable name for the snapshot Example: before-migration.
+        Attributes:
+            created_at (str): When the snapshot was created
+            id (str): Identifier of the snapshot on the compute plane Example: snap_abc123.
+            name (str): Name of the snapshot, unique in its workspace Example: my-snapshot.
+            status (str): Status of the snapshot (pending, ready, failed) Example: ready.
+            workspace (str): Workspace owning the snapshot
+            created_by (Union[Unset, str]): Who created the snapshot
+            sandbox_name (Union[Unset, str]): Name of the source sandbox. Kept for compatibility, read source.name instead.
+            source (Union[Unset, SandboxSnapshotSource]): The object a snapshot was captured from.
+            spec (Union[Unset, SandboxSnapshotSpec]): The configuration a snapshot carries, so a sandbox or an application
+                can be created from it once its source object is gone.
     """
 
     created_at: str
     id: str
-    sandbox_name: str
+    name: str
     status: str
     workspace: str
     created_by: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
+    sandbox_name: Union[Unset, str] = UNSET
+    source: Union[Unset, "SandboxSnapshotSource"] = UNSET
+    spec: Union[Unset, "SandboxSnapshotSpec"] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,7 +47,7 @@ class SandboxSnapshot:
 
         id = self.id
 
-        sandbox_name = self.sandbox_name
+        name = self.name
 
         status = self.status
 
@@ -44,7 +55,19 @@ class SandboxSnapshot:
 
         created_by = self.created_by
 
-        name = self.name
+        sandbox_name = self.sandbox_name
+
+        source: Union[Unset, dict[str, Any]] = UNSET
+        if self.source and not isinstance(self.source, Unset) and not isinstance(self.source, dict):
+            source = self.source.to_dict()
+        elif self.source and isinstance(self.source, dict):
+            source = self.source
+
+        spec: Union[Unset, dict[str, Any]] = UNSET
+        if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
+            spec = self.spec.to_dict()
+        elif self.spec and isinstance(self.spec, dict):
+            spec = self.spec
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -52,20 +75,27 @@ class SandboxSnapshot:
             {
                 "createdAt": created_at,
                 "id": id,
-                "sandboxName": sandbox_name,
+                "name": name,
                 "status": status,
                 "workspace": workspace,
             }
         )
         if created_by is not UNSET:
             field_dict["createdBy"] = created_by
-        if name is not UNSET:
-            field_dict["name"] = name
+        if sandbox_name is not UNSET:
+            field_dict["sandboxName"] = sandbox_name
+        if source is not UNSET:
+            field_dict["source"] = source
+        if spec is not UNSET:
+            field_dict["spec"] = spec
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.sandbox_snapshot_source import SandboxSnapshotSource
+        from ..models.sandbox_snapshot_spec import SandboxSnapshotSpec
+
         if not src_dict:
             return None
         d = src_dict.copy()
@@ -73,7 +103,7 @@ class SandboxSnapshot:
 
         id = d.pop("id")
 
-        sandbox_name = d.pop("sandboxName") if "sandboxName" in d else d.pop("sandbox_name")
+        name = d.pop("name")
 
         status = d.pop("status")
 
@@ -81,16 +111,32 @@ class SandboxSnapshot:
 
         created_by = d.pop("createdBy", d.pop("created_by", UNSET))
 
-        name = d.pop("name", UNSET)
+        sandbox_name = d.pop("sandboxName", d.pop("sandbox_name", UNSET))
+
+        _source = d.pop("source", UNSET)
+        source: Union[Unset, SandboxSnapshotSource]
+        if isinstance(_source, Unset):
+            source = UNSET
+        else:
+            source = SandboxSnapshotSource.from_dict(_source)
+
+        _spec = d.pop("spec", UNSET)
+        spec: Union[Unset, SandboxSnapshotSpec]
+        if isinstance(_spec, Unset):
+            spec = UNSET
+        else:
+            spec = SandboxSnapshotSpec.from_dict(_spec)
 
         sandbox_snapshot = cls(
             created_at=created_at,
             id=id,
-            sandbox_name=sandbox_name,
+            name=name,
             status=status,
             workspace=workspace,
             created_by=created_by,
-            name=name,
+            sandbox_name=sandbox_name,
+            source=source,
+            spec=spec,
         )
 
         sandbox_snapshot.additional_properties = d

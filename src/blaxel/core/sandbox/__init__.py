@@ -18,6 +18,7 @@ from .default import (
     SandboxPreviews,
     SandboxProcess,
     SandboxSchedules,
+    SandboxSnapshots,
     SandboxSystem,
 )
 from .sync import (
@@ -29,6 +30,7 @@ from .sync import (
     SyncSandboxPreviews,
     SyncSandboxProcess,
     SyncSandboxSchedules,
+    SyncSandboxSnapshots,
     SyncSandboxSystem,
 )
 from .types import (
@@ -73,6 +75,7 @@ __all__ = [
     "SandboxCodegen",
     "SandboxSystem",
     "SandboxDrive",
+    "SandboxSnapshots",
     "DriveMountRequest",
     "DriveMountResponse",
     "DriveMountInfo",
@@ -91,6 +94,7 @@ __all__ = [
     "SyncSandboxProcess",
     "SyncSandboxSystem",
     "SyncSandboxDrive",
+    "SyncSandboxSnapshots",
     "SyncCodeInterpreter",
     "CodeInterpreter",
 ]

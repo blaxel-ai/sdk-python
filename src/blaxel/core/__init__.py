@@ -37,6 +37,7 @@ from .sandbox import (
     SyncSandboxProcess,
 )
 from .sandbox.types import Sandbox
+from .snapshot import Snapshot, SnapshotAPIError, SyncSnapshot
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
 from .volume import SyncVolumeInstance, VolumeCreateConfiguration, VolumeInstance
 
@@ -72,6 +73,9 @@ __all__ = [
     "bl_tools",
     "convert_mcp_tool_to_blaxel_tool",
     "websocket_client",
+    "Snapshot",
+    "SyncSnapshot",
+    "SnapshotAPIError",
     "VolumeInstance",
     "SyncVolumeInstance",
     "VolumeCreateConfiguration",
