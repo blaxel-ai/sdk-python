@@ -26,8 +26,9 @@ class SandboxForkRequest:
                 variable of the source is kept.
             port (Union[Unset, int]): Port to expose from the sandbox Example: 8080.
             prefix (Union[Unset, str]): URL prefix for the application
-            snapshot_id (Union[Unset, str]): Snapshot ID to fork from. When set, the application revision references this
-                snapshot.
+            snapshot_id (Union[Unset, str]): Snapshot ID to fork from. When set, the fork is created from this existing
+                snapshot. When omitted, a sandbox fork copies the source sandbox's live state directly, without persisting a
+                snapshot in between.
             traffic (Union[Unset, int]): Traffic percentage for canary deployment (0-100). When set on an existing target,
                 creates a new revision with this traffic percentage. Example: 10.
     """
