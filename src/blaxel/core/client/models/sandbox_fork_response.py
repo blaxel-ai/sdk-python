@@ -16,8 +16,9 @@ class SandboxForkResponse:
 
         Attributes:
             name (Union[Unset, str]): Name of the created or updated resource
-            snapshot_id (Union[Unset, str]): The snapshot the fork was created from. Set only when the fork went through a
-                snapshot — an explicit snapshotId, or a fork into an application — and empty for a direct sandbox fork.
+            snapshot_id (Union[Unset, str]): The snapshot ID the fork was created from. Set only when the fork went through
+                a snapshot, meaning an explicit snapshotId was supplied or the fork target is an application. Empty when the
+                fork copied the source sandbox's live state directly.
             type_ (Union[Unset, SandboxForkResponseType]): Type of resource that was created (sandbox or application)
     """
 
