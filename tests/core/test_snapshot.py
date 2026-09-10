@@ -6,15 +6,18 @@ import pytest
 
 from blaxel.core import Snapshot
 from blaxel.core.client.models import (
+    Env,
     Metadata,
     PaginationMeta,
     Sandbox,
     SandboxSnapshot,
     SandboxSnapshotList,
+    SandboxSnapshotRequest,
     SandboxSnapshotSource,
     SandboxSpec,
 )
 from blaxel.core.sandbox import SandboxInstance
+from blaxel.core.snapshot import SyncSnapshot
 
 
 def snapshot_model(name: str = "my-snapshot") -> SandboxSnapshot:
@@ -36,6 +39,26 @@ def sandbox_instance(name: str = "my-sandbox") -> SandboxInstance:
 async def test_create_requires_a_source_name():
     with pytest.raises(ValueError):
         await Snapshot.create({"name": "my-snapshot", "source": {}})
+
+
+@pytest.mark.asyncio
+async def test_create_validates_typed_requests_like_mappings():
+    with pytest.raises(ValueError):
+        await Snapshot.create(SandboxSnapshotRequest())
+    with pytest.raises(ValueError):
+        await Snapshot.create(SandboxSnapshotRequest(source=SandboxSnapshotSource(name="")))
+    with pytest.raises(ValueError):
+        await Snapshot.create({"source": SandboxSnapshotSource(name="")})
+
+    with patch(
+        "blaxel.core.snapshot.snapshot.create_snapshot", new_callable=AsyncMock
+    ) as mock_create:
+        mock_create.return_value = snapshot_model()
+        request = SandboxSnapshotRequest(source=SandboxSnapshotSource(name="my-sandbox"))
+
+        await Snapshot.create(request)
+
+        assert mock_create.call_args.kwargs["body"] is request
 
 
 @pytest.mark.asyncio
@@ -98,6 +121,24 @@ async def test_list_returns_a_page_of_snapshots():
 
 
 @pytest.mark.asyncio
+async def test_list_answers_an_empty_page_when_the_body_is_an_empty_array():
+    # Before the workspace-level routes, a listing was a bare array, so a
+    # workspace without snapshots answers `[]`, which the model parses to None.
+    with patch("blaxel.core.snapshot.snapshot.list_snapshots", new_callable=AsyncMock) as mock_list:
+        mock_list.return_value = SandboxSnapshotList.from_dict([])
+
+        page = await Snapshot.list()
+
+        assert page.data == []
+        assert page.has_more is False
+
+    with patch("blaxel.core.snapshot.snapshot.list_snapshots_sync") as mock_list_sync:
+        mock_list_sync.return_value = SandboxSnapshotList.from_dict([])
+
+        assert SyncSnapshot.list().data == []
+
+
+@pytest.mark.asyncio
 async def test_delete_works_from_the_class_and_from_an_instance():
     with patch(
         "blaxel.core.snapshot.snapshot.delete_snapshot", new_callable=AsyncMock
@@ -135,6 +176,19 @@ async def test_fork_forwards_the_target_and_its_options():
         assert body.traffic == 100
         assert body.custom_domain == "app.example.com"
         assert body.prefix == "preview"
+
+
+@pytest.mark.asyncio
+async def test_fork_forwards_envs_as_models_or_mappings():
+    with patch("blaxel.core.snapshot.snapshot.fork_snapshot", new_callable=AsyncMock) as mock_fork:
+        mock_fork.return_value = MagicMock()
+
+        await Snapshot(snapshot_model()).fork(
+            "copy", envs=[{"name": "FOO", "value": "bar"}, Env(name="BAZ", value="qux")]
+        )
+
+        body = mock_fork.call_args.kwargs["body"].to_dict()
+        assert body["envs"] == [{"name": "FOO", "value": "bar"}, {"name": "BAZ", "value": "qux"}]
 
 
 @pytest.mark.asyncio

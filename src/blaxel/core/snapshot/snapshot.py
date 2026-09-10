@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Sequence, Union
 
 from ..client.api.compute.create_snapshot import asyncio as create_snapshot
 from ..client.api.compute.create_snapshot import sync as create_snapshot_sync
@@ -12,6 +12,7 @@ from ..client.api.compute.list_snapshots import asyncio as list_snapshots
 from ..client.api.compute.list_snapshots import sync as list_snapshots_sync
 from ..client.client import client
 from ..client.models import (
+    Env,
     SandboxForkRequest,
     SandboxForkResponse,
     SandboxSnapshot,
@@ -59,27 +60,31 @@ def _snapshot_request(
     and generated when omitted.
     """
     if isinstance(config, SandboxSnapshotRequest):
-        return config
-    source = config.get("source")
-    if isinstance(source, SandboxSnapshotSource):
-        request_source = source
+        request = config
     else:
-        source_name = source.get("name") if isinstance(source, dict) else None
-        if not source_name:
-            raise ValueError("Snapshot source requires a name")
-        kind = source.get("kind")
-        # The generated model defaults ``kind`` to sandbox; left out of the
-        # request, the control plane applies that same default itself.
-        request_source = SandboxSnapshotSource(
-            name=source_name,
-            kind=SandboxSnapshotSourceKind(kind) if kind is not None else UNSET,
+        source = config.get("source")
+        if isinstance(source, SandboxSnapshotSource):
+            request_source = source
+        elif isinstance(source, dict):
+            kind = source.get("kind")
+            # The generated model defaults ``kind`` to sandbox; left out of the
+            # request, the control plane applies that same default itself.
+            request_source = SandboxSnapshotSource(
+                name=source.get("name") or "",
+                kind=SandboxSnapshotSourceKind(kind) if kind is not None else UNSET,
+            )
+        else:
+            request_source = UNSET
+        name = config.get("name")
+        request = (
+            SandboxSnapshotRequest(source=request_source, name=name)
+            if name is not None
+            else SandboxSnapshotRequest(source=request_source)
         )
-    name = config.get("name")
-    return (
-        SandboxSnapshotRequest(source=request_source, name=name)
-        if name is not None
-        else SandboxSnapshotRequest(source=request_source)
-    )
+    source = request.source
+    if isinstance(source, SandboxSnapshotSource) and isinstance(source.name, str) and source.name:
+        return request
+    raise ValueError("Snapshot source requires a name")
 
 
 def _fork_body(
@@ -89,8 +94,11 @@ def _fork_body(
     traffic: int | None = None,
     custom_domain: str | None = None,
     prefix: str | None = None,
+    envs: Sequence[Env | dict[str, str]] | None = None,
 ) -> SandboxForkRequest:
     body = SandboxForkRequest(target_name=target_name, target_type=target_type)
+    if envs is not None:
+        body.envs = [env if isinstance(env, Env) else Env.from_dict(env) for env in envs]
     if port is not None:
         body.port = port
     if traffic is not None:
@@ -250,7 +258,9 @@ class Snapshot(_SnapshotBase):
                 limit=limit,
             )
             return make_async_paginated_list(
-                _unwrap(response, "list snapshots"), mapper=cls, fetch_next=fetch_page
+                _unwrap(response, "list snapshots", allow_none=True),
+                mapper=cls,
+                fetch_next=fetch_page,
             )
 
         return await fetch_page(cursor)
@@ -263,6 +273,7 @@ class Snapshot(_SnapshotBase):
         traffic: int | None = None,
         custom_domain: str | None = None,
         prefix: str | None = None,
+        envs: Sequence[Env | dict[str, str]] | None = None,
     ) -> SandboxForkResponse:
         """Create a sandbox or an application from this snapshot.
 
@@ -276,11 +287,13 @@ class Snapshot(_SnapshotBase):
             traffic: Canary traffic percentage when forking into an application.
             custom_domain: Custom domain for the application fork.
             prefix: URL prefix for the application fork.
+            envs: Environment variables the fork runs with, on top of the
+                source's; a variable the source already has takes this value.
         """
         response = await fork_snapshot(
             self.name,
             client=client,
-            body=_fork_body(target_name, target_type, port, traffic, custom_domain, prefix),
+            body=_fork_body(target_name, target_type, port, traffic, custom_domain, prefix, envs),
         )
         return _unwrap(response, f"fork snapshot {self.name}")
 
@@ -309,7 +322,9 @@ class SyncSnapshot(_SnapshotBase):
                 limit=limit,
             )
             return make_paginated_list(
-                _unwrap(response, "list snapshots"), mapper=cls, fetch_next=fetch_page
+                _unwrap(response, "list snapshots", allow_none=True),
+                mapper=cls,
+                fetch_next=fetch_page,
             )
 
         return fetch_page(cursor)
@@ -322,10 +337,11 @@ class SyncSnapshot(_SnapshotBase):
         traffic: int | None = None,
         custom_domain: str | None = None,
         prefix: str | None = None,
+        envs: Sequence[Env | dict[str, str]] | None = None,
     ) -> SandboxForkResponse:
         response = fork_snapshot_sync(
             self.name,
             client=client,
-            body=_fork_body(target_name, target_type, port, traffic, custom_domain, prefix),
+            body=_fork_body(target_name, target_type, port, traffic, custom_domain, prefix, envs),
         )
         return _unwrap(response, f"fork snapshot {self.name}")
