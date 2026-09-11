@@ -6,21 +6,21 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.error import Error
-from ...models.sandbox_snapshot import SandboxSnapshot
-from ...models.sandbox_snapshot_request import SandboxSnapshotRequest
+from ...models.sandbox_fork_request import SandboxForkRequest
+from ...models.sandbox_fork_response import SandboxForkResponse
 from ...types import Response
 
 
 def _get_kwargs(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
-    body: SandboxSnapshotRequest,
+    body: SandboxForkRequest,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/sandboxes/{sandbox_name}/snapshots",
+        "url": f"/snapshots/{snapshot_name}/fork",
     }
 
     if type(body) is dict:
@@ -37,9 +37,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, SandboxSnapshot] | None:
+) -> Union[Error, SandboxForkResponse] | None:
     if response.status_code == 200:
-        response_200 = SandboxSnapshot.from_dict(response.json())
+        response_200 = SandboxForkResponse.from_dict(response.json())
 
         return response_200
     if response.status_code == 404:
@@ -58,7 +58,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, SandboxSnapshot]]:
+) -> Response[Union[Error, SandboxForkResponse]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -68,32 +68,31 @@ def _build_response(
 
 
 def sync_detailed(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
-) -> Response[Union[Error, SandboxSnapshot]]:
-    """Create sandbox snapshot
+    body: SandboxForkRequest,
+) -> Response[Union[Error, SandboxForkResponse]]:
+    """Fork snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Creates a new sandbox or application from a snapshot. The snapshot is enough on its own, so this
+    works after the object it was captured from has been deleted.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
+        body (SandboxForkRequest): Request body for forking a sandbox into an application. Creates
+            a new application or adds a canary revision to an existing one.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxSnapshot]]
+        Response[Union[Error, SandboxForkResponse]]
     """
 
     kwargs = _get_kwargs(
-        sandbox_name=sandbox_name,
+        snapshot_name=snapshot_name,
         body=body,
     )
 
@@ -105,64 +104,62 @@ def sync_detailed(
 
 
 def sync(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
-) -> Union[Error, SandboxSnapshot] | None:
-    """Create sandbox snapshot
+    body: SandboxForkRequest,
+) -> Union[Error, SandboxForkResponse] | None:
+    """Fork snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Creates a new sandbox or application from a snapshot. The snapshot is enough on its own, so this
+    works after the object it was captured from has been deleted.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
+        body (SandboxForkRequest): Request body for forking a sandbox into an application. Creates
+            a new application or adds a canary revision to an existing one.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxSnapshot]
+        Union[Error, SandboxForkResponse]
     """
 
     return sync_detailed(
-        sandbox_name=sandbox_name,
+        snapshot_name=snapshot_name,
         client=client,
         body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
-) -> Response[Union[Error, SandboxSnapshot]]:
-    """Create sandbox snapshot
+    body: SandboxForkRequest,
+) -> Response[Union[Error, SandboxForkResponse]]:
+    """Fork snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Creates a new sandbox or application from a snapshot. The snapshot is enough on its own, so this
+    works after the object it was captured from has been deleted.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
+        body (SandboxForkRequest): Request body for forking a sandbox into an application. Creates
+            a new application or adds a canary revision to an existing one.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxSnapshot]]
+        Response[Union[Error, SandboxForkResponse]]
     """
 
     kwargs = _get_kwargs(
-        sandbox_name=sandbox_name,
+        snapshot_name=snapshot_name,
         body=body,
     )
 
@@ -172,33 +169,32 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    sandbox_name: str,
+    snapshot_name: str,
     *,
     client: Client,
-    body: SandboxSnapshotRequest,
-) -> Union[Error, SandboxSnapshot] | None:
-    """Create sandbox snapshot
+    body: SandboxForkRequest,
+) -> Union[Error, SandboxForkResponse] | None:
+    """Fork snapshot
 
-     Creates a point-in-time snapshot of a sandbox. Snapshots capture the sandbox state and can be used
-    for forking into new sandboxes or applications. This is a WIP endpoint — the full implementation
-    depends on the execution plane.
+     Creates a new sandbox or application from a snapshot. The snapshot is enough on its own, so this
+    works after the object it was captured from has been deleted.
 
     Args:
-        sandbox_name (str):
-        body (SandboxSnapshotRequest): Request body for creating a snapshot. The source object is
-            required at the root endpoint and implied by the path on the nested one.
+        snapshot_name (str):
+        body (SandboxForkRequest): Request body for forking a sandbox into an application. Creates
+            a new application or adds a canary revision to an existing one.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxSnapshot]
+        Union[Error, SandboxForkResponse]
     """
 
     return (
         await asyncio_detailed(
-            sandbox_name=sandbox_name,
+            snapshot_name=snapshot_name,
             client=client,
             body=body,
         )

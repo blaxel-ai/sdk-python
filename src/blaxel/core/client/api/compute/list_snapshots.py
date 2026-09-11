@@ -6,9 +6,9 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.error import Error
-from ...models.function_list import FunctionList
-from ...models.list_functions_anchor import ListFunctionsAnchor
-from ...models.list_functions_sort import ListFunctionsSort
+from ...models.list_snapshots_anchor import ListSnapshotsAnchor
+from ...models.list_snapshots_sort import ListSnapshotsSort
+from ...models.sandbox_snapshot_list import SandboxSnapshotList
 from ...types import UNSET, Response, Unset
 
 
@@ -16,11 +16,9 @@ def _get_kwargs(
     *,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    sort: Union[Unset, ListSnapshotsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -42,15 +40,11 @@ def _get_kwargs(
 
     params["anchor"] = json_anchor
 
-    params["externalId"] = external_id
-
-    params["status"] = status
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/functions",
+        "url": "/snapshots",
         "params": params,
     }
 
@@ -59,19 +53,11 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, FunctionList] | None:
+) -> Union[Error, SandboxSnapshotList] | None:
     if response.status_code == 200:
-        response_200 = FunctionList.from_dict(response.json())
+        response_200 = SandboxSnapshotList.from_dict(response.json())
 
         return response_200
-    if response.status_code == 401:
-        response_401 = Error.from_dict(response.json())
-
-        return response_401
-    if response.status_code == 403:
-        response_403 = Error.from_dict(response.json())
-
-        return response_403
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
@@ -84,7 +70,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, FunctionList]]:
+) -> Response[Union[Error, SandboxSnapshotList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -98,34 +84,30 @@ def sync_detailed(
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    sort: Union[Unset, ListSnapshotsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, FunctionList]]:
-    """List all MCP servers
+    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
+) -> Response[Union[Error, SandboxSnapshotList]]:
+    """List snapshots
 
-     Returns MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
-    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
-    and `limit` query parameters; older versions keep returning a bare array with all functions.
+     Returns the snapshots of the workspace, newest first by default, including the ones whose source
+    object has been deleted. Starting with API version 2026-04-28 the response is wrapped in `{data,
+    meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older versions
+    keep returning a bare array.
 
     Args:
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
+        sort (Union[Unset, ListSnapshotsSort]):
         q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        anchor (Union[Unset, ListSnapshotsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, FunctionList]]
+        Response[Union[Error, SandboxSnapshotList]]
     """
 
     kwargs = _get_kwargs(
@@ -134,8 +116,6 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
-        external_id=external_id,
-        status=status,
     )
 
     response = client.get_httpx_client().request(
@@ -150,34 +130,30 @@ def sync(
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    sort: Union[Unset, ListSnapshotsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[Error, FunctionList] | None:
-    """List all MCP servers
+    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
+) -> Union[Error, SandboxSnapshotList] | None:
+    """List snapshots
 
-     Returns MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
-    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
-    and `limit` query parameters; older versions keep returning a bare array with all functions.
+     Returns the snapshots of the workspace, newest first by default, including the ones whose source
+    object has been deleted. Starting with API version 2026-04-28 the response is wrapped in `{data,
+    meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older versions
+    keep returning a bare array.
 
     Args:
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
+        sort (Union[Unset, ListSnapshotsSort]):
         q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        anchor (Union[Unset, ListSnapshotsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, FunctionList]
+        Union[Error, SandboxSnapshotList]
     """
 
     return sync_detailed(
@@ -187,8 +163,6 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
-        external_id=external_id,
-        status=status,
     ).parsed
 
 
@@ -197,34 +171,30 @@ async def asyncio_detailed(
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    sort: Union[Unset, ListSnapshotsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, FunctionList]]:
-    """List all MCP servers
+    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
+) -> Response[Union[Error, SandboxSnapshotList]]:
+    """List snapshots
 
-     Returns MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
-    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
-    and `limit` query parameters; older versions keep returning a bare array with all functions.
+     Returns the snapshots of the workspace, newest first by default, including the ones whose source
+    object has been deleted. Starting with API version 2026-04-28 the response is wrapped in `{data,
+    meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older versions
+    keep returning a bare array.
 
     Args:
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
+        sort (Union[Unset, ListSnapshotsSort]):
         q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        anchor (Union[Unset, ListSnapshotsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, FunctionList]]
+        Response[Union[Error, SandboxSnapshotList]]
     """
 
     kwargs = _get_kwargs(
@@ -233,8 +203,6 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
-        external_id=external_id,
-        status=status,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -247,34 +215,30 @@ async def asyncio(
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
+    sort: Union[Unset, ListSnapshotsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[Error, FunctionList] | None:
-    """List all MCP servers
+    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
+) -> Union[Error, SandboxSnapshotList] | None:
+    """List snapshots
 
-     Returns MCP server functions deployed in the workspace. Each function includes its deployment
-    status, transport protocol (websocket or http-stream), and endpoint URL. Starting with API version
-    2026-04-28 the response is wrapped in `{data, meta}` and supports cursor pagination via the `cursor`
-    and `limit` query parameters; older versions keep returning a bare array with all functions.
+     Returns the snapshots of the workspace, newest first by default, including the ones whose source
+    object has been deleted. Starting with API version 2026-04-28 the response is wrapped in `{data,
+    meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older versions
+    keep returning a bare array.
 
     Args:
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
+        sort (Union[Unset, ListSnapshotsSort]):
         q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        anchor (Union[Unset, ListSnapshotsAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, FunctionList]
+        Union[Error, SandboxSnapshotList]
     """
 
     return (
@@ -285,7 +249,5 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
-            external_id=external_id,
-            status=status,
         )
     ).parsed

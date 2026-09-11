@@ -77,6 +77,7 @@ from .preview import SyncSandboxPreviews
 from .process import SyncSandboxProcess
 from .schedule import SyncSandboxSchedules
 from .session import SyncSandboxSessions
+from .snapshot import SyncSandboxSnapshots
 from .system import SyncSandboxSystem
 
 logger = logging.getLogger(__name__)
@@ -217,6 +218,7 @@ class SyncSandboxInstance:
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
         self.drives = SyncSandboxDrive(self.config)
+        self.snapshots = SyncSandboxSnapshots(self.sandbox, _unwrap_response)
 
     @property
     def metadata(self):
@@ -272,6 +274,8 @@ class SyncSandboxInstance:
 
         Args:
             name: Optional human-readable name for the snapshot.
+
+        .. deprecated:: Use ``sandbox.snapshots.create(name)``.
         """
         body = SandboxSnapshotRequest(name=name) if name is not None else SandboxSnapshotRequest()
         response = create_sandbox_snapshot(
@@ -282,7 +286,10 @@ class SyncSandboxInstance:
         return _unwrap_response(response, "create snapshot")
 
     def list_snapshots(self) -> list[SandboxSnapshot]:
-        """List the snapshots of this sandbox."""
+        """List the snapshots of this sandbox.
+
+        .. deprecated:: Use ``sandbox.snapshots.list()``.
+        """
         response = list_sandbox_snapshots(
             self.metadata.name,
             client=client,
@@ -290,7 +297,10 @@ class SyncSandboxInstance:
         return _unwrap_response(response, "list snapshots")
 
     def delete_snapshot(self, snapshot_id: str) -> None:
-        """Delete a snapshot of this sandbox by its ID."""
+        """Delete a snapshot of this sandbox by its ID.
+
+        .. deprecated:: Use ``sandbox.snapshots.delete(name)``.
+        """
         response = delete_sandbox_snapshot(
             self.metadata.name,
             snapshot_id,
@@ -311,6 +321,8 @@ class SyncSandboxInstance:
 
         Args:
             snapshot_id: ID of the snapshot to restore this sandbox to.
+
+        .. deprecated:: Use ``sandbox.snapshots.restore(name)``.
         """
         response = restore_sandbox_snapshot(
             self.metadata.name,

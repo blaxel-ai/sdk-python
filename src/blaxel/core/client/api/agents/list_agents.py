@@ -19,6 +19,7 @@ def _get_kwargs(
     sort: Union[Unset, ListAgentsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListAgentsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
@@ -40,6 +41,8 @@ def _get_kwargs(
         json_anchor = anchor.value
 
     params["anchor"] = json_anchor
+
+    params["externalId"] = external_id
 
     params["status"] = status
 
@@ -96,6 +99,7 @@ def sync_detailed(
     sort: Union[Unset, ListAgentsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListAgentsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> Response[Union[AgentList, Error]]:
     """List all agents
@@ -111,6 +115,7 @@ def sync_detailed(
         sort (Union[Unset, ListAgentsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListAgentsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -127,6 +132,7 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
         status=status,
     )
 
@@ -145,6 +151,7 @@ def sync(
     sort: Union[Unset, ListAgentsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListAgentsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> Union[AgentList, Error] | None:
     """List all agents
@@ -160,6 +167,7 @@ def sync(
         sort (Union[Unset, ListAgentsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListAgentsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -177,6 +185,7 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
         status=status,
     ).parsed
 
@@ -189,6 +198,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListAgentsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListAgentsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> Response[Union[AgentList, Error]]:
     """List all agents
@@ -204,6 +214,7 @@ async def asyncio_detailed(
         sort (Union[Unset, ListAgentsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListAgentsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -220,6 +231,7 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
         status=status,
     )
 
@@ -236,6 +248,7 @@ async def asyncio(
     sort: Union[Unset, ListAgentsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListAgentsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
     status: Union[Unset, str] = UNSET,
 ) -> Union[AgentList, Error] | None:
     """List all agents
@@ -251,6 +264,7 @@ async def asyncio(
         sort (Union[Unset, ListAgentsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListAgentsAnchor]):
+        external_id (Union[Unset, str]):
         status (Union[Unset, str]):
 
     Raises:
@@ -269,6 +283,7 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
+            external_id=external_id,
             status=status,
         )
     ).parsed
