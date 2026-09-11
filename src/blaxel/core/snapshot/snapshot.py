@@ -122,7 +122,7 @@ class _AsyncDeleteDescriptor:
             return self._delete_func
 
         async def instance_delete() -> None:
-            return await self._delete_func(instance.name)
+            return await self._delete_func(instance.id)
 
         instance_delete.__doc__ = self.__doc__
         return instance_delete
@@ -140,30 +140,30 @@ class _SyncDeleteDescriptor:
             return self._delete_func
 
         def instance_delete() -> None:
-            return self._delete_func(instance.name)
+            return self._delete_func(instance.id)
 
         instance_delete.__doc__ = self.__doc__
         return instance_delete
 
 
-async def _delete_snapshot(snapshot_name: str) -> None:
-    """Delete a snapshot.
+async def _delete_snapshot(snapshot_id: str) -> None:
+    """Delete a snapshot by its identifier (``snapshot.id``).
 
     There is one snapshot object, so this removes it for the whole workspace,
     whether or not the sandbox it was captured from still exists.
     """
-    response = await delete_snapshot(snapshot_name, client=client)
-    _unwrap(response, f"delete snapshot {snapshot_name}", allow_none=True)
+    response = await delete_snapshot(snapshot_id, client=client)
+    _unwrap(response, f"delete snapshot {snapshot_id}", allow_none=True)
 
 
-def _delete_snapshot_sync(snapshot_name: str) -> None:
-    """Delete a snapshot.
+def _delete_snapshot_sync(snapshot_id: str) -> None:
+    """Delete a snapshot by its identifier (``snapshot.id``).
 
     There is one snapshot object, so this removes it for the whole workspace,
     whether or not the sandbox it was captured from still exists.
     """
-    response = delete_snapshot_sync(snapshot_name, client=client)
-    _unwrap(response, f"delete snapshot {snapshot_name}", allow_none=True)
+    response = delete_snapshot_sync(snapshot_id, client=client)
+    _unwrap(response, f"delete snapshot {snapshot_id}", allow_none=True)
 
 
 class _SnapshotBase:
@@ -172,7 +172,7 @@ class _SnapshotBase:
 
     @property
     def name(self) -> str:
-        """Name of the snapshot, unique in the workspace."""
+        """Name of the snapshot, unique among the snapshots of its source sandbox."""
         return self.snapshot.name
 
     @property
@@ -232,9 +232,15 @@ class Snapshot(_SnapshotBase):
         return cls(_unwrap(response, "create snapshot"))
 
     @classmethod
-    async def get(cls, snapshot_name: str) -> "Snapshot":
-        response = await get_snapshot(snapshot_name, client=client)
-        return cls(_unwrap(response, f"get snapshot {snapshot_name}"))
+    async def get(cls, snapshot_id: str) -> "Snapshot":
+        """Fetch a snapshot by its identifier (``snapshot.id``).
+
+        Names are only unique within the sandbox they were captured from, so
+        the workspace-level routes take the identifier; use
+        ``sandbox.snapshots.get(name)`` to address one by name.
+        """
+        response = await get_snapshot(snapshot_id, client=client)
+        return cls(_unwrap(response, f"get snapshot {snapshot_id}"))
 
     @classmethod
     async def list(
@@ -291,7 +297,7 @@ class Snapshot(_SnapshotBase):
                 source's; a variable the source already has takes this value.
         """
         response = await fork_snapshot(
-            self.name,
+            self.id,
             client=client,
             body=_fork_body(target_name, target_type, port, traffic, custom_domain, prefix, envs),
         )
@@ -309,9 +315,9 @@ class SyncSnapshot(_SnapshotBase):
         return cls(_unwrap(response, "create snapshot"))
 
     @classmethod
-    def get(cls, snapshot_name: str) -> "SyncSnapshot":
-        response = get_snapshot_sync(snapshot_name, client=client)
-        return cls(_unwrap(response, f"get snapshot {snapshot_name}"))
+    def get(cls, snapshot_id: str) -> "SyncSnapshot":
+        response = get_snapshot_sync(snapshot_id, client=client)
+        return cls(_unwrap(response, f"get snapshot {snapshot_id}"))
 
     @classmethod
     def list(cls, limit: int = 50, cursor: str | None = None) -> PaginatedList["SyncSnapshot"]:
@@ -340,7 +346,7 @@ class SyncSnapshot(_SnapshotBase):
         envs: Sequence[Env | dict[str, str]] | None = None,
     ) -> SandboxForkResponse:
         response = fork_snapshot_sync(
-            self.name,
+            self.id,
             client=client,
             body=_fork_body(target_name, target_type, port, traffic, custom_domain, prefix, envs),
         )

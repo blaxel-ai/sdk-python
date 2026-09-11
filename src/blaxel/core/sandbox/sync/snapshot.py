@@ -40,8 +40,15 @@ class SyncSandboxSnapshots:
         return [SyncSnapshot(snapshot) for snapshot in snapshots]
 
     def get(self, snapshot_name: str) -> SyncSnapshot:
-        """Read one snapshot by name."""
-        return SyncSnapshot.get(snapshot_name)
+        """Find a snapshot captured from this sandbox by its name, or by its identifier.
+
+        Names are only unique within the sandbox, which is why the
+        workspace-level ``SyncSnapshot.get`` takes the identifier instead.
+        """
+        for snapshot in self.list():
+            if snapshot.name == snapshot_name or snapshot.id == snapshot_name:
+                return snapshot
+        raise ValueError(f"Snapshot {snapshot_name} not found on sandbox {self._sandbox_name}")
 
     def delete(self, snapshot_name: str) -> None:
         """Delete a snapshot, removing it for the whole workspace."""

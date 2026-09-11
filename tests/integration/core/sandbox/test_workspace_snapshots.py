@@ -30,12 +30,13 @@ class TestWorkspaceSnapshots:
     sandbox_name = unique_name("snap-src")
     snapshot_name = unique_name("snap")
     fork_name = unique_name("snap-fork")
+    snapshot_id = ""
 
     @pytest_asyncio.fixture(autouse=True)
     async def cleanup(self):
         yield
         for delete in (
-            lambda: Snapshot.delete(TestWorkspaceSnapshots.snapshot_name),
+            lambda: Snapshot.delete(TestWorkspaceSnapshots.snapshot_id),
             lambda: SandboxInstance.delete(TestWorkspaceSnapshots.sandbox_name),
             lambda: SandboxInstance.delete(TestWorkspaceSnapshots.fork_name),
         ):
@@ -61,18 +62,20 @@ class TestWorkspaceSnapshots:
         assert snapshot.name == TestWorkspaceSnapshots.snapshot_name
         assert snapshot.source.name == TestWorkspaceSnapshots.sandbox_name
         assert snapshot.source.kind == "sandbox"
+        assert snapshot.id
+        TestWorkspaceSnapshots.snapshot_id = snapshot.id
 
         from_sandbox = await sandbox.snapshots.list()
         assert TestWorkspaceSnapshots.snapshot_name in [s.name for s in from_sandbox]
 
         from_workspace = await Snapshot.list(limit=200)
-        names = [s.name async for s in from_workspace.auto_paging_iter()]
-        assert TestWorkspaceSnapshots.snapshot_name in names
+        ids = [s.id async for s in from_workspace.auto_paging_iter()]
+        assert TestWorkspaceSnapshots.snapshot_id in ids
 
         # Only a ready snapshot holds the filesystem it captured, and only a
         # ready one is worth outliving its sandbox.
         for _ in range(300):
-            if (await Snapshot.get(TestWorkspaceSnapshots.snapshot_name)).status == "ready":
+            if (await Snapshot.get(TestWorkspaceSnapshots.snapshot_id)).status == "ready":
                 break
             await asyncio.sleep(0.25)
         else:
@@ -81,7 +84,7 @@ class TestWorkspaceSnapshots:
         await SandboxInstance.delete(TestWorkspaceSnapshots.sandbox_name)
         await wait_for_sandbox_deletion(TestWorkspaceSnapshots.sandbox_name)
 
-        orphan = await Snapshot.get(TestWorkspaceSnapshots.snapshot_name)
+        orphan = await Snapshot.get(TestWorkspaceSnapshots.snapshot_id)
         assert orphan.name == TestWorkspaceSnapshots.snapshot_name
         assert orphan.source.deleted is True
         # What a fork needs to run is on the snapshot itself, not on the source.

@@ -94,13 +94,13 @@ async def test_create_forwards_an_explicit_kind_and_generates_the_name_when_omit
 
 
 @pytest.mark.asyncio
-async def test_get_addresses_a_snapshot_by_name():
+async def test_get_addresses_a_snapshot_by_id():
     with patch("blaxel.core.snapshot.snapshot.get_snapshot", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = snapshot_model()
 
-        snapshot = await Snapshot.get("my-snapshot")
+        snapshot = await Snapshot.get("snap_abc123")
 
-        assert mock_get.call_args.args[0] == "my-snapshot"
+        assert mock_get.call_args.args[0] == "snap_abc123"
         assert snapshot.source.name == "my-sandbox"
 
 
@@ -146,11 +146,12 @@ async def test_delete_works_from_the_class_and_from_an_instance():
         # A successful delete answers 204 No Content, hence None.
         mock_delete.return_value = None
 
-        await Snapshot.delete("my-snapshot")
-        assert mock_delete.call_args.args[0] == "my-snapshot"
+        await Snapshot.delete("snap_abc123")
+        assert mock_delete.call_args.args[0] == "snap_abc123"
 
+        # An instance is addressed by id, never by its per-sandbox name.
         await Snapshot(snapshot_model("other")).delete()
-        assert mock_delete.call_args.args[0] == "other"
+        assert mock_delete.call_args.args[0] == "snap_abc123"
 
 
 @pytest.mark.asyncio
@@ -168,7 +169,7 @@ async def test_fork_forwards_the_target_and_its_options():
             prefix="preview",
         )
 
-        assert mock_fork.call_args.args[0] == "my-snapshot"
+        assert mock_fork.call_args.args[0] == "snap_abc123"
         body = mock_fork.call_args.kwargs["body"]
         assert body.target_name == "my-app"
         assert body.target_type == "application"
@@ -253,13 +254,20 @@ async def test_sandbox_snapshots_delete_and_restore_use_the_sandbox_routes():
 
 
 @pytest.mark.asyncio
-async def test_sandbox_snapshots_get_reads_the_workspace_snapshot():
+async def test_sandbox_snapshots_get_resolves_a_name_or_id_among_the_sandbox_snapshots():
     sandbox = sandbox_instance()
 
-    with patch("blaxel.core.snapshot.snapshot.get_snapshot", new_callable=AsyncMock) as mock_get:
-        mock_get.return_value = snapshot_model()
+    with patch(
+        "blaxel.core.sandbox.default.snapshot.list_sandbox_snapshots", new_callable=AsyncMock
+    ) as mock_list:
+        mock_list.return_value = [snapshot_model()]
 
-        snapshot = await sandbox.snapshots.get("my-snapshot")
+        by_name = await sandbox.snapshots.get("my-snapshot")
+        by_id = await sandbox.snapshots.get("snap_abc123")
 
-        assert mock_get.call_args.args[0] == "my-snapshot"
-        assert isinstance(snapshot, Snapshot)
+        assert mock_list.call_args.args[0] == "my-sandbox"
+        assert isinstance(by_name, Snapshot)
+        assert by_name.id == "snap_abc123"
+        assert by_id.name == "my-snapshot"
+        with pytest.raises(ValueError):
+            await sandbox.snapshots.get("unknown")

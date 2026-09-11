@@ -40,8 +40,15 @@ class SandboxSnapshots:
         return [Snapshot(snapshot) for snapshot in snapshots]
 
     async def get(self, snapshot_name: str) -> Snapshot:
-        """Read one snapshot by name."""
-        return await Snapshot.get(snapshot_name)
+        """Find a snapshot captured from this sandbox by its name, or by its identifier.
+
+        Names are only unique within the sandbox, which is why the
+        workspace-level ``Snapshot.get`` takes the identifier instead.
+        """
+        for snapshot in await self.list():
+            if snapshot.name == snapshot_name or snapshot.id == snapshot_name:
+                return snapshot
+        raise ValueError(f"Snapshot {snapshot_name} not found on sandbox {self._sandbox_name}")
 
     async def delete(self, snapshot_name: str) -> None:
         """Delete a snapshot, removing it for the whole workspace."""
