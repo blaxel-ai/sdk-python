@@ -86,7 +86,7 @@ class TestWorkspaceSnapshots:
 
         orphan = await Snapshot.get(TestWorkspaceSnapshots.snapshot_id)
         assert orphan.name == TestWorkspaceSnapshots.snapshot_name
-        assert orphan.source.deleted is True
+        assert orphan.source.name == TestWorkspaceSnapshots.sandbox_name
         # What a fork needs to run is on the snapshot itself, not on the source.
         assert orphan.spec.image
 
