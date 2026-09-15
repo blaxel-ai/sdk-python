@@ -1,5 +1,7 @@
+import logging
 import os
 import platform
+import re
 from pathlib import Path
 from typing import Dict
 
@@ -9,6 +11,12 @@ from ..authentication import BlaxelAuth, auth
 from .logger import init_logger
 
 BLAXEL_API_VERSION = "2026-04-28"
+
+# An integration built on this SDK identifies itself with one User-Agent product
+# token: "<name>/<semver>", lowercase name, e.g. "deepseek-harness-blaxel-sandbox/0.1.2".
+INTEGRATION_TOKEN_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$")
+
+logger = logging.getLogger(__name__)
 
 
 def _get_int_env(name: str, default: int) -> int:
@@ -56,6 +64,7 @@ class Settings:
         init_logger(self.log_level)
         self.auth = auth(self.env, self.base_url)
         self._headers = None
+        self._integration: str | None = None
 
     @property
     def env(self) -> str:
@@ -118,11 +127,48 @@ class Settings:
         return _get_int_env("BL_SANDBOX_READ_RETRIES", 5)
 
     @property
+    def integration(self) -> str:
+        """Product token identifying the integration built on this SDK, or "".
+
+        Set programmatically (``settings.integration = "my-integration/1.2.0"``) or
+        through ``BL_INTEGRATION``. The token is appended to the User-Agent so Blaxel
+        can attribute traffic to the integration. Format: ``<name>/<semver>`` with a
+        lowercase name. An invalid value is ignored with a warning.
+        """
+        value = (
+            self._integration
+            if self._integration is not None
+            else os.environ.get("BL_INTEGRATION", "")
+        )
+        if not value:
+            return ""
+        if not INTEGRATION_TOKEN_PATTERN.match(value):
+            logger.warning(
+                "Ignoring invalid Blaxel integration token %r: expected <name>/<semver> with a lowercase name",
+                value,
+            )
+            return ""
+        return value
+
+    @integration.setter
+    def integration(self, value: str | None) -> None:
+        self._integration = value
+
+    @property
+    def user_agent(self) -> str:
+        """User-Agent sent on every request: SDK token, then the integration token if set."""
+        os_arch = _get_os_arch()
+        user_agent = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
+        integration = self.integration
+        if integration:
+            user_agent = f"{user_agent} {integration}"
+        return user_agent
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Get the headers for API requests."""
         headers = self.auth.get_headers()
-        os_arch = _get_os_arch()
-        headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
+        headers["User-Agent"] = self.user_agent
         headers["Blaxel-Version"] = self.api_version
         return headers
 
