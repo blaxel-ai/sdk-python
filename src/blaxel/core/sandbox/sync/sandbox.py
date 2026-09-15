@@ -345,8 +345,12 @@ class SyncSandboxInstance:
     ) -> SandboxForkResponse:
         """Fork this sandbox into a new sandbox or application.
 
-        Pass ``snapshot_id`` to fork from a specific snapshot (create a sandbox
-        from a snapshot) instead of the sandbox's live state.
+        Forking into a sandbox copies this sandbox's live state straight into
+        the fork: no snapshot is created, persisted, or listed under this
+        sandbox. Pass ``snapshot_id`` to fork from a snapshot taken earlier
+        instead. Forking into an application still goes through a snapshot,
+        which the application's revision references so that revision can be
+        re-activated later.
 
         Args:
             target_name: Name of the sandbox/application to create.
@@ -355,7 +359,8 @@ class SyncSandboxInstance:
             traffic: Canary traffic percentage (0-100) for an application fork.
             custom_domain: Custom domain for an application fork.
             prefix: URL prefix for an application fork.
-            snapshot_id: Snapshot ID to fork from.
+            snapshot_id: Snapshot ID to fork from, instead of this sandbox's
+                live state.
             envs: Environment variables the fork runs with, on top of the ones
                 the source has: a variable the source already carries takes this
                 value in the fork, one it does not is added, and every other
