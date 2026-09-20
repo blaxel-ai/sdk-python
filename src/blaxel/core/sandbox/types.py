@@ -92,12 +92,13 @@ class VolumeBinding:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "VolumeBinding":
+        # Accept both snake_case and the API/serialized camelCase spellings.
         return cls(
             name=data["name"],
-            mount_path=data["mount_path"],
-            read_only=data.get("read_only", False),
+            mount_path=data.get("mount_path", data.get("mountPath")),
+            read_only=data.get("read_only", data.get("readOnly", False)),
             type=data.get("type"),
-            size_mb=data.get("size_mb"),
+            size_mb=data.get("size_mb", data.get("sizeMb")),
         )
 
 
@@ -313,23 +314,33 @@ class SandboxCreateConfiguration:
                     )
                 )
             elif isinstance(volume, dict):
+                # Accept both snake_case (mount_path) and the API/serialized camelCase
+                # (mountPath) spellings, mirroring VolumeAttachment.from_dict, which
+                # tolerates both. Users routinely pass the shape produced by to_dict() or
+                # the camelCase names used by the API and the other Blaxel SDKs.
+                name = volume.get("name")
+                mount_path = volume.get("mount_path", volume.get("mountPath"))
+                read_only = volume.get("read_only", volume.get("readOnly", False))
+                size_mb = volume.get("size_mb", volume.get("sizeMb"))
+
                 # Validate that the dict has the required keys
-                if "name" not in volume or "mount_path" not in volume:
+                if name is None or mount_path is None:
                     raise ValueError(
-                        f"Volume binding dict must have 'name' and 'mount_path' keys: {volume}"
+                        "Volume binding dict must have 'name' and 'mount_path' "
+                        f"(or 'mountPath') keys: {volume}"
                     )
-                if not isinstance(volume["name"], str) or not isinstance(volume["mount_path"], str):
+                if not isinstance(name, str) or not isinstance(mount_path, str):
                     raise ValueError(
                         f"Volume binding 'name' and 'mount_path' must be strings: {volume}"
                     )
 
                 volume_objects.append(
                     self._build_volume_attachment(
-                        name=volume["name"],
-                        mount_path=volume["mount_path"],
-                        read_only=volume.get("read_only", False),
+                        name=name,
+                        mount_path=mount_path,
+                        read_only=read_only,
                         type_=volume.get("type"),
-                        size_mb=volume.get("size_mb"),
+                        size_mb=size_mb,
                     )
                 )
             else:
