@@ -92,8 +92,21 @@ class ModelList:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> Any:
+    def _paginated_items(self) -> list[Any]:
+        if isinstance(self.data, Unset) or self.data is None:
+            return []
+        return self.data
+
+    def __getitem__(self, key: Any) -> Any:
+        if isinstance(key, int | slice):
+            return self._paginated_items()[key]
         return self.additional_properties[key]
+
+    def __iter__(self):
+        return iter(self._paginated_items())
+
+    def __len__(self) -> int:
+        return len(self._paginated_items())
 
     def __setitem__(self, key: str, value: Any) -> None:
         self.additional_properties[key] = value
