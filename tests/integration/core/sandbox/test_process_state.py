@@ -10,6 +10,7 @@ import os
 import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from types import SimpleNamespace
 from uuid import uuid4
 
 import httpx
@@ -38,16 +39,20 @@ def process(cls, url):
 def interrupted_api():
     target = os.environ["BL_PROCESS_TEST_URL"]
     posts = []
+    expected = SimpleNamespace(name="")
 
     class Proxy(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
 
         def do_POST(self):
+            if self.path != "/process":
+                self.send_error(404)
+                return
             body = self.rfile.read(int(self.headers["Content-Length"]))
             posts.append(json.loads(body))
             response = httpx.post(
-                target + self.path,
+                target + "/process",
                 content=body,
                 headers={"Content-Type": "application/json"},
                 timeout=10,
@@ -57,7 +62,14 @@ def interrupted_api():
             self.connection.close()
 
         def do_GET(self):
-            response = httpx.get(target + self.path, timeout=10)
+            # Forward only URLs configured by the test, never a client-supplied path.
+            upstream = target + "/process/" + expected.name
+            if self.path == f"/process/{expected.name}/logs":
+                upstream += "/logs"
+            elif self.path != f"/process/{expected.name}":
+                self.send_error(404)
+                return
+            response = httpx.get(upstream, timeout=10)
             self.send_response(response.status_code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(response.content)))
@@ -67,7 +79,7 @@ def interrupted_api():
     server = ThreadingHTTPServer(("127.0.0.1", 0), Proxy)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    yield f"http://127.0.0.1:{server.server_port}", posts
+    yield f"http://127.0.0.1:{server.server_port}", posts, expected
     server.shutdown()
     server.server_close()
     thread.join()
@@ -75,10 +87,11 @@ def interrupted_api():
 
 @pytest.mark.asyncio
 async def test_real_api_recovery_after_response_loss(interrupted_api):
-    url, posts = interrupted_api
+    url, posts, expected = interrupted_api
     for cls in (SandboxProcess, SyncSandboxProcess):
         p = process(cls, url)
         name = f"py-recover-{uuid4().hex[:12]}"
+        expected.name = name
         request = {
             "name": name,
             "command": "sh -c 'echo recovered; exit 7'",
@@ -167,3 +180,11 @@ async def test_real_api_callback_model_preserves_callbacks():
         assert any("model-callback" in line for line in logs)
         if cls is SandboxProcess and p._client is not None:
             await p.get_client().aclose()
+
+
+def test_recovery_proxy_rejects_unexpected_routes(interrupted_api):
+    url, posts, expected = interrupted_api
+    expected.name = "only-this-process"
+    assert httpx.get(url + "/unexpected-target").status_code == 404
+    assert httpx.post(url + "/unexpected-target", json={}).status_code == 404
+    assert posts == []

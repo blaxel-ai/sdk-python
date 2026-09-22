@@ -534,7 +534,7 @@ For more information, refer to [our documentation](https://docs.blaxel.ai/Securi
 ### Recovering a process after a connection error
 
 Every process execution gets a name before it is sent, including when you omit
-`name`. A failed execution response raises `ProcessExecutionError` with an
+`name`. A transport failure or missing streaming result raises `ProcessExecutionError` with an
 `identifier` you can use to observe the original command. Do not call `exec`
 again to reconnect: process names are not idempotency keys for finished commands.
 
@@ -572,7 +572,9 @@ stopped = await sandbox.process.kill_and_wait(identifier, max_wait=10_000)
 504 responses until its deadline. It returns only `completed`, `failed`, `killed`,
 or `stopped`. A nonzero exit code is a command outcome, not a status lookup error.
 `ProcessObservationError.last_observation` may be absent if no status was received.
-The original exception is available through `__cause__`.
+The original exception is available through `__cause__`. Definitive HTTP rejections,
+validation errors, and callback errors retain their original exception type, with
+`identifier` attached when available.
 
 Cancelling an async execution or wait preserves `asyncio.CancelledError` and
 attaches `identifier`; cancelling a wait also attaches `last_observation`.

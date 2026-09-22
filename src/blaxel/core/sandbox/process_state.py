@@ -1,9 +1,13 @@
 """Shared process observation policy for synchronous and asynchronous clients."""
 
+import asyncio
 import math
 import random
 import time
+from typing import Any
 from uuid import uuid4
+
+import httpx
 
 from .client.models import ProcessResponse
 from .client.types import Unset
@@ -37,11 +41,11 @@ class ProcessExecutionError(Exception):
 
 
 def process_name(name: str | Unset | None) -> str:
-    return name or f"process-{uuid4().hex}"
+    return name or f"proc-{uuid4().hex}"
 
 
 def retryable_observation(error: Exception) -> bool:
-    if isinstance(error, TimeoutError):
+    if isinstance(error, TimeoutError | asyncio.TimeoutError):
         return True
     response = getattr(error, "response", None)
     return getattr(response, "status_code", None) in {
@@ -104,3 +108,33 @@ class ProcessWaitState:
         if self.failures:
             backoff *= random.uniform(0.8, 1.2)
         return min(backoff, self.remaining())
+
+
+class AsyncProcessReadClient:
+    """Apply a request timeout without mutating the shared HTTP client's defaults.
+
+    Generated endpoints only need request(). This adapter preserves connection
+    reuse and prevents concurrent waits from changing each other's deadlines.
+    """
+
+    def __init__(self, client: httpx.AsyncClient, timeout: float | None):
+        self.client = client
+        self.timeout = timeout
+
+    async def request(self, **kwargs: Any) -> httpx.Response:
+        if self.timeout is not None:
+            kwargs["timeout"] = self.timeout
+        return await self.client.request(**kwargs)
+
+
+class SyncProcessReadClient:
+    """Apply a per-request timeout to a generated synchronous endpoint."""
+
+    def __init__(self, client: httpx.Client, timeout: float | None):
+        self.client = client
+        self.timeout = timeout
+
+    def request(self, **kwargs: Any) -> httpx.Response:
+        if self.timeout is not None:
+            kwargs["timeout"] = self.timeout
+        return self.client.request(**kwargs)

@@ -272,7 +272,7 @@ async def test_cancelled_exec_preserves_identity():
     p._exec = AsyncMock(side_effect=asyncio.CancelledError())
     with pytest.raises(asyncio.CancelledError) as caught:
         await p.exec({"command": "sleep 10"})
-    assert caught.value.identifier.startswith("process-")
+    assert caught.value.identifier.startswith("proc-")
 
 
 @pytest.mark.asyncio
@@ -340,11 +340,12 @@ async def test_signal_and_wait_share_one_deadline(server):
     assert len(server.deletes) == 2
 
 
+@pytest.mark.parametrize("timeout_class", [TimeoutError, asyncio.TimeoutError])
 @pytest.mark.asyncio
-async def test_early_timeout_can_recover_before_deadline():
+async def test_early_timeout_can_recover_before_deadline(timeout_class):
     for cls in (SandboxProcess, SyncSandboxProcess):
         p = object.__new__(cls)
-        sequence = [TimeoutError("early socket timeout"), SimpleNamespace(status="completed")]
+        sequence = [timeout_class("early socket timeout"), SimpleNamespace(status="completed")]
         p._get_once = (
             AsyncMock(side_effect=sequence) if cls is SandboxProcess else Mock(side_effect=sequence)
         )
@@ -366,3 +367,48 @@ def test_sync_log_stream_reports_background_failure(server):
             handle.wait(timeout=2)
     finally:
         handle.close()
+
+
+@pytest.mark.parametrize("callback_model", [False, True])
+@pytest.mark.asyncio
+async def test_execution_preserves_serialized_extension_fields(callback_model):
+    from blaxel.core.sandbox.client.models import ProcessRequest
+    from blaxel.core.sandbox.types import ProcessRequestWithLog
+
+    for cls in (SandboxProcess, SyncSandboxProcess):
+        model = ProcessRequestWithLog if callback_model else ProcessRequest
+        request = model(command="echo hello")
+        request.additional_properties["futureOption"] = True
+        p = object.__new__(cls)
+        p._exec = AsyncMock() if cls is SandboxProcess else Mock()
+        if cls is SandboxProcess:
+            await p.exec(request)
+        else:
+            p.exec(request)
+        sent = p._exec.call_args.args[0]
+        assert sent.to_dict()["futureOption"] is True
+        assert sent.name.startswith("proc-")
+        assert sent.additional_properties is not request.additional_properties
+
+
+@pytest.mark.asyncio
+async def test_execution_preserves_definitive_error_categories():
+    from blaxel.core.sandbox.types import ResponseError
+
+    for cls in (SandboxProcess, SyncSandboxProcess):
+        for error in (
+            ValueError("callback failed"),
+            KeyError("invalid request"),
+            ResponseError(httpx.Response(400, json={"error": "invalid command"})),
+        ):
+            p = object.__new__(cls)
+            p._exec = (
+                AsyncMock(side_effect=error) if cls is SandboxProcess else Mock(side_effect=error)
+            )
+            with pytest.raises(type(error)) as caught:
+                if cls is SandboxProcess:
+                    await p.exec({"command": "echo hello"})
+                else:
+                    p.exec({"command": "echo hello"})
+            assert caught.value is error
+            assert caught.value.identifier.startswith("proc-")

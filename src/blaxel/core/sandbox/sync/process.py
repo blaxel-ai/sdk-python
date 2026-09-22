@@ -1,6 +1,6 @@
 import threading
 import time
-from typing import Any, Callable, Dict, Literal, Union
+from typing import Any, Callable, Dict, Literal, Union, cast
 
 import httpx
 from attrs import evolve
@@ -9,6 +9,7 @@ from ...common.settings import settings
 from ..client.api.process.delete_process_identifier_stdin import (
     sync_detailed as delete_process_stdin,
 )
+from ..client.api.process.get_process_identifier import sync_detailed as get_process
 from ..client.api.process.post_process_identifier_stdin import (
     sync_detailed as post_process_stdin,
 )
@@ -18,6 +19,7 @@ from ..process_state import (
     ProcessExecutionError,
     ProcessObservationError,
     ProcessWaitState,
+    SyncProcessReadClient,
     process_name,
     retryable_observation,
 )
@@ -197,11 +199,16 @@ class SyncSandboxProcess(SyncSandboxAction):
             process["name"] = identifier
         else:
             identifier = process_name(process.name)
-            process = evolve(process, name=identifier)
+            named_process = evolve(process, name=identifier)
+            named_process.additional_properties = process.additional_properties.copy()
+            process = named_process
         try:
             return self._exec(process)
         except Exception as error:
-            raise ProcessExecutionError(identifier) from error
+            setattr(error, "identifier", identifier)
+            if isinstance(error, httpx.TransportError):
+                raise ProcessExecutionError(identifier) from error
+            raise
 
     def _exec(
         self,
@@ -290,8 +297,8 @@ class SyncSandboxProcess(SyncSandboxAction):
                 timeout=None,
             ) as response:
                 if response.status_code >= 400:
-                    error_text = response.read()
-                    raise Exception(f"Failed to execute process: {error_text}")
+                    response.read()
+                    self.handle_response_error(response)
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type
@@ -369,7 +376,7 @@ class SyncSandboxProcess(SyncSandboxAction):
                             raise Exception(f"Failed to parse result JSON: {json_str}")
 
                 if not result:
-                    raise Exception("No result received from streaming response")
+                    raise ProcessExecutionError(str(process_request.name))
 
                 return ProcessResponseWithLog(result, lambda: None)
 
@@ -395,14 +402,11 @@ class SyncSandboxProcess(SyncSandboxAction):
             time.sleep(state.delay())
 
     def _get_once(self, identifier: str, timeout: float | None = None) -> ProcessResponse:
-        with self.get_client() as client:
-            kwargs: Dict[str, Any] = {"timeout": timeout} if timeout is not None else {}
-            response = client.get(f"/process/{identifier}", **kwargs)
-            self.handle_response_error(response)
-            result = ProcessResponse.from_dict(response.json())
-            if result is None:
-                raise ValueError("Empty process response")
-            return result
+        with self.get_client() as transport:
+            client = self.get_api_client().set_httpx_client(
+                cast(httpx.Client, SyncProcessReadClient(transport, timeout))
+            )
+            return api_result(get_process(identifier, client=client), ProcessResponse)
 
     def get(self, identifier: str) -> ProcessResponse:
         return retry_on_transient_reset(lambda: self._get_once(identifier))
