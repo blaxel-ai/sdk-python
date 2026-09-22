@@ -531,6 +531,63 @@ For more information, refer to [our documentation](https://docs.blaxel.ai/Securi
 
 - Python 3.9 or later
 
+### Recovering a process after a connection error
+
+Every process execution gets a name before it is sent, including when you omit
+`name`. A failed execution response raises `ProcessExecutionError` with an
+`identifier` you can use to observe the original command. Do not call `exec`
+again to reconnect: process names are not idempotency keys for finished commands.
+
+```python
+from blaxel.core.sandbox import (
+    ProcessExecutionError,
+    ProcessObservationError,
+    ProcessWaitTimeout,
+)
+
+try:
+    process = await sandbox.process.exec({
+        "command": "python worker.py",
+        "wait_for_completion": False,
+    })
+    identifier = process.name
+except ProcessExecutionError as error:
+    identifier = error.identifier
+
+try:
+    result = await sandbox.process.wait(identifier, max_wait=60_000)
+    print(result.status, result.exit_code, result.logs)
+except ProcessWaitTimeout as error:
+    # Only the observation timed out. The command may still be running.
+    print(error.identifier, error.last_observation)
+except ProcessObservationError as error:
+    # Authentication, missing process, or another status retrieval problem.
+    print(error.identifier, error.last_observation)
+
+# Explicitly request termination, then observe the API's terminal status.
+stopped = await sandbox.process.kill_and_wait(identifier, max_wait=10_000)
+```
+
+`wait` retries transient connection errors and HTTP 408, 429, 500, 502, 503, and
+504 responses until its deadline. It returns only `completed`, `failed`, `killed`,
+or `stopped`. A nonzero exit code is a command outcome, not a status lookup error.
+`ProcessObservationError.last_observation` may be absent if no status was received.
+The original exception is available through `__cause__`.
+
+Cancelling an async execution or wait preserves `asyncio.CancelledError` and
+attaches `identifier`; cancelling a wait also attaches `last_observation`.
+Cancellation never automatically kills the remote command. Use `kill_and_wait`
+or `stop_and_wait` to request termination explicitly. These helpers confirm the
+API's reported terminal status, not that the operating system has reaped every
+child process. The synchronous SDK has the same methods without `await`.
+
+Deadlines include status polling and retries. Async waits enforce the deadline
+across the whole request. Sync waits apply the remaining time to HTTP transport
+timeouts and reject late responses; a peer continuously sending response bytes
+can exceed that wall-clock deadline because synchronous HTTP timeouts are per
+network operation.
+
+
 ## Contributing
 
 Contributions are welcome! Please feel free to [submit a pull request](https://github.com/blaxel-ai/sdk-python/pulls).

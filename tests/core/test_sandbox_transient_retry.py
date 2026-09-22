@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from blaxel.core.common.settings import settings
+from blaxel.core.sandbox import ProcessExecutionError
 from blaxel.core.sandbox.default.filesystem import SandboxFileSystem
 from blaxel.core.sandbox.default.process import SandboxProcess
 from blaxel.core.sandbox.sync.filesystem import SyncSandboxFileSystem
@@ -271,6 +272,7 @@ async def test_process_exec_is_not_retried_on_transport_reset():
     process = cast(Any, object.__new__(SandboxProcess))
     process.get_client = lambda: client
 
-    with pytest.raises(httpx.ConnectError):
+    with pytest.raises(ProcessExecutionError) as caught:
         await process.exec({"command": "echo nope"})
+    assert isinstance(caught.value.__cause__, httpx.ConnectError)
     assert client.calls == 1

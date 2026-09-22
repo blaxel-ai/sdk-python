@@ -3,6 +3,7 @@ import time
 from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
+from attrs import evolve
 
 from ...common.settings import settings
 from ..client.api.process.delete_process_identifier_stdin import (
@@ -13,6 +14,13 @@ from ..client.api.process.post_process_identifier_stdin import (
 )
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
+from ..process_state import (
+    ProcessExecutionError,
+    ProcessObservationError,
+    ProcessWaitState,
+    process_name,
+    retryable_observation,
+)
 from ..transient_retry import retry_on_transient_reset
 from ..types import (
     ProcessRequestWithLog,
@@ -126,6 +134,7 @@ class SyncSandboxProcess(SyncSandboxAction):
         if options is None:
             options = {}
         closed = threading.Event()
+        errors: list[Exception] = []
 
         def run():
             url = f"{self.url}/process/{identifier}/logs/stream"
@@ -134,7 +143,7 @@ class SyncSandboxProcess(SyncSandboxAction):
                 with httpx.Client() as client_instance:
                     with client_instance.stream("GET", url, headers=headers) as response:
                         if response.status_code != 200:
-                            raise Exception(f"Failed to stream logs: {response.text}")
+                            raise Exception(f"Failed to stream logs: {response.read().decode()}")
                         buffer = ""
                         for chunk in response.iter_text():
                             if closed.is_set():
@@ -163,7 +172,7 @@ class SyncSandboxProcess(SyncSandboxAction):
             except Exception as e:
                 # Ignore on close
                 if not closed.is_set():
-                    raise e
+                    errors.append(e)
 
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
@@ -173,10 +182,28 @@ class SyncSandboxProcess(SyncSandboxAction):
 
         def wait_func(timeout=None):
             thread.join(timeout=timeout)
+            if errors:
+                raise errors[0]
 
         return StreamHandle(close, wait_func)
 
     def exec(
+        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
+    ) -> Union[ProcessResponse, ProcessResponseWithLog]:
+        """Start once with a recoverable name. Cancelling observation does not stop the command."""
+        if isinstance(process, dict):
+            process = dict(process)
+            identifier = process_name(process.get("name"))
+            process["name"] = identifier
+        else:
+            identifier = process_name(process.name)
+            process = evolve(process, name=identifier)
+        try:
+            return self._exec(process)
+        except Exception as error:
+            raise ProcessExecutionError(identifier) from error
+
+    def _exec(
         self,
         process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]],
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
@@ -346,31 +373,67 @@ class SyncSandboxProcess(SyncSandboxAction):
 
                 return ProcessResponseWithLog(result, lambda: None)
 
-    def wait(self, identifier: str, max_wait: int = 60000, interval: int = 1000) -> ProcessResponse:
-        start_time = time.monotonic() * 1000
-        status = "running"
-        data = self.get(identifier)
-        while status == "running":
-            time.sleep(interval / 1000)
+    def wait(
+        self, identifier: str, max_wait: float = 60000, interval: float = 1000
+    ) -> ProcessResponse:
+        """Observe a terminal status. A timeout never stops the command."""
+        return self._wait(ProcessWaitState(identifier, max_wait, interval))
+
+    def _wait(self, state: ProcessWaitState) -> ProcessResponse:
+        identifier = state.identifier
+        while True:
+            remaining = state.remaining()
             try:
-                data = self.get(identifier)
-                status = data.status or "running"
-            except Exception:
-                break
-            if (time.monotonic() * 1000) - start_time > max_wait:
-                raise Exception("Process did not finish in time")
-        return data
+                data = self._get_once(identifier, remaining)
+            except Exception as error:
+                state.failed(error)
+            else:
+                state.last_observation = data
+                state.remaining()
+                if state.observe(data):
+                    return data
+            time.sleep(state.delay())
+
+    def _get_once(self, identifier: str, timeout: float | None = None) -> ProcessResponse:
+        with self.get_client() as client:
+            kwargs: Dict[str, Any] = {"timeout": timeout} if timeout is not None else {}
+            response = client.get(f"/process/{identifier}", **kwargs)
+            self.handle_response_error(response)
+            result = ProcessResponse.from_dict(response.json())
+            if result is None:
+                raise ValueError("Empty process response")
+            return result
 
     def get(self, identifier: str) -> ProcessResponse:
-        def get_once() -> ProcessResponse:
-            with self.get_client() as client_instance:
-                response = client_instance.get(f"/process/{identifier}")
-                self.handle_response_error(response)
-                result = ProcessResponse.from_dict(response.json())
-                assert result is not None
-                return result
+        return retry_on_transient_reset(lambda: self._get_once(identifier))
 
-        return retry_on_transient_reset(get_once)
+    def kill_and_wait(
+        self, identifier: str, max_wait: float = 60000, interval: float = 1000
+    ) -> ProcessResponse:
+        """Request kill and observe API terminal state, not proof of OS process reaping."""
+        return self._signal_and_wait(identifier, self.kill, max_wait, interval)
+
+    def stop_and_wait(
+        self, identifier: str, max_wait: float = 60000, interval: float = 1000
+    ) -> ProcessResponse:
+        """Request stop and observe API terminal state, not proof of OS process reaping."""
+        return self._signal_and_wait(identifier, self.stop, max_wait, interval)
+
+    def _signal_and_wait(
+        self, identifier: str, signal: Callable, max_wait: float, interval: float
+    ) -> ProcessResponse:
+        state = ProcessWaitState(identifier, max_wait, interval)
+        remaining = state.remaining()
+        try:
+            signal(identifier, _timeout=remaining)
+        except Exception as error:
+            # A dropped DELETE response may hide an accepted signal. Never resend it.
+            if not retryable_observation(error):
+                raise ProcessObservationError(
+                    identifier, None, "could not confirm stop request"
+                ) from error
+            state.last_error = error
+        return self._wait(state)
 
     def list(self) -> list[ProcessResponse]:
         def list_once() -> list[ProcessResponse]:
@@ -386,15 +449,20 @@ class SyncSandboxProcess(SyncSandboxAction):
 
         return retry_on_transient_reset(list_once)
 
-    def stop(self, identifier: str) -> SuccessResponse:
+    def stop(self, identifier: str, *, _timeout: float | None = None) -> SuccessResponse:
         with self.get_client() as client_instance:
-            response = client_instance.delete(f"/process/{identifier}")
+            response = client_instance.delete(
+                f"/process/{identifier}", **({"timeout": _timeout} if _timeout is not None else {})
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
-    def kill(self, identifier: str) -> SuccessResponse:
+    def kill(self, identifier: str, *, _timeout: float | None = None) -> SuccessResponse:
         with self.get_client() as client_instance:
-            response = client_instance.delete(f"/process/{identifier}/kill")
+            response = client_instance.delete(
+                f"/process/{identifier}/kill",
+                **({"timeout": _timeout} if _timeout is not None else {}),
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
