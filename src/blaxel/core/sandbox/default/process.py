@@ -1,8 +1,8 @@
 import asyncio
-from typing import Any, Callable, Dict, Literal, Union, cast
+import math
+from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
-from attrs import evolve
 
 from ...common.settings import settings
 from ..client.api.process.delete_process_identifier_stdin import (
@@ -14,15 +14,7 @@ from ..client.api.process.post_process_identifier_stdin import (
 )
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..process_state import (
-    AsyncProcessReadClient,
-    ProcessExecutionError,
-    ProcessObservationError,
-    ProcessWaitState,
-    process_name,
-    retryable_observation,
-)
-from ..transient_retry import retry_on_transient_reset_async
+from ..transient_retry import is_retryable_read_error, retry_on_transient_reset_async
 from ..types import (
     AsyncStreamHandle,
     ProcessRequestWithLog,
@@ -230,30 +222,6 @@ class SandboxProcess(SandboxAction):
         return AsyncStreamHandle(close, wait_func)
 
     async def exec(
-        self, process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]]
-    ) -> Union[ProcessResponse, ProcessResponseWithLog]:
-        """Start once with a recoverable name. Cancelling observation does not stop the command."""
-        if isinstance(process, dict):
-            process = dict(process)
-            identifier = process_name(process.get("name"))
-            process["name"] = identifier
-        else:
-            identifier = process_name(process.name)
-            named_process = evolve(process, name=identifier)
-            named_process.additional_properties = process.additional_properties.copy()
-            process = named_process
-        try:
-            return await self._exec(process)
-        except asyncio.CancelledError as error:
-            setattr(error, "identifier", identifier)
-            raise
-        except Exception as error:
-            setattr(error, "identifier", identifier)
-            if isinstance(error, httpx.TransportError):
-                raise ProcessExecutionError(identifier) from error
-            raise
-
-    async def _exec(
         self,
         process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]],
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
@@ -269,6 +237,7 @@ class SandboxProcess(SandboxAction):
             process = process.to_dict()
 
         if isinstance(process, dict):
+            process = dict(process)
             if "on_log" in process:
                 on_log = process["on_log"]
                 del process["on_log"]
@@ -352,8 +321,8 @@ class SandboxProcess(SandboxAction):
                 timeout=None,
             ) as response:
                 if response.status_code >= 400:
-                    await response.aread()
-                    self.handle_response_error(response)
+                    error_text = await response.aread()
+                    raise Exception(f"Failed to execute process: {error_text}")
 
                 content_type = response.headers.get("Content-Type", "")
                 is_streaming = "application/x-ndjson" in content_type
@@ -432,72 +401,68 @@ class SandboxProcess(SandboxAction):
                             raise Exception(f"Failed to parse result JSON: {json_str}")
 
                 if not result:
-                    raise ProcessExecutionError(str(process_request.name))
+                    raise Exception("No result received from streaming response")
 
                 return ProcessResponseWithLog(result, lambda: None)
 
     async def wait(
-        self, identifier: str, max_wait: float = 60000, interval: float = 1000
+        self, identifier: str, max_wait: int = 60000, interval: int = 1000
     ) -> ProcessResponse:
-        """Observe a terminal status. Timeout/cancellation never stops the command."""
-        return await self._wait(ProcessWaitState(identifier, max_wait, interval))
-
-    async def _wait(self, state: ProcessWaitState) -> ProcessResponse:
-        identifier = state.identifier
-        try:
-            while True:
-                remaining = state.remaining()
+        """Wait for a terminal API state. Timeout/cancellation never stops the command."""
+        if (
+            not math.isfinite(max_wait)
+            or max_wait < 0
+            or not math.isfinite(interval)
+            or interval <= 0
+        ):
+            raise ValueError(
+                "max_wait must be finite and non-negative; interval must be finite and positive"
+            )
+        deadline = asyncio.get_running_loop().time() + max_wait / 1000
+        last_error = None
+        while True:
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                raise TimeoutError(
+                    f"Process did not finish in time ({identifier}); it may still be running"
+                ) from last_error
+            try:
+                # wait_for on Python 3.10 can swallow cancellation when a read
+                # completes at the same instant. wait keeps caller cancellation intact.
+                read = asyncio.create_task(self.get(identifier, retry=False))
                 try:
-                    data = await asyncio.wait_for(self._get_once(identifier, remaining), remaining)
-                except Exception as error:
-                    state.failed(error)
-                else:
-                    state.last_observation = data
-                    state.remaining()
-                    if state.observe(data):
-                        return data
-                await asyncio.sleep(state.delay())
-        except asyncio.CancelledError as error:
-            setattr(error, "identifier", identifier)
-            setattr(error, "last_observation", state.last_observation)
-            raise
+                    done, _ = await asyncio.wait({read}, timeout=remaining)
+                    if not done:
+                        raise asyncio.TimeoutError()
+                    result = read.result()
+                finally:
+                    read.cancel()
+                    await asyncio.gather(read, return_exceptions=True)
+            except Exception as error:
+                if not is_retryable_read_error(error):
+                    raise
+                last_error = error
+            else:
+                if asyncio.get_running_loop().time() >= deadline:
+                    raise TimeoutError(
+                        f"Process did not finish in time ({identifier}); it may still be running"
+                    ) from last_error
+                if result.status in {"completed", "failed", "killed", "stopped"}:
+                    return result
+                if result.status != "running":
+                    raise ValueError(f"Unknown process status: {result.status}")
+                last_error = None
+            await asyncio.sleep(
+                max(0, min(interval / 1000, deadline - asyncio.get_running_loop().time()))
+            )
 
-    async def _get_once(self, identifier: str, timeout: float | None = None) -> ProcessResponse:
-        client = self.get_api_client().set_async_httpx_client(
-            cast(httpx.AsyncClient, AsyncProcessReadClient(self.get_client(), timeout))
-        )
-        return api_result(await get_process(identifier, client=client), ProcessResponse)
+    async def get(self, identifier: str, *, retry: bool = True) -> ProcessResponse:
+        async def read() -> ProcessResponse:
+            client = self.get_api_client().set_async_httpx_client(self.get_client())
+            return api_result(await get_process(identifier, client=client), ProcessResponse)
 
-    async def get(self, identifier: str) -> ProcessResponse:
-        return await retry_on_transient_reset_async(lambda: self._get_once(identifier))
-
-    async def kill_and_wait(
-        self, identifier: str, max_wait: float = 60000, interval: float = 1000
-    ) -> ProcessResponse:
-        """Request kill and observe API terminal state, not proof of OS process reaping."""
-        return await self._signal_and_wait(identifier, self.kill, max_wait, interval)
-
-    async def stop_and_wait(
-        self, identifier: str, max_wait: float = 60000, interval: float = 1000
-    ) -> ProcessResponse:
-        """Request stop and observe API terminal state, not proof of OS process reaping."""
-        return await self._signal_and_wait(identifier, self.stop, max_wait, interval)
-
-    async def _signal_and_wait(
-        self, identifier: str, signal: Callable, max_wait: float, interval: float
-    ) -> ProcessResponse:
-        state = ProcessWaitState(identifier, max_wait, interval)
-        remaining = state.remaining()
-        try:
-            await asyncio.wait_for(signal(identifier, _timeout=remaining), remaining)
-        except Exception as error:
-            # A dropped DELETE response may hide an accepted signal. Never resend it.
-            if not retryable_observation(error):
-                raise ProcessObservationError(
-                    identifier, None, "could not confirm stop request"
-                ) from error
-            state.last_error = error
-        return await self._wait(state)
+        # wait owns its deadline and retry cadence; standalone GET keeps its retries.
+        return await retry_on_transient_reset_async(read) if retry else await read()
 
     async def list(self) -> list[ProcessResponse]:
         import json
@@ -519,32 +484,28 @@ class SandboxProcess(SandboxAction):
 
         return await retry_on_transient_reset_async(list_once)
 
-    async def stop(self, identifier: str, *, _timeout: float | None = None) -> SuccessResponse:
+    async def stop(self, identifier: str) -> SuccessResponse:
         import json
 
         client = self.get_client()
-        response = await client.delete(
-            f"/process/{identifier}", **({"timeout": _timeout} if _timeout is not None else {})
-        )
+        response = await client.delete(f"/process/{identifier}")
         try:
-            self.handle_response_error(response)
             data = json.loads(await response.aread())
+            self.handle_response_error(response)
             result = SuccessResponse.from_dict(data)
             assert result is not None
             return result
         finally:
             await response.aclose()
 
-    async def kill(self, identifier: str, *, _timeout: float | None = None) -> SuccessResponse:
+    async def kill(self, identifier: str) -> SuccessResponse:
         import json
 
         client = self.get_client()
-        response = await client.delete(
-            f"/process/{identifier}/kill", **({"timeout": _timeout} if _timeout is not None else {})
-        )
+        response = await client.delete(f"/process/{identifier}/kill")
         try:
-            self.handle_response_error(response)
             data = json.loads(await response.aread())
+            self.handle_response_error(response)
             result = SuccessResponse.from_dict(data)
             assert result is not None
             return result

@@ -21,7 +21,6 @@ from .default import (
     SandboxSnapshots,
     SandboxSystem,
 )
-from .process_state import ProcessExecutionError, ProcessObservationError, ProcessWaitTimeout
 from .sync import (
     SyncCodeInterpreter,
     SyncSandboxCodegen,
@@ -53,9 +52,6 @@ from .types import (
 )
 
 __all__ = [
-    "ProcessExecutionError",
-    "ProcessObservationError",
-    "ProcessWaitTimeout",
     "SandboxInstance",
     "SandboxAPIError",
     "SessionCreateOptions",
