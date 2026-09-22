@@ -450,11 +450,13 @@ class TestPreviewRaceConditions(TestPreviewOperations):
             )
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response2 = await client.get(preview2.spec.url)
-            if response2.status_code != 200:
-                print(
-                    f"Preview URL check failed for {preview_name}: {preview2.spec.url} - Status: {response2.status_code}"
-                )
-            assert response2.status_code == 200
+            assert response2.status_code == 200, (
+                f"Recreated preview {preview_name} at {preview2.spec.url}: "
+                f"HTTP {response2.status_code}; "
+                f"platform_code={response2.headers.get('x-blaxel-error-code')}; "
+                f"dispatch_state={response2.headers.get('x-blaxel-dispatch-state')}; "
+                f"body={response2.text[:2000]!r}"
+            )
 
             # Cleanup
             await self.sandbox.previews.delete(preview_name)

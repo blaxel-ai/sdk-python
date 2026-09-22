@@ -1,3 +1,4 @@
+import math
 import threading
 import time
 from typing import Any, Callable, Dict, Literal, Union
@@ -8,12 +9,13 @@ from ...common.settings import settings
 from ..client.api.process.delete_process_identifier_stdin import (
     sync_detailed as delete_process_stdin,
 )
+from ..client.api.process.get_process_identifier import sync_detailed as get_process
 from ..client.api.process.post_process_identifier_stdin import (
     sync_detailed as post_process_stdin,
 )
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..transient_retry import retry_on_transient_reset
+from ..transient_retry import is_retryable_read_error, retry_on_transient_reset
 from ..types import (
     ProcessRequestWithLog,
     ProcessResponseWithLog,
@@ -126,6 +128,7 @@ class SyncSandboxProcess(SyncSandboxAction):
         if options is None:
             options = {}
         closed = threading.Event()
+        errors: list[Exception] = []
 
         def run():
             url = f"{self.url}/process/{identifier}/logs/stream"
@@ -134,7 +137,7 @@ class SyncSandboxProcess(SyncSandboxAction):
                 with httpx.Client() as client_instance:
                     with client_instance.stream("GET", url, headers=headers) as response:
                         if response.status_code != 200:
-                            raise Exception(f"Failed to stream logs: {response.text}")
+                            raise Exception(f"Failed to stream logs: {response.read().decode()}")
                         buffer = ""
                         for chunk in response.iter_text():
                             if closed.is_set():
@@ -163,7 +166,7 @@ class SyncSandboxProcess(SyncSandboxAction):
             except Exception as e:
                 # Ignore on close
                 if not closed.is_set():
-                    raise e
+                    errors.append(e)
 
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
@@ -173,6 +176,8 @@ class SyncSandboxProcess(SyncSandboxAction):
 
         def wait_func(timeout=None):
             thread.join(timeout=timeout)
+            if errors:
+                raise errors[0]
 
         return StreamHandle(close, wait_func)
 
@@ -191,6 +196,7 @@ class SyncSandboxProcess(SyncSandboxAction):
             process = process.to_dict()
 
         if isinstance(process, dict):
+            process = dict(process)
             if "on_log" in process:
                 on_log = process["on_log"]
                 del process["on_log"]
@@ -347,30 +353,56 @@ class SyncSandboxProcess(SyncSandboxAction):
                 return ProcessResponseWithLog(result, lambda: None)
 
     def wait(self, identifier: str, max_wait: int = 60000, interval: int = 1000) -> ProcessResponse:
-        start_time = time.monotonic() * 1000
-        status = "running"
-        data = self.get(identifier)
-        while status == "running":
-            time.sleep(interval / 1000)
+        """Wait for a terminal API state; max_wait=-1 waits indefinitely. Never stops the command."""
+        if (
+            not math.isfinite(max_wait)
+            or (max_wait < 0 and max_wait != -1)
+            or not math.isfinite(interval)
+            or interval <= 0
+        ):
+            raise ValueError(
+                "max_wait must be -1 or finite and non-negative; interval must be finite and positive"
+            )
+        deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
+        last_error = None
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError(
+                    f"Process did not finish in time ({identifier}); it may still be running"
+                ) from last_error
             try:
-                data = self.get(identifier)
-                status = data.status or "running"
-            except Exception:
-                break
-            if (time.monotonic() * 1000) - start_time > max_wait:
-                raise Exception("Process did not finish in time")
-        return data
+                result = self.get(
+                    identifier, retry=False, timeout=None if max_wait == -1 else remaining
+                )
+            except Exception as error:
+                if not is_retryable_read_error(error):
+                    raise
+                last_error = error
+            else:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        f"Process did not finish in time ({identifier}); it may still be running"
+                    ) from last_error
+                if result.status in {"completed", "failed", "killed", "stopped"}:
+                    return result
+                if result.status != "running":
+                    raise ValueError(f"Unknown process status: {result.status}")
+                last_error = None
+            time.sleep(max(0, min(interval / 1000, deadline - time.monotonic())))
 
-    def get(self, identifier: str) -> ProcessResponse:
-        def get_once() -> ProcessResponse:
-            with self.get_client() as client_instance:
-                response = client_instance.get(f"/process/{identifier}")
-                self.handle_response_error(response)
-                result = ProcessResponse.from_dict(response.json())
-                assert result is not None
-                return result
+    def get(
+        self, identifier: str, *, retry: bool = True, timeout: float | None = None
+    ) -> ProcessResponse:
+        def read() -> ProcessResponse:
+            with self.get_client() as transport:
+                if timeout is not None:
+                    transport.timeout = httpx.Timeout(timeout)
+                client = self.get_api_client().set_httpx_client(transport)
+                return api_result(get_process(identifier, client=client), ProcessResponse)
 
-        return retry_on_transient_reset(get_once)
+        # wait owns its deadline and retry cadence; standalone GET keeps its retries.
+        return retry_on_transient_reset(read) if retry else read()
 
     def list(self) -> list[ProcessResponse]:
         def list_once() -> list[ProcessResponse]:
