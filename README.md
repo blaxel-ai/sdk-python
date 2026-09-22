@@ -541,7 +541,8 @@ result = await sandbox.process.wait("my-command", max_wait=60_000)
 ```
 
 `wait` retries temporary network/HTTP errors and returns only a terminal process
-state. Authentication and missing-process errors propagate. Timeout or async
+state. Set `max_wait=-1` to wait indefinitely, while still allowing async cancellation.
+Authentication and missing-process errors propagate. Timeout or async
 cancellation stops observation, not the command: call `wait` again to reconnect,
 or use `kill`/`stop` explicitly. Never repeat `exec` to recover an existing command.
 Sync waits apply the remaining deadline to HTTP timeouts and reject late results;

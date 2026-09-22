@@ -408,17 +408,19 @@ class SandboxProcess(SandboxAction):
     async def wait(
         self, identifier: str, max_wait: int = 60000, interval: int = 1000
     ) -> ProcessResponse:
-        """Wait for a terminal API state. Timeout/cancellation never stops the command."""
+        """Wait for a terminal API state; max_wait=-1 waits indefinitely. Never stops the command."""
         if (
             not math.isfinite(max_wait)
-            or max_wait < 0
+            or (max_wait < 0 and max_wait != -1)
             or not math.isfinite(interval)
             or interval <= 0
         ):
             raise ValueError(
-                "max_wait must be finite and non-negative; interval must be finite and positive"
+                "max_wait must be -1 or finite and non-negative; interval must be finite and positive"
             )
-        deadline = asyncio.get_running_loop().time() + max_wait / 1000
+        deadline = (
+            math.inf if max_wait == -1 else asyncio.get_running_loop().time() + max_wait / 1000
+        )
         last_error = None
         while True:
             remaining = deadline - asyncio.get_running_loop().time()
@@ -431,7 +433,9 @@ class SandboxProcess(SandboxAction):
                 # completes at the same instant. wait keeps caller cancellation intact.
                 read = asyncio.create_task(self.get(identifier, retry=False))
                 try:
-                    done, _ = await asyncio.wait({read}, timeout=remaining)
+                    done, _ = await asyncio.wait(
+                        {read}, timeout=None if max_wait == -1 else remaining
+                    )
                     if not done:
                         raise asyncio.TimeoutError()
                     result = read.result()

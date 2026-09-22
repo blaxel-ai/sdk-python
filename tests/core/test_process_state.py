@@ -91,9 +91,10 @@ async def test_hung_read_is_bounded_and_cancelled():
     assert cancelled.is_set()
 
 
+@pytest.mark.parametrize("max_wait", [100, -1])
 @pytest.mark.parametrize("during_read", [True, False])
 @pytest.mark.asyncio
-async def test_cancellation_propagates_without_another_read(during_read):
+async def test_cancellation_propagates_without_another_read(during_read, max_wait):
     entered = asyncio.Event()
 
     async def get(*args, **kwargs):
@@ -104,7 +105,7 @@ async def test_cancellation_propagates_without_another_read(during_read):
 
     p = object.__new__(SandboxProcess)
     p.get = AsyncMock(side_effect=get)
-    task = asyncio.create_task(p.wait("original", max_wait=100))
+    task = asyncio.create_task(p.wait("original", max_wait=max_wait))
     await entered.wait()
     await asyncio.sleep(0)
     task.cancel()
@@ -209,3 +210,45 @@ def test_sync_get_receives_remaining_transport_timeout(monkeypatch):
     )
     with pytest.raises(ResponseError):
         p.wait("original", max_wait=100)
+
+
+@pytest.mark.asyncio
+async def test_unlimited_wait_recovers_and_returns_terminal_state(monkeypatch):
+    original_wait = asyncio.wait
+    deadlines = []
+
+    async def observe_wait(tasks, *, timeout):
+        deadlines.append(timeout)
+        return await original_wait(tasks, timeout=timeout)
+
+    monkeypatch.setattr(asyncio, "wait", observe_wait)
+    for cls in (SandboxProcess, SyncSandboxProcess):
+        p = observer(
+            cls,
+            [
+                SimpleNamespace(status="running"),
+                httpx.ReadError("lost"),
+                SimpleNamespace(status="failed", exit_code=7),
+            ],
+        )
+        assert (await wait(p, max_wait=-1, interval=1)).exit_code == 7
+        assert p.get.call_count == 3
+        if cls is SyncSandboxProcess:
+            assert all(call.kwargs["timeout"] is None for call in p.get.call_args_list)
+        error = ResponseError(httpx.Response(403))
+        p = observer(cls, [error])
+        with pytest.raises(ResponseError) as caught:
+            await wait(p, max_wait=-1)
+        assert caught.value is error
+        assert p.get.call_count == 1
+    assert deadlines and all(timeout is None for timeout in deadlines)
+
+
+@pytest.mark.parametrize("max_wait", [-2, -0.5, float("inf"), float("nan")])
+@pytest.mark.asyncio
+async def test_only_minus_one_is_an_unlimited_wait(max_wait):
+    for cls in (SandboxProcess, SyncSandboxProcess):
+        p = observer(cls, [])
+        with pytest.raises(ValueError):
+            await wait(p, max_wait=max_wait)
+        assert not p.get.called

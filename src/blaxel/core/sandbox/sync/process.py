@@ -353,17 +353,17 @@ class SyncSandboxProcess(SyncSandboxAction):
                 return ProcessResponseWithLog(result, lambda: None)
 
     def wait(self, identifier: str, max_wait: int = 60000, interval: int = 1000) -> ProcessResponse:
-        """Wait for a terminal API state. Timeout/cancellation never stops the command."""
+        """Wait for a terminal API state; max_wait=-1 waits indefinitely. Never stops the command."""
         if (
             not math.isfinite(max_wait)
-            or max_wait < 0
+            or (max_wait < 0 and max_wait != -1)
             or not math.isfinite(interval)
             or interval <= 0
         ):
             raise ValueError(
-                "max_wait must be finite and non-negative; interval must be finite and positive"
+                "max_wait must be -1 or finite and non-negative; interval must be finite and positive"
             )
-        deadline = time.monotonic() + max_wait / 1000
+        deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
         last_error = None
         while True:
             remaining = deadline - time.monotonic()
@@ -372,7 +372,9 @@ class SyncSandboxProcess(SyncSandboxAction):
                     f"Process did not finish in time ({identifier}); it may still be running"
                 ) from last_error
             try:
-                result = self.get(identifier, retry=False, timeout=remaining)
+                result = self.get(
+                    identifier, retry=False, timeout=None if max_wait == -1 else remaining
+                )
             except Exception as error:
                 if not is_retryable_read_error(error):
                     raise
