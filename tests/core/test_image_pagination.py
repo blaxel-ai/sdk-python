@@ -209,3 +209,58 @@ async def test_async_image_helpers_fetch_only_explicit_next_pages(monkeypatch):
         assert len(calls) == 3
         assert [tag.name async for tag in tags.auto_paging_iter()] == ["release", "release"]
         assert len(calls) == 4
+
+
+@pytest.mark.parametrize("legacy", [[], [SUMMARY]])
+def test_sync_legacy_image_array(monkeypatch, legacy):
+    from blaxel.core.client.types import UNSET
+    from blaxel.core.image import ImageInstance
+    from blaxel.core.image import image as image_module
+
+    monkeypatch.setenv("BL_API_VERSION", "2026-04-28")
+
+    def handle(request):
+        assert request.headers["Blaxel-Version"] == "2026-04-28"
+        return httpx.Response(200, json=legacy)
+
+    with Client(
+        base_url="https://api.test",
+        headers=settings.headers,
+        httpx_args={"transport": httpx.MockTransport(handle)},
+    ) as client:
+        monkeypatch.setattr(image_module, "client", client)
+        page = ImageInstance.list()
+        assert len(page) == len(legacy)
+        assert page.meta is UNSET
+        assert not page.has_more
+        assert not page.next_page()
+        if legacy:
+            parsed = list_images.sync(client=client)
+            assert "meta" not in parsed.to_dict()
+            assert parsed.to_dict()["data"][0]["spec"] == legacy[0]["spec"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("legacy", [[], [SUMMARY]])
+async def test_async_legacy_image_array(monkeypatch, legacy):
+    from blaxel.core.client.types import UNSET
+    from blaxel.core.image import ImageInstance
+    from blaxel.core.image import image as image_module
+
+    monkeypatch.setenv("BL_API_VERSION", "2026-04-28")
+
+    def handle(request):
+        assert request.headers["Blaxel-Version"] == "2026-04-28"
+        return httpx.Response(200, json=legacy)
+
+    async with Client(
+        base_url="https://api.test",
+        headers=settings.headers,
+        httpx_args={"transport": httpx.MockTransport(handle)},
+    ) as client:
+        monkeypatch.setattr(image_module, "client", client)
+        page = await ImageInstance.list_async()
+        assert len(page) == len(legacy)
+        assert page.meta is UNSET
+        assert not page.has_more
+        assert not await page.next_page()

@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..pagination import split_list_response
+from ..types import UNSET, Unset
+
 if TYPE_CHECKING:
     from ..models.image_summary import ImageSummary
     from ..models.pagination_meta import PaginationMeta
@@ -21,7 +24,7 @@ class ListImagesResponse200:
     """
 
     data: list["ImageSummary"]
-    meta: "PaginationMeta"
+    meta: "PaginationMeta | Unset"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -34,30 +37,29 @@ class ListImagesResponse200:
                 data_item = data_item_data.to_dict()
             data.append(data_item)
 
-        if type(self.meta) is dict:
-            meta = self.meta
-        else:
-            meta = self.meta.to_dict()
+        meta = self.meta.to_dict() if not isinstance(self.meta, Unset) else UNSET
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
                 "data": data,
-                "meta": meta,
             }
         )
+        if meta is not UNSET:
+            field_dict["meta"] = meta
 
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: dict[str, Any] | list[Any]) -> T | None:
         from ..models.image_summary import ImageSummary
         from ..models.pagination_meta import PaginationMeta
 
-        if not src_dict:
+        _data, _meta, additional_properties = split_list_response(src_dict)
+        if not _data and not additional_properties and isinstance(_meta, Unset):
             return None
-        d = src_dict.copy()
+        d = {"data": _data, "meta": _meta}
         data = []
         _data = d.pop("data")
         for data_item_data in _data:
@@ -65,14 +67,14 @@ class ListImagesResponse200:
 
             data.append(data_item)
 
-        meta = PaginationMeta.from_dict(d.pop("meta"))
+        meta = UNSET if isinstance(_meta, Unset) else PaginationMeta.from_dict(_meta)
 
         list_images_response_200 = cls(
             data=data,
             meta=meta,
         )
 
-        list_images_response_200.additional_properties = d
+        list_images_response_200.additional_properties = additional_properties
         return list_images_response_200
 
     @property
