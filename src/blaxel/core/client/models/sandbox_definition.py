@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.port import Port
+    from ..models.sandbox_creation_options import SandboxCreationOptions
     from ..models.sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 
 
@@ -21,6 +22,8 @@ class SandboxDefinition:
         Attributes:
             categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the definition
             coming_soon (Union[Unset, bool]): If the definition is coming soon
+            creation_options (Union[Unset, SandboxCreationOptions]): Optional Hub template settings applied by the console
+                without additional sandbox creation lookups.
             description (Union[Unset, str]): Description of the definition Example: Python environment with data science
                 libraries pre-installed.
             display_name (Union[Unset, str]): Display name of the definition Example: Python Data Science.
@@ -38,6 +41,7 @@ class SandboxDefinition:
 
     categories: Union[Unset, list["SandboxDefinitionCategoriesItem"]] = UNSET
     coming_soon: Union[Unset, bool] = UNSET
+    creation_options: Union[Unset, "SandboxCreationOptions"] = UNSET
     description: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     enterprise: Union[Unset, bool] = UNSET
@@ -65,6 +69,16 @@ class SandboxDefinition:
                 categories.append(categories_item)
 
         coming_soon = self.coming_soon
+
+        creation_options: Union[Unset, dict[str, Any]] = UNSET
+        if (
+            self.creation_options
+            and not isinstance(self.creation_options, Unset)
+            and not isinstance(self.creation_options, dict)
+        ):
+            creation_options = self.creation_options.to_dict()
+        elif self.creation_options and isinstance(self.creation_options, dict):
+            creation_options = self.creation_options
 
         description = self.description
 
@@ -105,6 +119,8 @@ class SandboxDefinition:
             field_dict["categories"] = categories
         if coming_soon is not UNSET:
             field_dict["coming_soon"] = coming_soon
+        if creation_options is not UNSET:
+            field_dict["creationOptions"] = creation_options
         if description is not UNSET:
             field_dict["description"] = description
         if display_name is not UNSET:
@@ -135,6 +151,7 @@ class SandboxDefinition:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.port import Port
+        from ..models.sandbox_creation_options import SandboxCreationOptions
         from ..models.sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 
         if not src_dict:
@@ -148,6 +165,13 @@ class SandboxDefinition:
             categories.append(categories_item)
 
         coming_soon = d.pop("coming_soon", UNSET)
+
+        _creation_options = d.pop("creationOptions", d.pop("creation_options", UNSET))
+        creation_options: Union[Unset, SandboxCreationOptions]
+        if isinstance(_creation_options, Unset):
+            creation_options = UNSET
+        else:
+            creation_options = SandboxCreationOptions.from_dict(_creation_options)
 
         description = d.pop("description", UNSET)
 
@@ -181,6 +205,7 @@ class SandboxDefinition:
         sandbox_definition = cls(
             categories=categories,
             coming_soon=coming_soon,
+            creation_options=creation_options,
             description=description,
             display_name=display_name,
             enterprise=enterprise,

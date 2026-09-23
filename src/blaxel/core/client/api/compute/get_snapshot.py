@@ -56,7 +56,7 @@ def sync_detailed(
 ) -> Response[Union[Error, SandboxSnapshot]]:
     """Get snapshot
 
-     Returns a snapshot of the workspace by name.
+     Returns a snapshot of the workspace by ID.
 
     Args:
         snapshot_name (str):
@@ -87,7 +87,7 @@ def sync(
 ) -> Union[Error, SandboxSnapshot] | None:
     """Get snapshot
 
-     Returns a snapshot of the workspace by name.
+     Returns a snapshot of the workspace by ID.
 
     Args:
         snapshot_name (str):
@@ -113,7 +113,7 @@ async def asyncio_detailed(
 ) -> Response[Union[Error, SandboxSnapshot]]:
     """Get snapshot
 
-     Returns a snapshot of the workspace by name.
+     Returns a snapshot of the workspace by ID.
 
     Args:
         snapshot_name (str):
@@ -142,7 +142,7 @@ async def asyncio(
 ) -> Union[Error, SandboxSnapshot] | None:
     """Get snapshot
 
-     Returns a snapshot of the workspace by name.
+     Returns a snapshot of the workspace by ID.
 
     Args:
         snapshot_name (str):

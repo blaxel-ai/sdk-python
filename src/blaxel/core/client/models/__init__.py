@@ -99,6 +99,8 @@ from .image import Image
 from .image_metadata import ImageMetadata
 from .image_share_target import ImageShareTarget
 from .image_spec import ImageSpec
+from .image_summary import ImageSummary
+from .image_summary_spec import ImageSummarySpec
 from .image_tag import ImageTag
 from .integration import Integration
 from .integration_additional_infos import IntegrationAdditionalInfos
@@ -144,6 +146,9 @@ from .list_drives_anchor import ListDrivesAnchor
 from .list_drives_sort import ListDrivesSort
 from .list_functions_anchor import ListFunctionsAnchor
 from .list_functions_sort import ListFunctionsSort
+from .list_image_tags_response_200 import ListImageTagsResponse200
+from .list_image_tags_sort import ListImageTagsSort
+from .list_images_response_200 import ListImagesResponse200
 from .list_job_execution_tasks_sort import ListJobExecutionTasksSort
 from .list_job_executions_sort import ListJobExecutionsSort
 from .list_jobs_anchor import ListJobsAnchor
@@ -239,6 +244,8 @@ from .sandbox import Sandbox
 from .sandbox_archive import SandboxArchive
 from .sandbox_archive_restore import SandboxArchiveRestore
 from .sandbox_archive_restore_state import SandboxArchiveRestoreState
+from .sandbox_creation_options import SandboxCreationOptions
+from .sandbox_creation_options_extra_args import SandboxCreationOptionsExtraArgs
 from .sandbox_definition import SandboxDefinition
 from .sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 from .sandbox_error import SandboxError
@@ -413,6 +420,8 @@ __all__ = (
     "ImageMetadata",
     "ImageShareTarget",
     "ImageSpec",
+    "ImageSummary",
+    "ImageSummarySpec",
     "ImageTag",
     "Integration",
     "IntegrationAdditionalInfos",
@@ -458,6 +467,9 @@ __all__ = (
     "ListDrivesSort",
     "ListFunctionsAnchor",
     "ListFunctionsSort",
+    "ListImagesResponse200",
+    "ListImageTagsResponse200",
+    "ListImageTagsSort",
     "ListJobExecutionsSort",
     "ListJobExecutionTasksSort",
     "ListJobsAnchor",
@@ -551,6 +563,8 @@ __all__ = (
     "SandboxArchive",
     "SandboxArchiveRestore",
     "SandboxArchiveRestoreState",
+    "SandboxCreationOptions",
+    "SandboxCreationOptionsExtraArgs",
     "SandboxDefinition",
     "SandboxDefinitionCategoriesItem",
     "SandboxError",

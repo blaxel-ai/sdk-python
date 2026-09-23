@@ -5,39 +5,33 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="DeleteDriveResponse200")
+T = TypeVar("T", bound="ImageSummarySpec")
 
 
 @_attrs_define
-class DeleteDriveResponse200:
+class ImageSummarySpec:
     """
     Attributes:
-        message (Union[Unset, str]):  Example: Drive deletion started.
-        name (Union[Unset, str]):  Example: my-drive.
-        status (Union[Unset, str]):  Example: DELETING.
+        size (Union[Unset, int]):
+        tag_count (Union[Unset, int]):
     """
 
-    message: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    size: Union[Unset, int] = UNSET
+    tag_count: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        message = self.message
+        size = self.size
 
-        name = self.name
-
-        status = self.status
+        tag_count = self.tag_count
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if message is not UNSET:
-            field_dict["message"] = message
-        if name is not UNSET:
-            field_dict["name"] = name
-        if status is not UNSET:
-            field_dict["status"] = status
+        if size is not UNSET:
+            field_dict["size"] = size
+        if tag_count is not UNSET:
+            field_dict["tagCount"] = tag_count
 
         return field_dict
 
@@ -46,20 +40,17 @@ class DeleteDriveResponse200:
         if not src_dict:
             return None
         d = src_dict.copy()
-        message = d.pop("message", UNSET)
+        size = d.pop("size", UNSET)
 
-        name = d.pop("name", UNSET)
+        tag_count = d.pop("tagCount", d.pop("tag_count", UNSET))
 
-        status = d.pop("status", UNSET)
-
-        delete_drive_response_200 = cls(
-            message=message,
-            name=name,
-            status=status,
+        image_summary_spec = cls(
+            size=size,
+            tag_count=tag_count,
         )
 
-        delete_drive_response_200.additional_properties = d
-        return delete_drive_response_200
+        image_summary_spec.additional_properties = d
+        return image_summary_spec
 
     @property
     def additional_keys(self) -> list[str]:

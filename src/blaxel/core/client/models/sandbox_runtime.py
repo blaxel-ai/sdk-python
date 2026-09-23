@@ -24,8 +24,9 @@ class SandboxRuntime:
         expires (Union[Unset, str]): Absolute expiration timestamp in ISO 8601 format when the sandbox will be deleted
             Example: 2025-12-31T23:59:59Z.
         extra_args (Union[Unset, SandboxRuntimeExtraArgs]): Extra arguments for kernel selection. Supported keys:
-            'iptables', 'nfs' (mk3.0), 'tun' (mk3.1). Values: 'enabled' or 'disabled'. Determines which kernel variant the
-            workload runs on. Immutable after creation.
+            'iptables', 'nfs' (mk3.0), 'tun' and 'android' (mk3.1). The android variant includes tun and iptables and cannot
+            be combined with nfs. Android requests are rejected if routing selects mk3.0. Values: 'enabled' or 'disabled'.
+            Determines which kernel variant the workload runs on. Immutable after creation.
         image (Union[Unset, str]): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest)
             or a custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory

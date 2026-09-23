@@ -20,8 +20,10 @@ class SandboxSnapshot:
 
         Attributes:
             created_at (str): When the snapshot was created
-            id (str): Identifier of the snapshot on the compute plane Example: snap_abc123.
-            name (str): Name of the snapshot, unique in its workspace Example: my-snapshot.
+            id (str): Identifier of the snapshot, unique in the workspace. Workspace-level routes address the snapshot by
+                it. Example: snap_abc123.
+            name (str): Display name of the snapshot, unique among the snapshots of the sandbox it was captured from.
+                Defaults to the identifier. Example: my-snapshot.
             status (str): Status of the snapshot (pending, ready, failed) Example: ready.
             workspace (str): Workspace owning the snapshot
             created_by (Union[Unset, str]): Who created the snapshot
@@ -43,6 +45,7 @@ class SandboxSnapshot:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         created_at = self.created_at
 
         id = self.id

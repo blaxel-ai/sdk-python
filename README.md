@@ -48,6 +48,46 @@ if page.has_more:
     print(next_page.next_cursor)
 ```
 
+Image clients now use API version `2026-09-22`. `list_images` returns a page of
+summaries (`data` and `meta`), and `get_image` returns one summary. Each summary
+includes `spec.size`, `spec.tag_count`, `metadata.status`, and
+`metadata.last_deployed_at`. Tags are fetched separately, one page at a time:
+
+```python
+from blaxel.core.client.client import client
+from blaxel.core.client.api.images import list_images, list_image_tags
+
+images = await list_images.asyncio(client=client, limit=50, sort="name:asc")
+for image in images.data:
+    print(image.metadata.name, image.spec.tag_count)
+
+if images.meta.has_more:
+    images = await list_images.asyncio(
+        client=client, limit=50, sort="name:asc", cursor=images.meta.next_cursor
+    )
+
+tags = await list_image_tags.asyncio("sandbox", "my-image", client=client, limit=50)
+for tag in tags.data:
+    print(tag.name, tag.size)
+```
+
+For lazy pagination helpers, use `ImageInstance.list()` and
+`ImageInstance.list_tags()` (or `list_async()` and `list_tags_async()`). They return
+`PaginatedList` / `AsyncPaginatedList` with `next_page()` and `auto_paging_iter()`:
+
+```python
+from blaxel.core import ImageInstance
+
+page = await ImageInstance.list_async(limit=50, q="python")
+if page.has_more:
+    next_page = await page.next_page()
+
+tags = await ImageInstance.list_tags_async("sandbox", "my-image", limit=50)
+```
+
+These generated functions also expose `sync()` variants. Image responses no longer
+include `spec.tags`; migrate callers to `list_image_tags` when upgrading.
+
 Use `auto_paging_iter()` only when you explicitly want the SDK to walk every page for you:
 
 ```python
