@@ -55,6 +55,21 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# Transport-level failures raised by httpx while performing a request. These flow
+# through the generated API client (e.g. compute/create_sandbox.py), so they pass
+# the SDK-origin check, but they are transient connectivity problems external to
+# the SDK -- not SDK defects. The generated client functions document
+# ``httpx.TimeoutException`` as an expected raise the caller is responsible for
+# handling, so reporting one that reaches a last-chance boundary would turn a
+# network timeout or connection drop into misleading "Unhandled SDK exception"
+# noise. ProtocolError (e.g. a LocalProtocolError from a malformed request the SDK
+# built) is intentionally excluded so genuine SDK request-construction bugs are
+# still captured.
+_EXPECTED_NETWORK_EXCEPTIONS = (
+    httpx.TimeoutException,  # Connect/Read/Write/Pool timeouts
+    httpx.NetworkError,  # Connect/Read/Write/Close socket failures
+)
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -410,6 +425,8 @@ def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if issubclass(exc_type, _EXPECTED_NETWORK_EXCEPTIONS):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
