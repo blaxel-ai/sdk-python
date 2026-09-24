@@ -126,3 +126,41 @@ def test_successful_delivery_is_deduplicated_and_preserves_state(telemetry, monk
         "sdks": {"javascript": "4.5.6", "python": "1.0.0"},
         "future_field": {"keep": True},
     }
+
+
+def test_flush_budget_is_imperceptible():
+    """A capture against us.i.posthog.com takes ~250-350ms end to end, so a one
+    second ceiling covers the happy path without letting a stalled send register
+    as a hang. Because a version is only persisted after a successful delivery,
+    an unreachable endpoint makes every later run pay this budget again."""
+    assert posthog._POSTHOG_FLUSH_BUDGET <= 1.0
+
+
+def test_save_merges_writes_from_other_processes(telemetry):
+    """~/.blaxel/telemetry.json is shared by the CLI and both SDKs, each of which
+    caches it in memory for the life of its process. Writing a stale snapshot
+    back wholesale rolls back whatever another process recorded in the meantime,
+    which makes that process re-send its "Installed" event on every later run."""
+    state = posthog._load_telemetry_state()
+    state["sdks"]["python"] = "1.0.0"
+
+    # Another process writes fields this one has never seen.
+    telemetry.write_text(
+        json.dumps(
+            {
+                "distinct_id": "test-id",
+                "cli": "9.9.9",
+                "sdks": {"typescript": "2.0.0"},
+                "brand_new_field": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    posthog._save_telemetry_state(state)
+
+    written = json.loads(telemetry.read_text(encoding="utf-8"))
+    assert written["cli"] == "9.9.9", "another process's CLI version must survive"
+    assert written["brand_new_field"] is True, "unknown fields must survive"
+    assert written["sdks"]["typescript"] == "2.0.0", "another SDK's version must survive"
+    assert written["sdks"]["python"] == "1.0.0", "this process's own version must be written"
