@@ -127,6 +127,18 @@ def _validate_creation_timeout(timeout: int | None) -> int | None:
     return timeout
 
 
+def _validate_creation_retry(retry: int | None, timeout: int | None) -> int:
+    if retry is None:
+        return 0
+    if timeout is None:
+        raise ValueError("SandboxInstance.create: 'retry' requires 'timeout' to be set.")
+    if isinstance(retry, bool) or not isinstance(retry, int) or retry < 0:
+        raise ValueError(
+            f"SandboxInstance.create: 'retry' must be a non-negative whole number, got {retry!r}."
+        )
+    return retry
+
+
 def _creation_client(timeout: int | None) -> Client:
     """Return the control-plane client to use for a creation request.
 
@@ -590,6 +602,7 @@ class SandboxInstance:
         safe: bool = False,
         create_if_not_exist: bool = False,
         timeout: int | None = None,
+        retry: int | None = None,
     ) -> "SandboxInstance":
         """Create a sandbox.
 
@@ -600,8 +613,13 @@ class SandboxInstance:
                 sandbox and ``SandboxCreationTimeoutError`` is raised. Omitted, the
                 platform default deadline applies; an explicit value can only
                 shorten it.
+            retry: Number of additional creation attempts after a creation
+                timeout (``retry=2`` means up to 3 attempts in total). Only
+                creation timeouts are retried; any other error is raised as is.
+                Requires ``timeout``.
         """
         timeout = _validate_creation_timeout(timeout)
+        retry = _validate_creation_retry(retry, timeout)
         # No client-side default name: when the caller omits a name we send the
         # creation without metadata.name so the server can assign one and unnamed
         # creations become eligible for warm sandbox pools (ENG-3931).
@@ -731,27 +749,45 @@ class SandboxInstance:
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
 
         body = _create_body(sandbox)
-        try:
-            if timeout is None:
-                response = await create_sandbox(
-                    client=client, body=body, create_if_not_exist=create_if_not_exist
-                )
-            else:
-                async with _creation_client(timeout) as creation_client:
-                    response = await create_sandbox(
-                        client=creation_client, body=body, create_if_not_exist=create_if_not_exist
-                    )
-        except client_errors.UnexpectedStatus as e:
-            _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
-            raise
+        name = _sandbox_name(sandbox)
+        for attempt in range(retry + 1):
+            try:
+                try:
+                    if timeout is None:
+                        response = await create_sandbox(
+                            client=client, body=body, create_if_not_exist=create_if_not_exist
+                        )
+                    else:
+                        async with _creation_client(timeout) as creation_client:
+                            response = await create_sandbox(
+                                client=creation_client,
+                                body=body,
+                                create_if_not_exist=create_if_not_exist,
+                            )
+                except client_errors.UnexpectedStatus as e:
+                    _raise_if_creation_timeout(e, name, timeout)
+                    raise
 
-        # Check if response is an error
-        if isinstance(response, SandboxError):
-            _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-            status_code = response.status_code if response.status_code is not UNSET else None
-            code = response.code if response.code else None
-            message = response.message if response.message else str(response)
-            raise SandboxAPIError(message, status_code=status_code, code=code)
+                # Check if response is an error
+                if isinstance(response, SandboxError):
+                    _raise_if_creation_timeout(response, name, timeout)
+                    status_code = (
+                        response.status_code if response.status_code is not UNSET else None
+                    )
+                    code = response.code if response.code else None
+                    message = response.message if response.message else str(response)
+                    raise SandboxAPIError(message, status_code=status_code, code=code)
+                break
+            except SandboxCreationTimeoutError:
+                if attempt == retry:
+                    raise
+                logger.warning(
+                    "Sandbox %s was not ready within %ss, retrying creation (%d/%d)",
+                    name,
+                    timeout,
+                    attempt + 1,
+                    retry,
+                )
 
         assert response is not None
         instance = cls(response)
@@ -982,12 +1018,17 @@ class SandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
         timeout: int | None = None,
+        retry: int | None = None,
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing.
 
-        ``timeout`` is forwarded to :meth:`create`.
+        ``timeout`` and ``retry`` are forwarded to :meth:`create`.
         """
-        create_kwargs: Dict[str, Any] = {} if timeout is None else {"timeout": timeout}
+        create_kwargs: Dict[str, Any] = {}
+        if timeout is not None:
+            create_kwargs["timeout"] = timeout
+        if retry is not None:
+            create_kwargs["retry"] = retry
         attempts = 3
         last_status = "unknown"
         for attempt in range(attempts):

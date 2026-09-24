@@ -49,3 +49,30 @@ class TestCreationTimeout:
                 },
                 timeout=MAX_CREATION_TIMEOUT_SECONDS + 1,
             )
+
+    async def test_creates_with_a_retry_budget(self):
+        """A healthy creation succeeds on the first attempt even with retries allowed."""
+        name = unique_name("create-retry")
+        sandbox = await SandboxInstance.create(
+            {
+                "name": name,
+                "image": default_image,
+                "memory": 2048,
+                "region": default_region,
+                "labels": default_labels,
+            },
+            timeout=MAX_CREATION_TIMEOUT_SECONDS,
+            retry=1,
+        )
+        try:
+            assert sandbox.metadata.name == name
+            assert str(sandbox.status) == "DEPLOYED"
+        finally:
+            await SandboxInstance.delete(name)
+
+    async def test_rejects_retry_without_timeout_before_calling_the_api(self):
+        with pytest.raises(ValueError, match="requires 'timeout'"):
+            await SandboxInstance.create(
+                {"name": unique_name("create-retry-cap"), "labels": default_labels},
+                retry=1,
+            )
