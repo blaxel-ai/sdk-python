@@ -3,17 +3,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="SandboxRuntimeExtraArgs")
+T = TypeVar("T", bound="SandboxCreationOptionsExtraArgs")
 
 
 @_attrs_define
-class SandboxRuntimeExtraArgs:
-    """Extra arguments for kernel selection. Supported keys: 'iptables', 'nfs' (mk3.0), 'tun' and 'android' (mk3.1). The
-    android variant includes tun and iptables and cannot be combined with nfs. Android requests are rejected if routing
-    selects mk3.0. Values: 'enabled' or 'disabled'. Determines which kernel variant the workload runs on. Immutable
-    after creation.
-
-    """
+class SandboxCreationOptionsExtraArgs:
+    """Kernel selection arguments copied into runtime.extraArgs. At most 8 entries."""
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
@@ -28,10 +23,10 @@ class SandboxRuntimeExtraArgs:
         if not src_dict:
             return None
         d = src_dict.copy()
-        sandbox_runtime_extra_args = cls()
+        sandbox_creation_options_extra_args = cls()
 
-        sandbox_runtime_extra_args.additional_properties = d
-        return sandbox_runtime_extra_args
+        sandbox_creation_options_extra_args.additional_properties = d
+        return sandbox_creation_options_extra_args
 
     @property
     def additional_keys(self) -> list[str]:

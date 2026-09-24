@@ -85,7 +85,9 @@ def sync_detailed(
 
      Forks a sandbox into a new sandbox or application. When forking to a sandbox, the target must not
     already exist (409 if it does). When forking to an application, a new revision is added if the app
-    already exists, or a new application is created. This is a WIP endpoint — the full implementation
+    already exists, or a new application is created. With no snapshotId, a fork to a sandbox copies the
+    source sandbox's live state directly and no snapshot is persisted, while a fork to an application
+    takes a snapshot its revision then references. This is a WIP endpoint — the full implementation
     depends on the execution plane.
 
     Args:
@@ -123,7 +125,9 @@ def sync(
 
      Forks a sandbox into a new sandbox or application. When forking to a sandbox, the target must not
     already exist (409 if it does). When forking to an application, a new revision is added if the app
-    already exists, or a new application is created. This is a WIP endpoint — the full implementation
+    already exists, or a new application is created. With no snapshotId, a fork to a sandbox copies the
+    source sandbox's live state directly and no snapshot is persisted, while a fork to an application
+    takes a snapshot its revision then references. This is a WIP endpoint — the full implementation
     depends on the execution plane.
 
     Args:
@@ -156,7 +160,9 @@ async def asyncio_detailed(
 
      Forks a sandbox into a new sandbox or application. When forking to a sandbox, the target must not
     already exist (409 if it does). When forking to an application, a new revision is added if the app
-    already exists, or a new application is created. This is a WIP endpoint — the full implementation
+    already exists, or a new application is created. With no snapshotId, a fork to a sandbox copies the
+    source sandbox's live state directly and no snapshot is persisted, while a fork to an application
+    takes a snapshot its revision then references. This is a WIP endpoint — the full implementation
     depends on the execution plane.
 
     Args:
@@ -192,7 +198,9 @@ async def asyncio(
 
      Forks a sandbox into a new sandbox or application. When forking to a sandbox, the target must not
     already exist (409 if it does). When forking to an application, a new revision is added if the app
-    already exists, or a new application is created. This is a WIP endpoint — the full implementation
+    already exists, or a new application is created. With no snapshotId, a fork to a sandbox copies the
+    source sandbox's live state directly and no snapshot is persisted, while a fork to an application
+    takes a snapshot its revision then references. This is a WIP endpoint — the full implementation
     depends on the execution plane.
 
     Args:

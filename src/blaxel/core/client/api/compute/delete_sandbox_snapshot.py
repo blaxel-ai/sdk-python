@@ -56,7 +56,8 @@ def sync_detailed(
 ) -> Response[Union[Any, Error]]:
     """Delete sandbox snapshot
 
-     Deletes a snapshot of a sandbox by its ID.
+     Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
+    ID).
 
     Args:
         sandbox_name (str):
@@ -90,7 +91,8 @@ def sync(
 ) -> Union[Any, Error] | None:
     """Delete sandbox snapshot
 
-     Deletes a snapshot of a sandbox by its ID.
+     Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
+    ID).
 
     Args:
         sandbox_name (str):
@@ -119,7 +121,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, Error]]:
     """Delete sandbox snapshot
 
-     Deletes a snapshot of a sandbox by its ID.
+     Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
+    ID).
 
     Args:
         sandbox_name (str):
@@ -151,7 +154,8 @@ async def asyncio(
 ) -> Union[Any, Error] | None:
     """Delete sandbox snapshot
 
-     Deletes a snapshot of a sandbox by its ID.
+     Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
+    ID).
 
     Args:
         sandbox_name (str):
