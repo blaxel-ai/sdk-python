@@ -1,12 +1,16 @@
 import asyncio
+import json
 import logging
 import time
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
+from attrs import evolve
+
 if TYPE_CHECKING:
     import httpx
 
+from ...client import errors as client_errors
 from ...client.api.compute.archive_sandbox import asyncio as archive_sandbox
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
 from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
@@ -19,7 +23,7 @@ from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.restore_sandbox_snapshot import asyncio as restore_sandbox_snapshot
 from ...client.api.compute.unarchive_sandbox import asyncio as unarchive_sandbox
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
-from ...client.client import client
+from ...client.client import Client, client
 from ...client.models import (
     Env,
     Metadata,
@@ -70,6 +74,91 @@ class SandboxAPIError(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.code = code
+
+
+CREATION_TIMEOUT_HEADER = "X-Blaxel-Creation-Timeout"
+CREATION_TIMEOUT_CODE = "CREATION_TIMEOUT"
+MAX_CREATION_TIMEOUT_SECONDS = 50
+
+
+class SandboxCreationTimeoutError(SandboxAPIError):
+    """Raised when the sandbox was not ready within the creation deadline.
+
+    The control plane cancels the creation and releases the sandbox, so the same
+    name can be used by a later creation attempt.
+    """
+
+    def __init__(
+        self,
+        sandbox_name: str | None,
+        timeout: int | None,
+        data: Any = None,
+    ):
+        detail = data.get("message") if isinstance(data, dict) else None
+        target = f"Sandbox {sandbox_name}" if sandbox_name else "Sandbox"
+        deadline = f" within {timeout}s" if timeout is not None else " within the creation deadline"
+        message = f"{target} was not ready{deadline}; the creation was cancelled."
+        if isinstance(detail, str) and detail:
+            message = f"{message} {detail}"
+        super().__init__(message, status_code=408, code=CREATION_TIMEOUT_CODE)
+        self.sandbox_name = sandbox_name
+        self.timeout = timeout
+        self.data = data
+
+
+def is_creation_timeout_error(err: object) -> bool:
+    """Return True when ``err`` is a sandbox creation timeout."""
+    return isinstance(err, SandboxCreationTimeoutError)
+
+
+def _validate_creation_timeout(timeout: int | None) -> int | None:
+    if timeout is None:
+        return None
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, int)
+        or timeout < 1
+        or timeout > MAX_CREATION_TIMEOUT_SECONDS
+    ):
+        raise ValueError(
+            "SandboxInstance.create: 'timeout' must be a whole number of seconds"
+            f" between 1 and {MAX_CREATION_TIMEOUT_SECONDS}, got {timeout!r}."
+        )
+    return timeout
+
+
+def _creation_client(timeout: int | None) -> Client:
+    """Return the control-plane client to use for a creation request.
+
+    With a timeout, a copy of the shared client carrying the creation-timeout
+    header is returned so the shared client is left untouched.
+    """
+    if timeout is None:
+        return client
+    return evolve(client, headers={**client._headers, CREATION_TIMEOUT_HEADER: str(timeout)})
+
+
+def _decode_error_content(content: bytes) -> Any:
+    try:
+        return json.loads(content)
+    except (UnicodeDecodeError, ValueError):
+        return content.decode("utf-8", errors="replace")
+
+
+def _raise_if_creation_timeout(
+    error: SandboxError | client_errors.UnexpectedStatus,
+    sandbox_name: str | None,
+    timeout: int | None,
+) -> None:
+    if isinstance(error, client_errors.UnexpectedStatus):
+        if error.status_code != 408:
+            return
+        raise SandboxCreationTimeoutError(
+            sandbox_name, timeout, _decode_error_content(error.content)
+        ) from error
+    status_code = error.status_code if error.status_code is not UNSET else None
+    if status_code == 408 or error.code == CREATION_TIMEOUT_CODE:
+        raise SandboxCreationTimeoutError(sandbox_name, timeout, error.to_dict())
 
 
 logger = logging.getLogger(__name__)
@@ -500,7 +589,19 @@ class SandboxInstance:
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
         create_if_not_exist: bool = False,
+        timeout: int | None = None,
     ) -> "SandboxInstance":
+        """Create a sandbox.
+
+        Args:
+            timeout: Optional creation deadline in whole seconds (1 to
+                ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
+                in time the control plane cancels the creation, releases the
+                sandbox and ``SandboxCreationTimeoutError`` is raised. Omitted, the
+                platform default deadline applies; an explicit value can only
+                shorten it.
+        """
+        timeout = _validate_creation_timeout(timeout)
         # No client-side default name: when the caller omits a name we send the
         # creation without metadata.name so the server can assign one and unnamed
         # creations become eligible for warm sandbox pools (ENG-3931).
@@ -629,14 +730,24 @@ class SandboxInstance:
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
 
-        response = await create_sandbox(
-            client=client,
-            body=_create_body(sandbox),
-            create_if_not_exist=create_if_not_exist,
-        )
+        body = _create_body(sandbox)
+        try:
+            if timeout is None:
+                response = await create_sandbox(
+                    client=client, body=body, create_if_not_exist=create_if_not_exist
+                )
+            else:
+                async with _creation_client(timeout) as creation_client:
+                    response = await create_sandbox(
+                        client=creation_client, body=body, create_if_not_exist=create_if_not_exist
+                    )
+        except client_errors.UnexpectedStatus as e:
+            _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
+            raise
 
         # Check if response is an error
         if isinstance(response, SandboxError):
+            _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
@@ -868,15 +979,21 @@ class SandboxInstance:
 
     @classmethod
     async def create_if_not_exists(
-        cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
+        cls,
+        sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
+        timeout: int | None = None,
     ) -> "SandboxInstance":
-        """Create a sandbox if it doesn't exist, otherwise return existing."""
+        """Create a sandbox if it doesn't exist, otherwise return existing.
+
+        ``timeout`` is forwarded to :meth:`create`.
+        """
+        create_kwargs: Dict[str, Any] = {} if timeout is None else {"timeout": timeout}
         attempts = 3
         last_status = "unknown"
         for attempt in range(attempts):
             final_attempt = attempt == attempts - 1
             try:
-                return await cls.create(sandbox, create_if_not_exist=True)
+                return await cls.create(sandbox, create_if_not_exist=True, **create_kwargs)
             except SandboxAPIError as e:
                 if not _is_sandbox_conflict(e):
                     raise

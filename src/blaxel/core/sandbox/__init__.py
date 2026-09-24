@@ -9,9 +9,11 @@ from .client.models import (
     RerankingResponse,
 )
 from .default import (
+    MAX_CREATION_TIMEOUT_SECONDS,
     CodeInterpreter,
     SandboxAPIError,
     SandboxCodegen,
+    SandboxCreationTimeoutError,
     SandboxDrive,
     SandboxFileSystem,
     SandboxInstance,
@@ -20,6 +22,7 @@ from .default import (
     SandboxSchedules,
     SandboxSnapshots,
     SandboxSystem,
+    is_creation_timeout_error,
 )
 from .sync import (
     SyncCodeInterpreter,
@@ -54,6 +57,9 @@ from .types import (
 __all__ = [
     "SandboxInstance",
     "SandboxAPIError",
+    "SandboxCreationTimeoutError",
+    "is_creation_timeout_error",
+    "MAX_CREATION_TIMEOUT_SECONDS",
     "SessionCreateOptions",
     "SessionWithToken",
     "SandboxConfiguration",
