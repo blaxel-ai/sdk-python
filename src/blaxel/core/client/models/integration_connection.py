@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 if TYPE_CHECKING:
     from ..models.integration_connection_spec import IntegrationConnectionSpec
     from ..models.metadata import Metadata
@@ -58,9 +60,9 @@ class IntegrationConnection:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = Metadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = IntegrationConnectionSpec.from_dict(d.pop("spec"))
+        spec = IntegrationConnectionSpec.from_dict(d.pop("spec", UNSET))
 
         integration_connection = cls(
             metadata=metadata,
