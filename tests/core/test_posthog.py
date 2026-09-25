@@ -164,3 +164,34 @@ def test_save_merges_writes_from_other_processes(telemetry):
     assert written["brand_new_field"] is True, "unknown fields must survive"
     assert written["sdks"]["typescript"] == "2.0.0", "another SDK's version must survive"
     assert written["sdks"]["python"] == "1.0.0", "this process's own version must be written"
+
+
+def test_save_never_rolls_back_entries_it_does_not_own(telemetry):
+    """Each writer owns exactly one field: the CLI owns "cli" and each SDK owns
+    its own language entry. Re-asserting anything else on save would roll back a
+    newer value written by its real owner, and that owner would then treat its
+    version as unreported and send "Installed" again."""
+    # This process starts up and caches what the other writers had recorded.
+    telemetry.write_text(
+        json.dumps({"distinct_id": "test-id", "sdks": {"typescript": "1.0.0"}}),
+        encoding="utf-8",
+    )
+    posthog._telemetry_state = None
+    state = posthog._load_telemetry_state()
+    assert state["sdks"]["typescript"] == "1.0.0", "precondition: stale value is cached"
+
+    # The TypeScript SDK upgrades and records a newer version on disk.
+    telemetry.write_text(
+        json.dumps({"distinct_id": "test-id", "sdks": {"typescript": "2.0.0"}}),
+        encoding="utf-8",
+    )
+
+    # This process persists its own install. It must not resurrect typescript 1.0.0.
+    state["sdks"]["python"] = "9.9.9"
+    posthog._save_telemetry_state(state)
+
+    written = json.loads(telemetry.read_text(encoding="utf-8"))
+    assert written["sdks"]["python"] == "9.9.9", "must record the entry it owns"
+    assert written["sdks"]["typescript"] == "2.0.0", (
+        "must not roll back another SDK's newer version"
+    )

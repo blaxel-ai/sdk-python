@@ -30,6 +30,9 @@ _POSTHOG_HOST = "https://us.i.posthog.com"
 # make each of those runs wait out the full transport timeout.
 _POSTHOG_FLUSH_BUDGET = 1.0
 
+# The single per-language entry this SDK owns in the shared telemetry file.
+_SDK_STATE_KEY = "python"
+
 # Telemetry state file path: ~/.blaxel/telemetry.json
 _telemetry_state: dict | None = None
 _telemetry_lock = threading.Lock()
@@ -113,13 +116,16 @@ def _save_telemetry_state(state: dict) -> None:
         for key, value in state.items():
             merged.setdefault(key, value)
 
-        # Per-language entries are merged rather than replaced so the SDKs do
-        # not evict each other.
+        # Only re-assert the one language entry this process owns. Writing back
+        # the whole cached map would roll back a newer version another SDK
+        # recorded after this process started, and that SDK would then re-send
+        # its "Installed" event.
         on_disk_sdks = on_disk.get("sdks")
-        merged["sdks"] = {
-            **(on_disk_sdks if isinstance(on_disk_sdks, dict) else {}),
-            **(state.get("sdks") or {}),
-        }
+        merged_sdks = dict(on_disk_sdks) if isinstance(on_disk_sdks, dict) else {}
+        own_version = (state.get("sdks") or {}).get(_SDK_STATE_KEY)
+        if own_version:
+            merged_sdks[_SDK_STATE_KEY] = own_version
+        merged["sdks"] = merged_sdks
         if state.get("distinct_id"):
             merged["distinct_id"] = state["distinct_id"]
 
@@ -263,7 +269,7 @@ def track_sdk_installed() -> None:
             return
 
         state = _load_telemetry_state()
-        sdk_key = "python"
+        sdk_key = _SDK_STATE_KEY
         pending_key = (sdk_key, version)
 
         # Reserve this version in memory so concurrent calls do not send duplicates.
