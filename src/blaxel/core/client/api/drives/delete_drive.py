@@ -34,7 +34,7 @@ def _parse_response(
         response_404 = cast(Any, None)
         return response_404
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
@@ -57,7 +57,8 @@ def sync_detailed(
 ) -> Response[Union[Any, DeleteDriveResponse200]]:
     """Delete a drive
 
-     Deletes a drive immediately. The drive record is removed from the database synchronously.
+     Starts the deletion of a drive. The drive is marked DELETING and its storage is wiped
+    asynchronously; the drive disappears from listings once the cleanup completes.
 
     Args:
         drive_name (str):
@@ -88,7 +89,8 @@ def sync(
 ) -> Union[Any, DeleteDriveResponse200] | None:
     """Delete a drive
 
-     Deletes a drive immediately. The drive record is removed from the database synchronously.
+     Starts the deletion of a drive. The drive is marked DELETING and its storage is wiped
+    asynchronously; the drive disappears from listings once the cleanup completes.
 
     Args:
         drive_name (str):
@@ -114,7 +116,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, DeleteDriveResponse200]]:
     """Delete a drive
 
-     Deletes a drive immediately. The drive record is removed from the database synchronously.
+     Starts the deletion of a drive. The drive is marked DELETING and its storage is wiped
+    asynchronously; the drive disappears from listings once the cleanup completes.
 
     Args:
         drive_name (str):
@@ -143,7 +146,8 @@ async def asyncio(
 ) -> Union[Any, DeleteDriveResponse200] | None:
     """Delete a drive
 
-     Deletes a drive immediately. The drive record is removed from the database synchronously.
+     Starts the deletion of a drive. The drive is marked DELETING and its storage is wiped
+    asynchronously; the drive disappears from listings once the cleanup completes.
 
     Args:
         drive_name (str):

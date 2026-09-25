@@ -1,6 +1,7 @@
 """Pytest configuration and shared fixtures."""
 
 import os
+import uuid
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,6 +11,11 @@ from dotenv import load_dotenv
 # Load .env file from the sdk-python directory
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
+
+# Stamp the run id here, in a conftest the master process loads before it spawns
+# any pytest-xdist worker, so every worker inherits the same value. See
+# ``tests/helpers/utils.run_id``.
+os.environ.setdefault("BL_TEST_RUN_ID", uuid.uuid4().hex[:12])
 
 
 @pytest.fixture(scope="session", autouse=True)

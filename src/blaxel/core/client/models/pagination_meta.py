@@ -20,11 +20,16 @@ class PaginationMeta:
             total (Union[Unset, int]): Total number of items in the workspace, ignoring the current page's filters. Lets the
                 UI render "page X of Y" without walking the cursor chain. Computed from the hash-only metadata.workspace GSI
                 count, so search (`q`) does not narrow it.
+            total_is_partial (Union[Unset, bool]): True when `total` is a lower bound rather than a complete count. Counting
+                a very large workspace is bounded so the listing stays fast, and this flag says the real number is higher.
+                Clients must not derive a page count from `total` when this is set — keep paging with `nextCursor` until
+                `hasMore` is false.
     """
 
     has_more: Union[Unset, bool] = UNSET
     next_cursor: Union[Unset, str] = UNSET
     total: Union[Unset, int] = UNSET
+    total_is_partial: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -33,6 +38,8 @@ class PaginationMeta:
         next_cursor = self.next_cursor
 
         total = self.total
+
+        total_is_partial = self.total_is_partial
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -43,6 +50,8 @@ class PaginationMeta:
             field_dict["nextCursor"] = next_cursor
         if total is not UNSET:
             field_dict["total"] = total
+        if total_is_partial is not UNSET:
+            field_dict["totalIsPartial"] = total_is_partial
 
         return field_dict
 
@@ -57,10 +66,13 @@ class PaginationMeta:
 
         total = d.pop("total", UNSET)
 
+        total_is_partial = d.pop("totalIsPartial", d.pop("total_is_partial", UNSET))
+
         pagination_meta = cls(
             has_more=has_more,
             next_cursor=next_cursor,
             total=total,
+            total_is_partial=total_is_partial,
         )
 
         pagination_meta.additional_properties = d

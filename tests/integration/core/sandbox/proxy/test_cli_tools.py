@@ -7,8 +7,14 @@ import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
+from tests.helpers.echo import echo_host
 
-from .helpers import default_region, lowercase_keys, parse_json_output
+from .helpers import (
+    default_region,
+    lowercase_keys,
+    parse_json_output,
+    write_echo_url,
+)
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -20,6 +26,7 @@ class TestProxyCLITools:
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
         request.cls.sandbox_name = unique_name("proxy-cli")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -31,7 +38,7 @@ class TestProxyCLITools:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [echo_hostname],
                                 "headers": {
                                     "X-Proxy-Test": "header-injected",
                                     "X-Api-Key": "{{SECRET:test-api-key}}",
@@ -70,6 +77,8 @@ class TestProxyCLITools:
         if cert_install.exit_code != 0:
             raise RuntimeError(f"CA cert install failed: {(cert_install.logs or '')[:500]}")
 
+        await write_echo_url(request.cls.sandbox)
+
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
@@ -81,20 +90,20 @@ class TestProxyCLITools:
     async def test_curl_get_with_header_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "curl -s https://httpbin.org/headers",
+                "command": "curl -s -D - $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
+        assert "x-blaxel-request-id" in (result.logs or "").lower()
         headers = lowercase_keys(parse_json_output(result.logs)["headers"])
-        assert headers.get("x-blaxel-request-id") is not None
         assert headers["x-proxy-test"] == "header-injected"
         assert headers["x-api-key"] == "resolved-secret-42"
 
     async def test_curl_post_with_body_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """curl -s -X POST https://httpbin.org/post -H "Content-Type: application/json" -d '{"user_data":"from-curl"}'""",
+                "command": """curl -s -D - -X POST $(cat /tmp/echo-url)/post -H "Content-Type: application/json" -d '{"user_data":"from-curl"}'""",
                 "wait_for_completion": True,
             }
         )
@@ -103,14 +112,14 @@ class TestProxyCLITools:
         assert response["json"]["user_data"] == "from-curl"
         assert response["json"]["injected_field"] == "body-injected"
         assert response["json"]["secret_body"] == "resolved-secret-42"
+        assert "x-blaxel-request-id" in (result.logs or "").lower()
         headers = lowercase_keys(response["headers"])
-        assert headers.get("x-blaxel-request-id") is not None
         assert headers["x-proxy-test"] == "header-injected"
 
     async def test_curl_preserves_user_headers(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -H "X-User-Custom: from-curl" https://httpbin.org/headers',
+                "command": 'curl -s -H "X-User-Custom: from-curl" $(cat /tmp/echo-url)/headers',
                 "wait_for_completion": True,
             }
         )
@@ -123,7 +132,7 @@ class TestProxyCLITools:
     async def test_curl_follows_redirects(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -L -o /dev/null -w "%{http_code}" https://httpbin.org/redirect/1',
+                "command": 'curl -s -L -o /dev/null -w "%{http_code}" $(cat /tmp/echo-url)/redirect/1',
                 "wait_for_completion": True,
             }
         )
@@ -133,7 +142,7 @@ class TestProxyCLITools:
     async def test_curl_put_through_proxy(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """curl -s -X PUT https://httpbin.org/put -H "Content-Type: application/json" -d '{"update":"from-curl"}'""",
+                "command": """curl -s -X PUT $(cat /tmp/echo-url)/put -H "Content-Type: application/json" -d '{"update":"from-curl"}'""",
                 "wait_for_completion": True,
             }
         )
@@ -145,7 +154,7 @@ class TestProxyCLITools:
     async def test_curl_delete_through_proxy(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "curl -s -X DELETE https://httpbin.org/delete",
+                "command": "curl -s -X DELETE $(cat /tmp/echo-url)/delete",
                 "wait_for_completion": True,
             }
         )
@@ -158,7 +167,7 @@ class TestProxyCLITools:
     async def test_curl_handles_large_response(self):
         result = await self.sandbox.process.exec(
             {
-                "command": 'curl -s -o /dev/null -w "%{http_code} %{size_download}" https://httpbin.org/bytes/10240',
+                "command": 'curl -s -o /dev/null -w "%{http_code} %{size_download}" $(cat /tmp/echo-url)/bytes/10240',
                 "wait_for_completion": True,
             }
         )

@@ -1,6 +1,12 @@
 """Blaxel core module."""
 
 from .agents import BlAgent, bl_agent
+from .application import (
+    ApplicationAPIError,
+    ApplicationCreateConfiguration,
+    ApplicationInstance,
+    SyncApplicationInstance,
+)
 from .authentication import BlaxelAuth, auth, get_credentials
 from .cache import find_from_cache
 from .client.client import client
@@ -31,6 +37,7 @@ from .sandbox import (
     SyncSandboxProcess,
 )
 from .sandbox.types import Sandbox
+from .snapshot import Snapshot, SnapshotAPIError, SyncSnapshot
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
 from .volume import SyncVolumeInstance, VolumeCreateConfiguration, VolumeInstance
 
@@ -66,6 +73,9 @@ __all__ = [
     "bl_tools",
     "convert_mcp_tool_to_blaxel_tool",
     "websocket_client",
+    "Snapshot",
+    "SyncSnapshot",
+    "SnapshotAPIError",
     "VolumeInstance",
     "SyncVolumeInstance",
     "VolumeCreateConfiguration",
@@ -73,6 +83,10 @@ __all__ = [
     "SyncDriveInstance",
     "DriveCreateConfiguration",
     "DriveAPIError",
+    "ApplicationInstance",
+    "SyncApplicationInstance",
+    "ApplicationCreateConfiguration",
+    "ApplicationAPIError",
     "verify_webhook_signature",
     "verify_webhook_from_request",
     "ImageInstance",

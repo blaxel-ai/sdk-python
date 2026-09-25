@@ -22,6 +22,10 @@ sdk-sandbox:
 		--config=./openapi-python-client.yml
 	cp -r ./tmp-sdk-sandbox/blaxel/* ./src/blaxel/core/sandbox/client
 	rm -rf ./tmp-sdk-sandbox
+	# openapi-python-client emits `_body = body.payload` for a raw (octet-stream) string
+	# body, which fails at call time on a str: send the string itself.
+	find src/blaxel/core/sandbox/client/api -name '*.py' \
+		-exec sed -i.bak 's/_body = body\.payload$$/_body = body/' {} \; -exec rm -f {}.bak \;
 	uv run ruff format
 	uv run ruff check --fix
 

@@ -1,0 +1,89 @@
+from typing import TYPE_CHECKING, Any, TypeVar, Union
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.sandbox_snapshot_source import SandboxSnapshotSource
+
+
+T = TypeVar("T", bound="SandboxSnapshotRequest")
+
+
+@_attrs_define
+class SandboxSnapshotRequest:
+    """Request body for creating a snapshot. The source object is required at the root endpoint and implied by the path on
+    the nested one.
+
+        Attributes:
+            name (Union[Unset, str]): Display name of the snapshot, unique among the snapshots of the sandbox it is captured
+                from; the same name may be reused on another sandbox. Defaults to the snapshot identifier when absent. Example:
+                my-snapshot.
+            source (Union[Unset, SandboxSnapshotSource]): The object a snapshot was captured from.
+    """
+
+    name: Union[Unset, str] = UNSET
+    source: Union[Unset, "SandboxSnapshotSource"] = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+
+        name = self.name
+
+        source: Union[Unset, dict[str, Any]] = UNSET
+        if self.source and not isinstance(self.source, Unset) and not isinstance(self.source, dict):
+            source = self.source.to_dict()
+        elif self.source and isinstance(self.source, dict):
+            source = self.source
+
+        field_dict: dict[str, Any] = {}
+        field_dict.update(self.additional_properties)
+        field_dict.update({})
+        if name is not UNSET:
+            field_dict["name"] = name
+        if source is not UNSET:
+            field_dict["source"] = source
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+        from ..models.sandbox_snapshot_source import SandboxSnapshotSource
+
+        if not src_dict:
+            return None
+        d = src_dict.copy()
+        name = d.pop("name", UNSET)
+
+        _source = d.pop("source", UNSET)
+        source: Union[Unset, SandboxSnapshotSource]
+        if isinstance(_source, Unset):
+            source = UNSET
+        else:
+            source = SandboxSnapshotSource.from_dict(_source)
+
+        sandbox_snapshot_request = cls(
+            name=name,
+            source=source,
+        )
+
+        sandbox_snapshot_request.additional_properties = d
+        return sandbox_snapshot_request
+
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties

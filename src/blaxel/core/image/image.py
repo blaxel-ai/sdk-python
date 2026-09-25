@@ -16,8 +16,25 @@ from typing import Callable, List
 import httpx
 from dockerfile_parse import DockerfileParser  # type: ignore[import-untyped]
 
+from ..client.api.images import list_image_tags, list_images
 from ..client.client import client
-from ..client.models import Metadata, MetadataLabels, Sandbox, SandboxRuntime, SandboxSpec
+from ..client.models import (
+    ImageSummary,
+    ImageTag,
+    ListImageTagsSort,
+    Metadata,
+    MetadataLabels,
+    Sandbox,
+    SandboxRuntime,
+    SandboxSpec,
+)
+from ..client.pagination import (
+    AsyncPaginatedList,
+    PaginatedList,
+    make_async_paginated_list,
+    make_paginated_list,
+    normalize_cursor,
+)
 from ..client.types import Response
 
 SANDBOX_API_IMAGE = "ghcr.io/blaxel-ai/sandbox"
@@ -106,6 +123,142 @@ class ImageInstance:
 
     def __init__(self, context: ImageBuildContext):
         self._context = context
+
+    @classmethod
+    def list(
+        cls,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+        sort: str = "name:asc",
+        q: str | None = None,
+    ) -> PaginatedList[ImageSummary]:
+        """List one page of image summaries, without fetching their tags."""
+        page = list_images.sync(
+            client=client,
+            limit=limit,
+            cursor=normalize_cursor(cursor),
+            sort=sort,
+            q=normalize_cursor(q),
+        )
+        return make_paginated_list(
+            page,
+            mapper=lambda image: image,
+            fetch_next=lambda next_cursor: cls.list(
+                limit=limit,
+                cursor=next_cursor,
+                sort=sort,
+                q=q,
+            ),
+        )
+
+    @classmethod
+    async def list_async(
+        cls,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+        sort: str = "name:asc",
+        q: str | None = None,
+    ) -> AsyncPaginatedList[ImageSummary]:
+        """List one page of image summaries asynchronously."""
+        page = await list_images.asyncio(
+            client=client,
+            limit=limit,
+            cursor=normalize_cursor(cursor),
+            sort=sort,
+            q=normalize_cursor(q),
+        )
+        return make_async_paginated_list(
+            page,
+            mapper=lambda image: image,
+            fetch_next=lambda next_cursor: cls.list_async(
+                limit=limit,
+                cursor=next_cursor,
+                sort=sort,
+                q=q,
+            ),
+        )
+
+    @classmethod
+    def list_tags(
+        cls,
+        resource_type: str,
+        image_name: str,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+        sort: ListImageTagsSort = ListImageTagsSort.NAMEASC,
+        q: str | None = None,
+        name: str | None = None,
+        source_workspace: str | None = None,
+    ) -> PaginatedList[ImageTag]:
+        """List one page of tags; source_workspace selects a shared image's owner."""
+        page = list_image_tags.sync(
+            resource_type,
+            image_name,
+            client=client,
+            limit=limit,
+            cursor=normalize_cursor(cursor),
+            sort=sort,
+            q=normalize_cursor(q),
+            name=normalize_cursor(name),
+            source_workspace=normalize_cursor(source_workspace),
+        )
+        return make_paginated_list(
+            page,
+            mapper=lambda tag: tag,
+            fetch_next=lambda next_cursor: cls.list_tags(
+                resource_type,
+                image_name,
+                limit=limit,
+                cursor=next_cursor,
+                sort=sort,
+                q=q,
+                name=name,
+                source_workspace=source_workspace,
+            ),
+        )
+
+    @classmethod
+    async def list_tags_async(
+        cls,
+        resource_type: str,
+        image_name: str,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+        sort: ListImageTagsSort = ListImageTagsSort.NAMEASC,
+        q: str | None = None,
+        name: str | None = None,
+        source_workspace: str | None = None,
+    ) -> AsyncPaginatedList[ImageTag]:
+        """List one page of tags asynchronously, without loading all tags."""
+        page = await list_image_tags.asyncio(
+            resource_type,
+            image_name,
+            client=client,
+            limit=limit,
+            cursor=normalize_cursor(cursor),
+            sort=sort,
+            q=normalize_cursor(q),
+            name=normalize_cursor(name),
+            source_workspace=normalize_cursor(source_workspace),
+        )
+        return make_async_paginated_list(
+            page,
+            mapper=lambda tag: tag,
+            fetch_next=lambda next_cursor: cls.list_tags_async(
+                resource_type,
+                image_name,
+                limit=limit,
+                cursor=next_cursor,
+                sort=sort,
+                q=q,
+                name=name,
+                source_workspace=source_workspace,
+            ),
+        )
 
     def _clone_context(self) -> ImageBuildContext:
         """Create a copy of the current context."""

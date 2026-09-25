@@ -17,9 +17,9 @@ class TestBlModel:
     """Test bl_model functionality."""
 
     @pytest.mark.parametrize("model_name", TEST_MODELS)
-    async def test_can_invoke_model(self, model_name: str):
+    async def test_can_invoke_model(self, model_name: str, model_http_client):
         """Test invoking a model."""
-        model = await bl_model(model_name)
+        model = await bl_model(model_name, http_async_client=model_http_client)
         result = await model.ainvoke("Say hello in one word")
 
         assert result is not None

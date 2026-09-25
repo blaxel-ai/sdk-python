@@ -3,7 +3,7 @@
 {% set paginated_list = namespace(value=false) %}
 {% set has_data = namespace(value=false) %}
 {% set has_meta = namespace(value=false) %}
-{% if class_name.endswith("List") %}
+{% if class_name.endswith("List") or class_name == "ListImagesResponse200" %}
 {% for property in model.required_properties + model.optional_properties %}
 {% if property.python_name == "data" %}
 {% set has_data.value = true %}
@@ -78,7 +78,11 @@ class {{ class_name }}:
 
     {% for property in model.required_properties + model.optional_properties %}
     {% if property.default is none and property.required %}
+    {% if paginated_list.value and property.python_name == "meta" %}
+    meta: "{{ property.get_type_string() }} | Unset"
+    {% else %}
     {{ property.to_string() }}
+    {% endif %}
     {% endif %}
     {% endfor %}
     {% for property in model.required_properties + model.optional_properties %}
@@ -95,6 +99,8 @@ class {{ class_name }}:
 {% import "property_templates/" + property.template as prop_template %}
 {% if multipart %}
 {{ prop_template.transform_multipart(property, "self." + property.python_name, property.python_name) }}
+{% elif paginated_list.value and property.python_name == "meta" and property.required %}
+meta = self.meta.to_dict() if not isinstance(self.meta, Unset) else UNSET
 {% elif prop_template.transform %}
 {{ prop_template.transform(property=property, source="self." + property.python_name, destination=property.python_name) }}
 {% else %}
@@ -119,11 +125,15 @@ field_dict.update(self.additional_properties)
 {% if model.required_properties | length > 0 or model.optional_properties | length > 0 %}
 field_dict.update({
     {% for property in model.required_properties + model.optional_properties %}
-    {% if property.required %}
+    {% if property.required and not (paginated_list.value and property.python_name == "meta") %}
     "{{ property.name }}": {{ property.python_name }},
     {% endif %}
     {% endfor %}
 })
+{% endif %}
+{% if class_name == "ListImagesResponse200" %}
+if meta is not UNSET:
+    field_dict["meta"] = meta
 {% endif %}
 {% for property in model.optional_properties %}
 {% if not property.required %}
@@ -177,7 +187,9 @@ return field_dict
         {% endif %}
     {% endif %}
     {% import "property_templates/" + property.template as prop_template %}
-    {% if prop_template.construct %}
+    {% if paginated_list.value and property.python_name == "meta" and property.required %}
+        meta = UNSET if isinstance(_meta, Unset) else PaginationMeta.from_dict(_meta)
+    {% elif prop_template.construct %}
         {{ prop_template.construct(property, property_source) | indent(8) }}
     {% else %}
         {{ property.python_name }} = {{ property_source }}

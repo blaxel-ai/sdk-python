@@ -48,6 +48,46 @@ if page.has_more:
     print(next_page.next_cursor)
 ```
 
+Image clients now use API version `2026-09-22`. `list_images` returns a page of
+summaries (`data` and `meta`), and `get_image` returns one summary. Each summary
+includes `spec.size`, `spec.tag_count`, `metadata.status`, and
+`metadata.last_deployed_at`. Tags are fetched separately, one page at a time:
+
+```python
+from blaxel.core.client.client import client
+from blaxel.core.client.api.images import list_images, list_image_tags
+
+images = await list_images.asyncio(client=client, limit=50, sort="name:asc")
+for image in images.data:
+    print(image.metadata.name, image.spec.tag_count)
+
+if images.meta.has_more:
+    images = await list_images.asyncio(
+        client=client, limit=50, sort="name:asc", cursor=images.meta.next_cursor
+    )
+
+tags = await list_image_tags.asyncio("sandbox", "my-image", client=client, limit=50)
+for tag in tags.data:
+    print(tag.name, tag.size)
+```
+
+For lazy pagination helpers, use `ImageInstance.list()` and
+`ImageInstance.list_tags()` (or `list_async()` and `list_tags_async()`). They return
+`PaginatedList` / `AsyncPaginatedList` with `next_page()` and `auto_paging_iter()`:
+
+```python
+from blaxel.core import ImageInstance
+
+page = await ImageInstance.list_async(limit=50, q="python")
+if page.has_more:
+    next_page = await page.next_page()
+
+tags = await ImageInstance.list_tags_async("sandbox", "my-image", limit=50)
+```
+
+These generated functions also expose `sync()` variants. Image responses no longer
+include `spec.tags`; migrate callers to `list_image_tags` when upgrading.
+
 Use `auto_paging_iter()` only when you explicitly want the SDK to walk every page for you:
 
 ```python
@@ -495,7 +535,7 @@ import blaxel.telemetry
 
 ### Error tracking
 
-The SDK includes error tracking that captures exceptions originating from the SDK itself (not your application code). It collects data including the error type, message, stack trace, SDK version, workspace name, and so on. No user or application data is collected.
+The SDK includes error tracking for unhandled exceptions originating from the SDK itself (not your application code). It collects a sanitized error type and HTTP/error code, package-relative SDK stack frames, SDK version, commit, and workspace name. It does not collect application stack frames, raw exception messages, response bodies, or local filesystem paths.
 
 Error tracking is off by default since v0.2.46. To explicitly disable it in older versions:
 
@@ -530,6 +570,25 @@ For more information, refer to [our documentation](https://docs.blaxel.ai/Securi
 ## Requirements
 
 - Python 3.9 or later
+
+### Observing a process after a connection error
+
+Give the command a name before starting it so you can reconnect using the existing API:
+
+```python
+await sandbox.process.exec({"name": "my-command", "command": "python worker.py", "wait_for_completion": False})
+result = await sandbox.process.wait("my-command", max_wait=60_000)
+```
+
+`wait` retries temporary network/HTTP errors and returns only a terminal process
+state. Set `max_wait=-1` to wait indefinitely, while still allowing async cancellation.
+Authentication and missing-process errors propagate. Timeout or async
+cancellation stops observation, not the command: call `wait` again to reconnect,
+or use `kill`/`stop` explicitly. Never repeat `exec` to recover an existing command.
+Sync waits apply the remaining deadline to HTTP timeouts and reject late results;
+a server continuously sending bytes can exceed that deadline because sync HTTP
+timeouts apply per network operation.
+
 
 ## Contributing
 

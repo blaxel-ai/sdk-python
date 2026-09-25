@@ -7,19 +7,33 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 if TYPE_CHECKING:
     import httpx
 
+from ...client.api.compute.archive_sandbox import asyncio as archive_sandbox
 from ...client.api.compute.create_sandbox import asyncio as create_sandbox
+from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
+from ...client.api.compute.delete_sandbox_snapshot import asyncio as delete_sandbox_snapshot
+from ...client.api.compute.fork_sandbox import asyncio as fork_sandbox
 from ...client.api.compute.get_sandbox import asyncio as get_sandbox
+from ...client.api.compute.list_sandbox_snapshots import asyncio as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
+from ...client.api.compute.restore_sandbox_snapshot import asyncio as restore_sandbox_snapshot
+from ...client.api.compute.unarchive_sandbox import asyncio as unarchive_sandbox
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
 from ...client.models import (
+    Env,
     Metadata,
     MetadataLabels,
     Sandbox,
+    SandboxForkRequest,
+    SandboxForkResponse,
+    SandboxInfrastructureError,
     SandboxLifecycle,
+    SandboxRestoreResponse,
     SandboxRuntime,
     SandboxRuntimeExtraArgs,
+    SandboxSnapshot,
+    SandboxSnapshotRequest,
     SandboxSpec,
 )
 from ...client.models import (
@@ -28,7 +42,7 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, normalize_cursor
-from ...client.types import UNSET
+from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
@@ -45,6 +59,7 @@ from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .schedule import SandboxSchedules
 from .session import SandboxSessions
+from .snapshot import SandboxSnapshots
 from .system import SandboxSystem
 
 
@@ -79,6 +94,26 @@ TRANSIENT_SANDBOX_STATUSES = {
 TRANSIENT_STATUS_MAX_WAIT_SECONDS = 30.0
 TRANSIENT_STATUS_POLL_SECONDS = 0.5
 
+# Archiving a filesystem, and restoring it, take as long as that filesystem is
+# big — minutes for a few gigabytes.
+# Waits are expressed in milliseconds, like every other wait option of this SDK
+# (e.g. ``process.wait(max_wait=..., interval=...)``).
+ARCHIVE_MAX_WAIT_MS = 1_800_000
+ARCHIVE_WAIT_POLL_MS = 2_000
+# An archive is done when the sandbox is ARCHIVED; it is still under way while
+# the record holds one of these.
+ARCHIVING_STATUSES = {"ARCHIVING"}
+# A restore is done when the sandbox is DEPLOYED again; the instance is recreated
+# before the archived filesystem is written back over its image.
+UNARCHIVING_STATUSES = {"UNARCHIVING", "DEPLOYING", "BUILDING", "UPLOADING"}
+# The status the sandbox holds before the operation moves it, tolerated only
+# while the operation is starting: an archive that fails hands the sandbox back
+# as DEPLOYED, and a restore that fails leaves it ARCHIVED, so reading the entry
+# status again once the operation has begun means it is over, not still running.
+ARCHIVE_ENTRY_STATUS = "DEPLOYED"
+UNARCHIVE_ENTRY_STATUS = "ARCHIVED"
+ARCHIVE_ENTRY_MAX_WAIT_MS = 30_000
+
 
 def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
     return error.status_code == 409 or error.code in {409, "409", "SANDBOX_ALREADY_EXISTS"}
@@ -86,6 +121,25 @@ def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
 
 def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
     return error.status_code == 404 or error.code in {404, "404"}
+
+
+def _unwrap_response(response, action: str, *, allow_none: bool = False):
+    """Raise a SandboxAPIError for error/empty responses, else return the payload.
+
+    Every generated control-plane API function returns ``Union[Error, T] | None``,
+    so an error status is a *return value*, not an exception. Callers must route
+    the response through here; handing it straight to ``cls(...)`` builds an
+    instance wrapping an ``Error`` and turns a failed write into a silent no-op.
+    Void endpoints (e.g. delete, which returns 204 No Content) legitimately return
+    ``None`` — pass ``allow_none=True`` for those.
+    """
+    if isinstance(response, Error):
+        status_code = response.code if response.code is not UNSET else None
+        message = response.message if response.message is not UNSET else response.error
+        raise SandboxAPIError(message, status_code=status_code, code=response.error)
+    if response is None and not allow_none:
+        raise SandboxAPIError(f"Failed to {action}")
+    return response
 
 
 def _sandbox_name(
@@ -138,8 +192,101 @@ class _AsyncDeleteDescriptor:
             return instance_delete
 
 
+def _status_of(sandbox: Sandbox) -> str | None:
+    status = sandbox.status
+    return None if isinstance(status, Unset) else str(status) if status else None
+
+
+class _AsyncSandboxCallDescriptor:
+    """Expose an operation as both ``SandboxInstance.op("name")`` and ``instance.op()``.
+
+    Both forms answer a ``SandboxInstance``; the instance form refreshes the
+    record it was called on. The archive of a filesystem and its restore run in
+    the background, so both forms wait for the sandbox to reach ``target`` unless
+    ``wait=False``.
+    """
+
+    def __init__(
+        self,
+        api_call: Callable,
+        action: str,
+        target: str,
+        pending: set[str],
+        entry: str,
+        doc: str,
+    ):
+        self._api_call = api_call
+        self._action = action
+        self._target = target
+        self._pending = pending
+        self._entry = entry
+        self.__doc__ = doc
+
+    async def _call(self, sandbox_name: str, wait: bool, max_wait: int, interval: int) -> Sandbox:
+        response = await self._api_call(sandbox_name)
+        sandbox = _unwrap_response(response, f"{self._action} sandbox {sandbox_name}")
+        if not wait or _status_of(sandbox) == self._target:
+            return sandbox
+        return await self._wait(sandbox_name, max_wait, interval)
+
+    async def _wait(self, sandbox_name: str, max_wait: int, interval: int) -> Sandbox:
+        deadline = time.monotonic() + max_wait / 1000
+        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
+        started = False
+        while True:
+            await asyncio.sleep(interval / 1000)
+            response = await get_sandbox(sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            status = _status_of(sandbox)
+            if status == self._target:
+                return sandbox
+            if status in self._pending:
+                started = True
+            elif status == self._entry and not started and time.monotonic() < entry_deadline:
+                continue
+            if status not in self._pending:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is {status} while it should {self._action}"
+                )
+            if time.monotonic() >= deadline:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is still {status} "
+                    f"after waiting {max_wait / 1000:.0f}s for it to {self._action}"
+                )
+
+    def __get__(self, instance, owner):
+        if instance is None:
+
+            async def class_call(
+                sandbox_name: str,
+                *,
+                wait: bool = True,
+                max_wait: int = ARCHIVE_MAX_WAIT_MS,
+                interval: int = ARCHIVE_WAIT_POLL_MS,
+            ) -> "SandboxInstance":
+                return SandboxInstance(await self._call(sandbox_name, wait, max_wait, interval))
+
+            class_call.__doc__ = self.__doc__
+            return class_call
+
+        async def instance_call(
+            *,
+            wait: bool = True,
+            max_wait: int = ARCHIVE_MAX_WAIT_MS,
+            interval: int = ARCHIVE_WAIT_POLL_MS,
+        ) -> "SandboxInstance":
+            instance.sandbox = await self._call(instance.metadata.name, wait, max_wait, interval)
+            instance.config.sandbox = instance.sandbox
+            return instance
+
+        instance_call.__doc__ = self.__doc__
+        return instance_call
+
+
 class SandboxInstance:
     delete: "_AsyncDeleteDescriptor"
+    archive: "_AsyncSandboxCallDescriptor"
+    unarchive: "_AsyncSandboxCallDescriptor"
 
     def __init__(
         self,
@@ -171,6 +318,7 @@ class SandboxInstance:
         self.codegen = SandboxCodegen(self.config)
         self.system = SandboxSystem(self.config)
         self.drives = SandboxDrive(self.config)
+        self.snapshots = SandboxSnapshots(self.sandbox, _unwrap_response)
 
     @property
     def metadata(self):
@@ -187,6 +335,17 @@ class SandboxInstance:
     @property
     def spec(self):
         return self.sandbox.spec
+
+    @property
+    def errors(self) -> list[SandboxInfrastructureError]:
+        """Infrastructure failures the compute plane recorded for this sandbox, oldest first.
+
+        Entries with ``fatal`` set are the ones that moved the sandbox to FAILED; the
+        others (e.g. a microVM that exited and restarted) are informational. Only
+        returned when a single sandbox is read, never in listings.
+        """
+        errors = self.sandbox.errors
+        return list(errors) if not isinstance(errors, Unset) and errors else []
 
     @property
     def last_used_at(self):
@@ -208,6 +367,126 @@ class SandboxInstance:
             **kwargs: Additional arguments forwarded to httpx (e.g. headers, content)
         """
         return await self.network.fetch(port, path, method, **kwargs)
+
+    async def snapshot(self, name: str | None = None) -> SandboxSnapshot:
+        """Create a point-in-time snapshot of this sandbox.
+
+        Snapshots capture the sandbox state and can be forked into new sandboxes
+        or applications.
+
+        Args:
+            name: Optional human-readable name for the snapshot.
+
+        .. deprecated:: Use ``sandbox.snapshots.create(name)``.
+        """
+        body = SandboxSnapshotRequest(name=name) if name is not None else SandboxSnapshotRequest()
+        response = await create_sandbox_snapshot(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "create snapshot")
+
+    async def list_snapshots(self) -> list[SandboxSnapshot]:
+        """List the snapshots of this sandbox.
+
+        .. deprecated:: Use ``sandbox.snapshots.list()``.
+        """
+        response = await list_sandbox_snapshots(
+            self.metadata.name,
+            client=client,
+        )
+        return _unwrap_response(response, "list snapshots")
+
+    async def delete_snapshot(self, snapshot_id: str) -> None:
+        """Delete a snapshot of this sandbox by its ID.
+
+        .. deprecated:: Use ``sandbox.snapshots.delete(name)``.
+        """
+        response = await delete_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        _unwrap_response(response, "delete snapshot", allow_none=True)
+
+    async def restore(self, snapshot_id: str) -> SandboxRestoreResponse:
+        """Restore this sandbox to one of its own snapshots.
+
+        The sandbox keeps its name, its URLs and its previews: the running
+        instance is torn down and rebuilt from the snapshot, so everything
+        written since the snapshot was taken is lost unless it was snapshotted
+        too.
+
+        The restore is asked for without waiting on the instance, the same way a
+        fork is: connections to a sandbox still resuming are retried.
+
+        Args:
+            snapshot_id: ID of the snapshot to restore this sandbox to.
+
+        .. deprecated:: Use ``sandbox.snapshots.restore(name)``.
+        """
+        response = await restore_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        return _unwrap_response(response, "restore snapshot")
+
+    async def fork(
+        self,
+        target_name: str,
+        *,
+        target_type: str = "sandbox",
+        port: int | None = None,
+        traffic: int | None = None,
+        custom_domain: str | None = None,
+        prefix: str | None = None,
+        snapshot_id: str | None = None,
+        envs: list[Env] | None = None,
+    ) -> SandboxForkResponse:
+        """Fork this sandbox into a new sandbox or application.
+
+        Forking into a sandbox copies this sandbox's live state straight into
+        the fork: no snapshot is created, persisted, or listed under this
+        sandbox. Pass ``snapshot_id`` to fork from a snapshot taken earlier
+        instead. Forking into an application still goes through a snapshot,
+        which the application's revision references so that revision can be
+        re-activated later.
+
+        Args:
+            target_name: Name of the sandbox/application to create.
+            target_type: Resource type to fork into ("sandbox" or "application").
+            port: Port to expose from the fork.
+            traffic: Canary traffic percentage (0-100) for an application fork.
+            custom_domain: Custom domain for an application fork.
+            prefix: URL prefix for an application fork.
+            snapshot_id: Snapshot ID to fork from, instead of this sandbox's
+                live state.
+            envs: Environment variables the fork runs with, on top of the ones
+                the source has: a variable the source already carries takes this
+                value in the fork, one it does not is added, and every other
+                variable of the source is kept.
+        """
+        body = SandboxForkRequest(target_name=target_name, target_type=target_type)
+        if port is not None:
+            body.port = port
+        if traffic is not None:
+            body.traffic = traffic
+        if custom_domain is not None:
+            body.custom_domain = custom_domain
+        if prefix is not None:
+            body.prefix = prefix
+        if snapshot_id is not None:
+            body.snapshot_id = snapshot_id
+        if envs is not None:
+            body.envs = envs
+        response = await fork_sandbox(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "fork sandbox")
 
     async def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SandboxInstance":
         logger.warning(
@@ -485,7 +764,7 @@ class SandboxInstance:
         )
 
         # Return new instance with updated sandbox
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox metadata"))
 
     @classmethod
     async def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SandboxInstance":
@@ -517,7 +796,7 @@ class SandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox TTL"))
 
     @classmethod
     async def update_lifecycle(
@@ -549,7 +828,7 @@ class SandboxInstance:
             body=body,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox lifecycle"))
 
     @classmethod
     async def update_network(
@@ -585,7 +864,7 @@ class SandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox network"))
 
     @classmethod
     async def create_if_not_exists(
@@ -686,10 +965,46 @@ async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         sandbox_name,
         client=client,
     )
-    if response is None:
-        raise ValueError(f"Sandbox {sandbox_name} not found")
-    return response
+    return _unwrap_response(response, f"delete sandbox {sandbox_name}")
+
+
+async def _archive_sandbox_by_name(sandbox_name: str):
+    return await archive_sandbox(sandbox_name, client=client)
+
+
+async def _unarchive_sandbox_by_name(sandbox_name: str):
+    return await unarchive_sandbox(sandbox_name, client=client)
 
 
 # Assign the delete descriptor to support both class-level and instance-level calls
 SandboxInstance.delete = _AsyncDeleteDescriptor(_delete_sandbox_by_name)
+SandboxInstance.archive = _AsyncSandboxCallDescriptor(
+    _archive_sandbox_by_name,
+    "archive",
+    "ARCHIVED",
+    ARCHIVING_STATUSES,
+    ARCHIVE_ENTRY_STATUS,
+    """Archive a sandbox: keep its filesystem, stop the sandbox.
+
+    The filesystem changes made over the image are exported to the archive store
+    and the sandbox is shut down; memory and running processes are lost, and the
+    saved processes start again from their configuration when the sandbox is
+    unarchived. The export runs in the background: this waits until the sandbox
+    is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+    """,
+)
+SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
+    _unarchive_sandbox_by_name,
+    "unarchive",
+    "DEPLOYED",
+    UNARCHIVING_STATUSES,
+    UNARCHIVE_ENTRY_STATUS,
+    """Recreate an archived sandbox from its archive.
+
+    The sandbox is started again from its image, and the archived filesystem is
+    written back over it. The sandbox answers, and its terminal is reachable, while the archived
+    filesystem is written back over its image. This waits until the restore is
+    done and the saved processes are running again; pass ``wait=False`` to return
+    while the sandbox is still UNARCHIVING.
+    """,
+)

@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
-from tests.helpers import async_sleep, default_image, default_labels, unique_name
+from tests.helpers import async_sleep, default_image, default_labels, unique_name, wait_until
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -160,8 +160,7 @@ class TestFromSession(TestSessionOperations):
 
         try:
             await sandbox_from_session.process.wait("stream-session")
-            await async_sleep(0.1)
-            assert len(logs) > 0
+            assert await wait_until(lambda: len(logs) > 0)
         finally:
             stream.close()
 
@@ -185,8 +184,7 @@ class TestFromSession(TestSessionOperations):
             await async_sleep(0.5)  # Wait for watch to be established
             await sandbox_from_session.fs.write("/session-test.txt", "content")
 
-            await async_sleep(1.0)  # Wait for callback to fire
-            assert change_detected is True
+            assert await wait_until(lambda: change_detected)
         finally:
             handle.close()
 

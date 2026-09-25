@@ -19,6 +19,8 @@ def _get_kwargs(
     sort: Union[Unset, ListFunctionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -39,6 +41,10 @@ def _get_kwargs(
         json_anchor = anchor.value
 
     params["anchor"] = json_anchor
+
+    params["externalId"] = external_id
+
+    params["status"] = status
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -71,7 +77,7 @@ def _parse_response(
 
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
@@ -95,6 +101,8 @@ def sync_detailed(
     sort: Union[Unset, ListFunctionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, FunctionList]]:
     """List all MCP servers
 
@@ -109,6 +117,8 @@ def sync_detailed(
         sort (Union[Unset, ListFunctionsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListFunctionsAnchor]):
+        external_id (Union[Unset, str]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -124,6 +134,8 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
+        status=status,
     )
 
     response = client.get_httpx_client().request(
@@ -141,6 +153,8 @@ def sync(
     sort: Union[Unset, ListFunctionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Union[Error, FunctionList] | None:
     """List all MCP servers
 
@@ -155,6 +169,8 @@ def sync(
         sort (Union[Unset, ListFunctionsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListFunctionsAnchor]):
+        external_id (Union[Unset, str]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -171,6 +187,8 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
+        status=status,
     ).parsed
 
 
@@ -182,6 +200,8 @@ async def asyncio_detailed(
     sort: Union[Unset, ListFunctionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, FunctionList]]:
     """List all MCP servers
 
@@ -196,6 +216,8 @@ async def asyncio_detailed(
         sort (Union[Unset, ListFunctionsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListFunctionsAnchor]):
+        external_id (Union[Unset, str]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -211,6 +233,8 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        external_id=external_id,
+        status=status,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -226,6 +250,8 @@ async def asyncio(
     sort: Union[Unset, ListFunctionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Union[Error, FunctionList] | None:
     """List all MCP servers
 
@@ -240,6 +266,8 @@ async def asyncio(
         sort (Union[Unset, ListFunctionsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListFunctionsAnchor]):
+        external_id (Union[Unset, str]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -257,5 +285,7 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
+            external_id=external_id,
+            status=status,
         )
     ).parsed

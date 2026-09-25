@@ -9,6 +9,7 @@ from .sandbox import (
     SandboxProcess,
     SandboxSchedules,
 )
+from .snapshot import SandboxSnapshots
 from .system import SandboxSystem
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "SandboxCodegen",
     "SandboxSystem",
     "SandboxDrive",
+    "SandboxSnapshots",
     "CodeInterpreter",
 ]

@@ -17,6 +17,7 @@ from ..client.models import (
 from ..client.types import UNSET
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
+from .client.types import Response as ApiResponse
 
 
 class SessionCreateOptions:
@@ -421,6 +422,31 @@ class ResponseError(Exception):
         self.response = response
         self.data = data
         self.error = None
+
+    @classmethod
+    def from_api_response(cls, response: ApiResponse[Any]) -> "ResponseError":
+        """Wrap a generated-client ``Response`` so every sandbox call raises one error type."""
+        return cls(
+            httpx.Response(
+                int(response.status_code),
+                content=response.content,
+                headers=dict(response.headers),
+            )
+        )
+
+
+ParsedT = TypeVar("ParsedT")
+
+
+def api_result(response: ApiResponse[Any], model: type[ParsedT]) -> ParsedT:
+    """Return the parsed body of a generated-client ``Response`` when it is a ``model``.
+
+    Anything else (an error status, an ``ErrorResponse`` body, an undocumented
+    status the client did not parse) raises ``ResponseError``.
+    """
+    if response.status_code < 300 and isinstance(response.parsed, model):
+        return response.parsed
+    raise ResponseError.from_api_response(response)
 
 
 # -----------------------------

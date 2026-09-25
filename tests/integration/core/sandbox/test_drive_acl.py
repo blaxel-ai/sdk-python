@@ -61,7 +61,6 @@ async def _create_drive_with_permissions(name: str, permissions: list[dict]) -> 
         ),
         spec=DriveSpec(
             region=default_region,
-            size=1,
             permissions=_make_permissions(permissions),
         ),
     )

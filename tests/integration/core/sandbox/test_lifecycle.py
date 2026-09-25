@@ -425,11 +425,11 @@ class TestUpdateLifecyclePreservesState(TestSandboxLifecycleAndExpiration):
                     value="20m",
                     action=ExpirationPolicyAction.DELETE,
                 ),
-                ExpirationPolicy(
-                    type_=ExpirationPolicyType.TTL_IDLE,
-                    value="10m",
-                    action=ExpirationPolicyAction.DELETE,
-                ),
+                # Exactly one ttl-idle: the control plane rejects duplicates of a
+                # policy type with a 400. That 400 used to be swallowed by
+                # update_lifecycle, so this test passed while the update never
+                # applied -- it asserted the file survived a change that never
+                # happened.
                 ExpirationPolicy(
                     type_=ExpirationPolicyType.TTL_IDLE,
                     value="10m",

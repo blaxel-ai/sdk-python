@@ -12,18 +12,22 @@ T = TypeVar("T", bound="DeleteDriveResponse200")
 class DeleteDriveResponse200:
     """
     Attributes:
-        message (Union[Unset, str]):  Example: Drive deleted successfully.
+        message (Union[Unset, str]):  Example: Drive deletion started.
         name (Union[Unset, str]):  Example: my-drive.
+        status (Union[Unset, str]):  Example: DELETING.
     """
 
     message: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
+    status: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         message = self.message
 
         name = self.name
+
+        status = self.status
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -32,6 +36,8 @@ class DeleteDriveResponse200:
             field_dict["message"] = message
         if name is not UNSET:
             field_dict["name"] = name
+        if status is not UNSET:
+            field_dict["status"] = status
 
         return field_dict
 
@@ -44,9 +50,12 @@ class DeleteDriveResponse200:
 
         name = d.pop("name", UNSET)
 
+        status = d.pop("status", UNSET)
+
         delete_drive_response_200 = cls(
             message=message,
             name=name,
+            status=status,
         )
 
         delete_drive_response_200.additional_properties = d

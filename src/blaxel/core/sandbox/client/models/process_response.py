@@ -28,6 +28,7 @@ class ProcessResponse:
         max_restarts (Union[Unset, int]):  Example: 3.
         restart_count (Union[Unset, int]):  Example: 2.
         restart_on_failure (Union[Unset, bool]):  Example: True.
+        stdin (Union[Unset, bool]): Whether the process was started with a writable stdin pipe
     """
 
     command: str
@@ -45,6 +46,7 @@ class ProcessResponse:
     max_restarts: Union[Unset, int] = UNSET
     restart_count: Union[Unset, int] = UNSET
     restart_on_failure: Union[Unset, bool] = UNSET
+    stdin: Union[Unset, bool] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -78,6 +80,8 @@ class ProcessResponse:
 
         restart_on_failure = self.restart_on_failure
 
+        stdin = self.stdin
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -103,6 +107,8 @@ class ProcessResponse:
             field_dict["restartCount"] = restart_count
         if restart_on_failure is not UNSET:
             field_dict["restartOnFailure"] = restart_on_failure
+        if stdin is not UNSET:
+            field_dict["stdin"] = stdin
 
         return field_dict
 
@@ -141,6 +147,8 @@ class ProcessResponse:
 
         restart_on_failure = d.pop("restartOnFailure", d.pop("restart_on_failure", UNSET))
 
+        stdin = d.pop("stdin", UNSET)
+
         process_response = cls(
             command=command,
             completed_at=completed_at,
@@ -157,6 +165,7 @@ class ProcessResponse:
             max_restarts=max_restarts,
             restart_count=restart_count,
             restart_on_failure=restart_on_failure,
+            stdin=stdin,
         )
 
         process_response.additional_properties = d

@@ -1,37 +1,49 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union, cast
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.template import Template
+from ...models.drive import Drive
 from ...types import Response
 
 
 def _get_kwargs(
-    template_name: str,
+    external_id: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/templates/{template_name}",
+        "url": f"/drives/by-external-id/{external_id}",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Template | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Drive] | None:
     if response.status_code == 200:
-        response_200 = Template.from_dict(response.json())
+        response_200 = Drive.from_dict(response.json())
 
         return response_200
+    if response.status_code == 401:
+        response_401 = cast(Any, None)
+        return response_401
+    if response.status_code == 403:
+        response_403 = cast(Any, None)
+        return response_403
+    if response.status_code == 404:
+        response_404 = cast(Any, None)
+        return response_404
+    if response.status_code == 500:
+        response_500 = cast(Any, None)
+        return response_500
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(response.status_code, response.content, response.headers)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Template]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Drive]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -41,28 +53,27 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Tem
 
 
 def sync_detailed(
-    template_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> Response[Template]:
-    """Get template
+) -> Response[Union[Any, Drive]]:
+    """Get drive by external ID
 
-     Returns detailed information about a deployment template including its configuration, source code
-    reference, and available parameters.
+     Returns a drive matching the given external ID. If no drive is found, returns 404.
 
     Args:
-        template_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Template]
+        Response[Union[Any, Drive]]
     """
 
     kwargs = _get_kwargs(
-        template_name=template_name,
+        external_id=external_id,
     )
 
     response = client.get_httpx_client().request(
@@ -73,55 +84,53 @@ def sync_detailed(
 
 
 def sync(
-    template_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> Template | None:
-    """Get template
+) -> Union[Any, Drive] | None:
+    """Get drive by external ID
 
-     Returns detailed information about a deployment template including its configuration, source code
-    reference, and available parameters.
+     Returns a drive matching the given external ID. If no drive is found, returns 404.
 
     Args:
-        template_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Template
+        Union[Any, Drive]
     """
 
     return sync_detailed(
-        template_name=template_name,
+        external_id=external_id,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    template_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> Response[Template]:
-    """Get template
+) -> Response[Union[Any, Drive]]:
+    """Get drive by external ID
 
-     Returns detailed information about a deployment template including its configuration, source code
-    reference, and available parameters.
+     Returns a drive matching the given external ID. If no drive is found, returns 404.
 
     Args:
-        template_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Template]
+        Response[Union[Any, Drive]]
     """
 
     kwargs = _get_kwargs(
-        template_name=template_name,
+        external_id=external_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -130,29 +139,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    template_name: str,
+    external_id: str,
     *,
     client: Client,
-) -> Template | None:
-    """Get template
+) -> Union[Any, Drive] | None:
+    """Get drive by external ID
 
-     Returns detailed information about a deployment template including its configuration, source code
-    reference, and available parameters.
+     Returns a drive matching the given external ID. If no drive is found, returns 404.
 
     Args:
-        template_name (str):
+        external_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Template
+        Union[Any, Drive]
     """
 
     return (
         await asyncio_detailed(
-            template_name=template_name,
+            external_id=external_id,
             client=client,
         )
     ).parsed

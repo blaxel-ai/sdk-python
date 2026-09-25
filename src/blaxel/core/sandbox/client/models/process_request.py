@@ -24,6 +24,8 @@ class ProcessRequest:
             unlimited restarts. Example: 3.
         name (Union[Unset, str]):  Example: my-process.
         restart_on_failure (Union[Unset, bool]):  Example: True.
+        stdin (Union[Unset, bool]): Open a writable stdin pipe, fed via POST /process/{identifier}/stdin and closed via
+            DELETE. The pipe does not survive a sandbox-api restart: the process then sees EOF.
         timeout (Union[Unset, int]): Timeout in seconds. When keepAlive is true, defaults to 600s (10 minutes). Set to 0
             for infinite (no auto-kill). Example: 30.
         wait_for_completion (Union[Unset, bool]):
@@ -37,6 +39,7 @@ class ProcessRequest:
     max_restarts: Union[Unset, int] = UNSET
     name: Union[Unset, str] = UNSET
     restart_on_failure: Union[Unset, bool] = UNSET
+    stdin: Union[Unset, bool] = UNSET
     timeout: Union[Unset, int] = UNSET
     wait_for_completion: Union[Unset, bool] = UNSET
     wait_for_ports: Union[Unset, list[int]] = UNSET
@@ -44,6 +47,7 @@ class ProcessRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         command = self.command
 
         env: Union[Unset, dict[str, Any]] = UNSET
@@ -59,6 +63,8 @@ class ProcessRequest:
         name = self.name
 
         restart_on_failure = self.restart_on_failure
+
+        stdin = self.stdin
 
         timeout = self.timeout
 
@@ -87,6 +93,8 @@ class ProcessRequest:
             field_dict["name"] = name
         if restart_on_failure is not UNSET:
             field_dict["restartOnFailure"] = restart_on_failure
+        if stdin is not UNSET:
+            field_dict["stdin"] = stdin
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
         if wait_for_completion is not UNSET:
@@ -122,6 +130,8 @@ class ProcessRequest:
 
         restart_on_failure = d.pop("restartOnFailure", d.pop("restart_on_failure", UNSET))
 
+        stdin = d.pop("stdin", UNSET)
+
         timeout = d.pop("timeout", UNSET)
 
         wait_for_completion = d.pop("waitForCompletion", d.pop("wait_for_completion", UNSET))
@@ -137,6 +147,7 @@ class ProcessRequest:
             max_restarts=max_restarts,
             name=name,
             restart_on_failure=restart_on_failure,
+            stdin=stdin,
             timeout=timeout,
             wait_for_completion=wait_for_completion,
             wait_for_ports=wait_for_ports,

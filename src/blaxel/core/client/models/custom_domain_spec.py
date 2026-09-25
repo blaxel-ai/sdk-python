@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.custom_domain_spec_domain_type import CustomDomainSpecDomainType
 from ..models.custom_domain_spec_status import CustomDomainSpecStatus
 from ..types import UNSET, Unset
 
@@ -22,6 +23,8 @@ class CustomDomainSpec:
 
     Attributes:
         cname_records (Union[Unset, str]): CNAME target for the domain
+        domain_type (Union[Unset, CustomDomainSpecDomainType]): Type of custom domain (previews or applications)
+            Example: applications.
         fallback_preview_id (Union[Unset, str]): Preview ID to route to when a preview lookup fails on this custom
             domain Example: my-fallback-preview.
         last_verified_at (Union[Unset, str]): Last verification attempt timestamp
@@ -36,6 +39,7 @@ class CustomDomainSpec:
     """
 
     cname_records: Union[Unset, str] = UNSET
+    domain_type: Union[Unset, CustomDomainSpecDomainType] = UNSET
     fallback_preview_id: Union[Unset, str] = UNSET
     last_verified_at: Union[Unset, str] = UNSET
     region: Union[Unset, str] = UNSET
@@ -50,6 +54,10 @@ class CustomDomainSpec:
     def to_dict(self) -> dict[str, Any]:
 
         cname_records = self.cname_records
+
+        domain_type: Union[Unset, str] = UNSET
+        if not isinstance(self.domain_type, Unset):
+            domain_type = self.domain_type.value
 
         fallback_preview_id = self.fallback_preview_id
 
@@ -88,6 +96,8 @@ class CustomDomainSpec:
         field_dict.update({})
         if cname_records is not UNSET:
             field_dict["cnameRecords"] = cname_records
+        if domain_type is not UNSET:
+            field_dict["domainType"] = domain_type
         if fallback_preview_id is not UNSET:
             field_dict["fallbackPreviewId"] = fallback_preview_id
         if last_verified_at is not UNSET:
@@ -116,6 +126,13 @@ class CustomDomainSpec:
             return None
         d = src_dict.copy()
         cname_records = d.pop("cnameRecords", d.pop("cname_records", UNSET))
+
+        _domain_type = d.pop("domainType", d.pop("domain_type", UNSET))
+        domain_type: Union[Unset, CustomDomainSpecDomainType]
+        if isinstance(_domain_type, Unset):
+            domain_type = UNSET
+        else:
+            domain_type = CustomDomainSpecDomainType(_domain_type)
 
         fallback_preview_id = d.pop("fallbackPreviewId", d.pop("fallback_preview_id", UNSET))
 
@@ -152,6 +169,7 @@ class CustomDomainSpec:
 
         custom_domain_spec = cls(
             cname_records=cname_records,
+            domain_type=domain_type,
             fallback_preview_id=fallback_preview_id,
             last_verified_at=last_verified_at,
             region=region,

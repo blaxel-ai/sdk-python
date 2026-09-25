@@ -2,6 +2,12 @@
 
 from .apply_edit_request import ApplyEditRequest
 from .apply_edit_response import ApplyEditResponse
+from .archive_change import ArchiveChange
+from .archive_change_kind import ArchiveChangeKind
+from .archive_export_state import ArchiveExportState
+from .archive_manifest import ArchiveManifest
+from .archive_quiesce_state import ArchiveQuiesceState
+from .archive_restore_state import ArchiveRestoreState
 from .content_search_match import ContentSearchMatch
 from .content_search_response import ContentSearchResponse
 from .delete_network_process_pid_monitor_response_200 import (
@@ -14,6 +20,10 @@ from .drive_mount_request import DriveMountRequest
 from .drive_mount_response import DriveMountResponse
 from .drive_unmount_response import DriveUnmountResponse
 from .error_response import ErrorResponse
+from .export_options import ExportOptions
+from .export_options_headers import ExportOptionsHeaders
+from .export_progress import ExportProgress
+from .export_result import ExportResult
 from .file import File
 from .file_request import FileRequest
 from .file_with_content import FileWithContent
@@ -25,6 +35,7 @@ from .find_response import FindResponse
 from .fuzzy_search_match import FuzzySearchMatch
 from .fuzzy_search_response import FuzzySearchResponse
 from .get_network_process_pid_ports_response_200 import GetNetworkProcessPidPortsResponse200
+from .handler_reload_response import HandlerReloadResponse
 from .health_response import HealthResponse
 from .multipart_complete_request import MultipartCompleteRequest
 from .multipart_initiate_request import MultipartInitiateRequest
@@ -32,6 +43,7 @@ from .multipart_initiate_response import MultipartInitiateResponse
 from .multipart_list_parts_response import MultipartListPartsResponse
 from .multipart_list_uploads_response import MultipartListUploadsResponse
 from .multipart_part_info import MultipartPartInfo
+from .multipart_upload import MultipartUpload
 from .multipart_upload_part_response import MultipartUploadPartResponse
 from .port_monitor_request import PortMonitorRequest
 from .post_network_process_pid_monitor_response_200 import PostNetworkProcessPidMonitorResponse200
@@ -42,8 +54,10 @@ from .process_response import ProcessResponse
 from .process_response_status import ProcessResponseStatus
 from .process_upgrade_state import ProcessUpgradeState
 from .put_filesystem_multipart_upload_id_part_body import PutFilesystemMultipartUploadIdPartBody
+from .quiesce_status import QuiesceStatus
 from .ranked_file import RankedFile
 from .reranking_response import RerankingResponse
+from .restore_progress import RestoreProgress
 from .subdirectory import Subdirectory
 from .success_response import SuccessResponse
 from .tree_request import TreeRequest
@@ -55,6 +69,12 @@ from .upgrade_status import UpgradeStatus
 __all__ = (
     "ApplyEditRequest",
     "ApplyEditResponse",
+    "ArchiveChange",
+    "ArchiveChangeKind",
+    "ArchiveExportState",
+    "ArchiveManifest",
+    "ArchiveQuiesceState",
+    "ArchiveRestoreState",
     "ContentSearchMatch",
     "ContentSearchResponse",
     "DeleteNetworkProcessPidMonitorResponse200",
@@ -65,6 +85,10 @@ __all__ = (
     "DriveMountResponse",
     "DriveUnmountResponse",
     "ErrorResponse",
+    "ExportOptions",
+    "ExportOptionsHeaders",
+    "ExportProgress",
+    "ExportResult",
     "File",
     "FileRequest",
     "FilesystemMultipartUpload",
@@ -76,6 +100,7 @@ __all__ = (
     "FuzzySearchMatch",
     "FuzzySearchResponse",
     "GetNetworkProcessPidPortsResponse200",
+    "HandlerReloadResponse",
     "HealthResponse",
     "MultipartCompleteRequest",
     "MultipartInitiateRequest",
@@ -83,6 +108,7 @@ __all__ = (
     "MultipartListPartsResponse",
     "MultipartListUploadsResponse",
     "MultipartPartInfo",
+    "MultipartUpload",
     "MultipartUploadPartResponse",
     "PortMonitorRequest",
     "PostNetworkProcessPidMonitorResponse200",
@@ -93,8 +119,10 @@ __all__ = (
     "ProcessResponseStatus",
     "ProcessUpgradeState",
     "PutFilesystemMultipartUploadIdPartBody",
+    "QuiesceStatus",
     "RankedFile",
     "RerankingResponse",
+    "RestoreProgress",
     "Subdirectory",
     "SuccessResponse",
     "TreeRequest",

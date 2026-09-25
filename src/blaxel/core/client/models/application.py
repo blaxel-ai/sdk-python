@@ -25,12 +25,14 @@ class Application:
             spec (ApplicationSpec): Configuration for an application including revision management, URL routing, and
                 deployment region
             events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
+            node_generation (Union[Unset, str]): Infrastructure generation this application is deployed on (mk3.0 or mk3.1).
             status (Union[Unset, str]): Application status computed from events
     """
 
     metadata: "Metadata"
     spec: "ApplicationSpec"
     events: Union[Unset, list["CoreEvent"]] = UNSET
+    node_generation: Union[Unset, str] = UNSET
     status: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -58,6 +60,8 @@ class Application:
                     )
                 events.append(componentsschemas_core_events_item)
 
+        node_generation = self.node_generation
+
         status = self.status
 
         field_dict: dict[str, Any] = {}
@@ -70,6 +74,8 @@ class Application:
         )
         if events is not UNSET:
             field_dict["events"] = events
+        if node_generation is not UNSET:
+            field_dict["nodeGeneration"] = node_generation
         if status is not UNSET:
             field_dict["status"] = status
 
@@ -97,12 +103,15 @@ class Application:
 
             events.append(componentsschemas_core_events_item)
 
+        node_generation = d.pop("nodeGeneration", d.pop("node_generation", UNSET))
+
         status = d.pop("status", UNSET)
 
         application = cls(
             metadata=metadata,
             spec=spec,
             events=events,
+            node_generation=node_generation,
             status=status,
         )
 
