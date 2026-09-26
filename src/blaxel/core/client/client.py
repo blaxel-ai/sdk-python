@@ -1,9 +1,113 @@
 import asyncio
+import os
+import random
 import ssl
+import time
 from typing import Any, Union
 
 import httpx
 from attrs import define, evolve, field
+
+# Transient upstream failures that are safe to replay: the API sits behind a
+# proxy that briefly answers 502/503/504 while a backend is unavailable (deploy,
+# cold start, connection drain). A bounded retry turns those blips into a
+# successful call instead of surfacing an UnexpectedStatus to user code.
+_RETRYABLE_STATUS_CODES = frozenset({502, 503, 504})
+# Only replay requests whose semantics make a retry safe. POST is intentionally
+# excluded so a transient gateway error can never duplicate a create/side effect.
+_IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "PUT", "DELETE"})
+# When the caller customizes transport-level networking we leave construction
+# exactly as-is and skip the retry wrapper, to preserve their configuration.
+_TRANSPORT_HTTPX_ARGS = frozenset(
+    {
+        "transport",
+        "mounts",
+        "app",
+        "http1",
+        "http2",
+        "proxy",
+        "proxies",
+        "limits",
+        "verify",
+        "cert",
+        "trust_env",
+    }
+)
+_DEFAULT_CLIENT_RETRIES = 2
+_RETRY_BASE_BACKOFF_SECONDS = 0.25
+_RETRY_MAX_BACKOFF_SECONDS = 2.0
+
+
+def _client_max_retries() -> int:
+    """Retry budget for transient gateway 5xx on idempotent control-plane calls."""
+    value = os.environ.get("BL_CLIENT_RETRIES")
+    if value is None:
+        return _DEFAULT_CLIENT_RETRIES
+    try:
+        parsed = int(value)
+    except ValueError:
+        return _DEFAULT_CLIENT_RETRIES
+    return parsed if parsed >= 0 else _DEFAULT_CLIENT_RETRIES
+
+
+def _should_retry_transient(request: httpx.Request, status_code: int) -> bool:
+    return request.method.upper() in _IDEMPOTENT_METHODS and status_code in _RETRYABLE_STATUS_CODES
+
+
+def _retry_backoff_seconds(attempt: int) -> float:
+    exponential = _RETRY_BASE_BACKOFF_SECONDS * (2 ** max(attempt - 1, 0))
+    capped = min(exponential, _RETRY_MAX_BACKOFF_SECONDS)
+    return capped + random.uniform(0, _RETRY_BASE_BACKOFF_SECONDS)
+
+
+def _uses_custom_transport(httpx_args: dict[str, Any]) -> bool:
+    return bool(_TRANSPORT_HTTPX_ARGS & httpx_args.keys())
+
+
+class _RetryTransport(httpx.BaseTransport):
+    """Replay idempotent requests a bounded number of times on transient 5xx."""
+
+    def __init__(self, wrapped: httpx.BaseTransport, max_retries: int) -> None:
+        self._wrapped = wrapped
+        self._max_retries = max_retries
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        response = self._wrapped.handle_request(request)
+        attempt = 0
+        while attempt < self._max_retries and _should_retry_transient(
+            request, response.status_code
+        ):
+            response.close()
+            attempt += 1
+            time.sleep(_retry_backoff_seconds(attempt))
+            response = self._wrapped.handle_request(request)
+        return response
+
+    def close(self) -> None:
+        self._wrapped.close()
+
+
+class _AsyncRetryTransport(httpx.AsyncBaseTransport):
+    """Async counterpart of :class:`_RetryTransport`."""
+
+    def __init__(self, wrapped: httpx.AsyncBaseTransport, max_retries: int) -> None:
+        self._wrapped = wrapped
+        self._max_retries = max_retries
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        response = await self._wrapped.handle_async_request(request)
+        attempt = 0
+        while attempt < self._max_retries and _should_retry_transient(
+            request, response.status_code
+        ):
+            await response.aclose()
+            attempt += 1
+            await asyncio.sleep(_retry_backoff_seconds(attempt))
+            response = await self._wrapped.handle_async_request(request)
+        return response
+
+    async def aclose(self) -> None:
+        await self._wrapped.aclose()
 
 
 @define
@@ -111,6 +215,15 @@ class Client:
     def get_httpx_client(self) -> httpx.Client:
         """Get the underlying httpx.Client, constructing a new one if not previously set"""
         if self._client is None:
+            httpx_args = self._httpx_args
+            if not _uses_custom_transport(httpx_args):
+                httpx_args = {
+                    **httpx_args,
+                    "transport": _RetryTransport(
+                        httpx.HTTPTransport(verify=self._verify_ssl),
+                        _client_max_retries(),
+                    ),
+                }
             self._client = httpx.Client(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -119,7 +232,7 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
-                **self._httpx_args,
+                **httpx_args,
             )
         return self._client
 
@@ -152,6 +265,15 @@ class Client:
             self._async_client_loop = None
 
         if self._async_client is None:
+            httpx_args = self._httpx_args
+            if not _uses_custom_transport(httpx_args):
+                httpx_args = {
+                    **httpx_args,
+                    "transport": _AsyncRetryTransport(
+                        httpx.AsyncHTTPTransport(verify=self._verify_ssl),
+                        _client_max_retries(),
+                    ),
+                }
             self._async_client = httpx.AsyncClient(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -160,7 +282,7 @@ class Client:
                 verify=self._verify_ssl,
                 follow_redirects=self._follow_redirects,
                 auth=self._auth,
-                **self._httpx_args,
+                **httpx_args,
             )
             self._async_client_loop = current_loop
         return self._async_client
