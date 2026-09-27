@@ -52,6 +52,58 @@ def _raise_in_sdk(relative_path: str, code: str) -> BaseException:
     return _raise_in_file(_sdk_filename(relative_path), code)
 
 
+def _raise_provider_error_through_sdk(
+    status_code: int = 404,
+    *,
+    wrapper_path: str = "langgraph/model.py",
+    on_response: bool = False,
+) -> BaseException:
+    """Build a provider HTTP error that unwinds through an SDK wrapper frame.
+
+    Mirrors SDK-PYTHON-11Z: a provider client raises an HTTP status error (e.g. a
+    404 for an unavailable model) that propagates through a thin SDK model wrapper
+    without the SDK raising it. When ``on_response`` is set the status lives on an
+    attached ``response`` object, as the anthropic/openai clients do.
+    """
+    if on_response:
+        provider_source = """
+class NotFoundError(Exception):
+    def __init__(self, status_code):
+        super().__init__("model not found")
+        self.response = type("Response", (), {"status_code": status_code})()
+
+def request(status_code):
+    raise NotFoundError(status_code)
+"""
+    else:
+        provider_source = """
+class NotFoundError(Exception):
+    def __init__(self, status_code):
+        super().__init__("model not found")
+        self.status_code = status_code
+
+def request(status_code):
+    raise NotFoundError(status_code)
+"""
+    provider = _define_in_file(
+        "/tmp/site-packages/anthropic/_base_client.py",
+        provider_source,
+    )
+    wrapper = _define_in_file(
+        _sdk_filename(wrapper_path),
+        "def ainvoke(request, status_code):\n    return request(status_code)",
+    )
+    return _raise_in_file(
+        "/tmp/customer/app.py",
+        "ainvoke(request, status_code)",
+        {
+            "ainvoke": wrapper["ainvoke"],
+            "request": provider["request"],
+            "status_code": status_code,
+        },
+    )
+
+
 def _exception_group_leaves(error: BaseException) -> list[BaseException]:
     if isinstance(error, sentry._EXCEPTION_GROUP_TYPES):
         leaves = []
@@ -236,6 +288,41 @@ except errors.UnexpectedStatus as exc:
         assert namespace["handled_status"] == 404
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == []
+
+    def test_unhandled_provider_http_error_through_wrapper_is_not_captured(
+        self, installed_sentry_hooks
+    ):
+        """Regression for SDK-PYTHON-11Z: a provider 404 (e.g. an unavailable model)
+        unwinds through the SDK model wrapper, but is a user/provider problem rather
+        than an SDK defect and must not be reported."""
+        exc = _raise_provider_error_through_sdk(404)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_sdk_raised_http_error_is_still_captured(self, installed_sentry_hooks):
+        """An HTTP status error the SDK itself raises (e.g. the generated client's
+        UnexpectedStatus) is a genuine SDK failure and stays reportable."""
+        exc = _raise_in_sdk(
+            "core/client/api/jobs/create_job_execution.py",
+            """
+class UnexpectedStatus(Exception):
+    def __init__(self):
+        super().__init__("unexpected status")
+        self.status_code = 502
+
+raise UnexpectedStatus()
+""",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
     def test_unhandled_sdk_exception_is_captured_and_chained(self, installed_sentry_hooks):
         exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
@@ -688,6 +775,105 @@ _parse_response(
         assert "top-secret-customer-value" not in serialized_event
         assert "CUSTOMER_SECRET" not in serialized_event
         assert event["exception"]["values"][0]["value"] == ("Unhandled SDK exception (HTTP 404)")
+
+
+class TestPassThroughProviderError:
+    """Cover suppression of downstream provider/API errors surfacing via the SDK."""
+
+    def test_status_code_on_exception_is_read(self):
+        exc = _raise_provider_error_through_sdk(404)
+        assert sentry._http_status_code(exc) == 404
+
+    def test_status_code_on_response_is_read(self):
+        exc = _raise_provider_error_through_sdk(429, on_response=True)
+        assert sentry._http_status_code(exc) == 429
+
+    def test_error_without_status_code_has_none(self):
+        exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+        assert sentry._http_status_code(exc) is None
+
+    def test_boolean_status_code_is_not_treated_as_http(self):
+        exc = RuntimeError("weird")
+        setattr(exc, "status_code", True)
+        assert sentry._http_status_code(exc) is None
+
+    def test_provider_http_error_through_wrapper_is_pass_through(self):
+        exc = _raise_provider_error_through_sdk(404)
+        assert sentry._is_from_sdk(exc) is True
+        assert sentry._was_raised_in_sdk(exc) is False
+        assert sentry._is_pass_through_provider_error(exc) is True
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_provider_http_error_through_any_integration_wrapper_is_pass_through(self):
+        for wrapper_path in ("langgraph/model.py", "llamaindex/model.py", "openai/model.py"):
+            exc = _raise_provider_error_through_sdk(404, wrapper_path=wrapper_path)
+            assert sentry._is_pass_through_provider_error(exc) is True, wrapper_path
+
+    def test_sdk_raised_http_error_is_not_pass_through(self):
+        exc = _raise_in_sdk(
+            "core/client/api/jobs/create_job_execution.py",
+            """
+class UnexpectedStatus(Exception):
+    def __init__(self):
+        super().__init__("bad gateway")
+        self.status_code = 502
+
+raise UnexpectedStatus()
+""",
+        )
+        assert sentry._was_raised_in_sdk(exc) is True
+        assert sentry._is_pass_through_provider_error(exc) is False
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_non_http_error_through_wrapper_stays_reportable(self):
+        """A crash without a server status is treated conservatively: it may be a
+        genuine SDK bug, so it is not suppressed as a provider error."""
+        provider = _define_in_file(
+            "/tmp/site-packages/langchain_core/language_models.py",
+            "def ainvoke():\n    raise ValueError('boom')",
+        )
+        wrapper = _define_in_file(
+            _sdk_filename("langgraph/model.py"),
+            "def ainvoke(inner):\n    return inner()",
+        )
+        exc = _raise_in_file(
+            "/tmp/customer/app.py",
+            "ainvoke(inner)",
+            {"ainvoke": wrapper["ainvoke"], "inner": provider["ainvoke"]},
+        )
+        assert sentry._http_status_code(exc) is None
+        assert sentry._is_pass_through_provider_error(exc) is False
+
+    def test_application_provider_error_is_not_sdk_at_all(self):
+        """A provider error that never touches an SDK frame is filtered upstream by
+        the from-SDK check, independent of the pass-through classification."""
+        provider = _define_in_file(
+            "/tmp/site-packages/anthropic/_base_client.py",
+            """
+class NotFoundError(Exception):
+    def __init__(self):
+        super().__init__("model not found")
+        self.status_code = 404
+
+def request():
+    raise NotFoundError()
+""",
+        )
+        exc = _raise_in_file(
+            "/tmp/customer/app.py",
+            "request()",
+            {"request": provider["request"]},
+        )
+        assert sentry._is_from_sdk(exc) is False
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_pass_through_provider_error_value_is_privacy_safe(self):
+        """The redacted event value still surfaces the HTTP status for triage."""
+        exc = _raise_provider_error_through_sdk(404)
+        event = sentry._error_to_sentry_event(exc, "excepthook")
+        exception_value = event["exception"]["values"][0]
+        assert exception_value["value"] == "Unhandled SDK exception (HTTP 404)"
+        assert "model not found" not in json.dumps(event)
 
 
 class TestIsOptionalDependencyError:
