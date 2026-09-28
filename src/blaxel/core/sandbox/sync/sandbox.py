@@ -48,17 +48,10 @@ from ..default.sandbox import (
     ARCHIVE_MAX_WAIT_MS,
     ARCHIVE_WAIT_POLL_MS,
     ARCHIVING_STATUSES,
-    NON_REUSABLE_SANDBOX_STATUSES,
-    TRANSIENT_SANDBOX_STATUSES,
-    TRANSIENT_STATUS_MAX_WAIT_SECONDS,
-    TRANSIENT_STATUS_POLL_SECONDS,
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     SandboxAPIError,
     _create_body,
-    _is_sandbox_conflict,
-    _is_sandbox_not_found,
-    _sandbox_name,
     _status_of,
     _unwrap_response,
 )
@@ -724,70 +717,14 @@ class SyncSandboxInstance:
     def create_if_not_exists(
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
-        attempts = 3
-        last_status = "unknown"
-        for attempt in range(attempts):
-            final_attempt = attempt == attempts - 1
-            try:
-                return cls.create(sandbox, create_if_not_exist=True)
-            except SandboxAPIError as e:
-                if not _is_sandbox_conflict(e):
-                    raise
+        """Create the sandbox, or return the one already holding this name.
 
-                name = _sandbox_name(sandbox)
-                if not name:
-                    raise ValueError("Sandbox name is required")
-
-                try:
-                    sandbox_instance = cls.get(name)
-                except SandboxAPIError as get_error:
-                    if _is_sandbox_not_found(get_error):
-                        # The record vanished between the create conflict and this status
-                        # check (its deletion just finished); give the control plane a
-                        # beat and retry.
-                        last_status = "vanished"
-                        if not final_attempt:
-                            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
-                        continue
-                    raise
-
-                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
-                    return sandbox_instance
-
-                # A delete or deactivation in flight rejects creates until it finishes;
-                # wait it out instead of burning the remaining attempts inside the window.
-                # No point waiting after the last attempt: nothing will use the result.
-                last_status = str(sandbox_instance.status)
-                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
-                    cls._wait_while_dying(name)
-
-        raise RuntimeError(
-            f"Unable to create sandbox after {attempts} attempts."
-            f" Last conflicting status: {last_status}."
-        )
-
-    @classmethod
-    def _wait_while_dying(cls, name: str) -> None:
-        """Poll until an in-flight delete/deactivation settles or the record disappears.
-
-        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
-        the record is gone) end the wait: the caller's create retry decides next.
+        The control plane owns the reconciliation: an alive sandbox is returned as
+        is, a FAILED/TERMINATED one is replaced, and a deletion or concurrent
+        creation still in flight is waited for server-side. A 409 therefore only
+        surfaces when the name really cannot be used, and is raised as is.
         """
-        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
-        while time.monotonic() < deadline:
-            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
-            try:
-                current = cls.get(name)
-            except Exception:
-                return
-            status = str(current.status)
-            if status not in TRANSIENT_SANDBOX_STATUSES:
-                return
-            logger.debug(
-                "Sandbox %s still %s; waiting for the record to settle before recreating",
-                name,
-                status,
-            )
+        return cls.create(sandbox, create_if_not_exist=True)
 
     @classmethod
     def from_session(
