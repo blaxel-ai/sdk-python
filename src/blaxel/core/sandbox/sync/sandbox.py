@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 if TYPE_CHECKING:
     import httpx
 
+from ...client import errors as client_errors
 from ...client.api.compute.archive_sandbox import sync as archive_sandbox
 from ...client.api.compute.create_sandbox import sync as create_sandbox
 from ...client.api.compute.create_sandbox_snapshot import sync as create_sandbox_snapshot
@@ -52,8 +53,12 @@ from ..default.sandbox import (
     UNARCHIVING_STATUSES,
     SandboxAPIError,
     _create_body,
+    _creation_client,
+    _raise_if_creation_timeout,
+    _sandbox_name,
     _status_of,
     _unwrap_response,
+    _validate_creation_timeout,
 )
 from ..types import (
     SandboxConfiguration,
@@ -391,7 +396,19 @@ class SyncSandboxInstance:
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
         create_if_not_exist: bool = False,
+        timeout: int | None = None,
     ) -> "SyncSandboxInstance":
+        """Create a sandbox.
+
+        Args:
+            timeout: Optional creation deadline in whole seconds (1 to
+                ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
+                in time the control plane cancels the creation, releases the
+                sandbox and ``SandboxCreationTimeoutError`` is raised. Omitted, the
+                platform default deadline applies; an explicit value can only
+                shorten it.
+        """
+        timeout = _validate_creation_timeout(timeout)
         # No client-side default name: when the caller omits a name we send the
         # creation without metadata.name so the server can assign one and unnamed
         # creations become eligible for warm sandbox pools (ENG-3931).
@@ -503,14 +520,24 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-        response = create_sandbox(
-            client=client,
-            body=_create_body(sandbox),
-            create_if_not_exist=create_if_not_exist,
-        )
+        body = _create_body(sandbox)
+        try:
+            if timeout is None:
+                response = create_sandbox(
+                    client=client, body=body, create_if_not_exist=create_if_not_exist
+                )
+            else:
+                with _creation_client(timeout) as creation_client:
+                    response = create_sandbox(
+                        client=creation_client, body=body, create_if_not_exist=create_if_not_exist
+                    )
+        except client_errors.UnexpectedStatus as e:
+            _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
+            raise
 
         # Check if response is an error
         if isinstance(response, SandboxError):
+            _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
@@ -715,16 +742,21 @@ class SyncSandboxInstance:
 
     @classmethod
     def create_if_not_exists(
-        cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
+        cls,
+        sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
+        timeout: int | None = None,
     ) -> "SyncSandboxInstance":
         """Create the sandbox, or return the one already holding this name.
+
+        ``timeout`` is forwarded to :meth:`create`.
 
         The control plane owns the reconciliation: an alive sandbox is returned as
         is, a FAILED/TERMINATED one is replaced, and a deletion or concurrent
         creation still in flight is waited for server-side. A 409 therefore only
         surfaces when the name really cannot be used, and is raised as is.
         """
-        return cls.create(sandbox, create_if_not_exist=True)
+        create_kwargs: Dict[str, Any] = {} if timeout is None else {"timeout": timeout}
+        return cls.create(sandbox, create_if_not_exist=True, **create_kwargs)
 
     @classmethod
     def from_session(
