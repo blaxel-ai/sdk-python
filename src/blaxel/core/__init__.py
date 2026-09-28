@@ -24,7 +24,9 @@ from .mcp import BlaxelMcpServerTransport, websocket_client
 from .models import BLModel, bl_model
 from .sandbox import (
     CodeInterpreter,
+    SandboxAPIError,
     SandboxCodegen,
+    SandboxCreationTimeoutError,
     SandboxFileSystem,
     SandboxInstance,
     SandboxPreviews,
@@ -35,6 +37,7 @@ from .sandbox import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    is_creation_timeout_error,
 )
 from .sandbox.types import Sandbox
 from .snapshot import Snapshot, SnapshotAPIError, SyncSnapshot
@@ -59,6 +62,9 @@ __all__ = [
     "Sandbox",
     "SandboxFileSystem",
     "SandboxInstance",
+    "SandboxAPIError",
+    "SandboxCreationTimeoutError",
+    "is_creation_timeout_error",
     "SandboxPreviews",
     "SandboxProcess",
     "SandboxCodegen",
