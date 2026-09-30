@@ -555,6 +555,12 @@ async def test_fork_sends_lifecycle_only_when_given():
         await sandbox.fork("requested", lifecycle=lifecycle)
         assert mock_fork.call_args.kwargs["body"].to_dict()["lifecycle"] == lifecycle
 
+        await sandbox.fork(
+            "requested",
+            lifecycle={"expiration_policies": lifecycle["expirationPolicies"]},
+        )
+        assert mock_fork.call_args.kwargs["body"].to_dict()["lifecycle"] == lifecycle
+
 
 @pytest.mark.asyncio
 async def test_snapshot_sends_optional_name():

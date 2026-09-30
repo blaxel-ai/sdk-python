@@ -547,9 +547,9 @@ class SandboxInstance:
         if envs is not None:
             body.envs = envs
         if lifecycle is not None:
-            body.additional_properties["lifecycle"] = (
-                lifecycle if isinstance(lifecycle, dict) else lifecycle.to_dict()
-            )
+            if isinstance(lifecycle, dict):
+                lifecycle = SandboxLifecycle.from_dict(lifecycle) or SandboxLifecycle()
+            body.additional_properties["lifecycle"] = lifecycle.to_dict()
         response = await fork_sandbox(
             self.metadata.name,
             client=client,
