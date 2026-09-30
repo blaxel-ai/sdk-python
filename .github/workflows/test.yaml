@@ -64,6 +64,9 @@ jobs:
           echo "✅ Package builds successfully"
           ls -la dist/
 
+      - name: Check public process response types
+        run: uv tool run --from pyright==1.1.408 pyright --project tests/typing/pyrightconfig.json
+
       - name: Run tests
         run: |
           source .venv/bin/activate

@@ -1,0 +1,8 @@
+{
+  "include": ["process_response_nullable.py"],
+  "extraPaths": ["../../src"],
+  "venvPath": "../..",
+  "venv": ".venv",
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic"
+}

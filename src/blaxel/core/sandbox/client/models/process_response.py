@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,15 +14,15 @@ class ProcessResponse:
     """
     Attributes:
         command (str):  Example: ls -la.
-        completed_at (str):  Example: Wed, 01 Jan 2023 12:01:00 GMT.
+        completed_at (Union[None, str]):  Example: Wed, 01 Jan 2023 12:01:00 GMT.
         exit_code (int):
-        logs (str):  Example: logs output.
+        logs (Union[None, str]):  Example: logs output.
         name (str):  Example: my-process.
         pid (str):  Example: 1234.
         started_at (str):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
         status (ProcessResponseStatus):  Example: running.
-        stderr (str):  Example: stderr output.
-        stdout (str):  Example: stdout output.
+        stderr (Union[None, str]):  Example: stderr output.
+        stdout (Union[None, str]):  Example: stdout output.
         working_dir (str):  Example: /home/user.
         keep_alive (Union[Unset, bool]): Whether scale-to-zero is disabled for this process
         max_restarts (Union[Unset, int]):  Example: 3.
@@ -32,15 +32,15 @@ class ProcessResponse:
     """
 
     command: str
-    completed_at: str
+    completed_at: Union[None, str]
     exit_code: int
-    logs: str
+    logs: Union[None, str]
     name: str
     pid: str
     started_at: str
     status: ProcessResponseStatus
-    stderr: str
-    stdout: str
+    stderr: Union[None, str]
+    stdout: Union[None, str]
     working_dir: str
     keep_alive: Union[Unset, bool] = UNSET
     max_restarts: Union[Unset, int] = UNSET
@@ -52,10 +52,12 @@ class ProcessResponse:
     def to_dict(self) -> dict[str, Any]:
         command = self.command
 
+        completed_at: Union[None, str]
         completed_at = self.completed_at
 
         exit_code = self.exit_code
 
+        logs: Union[None, str]
         logs = self.logs
 
         name = self.name
@@ -66,8 +68,10 @@ class ProcessResponse:
 
         status = self.status.value
 
+        stderr: Union[None, str]
         stderr = self.stderr
 
+        stdout: Union[None, str]
         stdout = self.stdout
 
         working_dir = self.working_dir
@@ -119,11 +123,23 @@ class ProcessResponse:
         d = src_dict.copy()
         command = d.pop("command")
 
-        completed_at = d.pop("completedAt") if "completedAt" in d else d.pop("completed_at")
+        def _parse_completed_at(data: object) -> Union[None, str]:
+            if data is None:
+                return data
+            return cast(Union[None, str], data)
+
+        completed_at = _parse_completed_at(
+            d.pop("completedAt") if "completedAt" in d else d.pop("completed_at")
+        )
 
         exit_code = d.pop("exitCode") if "exitCode" in d else d.pop("exit_code")
 
-        logs = d.pop("logs")
+        def _parse_logs(data: object) -> Union[None, str]:
+            if data is None:
+                return data
+            return cast(Union[None, str], data)
+
+        logs = _parse_logs(d.pop("logs"))
 
         name = d.pop("name")
 
@@ -133,9 +149,19 @@ class ProcessResponse:
 
         status = ProcessResponseStatus(d.pop("status"))
 
-        stderr = d.pop("stderr")
+        def _parse_stderr(data: object) -> Union[None, str]:
+            if data is None:
+                return data
+            return cast(Union[None, str], data)
 
-        stdout = d.pop("stdout")
+        stderr = _parse_stderr(d.pop("stderr"))
+
+        def _parse_stdout(data: object) -> Union[None, str]:
+            if data is None:
+                return data
+            return cast(Union[None, str], data)
+
+        stdout = _parse_stdout(d.pop("stdout"))
 
         working_dir = d.pop("workingDir") if "workingDir" in d else d.pop("working_dir")
 
