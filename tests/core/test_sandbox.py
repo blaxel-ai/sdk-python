@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from blaxel.core.client.models import Metadata, Sandbox, SandboxSpec
+from blaxel.core.client.models import Metadata, Sandbox, SandboxLifecycle, SandboxSpec
 from blaxel.core.sandbox import (
     CodeInterpreter,
     SandboxAPIError,
@@ -535,6 +535,34 @@ async def test_fork_forwards_application_options_and_snapshot():
 
 
 @pytest.mark.asyncio
+async def test_fork_sends_lifecycle_only_when_given():
+    sandbox = sandbox_instance("my-sandbox")
+    lifecycle = {
+        "expirationPolicies": [{"type": "ttl-max-age", "value": "45m", "action": "delete"}]
+    }
+
+    with patch(
+        "blaxel.core.sandbox.default.sandbox.fork_sandbox", new_callable=AsyncMock
+    ) as mock_fork:
+        mock_fork.return_value = MagicMock()
+
+        await sandbox.fork("inherited")
+        assert "lifecycle" not in mock_fork.call_args.kwargs["body"].to_dict()
+
+        await sandbox.fork("requested", lifecycle=SandboxLifecycle.from_dict(lifecycle))
+        assert mock_fork.call_args.kwargs["body"].to_dict()["lifecycle"] == lifecycle
+
+        await sandbox.fork("requested", lifecycle=lifecycle)
+        assert mock_fork.call_args.kwargs["body"].to_dict()["lifecycle"] == lifecycle
+
+        await sandbox.fork(
+            "requested",
+            lifecycle={"expiration_policies": lifecycle["expirationPolicies"]},
+        )
+        assert mock_fork.call_args.kwargs["body"].to_dict()["lifecycle"] == lifecycle
+
+
+@pytest.mark.asyncio
 async def test_snapshot_sends_optional_name():
     sandbox = sandbox_instance("my-sandbox")
 
@@ -589,13 +617,20 @@ def test_sync_fork_and_snapshot_helpers():
         mock_fork.return_value = MagicMock()
         mock_snapshot.return_value = MagicMock()
 
-        sandbox.fork("my-sandbox-copy", snapshot_id="snap_abc123")
+        sandbox.fork(
+            "my-sandbox-copy",
+            snapshot_id="snap_abc123",
+            lifecycle={"expirationPolicies": [{"type": "ttl-idle", "value": "1h"}]},
+        )
         sandbox.snapshot("before")
 
         fork_body = mock_fork.call_args.kwargs["body"]
         assert fork_body.target_name == "my-sandbox-copy"
         assert fork_body.target_type == "sandbox"
         assert fork_body.snapshot_id == "snap_abc123"
+        assert fork_body.to_dict()["lifecycle"] == {
+            "expirationPolicies": [{"type": "ttl-idle", "value": "1h"}]
+        }
         assert mock_snapshot.call_args.kwargs["body"].name == "before"
 
 
