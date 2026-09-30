@@ -340,6 +340,7 @@ class SyncSandboxInstance:
         prefix: str | None = None,
         snapshot_id: str | None = None,
         envs: list[Env] | None = None,
+        lifecycle: SandboxLifecycle | Dict[str, Any] | None = None,
     ) -> SandboxForkResponse:
         """Fork this sandbox into a new sandbox or application.
 
@@ -363,6 +364,9 @@ class SyncSandboxInstance:
                 the source has: a variable the source already carries takes this
                 value in the fork, one it does not is added, and every other
                 variable of the source is kept.
+            lifecycle: Lifecycle the fork runs with, replacing the source's.
+                When omitted, a sandbox fork keeps the source's lifecycle and
+                its runtime ttl and expires. Only valid for a sandbox fork.
         """
         body = SandboxForkRequest(target_name=target_name, target_type=target_type)
         if port is not None:
@@ -377,6 +381,10 @@ class SyncSandboxInstance:
             body.snapshot_id = snapshot_id
         if envs is not None:
             body.envs = envs
+        if lifecycle is not None:
+            body.additional_properties["lifecycle"] = (
+                lifecycle if isinstance(lifecycle, dict) else lifecycle.to_dict()
+            )
         response = fork_sandbox(
             self.metadata.name,
             client=client,
