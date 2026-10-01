@@ -3,6 +3,7 @@
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from blaxel.core.client.models import Metadata, Sandbox, SandboxLifecycle, SandboxSpec
@@ -19,6 +20,7 @@ from blaxel.core.sandbox.types import (
     SandboxConfiguration,
     SandboxUpdateMetadata,
     SandboxUpdateNetwork,
+    SessionWithToken,
 )
 
 
@@ -377,29 +379,51 @@ def _session_dict() -> dict:
     }
 
 
+def _session_file_response(request: httpx.Request) -> httpx.Response:
+    session = _session_dict()
+    assert request.headers["X-Blaxel-Preview-Token"] == session["token"]
+    assert request.url.host == httpx.URL(session["url"]).host
+    assert "bl_preview_token" not in request.url.params
+    assert session["token"] not in str(request.url)
+    return httpx.Response(200, json={"content": "session-authenticated"})
+
+
 @pytest.mark.asyncio
-async def test_from_session_does_not_leak_token_in_params():
-    """The preview token must only travel in the header, never as a URL query param."""
+@pytest.mark.parametrize("as_dict", [True, False], ids=["dict", "SessionWithToken"])
+async def test_from_session_does_not_leak_token_in_params(as_dict: bool):
     session = _session_dict()
 
-    instance = await SandboxInstance.from_session(session)
+    instance = await SandboxInstance.from_session(
+        session if as_dict else SessionWithToken.from_dict(session)
+    )
 
     assert instance.config.params == {}
     assert instance.config.headers == {"X-Blaxel-Preview-Token": session["token"]}
-    # The persistent HTTP client must not carry the token as a default query param.
-    client = instance.process.get_client()
-    assert session["token"] not in str(client.params)
+    with patch(
+        "httpx.AsyncHTTPTransport.handle_async_request", side_effect=_session_file_response
+    ) as send:
+        try:
+            for _ in range(2):
+                assert await instance.fs.read("/tmp/session-test.txt") == "session-authenticated"
+            assert send.call_count == 2
+        finally:
+            await instance.fs.get_client().aclose()
 
 
-def test_sync_from_session_does_not_leak_token_in_params():
+@pytest.mark.parametrize("as_dict", [True, False], ids=["dict", "SessionWithToken"])
+def test_sync_from_session_does_not_leak_token_in_params(as_dict: bool):
     session = _session_dict()
 
-    instance = SyncSandboxInstance.from_session(session)
+    instance = SyncSandboxInstance.from_session(
+        session if as_dict else SessionWithToken.from_dict(session)
+    )
 
     assert instance.config.params == {}
     assert instance.config.headers == {"X-Blaxel-Preview-Token": session["token"]}
-    client = instance.process.get_client()
-    assert session["token"] not in str(client.params)
+    with patch("httpx.HTTPTransport.handle_request", side_effect=_session_file_response) as send:
+        for _ in range(2):
+            assert instance.fs.read("/tmp/session-test.txt") == "session-authenticated"
+        assert send.call_count == 2
 
 
 def _body_metadata_name(body):
