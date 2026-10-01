@@ -13,6 +13,7 @@ SDK_USER_AGENT = re.compile(r"^blaxel/sdk/python/\S+ \([^)]+\) blaxel/\S+")
 @pytest.fixture(autouse=True)
 def _reset_integration():
     settings.integration = None
+    settings._warned_integration = None
     os.environ.pop("BL_INTEGRATION", None)
     yield
     settings.integration = None
@@ -113,3 +114,11 @@ def test_async_control_plane_client_keeps_user_agent_across_event_loops(monkeypa
         ua = asyncio.run(user_agent_in_loop())
         assert ua.startswith("blaxel/sdk/python/")
         assert ua.endswith(" my-integration/1.2.0")
+
+
+def test_invalid_token_warns_once(caplog):
+    settings.integration = "Not-Valid"
+    with caplog.at_level("WARNING"):
+        for _ in range(5):
+            assert settings.integration == ""
+    assert caplog.text.count("invalid Blaxel integration token") == 1

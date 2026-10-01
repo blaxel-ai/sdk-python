@@ -65,6 +65,7 @@ class Settings:
         self.auth = auth(self.env, self.base_url)
         self._headers = None
         self._integration: str | None = None
+        self._warned_integration: str | None = None
 
     @property
     def env(self) -> str:
@@ -143,10 +144,13 @@ class Settings:
         if not value:
             return ""
         if not INTEGRATION_TOKEN_PATTERN.fullmatch(value):
-            logger.warning(
-                "Ignoring invalid Blaxel integration token %r: expected <name>/<semver> with a lowercase name",
-                value,
-            )
+            # Resolved on every request, so warn once per invalid value rather than per request.
+            if self._warned_integration != value:
+                self._warned_integration = value
+                logger.warning(
+                    "Ignoring invalid Blaxel integration token %r: expected <name>/<semver> with a lowercase name",
+                    value,
+                )
             return ""
         return value
 
