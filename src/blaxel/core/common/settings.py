@@ -14,7 +14,7 @@ BLAXEL_API_VERSION = "2026-09-22"
 
 # An integration built on this SDK identifies itself with one User-Agent product
 # token: "<name>/<semver>", lowercase name, e.g. "deepseek-harness-blaxel-sandbox/0.1.2".
-INTEGRATION_TOKEN_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$")
+INTEGRATION_TOKEN_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]*/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?")
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class Settings:
         )
         if not value:
             return ""
-        if not INTEGRATION_TOKEN_PATTERN.match(value):
+        if not INTEGRATION_TOKEN_PATTERN.fullmatch(value):
             logger.warning(
                 "Ignoring invalid Blaxel integration token %r: expected <name>/<semver> with a lowercase name",
                 value,

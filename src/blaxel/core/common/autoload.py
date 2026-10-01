@@ -36,22 +36,20 @@ def autoload() -> None:
     # (limit/cursor/next_page) is silently ignored.
     client.with_headers({"Blaxel-Version": settings.api_version})
 
-    # Register response interceptors for authentication error handling
-    # Access the underlying httpx clients and add event hooks
-    # Use sync interceptors for sync clients and async interceptors for async clients
-    httpx_client = client.get_httpx_client()
-    httpx_client.event_hooks["request"] = [_set_user_agent]
-    httpx_client.event_hooks["response"] = response_interceptors_sync
-
-    httpx_async_client = client.get_async_httpx_client()
-    httpx_async_client.event_hooks["request"] = [_set_user_agent_async]
-    httpx_async_client.event_hooks["response"] = response_interceptors_async
-
-    httpx_sandbox_client = client_sandbox.get_httpx_client()
-    httpx_sandbox_client.event_hooks["response"] = response_interceptors_sync
-
-    httpx_sandbox_async_client = client_sandbox.get_async_httpx_client()
-    httpx_sandbox_async_client.event_hooks["response"] = response_interceptors_async
+    # Register request/response hooks through the client so they survive re-creation
+    # of the httpx clients (the async client is rebuilt whenever the event loop changes).
+    # Use sync hooks for sync clients and async hooks for async clients.
+    client.with_event_hooks(
+        sync_hooks={"request": [_set_user_agent], "response": response_interceptors_sync},
+        async_hooks={
+            "request": [_set_user_agent_async],
+            "response": response_interceptors_async,
+        },
+    )
+    client_sandbox.with_event_hooks(
+        sync_hooks={"response": response_interceptors_sync},
+        async_hooks={"response": response_interceptors_async},
+    )
 
     if settings.tracking:
         try:

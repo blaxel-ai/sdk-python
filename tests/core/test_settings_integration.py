@@ -53,6 +53,8 @@ def test_programmatic_token_wins_over_env():
         "a/1.0.0 b/1.0.0",
         "deepseek/0.1.2 (extra)",
         " x/1.0.0",
+        "x/1.0.0\n",
+        "x/1.0.0\r\n",
     ],
 )
 def test_invalid_token_is_ignored(value, caplog):
@@ -74,7 +76,6 @@ def test_other_headers_are_untouched():
 
 
 def test_control_plane_client_sends_sdk_user_agent(monkeypatch):
-
     from blaxel.core.client.client import client
     from blaxel.core.common.autoload import autoload
 
@@ -88,3 +89,27 @@ def test_control_plane_client_sends_sdk_user_agent(monkeypatch):
     assert ua.startswith("blaxel/sdk/python/")
     assert ua.endswith(" my-integration/1.2.0")
     assert "python-httpx" not in ua
+
+
+def test_async_control_plane_client_keeps_user_agent_across_event_loops(monkeypatch):
+    import asyncio
+
+    from blaxel.core.client.client import client
+    from blaxel.core.common.autoload import autoload
+
+    monkeypatch.setenv("BL_INTEGRATION", "my-integration/1.2.0")
+    autoload()
+
+    async def user_agent_in_loop():
+        # Created inside a running loop, so this is a fresh client, not the import-time one.
+        httpx_client = client.get_async_httpx_client()
+        request = httpx_client.build_request("GET", "https://example.invalid/v0/sandboxes")
+        for hook in httpx_client.event_hooks["request"]:
+            await hook(request)
+        assert httpx_client.event_hooks["response"], "response interceptors were dropped"
+        return request.headers["User-Agent"]
+
+    for _ in range(2):
+        ua = asyncio.run(user_agent_in_loop())
+        assert ua.startswith("blaxel/sdk/python/")
+        assert ua.endswith(" my-integration/1.2.0")
