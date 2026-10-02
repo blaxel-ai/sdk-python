@@ -150,9 +150,9 @@ class Sandbox:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = Metadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = SandboxSpec.from_dict(d.pop("spec"))
+        spec = SandboxSpec.from_dict(d.pop("spec", UNSET))
 
         _archive = d.pop("archive", UNSET)
         archive: Union[Unset, SandboxArchive]

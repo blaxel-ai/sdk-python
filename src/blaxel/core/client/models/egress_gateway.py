@@ -85,9 +85,9 @@ class EgressGateway:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = EgressGatewayMetadata.from_dict(d.pop("metadata"))
+        metadata = EgressGatewayMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = EgressGatewaySpec.from_dict(d.pop("spec"))
+        spec = EgressGatewaySpec.from_dict(d.pop("spec", UNSET))
 
         events = []
         _events = d.pop("events", UNSET)

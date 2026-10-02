@@ -92,7 +92,7 @@ class ExportResult:
         if not src_dict:
             return None
         d = src_dict.copy()
-        manifest = ArchiveManifest.from_dict(d.pop("manifest"))
+        manifest = ArchiveManifest.from_dict(d.pop("manifest", UNSET))
 
         changes = []
         _changes = d.pop("changes", UNSET)

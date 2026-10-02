@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 if TYPE_CHECKING:
     from ..models.sso_domain_metadata import SSODomainMetadata
     from ..models.sso_domain_spec import SSODomainSpec
@@ -58,9 +60,9 @@ class SSODomain:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = SSODomainMetadata.from_dict(d.pop("metadata"))
+        metadata = SSODomainMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = SSODomainSpec.from_dict(d.pop("spec"))
+        spec = SSODomainSpec.from_dict(d.pop("spec", UNSET))
 
         sso_domain = cls(
             metadata=metadata,

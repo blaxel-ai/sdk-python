@@ -72,9 +72,9 @@ class Policy:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = Metadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = PolicySpec.from_dict(d.pop("spec"))
+        spec = PolicySpec.from_dict(d.pop("spec", UNSET))
 
         _usage = d.pop("usage", UNSET)
         usage: Union[Unset, PolicyUsageCounts]

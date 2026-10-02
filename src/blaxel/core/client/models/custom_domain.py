@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 if TYPE_CHECKING:
     from ..models.custom_domain_metadata import CustomDomainMetadata
     from ..models.custom_domain_spec import CustomDomainSpec
@@ -58,9 +60,9 @@ class CustomDomain:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = CustomDomainMetadata.from_dict(d.pop("metadata"))
+        metadata = CustomDomainMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = CustomDomainSpec.from_dict(d.pop("spec"))
+        spec = CustomDomainSpec.from_dict(d.pop("spec", UNSET))
 
         custom_domain = cls(
             metadata=metadata,

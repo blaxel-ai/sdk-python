@@ -174,7 +174,17 @@ return field_dict
 {% endif %}
 {% for property in model.required_properties + model.optional_properties %}
     {% if property.required %}
-        {% if property.name != property.python_name %}
+        {% if property.template == "model_property.py.jinja" %}
+            {# Required nested objects: tolerate a missing key instead of raising a raw KeyError
+               on an unexpected/partial response shape. The value flows into the nested
+               ``from_dict`` which returns None for the resulting UNSET, matching the empty-input
+               handling above. #}
+            {% if property.name != property.python_name %}
+                {% set property_source = 'd.pop("' + property.name + '", d.pop("' + property.python_name + '", UNSET))' %}
+            {% else %}
+                {% set property_source = 'd.pop("' + property.name + '", UNSET)' %}
+            {% endif %}
+        {% elif property.name != property.python_name %}
             {% set property_source = 'd.pop("' + property.name + '") if "' + property.name + '" in d else d.pop("' + property.python_name + '")' %}
         {% else %}
             {% set property_source = 'd.pop("' + property.name + '")' %}
