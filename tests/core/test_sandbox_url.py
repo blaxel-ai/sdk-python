@@ -41,3 +41,12 @@ async def test_requests_have_no_double_slash(base):
     filesystem._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     await filesystem.grep("x", "app")
     assert paths == ["/filesystem-content-search/app?query=x"]
+
+
+@pytest.mark.parametrize("cls", [SandboxAction, SyncSandboxAction])
+@pytest.mark.parametrize("base", BASES)
+def test_forced_url_clients_use_normalized_base(cls, base):
+    sandbox = Sandbox(metadata=Metadata(name="sbx"), spec=SandboxSpec())
+    action = cls(SandboxConfiguration(sandbox, force_url=base))
+    for client in (action.get_client(), action.get_api_client().get_httpx_client()):
+        assert client.build_request("GET", "/filesystem/app").url.raw_path == b"/filesystem/app"

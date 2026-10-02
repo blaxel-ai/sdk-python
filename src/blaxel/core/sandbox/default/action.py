@@ -53,9 +53,8 @@ class SandboxAction:
     def get_client(self) -> httpx.AsyncClient:
         """Get persistent HTTP client for this sandbox instance."""
         if self._client is None:
-            base_url = self.sandbox_config.force_url or self.url
             self._client = httpx.AsyncClient(
-                base_url=base_url,
+                base_url=self.url,
                 headers=self.sandbox_config.headers
                 if self.sandbox_config.force_url
                 else {**settings.headers, **self.sandbox_config.headers},
@@ -72,7 +71,7 @@ class SandboxAction:
         callers apply one error path through ``ResponseError``.
         """
         return Client(
-            base_url=self.sandbox_config.force_url or self.url,
+            base_url=self.url,
             headers=self.sandbox_config.headers
             if self.sandbox_config.force_url
             else {**settings.headers, **self.sandbox_config.headers},

@@ -48,7 +48,7 @@ class SyncSandboxAction:
     def get_client(self) -> httpx.Client:
         if self.sandbox_config.force_url:
             return httpx.Client(
-                base_url=self.sandbox_config.force_url,
+                base_url=self.url,
                 headers=self.sandbox_config.headers,
             )
         return httpx.Client(
@@ -63,7 +63,7 @@ class SyncSandboxAction:
         callers apply one error path through ``ResponseError``.
         """
         return Client(
-            base_url=self.sandbox_config.force_url or self.url,
+            base_url=self.url,
             headers=self.sandbox_config.headers
             if self.sandbox_config.force_url
             else {**settings.headers, **self.sandbox_config.headers},
