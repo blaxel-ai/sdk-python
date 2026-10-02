@@ -4,7 +4,7 @@ import logging
 import shlex
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, TypeVar, Union
 
 import httpx
 
@@ -22,6 +22,8 @@ from .action import SyncSandboxAction
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 # Multipart upload constants
 MULTIPART_THRESHOLD = 5 * 1024 * 1024  # 5MB
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB per part
@@ -36,10 +38,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
     def mkdir(self, path: str, permissions: str = "0755") -> SuccessResponse:
         path = self.format_path(path)
         body = FileRequest(is_directory=True, permissions=permissions)
-        with self.get_client() as client_instance:
-            response = client_instance.put(f"/filesystem/{path}", json=body.to_dict())
-            self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+        return self._put_with_retry(
+            f"/filesystem/{path}", body.to_dict(), SuccessResponse.from_dict
+        )
 
     def write(self, path: str, content: str) -> SuccessResponse:
         path = self.format_path(path)
@@ -48,10 +49,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             content_bytes = content.encode("utf-8")
             return self._upload_with_multipart(path, content_bytes, "0644")
         body = FileRequest(content=content)
-        with self.get_client() as client_instance:
-            response = client_instance.put(f"/filesystem/{path}", json=body.to_dict())
-            self.handle_response_error(response)
-            return SuccessResponse.from_dict(response.json())
+        return self._put_with_retry(
+            f"/filesystem/{path}", body.to_dict(), SuccessResponse.from_dict
+        )
 
     def write_binary(self, path: str, content: Union[bytes, bytearray, str]) -> SuccessResponse:
         path = self.format_path(path)
@@ -97,14 +97,23 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 file = SandboxFilesystemFile.from_dict(file)
             files_dict[file.path] = file.content
         path = destination_path or ""
-        with self.get_client() as client_instance:
-            response = client_instance.put(
-                f"/filesystem/tree/{path}",
-                json={"files": files_dict},
-                headers={"Content-Type": "application/json"},
-            )
-            self.handle_response_error(response)
-            return Directory.from_dict(response.json())
+        return self._put_with_retry(
+            f"/filesystem/tree/{path}", {"files": files_dict}, Directory.from_dict
+        )
+
+    def _put_with_retry(
+        self, url: str, body: Dict[str, Any], parse: Callable[[Dict[str, Any]], T]
+    ) -> T:
+        """Filesystem PUTs overwrite their target, so transient failures are retried
+        with the same budget as ``write_binary``."""
+
+        def put_once():
+            with self.get_client() as client_instance:
+                response = client_instance.put(url, json=body)
+                self.handle_response_error(response)
+                return parse(response.json())
+
+        return retry_on_transient_reset(put_once, retries=settings.fs_part_retries)
 
     def read(self, path: str) -> str:
         path = self.format_path(path)

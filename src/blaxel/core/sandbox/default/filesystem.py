@@ -4,7 +4,7 @@ import json
 import logging
 import shlex
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, TypeVar, Union
 
 import httpx
 
@@ -27,6 +27,8 @@ MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 
 class SandboxFileSystem(SandboxAction):
     def __init__(self, sandbox_config: SandboxConfiguration, process=None):
@@ -37,14 +39,9 @@ class SandboxFileSystem(SandboxAction):
         path = self.format_path(path)
         body = FileRequest(is_directory=True, permissions=permissions)
 
-        client = self.get_client()
-        response = await client.put(f"/filesystem/{path}", json=body.to_dict())
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            return SuccessResponse.from_dict(data)
-        finally:
-            await response.aclose()
+        return await self._put_with_retry(
+            f"/filesystem/{path}", body.to_dict(), SuccessResponse.from_dict
+        )
 
     async def write(self, path: str, content: str) -> SuccessResponse:
         path = self.format_path(path)
@@ -60,14 +57,9 @@ class SandboxFileSystem(SandboxAction):
         # Use regular upload for small files
         body = FileRequest(content=content)
 
-        client = self.get_client()
-        response = await client.put(f"/filesystem/{path}", json=body.to_dict())
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            return SuccessResponse.from_dict(data)
-        finally:
-            await response.aclose()
+        return await self._put_with_retry(
+            f"/filesystem/{path}", body.to_dict(), SuccessResponse.from_dict
+        )
 
     async def write_binary(
         self, path: str, content: Union[bytes, bytearray, str]
@@ -139,18 +131,27 @@ class SandboxFileSystem(SandboxAction):
 
         path = destination_path or ""
 
-        client = self.get_client()
-        response = await client.put(
-            f"/filesystem/tree/{path}",
-            json={"files": files_dict},
-            headers={"Content-Type": "application/json"},
+        return await self._put_with_retry(
+            f"/filesystem/tree/{path}", {"files": files_dict}, Directory.from_dict
         )
-        try:
-            data = json.loads(await response.aread())
-            self.handle_response_error(response)
-            return Directory.from_dict(data)
-        finally:
-            await response.aclose()
+
+    async def _put_with_retry(
+        self, url: str, body: Dict[str, Any], parse: Callable[[Dict[str, Any]], T]
+    ) -> T:
+        """Filesystem PUTs overwrite their target, so transient failures are retried
+        with the same budget as ``write_binary``."""
+
+        async def put_once():
+            client = self.get_client()
+            response = await client.put(url, json=body)
+            try:
+                data = json.loads(await response.aread())
+                self.handle_response_error(response)
+                return parse(data)
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(put_once, retries=settings.fs_part_retries)
 
     async def read(self, path: str) -> str:
         path = self.format_path(path)

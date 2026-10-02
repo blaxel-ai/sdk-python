@@ -1,7 +1,10 @@
+import httpx
 import pytest
 
+from blaxel.core.client.models import Metadata, Sandbox, SandboxSpec
 from blaxel.core.sandbox.default.filesystem import SandboxFileSystem
 from blaxel.core.sandbox.sync.filesystem import SyncSandboxFileSystem
+from blaxel.core.sandbox.types import ResponseError, SandboxConfiguration
 
 
 class _RecordingProcess:
@@ -97,3 +100,88 @@ def test_sync_multipart_upload_aborts_when_part_thread_fails():
     assert 2 in uploaded_parts
     assert aborted_uploads == ["upload-1"]
     assert completed_parts == []
+
+
+def _flaky_put_handler(requests):
+    """Drops the first PUT at the transport level, then answers like the sandbox."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if len(requests) == 1:
+            raise httpx.ConnectError("Connection reset by peer", request=request)
+        if request.url.path.startswith("/filesystem/tree/"):
+            return httpx.Response(
+                200, json={"name": "tmp", "path": "/tmp", "files": [], "subdirectories": []}
+            )
+        return httpx.Response(200, json={"message": "ok", "path": "/tmp/x"})
+
+    return handler
+
+
+def _failing_put_handler(requests):
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(400, json={"error": "bad request"})
+
+    return handler
+
+
+_PUTS = [
+    ("write", lambda fs: fs.write("/tmp/a.txt", "hello")),
+    ("mkdir", lambda fs: fs.mkdir("/tmp/dir")),
+    ("write_tree", lambda fs: fs.write_tree([{"path": "a.txt", "content": "a"}], "/tmp")),
+    ("write_binary", lambda fs: fs.write_binary("/tmp/a.bin", b"\x01\x02")),
+]
+
+
+def _config():
+    return SandboxConfiguration(
+        sandbox=Sandbox(metadata=Metadata(name="local"), spec=SandboxSpec()),
+        force_url="http://sandbox.local",
+    )
+
+
+def _async_filesystem(handler):
+    filesystem = SandboxFileSystem(_config())
+    filesystem._client = httpx.AsyncClient(
+        base_url="http://sandbox.local", transport=httpx.MockTransport(handler)
+    )
+    return filesystem
+
+
+def _sync_filesystem(handler):
+    filesystem = SyncSandboxFileSystem(_config())
+    filesystem.get_client = lambda: httpx.Client(
+        base_url="http://sandbox.local", transport=httpx.MockTransport(handler)
+    )
+    return filesystem
+
+
+@pytest.mark.parametrize("name,put", _PUTS)
+async def test_async_filesystem_put_retries_transient_failure(name, put):
+    requests = []
+    assert await put(_async_filesystem(_flaky_put_handler(requests))) is not None
+    assert [request.method for request in requests] == ["PUT", "PUT"]
+
+
+@pytest.mark.parametrize("name,put", _PUTS)
+def test_sync_filesystem_put_retries_transient_failure(name, put):
+    requests = []
+    assert put(_sync_filesystem(_flaky_put_handler(requests))) is not None
+    assert [request.method for request in requests] == ["PUT", "PUT"]
+
+
+@pytest.mark.parametrize("name,put", _PUTS[:3])
+async def test_async_filesystem_put_does_not_retry_application_error(name, put):
+    requests = []
+    with pytest.raises(ResponseError):
+        await put(_async_filesystem(_failing_put_handler(requests)))
+    assert len(requests) == 1
+
+
+@pytest.mark.parametrize("name,put", _PUTS[:3])
+def test_sync_filesystem_put_does_not_retry_application_error(name, put):
+    requests = []
+    with pytest.raises(ResponseError):
+        put(_sync_filesystem(_failing_put_handler(requests)))
+    assert len(requests) == 1
