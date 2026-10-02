@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+import requests
 
 from .settings import settings
 
@@ -53,6 +54,24 @@ _IGNORED_EXCEPTIONS = (
     KeyboardInterrupt,  # User interrupt (Ctrl+C)
     SystemExit,  # Program exit
     CancelledError,  # Async task cancellation
+)
+
+# Transport-level connectivity failures -- DNS resolution errors, refused or reset
+# connections, and network timeouts -- originate in the machine or network running
+# the SDK, not in SDK code. Like optional-dependency import errors, they are an
+# environment issue rather than an SDK defect and must not be reported to Sentry.
+# The base classes below cover their subclasses: requests ``Timeout`` covers
+# connect/read timeouts, httpx ``NetworkError`` covers connect/read/write/close
+# errors, and httpx ``TimeoutException`` covers every httpx timeout. HTTP error
+# responses (e.g. ``requests`` ``HTTPError``) and client-side protocol misuse
+# (``httpx`` ``LocalProtocolError``) are deliberately excluded -- those are still
+# actionable and remain reportable.
+_TRANSIENT_NETWORK_ERRORS: tuple[type[BaseException], ...] = (
+    requests.exceptions.ConnectionError,
+    requests.exceptions.Timeout,
+    httpx.NetworkError,
+    httpx.TimeoutException,
+    httpx.RemoteProtocolError,
 )
 
 # Optional dependencies that may not be installed - import errors for these are expected
@@ -405,11 +424,24 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_transient_network_error(exc_value: BaseException) -> bool:
+    """Check whether an exception is an environment-level connectivity failure.
+
+    DNS resolution failures, refused or reset connections, and network timeouts
+    come from the machine or network running the SDK rather than from SDK code, so
+    -- like optional-dependency import errors -- they are not SDK defects and must
+    not be reported to Sentry.
+    """
+    return isinstance(exc_value, _TRANSIENT_NETWORK_ERRORS)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_transient_network_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
