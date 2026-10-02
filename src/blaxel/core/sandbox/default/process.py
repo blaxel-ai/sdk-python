@@ -315,7 +315,7 @@ class SandboxProcess(SandboxAction):
                 headers={
                     **headers,
                     "Content-Type": "application/json",
-                    "Accept": "text/event-stream",
+                    "Accept": "application/x-ndjson, text/event-stream",
                 },
                 json=process_request.to_dict(),
                 timeout=None,
