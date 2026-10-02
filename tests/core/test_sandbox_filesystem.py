@@ -185,3 +185,24 @@ def test_sync_filesystem_put_does_not_retry_application_error(name, put):
     with pytest.raises(ResponseError):
         put(_sync_filesystem(_failing_put_handler(requests)))
     assert len(requests) == 1
+
+
+async def test_grep_sends_context_lines_and_returns_match_context():
+    requests = []
+    match = {
+        "path": "/app/main.go",
+        "line": 3,
+        "column": 1,
+        "text": "func main() {",
+        "context": "package main\n\nfunc main() {\n}",
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"query": "main", "total": 1, "matches": [match]})
+
+    filesystem = _async_filesystem(handler)
+    result = await filesystem.grep("main", "/app", context_lines=2)
+    assert requests[0].url.params["query"] == "main"
+    assert requests[0].url.params["contextLines"] == "2"
+    assert result.matches[0].context == match["context"]
