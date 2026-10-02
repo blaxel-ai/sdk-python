@@ -16,12 +16,9 @@ class SyncSandboxAction:
 
     @property
     def external_url(self) -> str:
-        if (
-            self.sandbox_config.metadata
-            and self.sandbox_config.metadata.url is not None
-            and self.sandbox_config.metadata.url != ""
-        ):
-            return self.sandbox_config.metadata.url
+        metadata = self.sandbox_config.metadata
+        if metadata and isinstance(metadata.url, str) and metadata.url:
+            return metadata.url.rstrip("/")
 
         return f"{settings.run_url}/{settings.workspace}/sandboxes/{self.name}"
 
@@ -39,8 +36,7 @@ class SyncSandboxAction:
     @property
     def url(self) -> str:
         if self.forced_url:
-            url = self.forced_url
-            return url[:-1] if url.endswith("/") else url
+            return self.forced_url.rstrip("/")
         return self.external_url
 
     @property
