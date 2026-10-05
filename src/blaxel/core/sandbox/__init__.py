@@ -24,6 +24,7 @@ from .default import (
     SandboxSystem,
     is_creation_timeout_error,
 )
+from .read_tree import FilesystemReadTreeError
 from .sync import (
     SyncCodeInterpreter,
     SyncSandboxCodegen,
@@ -75,6 +76,7 @@ __all__ = [
     "SandboxUpdateNetwork",
     "Sandbox",
     "SandboxFileSystem",
+    "FilesystemReadTreeError",
     "SandboxPreviews",
     "SandboxSchedules",
     "SandboxProcess",

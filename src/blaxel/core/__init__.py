@@ -24,6 +24,7 @@ from .mcp import BlaxelMcpServerTransport, websocket_client
 from .models import BLModel, bl_model
 from .sandbox import (
     CodeInterpreter,
+    FilesystemReadTreeError,
     SandboxAPIError,
     SandboxCodegen,
     SandboxCreationTimeoutError,
@@ -61,6 +62,7 @@ __all__ = [
     "bl_model",
     "Sandbox",
     "SandboxFileSystem",
+    "FilesystemReadTreeError",
     "SandboxInstance",
     "SandboxAPIError",
     "SandboxCreationTimeoutError",

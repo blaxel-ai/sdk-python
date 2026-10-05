@@ -5,11 +5,14 @@ import shlex
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
+from urllib.parse import quote
 
 import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
+from ..client.models.find_response import FindResponse
+from ..read_tree import _read_tree_sync
 from ..transient_retry import retry_on_transient_reset
 from ..types import (
     CopyResponse,
@@ -119,6 +122,52 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 raise Exception("Unsupported file type")
 
         return retry_on_transient_reset(read_once)
+
+    def read_tree(
+        self,
+        path: str,
+        *,
+        patterns: list[str] | None = None,
+        exclude_dirs: list[str] | None = None,
+        exclude_hidden: bool | None = None,
+        max_files: int = 100,
+        concurrency: int = 4,
+    ) -> dict[str, str]:
+        """Sync version of ``SandboxFileSystem.read_tree``, with the same parameters and errors."""
+        return _read_tree_sync(
+            path,
+            max_files,
+            concurrency,
+            lambda limit: self._find_files(
+                quote(path), patterns, exclude_dirs, exclude_hidden, limit
+            ),
+            self.read,
+        )
+
+    def _find_files(
+        self,
+        path: str,
+        patterns: list[str] | None,
+        exclude_dirs: list[str] | None,
+        exclude_hidden: bool | None,
+        max_results: int,
+    ):
+        path = self.format_path(path)
+        params: dict[str, Any] = {"type": "file", "maxResults": max_results}
+        if patterns:
+            params["patterns"] = ",".join(patterns)
+        if exclude_dirs:
+            params["excludeDirs"] = ",".join(exclude_dirs)
+        if exclude_hidden is not None:
+            params["excludeHidden"] = exclude_hidden
+
+        def find_once():
+            with self.get_client() as client_instance:
+                response = client_instance.get(f"/filesystem-find/{path}", params=params)
+                self.handle_response_error(response)
+                return FindResponse.from_dict(response.json())
+
+        return retry_on_transient_reset(find_once)
 
     def read_binary(self, path: str) -> bytes:
         path = self.format_path(path)

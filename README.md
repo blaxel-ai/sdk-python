@@ -306,6 +306,39 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+`read_tree` reads every file that `find` selects and returns `{relative path: text}`. It takes
+`find`'s `patterns`, `exclude_dirs` and `exclude_hidden` options. `SyncSandboxInstance` has the
+same method, without `await`.
+
+```python
+import asyncio
+
+from blaxel.core import SandboxInstance
+
+
+async def main():
+    sandbox = await SandboxInstance.get("my-sandbox")
+    schemas = await sandbox.fs.read_tree(
+        "/app/schemas", patterns=["*.json"], max_files=20, concurrency=4
+    )
+    # {"Blog.json": "...", "nested/About.json": "..."}
+    print(schemas)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+It does one `find` plus one `read` per file, `concurrency` (default 4) at a time. If more than
+`max_files` (default 100, at most 999) files match, it raises instead of returning some of them.
+Failures raise a `FilesystemReadTreeError` with a `code` (`MAX_FILES`, `DISCOVERY` or `READ`) and,
+for `READ`, the failing `path`; nothing partial is returned. A symlink to a directory fails as `READ`.
+Files are read as UTF-8 text; binary content is not preserved, so use `patterns` to select text files.
+
+A non-empty `exclude_dirs` replaces `find`'s default exclusions (`node_modules`, `vendor`, `.git`,
+`dist`, `build`, `target`, `__pycache__`, `.venv`, `.next`, `coverage`), so list the ones you
+still want skipped.
+
 #### Volumes
 
 Persist data by attaching and using volumes:
