@@ -233,7 +233,7 @@ def test_response_error_preserves_data_message_and_unmodified_body():
     assert str(error) == str(error.data)
     assert error.message == str(error)
     assert error.error is None
-    assert_response_snapshot(error.response, response)
+    assert error.response is response
 
 
 @pytest.mark.parametrize(
@@ -435,7 +435,6 @@ async def test_creation_timeout_keeps_response_headers_sync_and_async(sync):
     "factory",
     [
         lambda r: BlaxelError("failed", response=r),
-        ResponseError,
         lambda r: SandboxCreationTimeoutError("sbx", 10, GENERIC, response=r),
         lambda r: errors.from_response(404, r.content, r.headers, response=r),
         lambda r: sandbox_errors.from_response(404, r.content, r.headers, response=r),
@@ -489,6 +488,21 @@ def test_other_generated_error_models_do_not_retain_authenticated_requests(sandb
     assert_response_snapshot(parsed._response, response)
 
 
+def test_response_error_preserves_original_response_request_url_and_data_identity():
+    response = authenticated_response()
+    data = response.json()
+    with patch.object(response, "json", return_value=data):
+        error = ResponseError(response)
+    assert error.response is response
+    assert error.response.request is response.request
+    assert error.response.url == response.request.url
+    assert error.response.history is response.history
+    assert error.data is data
+    assert data == {**GENERIC, "status": 404, "statusText": "Not Found"}
+    assert error.body == GENERIC
+    assert error.body is not data
+
+
 def test_snapshot_preserves_decoded_compressed_content_and_response_metadata():
     response = httpx.Response(
         404,
@@ -501,9 +515,10 @@ def test_snapshot_preserves_decoded_compressed_content_and_response_metadata():
         request=httpx.Request("GET", "https://api.test"),
         extensions={"reason_phrase": b"Custom Not Found", "http_version": b"HTTP/2"},
     )
-    error = ResponseError(response)
+    error = BlaxelError("failed", response=response)
     assert_response_snapshot(error.response, response)
     assert error.body == {"error": "café"}
+    assert error.response is not None
     assert error.response.json() == error.body
     assert error.request_id == "gzip-id"
 

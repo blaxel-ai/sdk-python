@@ -15,7 +15,7 @@ from ..client.models import (
     VolumeAttachmentType,
 )
 from ..client.types import UNSET
-from ..errors import BlaxelError, _response_snapshot
+from ..errors import BlaxelError
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
 from .client.types import Response as ApiResponse
@@ -410,23 +410,30 @@ class ResponseError(BlaxelError):
     def __init__(self, response: httpx.Response):
         data_error = {}
         data = None
+        body = ""
         if response.content:
             try:
                 data = response.json()
-                # Keep the original body intact; status/statusText belong only
-                # to the legacy message/data representation.
-                data_error = dict(data) if isinstance(data, dict) else data
+                # Keep the legacy data object and its mutation semantics.
+                # Only the new body field gets a copy without status/statusText.
+                body = dict(data) if isinstance(data, dict) else data
+                data_error = data
             except Exception:
                 data = response.text
+                body = data
                 data_error["response"] = data
         if response.status_code:
             data_error["status"] = response.status_code
         if response.reason_phrase:
             data_error["statusText"] = response.reason_phrase
 
-        super().__init__(str(data_error), body=data, response=response)
-        self.response = _response_snapshot(response)  # pyright: ignore[reportIncompatibleVariableOverride]
-        self.data = data_error if isinstance(data, dict) else data
+        # This response was already retained on main; add metadata directly
+        # rather than create a snapshot for the existing legacy field.
+        super().__init__(
+            str(data_error), status=response.status_code, body=body, headers=response.headers
+        )
+        self.response = response  # pyright: ignore[reportIncompatibleVariableOverride]
+        self.data = data
         self.error = None
 
     @classmethod
