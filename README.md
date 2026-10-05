@@ -306,6 +306,39 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+Protected copy is opt-in; ordinary `cp` still overwrites:
+
+```python
+try:
+    await sandbox.fs.cp("/tmp/source.txt", "/tmp/target.txt", no_overwrite=True)
+except FileExistsError:
+    pass  # Existing effective target was left unchanged.
+# SyncSandboxInstance: same method and keyword, without await.
+```
+
+This follows `cp -r` placement: an existing destination directory (including a
+symlink to one) is a container, so the protected entry is its source-basename
+child. Existing final files, directories and symlinks conflict; trees are not
+merged. With an absent raw directory destination, later callers may resolve a
+different child target once the first creates that directory.
+
+Cooperating copies of the same stable final entry do not replace it; complete
+content publication is not atomic. The file claim checks for symlinks and
+non-regular entries before copying, but a raced symlink to a FIFO can still
+block while opening the claim. Timeouts do not cancel the running command.
+Errors, timeouts or disconnects can leave visible partial results; there is no
+automatic rollback or cancellation. Inspect/remove a known partial result
+explicitly before retrying. This does not harden against hostile same-user
+workloads replacing parents/entries or provide a source snapshot.
+
+Protected regular files and top-level directories preserve rwx subject to umask,
+but strip special setuid/setgid/sticky bits (an intentional safety difference
+from BusyBox `cp -r`).
+Top-level special-file sources are rejected; recursive contents keep the image's
+`cp -r` behavior. Images need Linux `sh`, `cp`, `mkdir`, `ln -sT`, `readlink -n`,
+`basename`, `stat -Lc` and `chmod` (tested with BusyBox/GNU); missing tools fail
+closed, never fall back to overwriting. No sandbox API upgrade is required.
+
 #### Volumes
 
 Persist data by attaching and using volumes:
