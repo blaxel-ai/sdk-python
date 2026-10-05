@@ -195,3 +195,20 @@ def test_save_never_rolls_back_entries_it_does_not_own(telemetry):
     assert written["sdks"]["typescript"] == "2.0.0", (
         "must not roll back another SDK's newer version"
     )
+
+
+def test_first_persisted_distinct_id_wins(telemetry):
+    """distinct_id is shared by the CLI and both SDKs. If this process starts
+    before any id exists and the CLI persists one first, this process must adopt
+    it instead of replacing it, or one user becomes two PostHog identities."""
+    telemetry.write_text(json.dumps({"sdks": {}}), encoding="utf-8")
+    posthog._telemetry_state = None
+    posthog._load_telemetry_state()
+
+    telemetry.write_text(json.dumps({"distinct_id": "cli-generated"}), encoding="utf-8")
+
+    used = posthog._get_distinct_id()
+
+    written = json.loads(telemetry.read_text(encoding="utf-8"))
+    assert written["distinct_id"] == "cli-generated"
+    assert used == "cli-generated"

@@ -126,14 +126,21 @@ def _save_telemetry_state(state: dict) -> None:
         if own_version:
             merged_sdks[_SDK_STATE_KEY] = own_version
         merged["sdks"] = merged_sdks
-        if state.get("distinct_id"):
-            merged["distinct_id"] = state["distinct_id"]
+        # distinct_id is shared by every writer, so the first one persisted wins.
+        # Replacing it would split the same user across two PostHog identities.
+        on_disk_id = on_disk.get("distinct_id")
+        merged["distinct_id"] = (
+            on_disk_id if isinstance(on_disk_id, str) and on_disk_id else state.get("distinct_id", "")
+        )
 
         telemetry_path.write_text(
             json.dumps(merged, indent=2),
             encoding="utf-8",
         )
         telemetry_path.chmod(0o600)
+        # Adopt the persisted identity so events match what other writers use.
+        if merged["distinct_id"]:
+            state["distinct_id"] = merged["distinct_id"]
     except Exception:
         # Silently fail
         pass
