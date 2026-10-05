@@ -156,6 +156,29 @@ def _decode_error_body(content: bytes) -> Any:
         return content.decode("utf-8", errors="replace")
 
 
+def _response_snapshot(response: httpx.Response) -> httpx.Response:
+    """Retain response diagnostics without retaining the authenticated request.
+
+    Do not copy history, next_request, streams, or opaque transport extensions:
+    they can point back to requests and their authorization headers. Content is
+    already decoded, so restore the original headers only after construction to
+    avoid decoding compressed content twice.
+    """
+    snapshot = httpx.Response(
+        response.status_code,
+        content=response.content,
+        extensions={
+            "reason_phrase": response.reason_phrase.encode("ascii", errors="replace"),
+            "http_version": response.http_version.encode("ascii", errors="replace"),
+        },
+    )
+    snapshot.headers = response.headers.copy()
+    encoding = response.encoding
+    if encoding is not None:
+        snapshot.encoding = encoding
+    return snapshot
+
+
 def _body_metadata(body: Any) -> tuple[BlaxelErrorCodeValue | None, bool | None]:
     code = None
     retryable = None
@@ -223,7 +246,7 @@ class BlaxelError(Exception):
         )
         self.retryable = retryable
         self.body = body
-        self.response = response
+        self.response = _response_snapshot(response) if response is not None else None
 
 
 ErrorT = TypeVar("ErrorT", bound=BlaxelError)

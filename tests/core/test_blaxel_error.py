@@ -1,5 +1,6 @@
 """Compatibility and metadata tests for the shared public API error contract."""
 
+import gzip
 from typing import get_args
 from unittest.mock import patch
 
@@ -49,6 +50,44 @@ PLATFORM = {
 CONFIG = {"name": "sbx", "region": "us-pdx-1"}
 
 
+def assert_response_snapshot(snapshot: httpx.Response | None, original: httpx.Response) -> None:
+    assert snapshot is not None
+    assert snapshot is not original
+    assert snapshot.status_code == original.status_code
+    assert snapshot.headers == original.headers
+    assert snapshot.content == original.content
+    assert snapshot.reason_phrase == original.reason_phrase
+    assert snapshot.http_version == original.http_version
+    assert snapshot.history == []
+    assert snapshot.next_request is None
+    assert "network_stream" not in snapshot.extensions
+    assert "trace" not in snapshot.extensions
+    with pytest.raises(RuntimeError, match="request"):
+        _ = snapshot.request
+
+
+def authenticated_response() -> httpx.Response:
+    request = httpx.Request(
+        "POST",
+        "https://api.test/resource",
+        headers={
+            "x-blaxel-authorization": "private-blaxel-token",
+            "Authorization": "Bearer private-token",
+            "Cookie": "private-cookie",
+        },
+    )
+    response = httpx.Response(
+        404,
+        json=GENERIC,
+        headers={"X-Cf-Request-Id": "safe-request-id"},
+        request=request,
+        extensions={"network_stream": request, "trace": request},
+    )
+    response.history = [httpx.Response(307, request=request)]
+    response.next_request = request
+    return response
+
+
 @pytest.mark.parametrize(
     "body,code,retryable",
     [
@@ -66,7 +105,7 @@ def test_three_wire_shapes(body, code, retryable):
     assert error.request_id == "req-1"
     assert error.message == str(error) == "unchanged message"
     assert error.body == body
-    assert error.response is response
+    assert_response_snapshot(error.response, response)
 
 
 @pytest.mark.parametrize(
@@ -149,7 +188,7 @@ def test_resource_error_keeps_raw_body_headers_and_legacy_code(cls):
     error = cls("old message", 404, parsed.error, error=parsed)
     assert error.code == "Sandbox not found"  # compatibility, not numeric 404
     assert error.body == GENERIC
-    assert error.response is response
+    assert_response_snapshot(error.response, response)
     assert error.request_id == "req-2"
     assert parsed.to_dict() == GENERIC
     assert "_response" not in repr(parsed)
@@ -194,7 +233,7 @@ def test_response_error_preserves_data_message_and_unmodified_body():
     assert str(error) == str(error.data)
     assert error.message == str(error)
     assert error.error is None
-    assert error.response is response
+    assert_response_snapshot(error.response, response)
 
 
 @pytest.mark.parametrize(
@@ -224,7 +263,7 @@ def test_generated_status_errors_keep_safe_messages_and_gain_metadata(module, st
     assert error.status == error.status_code == status
     assert error.content == response.content
     assert error.body == PLATFORM
-    assert error.response is response
+    assert_response_snapshot(error.response, response)
     assert error.request_id == "safe-id"
     assert "workload" not in str(error)
     assert error.message == str(error)
@@ -264,7 +303,7 @@ async def test_high_level_creation_metadata_sync_and_async(sync):
     assert error.status == 409
     assert error.body == ACTION
     assert error.request_id == "creation-id"
-    assert error.response is response
+    assert_response_snapshot(error.response, response)
     assert error.message == ACTION["message"]
     if sync:
         client.get_httpx_client().close()
@@ -384,12 +423,89 @@ async def test_creation_timeout_keeps_response_headers_sync_and_async(sync):
     error = caught.value
     assert error.request_id == "deadline-id"
     assert error.body == error.data == body
-    assert error.response is response
+    assert_response_snapshot(error.response, response)
     assert error.__cause__ is not None
     if sync:
         client.get_httpx_client().close()
     else:
         await client.get_async_httpx_client().aclose()
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        lambda r: BlaxelError("failed", response=r),
+        ResponseError,
+        lambda r: SandboxCreationTimeoutError("sbx", 10, GENERIC, response=r),
+        lambda r: errors.from_response(404, r.content, r.headers, response=r),
+        lambda r: sandbox_errors.from_response(404, r.content, r.headers, response=r),
+    ],
+)
+def test_error_response_does_not_retain_authenticated_requests(factory):
+    response = authenticated_response()
+    error = factory(response)
+    assert_response_snapshot(error.response, response)
+    assert error.request_id == "safe-request-id"
+    # Do not mutate the source response, or the normal client/request path.
+    assert response.request.headers["x-blaxel-authorization"] == "private-blaxel-token"
+    assert len(response.history) == 1
+
+
+@pytest.mark.parametrize(
+    "cls", [SandboxAPIError, DriveAPIError, VolumeAPIError, SnapshotAPIError, ApplicationAPIError]
+)
+def test_wrapper_and_returned_error_model_do_not_retain_authenticated_requests(cls):
+    response = authenticated_response()
+    parsed = get_sandbox._parse_response(
+        client=Client(base_url="https://api.test"), response=response
+    )
+    assert isinstance(parsed, Error)
+    assert_response_snapshot(parsed._response, response)
+    error = cls("failed", 404, parsed.error, error=parsed)
+    assert_response_snapshot(error.response, response)
+    assert error.body == GENERIC
+
+
+@pytest.mark.parametrize("sandbox_api", [False, True])
+def test_other_generated_error_models_do_not_retain_authenticated_requests(sandbox_api):
+    original = authenticated_response()
+    response = httpx.Response(
+        404 if sandbox_api else 409,
+        json={"error": "missing"} if sandbox_api else ACTION,
+        request=original.request,
+        headers=original.headers,
+        extensions=original.extensions,
+    )
+    if sandbox_api:
+        parsed = get_process_identifier._parse_response(
+            client=SandboxClient(base_url="https://sandbox.test"), response=response
+        )
+        assert isinstance(parsed, ErrorResponse)
+    else:
+        parsed = create_sandbox._parse_response(
+            client=Client(base_url="https://api.test"), response=response
+        )
+        assert isinstance(parsed, SandboxError)
+    assert_response_snapshot(parsed._response, response)
+
+
+def test_snapshot_preserves_decoded_compressed_content_and_response_metadata():
+    response = httpx.Response(
+        404,
+        content=gzip.compress('{"error":"café"}'.encode()),
+        headers={
+            "Content-Encoding": "gzip",
+            "Content-Type": "application/json; charset=utf-8",
+            "X-Cf-Request-Id": "gzip-id",
+        },
+        request=httpx.Request("GET", "https://api.test"),
+        extensions={"reason_phrase": b"Custom Not Found", "http_version": b"HTTP/2"},
+    )
+    error = ResponseError(response)
+    assert_response_snapshot(error.response, response)
+    assert error.body == {"error": "café"}
+    assert error.response.json() == error.body
+    assert error.request_id == "gzip-id"
 
 
 def test_known_code_literal_matches_typescript_contract():

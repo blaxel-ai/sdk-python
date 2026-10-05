@@ -9,7 +9,7 @@ from typing import Any, Mapping
 
 import httpx
 
-from blaxel.core.errors import BlaxelError, _decode_error_body
+from blaxel.core.errors import BlaxelError, _decode_error_body, _response_snapshot
 
 _MAX_JSON_INSPECTION_BYTES = 64 * 1024
 _STABLE_CODE_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
@@ -97,7 +97,7 @@ def _retry_after_header(headers: Mapping[str, str] | None) -> str | None:
 def retain_response(parsed: Any, response: httpx.Response) -> None:
     """Keep modeled error return values unchanged, but retain their HTTP metadata."""
     if hasattr(parsed, "_response"):
-        parsed._response = response
+        parsed._response = _response_snapshot(response)
 
 
 class UnexpectedStatus(BlaxelError):

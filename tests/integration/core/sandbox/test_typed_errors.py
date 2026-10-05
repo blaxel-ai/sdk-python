@@ -35,6 +35,8 @@ class TestTypedErrors:
         assert error.status == status
         assert error.response is not None
         assert error.response.status_code == status
+        with pytest.raises(RuntimeError, match="request"):
+            _ = error.response.request
         assert isinstance(error.body, dict)
         assert error.message == str(error)
         print(f"live error: status={error.status} code={error.code} request_id={error.request_id}")

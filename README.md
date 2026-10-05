@@ -359,7 +359,7 @@ The SDK's typed API exceptions share a `BlaxelError` base, in both async and syn
 | `message` | Existing exception message, also available through `str(err)` |
 | `request_id` | Request ID to quote to Blaxel support (`X-Cf-Request-Id`, then `X-Amz-Cf-Id`, then `CF-Ray`), or `None` |
 | `retryable` | Backend retry hint, or `None` when absent; generated status errors also retain their existing `Retry-After` behavior |
-| `body` / `response` | Parsed response body (or non-JSON text) and the raw `httpx.Response`, when available |
+| `body` / `response` | Parsed response body (or non-JSON text) and a request-free `httpx.Response` snapshot, when available |
 
 ```python
 from blaxel.core import BlaxelError, SandboxInstance, is_blaxel_error
@@ -379,6 +379,8 @@ except BlaxelError as err:
 ```
 
 `BlaxelErrorCode` is a `Literal` listing the same known backend codes as the TypeScript SDK. A newer backend can send a code this SDK does not list yet, so keep a fallback branch. The body shapes are exported as `BlaxelApiErrorBody`, `BlaxelActionErrorBody`, `BlaxelPlatformErrorBody`, and `BlaxelSandboxApiErrorBody` (`TypedDict` types). Network failures, cancellation, client-side validation, and missing credentials keep their original exception types.
+
+Error response snapshots retain status, response headers, decoded content, and reason/version metadata—not the outgoing request, request headers, URL, redirect history, or transport objects. This keeps credential-bearing request references out of their response metadata. `err.response.request` is therefore unavailable; use `err.request_id` for support diagnostics. The original HTTP response is not modified.
 
 This is additive: low-level generated calls that return modeled `Error`, `SandboxError`, or `ErrorResponse` values still return them, rather than raising. Documented error branches returning `None` and generated schema-parse failures also retain their existing behavior. Likewise, `raise_on_unexpected_status=False` still suppresses undocumented-status exceptions. High-level methods that returned error values before this change still do so; this base class does not introduce a global raise-on-error policy.
 

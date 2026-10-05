@@ -15,7 +15,7 @@ from ..client.models import (
     VolumeAttachmentType,
 )
 from ..client.types import UNSET
-from ..errors import BlaxelError
+from ..errors import BlaxelError, _response_snapshot
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
 from .client.types import Response as ApiResponse
@@ -425,7 +425,7 @@ class ResponseError(BlaxelError):
             data_error["statusText"] = response.reason_phrase
 
         super().__init__(str(data_error), body=data, response=response)
-        self.response = response  # pyright: ignore[reportIncompatibleVariableOverride]
+        self.response = _response_snapshot(response)  # pyright: ignore[reportIncompatibleVariableOverride]
         self.data = data_error if isinstance(data, dict) else data
         self.error = None
 
