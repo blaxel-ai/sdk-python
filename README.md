@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
 #### Preview URLs
 
-Generate public preview URLs to access services running in your sandbox:
+Generate preview URLs to access services running in your sandbox:
 
 ```python
 import asyncio
@@ -170,20 +170,24 @@ async def main():
         "wait_for_ports": [3000]
     })
 
-    # Create a public preview URL
-    preview = await sandbox.previews.create_if_not_exists({
-        "metadata": {"name": "app-preview"},
-        "spec": {
-            "port": 3000,
-            "public": True
-        }
-    })
-
-    print(preview.spec.url)  # https://xyz.preview.bl.run
+    # Create/reuse a private preview and an expiry-capped token
+    preview = await sandbox.previews.create_if_not_exists({"port": 3000})
+    token = await preview.tokens.create_if_expired()
+    # preview.url is the base URL. Pass {"bl_preview_token": token.value}
+    # as HTTP request query params; do not log this credential.
+    # SyncSandboxInstance uses the same calls without await.
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+Shorthand uses the per-sandbox name `preview-<port>` and defaults to private on
+creation. Existing previews are returned as-is, even if public or on another port.
+A URL prefix is optional; full-model inputs below remain supported.
+`create_if_expired()` creates a 24-hour token or reuses the latest eligible token
+with at least one hour remaining. An explicit expiry caps reuse (naive datetimes
+mean UTC); concurrent callers may mint separate tokens. Delete a token with
+`await preview.tokens.delete(token.name)`. No old tokens are automatically deleted.
 
 Previews can also be private, with or without a custom prefix. When you create a private preview URL, a [token](https://docs.blaxel.ai/Sandboxes/Preview-url#private-preview-urls) is required to access the URL, passed as a request parameter or request header.
 
