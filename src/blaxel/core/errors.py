@@ -22,6 +22,7 @@ BlaxelErrorCode = Literal[
     "FORBIDDEN",
     "BAD_REQUEST",
     "USAGE_LIMIT_EXCEEDED",
+    # Reserved: defined by the gateway but not currently returned.
     "POLICY_VIOLATION",
     "UPSTREAM_CONNECT_FAILED",
     "UPSTREAM_CONNECT_TIMEOUT",
@@ -201,6 +202,16 @@ def _body_metadata(body: Any) -> tuple[BlaxelErrorCodeValue | None, bool | None]
     return code, retryable
 
 
+def _body_text(body: Any, field: str) -> str | None:
+    if isinstance(body, dict):
+        for source in (body.get("error"), body):
+            if isinstance(source, dict):
+                value = source.get(field)
+                if isinstance(value, str):
+                    return value
+    return None
+
+
 class BlaxelError(Exception):
     """Common base for Blaxel API errors, without wrapping network/validation failures.
 
@@ -214,6 +225,11 @@ class BlaxelError(Exception):
     message: str
     request_id: str | None
     retryable: bool | None
+    action: str | None
+    do_not: str | None
+    docs_url: str | None
+    origin: str | None
+    timestamp: str | None
     body: Any
     response: httpx.Response | None
 
@@ -245,6 +261,11 @@ class BlaxelError(Exception):
             None,
         )
         self.retryable = retryable
+        self.action = _body_text(body, "action")
+        self.do_not = _body_text(body, "do_not")
+        self.docs_url = _body_text(body, "docs_url")
+        self.origin = _body_text(body, "origin")
+        self.timestamp = _body_text(body, "timestamp")
         self.body = body
         self.response = _response_snapshot(response) if response is not None else None
 

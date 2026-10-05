@@ -45,6 +45,10 @@ PLATFORM = {
         "status": 404,
         "retryable": True,
         "origin": "platform",
+        "action": "Retry after the workload becomes available.",
+        "do_not": "Do not recreate the workload.",
+        "docs_url": "https://docs.blaxel.ai/troubleshooting/error-codes",
+        "timestamp": "2026-04-23T14:49:43+00:00",
     }
 }
 CONFIG = {"name": "sbx", "region": "us-pdx-1"}
@@ -150,6 +154,33 @@ def test_missing_or_malformed_metadata(body):
     assert error.retryable is None
     assert error.request_id is None
     assert error.response is None
+
+
+@pytest.mark.parametrize("factory", [BlaxelError, ResponseError, sandbox_errors.UnexpectedStatus])
+def test_documented_platform_guidance(factory):
+    response = httpx.Response(404, json=PLATFORM)
+    if factory is BlaxelError:
+        error = factory("legacy message", response=response)
+    elif factory is ResponseError:
+        error = factory(response)
+    else:
+        error = factory(404, response.content, response.headers, response=response)
+    for field in ("action", "do_not", "docs_url", "origin", "timestamp"):
+        assert getattr(error, field) == PLATFORM["error"][field]
+    assert error.retryable is True
+    assert error.body == PLATFORM
+
+
+@pytest.mark.parametrize("field", ["action", "do_not", "docs_url", "origin", "timestamp"])
+def test_guidance_prefers_nested_text_and_falls_back_to_top_level(field):
+    assert getattr(BlaxelError("x"), field) is None
+    for malformed in (None, False, 12, [], {}):
+        assert getattr(BlaxelError("x", body={"error": {field: malformed}}), field) is None
+        body = {field: "top-level", "error": {field: malformed}}
+        assert getattr(BlaxelError("x", body=body), field) == "top-level"
+    body = {field: "top-level", "error": {field: "nested"}}
+    assert getattr(BlaxelError("x", body=body), field) == "nested"
+    assert getattr(BlaxelError("x", body={"error": {field: ""}}), field) == ""
 
 
 def test_unknown_codes_and_predicate():
@@ -544,7 +575,7 @@ def test_snapshot_preserves_decoded_compressed_content_and_response_metadata():
 
 
 def test_known_code_literal_matches_typescript_contract():
-    # Exact union from TypeScript c057cff, including forward-compatibility gaps
+    # Exact union from the TypeScript error-types catalog, including forward-compatibility gaps
     # deliberately excluded (generic sandbox/process error messages are not codes).
     expected = """
     ROUTE_NOT_FOUND WORKLOAD_NOT_FOUND WORKSPACE_NOT_FOUND WORKLOAD_UNAVAILABLE

@@ -359,6 +359,8 @@ The SDK's typed API exceptions share a `BlaxelError` base, in both async and syn
 | `message` | Existing exception message, also available through `str(err)` |
 | `request_id` | Request ID to quote to Blaxel support (`X-Cf-Request-Id`, then `X-Amz-Cf-Id`, then `CF-Ray`), or `None` |
 | `retryable` | Backend retry hint, or `None` when absent; generated status errors also retain their existing `Retry-After` behavior |
+| `action` / `do_not` / `docs_url` | Backend guidance and related documentation, or `None` when absent |
+| `origin` / `timestamp` | Backend error origin and ISO-8601 timestamp, or `None` when absent |
 | `body` / `response` | Parsed response body (or non-JSON text) and response diagnostics, when available; `ResponseError` keeps its original `httpx.Response`, while other classes use request-free snapshots |
 
 ```python
