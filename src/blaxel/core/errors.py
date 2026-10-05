@@ -297,6 +297,9 @@ class _APIError(BlaxelError):
                 body = error.to_dict()
         super().__init__(message, status=status_code, code=code, body=body, response=response)
         self.status_code = status_code
+        # This field already existed on resource wrappers, including None.
+        # Wire metadata must not replace the caller's legacy value.
+        self.code = code
 
 
 __all__ = [

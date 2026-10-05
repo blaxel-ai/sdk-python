@@ -195,6 +195,26 @@ def test_resource_error_keeps_raw_body_headers_and_legacy_code(cls):
     assert parsed == Error.from_dict(GENERIC)
 
 
+@pytest.mark.parametrize(
+    "cls", [SandboxAPIError, DriveAPIError, VolumeAPIError, SnapshotAPIError, ApplicationAPIError]
+)
+@pytest.mark.parametrize("source", ["body", "response", "header"])
+def test_new_metadata_does_not_replace_legacy_none_code(cls, source):
+    if source == "body":
+        error = cls("failed", body=PLATFORM)
+    else:
+        response = httpx.Response(
+            503,
+            json=PLATFORM if source == "response" else {"error": "failed"},
+            headers={"X-Blaxel-Error-Code": "WORKLOAD_UNAVAILABLE"},
+        )
+        error = cls("failed", response=response)
+    assert error.code is None
+    assert error.status_code is None
+    assert error.args == ("failed",)
+    assert error.body is not None
+
+
 def test_missing_legacy_status_code_is_not_replaced_by_http_status():
     response = httpx.Response(404, json={"error": "missing"})
     parsed = Error.from_dict({"error": "missing"})
