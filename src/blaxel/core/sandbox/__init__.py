@@ -24,6 +24,7 @@ from .default import (
     SandboxSystem,
     is_creation_timeout_error,
 )
+from .drive_setup import SandboxDriveSetupError
 from .sync import (
     SyncCodeInterpreter,
     SyncSandboxCodegen,
@@ -44,6 +45,7 @@ from .types import (
     ProcessResponseWithLog,
     SandboxConfiguration,
     SandboxCreateConfiguration,
+    SandboxDriveMountConfiguration,
     SandboxFilesystemFile,
     SandboxUpdateNetwork,
     SessionCreateOptions,
@@ -64,6 +66,8 @@ __all__ = [
     "SessionWithToken",
     "SandboxConfiguration",
     "SandboxCreateConfiguration",
+    "SandboxDriveMountConfiguration",
+    "SandboxDriveSetupError",
     "VolumeBinding",
     "WatchEvent",
     "WatchHandle",

@@ -15,6 +15,7 @@ from ..client.models import (
     VolumeAttachmentType,
 )
 from ..client.types import UNSET
+from ..drive import DriveCreateConfiguration
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
 from .client.types import Response as ApiResponse
@@ -99,6 +100,29 @@ class VolumeBinding:
             type=data.get("type"),
             size_mb=data.get("size_mb"),
         )
+
+
+class SandboxDriveMountConfiguration:
+    """A drive to mount once the sandbox exists.
+
+    Give ``drive_name`` for a drive that already exists, or ``create`` (a
+    ``DriveCreateConfiguration`` or dict) for a new one. New drives are created in the
+    sandbox's region.
+    """
+
+    def __init__(
+        self,
+        mount_path: str,
+        drive_name: str | None = None,
+        create: DriveCreateConfiguration | dict | None = None,
+        drive_path: str = "/",
+        read_only: bool = False,
+    ):
+        self.mount_path = mount_path
+        self.drive_name = drive_name
+        self.create = create
+        self.drive_path = drive_path
+        self.read_only = read_only
 
 
 class SandboxConfiguration:

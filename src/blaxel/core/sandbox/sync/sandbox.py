@@ -60,9 +60,11 @@ from ..default.sandbox import (
     _unwrap_response,
     _validate_creation_timeout,
 )
+from ..drive_setup import _mount_drives_sync, _normalize_mount_drives
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
+    SandboxDriveMountConfiguration,
     SandboxUpdateMetadata,
     SandboxUpdateNetwork,
     SessionWithToken,
@@ -405,10 +407,14 @@ class SyncSandboxInstance:
         safe: bool = False,
         create_if_not_exist: bool = False,
         timeout: int | None = None,
+        *,
+        mount_drives: "list[SandboxDriveMountConfiguration | dict] | None" = None,
     ) -> "SyncSandboxInstance":
         """Create a sandbox.
 
         Args:
+            mount_drives: Drives to mount once the sandbox exists. If setup fails the
+                sandbox is kept and SandboxDriveSetupError is raised.
             timeout: Optional creation deadline in whole seconds (1 to
                 ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
                 in time the control plane cancels the creation, releases the
@@ -416,6 +422,7 @@ class SyncSandboxInstance:
                 platform default deadline applies; an explicit value can only
                 shorten it.
         """
+        mounts = _normalize_mount_drives(mount_drives, create_if_not_exist)
         timeout = _validate_creation_timeout(timeout)
         # No client-side default name: when the caller omits a name we send the
         # creation without metadata.name so the server can assign one and unnamed
@@ -557,6 +564,8 @@ class SyncSandboxInstance:
                 instance.fs.ls("/")
             except Exception:
                 pass
+        if mounts:
+            _mount_drives_sync(instance, mounts)
         return instance
 
     @classmethod
@@ -753,10 +762,12 @@ class SyncSandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
         timeout: int | None = None,
+        *,
+        mount_drives: "list[SandboxDriveMountConfiguration | dict] | None" = None,
     ) -> "SyncSandboxInstance":
         """Create the sandbox, or return the one already holding this name.
 
-        ``timeout`` is forwarded to :meth:`create`.
+        ``timeout`` and ``mount_drives`` are forwarded to :meth:`create`.
 
         The control plane owns the reconciliation: an alive sandbox is returned as
         is, a FAILED/TERMINATED one is replaced, and a deletion or concurrent
@@ -764,6 +775,8 @@ class SyncSandboxInstance:
         surfaces when the name really cannot be used, and is raised as is.
         """
         create_kwargs: Dict[str, Any] = {} if timeout is None else {"timeout": timeout}
+        if mount_drives is not None:
+            create_kwargs["mount_drives"] = mount_drives
         return cls.create(sandbox, create_if_not_exist=True, **create_kwargs)
 
     @classmethod

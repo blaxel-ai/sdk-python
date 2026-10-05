@@ -306,6 +306,35 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+#### Drives
+
+Pass `mount_drives` to mount drives as soon as the sandbox is created. Give `drive_name` for a drive that already exists, or `create` for a new one (a named drive is reused if it already exists). New drives are created in the sandbox's region; an existing drive must be in that region too. `SyncSandboxInstance` takes the same argument.
+
+```python
+import asyncio
+from blaxel.core import SandboxInstance
+
+async def main():
+    config = {"image": "blaxel/base-image:latest", "region": "us-was-1"}
+
+    sandbox = await SandboxInstance.create(
+        config,
+        mount_drives=[{"create": {"name": "app-data"}, "mount_path": "/mnt/data"}],
+    )
+    await sandbox.fs.write("/mnt/data/hello.txt", "hello")
+
+    # A second sandbox can mount the same drive by name.
+    reader = await SandboxInstance.create(
+        config,
+        mount_drives=[{"drive_name": "app-data", "mount_path": "/mnt/data", "read_only": True}],
+    )
+    print(await reader.fs.read("/mnt/data/hello.txt"))  # hello
+
+asyncio.run(main())
+```
+
+Each entry also takes `drive_path` (a sub-folder of the drive). With `create_if_not_exists`, a new drive needs a `name`. If a drive can't be mounted, `create` raises `SandboxDriveSetupError` with the `sandbox`, the `drive_names` it used and the original error as `__cause__`. The sandbox, drives and mounts made so far are kept, so delete only what you created.
+
 #### Volumes
 
 Persist data by attaching and using volumes:
