@@ -29,7 +29,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Worksp
 
         return response_200
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
@@ -49,8 +51,8 @@ def sync_detailed(
 ) -> Response[list["WorkspaceUser"]]:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -75,8 +77,8 @@ def sync(
 ) -> list["WorkspaceUser"] | None:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -97,8 +99,8 @@ async def asyncio_detailed(
 ) -> Response[list["WorkspaceUser"]]:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -121,8 +123,8 @@ async def asyncio(
 ) -> list["WorkspaceUser"] | None:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

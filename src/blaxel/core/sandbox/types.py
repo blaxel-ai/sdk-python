@@ -15,6 +15,7 @@ from ..client.models import (
     VolumeAttachmentType,
 )
 from ..client.types import UNSET
+from ..errors import BlaxelError
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
 from .client.types import Response as ApiResponse
@@ -402,14 +403,19 @@ class ProcessResponseWithLog:
             setattr(self._process_response, name, value)
 
 
-class ResponseError(Exception):
+class ResponseError(BlaxelError):
+    # Unlike the base, this legacy exception always has an HTTP response.
+    response: httpx.Response
+
     def __init__(self, response: httpx.Response):
         data_error = {}
         data = None
         if response.content:
             try:
                 data = response.json()
-                data_error = data
+                # Keep the original body intact; status/statusText belong only
+                # to the legacy message/data representation.
+                data_error = dict(data) if isinstance(data, dict) else data
             except Exception:
                 data = response.text
                 data_error["response"] = data
@@ -418,9 +424,9 @@ class ResponseError(Exception):
         if response.reason_phrase:
             data_error["statusText"] = response.reason_phrase
 
-        super().__init__(str(data_error))
-        self.response = response
-        self.data = data
+        super().__init__(str(data_error), body=data, response=response)
+        self.response = response  # pyright: ignore[reportIncompatibleVariableOverride]
+        self.data = data_error if isinstance(data, dict) else data
         self.error = None
 
     @classmethod

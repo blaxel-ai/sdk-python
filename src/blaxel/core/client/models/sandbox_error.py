@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, TypeVar, Union
 
+import httpx
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
@@ -31,6 +32,8 @@ class SandboxError:
         workspace (Union[Unset, str]): Workspace name where the sandbox creation was attempted Example: main.
     """
 
+    # Retain HTTP metadata without changing the serialized API body or constructor.
+    _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
     code: str
     message: str
     details: Union[Unset, "SandboxErrorDetails"] = UNSET
@@ -42,7 +45,6 @@ class SandboxError:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         code = self.code
 
         message = self.message

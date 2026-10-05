@@ -31,17 +31,22 @@ def _parse_response(
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_404, response)
         return response_404
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_422, response)
         return response_422
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
@@ -64,7 +69,8 @@ def sync_detailed(
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Kill a process
 
-     Forcefully kill a running process
+     Request forceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
@@ -95,7 +101,8 @@ def sync(
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Kill a process
 
-     Forcefully kill a running process
+     Request forceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
@@ -121,7 +128,8 @@ async def asyncio_detailed(
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Kill a process
 
-     Forcefully kill a running process
+     Request forceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
@@ -150,7 +158,8 @@ async def asyncio(
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Kill a process
 
-     Forcefully kill a running process
+     Request forceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
