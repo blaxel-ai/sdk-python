@@ -49,17 +49,26 @@ from ..default.sandbox import (
     ARCHIVE_MAX_WAIT_MS,
     ARCHIVE_WAIT_POLL_MS,
     ARCHIVING_STATUSES,
+    RESET_MAX_WAIT_MS,
+    RESET_POLL_MS,
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     SandboxAPIError,
+    _check_reset_status,
+    _check_resettable,
+    _check_taken_down,
     _create_body,
     _creation_client,
+    _enabled_body,
+    _is_not_yet_routable,
     _raise_if_creation_timeout,
+    _reset_failure,
     _sandbox_name,
     _status_of,
     _unwrap_response,
     _validate_creation_timeout,
 )
+from ..transient_retry import retry_on_transient_reset
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -188,6 +197,7 @@ class _SyncSandboxCallDescriptor:
 class SyncSandboxInstance:
     archive: "_SyncSandboxCallDescriptor"
     unarchive: "_SyncSandboxCallDescriptor"
+    reset: "_SyncResetDescriptor"
 
     def __init__(
         self,
@@ -785,6 +795,117 @@ class SyncSandboxInstance:
         )
 
 
+class _SyncResetDescriptor:
+    """Expose ``reset`` as both ``SyncSandboxInstance.reset("name")`` and ``instance.reset()``.
+
+    Both forms answer a ``SyncSandboxInstance``; the instance form refreshes the
+    record it was called on.
+    """
+
+    def __init__(self, doc: str):
+        self.__doc__ = doc
+
+    def __get__(self, instance, owner):
+        if instance is None:
+
+            def class_call(
+                sandbox_name: str,
+                *,
+                max_wait: int = RESET_MAX_WAIT_MS,
+                interval: int = RESET_POLL_MS,
+            ) -> "SyncSandboxInstance":
+                return _reset_sandbox_by_name(sandbox_name, max_wait, interval)
+
+            class_call.__doc__ = self.__doc__
+            return class_call
+
+        def instance_call(
+            *, max_wait: int = RESET_MAX_WAIT_MS, interval: int = RESET_POLL_MS
+        ) -> "SyncSandboxInstance":
+            fresh = _reset_sandbox_by_name(instance.metadata.name, max_wait, interval)
+            instance.sandbox = fresh.sandbox
+            instance.config.sandbox = instance.sandbox
+            return instance
+
+        instance_call.__doc__ = self.__doc__
+        return instance_call
+
+
+def _reset_sandbox_by_name(
+    sandbox_name: str, max_wait: int, interval: int
+) -> "SyncSandboxInstance":
+    response = get_sandbox(sandbox_name, client=client)
+    current = _unwrap_response(response, f"read sandbox {sandbox_name}")
+    record = current
+    if _check_resettable(sandbox_name, current):
+        try:
+            response = retry_on_transient_reset(
+                lambda: update_sandbox(
+                    sandbox_name=sandbox_name, client=client, body=_enabled_body(current, False)
+                )
+            )
+            record = _unwrap_response(response, f"disable sandbox {sandbox_name}")
+        except Exception as e:
+            raise _reset_failure(
+                sandbox_name, "could not be reset, it was left as it was", e
+            ) from e
+        _check_taken_down(sandbox_name, record)
+    try:
+        response = retry_on_transient_reset(
+            lambda: update_sandbox(
+                sandbox_name=sandbox_name, client=client, body=_enabled_body(record, True)
+            )
+        )
+        _unwrap_response(response, f"enable sandbox {sandbox_name}")
+    except Exception as e:
+        raise _reset_failure(
+            sandbox_name,
+            "was taken down for the reset but could not be switched back on, it is left "
+            f'DEACTIVATED; call SyncSandboxInstance.reset("{sandbox_name}") again to bring it back',
+            e,
+        ) from e
+    return _wait_for_reset(sandbox_name, max_wait, interval)
+
+
+def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "SyncSandboxInstance":
+    """Wait until the sandbox is DEPLOYED again and answers.
+
+    The record turns DEPLOYED a couple of seconds before the sandbox is routable,
+    during which calls get a 404 WORKLOAD_UNAVAILABLE (retryable), so DEPLOYED
+    alone is not ready.
+    """
+    deadline = time.monotonic() + max_wait / 1000
+    seconds = round(max_wait / 1000)
+    instance: SyncSandboxInstance | None = None
+    while True:
+        time.sleep(interval / 1000)
+        if instance is None:
+            response = retry_on_transient_reset(lambda: get_sandbox(sandbox_name, client=client))
+            record = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            if _check_reset_status(sandbox_name, record):
+                instance = SyncSandboxInstance(record)
+            elif time.monotonic() >= deadline:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is still DEPLOYING after waiting {seconds}s "
+                    "for it to deploy again after the reset"
+                )
+        if instance is not None:
+            try:
+                instance.fs.ls("/")
+                return instance
+            except Exception as e:
+                if not _is_not_yet_routable(e):
+                    raise _reset_failure(
+                        sandbox_name, "was deployed again but does not answer after the reset", e
+                    ) from e
+                if time.monotonic() >= deadline:
+                    raise _reset_failure(
+                        sandbox_name,
+                        f"was deployed again but did not answer within {seconds}s after the reset",
+                        e,
+                    ) from e
+
+
 def _archive_sandbox_by_name(sandbox_name: str):
     return archive_sandbox(sandbox_name, client=client)
 
@@ -833,4 +954,28 @@ SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.
     """,
+)
+SyncSandboxInstance.reset = _SyncResetDescriptor(
+    """Reset a sandbox to a fresh copy of its image.
+
+    The sandbox is taken down and deployed again from its image: everything
+    written to its filesystem since it started and every running process are
+    gone, as after a delete and a create. Unlike a delete and a create, the
+    sandbox is never absent: it keeps its name and URL, its spec, its
+    environment variables (secret values included), its volumes and the data
+    on them, its previews, preview tokens and sessions. What was set up from
+    inside the sandbox, such as drive mounts, has to be set up again.
+
+    This waits until the sandbox is DEPLOYED again and answers, a few seconds.
+    A sandbox that is disabled is switched back on. Sandboxes that are archived
+    or being deleted cannot be reset.
+
+    It works by switching the sandbox off and on again (``spec.enabled``). If the
+    second write fails the sandbox is left DEACTIVATED, and the error says so:
+    calling ``reset`` again brings it back.
+
+    Args:
+        max_wait: Give up waiting for the sandbox after this many milliseconds.
+        interval: Milliseconds between two reads of the sandbox.
+    """
 )
