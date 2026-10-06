@@ -1248,8 +1248,9 @@ SandboxInstance.reset = _AsyncResetDescriptor(
     gone, as after a delete and a create. Unlike a delete and a create, the
     sandbox is never absent: it keeps its name and URL, its spec, its
     environment variables (secret values included), its volumes and the data
-    on them, its previews, preview tokens and sessions. What was set up from
-    inside the sandbox, such as drive mounts, has to be set up again.
+    on them, its previews, preview tokens and sessions. Running processes, and
+    anything mounted from inside the sandbox such as a drive, belong to the old
+    instance and have to be started or mounted again.
 
     This waits until the sandbox is DEPLOYED again and answers, a few seconds.
     A sandbox that is disabled is switched back on. Sandboxes that are archived
