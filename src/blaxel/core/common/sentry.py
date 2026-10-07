@@ -66,6 +66,14 @@ _SAFE_ERROR_CODES = {
     "WORKLOAD_UNAVAILABLE",
 }
 
+# HTTP statuses the SDK itself already treats as transient or throttling
+# responses (mirrors ``is_retryable_read_error`` in ``sandbox/transient_retry.py``).
+# They indicate a server-side gateway/availability or rate-limit failure rather
+# than an SDK defect: the client correctly surfaces them to the caller, but an
+# unhandled one that reaches a last-chance boundary is not an actionable SDK bug,
+# so it must not be reported to Sentry as noise.
+_TRANSIENT_HTTP_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
+
 # Optional blaxel framework integration subpackages. Importing any of these
 # requires installing the matching extra (e.g. ``pip install blaxel[openai]``).
 # When the extra -- or one of its transitive dependencies -- is missing, or when
@@ -405,11 +413,33 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status carried by an SDK API error, if any."""
+    status_code = getattr(error, "status_code", None)
+    if not isinstance(status_code, int) or isinstance(status_code, bool):
+        status_code = getattr(getattr(error, "response", None), "status_code", None)
+    if isinstance(status_code, int) and not isinstance(status_code, bool):
+        return int(status_code)
+    return None
+
+
+def _is_transient_http_error(error: BaseException) -> bool:
+    """Whether an error is a transient/throttling server HTTP response, not an SDK defect.
+
+    A 502/503/504 gateway failure, a 500, a 408 timeout, or a 429 rate-limit is a
+    server-side condition the SDK cannot fix; it is surfaced to the caller but is
+    not an actionable SDK bug, so it should not be captured as Sentry noise.
+    """
+    return _http_status_code(error) in _TRANSIENT_HTTP_STATUS_CODES
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_transient_http_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
