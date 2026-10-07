@@ -21,10 +21,12 @@ import pytest
 
 import blaxel
 import blaxel.core.common.sentry as sentry
+from blaxel.core.authentication.types import CredentialsError
 from blaxel.core.client import Client, errors
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
+    _is_credentials_error,
     _is_optional_dependency_error,
 )
 
@@ -470,6 +472,20 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_credentials_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/authentication/types.py",
+            "from blaxel.core.authentication.types import CredentialsError\n"
+            "raise CredentialsError('No Blaxel credentials found. Set the BL_API_KEY "
+            "and BL_WORKSPACE environment variables, or run `bl login`.')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -777,3 +793,25 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestIsCredentialsError:
+    """The actionable missing-credentials error is expected config, not an SDK bug."""
+
+    def test_credentials_error_type_is_credentials_error(self):
+        assert _is_credentials_error(CredentialsError) is True
+
+    def test_credentials_error_subclass_is_credentials_error(self):
+        class SubCredentialsError(CredentialsError):
+            pass
+
+        assert _is_credentials_error(SubCredentialsError) is True
+
+    def test_runtime_error_is_not_credentials_error(self):
+        assert _is_credentials_error(RuntimeError) is False
+
+    def test_base_exception_is_not_credentials_error(self):
+        assert _is_credentials_error(Exception) is False
+
+    def test_none_is_not_credentials_error(self):
+        assert _is_credentials_error(None) is False

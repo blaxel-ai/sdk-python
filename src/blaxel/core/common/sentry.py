@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from ..authentication.types import CredentialsError
 from .settings import settings
 
 try:
@@ -405,11 +406,25 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_credentials_error(exc_type) -> bool:
+    """Check whether the exception is the SDK's actionable missing-credentials error.
+
+    ``CredentialsError`` is raised deliberately by the authentication layer when
+    the caller's Blaxel credentials or workspace are missing or incomplete (no
+    ``BL_API_KEY`` / ``BL_WORKSPACE``, not logged in). It carries an actionable
+    message telling the user what to configure, so it is an expected environment
+    issue rather than an SDK defect and must not be reported to Sentry.
+    """
+    return bool(exc_type) and issubclass(exc_type, CredentialsError)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_credentials_error(exc_type):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
