@@ -348,6 +348,46 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+### Error handling
+
+The SDK's typed API exceptions share a `BlaxelError` base, in both async and sync clients. `ResponseError`, `SandboxAPIError`, `SandboxCreationTimeoutError`, `DriveAPIError`, `VolumeAPIError`, `SnapshotAPIError`, `ApplicationAPIError`, and generated-client `UnexpectedStatus` / `APIStatusError` subclasses keep their existing messages, fields, and `except` behavior.
+
+| Field | Meaning |
+| --- | --- |
+| `status` | HTTP status of the failing response, or `None` |
+| `code` | Machine-readable code when the backend sends one, a newer string, or the numeric HTTP status in a generic `{ "error", "code" }` body; existing resource wrappers keep their legacy string `.code` (the wire code is in `.body`) |
+| `message` | Existing exception message, also available through `str(err)` |
+| `request_id` | Request ID to quote to Blaxel support (`X-Cf-Request-Id`, then `X-Amz-Cf-Id`, then `CF-Ray`), or `None` |
+| `retryable` | Backend retry hint, or `None` when absent; generated status errors also retain their existing `Retry-After` behavior |
+| `action` / `do_not` / `docs_url` | Backend guidance and related documentation, or `None` when absent |
+| `origin` / `timestamp` | Backend error origin and ISO-8601 timestamp, or `None` when absent |
+| `body` / `response` | Parsed response body (or non-JSON text) and response diagnostics, when available; `ResponseError` keeps its original `httpx.Response`, while other classes use request-free snapshots |
+
+```python
+from blaxel.core import BlaxelError, SandboxInstance, is_blaxel_error
+
+try:
+    sandbox = await SandboxInstance.create({"name": "my-sandbox", "region": "us-pdx-1"})
+except BlaxelError as err:
+    if is_blaxel_error(err, "QUOTA_EXCEEDED"):
+        pass  # wait for capacity, then retry
+    elif is_blaxel_error(err, ["SANDBOX_ALREADY_EXISTS", "SANDBOX_DELETION_IN_PROGRESS"]):
+        pass  # the name is taken
+    elif err.status in (401, 403):
+        pass  # check the API key and workspace
+    else:
+        print(err.status, err.code, err.message, err.request_id)
+    raise
+```
+
+`BlaxelErrorCode` is a `Literal` listing the same known backend codes as the TypeScript SDK. A newer backend can send a code this SDK does not list yet, so keep a fallback branch. The body shapes are exported as `BlaxelApiErrorBody`, `BlaxelActionErrorBody`, `BlaxelPlatformErrorBody`, and `BlaxelSandboxApiErrorBody` (`TypedDict` types). Network failures, cancellation, client-side validation, and missing credentials keep their original exception types.
+
+`ResponseError.response` keeps the original `httpx.Response` object, exactly as before: its identity and existing request/URL access are unchanged. Its existing `data` object also retains its identity and mutation behavior.
+
+Only newly retained responses—on the `BlaxelError` base for other classes, resource wrappers, generated status errors, and returned generated error models—use request-free snapshots. These retain status, response headers, decoded content, and reason/version metadata, but not the outgoing request, request headers, URL, redirect history, or transport objects. Request/URL access is unavailable only on these snapshots; use `err.request_id` for support diagnostics. The original HTTP response is not modified.
+
+This is additive: low-level generated calls that return modeled `Error`, `SandboxError`, or `ErrorResponse` values still return them, rather than raising. Documented error branches returning `None` and generated schema-parse failures also retain their existing behavior. Likewise, `raise_on_unexpected_status=False` still suppresses undocumented-status exceptions. High-level methods that returned error values before this change still do so; this base class does not introduce a global raise-on-error policy.
+
 ### Batch jobs
 
 Blaxel lets you support agentic workflows by offloading asynchronous batch processing tasks to its scalable infrastructure, where they can run in parallel. Jobs can run multiple times within a single execution and accept optional input parameters.
