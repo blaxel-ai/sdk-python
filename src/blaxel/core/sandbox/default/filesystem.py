@@ -148,9 +148,9 @@ class SandboxFileSystem(SandboxAction):
             headers={"Content-Type": "application/json"},
         )
         try:
-            data = json.loads(await response.aread())
+            await response.aread()
             self.handle_response_error(response)
-            return Directory.from_dict(data)
+            return Directory.from_dict(response.json())
         finally:
             await response.aclose()
 

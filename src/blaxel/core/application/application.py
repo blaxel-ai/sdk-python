@@ -20,6 +20,7 @@ from ..client.models import Application, ApplicationSpec, Env, Metadata
 from ..client.models.error import Error
 from ..client.types import UNSET
 from ..common.settings import settings
+from ..errors import _APIError
 
 # Spec-level fields that default to UNSET on the generated model, so "is set"
 # is a reliable signal of whether the caller provided them. Booleans like
@@ -60,13 +61,8 @@ def _merge_application_spec(new_spec, current_spec, *, enabled, proxy) -> Applic
     return ApplicationSpec(**merged)
 
 
-class ApplicationAPIError(Exception):
+class ApplicationAPIError(_APIError):
     """Exception raised when application API returns an error."""
-
-    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.code = code
 
 
 class _AsyncDeleteDescriptor:
@@ -302,7 +298,9 @@ class ApplicationInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+            raise ApplicationAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -315,7 +313,9 @@ class ApplicationInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+            raise ApplicationAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -446,7 +446,9 @@ class SyncApplicationInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+            raise ApplicationAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -460,7 +462,9 @@ class SyncApplicationInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+            raise ApplicationAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -514,7 +518,9 @@ async def _delete_application_by_name(application_name: str) -> Application:
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+        raise ApplicationAPIError(
+            message, status_code=status_code, code=response.error, error=response
+        )
     return response
 
 
@@ -524,7 +530,9 @@ def _delete_application_by_name_sync(application_name: str) -> Application:
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+        raise ApplicationAPIError(
+            message, status_code=status_code, code=response.error, error=response
+        )
     return response
 
 
@@ -607,7 +615,9 @@ async def _update_application_by_name(
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+        raise ApplicationAPIError(
+            message, status_code=status_code, code=response.error, error=response
+        )
     await asyncio.sleep(0.5)
     return ApplicationInstance(response)
 
@@ -691,7 +701,9 @@ def _update_application_by_name_sync(
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise ApplicationAPIError(message, status_code=status_code, code=response.error)
+        raise ApplicationAPIError(
+            message, status_code=status_code, code=response.error, error=response
+        )
     time.sleep(0.5)
     return SyncApplicationInstance(response)
 
