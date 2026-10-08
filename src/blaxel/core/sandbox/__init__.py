@@ -1,3 +1,13 @@
+from ..errors import (
+    BlaxelActionErrorBody,
+    BlaxelApiErrorBody,
+    BlaxelError,
+    BlaxelErrorCode,
+    BlaxelErrorCodeValue,
+    BlaxelPlatformErrorBody,
+    BlaxelSandboxApiErrorBody,
+    is_blaxel_error,
+)
 from .client.models import (
     ApplyEditRequest,
     ApplyEditResponse,
@@ -42,9 +52,11 @@ from .types import (
     CopyResponse,
     ProcessRequestWithLog,
     ProcessResponseWithLog,
+    ResponseError,
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxFilesystemFile,
+    SandboxPreviewCreateConfiguration,
     SandboxUpdateNetwork,
     SessionCreateOptions,
     SessionWithToken,
@@ -55,6 +67,15 @@ from .types import (
 )
 
 __all__ = [
+    "BlaxelError",
+    "BlaxelErrorCode",
+    "BlaxelErrorCodeValue",
+    "BlaxelApiErrorBody",
+    "BlaxelActionErrorBody",
+    "BlaxelPlatformErrorBody",
+    "BlaxelSandboxApiErrorBody",
+    "is_blaxel_error",
+    "ResponseError",
     "SandboxInstance",
     "SandboxAPIError",
     "SandboxCreationTimeoutError",
@@ -75,6 +96,7 @@ __all__ = [
     "SandboxUpdateNetwork",
     "Sandbox",
     "SandboxFileSystem",
+    "SandboxPreviewCreateConfiguration",
     "SandboxPreviews",
     "SandboxSchedules",
     "SandboxProcess",
