@@ -52,6 +52,16 @@ def _raise_in_sdk(relative_path: str, code: str) -> BaseException:
     return _raise_in_file(_sdk_filename(relative_path), code)
 
 
+def _raise_response_error_in_sdk(relative_path: str, status_code: int) -> BaseException:
+    """Raise the sandbox wrapper's ``ResponseError`` for ``status_code`` from an SDK frame."""
+    return _raise_in_sdk(
+        relative_path,
+        "import httpx\n"
+        "from blaxel.core.sandbox.types import ResponseError\n"
+        f"raise ResponseError(httpx.Response({status_code}))",
+    )
+
+
 def _exception_group_leaves(error: BaseException) -> list[BaseException]:
     if isinstance(error, sentry._EXCEPTION_GROUP_TYPES):
         leaves = []
@@ -569,6 +579,104 @@ class BrokenFinalizer:
 
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.thread_hook_calls == [args]
+
+
+class TestHttpStatusClassification:
+    """Cover the HTTP-status helpers used to suppress resource-not-found noise."""
+
+    def test_status_read_from_blaxel_error_status_attribute(self):
+        exc = _raise_response_error_in_sdk("core/sandbox/default/action.py", 404)
+        # ResponseError carries the status on ``.status`` (and ``.response``),
+        # not ``.status_code``.
+        assert getattr(exc, "status_code", None) is None
+        assert sentry._http_status_code(exc) == 404
+
+    def test_status_read_from_status_code_attribute(self):
+        exc = errors.UnexpectedStatus(404, b"")
+        assert sentry._http_status_code(exc) == 404
+
+    def test_status_read_from_response_object(self):
+        exc = httpx.HTTPStatusError(
+            "boom",
+            request=httpx.Request("GET", "https://example.com"),
+            response=httpx.Response(404),
+        )
+        assert sentry._http_status_code(exc) == 404
+
+    def test_non_http_error_has_no_status(self):
+        assert sentry._http_status_code(RuntimeError("boom")) is None
+
+    def test_boolean_status_is_rejected(self):
+        exc = RuntimeError("boom")
+        setattr(exc, "status_code", True)
+        assert sentry._http_status_code(exc) is None
+
+    def test_only_404_is_treated_as_resource_not_found(self):
+        for status in (400, 401, 403, 409, 422, 429, 500, 502, 503):
+            exc = _raise_response_error_in_sdk("core/sandbox/default/action.py", status)
+            assert sentry._is_resource_not_found_error(exc) is False, status
+        not_found = _raise_response_error_in_sdk("core/sandbox/default/action.py", 404)
+        assert sentry._is_resource_not_found_error(not_found) is True
+
+
+class TestResourceNotFoundBoundary:
+    """A 404 surfaced through an SDK frame is a usage/state condition, not a defect."""
+
+    def test_unhandled_response_error_404_is_not_captured(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-124: process.get on a missing process 404s."""
+        exc = _raise_response_error_in_sdk("core/sandbox/default/action.py", 404)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        # The original excepthook still runs so the program crash is unchanged.
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_unexpected_status_404_is_not_captured(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/compute/get_process.py",
+            "from blaxel.core.client import errors\nraise errors.UnexpectedStatus(404, b'')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_response_error_500_is_still_captured(self, installed_sentry_hooks):
+        """Anti over-suppression: a server 500 through an SDK frame is still reported."""
+        exc = _raise_response_error_in_sdk("core/sandbox/default/action.py", 500)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+
+    def test_unhandled_response_error_400_is_still_captured(self, installed_sentry_hooks):
+        """Only 404 is filtered; other 4xx stay visible as possible request-shape bugs."""
+        exc = _raise_response_error_in_sdk("core/sandbox/default/action.py", 400)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+
+    def test_application_404_is_not_captured_even_though_filtered(self, installed_sentry_hooks):
+        """A 404 raised from application code was never SDK-origin to begin with."""
+        exc = _raise_in_file(
+            "/tmp/customer/app.py",
+            "import httpx\n"
+            "from blaxel.core.sandbox.types import ResponseError\n"
+            "raise ResponseError(httpx.Response(404))",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
 
 class TestSentryDelivery:
