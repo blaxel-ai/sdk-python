@@ -21,6 +21,21 @@ from .client.models.process_response import ProcessResponse
 from .client.types import Response as ApiResponse
 
 
+class SandboxPreviewCreateConfiguration:
+    """Port shorthand for a preview; existing previews are never reconciled."""
+
+    def __init__(self, port: int, name: str | None = None, public: bool = False):
+        self.port = port
+        self.name = name
+        self.public = public
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SandboxPreviewCreateConfiguration":
+        return cls(
+            port=data.get("port", 0), name=data.get("name"), public=data.get("public", False)
+        )
+
+
 class SessionCreateOptions:
     def __init__(
         self,
