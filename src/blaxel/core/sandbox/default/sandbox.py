@@ -48,6 +48,7 @@ from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, normalize_cursor
 from ...client.types import UNSET, Unset
 from ...common.settings import settings
+from ...errors import _APIError
 from ..drive_setup import _mount_drives_async, _normalize_mount_drives
 from ..types import (
     SandboxConfiguration,
@@ -69,13 +70,8 @@ from .snapshot import SandboxSnapshots
 from .system import SandboxSystem
 
 
-class SandboxAPIError(Exception):
+class SandboxAPIError(_APIError):
     """Exception raised when sandbox API returns an error."""
-
-    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.code = code
 
 
 CREATION_TIMEOUT_HEADER = "X-Blaxel-Creation-Timeout"
@@ -95,6 +91,8 @@ class SandboxCreationTimeoutError(SandboxAPIError):
         sandbox_name: str | None,
         timeout: int | None,
         data: Any = None,
+        *,
+        response: "httpx.Response | None" = None,
     ):
         detail = data.get("message") if isinstance(data, dict) else None
         target = f"Sandbox {sandbox_name}" if sandbox_name else "Sandbox"
@@ -102,7 +100,9 @@ class SandboxCreationTimeoutError(SandboxAPIError):
         message = f"{target} was not ready{deadline}; the creation was cancelled."
         if isinstance(detail, str) and detail:
             message = f"{message} {detail}"
-        super().__init__(message, status_code=408, code=CREATION_TIMEOUT_CODE)
+        super().__init__(
+            message, status_code=408, code=CREATION_TIMEOUT_CODE, body=data, response=response
+        )
         self.sandbox_name = sandbox_name
         self.timeout = timeout
         self.data = data
@@ -156,11 +156,13 @@ def _raise_if_creation_timeout(
         if error.status_code != 408:
             return
         raise SandboxCreationTimeoutError(
-            sandbox_name, timeout, _decode_error_content(error.content)
+            sandbox_name, timeout, _decode_error_content(error.content), response=error.response
         ) from error
     status_code = error.status_code if error.status_code is not UNSET else None
     if status_code == 408 or error.code == CREATION_TIMEOUT_CODE:
-        raise SandboxCreationTimeoutError(sandbox_name, timeout, error.to_dict())
+        raise SandboxCreationTimeoutError(
+            sandbox_name, timeout, error.to_dict(), response=error._response
+        )
 
 
 logger = logging.getLogger(__name__)
@@ -199,7 +201,7 @@ def _unwrap_response(response, action: str, *, allow_none: bool = False):
     if isinstance(response, Error):
         status_code = response.code if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise SandboxAPIError(message, status_code=status_code, code=response.error)
+        raise SandboxAPIError(message, status_code=status_code, code=response.error, error=response)
     if response is None and not allow_none:
         raise SandboxAPIError(f"Failed to {action}")
     return response
@@ -738,7 +740,7 @@ class SandboxInstance:
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
-            raise SandboxAPIError(message, status_code=status_code, code=code)
+            raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
         assert response is not None
         instance = cls(response)
@@ -763,7 +765,9 @@ class SandboxInstance:
         if isinstance(response, Error):
             status_code = response.code if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+            raise SandboxAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
 
         if response is None:
             raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
@@ -808,7 +812,9 @@ class SandboxInstance:
             if isinstance(response, Error):
                 status_code = response.code if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise SandboxAPIError(message, status_code=status_code, code=response.error)
+                raise SandboxAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return await fetch_page(cursor)

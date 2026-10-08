@@ -1,3 +1,13 @@
+from ..errors import (
+    BlaxelActionErrorBody,
+    BlaxelApiErrorBody,
+    BlaxelError,
+    BlaxelErrorCode,
+    BlaxelErrorCodeValue,
+    BlaxelPlatformErrorBody,
+    BlaxelSandboxApiErrorBody,
+    is_blaxel_error,
+)
 from .autoload import autoload
 from .env import env
 from .internal import get_alphanumeric_limited_hash, get_global_unique_hash
@@ -11,6 +21,14 @@ from .webhook import (
 )
 
 __all__ = [
+    "BlaxelError",
+    "BlaxelErrorCode",
+    "BlaxelErrorCodeValue",
+    "BlaxelApiErrorBody",
+    "BlaxelActionErrorBody",
+    "BlaxelPlatformErrorBody",
+    "BlaxelSandboxApiErrorBody",
+    "is_blaxel_error",
     "autoload",
     "capture_exception",
     "flush_sentry",
