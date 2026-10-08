@@ -44,17 +44,22 @@ def _parse_response(
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_422, response)
         return response_422
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 

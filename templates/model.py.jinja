@@ -20,6 +20,9 @@ from typing import Any, TypeVar, Optional, BinaryIO, TextIO, TYPE_CHECKING
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+{% if class_name in ["Error", "SandboxError", "ErrorResponse"] %}
+import httpx
+{% endif %}
 {% if model.is_multipart_body %}
 import json
 {% endif %}
@@ -76,6 +79,10 @@ T = TypeVar("T", bound="{{ class_name }}")
 class {{ class_name }}:
     {{ safe_docstring(class_docstring_content(model)) | indent(4) }}
 
+    {% if class_name in ["Error", "SandboxError", "ErrorResponse"] %}
+    # Retain HTTP metadata without changing the serialized API body or constructor.
+    _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
+    {% endif %}
     {% for property in model.required_properties + model.optional_properties %}
     {% if property.default is none and property.required %}
     {% if paginated_list.value and property.python_name == "meta" %}
