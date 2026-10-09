@@ -196,6 +196,10 @@ RESET_POLL_MS = 500
 # brings the sandbox back to life) is refused before anything is written.
 RESETTABLE_STATUSES = {"DEPLOYED", "DEPLOYING", "DEACTIVATING", "DEACTIVATED", "FAILED"}
 RESET_OFF_STATUSES = {"DEACTIVATING", "DEACTIVATED"}
+# Right after the switch-on write the record can still read as off while the
+# control plane starts the redeploy. That is tolerated only until the redeploy
+# has been seen, and never past the wait the caller asked for.
+RESET_ENTRY_MAX_WAIT_MS = 30_000
 
 
 def _unwrap_response(response, action: str, *, allow_none: bool = False):
@@ -267,6 +271,16 @@ def _check_taken_down(sandbox_name: str, sandbox: Sandbox) -> None:
         )
 
 
+def _check_still_going_down(sandbox_name: str, sandbox: Sandbox) -> None:
+    """While the teardown runs: the sandbox must stay off, not come back on its own."""
+    status = _status_of(sandbox)
+    if status not in RESET_OFF_STATUSES:
+        raise SandboxAPIError(
+            f"Sandbox {sandbox_name} could not be reset: the control plane did not finish "
+            f"taking it down (it is {status})"
+        )
+
+
 def _reset_failure(sandbox_name: str, message: str, cause: Exception) -> SandboxAPIError:
     return SandboxAPIError(
         f"Sandbox {sandbox_name} {message}: {cause}",
@@ -286,13 +300,26 @@ def _is_not_yet_routable(error: Exception) -> bool:
     return True
 
 
-def _check_reset_status(sandbox_name: str, sandbox: Sandbox) -> bool:
-    """While waiting for the redeploy: True once DEPLOYED, False while DEPLOYING."""
+def _reset_entry_window(max_wait: int) -> float:
+    """Seconds, from now, during which a record that still reads off is tolerated."""
+    return (
+        min(RESET_ENTRY_MAX_WAIT_MS, max_wait if max_wait >= 0 else RESET_ENTRY_MAX_WAIT_MS) / 1000
+    )
+
+
+def _check_reset_status(sandbox_name: str, sandbox: Sandbox, *, tolerate_off: bool = False) -> bool:
+    """While waiting for the redeploy: True once DEPLOYED, False while DEPLOYING.
+
+    ``tolerate_off`` also lets a record that still reads DEACTIVATING/DEACTIVATED
+    pass (False), for the moment right after the switch-on write.
+    """
     status = _status_of(sandbox)
     if status == "DEPLOYED":
         return True
     if status == "FAILED":
         raise SandboxAPIError(f"Sandbox {sandbox_name} failed to deploy again after the reset")
+    if tolerate_off and status in RESET_OFF_STATUSES:
+        return False
     if status != "DEPLOYING":
         raise SandboxAPIError(
             f"Sandbox {sandbox_name} is {status} while it should be deployed again after the reset"
@@ -1140,6 +1167,11 @@ async def _reset_sandbox_by_name(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
         _check_taken_down(sandbox_name, record)
+        # The write can come back while the teardown is still running. Switching the
+        # sandbox back on then cancels it and leaves the old instance, and its
+        # filesystem, in place: let it finish first.
+        if _status_of(record) == "DEACTIVATING":
+            record = await _wait_for_deactivated(sandbox_name, record, max_wait, interval)
     try:
         response = await retry_on_transient_reset_async(
             lambda: update_sandbox(
@@ -1157,6 +1189,24 @@ async def _reset_sandbox_by_name(
     return await _wait_for_reset(sandbox_name, max_wait, interval)
 
 
+async def _wait_for_deactivated(
+    sandbox_name: str, record: Sandbox, max_wait: int, interval: int
+) -> Sandbox:
+    """Wait for a sandbox that is DEACTIVATING to be DEACTIVATED, within the entry window.
+
+    If the teardown is slow the last record read is returned and the reset goes on.
+    """
+    deadline = time.monotonic() + _reset_entry_window(max_wait)
+    while _status_of(record) == "DEACTIVATING" and time.monotonic() < deadline:
+        await asyncio.sleep(interval / 1000)
+        response = await retry_on_transient_reset_async(
+            lambda: get_sandbox(sandbox_name, client=client)
+        )
+        record = _unwrap_response(response, f"read sandbox {sandbox_name}")
+        _check_still_going_down(sandbox_name, record)
+    return record
+
+
 async def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "SandboxInstance":
     """Wait until the sandbox is DEPLOYED again and answers.
 
@@ -1165,7 +1215,9 @@ async def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "S
     alone is not ready.
     """
     deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
+    entry_deadline = time.monotonic() + _reset_entry_window(max_wait)
     seconds = round(max_wait / 1000)
+    redeploying = False
     instance: SandboxInstance | None = None
     while True:
         await asyncio.sleep(interval / 1000)
@@ -1174,7 +1226,12 @@ async def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "S
                 lambda: get_sandbox(sandbox_name, client=client)
             )
             record = _unwrap_response(response, f"read sandbox {sandbox_name}")
-            if _check_reset_status(sandbox_name, record):
+            redeploying = redeploying or _status_of(record) == "DEPLOYING"
+            if _check_reset_status(
+                sandbox_name,
+                record,
+                tolerate_off=not redeploying and time.monotonic() < entry_deadline,
+            ):
                 instance = SandboxInstance(record)
             elif time.monotonic() >= deadline:
                 raise SandboxAPIError(

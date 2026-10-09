@@ -238,13 +238,72 @@ async def test_reset_raises_when_the_sandbox_fails_to_deploy_again(aio):
 
 
 @pytest.mark.asyncio
-async def test_reset_raises_when_the_sandbox_is_taken_down_again_while_it_waits(aio):
+async def test_reset_tolerates_the_record_still_reading_off_right_after_the_switch_on_write(aio):
+    get, update, _ = aio
+    get.side_effect = [
+        record("DEPLOYED"),
+        record("DEACTIVATED", False),
+        record("DEACTIVATING", False),
+        record("DEPLOYING"),
+        record("DEPLOYED"),
+    ]
+    update.side_effect = [record("DEACTIVATED", False), record("DEACTIVATED", True)]
+
+    instance = await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert get.await_count == 5
+
+
+@pytest.mark.asyncio
+async def test_reset_does_not_tolerate_a_sandbox_that_stays_off_within_the_wait_asked_for(aio):
     get, update, _ = aio
     get.side_effect = [record("DEPLOYED"), record("DEACTIVATED", False)]
+    update.side_effect = [record("DEACTIVATED", False), record("DEACTIVATED", True)]
+
+    with pytest.raises(SandboxAPIError, match="is DEACTIVATED while it should be deployed again"):
+        await SandboxInstance.reset("my-sandbox", interval=0, max_wait=0)
+
+
+@pytest.mark.asyncio
+async def test_reset_raises_when_the_sandbox_is_taken_down_again_once_it_is_redeploying(aio):
+    get, update, _ = aio
+    get.side_effect = [record("DEPLOYED"), record("DEPLOYING"), record("DEACTIVATED", False)]
     update.side_effect = [record("DEACTIVATED", False), record("DEPLOYING")]
 
     with pytest.raises(SandboxAPIError, match="is DEACTIVATED while it should be deployed again"):
         await SandboxInstance.reset("my-sandbox", interval=0)
+
+
+@pytest.mark.asyncio
+async def test_reset_lets_the_teardown_finish_before_it_switches_the_sandbox_back_on(aio):
+    get, update, _ = aio
+    get.side_effect = [
+        record("DEPLOYED"),
+        record("DEACTIVATING", False),
+        record("DEACTIVATED", False),
+        record("DEPLOYED"),
+    ]
+    update.side_effect = [record("DEACTIVATING", False), record("DEPLOYING")]
+
+    instance = await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert update.await_count == 2
+    assert body_of(update, 1)["spec"]["enabled"] is True
+    # Switching it on came after the sandbox read DEACTIVATED: two reads, then the write.
+    assert get.await_count == 4
+
+
+@pytest.mark.asyncio
+async def test_reset_does_not_switch_it_back_on_when_the_teardown_ends_up_somewhere_else(aio):
+    get, update, _ = aio
+    get.side_effect = [record("DEPLOYED"), record("DEPLOYED")]
+    update.side_effect = [record("DEACTIVATING", False)]
+
+    with pytest.raises(SandboxAPIError, match=r"did not finish taking it down \(it is DEPLOYED\)"):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+    assert update.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -399,6 +458,41 @@ def test_sync_reset_waits_until_the_sandbox_answers_not_only_until_it_is_deploye
     assert instance.status == "DEPLOYED"
     assert ls.call_count == 3
     assert get.call_count == 2
+
+
+def test_sync_reset_tolerates_the_record_still_reading_off_right_after_the_switch_on_write(
+    blocking,
+):
+    get, update, _ = blocking
+    get.side_effect = [
+        record("DEPLOYED"),
+        record("DEACTIVATED", False),
+        record("DEPLOYING"),
+        record("DEPLOYED"),
+    ]
+    update.side_effect = [record("DEACTIVATED", False), record("DEACTIVATED", True)]
+
+    instance = SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert get.call_count == 4
+
+
+def test_sync_reset_lets_the_teardown_finish_before_it_switches_the_sandbox_back_on(blocking):
+    get, update, _ = blocking
+    get.side_effect = [
+        record("DEPLOYED"),
+        record("DEACTIVATING", False),
+        record("DEACTIVATED", False),
+        record("DEPLOYED"),
+    ]
+    update.side_effect = [record("DEACTIVATING", False), record("DEPLOYING")]
+
+    instance = SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert update.call_count == 2
+    assert get.call_count == 4
 
 
 def test_sync_reset_waits_indefinitely_when_max_wait_is_minus_one(blocking):
