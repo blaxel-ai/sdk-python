@@ -1,4 +1,5 @@
 import logging
+import math
 import time
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
@@ -878,7 +879,7 @@ def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "SyncSan
     during which calls get a 404 WORKLOAD_UNAVAILABLE (retryable), so DEPLOYED
     alone is not ready.
     """
-    deadline = time.monotonic() + max_wait / 1000
+    deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
     seconds = round(max_wait / 1000)
     instance: SyncSandboxInstance | None = None
     while True:
@@ -980,7 +981,8 @@ SyncSandboxInstance.reset = _SyncResetDescriptor(
     calling ``reset`` again brings it back.
 
     Args:
-        max_wait: Give up waiting for the sandbox after this many milliseconds.
+        max_wait: Give up waiting for the sandbox after this many milliseconds;
+            -1 waits indefinitely.
         interval: Milliseconds between two reads of the sandbox.
     """
 )

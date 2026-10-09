@@ -258,6 +258,18 @@ async def test_reset_gives_up_after_max_wait(aio):
 
 
 @pytest.mark.asyncio
+async def test_reset_waits_indefinitely_when_max_wait_is_minus_one(aio):
+    get, update, _ = aio
+    get.side_effect = [record("DEPLOYED"), *[record("DEPLOYING")] * 5, record("DEPLOYED")]
+    update.side_effect = [record("DEACTIVATED", False), record("DEPLOYING")]
+
+    instance = await SandboxInstance.reset("my-sandbox", interval=0, max_wait=-1)
+
+    assert instance.status == "DEPLOYED"
+    assert get.await_count == 7
+
+
+@pytest.mark.asyncio
 async def test_reset_waits_until_the_sandbox_answers_not_only_until_it_is_deployed(aio):
     # The record is DEPLOYED a couple of seconds before the route is up.
     get, update, ls = aio
@@ -387,6 +399,17 @@ def test_sync_reset_waits_until_the_sandbox_answers_not_only_until_it_is_deploye
     assert instance.status == "DEPLOYED"
     assert ls.call_count == 3
     assert get.call_count == 2
+
+
+def test_sync_reset_waits_indefinitely_when_max_wait_is_minus_one(blocking):
+    get, update, _ = blocking
+    get.side_effect = [record("DEPLOYED"), *[record("DEPLOYING")] * 5, record("DEPLOYED")]
+    update.side_effect = [record("DEACTIVATED", False), record("DEPLOYING")]
+
+    instance = SyncSandboxInstance.reset("my-sandbox", interval=0, max_wait=-1)
+
+    assert instance.status == "DEPLOYED"
+    assert get.call_count == 7
 
 
 def test_sync_reset_raises_when_a_deployed_sandbox_does_not_answer_in_time(blocking):

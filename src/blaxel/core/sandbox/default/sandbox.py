@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import math
 import time
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
@@ -1163,7 +1164,7 @@ async def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "S
     during which calls get a 404 WORKLOAD_UNAVAILABLE (retryable), so DEPLOYED
     alone is not ready.
     """
-    deadline = time.monotonic() + max_wait / 1000
+    deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
     seconds = round(max_wait / 1000)
     instance: SandboxInstance | None = None
     while True:
@@ -1267,7 +1268,8 @@ SandboxInstance.reset = _AsyncResetDescriptor(
     calling ``reset`` again brings it back.
 
     Args:
-        max_wait: Give up waiting for the sandbox after this many milliseconds.
+        max_wait: Give up waiting for the sandbox after this many milliseconds;
+            -1 waits indefinitely.
         interval: Milliseconds between two reads of the sandbox.
     """
 )
