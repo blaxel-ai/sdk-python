@@ -119,7 +119,7 @@ class VolumeBinding:
 
 
 class SandboxDriveMountConfiguration:
-    """A drive to mount once the sandbox exists.
+    """A drive to mount on the sandbox.
 
     Give ``drive_name`` for a drive that already exists, or ``create`` (a
     ``DriveCreateConfiguration`` or dict) for a new one. New drives are created in the

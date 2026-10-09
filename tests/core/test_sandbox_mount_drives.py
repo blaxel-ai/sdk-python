@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from blaxel.core import (
+    DriveAPIError,
     DriveInstance,
     SandboxDriveMountConfiguration,
     SandboxDriveSetupError,
@@ -57,8 +58,9 @@ def h(request, monkeypatch):
         mounted=mounted,
         create_sandbox=mock(return_value=response),
         get=mock(side_effect=drive),
-        create=mock(side_effect=lambda config: drive("drive-1234abcd", config.region)),
-        create_if_not_exists=mock(side_effect=lambda config: drive(config.name, config.region)),
+        create=mock(
+            side_effect=lambda config: drive(config.name or "drive-1234abcd", config.region)
+        ),
         mount=mock(side_effect=mount),
         list=mock(side_effect=lambda: list(mounted)),
         unmount=mock(),
@@ -69,14 +71,13 @@ def h(request, monkeypatch):
     monkeypatch.setattr(fs_cls, "ls", mock(return_value=[]))
     monkeypatch.setattr(drive_cls, "get", h.get)
     monkeypatch.setattr(drive_cls, "create", h.create)
-    monkeypatch.setattr(drive_cls, "create_if_not_exists", h.create_if_not_exists)
     monkeypatch.setattr(mounts_cls, "mount", h.mount)
     monkeypatch.setattr(mounts_cls, "list", h.list)
     monkeypatch.setattr(mounts_cls, "unmount", h.unmount)
     monkeypatch.setattr(drive_cls, "delete", h.delete_drive)
     monkeypatch.setattr(sandbox_cls, "delete", h.delete_sandbox)
     yield h
-    # However setup ends, nothing is deleted or unmounted.
+    # Once the sandbox exists, nothing is deleted or unmounted, however setup ends.
     for mock_ in (h.delete_drive, h.delete_sandbox, h.unmount):
         mock_.assert_not_called()
 
@@ -103,9 +104,18 @@ async def test_new_drives_are_created_in_the_sandbox_region(h):
         {"create": {"name": "app"}, "mount_path": "/mnt/b"},
     ]
     await call(h.cls.create, dict(CONFIG), mount_drives=mounts)
-    assert h.create.call_args.args[0].region == REGION
-    assert h.create_if_not_exists.call_args.args[0].name == "app"
-    assert h.create_if_not_exists.call_args.args[0].region == REGION
+    configs = {config.name: config for (config,), _ in h.create.call_args_list}
+    assert configs.keys() == {None, "app"}
+    assert all(config.region == REGION for config in configs.values())
+    h.get.assert_not_called()
+
+
+async def test_named_drive_that_already_exists_is_reused(h):
+    h.create.side_effect = DriveAPIError("exists", status_code=409)
+    h.get.side_effect = lambda name: h.drive(name)
+    mounts = [{"create": {"name": "app"}, "mount_path": "/mnt/data"}]
+    await call(h.cls.create, dict(CONFIG), mount_drives=mounts)
+    h.get.assert_called_once_with("app")
 
 
 async def test_new_drive_in_another_region_is_rejected_and_the_sandbox_kept(h):

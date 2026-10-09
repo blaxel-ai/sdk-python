@@ -60,7 +60,7 @@ from ..default.sandbox import (
     _unwrap_response,
     _validate_creation_timeout,
 )
-from ..drive_setup import _mount_drives_sync, _normalize_mount_drives
+from ..drive_setup import _normalize_mount_drives, _requested_region, _SyncDriveSetup
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -413,8 +413,11 @@ class SyncSandboxInstance:
         """Create a sandbox.
 
         Args:
-            mount_drives: Drives to mount once the sandbox exists. If setup fails the
-                sandbox is kept and SandboxDriveSetupError is raised.
+            mount_drives: Drives to mount on the sandbox. Drives are looked up or created
+                while the sandbox is being created (a few at a time) and each is mounted
+                as soon as the sandbox and that drive are ready. If drive setup fails the
+                sandbox is kept and SandboxDriveSetupError is raised; if the sandbox cannot
+                be created, the drives this call created are deleted and its error is raised.
             timeout: Optional creation deadline in whole seconds (1 to
                 ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
                 in time the control plane cancels the creation, releases the
@@ -535,37 +538,49 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-        body = _create_body(sandbox)
-        try:
-            if timeout is None:
-                response = create_sandbox(
-                    client=client, body=body, create_if_not_exist=create_if_not_exist
-                )
-            else:
-                with _creation_client(timeout) as creation_client:
-                    response = create_sandbox(
-                        client=creation_client, body=body, create_if_not_exist=create_if_not_exist
-                    )
-        except client_errors.UnexpectedStatus as e:
-            _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
-            raise
-
-        # Check if response is an error
-        if isinstance(response, SandboxError):
-            _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-            status_code = response.status_code if response.status_code is not UNSET else None
-            code = response.code if response.code else None
-            message = response.message if response.message else str(response)
-            raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
-
-        instance = cls(response)
-        if safe:
-            try:
-                instance.fs.ls("/")
-            except Exception:
-                pass
+        drives = None
         if mounts:
-            _mount_drives_sync(instance, mounts)
+            # Drives are set up alongside the sandbox, which only has to wait for them when mounting.
+            drives = _SyncDriveSetup(mounts, _requested_region(sandbox.spec.region))
+            drives.start()
+        try:
+            body = _create_body(sandbox)
+            try:
+                if timeout is None:
+                    response = create_sandbox(
+                        client=client, body=body, create_if_not_exist=create_if_not_exist
+                    )
+                else:
+                    with _creation_client(timeout) as creation_client:
+                        response = create_sandbox(
+                            client=creation_client,
+                            body=body,
+                            create_if_not_exist=create_if_not_exist,
+                        )
+            except client_errors.UnexpectedStatus as e:
+                _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
+                raise
+
+            # Check if response is an error
+            if isinstance(response, SandboxError):
+                _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
+                status_code = response.status_code if response.status_code is not UNSET else None
+                code = response.code if response.code else None
+                message = response.message if response.message else str(response)
+                raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+
+            instance = cls(response)
+            if safe:
+                try:
+                    instance.fs.ls("/")
+                except Exception:
+                    pass
+        except BaseException:
+            if drives is not None:
+                drives.discard()
+            raise
+        if drives is not None:
+            drives.mount(instance)
         return instance
 
     @classmethod
