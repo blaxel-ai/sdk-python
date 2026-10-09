@@ -1,77 +1,45 @@
-"""Private Linux copy reservation script, kept in parity with the TypeScript SDK.
+"""Shared by the async and sync ``cp(..., no_overwrite=True)``: one sandbox API copy request.
 
-Cooperating copies reserve a stable final entry without replacing it. Contents
-are not atomically published. Never roll back partial targets automatically:
-a workload could have replaced them. A raced FIFO can block during the claim.
+The sandbox API creates every entry exclusively and answers 409 ``FILE_ALREADY_EXISTS``
+when the final target exists. Requests are not retried: a copy may have created
+entries before a connection reset.
 """
 
-import shlex
+from typing import Any, Callable
 
-_COPY_NO_OVERWRITE_MARKER = "BLAXEL_CP_NO_OVERWRITE_EXISTS"
+import httpx
 
-# POSIX sh syntax, BusyBox/GNU utility options. Missing tools fail closed.
-_COPY_NO_OVERWRITE_SCRIPT = r"""src=$1
-dst=$2
-case "$src" in /*) ;; *) src="./$src";; esac
-case "$dst" in /*) ;; *) dst="./$dst";; esac
+from .types import CopyResponse
 
-conflict() {
-  printf '%s\n' 'BLAXEL_CP_NO_OVERWRITE_EXISTS' >&2
-  exit 73
-}
-claim_failed() {
-  # Only a collision on the exact resolved final entry is a conflict.
-  if [ -e "$target" ] || [ -L "$target" ]; then conflict; fi
-  printf '%s\n' 'Could not reserve copy destination' >&2
-  exit 1
-}
-target=$dst
-if [ -d "$dst" ]; then
-  # Preserve basename edge cases "." and ".."; they resolve to existing entries.
-  base=$(basename -- "$src" && printf '.') || exit 1
-  base=${base%.}
-  base=${base%?} # remove only basename's final output newline
-  target=$dst/$base
-fi
-# Existing entries: do not follow a last-component symlink, including dangling links.
-if [ -e "$target" ] || [ -L "$target" ]; then conflict; fi
-
-if [ -L "$src" ]; then
-  # -n plus a sentinel preserves trailing newlines in the actual link value.
-  link=$(readlink -n -- "$src" && printf '.') || exit 1
-  link=${link%.}
-  # -T is mandatory: ln -s alone may create a link INSIDE an existing directory.
-  ln -sT -- "$link" "$target" || claim_failed
-elif [ -d "$src" ]; then
-  mode=$(stat -Lc '%a' -- "$src") || exit 1
-  mask=$(umask) || exit 1
-  mode=$(printf '%o' "$(( (0$mode & 0777) & ~(0$mask) ))") || exit 1
-  mkdir -- "$target" || claim_failed
-  # Fill the reserved root, not target/basename(src). Includes hidden entries.
-  cp -r -- "$src"/. "$target" || exit 1
-  chmod "$mode" -- "$target" || exit 1
-elif [ -f "$src" ]; then
-  # Claiming with a redirect gives 0666 & umask; recover executable rwx bits afterwards.
-  mode=$(stat -Lc '%a' -- "$src") || exit 1
-  mask=$(umask) || exit 1
-  mode=$(printf '%o' "$(( (0$mode & 0777) & ~(0$mask) ))") || exit 1
-  (set -C; : > "$target") || claim_failed
-  # noclobber still opens an existing non-regular entry (e.g. a raced symlink to a device).
-  if [ -L "$target" ] || [ ! -f "$target" ]; then conflict; fi
-  cp -r -- "$src" "$target" || exit 1
-  chmod "$mode" -- "$target" || exit 1
-else
-  printf '%s\n' 'Source is missing or is not a regular file, directory, or symbolic link' >&2
-  exit 1
-fi
-exit 0
-"""
+COPY_PATH = "/filesystem-copy"
 
 
-def _copy_no_overwrite_command(source: str, destination: str) -> str:
-    if not source or not destination or "\0" in source or "\0" in destination:
-        raise ValueError("source and destination must be nonempty paths without NUL bytes")
-    return (
-        f"sh -c {shlex.quote(_COPY_NO_OVERWRITE_SCRIPT)} sh "
-        f"{shlex.quote(source)} {shlex.quote(destination)}"
-    )
+def _copy_body(source: str, destination: str) -> dict[str, Any]:
+    if not source or not destination:
+        raise ValueError("source and destination must be nonempty paths")
+    return {"source": source, "destination": destination, "noOverwrite": True}
+
+
+def _copy_result(
+    response: httpx.Response,
+    source: str,
+    destination: str,
+    handle_response_error: Callable[[httpx.Response], None],
+) -> CopyResponse:
+    try:
+        error = response.json() if response.content else None
+    except ValueError:
+        error = None
+    code = error.get("code") if isinstance(error, dict) else None
+    if response.status_code == 409 and code == "FILE_ALREADY_EXISTS":
+        raise FileExistsError(
+            f"Could not copy {source} to {destination}: destination already exists"
+        )
+    if response.status_code == 404 and not isinstance(error, dict):
+        # An older sandbox API has no copy endpoint. Never fall back to an overwriting copy.
+        raise RuntimeError(
+            "cp with no_overwrite needs a newer sandbox API: this sandbox has no "
+            "/filesystem-copy endpoint; update its image"
+        )
+    handle_response_error(response)
+    return CopyResponse(message="Files copied", source=source, destination=destination)

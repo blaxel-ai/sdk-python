@@ -316,28 +316,16 @@ except FileExistsError:
 # SyncSandboxInstance: same method and keyword, without await.
 ```
 
-This follows `cp -r` placement: an existing destination directory (including a
-symlink to one) is a container, so the protected entry is its source-basename
-child. Existing final files, directories and symlinks conflict; trees are not
-merged. With an absent raw directory destination, later callers may resolve a
-different child target once the first creates that directory.
+With `no_overwrite`, the sandbox API copies in one request (`POST /filesystem-copy`) and
+creates every entry exclusively, so there is no check-then-write race. Like `cp -r`, an
+existing destination directory (or symlink to one) is a container: the protected target is
+its child named after the source. An existing target, including an empty directory or a
+dangling symlink, is a conflict and is left unchanged; directories are never merged.
 
-Cooperating copies of the same stable final entry do not replace it; complete
-content publication is not atomic. The file claim checks for symlinks and
-non-regular entries before copying, but a raced symlink to a FIFO can still
-block while opening the claim. Timeouts do not cancel the running command.
-Errors, timeouts or disconnects can leave visible partial results; there is no
-automatic rollback or cancellation. Inspect/remove a known partial result
-explicitly before retrying. This does not harden against hostile same-user
-workloads replacing parents/entries or provide a source snapshot.
-
-Protected regular files and top-level directories preserve rwx subject to umask,
-but strip special setuid/setgid/sticky bits (an intentional safety difference
-from BusyBox `cp -r`).
-Top-level special-file sources are rejected; recursive contents keep the image's
-`cp -r` behavior. Images need Linux `sh`, `cp`, `mkdir`, `ln -sT`, `readlink -n`,
-`basename`, `stat -Lc` and `chmod` (tested with BusyBox/GNU); missing tools fail
-closed, never fall back to overwriting. No sandbox API upgrade is required.
+The copy is not a transaction: if it fails part-way, entries it already created remain, and
+a retry conflicts with them. Source symlinks are copied as symlinks; special files are refused.
+It needs a sandbox image whose API has the copy endpoint and raises `RuntimeError` on older
+ones, never falling back to an overwriting copy.
 
 #### Volumes
 
