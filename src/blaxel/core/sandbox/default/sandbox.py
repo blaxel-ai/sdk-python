@@ -641,7 +641,7 @@ class SandboxInstance:
             requested = RequestedSandbox(
                 image=config.image,
                 memory=config.memory,
-                region=region,
+                region=config.region,
                 envs=config._normalize_envs(),
             )
             if not region:

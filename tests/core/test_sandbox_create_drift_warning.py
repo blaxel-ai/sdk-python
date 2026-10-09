@@ -110,6 +110,18 @@ async def test_compares_only_what_the_caller_set_never_the_sdk_defaults(kind):
 
 
 @kinds
+async def test_the_bl_region_default_is_not_a_requested_region(kind, monkeypatch):
+    monkeypatch.setenv("BL_REGION", "us-pdx-1")
+    _, drift = await _create_if_not_exists(kind, _existing(), {"name": "sbx"})
+    assert drift == []
+    # An explicit region is still compared, whatever BL_REGION says.
+    _, drift = await _create_if_not_exists(
+        kind, _existing(), {"name": "sbx", "region": "us-pdx-1"}
+    )
+    assert len(drift) == 1 and "region (requested us-pdx-1, existing us-was-1)" in drift[0]
+
+
+@kinds
 async def test_treats_an_untagged_image_as_latest(kind):
     runtime = SandboxRuntime(image="blaxel/base-image:latest")
     _, drift = await _create_if_not_exists(
