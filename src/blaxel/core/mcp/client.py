@@ -1,4 +1,5 @@
 import logging
+import sys
 from contextlib import asynccontextmanager
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -14,11 +15,42 @@ from mcp.shared.message import SessionMessage
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.client import connect as ws_connect
 
+if sys.version_info < (3, 11):
+    # Builtin from Python 3.11 onwards; provided by the ``exceptiongroup`` backport
+    # (an anyio dependency) on older versions.
+    from exceptiongroup import BaseExceptionGroup
+
 logger = logging.getLogger(__name__)
 
 
 def remove_request_params(url: str) -> str:
     return urljoin(url, urlparse(url).path)
+
+
+def _single_task_group_error(exc_group: BaseExceptionGroup) -> BaseException | None:
+    """Reduce an anyio task-group exception group to a single meaningful error.
+
+    anyio raises a ``BaseExceptionGroup`` from a task group's ``__aexit__`` whenever a
+    child task or the body fails (e.g. the WebSocket connection is refused). Pure
+    cancellation from normal shutdown is not a real failure and is stripped out.
+
+    Returns the lone remaining exception when exactly one is left, the filtered group
+    when several genuine failures remain, or ``None`` when only cancellations occurred.
+    """
+    _, rest = exc_group.split(anyio.get_cancelled_exc_class())
+    if rest is None:
+        return None
+    leaves: list[BaseException] = []
+    stack: list[BaseException] = [rest]
+    while stack:
+        current = stack.pop()
+        if isinstance(current, BaseExceptionGroup):
+            stack.extend(current.exceptions)
+        else:
+            leaves.append(current)
+    if len(leaves) == 1:
+        return leaves[0]
+    return rest
 
 
 @asynccontextmanager
@@ -116,6 +148,14 @@ async def websocket_client(
             # Suppress it here so it doesn't get wrapped by anyio's BaseExceptionGroup.
             # The outer finally block below will still execute for cleanup.
             pass
+        except BaseExceptionGroup as exc_group:
+            # anyio wraps a failing task or connection in a BaseExceptionGroup when the
+            # task group exits. Surface a single, catchable error (e.g. a connection
+            # error) instead of leaking the opaque group to the caller, and ignore
+            # groups that only contain cancellations from normal shutdown.
+            error = _single_task_group_error(exc_group)
+            if error is not None:
+                raise error from None
 
         # The original code had the tg.cancel_scope.cancel() inside the 'finally'
         # associated with the 'yield'. Let's ensure cancellation happens
