@@ -5,13 +5,12 @@ import logging
 import shlex
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
-from urllib.parse import quote
 
 import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
-from ..read_tree import _read_tree_async
+from ..read_tree import _tree_files, _tree_request
 from ..transient_retry import retry_on_transient_reset_async
 from ..types import (
     AsyncWatchHandle,
@@ -178,35 +177,34 @@ class SandboxFileSystem(SandboxAction):
         patterns: list[str] | None = None,
         exclude_dirs: list[str] | None = None,
         exclude_hidden: bool | None = None,
-        max_files: int = 100,
-        concurrency: int = 4,
+        max_files: int | None = None,
+        max_bytes: int | None = None,
     ) -> dict[str, str]:
-        """Read every file that ``find`` selects and return ``{relative path: text}``.
+        """Read every file under ``path`` in one request and return ``{relative path: text}``.
 
-        Takes ``find``'s ``patterns``, ``exclude_dirs`` and ``exclude_hidden``. A
-        non-empty ``exclude_dirs`` replaces ``find``'s default exclusions
-        (``node_modules``, ``vendor``, ``.git``, ``dist``, ``build``, ``target``,
-        ``__pycache__``, ``.venv``, ``.next``, ``coverage``).
-
-        Reads at most ``concurrency`` files at a time. Raises
-        ``FilesystemReadTreeError`` if more than ``max_files`` (at most 999) files
-        match, if discovery fails, or if any read fails; a symlink to a directory
-        fails as ``READ``. Nothing partial is returned.
+        The sandbox API walks the tree. ``patterns`` are globs on file names,
+        ``exclude_dirs`` skips directories by name and ``exclude_hidden`` skips
+        dot-entries; nothing is excluded by default. If more than ``max_files``
+        (default 10000) files match or they hold more than ``max_bytes`` (default
+        32 MiB), the request fails with a 422 and nothing partial is returned. Only
+        regular files (and symlinks to them) are read, as UTF-8 text. Raises
+        ``RuntimeError`` on an older sandbox API without recursive tree reads.
         """
-        return await _read_tree_async(
-            path,
-            max_files,
-            concurrency,
-            lambda limit: self.find(
-                quote(path),
-                type="file",
-                patterns=patterns,
-                max_results=limit,
-                exclude_dirs=exclude_dirs,
-                exclude_hidden=exclude_hidden,
-            ),
-            self.read,
+        url, params = _tree_request(
+            self.format_path(path), patterns, exclude_dirs, exclude_hidden, max_files, max_bytes
         )
+
+        async def read_tree_once() -> dict[str, str]:
+            client = self.get_client()
+            response = await client.get(url, params=params)
+            try:
+                await response.aread()
+                self.handle_response_error(response)
+                return _tree_files(response.json())
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(read_tree_once)
 
     async def read_binary(self, path: str) -> bytes:
         """Read binary content from a file.
