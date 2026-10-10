@@ -310,6 +310,35 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+`read_tree` reads every file under a directory in one request and returns `{relative path: text}`.
+`SyncSandboxInstance` has the same method, without `await`.
+
+```python
+import asyncio
+
+from blaxel.core import SandboxInstance
+
+
+async def main():
+    sandbox = await SandboxInstance.get("my-sandbox")
+    schemas = await sandbox.fs.read_tree(
+        "/app/schemas", patterns=["*.json"], exclude_dirs=["node_modules"], max_files=20
+    )
+    # {"Blog.json": "...", "nested/About.json": "..."}
+    print(schemas)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+`patterns` are globs on file names, `exclude_dirs` skips directories by name and `exclude_hidden`
+skips dot-entries; nothing is excluded by default. If more than `max_files` (default 10000) files
+match or they hold more than `max_bytes` (default 32 MiB), the request fails with a 422
+`ResponseError` and nothing partial is returned. Only regular files (and symlinks to them) are
+read, as UTF-8 text. It needs a sandbox image whose API supports recursive tree reads and raises
+`RuntimeError` on older ones.
+
 #### Volumes
 
 Persist data by attaching and using volumes:
