@@ -312,7 +312,7 @@ if __name__ == "__main__":
 
 #### Drives
 
-Pass `mount_drives` to mount drives on the sandbox. Drives are looked up or created while the sandbox is being created (up to 5 at a time), and each is mounted once both it and the sandbox are ready. Give `drive_name` for a drive that already exists, or `create` for a new one (a named drive is reused if it already exists). New drives are created in the sandbox's region; an existing drive must be in that region too. `SyncSandboxInstance` takes the same argument.
+Pass `mount_drives` to mount drives on the sandbox. Drives are looked up or created while the sandbox is being created (up to 5 at a time), and each is mounted once both it and the sandbox are ready. Give `drive_name` for a drive that already exists, or `create` for a new one (a named drive is reused if it already exists). New drives are created in the region the sandbox request sends (`region`, or `BL_REGION`); without one, they are created once the sandbox exists, in its region. An existing drive must be in the sandbox's region too. `SyncSandboxInstance` takes the same argument.
 
 ```python
 import asyncio
@@ -337,7 +337,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Each entry also takes `drive_path` (a sub-folder of the drive). With `create_if_not_exists`, a new drive needs a `name`. If a drive can't be set up or mounted, `create` raises `SandboxDriveSetupError` with the `sandbox`, the `drive_names` it used and the original error as `__cause__`; the sandbox, drives and mounts made so far are kept, so delete only what you created. If the sandbox itself can't be created, its error is raised and the drives this call created are deleted.
+Each entry also takes `drive_path` (a sub-folder of the drive). With `create_if_not_exists`, a new drive needs a `name`. If anything fails, the drives this call created and did not mount are deleted. If a drive can't be set up or mounted, `create` raises `SandboxDriveSetupError` with the `sandbox`, the `drive_names` left in place, the `created_drives` among them that this call created (or may have created, if a response was lost) and the original error as `__cause__`; the sandbox and the mounts made so far are kept. If the sandbox itself can't be created, its error is raised, wrapped in a `SandboxDriveSetupError` without a `sandbox` only if a drive created for it could not be deleted.
 
 #### Volumes
 

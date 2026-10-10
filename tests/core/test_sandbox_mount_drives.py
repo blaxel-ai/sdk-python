@@ -1,6 +1,7 @@
 """mount_drives behaves the same for async and sync sandbox creation."""
 
 import inspect
+import re
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -77,7 +78,7 @@ def h(request, monkeypatch):
     monkeypatch.setattr(drive_cls, "delete", h.delete_drive)
     monkeypatch.setattr(sandbox_cls, "delete", h.delete_sandbox)
     yield h
-    # Once the sandbox exists, nothing is deleted or unmounted, however setup ends.
+    # These cases only use existing drives or succeed: nothing is deleted or unmounted.
     for mock_ in (h.delete_drive, h.delete_sandbox, h.unmount):
         mock_.assert_not_called()
 
@@ -105,7 +106,9 @@ async def test_new_drives_are_created_in_the_sandbox_region(h):
     ]
     await call(h.cls.create, dict(CONFIG), mount_drives=mounts)
     configs = {config.name: config for (config,), _ in h.create.call_args_list}
-    assert configs.keys() == {None, "app"}
+    # An unnamed drive is named here, so a create whose response is lost can be looked up.
+    (generated,) = configs.keys() - {"app"}
+    assert re.fullmatch(r"drive-[0-9a-f]{16}", generated)
     assert all(config.region == REGION for config in configs.values())
     h.get.assert_not_called()
 
