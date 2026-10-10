@@ -23,7 +23,6 @@ class FindResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         matches = []
         for matches_item_data in self.matches:
             if type(matches_item_data) is dict:

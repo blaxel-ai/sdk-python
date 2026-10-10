@@ -24,7 +24,6 @@ class TreeRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         files: Union[Unset, dict[str, Any]] = UNSET
         if self.files and not isinstance(self.files, Unset) and not isinstance(self.files, dict):
             files = self.files.to_dict()

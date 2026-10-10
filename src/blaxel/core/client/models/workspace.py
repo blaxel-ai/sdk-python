@@ -28,6 +28,8 @@ class Workspace:
             created_by (Union[Unset, str]): The user or service account who created the resource
             updated_by (Union[Unset, str]): The user or service account who updated the resource
             account_id (Union[Unset, str]): Workspace account id
+            baseten_team_id (Union[Unset, str]): Baseten team this workspace was provisioned for; absent on native
+                workspaces
             display_name (Union[Unset, str]): Workspace display name Example: My Workspace.
             group_mappings (Union[Unset, list['GroupWorkspaceMapping']]): Group-to-role mappings for directory sync (SCIM)
                 group membership
@@ -54,6 +56,7 @@ class Workspace:
     created_by: Union[Unset, str] = UNSET
     updated_by: Union[Unset, str] = UNSET
     account_id: Union[Unset, str] = UNSET
+    baseten_team_id: Union[Unset, str] = UNSET
     display_name: Union[Unset, str] = UNSET
     group_mappings: Union[Unset, list["GroupWorkspaceMapping"]] = UNSET
     hipaa_info: Union[Unset, "WorkspaceHipaaInfo"] = UNSET
@@ -78,6 +81,8 @@ class Workspace:
         updated_by = self.updated_by
 
         account_id = self.account_id
+
+        baseten_team_id = self.baseten_team_id
 
         display_name = self.display_name
 
@@ -152,6 +157,8 @@ class Workspace:
             field_dict["updatedBy"] = updated_by
         if account_id is not UNSET:
             field_dict["accountId"] = account_id
+        if baseten_team_id is not UNSET:
+            field_dict["basetenTeamId"] = baseten_team_id
         if display_name is not UNSET:
             field_dict["displayName"] = display_name
         if group_mappings is not UNSET:
@@ -197,6 +204,8 @@ class Workspace:
         updated_by = d.pop("updatedBy", d.pop("updated_by", UNSET))
 
         account_id = d.pop("accountId", d.pop("account_id", UNSET))
+
+        baseten_team_id = d.pop("basetenTeamId", d.pop("baseten_team_id", UNSET))
 
         display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
@@ -256,6 +265,7 @@ class Workspace:
             created_by=created_by,
             updated_by=updated_by,
             account_id=account_id,
+            baseten_team_id=baseten_team_id,
             display_name=display_name,
             group_mappings=group_mappings,
             hipaa_info=hipaa_info,

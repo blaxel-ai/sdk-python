@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class GroupWorkspaceMappingRole(str, Enum):
+class CreateWorkspaceServiceAccountBodyRole(str, Enum):
     ADMIN = "admin"
     MEMBER = "member"
     VIEWER = "viewer"
@@ -10,7 +10,7 @@ class GroupWorkspaceMappingRole(str, Enum):
         return str(self.value)
 
     @classmethod
-    def _missing_(cls, value: object) -> "GroupWorkspaceMappingRole | None":
+    def _missing_(cls, value: object) -> "CreateWorkspaceServiceAccountBodyRole | None":
         if isinstance(value, str):
             upper_value = value.upper()
             for member in cls:

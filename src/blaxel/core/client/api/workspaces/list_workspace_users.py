@@ -51,8 +51,8 @@ def sync_detailed(
 ) -> Response[list["WorkspaceUser"]]:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -77,8 +77,8 @@ def sync(
 ) -> list["WorkspaceUser"] | None:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -99,8 +99,8 @@ async def asyncio_detailed(
 ) -> Response[list["WorkspaceUser"]]:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -123,8 +123,8 @@ async def asyncio(
 ) -> list["WorkspaceUser"] | None:
     """List workspace team members
 
-     Returns all team members in the workspace including their roles (admin or member) and invitation
-    status.
+     Returns all team members in the workspace including their roles (admin, member or viewer) and
+    invitation status.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

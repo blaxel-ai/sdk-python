@@ -16,7 +16,8 @@ class ContentSearchMatch:
         line (int):  Example: 42.
         path (str):  Example: src/main.go.
         text (str):  Example: const searchText = 'example'.
-        context (Union[Unset, str]):  Example: previous line
+        context (Union[Unset, str]): The matching line with up to contextLines lines before and after it, newline-
+            separated; omitted when contextLines is 0 Example: previous line
             current line
             next line.
     """
