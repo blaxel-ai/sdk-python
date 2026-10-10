@@ -69,7 +69,8 @@ def sync_detailed(
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Stop a process
 
-     Gracefully stop a running process
+     Request graceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
@@ -100,7 +101,8 @@ def sync(
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Stop a process
 
-     Gracefully stop a running process
+     Request graceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
@@ -126,7 +128,8 @@ async def asyncio_detailed(
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Stop a process
 
-     Gracefully stop a running process
+     Request graceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):
@@ -155,7 +158,8 @@ async def asyncio(
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Stop a process
 
-     Gracefully stop a running process
+     Request graceful termination. Poll GET /process/{identifier} until terminal status confirms the
+    managed process has exited.
 
     Args:
         identifier (str):

@@ -20,6 +20,9 @@ class WorkspaceUser:
         expired (Union[Unset, bool]): Whether the invitation has expired
         family_name (Union[Unset, str]): Workspace user family name
         given_name (Union[Unset, str]): Workspace user given name
+        mfa_enabled (Union[Unset, bool]): Whether the user has at least one verified MFA factor. Omitted when the caller
+            is not entitled to see it (only workspace admins and owners see other members' MFA status) and for pending
+            invitations, which have no account yet.
         role (Union[Unset, str]): Workspace user role
         source (Union[Unset, WorkspaceUserSource]): Source of the user provisioning
         sub (Union[Unset, str]): Workspace user identifier
@@ -31,6 +34,7 @@ class WorkspaceUser:
     expired: Union[Unset, bool] = UNSET
     family_name: Union[Unset, str] = UNSET
     given_name: Union[Unset, str] = UNSET
+    mfa_enabled: Union[Unset, bool] = UNSET
     role: Union[Unset, str] = UNSET
     source: Union[Unset, WorkspaceUserSource] = UNSET
     sub: Union[Unset, str] = UNSET
@@ -48,6 +52,8 @@ class WorkspaceUser:
         family_name = self.family_name
 
         given_name = self.given_name
+
+        mfa_enabled = self.mfa_enabled
 
         role = self.role
 
@@ -72,6 +78,8 @@ class WorkspaceUser:
             field_dict["family_name"] = family_name
         if given_name is not UNSET:
             field_dict["given_name"] = given_name
+        if mfa_enabled is not UNSET:
+            field_dict["mfa_enabled"] = mfa_enabled
         if role is not UNSET:
             field_dict["role"] = role
         if source is not UNSET:
@@ -98,6 +106,8 @@ class WorkspaceUser:
 
         given_name = d.pop("given_name", UNSET)
 
+        mfa_enabled = d.pop("mfa_enabled", UNSET)
+
         role = d.pop("role", UNSET)
 
         _source = d.pop("source", UNSET)
@@ -116,6 +126,7 @@ class WorkspaceUser:
             expired=expired,
             family_name=family_name,
             given_name=given_name,
+            mfa_enabled=mfa_enabled,
             role=role,
             source=source,
             sub=sub,

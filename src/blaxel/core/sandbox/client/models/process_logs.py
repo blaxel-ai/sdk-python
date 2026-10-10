@@ -10,7 +10,8 @@ T = TypeVar("T", bound="ProcessLogs")
 class ProcessLogs:
     """
     Attributes:
-        logs (str):  Example: logs output.
+        logs (str): Concatenation of the returned stdout followed by the returned stderr. Output from the two streams is
+            not interleaved. Example: logs output.
         stderr (str):  Example: stderr output.
         stdout (str):  Example: stdout output.
     """

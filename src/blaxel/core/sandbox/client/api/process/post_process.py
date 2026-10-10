@@ -80,10 +80,18 @@ def sync_detailed(
     client: Client,
     body: ProcessRequest,
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
-    """Execute a command
+    r"""Execute a command
 
-     Execute a command and return process information. If Accept header is text/event-stream, streams
-    logs in SSE format and returns the process response as a final event.
+     Execute a command and return process information.
+
+    Streaming: with `Accept: application/x-ndjson` (or `Accept: text/event-stream`, kept for
+    compatibility) the response is NDJSON (`Content-Type: application/x-ndjson`), not SSE: one JSON
+    object per line, `{\"type\": \"...\", \"data\": \"...\"}`.
+    `type` is `stdout` or `stderr` (`data` is a raw output chunk, sent as soon as the process writes it,
+    newlines included; if the process finished before any chunk was streamed, its output is sent instead
+    as one event per line, without the newline), `keepalive` (every 5 seconds, no data), `error` (`data`
+    is the message, ends the stream) or `result` (last event, `data` is the ProcessResponse as a JSON
+    string).
 
     Args:
         body (ProcessRequest):
@@ -112,10 +120,18 @@ def sync(
     client: Client,
     body: ProcessRequest,
 ) -> Union[ErrorResponse, ProcessResponse] | None:
-    """Execute a command
+    r"""Execute a command
 
-     Execute a command and return process information. If Accept header is text/event-stream, streams
-    logs in SSE format and returns the process response as a final event.
+     Execute a command and return process information.
+
+    Streaming: with `Accept: application/x-ndjson` (or `Accept: text/event-stream`, kept for
+    compatibility) the response is NDJSON (`Content-Type: application/x-ndjson`), not SSE: one JSON
+    object per line, `{\"type\": \"...\", \"data\": \"...\"}`.
+    `type` is `stdout` or `stderr` (`data` is a raw output chunk, sent as soon as the process writes it,
+    newlines included; if the process finished before any chunk was streamed, its output is sent instead
+    as one event per line, without the newline), `keepalive` (every 5 seconds, no data), `error` (`data`
+    is the message, ends the stream) or `result` (last event, `data` is the ProcessResponse as a JSON
+    string).
 
     Args:
         body (ProcessRequest):
@@ -139,10 +155,18 @@ async def asyncio_detailed(
     client: Client,
     body: ProcessRequest,
 ) -> Response[Union[ErrorResponse, ProcessResponse]]:
-    """Execute a command
+    r"""Execute a command
 
-     Execute a command and return process information. If Accept header is text/event-stream, streams
-    logs in SSE format and returns the process response as a final event.
+     Execute a command and return process information.
+
+    Streaming: with `Accept: application/x-ndjson` (or `Accept: text/event-stream`, kept for
+    compatibility) the response is NDJSON (`Content-Type: application/x-ndjson`), not SSE: one JSON
+    object per line, `{\"type\": \"...\", \"data\": \"...\"}`.
+    `type` is `stdout` or `stderr` (`data` is a raw output chunk, sent as soon as the process writes it,
+    newlines included; if the process finished before any chunk was streamed, its output is sent instead
+    as one event per line, without the newline), `keepalive` (every 5 seconds, no data), `error` (`data`
+    is the message, ends the stream) or `result` (last event, `data` is the ProcessResponse as a JSON
+    string).
 
     Args:
         body (ProcessRequest):
@@ -169,10 +193,18 @@ async def asyncio(
     client: Client,
     body: ProcessRequest,
 ) -> Union[ErrorResponse, ProcessResponse] | None:
-    """Execute a command
+    r"""Execute a command
 
-     Execute a command and return process information. If Accept header is text/event-stream, streams
-    logs in SSE format and returns the process response as a final event.
+     Execute a command and return process information.
+
+    Streaming: with `Accept: application/x-ndjson` (or `Accept: text/event-stream`, kept for
+    compatibility) the response is NDJSON (`Content-Type: application/x-ndjson`), not SSE: one JSON
+    object per line, `{\"type\": \"...\", \"data\": \"...\"}`.
+    `type` is `stdout` or `stderr` (`data` is a raw output chunk, sent as soon as the process writes it,
+    newlines included; if the process finished before any chunk was streamed, its output is sent instead
+    as one event per line, without the newline), `keepalive` (every 5 seconds, no data), `error` (`data`
+    is the message, ends the stream) or `result` (last event, `data` is the ProcessResponse as a JSON
+    string).
 
     Args:
         body (ProcessRequest):

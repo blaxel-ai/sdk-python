@@ -70,10 +70,19 @@ def sync_detailed(
     client: Client,
     ignore: Union[Unset, str] = UNSET,
 ) -> Response[Union[ErrorResponse, str]]:
-    """Stream file modification events in a directory
+    r"""Stream file modification events in a directory
 
-     Streams the path of modified files (one per line) in the given directory. Closes when the client
-    disconnects.
+     Streams change events for a directory until the client disconnects.
+
+    The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
+    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
+    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
+    name of the changed entry, `path` the directory containing it, and `error` is always null. A
+    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    Only the directory's direct entries are watched. To also watch every subdirectory, including ones
+    created later, end the path with `/**`. The stream reports subsequent changes without an initial
+    snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
+    present inside it to cover changes before its watch was registered.
 
     Args:
         path (str):
@@ -105,10 +114,19 @@ def sync(
     client: Client,
     ignore: Union[Unset, str] = UNSET,
 ) -> Union[ErrorResponse, str] | None:
-    """Stream file modification events in a directory
+    r"""Stream file modification events in a directory
 
-     Streams the path of modified files (one per line) in the given directory. Closes when the client
-    disconnects.
+     Streams change events for a directory until the client disconnects.
+
+    The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
+    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
+    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
+    name of the changed entry, `path` the directory containing it, and `error` is always null. A
+    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    Only the directory's direct entries are watched. To also watch every subdirectory, including ones
+    created later, end the path with `/**`. The stream reports subsequent changes without an initial
+    snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
+    present inside it to cover changes before its watch was registered.
 
     Args:
         path (str):
@@ -135,10 +153,19 @@ async def asyncio_detailed(
     client: Client,
     ignore: Union[Unset, str] = UNSET,
 ) -> Response[Union[ErrorResponse, str]]:
-    """Stream file modification events in a directory
+    r"""Stream file modification events in a directory
 
-     Streams the path of modified files (one per line) in the given directory. Closes when the client
-    disconnects.
+     Streams change events for a directory until the client disconnects.
+
+    The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
+    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
+    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
+    name of the changed entry, `path` the directory containing it, and `error` is always null. A
+    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    Only the directory's direct entries are watched. To also watch every subdirectory, including ones
+    created later, end the path with `/**`. The stream reports subsequent changes without an initial
+    snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
+    present inside it to cover changes before its watch was registered.
 
     Args:
         path (str):
@@ -168,10 +195,19 @@ async def asyncio(
     client: Client,
     ignore: Union[Unset, str] = UNSET,
 ) -> Union[ErrorResponse, str] | None:
-    """Stream file modification events in a directory
+    r"""Stream file modification events in a directory
 
-     Streams the path of modified files (one per line) in the given directory. Closes when the client
-    disconnects.
+     Streams change events for a directory until the client disconnects.
+
+    The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
+    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
+    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
+    name of the changed entry, `path` the directory containing it, and `error` is always null. A
+    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    Only the directory's direct entries are watched. To also watch every subdirectory, including ones
+    created later, end the path with `/**`. The stream reports subsequent changes without an initial
+    snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
+    present inside it to cover changes before its watch was registered.
 
     Args:
         path (str):
