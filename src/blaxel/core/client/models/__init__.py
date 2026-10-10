@@ -279,6 +279,7 @@ from .sandbox_snapshot_spec import SandboxSnapshotSpec
 from .sandbox_snapshot_spec_generation import SandboxSnapshotSpecGeneration
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
+from .secret import Secret
 from .share_custom_domain_body import ShareCustomDomainBody
 from .share_image_body import ShareImageBody
 from .sso_domain import SSODomain
@@ -598,6 +599,7 @@ __all__ = (
     "SandboxSnapshotSpecGeneration",
     "SandboxSpec",
     "SandboxState",
+    "Secret",
     "ShareCustomDomainBody",
     "ShareImageBody",
     "SSODomain",
