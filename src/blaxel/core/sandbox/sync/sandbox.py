@@ -1,5 +1,4 @@
 import logging
-import math
 import time
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
@@ -57,17 +56,19 @@ from ..default.sandbox import (
     SandboxAPIError,
     _check_reset_status,
     _check_resettable,
-    _check_still_going_down,
     _check_taken_down,
     _create_body,
     _creation_client,
     _enabled_body,
     _is_not_yet_routable,
     _raise_if_creation_timeout,
-    _reset_entry_window,
+    _reset_deadline,
+    _reset_entry_deadline,
     _reset_failure,
     _sandbox_name,
     _status_of,
+    _teardown_done,
+    _teardown_timeout,
     _unwrap_response,
     _validate_creation_timeout,
 )
@@ -841,6 +842,7 @@ class _SyncResetDescriptor:
 def _reset_sandbox_by_name(
     sandbox_name: str, max_wait: int, interval: int
 ) -> "SyncSandboxInstance":
+    deadline = _reset_deadline(max_wait)
     response = get_sandbox(sandbox_name, client=client)
     current = _unwrap_response(response, f"read sandbox {sandbox_name}")
     record = current
@@ -857,11 +859,7 @@ def _reset_sandbox_by_name(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
         _check_taken_down(sandbox_name, record)
-        # The write can come back while the teardown is still running. Switching the
-        # sandbox back on then cancels it and leaves the old instance, and its
-        # filesystem, in place: let it finish first.
-        if _status_of(record) == "DEACTIVATING":
-            record = _wait_for_deactivated(sandbox_name, record, max_wait, interval)
+    _wait_for_teardown(sandbox_name, current, deadline, max_wait, interval)
     try:
         response = retry_on_transient_reset(
             lambda: update_sandbox(
@@ -876,34 +874,42 @@ def _reset_sandbox_by_name(
             f'DEACTIVATED; call SyncSandboxInstance.reset("{sandbox_name}") again to bring it back',
             e,
         ) from e
-    return _wait_for_reset(sandbox_name, max_wait, interval)
+    return _wait_for_reset(sandbox_name, deadline, max_wait, interval)
 
 
-def _wait_for_deactivated(
-    sandbox_name: str, record: Sandbox, max_wait: int, interval: int
-) -> Sandbox:
-    """Wait for a sandbox that is DEACTIVATING to be DEACTIVATED, within the entry window.
+def _wait_for_teardown(
+    sandbox_name: str, current: Sandbox, deadline: float, max_wait: int, interval: int
+) -> None:
+    """Wait until the instance that was switched off is gone.
 
-    If the teardown is slow the last record read is returned and the reset goes on.
+    Switched back on while it is still there, the sandbox keeps it, and its
+    filesystem: the compute plane finds the instance it would create already
+    running and leaves it in place. The record cannot tell: the control plane
+    stamps DEACTIVATED as soon as the switch-off is written and tears the
+    instance down afterwards. The sandbox's URL can (see ``_teardown_done``).
     """
-    deadline = time.monotonic() + _reset_entry_window(max_wait)
-    while _status_of(record) == "DEACTIVATING" and time.monotonic() < deadline:
+    old = SyncSandboxInstance(current)
+    while True:
+        try:
+            old.fs.ls("/")
+        except Exception as e:
+            if _teardown_done(sandbox_name, e, "SyncSandboxInstance"):
+                return
+        if time.monotonic() >= deadline:
+            raise _teardown_timeout(sandbox_name, max_wait, "SyncSandboxInstance")
         time.sleep(interval / 1000)
-        response = retry_on_transient_reset(lambda: get_sandbox(sandbox_name, client=client))
-        record = _unwrap_response(response, f"read sandbox {sandbox_name}")
-        _check_still_going_down(sandbox_name, record)
-    return record
 
 
-def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "SyncSandboxInstance":
+def _wait_for_reset(
+    sandbox_name: str, deadline: float, max_wait: int, interval: int
+) -> "SyncSandboxInstance":
     """Wait until the sandbox is DEPLOYED again and answers.
 
     The record turns DEPLOYED a couple of seconds before the sandbox is routable,
     during which calls get a 404 WORKLOAD_UNAVAILABLE (retryable), so DEPLOYED
     alone is not ready.
     """
-    deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
-    entry_deadline = time.monotonic() + _reset_entry_window(max_wait)
+    entry_deadline = _reset_entry_deadline(deadline)
     seconds = round(max_wait / 1000)
     redeploying = False
     instance: SyncSandboxInstance | None = None
@@ -1002,16 +1008,17 @@ SyncSandboxInstance.reset = _SyncResetDescriptor(
     anything mounted from inside the sandbox such as a drive, belong to the old
     instance and have to be started or mounted again.
 
-    This waits until the sandbox is DEPLOYED again and answers, a few seconds.
-    A sandbox that is disabled is switched back on. Sandboxes that are archived
-    or being deleted cannot be reset.
+    This waits until the old instance is gone and the sandbox is DEPLOYED again
+    and answers, a few seconds. A sandbox that is disabled is switched back on.
+    Sandboxes that are archived or being deleted cannot be reset.
 
     It works by switching the sandbox off and on again (``spec.enabled``). If the
-    second write fails the sandbox is left DEACTIVATED, and the error says so:
-    calling ``reset`` again brings it back.
+    old instance is still running when ``max_wait`` runs out, or the second
+    write fails, the sandbox is left DEACTIVATED and the error says so: calling
+    ``reset`` again finishes the reset.
 
     Args:
-        max_wait: Give up waiting for the sandbox after this many milliseconds;
+        max_wait: Give up waiting for the reset after this many milliseconds;
             -1 waits indefinitely.
         interval: Milliseconds between two reads of the sandbox.
     """

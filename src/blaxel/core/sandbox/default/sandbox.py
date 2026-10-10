@@ -271,40 +271,70 @@ def _check_taken_down(sandbox_name: str, sandbox: Sandbox) -> None:
         )
 
 
-def _check_still_going_down(sandbox_name: str, sandbox: Sandbox) -> None:
-    """While the teardown runs: the sandbox must stay off, not come back on its own."""
-    status = _status_of(sandbox)
-    if status not in RESET_OFF_STATUSES:
-        raise SandboxAPIError(
-            f"Sandbox {sandbox_name} could not be reset: the control plane did not finish "
-            f"taking it down (it is {status})"
-        )
-
-
 def _reset_failure(sandbox_name: str, message: str, cause: Exception) -> SandboxAPIError:
     return SandboxAPIError(
         f"Sandbox {sandbox_name} {message}: {cause}",
-        status_code=getattr(cause, "status_code", None),
+        status_code=_error_status(cause),
     )
+
+
+def _error_status(error: Exception) -> int | None:
+    status = getattr(getattr(error, "response", None), "status_code", None)
+    if not isinstance(status, int):
+        status = getattr(error, "status_code", None)
+    return status if isinstance(status, int) else None
 
 
 def _is_not_yet_routable(error: Exception) -> bool:
     """A call that reached no sandbox yet: the route is not up (404 WORKLOAD_UNAVAILABLE),
     the edge could not reach it, or the connection dropped. Safe to try again.
     """
-    status = getattr(getattr(error, "response", None), "status_code", None)
-    if not isinstance(status, int):
-        status = getattr(error, "status_code", None)
-    if isinstance(status, int):
+    status = _error_status(error)
+    if status is not None:
         return status == 404 or status in (502, 503, 504)
     return True
 
 
-def _reset_entry_window(max_wait: int) -> float:
-    """Seconds, from now, during which a record that still reads off is tolerated."""
-    return (
-        min(RESET_ENTRY_MAX_WAIT_MS, max_wait if max_wait >= 0 else RESET_ENTRY_MAX_WAIT_MS) / 1000
+def _reset_deadline(max_wait: int) -> float:
+    """When the reset gives up: ``max_wait`` covers the teardown and the redeploy together."""
+    return math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
+
+
+def _reset_entry_deadline(deadline: float) -> float:
+    """Until when, from the switch-on, a record that still reads off is tolerated."""
+    return min(time.monotonic() + RESET_ENTRY_MAX_WAIT_MS / 1000, deadline)
+
+
+def _teardown_done(sandbox_name: str, error: Exception, owner: str = "SandboxInstance") -> bool:
+    """Whether a failed call to the switched-off sandbox says its old instance is gone.
+
+    The gateway routes only to a running instance and answers 404
+    (WORKLOAD_UNAVAILABLE) once there is none. A gateway error or a dropped
+    connection says nothing yet; anything else cannot be read and is raised.
+    """
+    if _error_status(error) == 404:
+        return True
+    if not _is_not_yet_routable(error):
+        raise _reset_failure(
+            sandbox_name,
+            "is switched off for the reset, but whether its old instance is gone could not be "
+            f"checked, {_left_off(sandbox_name, owner)}",
+            error,
+        ) from error
+    return False
+
+
+def _teardown_timeout(
+    sandbox_name: str, max_wait: int, owner: str = "SandboxInstance"
+) -> SandboxAPIError:
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} is switched off for the reset, but its old instance was still "
+        f"running after {round(max_wait / 1000)}s, {_left_off(sandbox_name, owner)}"
     )
+
+
+def _left_off(sandbox_name: str, owner: str) -> str:
+    return f'it is left DEACTIVATED; call {owner}.reset("{sandbox_name}") again to finish the reset'
 
 
 def _check_reset_status(sandbox_name: str, sandbox: Sandbox, *, tolerate_off: bool = False) -> bool:
@@ -1151,6 +1181,7 @@ class _AsyncResetDescriptor:
 async def _reset_sandbox_by_name(
     sandbox_name: str, max_wait: int, interval: int
 ) -> "SandboxInstance":
+    deadline = _reset_deadline(max_wait)
     response = await get_sandbox(sandbox_name, client=client)
     current = _unwrap_response(response, f"read sandbox {sandbox_name}")
     record = current
@@ -1167,11 +1198,7 @@ async def _reset_sandbox_by_name(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
         _check_taken_down(sandbox_name, record)
-        # The write can come back while the teardown is still running. Switching the
-        # sandbox back on then cancels it and leaves the old instance, and its
-        # filesystem, in place: let it finish first.
-        if _status_of(record) == "DEACTIVATING":
-            record = await _wait_for_deactivated(sandbox_name, record, max_wait, interval)
+    await _wait_for_teardown(sandbox_name, current, deadline, max_wait, interval)
     try:
         response = await retry_on_transient_reset_async(
             lambda: update_sandbox(
@@ -1186,36 +1213,42 @@ async def _reset_sandbox_by_name(
             f'DEACTIVATED; call SandboxInstance.reset("{sandbox_name}") again to bring it back',
             e,
         ) from e
-    return await _wait_for_reset(sandbox_name, max_wait, interval)
+    return await _wait_for_reset(sandbox_name, deadline, max_wait, interval)
 
 
-async def _wait_for_deactivated(
-    sandbox_name: str, record: Sandbox, max_wait: int, interval: int
-) -> Sandbox:
-    """Wait for a sandbox that is DEACTIVATING to be DEACTIVATED, within the entry window.
+async def _wait_for_teardown(
+    sandbox_name: str, current: Sandbox, deadline: float, max_wait: int, interval: int
+) -> None:
+    """Wait until the instance that was switched off is gone.
 
-    If the teardown is slow the last record read is returned and the reset goes on.
+    Switched back on while it is still there, the sandbox keeps it, and its
+    filesystem: the compute plane finds the instance it would create already
+    running and leaves it in place. The record cannot tell: the control plane
+    stamps DEACTIVATED as soon as the switch-off is written and tears the
+    instance down afterwards. The sandbox's URL can (see ``_teardown_done``).
     """
-    deadline = time.monotonic() + _reset_entry_window(max_wait)
-    while _status_of(record) == "DEACTIVATING" and time.monotonic() < deadline:
+    old = SandboxInstance(current)
+    while True:
+        try:
+            await old.fs.ls("/")
+        except Exception as e:
+            if _teardown_done(sandbox_name, e):
+                return
+        if time.monotonic() >= deadline:
+            raise _teardown_timeout(sandbox_name, max_wait)
         await asyncio.sleep(interval / 1000)
-        response = await retry_on_transient_reset_async(
-            lambda: get_sandbox(sandbox_name, client=client)
-        )
-        record = _unwrap_response(response, f"read sandbox {sandbox_name}")
-        _check_still_going_down(sandbox_name, record)
-    return record
 
 
-async def _wait_for_reset(sandbox_name: str, max_wait: int, interval: int) -> "SandboxInstance":
+async def _wait_for_reset(
+    sandbox_name: str, deadline: float, max_wait: int, interval: int
+) -> "SandboxInstance":
     """Wait until the sandbox is DEPLOYED again and answers.
 
     The record turns DEPLOYED a couple of seconds before the sandbox is routable,
     during which calls get a 404 WORKLOAD_UNAVAILABLE (retryable), so DEPLOYED
     alone is not ready.
     """
-    deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
-    entry_deadline = time.monotonic() + _reset_entry_window(max_wait)
+    entry_deadline = _reset_entry_deadline(deadline)
     seconds = round(max_wait / 1000)
     redeploying = False
     instance: SandboxInstance | None = None
@@ -1316,16 +1349,17 @@ SandboxInstance.reset = _AsyncResetDescriptor(
     anything mounted from inside the sandbox such as a drive, belong to the old
     instance and have to be started or mounted again.
 
-    This waits until the sandbox is DEPLOYED again and answers, a few seconds.
-    A sandbox that is disabled is switched back on. Sandboxes that are archived
-    or being deleted cannot be reset.
+    This waits until the old instance is gone and the sandbox is DEPLOYED again
+    and answers, a few seconds. A sandbox that is disabled is switched back on.
+    Sandboxes that are archived or being deleted cannot be reset.
 
     It works by switching the sandbox off and on again (``spec.enabled``). If the
-    second write fails the sandbox is left DEACTIVATED, and the error says so:
-    calling ``reset`` again brings it back.
+    old instance is still running when ``max_wait`` runs out, or the second
+    write fails, the sandbox is left DEACTIVATED and the error says so: calling
+    ``reset`` again finishes the reset.
 
     Args:
-        max_wait: Give up waiting for the sandbox after this many milliseconds;
+        max_wait: Give up waiting for the reset after this many milliseconds;
             -1 waits indefinitely.
         interval: Milliseconds between two reads of the sandbox.
     """
