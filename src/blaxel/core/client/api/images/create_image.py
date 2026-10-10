@@ -70,9 +70,10 @@ def sync_detailed(
 ) -> Response[Union[Any, CreateImageResponse200]]:
     """Build a container image
 
-     Builds a container image without creating a deployment. Returns a presigned URL for uploading source
-    code. After upload, the image will be built and stored in the registry, but no agent, function,
-    sandbox, or job will be created or updated.
+     Builds or imports a container image without creating a deployment. Provide a registry image
+    reference to download and convert an existing image, or omit image to receive a presigned URL for
+    uploading source code. Registry imports can specify memoryMb and volumeMb for the import worker.
+    These settings do not change the resources of workloads using the image.
 
     Args:
         body (CreateImageBody):
@@ -103,9 +104,10 @@ def sync(
 ) -> Union[Any, CreateImageResponse200] | None:
     """Build a container image
 
-     Builds a container image without creating a deployment. Returns a presigned URL for uploading source
-    code. After upload, the image will be built and stored in the registry, but no agent, function,
-    sandbox, or job will be created or updated.
+     Builds or imports a container image without creating a deployment. Provide a registry image
+    reference to download and convert an existing image, or omit image to receive a presigned URL for
+    uploading source code. Registry imports can specify memoryMb and volumeMb for the import worker.
+    These settings do not change the resources of workloads using the image.
 
     Args:
         body (CreateImageBody):
@@ -131,9 +133,10 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, CreateImageResponse200]]:
     """Build a container image
 
-     Builds a container image without creating a deployment. Returns a presigned URL for uploading source
-    code. After upload, the image will be built and stored in the registry, but no agent, function,
-    sandbox, or job will be created or updated.
+     Builds or imports a container image without creating a deployment. Provide a registry image
+    reference to download and convert an existing image, or omit image to receive a presigned URL for
+    uploading source code. Registry imports can specify memoryMb and volumeMb for the import worker.
+    These settings do not change the resources of workloads using the image.
 
     Args:
         body (CreateImageBody):
@@ -162,9 +165,10 @@ async def asyncio(
 ) -> Union[Any, CreateImageResponse200] | None:
     """Build a container image
 
-     Builds a container image without creating a deployment. Returns a presigned URL for uploading source
-    code. After upload, the image will be built and stored in the registry, but no agent, function,
-    sandbox, or job will be created or updated.
+     Builds or imports a container image without creating a deployment. Provide a registry image
+    reference to download and convert an existing image, or omit image to receive a presigned URL for
+    uploading source code. Registry imports can specify memoryMb and volumeMb for the import worker.
+    These settings do not change the resources of workloads using the image.
 
     Args:
         body (CreateImageBody):

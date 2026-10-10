@@ -50,6 +50,7 @@ from .sandbox import (
     is_creation_timeout_error,
 )
 from .sandbox.types import Sandbox
+from .secret import SecretAPIError, SecretInstance, SyncSecretInstance
 from .snapshot import Snapshot, SnapshotAPIError, SyncSnapshot
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
 from .volume import SyncVolumeInstance, VolumeAPIError, VolumeCreateConfiguration, VolumeInstance
@@ -65,6 +66,7 @@ __all__ = [
     "is_blaxel_error",
     "ResponseError",
     "VolumeAPIError",
+    "SecretAPIError",
     "BlAgent",
     "bl_agent",
     "BlaxelAuth",
@@ -106,6 +108,8 @@ __all__ = [
     "VolumeInstance",
     "SyncVolumeInstance",
     "VolumeCreateConfiguration",
+    "SecretInstance",
+    "SyncSecretInstance",
     "DriveInstance",
     "SyncDriveInstance",
     "DriveCreateConfiguration",

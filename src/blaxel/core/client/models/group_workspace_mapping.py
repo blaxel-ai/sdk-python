@@ -15,8 +15,8 @@ class GroupWorkspaceMapping:
 
     Attributes:
         group_name (Union[Unset, str]): Name of the IdP group (e.g. "Engineering", "Platform") Example: Engineering.
-        role (Union[Unset, GroupWorkspaceMappingRole]): Role to assign in this workspace (admin or member) Example:
-            admin.
+        role (Union[Unset, GroupWorkspaceMappingRole]): Role to assign in this workspace (admin, member or viewer)
+            Example: admin.
     """
 
     group_name: Union[Unset, str] = UNSET

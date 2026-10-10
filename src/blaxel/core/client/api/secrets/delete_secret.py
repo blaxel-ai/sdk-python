@@ -5,27 +5,24 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.workspace_user import WorkspaceUser
+from ...models.secret import Secret
 from ...types import Response
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    secret_name: str,
+) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": "/users",
+        "method": "delete",
+        "url": f"/secrets/{secret_name}",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["WorkspaceUser"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Secret | None:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = WorkspaceUser.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = Secret.from_dict(response.json())
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -36,7 +33,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Worksp
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["WorkspaceUser"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Secret]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -46,23 +43,28 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 
 
 def sync_detailed(
+    secret_name: str,
     *,
     client: Client,
-) -> Response[list["WorkspaceUser"]]:
-    """List workspace team members
+) -> Response[Secret]:
+    """Delete secret
 
-     Returns all team members in the workspace including their roles (admin, member or viewer) and
-    invitation status.
+     Deletes a secret and all its versions from the workspace.
+
+    Args:
+        secret_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['WorkspaceUser']]
+        Response[Secret]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        secret_name=secret_name,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -72,45 +74,54 @@ def sync_detailed(
 
 
 def sync(
+    secret_name: str,
     *,
     client: Client,
-) -> list["WorkspaceUser"] | None:
-    """List workspace team members
+) -> Secret | None:
+    """Delete secret
 
-     Returns all team members in the workspace including their roles (admin, member or viewer) and
-    invitation status.
+     Deletes a secret and all its versions from the workspace.
+
+    Args:
+        secret_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['WorkspaceUser']
+        Secret
     """
 
     return sync_detailed(
+        secret_name=secret_name,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
+    secret_name: str,
     *,
     client: Client,
-) -> Response[list["WorkspaceUser"]]:
-    """List workspace team members
+) -> Response[Secret]:
+    """Delete secret
 
-     Returns all team members in the workspace including their roles (admin, member or viewer) and
-    invitation status.
+     Deletes a secret and all its versions from the workspace.
+
+    Args:
+        secret_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['WorkspaceUser']]
+        Response[Secret]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        secret_name=secret_name,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -118,24 +129,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    secret_name: str,
     *,
     client: Client,
-) -> list["WorkspaceUser"] | None:
-    """List workspace team members
+) -> Secret | None:
+    """Delete secret
 
-     Returns all team members in the workspace including their roles (admin, member or viewer) and
-    invitation status.
+     Deletes a secret and all its versions from the workspace.
+
+    Args:
+        secret_name (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['WorkspaceUser']
+        Secret
     """
 
     return (
         await asyncio_detailed(
+            secret_name=secret_name,
             client=client,
         )
     ).parsed
