@@ -7,7 +7,6 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.env import Env
-    from ..models.sandbox_lifecycle import SandboxLifecycle
 
 
 T = TypeVar("T", bound="SandboxForkRequest")
@@ -25,8 +24,6 @@ class SandboxForkRequest:
             envs (Union[Unset, list['Env']]): Environment variables the fork runs with, on top of the ones the source has. A
                 variable the source already carries takes this value in the fork, one it does not is added, and every other
                 variable of the source is kept.
-            lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
-                on idle time, max age, or specific dates
             port (Union[Unset, int]): Port to expose from the sandbox Example: 8080.
             prefix (Union[Unset, str]): URL prefix for the application
             snapshot_id (Union[Unset, str]): Snapshot ID to fork from. When set, the fork is created from that existing
@@ -41,7 +38,6 @@ class SandboxForkRequest:
     target_type: str
     custom_domain: Union[Unset, str] = UNSET
     envs: Union[Unset, list["Env"]] = UNSET
-    lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
     port: Union[Unset, int] = UNSET
     prefix: Union[Unset, str] = UNSET
     snapshot_id: Union[Unset, str] = UNSET
@@ -66,16 +62,6 @@ class SandboxForkRequest:
                     envs_item = envs_item_data.to_dict()
                 envs.append(envs_item)
 
-        lifecycle: Union[Unset, dict[str, Any]] = UNSET
-        if (
-            self.lifecycle
-            and not isinstance(self.lifecycle, Unset)
-            and not isinstance(self.lifecycle, dict)
-        ):
-            lifecycle = self.lifecycle.to_dict()
-        elif self.lifecycle and isinstance(self.lifecycle, dict):
-            lifecycle = self.lifecycle
-
         port = self.port
 
         prefix = self.prefix
@@ -96,8 +82,6 @@ class SandboxForkRequest:
             field_dict["customDomain"] = custom_domain
         if envs is not UNSET:
             field_dict["envs"] = envs
-        if lifecycle is not UNSET:
-            field_dict["lifecycle"] = lifecycle
         if port is not UNSET:
             field_dict["port"] = port
         if prefix is not UNSET:
@@ -112,7 +96,6 @@ class SandboxForkRequest:
     @classmethod
     def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
         from ..models.env import Env
-        from ..models.sandbox_lifecycle import SandboxLifecycle
 
         if not src_dict:
             return None
@@ -130,13 +113,6 @@ class SandboxForkRequest:
 
             envs.append(envs_item)
 
-        _lifecycle = d.pop("lifecycle", UNSET)
-        lifecycle: Union[Unset, SandboxLifecycle]
-        if isinstance(_lifecycle, Unset):
-            lifecycle = UNSET
-        else:
-            lifecycle = SandboxLifecycle.from_dict(_lifecycle)
-
         port = d.pop("port", UNSET)
 
         prefix = d.pop("prefix", UNSET)
@@ -150,7 +126,6 @@ class SandboxForkRequest:
             target_type=target_type,
             custom_domain=custom_domain,
             envs=envs,
-            lifecycle=lifecycle,
             port=port,
             prefix=prefix,
             snapshot_id=snapshot_id,

@@ -25,7 +25,6 @@ class TriggerConfiguration:
         retry (Union[Unset, int]): The retry of the trigger Example: 3.
         schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * * Example: 0 * * * *.
         tasks (Union[Unset, list['TriggerConfigurationTask']]): The tasks configuration of the cronjob
-        tasks_ref (Union[Unset, str]): Where this trigger's task list is stored (server-managed)
         timeout (Union[Unset, int]): The timeout in seconds for async triggers (max 900s, MK3 only) Example: 300.
     """
 
@@ -36,7 +35,6 @@ class TriggerConfiguration:
     retry: Union[Unset, int] = UNSET
     schedule: Union[Unset, str] = UNSET
     tasks: Union[Unset, list["TriggerConfigurationTask"]] = UNSET
-    tasks_ref: Union[Unset, str] = UNSET
     timeout: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -64,8 +62,6 @@ class TriggerConfiguration:
                     tasks_item = tasks_item_data.to_dict()
                 tasks.append(tasks_item)
 
-        tasks_ref = self.tasks_ref
-
         timeout = self.timeout
 
         field_dict: dict[str, Any] = {}
@@ -85,8 +81,6 @@ class TriggerConfiguration:
             field_dict["schedule"] = schedule
         if tasks is not UNSET:
             field_dict["tasks"] = tasks
-        if tasks_ref is not UNSET:
-            field_dict["tasksRef"] = tasks_ref
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
 
@@ -118,8 +112,6 @@ class TriggerConfiguration:
 
             tasks.append(tasks_item)
 
-        tasks_ref = d.pop("tasksRef", d.pop("tasks_ref", UNSET))
-
         timeout = d.pop("timeout", UNSET)
 
         trigger_configuration = cls(
@@ -130,7 +122,6 @@ class TriggerConfiguration:
             retry=retry,
             schedule=schedule,
             tasks=tasks,
-            tasks_ref=tasks_ref,
             timeout=timeout,
         )
 

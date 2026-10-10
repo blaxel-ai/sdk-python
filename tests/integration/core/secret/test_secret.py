@@ -4,9 +4,16 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core import SecretInstance, SyncSecretInstance
+from blaxel.core.client.client import client
 from blaxel.core.client.types import UNSET
 from blaxel.core.errors import BlaxelError
 from tests.helpers import unique_name
+
+# /secrets ships with controlplane#5736; skip until the target environment serves it.
+pytestmark = pytest.mark.skipif(
+    client.get_httpx_client().get("/secrets").status_code == 404,
+    reason="workspace secrets API not deployed on this environment",
+)
 
 
 def _secret_name(prefix: str) -> str:

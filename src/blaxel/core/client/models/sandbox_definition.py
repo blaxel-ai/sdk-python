@@ -30,10 +30,6 @@ class SandboxDefinition:
             enterprise (Union[Unset, bool]): If the definition is enterprise
             hidden (Union[Unset, bool]): If the definition is hidden
             icon (Union[Unset, str]): Icon of the definition
-            icon_dark (Union[Unset, str]): Nonempty dark-mode icon URL in responses. Blank inputs use the resolved light-
-                mode icon.
-            icon_light (Union[Unset, str]): Nonempty light-mode icon URL in responses. Blank inputs use icon, iconDark, then
-                the default Hub icon.
             image (Union[Unset, str]): Image of the Sandbox definition Example: blaxel/python-data-science:latest.
             long_description (Union[Unset, str]): Long description of the definition
             memory (Union[Unset, int]): Memory of the Sandbox definition in MB Example: 2048.
@@ -51,8 +47,6 @@ class SandboxDefinition:
     enterprise: Union[Unset, bool] = UNSET
     hidden: Union[Unset, bool] = UNSET
     icon: Union[Unset, str] = UNSET
-    icon_dark: Union[Unset, str] = UNSET
-    icon_light: Union[Unset, str] = UNSET
     image: Union[Unset, str] = UNSET
     long_description: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
@@ -96,10 +90,6 @@ class SandboxDefinition:
 
         icon = self.icon
 
-        icon_dark = self.icon_dark
-
-        icon_light = self.icon_light
-
         image = self.image
 
         long_description = self.long_description
@@ -141,10 +131,6 @@ class SandboxDefinition:
             field_dict["hidden"] = hidden
         if icon is not UNSET:
             field_dict["icon"] = icon
-        if icon_dark is not UNSET:
-            field_dict["iconDark"] = icon_dark
-        if icon_light is not UNSET:
-            field_dict["iconLight"] = icon_light
         if image is not UNSET:
             field_dict["image"] = image
         if long_description is not UNSET:
@@ -197,10 +183,6 @@ class SandboxDefinition:
 
         icon = d.pop("icon", UNSET)
 
-        icon_dark = d.pop("iconDark", d.pop("icon_dark", UNSET))
-
-        icon_light = d.pop("iconLight", d.pop("icon_light", UNSET))
-
         image = d.pop("image", UNSET)
 
         long_description = d.pop("longDescription", d.pop("long_description", UNSET))
@@ -229,8 +211,6 @@ class SandboxDefinition:
             enterprise=enterprise,
             hidden=hidden,
             icon=icon,
-            icon_dark=icon_dark,
-            icon_light=icon_light,
             image=image,
             long_description=long_description,
             memory=memory,
