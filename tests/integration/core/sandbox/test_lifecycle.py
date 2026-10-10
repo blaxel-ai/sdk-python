@@ -17,7 +17,6 @@ from tests.helpers import (
     default_image,
     default_labels,
     unique_name,
-    wait_for_sandbox_deletion,
     wait_for_sandbox_deployed,
 )
 
@@ -178,8 +177,8 @@ class TestExpirationPolicies(TestSandboxLifecycleAndExpiration):
 
     async def test_supports_various_duration_formats(self):
         """Test that various duration formats are supported."""
-        # The API rejects any TTL under 5m, so sub-minute formats like "30s" are not valid here.
-        durations = ["5m", "90m", "1h"]
+        # The API rejects any TTL under 5m, so each format uses a value of at least 5m.
+        durations = ["300s", "5m", "90m", "1h"]
 
         for duration in durations:
             # Extract numeric part for unique name
@@ -225,7 +224,20 @@ class TestTTLExpirationBehavior(TestSandboxLifecycleAndExpiration):
         TestSandboxLifecycleAndExpiration.created_sandboxes.append(name)
 
         # Wait for TTL + buffer (expiration cron runs every minute): 5m + 3m.
-        assert await wait_for_sandbox_deletion(name, max_attempts=8 * 60)
+        # Only a 404 or TERMINATED counts as expired, so a transient API error cannot pass the test.
+        expired = False
+        for _ in range(8 * 6):
+            try:
+                sbx = await SandboxInstance.get(name)
+                if getattr(sbx, "status", None) == "TERMINATED":
+                    expired = True
+                    break
+            except Exception as e:
+                if getattr(e, "status_code", None) == 404:
+                    expired = True
+                    break
+            await async_sleep(10)
+        assert expired, f"sandbox {name} did not expire within 8 minutes"
 
         # This should not fail - create a new sandbox with the same name
         sbx = await SandboxInstance.create(
