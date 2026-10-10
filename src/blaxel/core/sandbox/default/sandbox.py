@@ -49,6 +49,7 @@ from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, 
 from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ...errors import _APIError
+from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -635,6 +636,14 @@ class SandboxInstance:
             ttl = config.ttl
             expires = config.expires
             region = config.region or settings.region
+            # What the caller asked for, read before the defaults above fill the gaps:
+            # create_if_not_exists compares only these with the sandbox it gets back.
+            requested = RequestedSandbox(
+                image=config.image,
+                memory=config.memory,
+                region=config.region,
+                envs=config._normalize_envs(),
+            )
             if not region:
                 warnings.warn(
                     "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
@@ -699,6 +708,7 @@ class SandboxInstance:
                 assert sandbox is not None
 
             assert isinstance(sandbox, Sandbox)
+            requested = requested_from_model(sandbox)
             # Set defaults for missing fields
             if not sandbox.metadata:
                 sandbox.metadata = Metadata(name=None)
@@ -736,6 +746,12 @@ class SandboxInstance:
             raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
         assert response is not None
+        if create_if_not_exist:
+            # The sandbox already holding the name comes back as is, whatever it was
+            # created with. Say so when it is not what was asked for; only a warning.
+            drift = drift_message(requested, response)
+            if drift:
+                warnings.warn(drift, stacklevel=caller_stacklevel())
         instance = cls(response)
         # TODO remove this part once we have a better way to handle this
         if safe:
