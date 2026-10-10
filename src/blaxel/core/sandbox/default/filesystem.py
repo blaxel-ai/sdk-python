@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Union
 import httpx
 
 from ...common.settings import settings
+from .._copy_no_overwrite import COPY_PATH, _copy_body, _copy_result
 from ..client.models import Directory, FileRequest, SuccessResponse
 from ..transient_retry import retry_on_transient_reset_async
 from ..types import (
@@ -354,14 +355,34 @@ class SandboxFileSystem(SandboxAction):
 
         return await retry_on_transient_reset_async(grep_once)
 
-    async def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
+    async def cp(
+        self,
+        source: str,
+        destination: str,
+        max_wait: int = 180000,
+        *,
+        no_overwrite: bool = False,
+    ) -> CopyResponse:
         """Copy files or directories using the cp command.
 
         Args:
             source: Source path
             destination: Destination path
             max_wait: Maximum time to wait for the copy operation in milliseconds (default: 180000)
+            no_overwrite: Copy in one sandbox API request that creates every entry
+                exclusively; an existing final target raises FileExistsError and is left
+                unchanged. Not a transaction: entries created before a failure remain.
         """
+        if no_overwrite:
+            body = _copy_body(source, destination)
+            client = self.get_client()
+            response = await client.post(COPY_PATH, json=body)
+            try:
+                await response.aread()
+                return _copy_result(response, source, destination, self.handle_response_error)
+            finally:
+                await response.aclose()
+
         if not self.process:
             raise Exception("Process instance not available. Cannot execute cp command.")
 

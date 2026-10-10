@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Union
 import httpx
 
 from ...common.settings import settings
+from .._copy_no_overwrite import COPY_PATH, _copy_body, _copy_result
 from ..client.models import Directory, FileRequest, SuccessResponse
 from ..transient_retry import retry_on_transient_reset
 from ..types import (
@@ -167,9 +168,23 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         return retry_on_transient_reset(ls_once)
 
-    def cp(self, source: str, destination: str, max_wait: int = 180000) -> CopyResponse:
+    def cp(
+        self,
+        source: str,
+        destination: str,
+        max_wait: int = 180000,
+        *,
+        no_overwrite: bool = False,
+    ) -> CopyResponse:
+        if no_overwrite:
+            body = _copy_body(source, destination)
+            with self.get_client() as client_instance:
+                response = client_instance.post(COPY_PATH, json=body)
+                return _copy_result(response, source, destination, self.handle_response_error)
+
         if not self.process:
             raise Exception("Process instance not available. Cannot execute cp command.")
+
         # Quote both paths so the shell treats them as single literal arguments
         # and cannot interpret injected metacharacters.
         command = f"cp -r {shlex.quote(source)} {shlex.quote(destination)}"
