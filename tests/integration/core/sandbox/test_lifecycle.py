@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -16,6 +17,7 @@ from tests.helpers import (
     default_image,
     default_labels,
     unique_name,
+    wait_for_sandbox_deletion,
     wait_for_sandbox_deployed,
 )
 
@@ -76,7 +78,7 @@ class TestTTL(TestSandboxLifecycleAndExpiration):
     async def test_creates_sandbox_with_expires_date(self):
         """Test creating a sandbox with expires date."""
         name = unique_name("expires-date")
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
         sandbox = await SandboxInstance.create(
             {
@@ -176,7 +178,8 @@ class TestExpirationPolicies(TestSandboxLifecycleAndExpiration):
 
     async def test_supports_various_duration_formats(self):
         """Test that various duration formats are supported."""
-        durations = ["30s", "5m", "1h"]
+        # The API rejects any TTL under 5m, so sub-minute formats like "30s" are not valid here.
+        durations = ["5m", "90m", "1h"]
 
         for duration in durations:
             # Extract numeric part for unique name
@@ -203,6 +206,10 @@ class TestExpirationPolicies(TestSandboxLifecycleAndExpiration):
 class TestTTLExpirationBehavior(TestSandboxLifecycleAndExpiration):
     """Test TTL expiration behavior."""
 
+    @pytest.mark.skipif(
+        not os.environ.get("RUN_SLOW_TESTS"),
+        reason="slow test (waits for the 5m minimum TTL); set RUN_SLOW_TESTS=1 to enable",
+    )
     async def test_sandbox_terminates_after_ttl_expires(self):
         """Test that sandbox terminates after TTL expires."""
         name = unique_name("ttl-expire")
@@ -210,19 +217,21 @@ class TestTTLExpirationBehavior(TestSandboxLifecycleAndExpiration):
             {
                 "name": name,
                 "image": default_image,
-                "ttl": "1s",
+                "ttl": "5m",  # API minimum
                 "labels": default_labels,
             }
         )
-        # Don't add to created_sandboxes - we expect it to auto-delete
+        # Registered for cleanup in case it never expires; a delete of a gone sandbox is ignored.
+        TestSandboxLifecycleAndExpiration.created_sandboxes.append(name)
 
-        # Wait for TTL + buffer (cron runs every minute)
-        await async_sleep(1.1)
+        # Wait for TTL + buffer (expiration cron runs every minute): 5m + 3m.
+        assert await wait_for_sandbox_deletion(name, max_attempts=8 * 60)
 
         # This should not fail - create a new sandbox with the same name
-        sbx = await SandboxInstance.create({"name": name, "labels": default_labels})
+        sbx = await SandboxInstance.create(
+            {"name": name, "image": default_image, "labels": default_labels}
+        )
         assert sbx.metadata.name == name
-        TestSandboxLifecycleAndExpiration.created_sandboxes.append(name)
 
 
 @pytest.mark.asyncio(loop_scope="class")
