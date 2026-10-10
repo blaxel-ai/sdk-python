@@ -48,7 +48,7 @@ def _get_kwargs(
 {% if endpoint.bodies | length > 1 %}
 {% for body in endpoint.bodies %}
     {# Plain dicts are accepted as JSON bodies, like the single-body branch #}
-    if isinstance(body, {% if body.body_type.value == "json" %}({{ body.prop.get_type_string() }}, dict){% else %}{{ body.prop.get_type_string() }}{% endif %}):
+    if isinstance(body, {% if body.body_type.value == "json" %}{{ body.prop.get_type_string() }} | dict{% else %}{{ body.prop.get_type_string() }}{% endif %}):
         {% set destination = "_" + body.body_type + "_body" %}
         {{ body_to_kwarg(body, destination) | indent(8) }}
         _kwargs["{{ body.body_type.value }}"] = {{ destination }}

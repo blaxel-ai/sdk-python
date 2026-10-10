@@ -27,7 +27,7 @@ def _get_kwargs(
         "url": f"/filesystem/{path}",
     }
 
-    if isinstance(body, (FileRequest, dict)):
+    if isinstance(body, FileRequest | dict):
         if type(body) is dict:
             _json_body = body
         else:
