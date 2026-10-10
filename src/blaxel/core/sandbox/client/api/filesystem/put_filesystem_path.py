@@ -27,7 +27,7 @@ def _get_kwargs(
         "url": f"/filesystem/{path}",
     }
 
-    if isinstance(body, FileRequest):
+    if isinstance(body, (FileRequest, dict)):
         if type(body) is dict:
             _json_body = body
         else:
@@ -39,7 +39,6 @@ def _get_kwargs(
         _files_body = body.to_multipart()
 
         _kwargs["files"] = _files_body
-        headers["Content-Type"] = "multipart/form-data"
 
     _kwargs["headers"] = headers
     return _kwargs
