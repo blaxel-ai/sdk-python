@@ -33,6 +33,24 @@ def entry(name):
     return {"create": {"name": name}, "mount_path": f"/mnt/{name}"}
 
 
+def unnamed(id):
+    """A drive the SDK names; tests tell them apart by a label."""
+    return {"create": {"labels": {"id": id}}, "mount_path": f"/mnt/{id}"}
+
+
+def id_of(config):
+    return (config.labels or {}).get("id", config.name)
+
+
+def id_of_name(h, name):
+    """The id of the entry a drive name (generated or not) was created for."""
+    return next(id_of(c.args[0]) for c in h.create.call_args_list if c.args[0].name == name)
+
+
+def deleted_ids(h):
+    return sorted(id_of_name(h, c.args[0]) for c in h.delete_drive.call_args_list)
+
+
 class Gate:
     """Blocks callers until opened, from a task (async) or a thread (sync)."""
 
@@ -321,7 +339,7 @@ async def test_drives_waiting_for_the_sandbox_region_do_not_hold_a_slot(h, monke
     assert h.create.call_count == MOUNT_DRIVES_CONCURRENCY
 
 
-async def test_failed_sandbox_deletes_the_drives_this_call_created_and_only_those(h):
+async def test_failed_sandbox_deletes_the_drives_this_call_named_and_created_and_only_those(h):
     failure = RuntimeError("quota exceeded")
     sandbox, new = h.gate(), h.gate()
     h.create_sandbox.side_effect = effect(h, raising(failure), lambda *a: sandbox)
@@ -331,8 +349,8 @@ async def test_failed_sandbox_deletes_the_drives_this_call_created_and_only_thos
             raise DriveAPIError("exists", status_code=409)
         return h.drive(config.name)
 
-    h.create.side_effect = effect(h, create, lambda config: new if config.name == "new" else None)
-    mounts = [entry("new"), entry("old"), {"drive_name": "data", "mount_path": "/mnt/data"}]
+    h.create.side_effect = effect(h, create, lambda c: new if id_of(c) == "new" else None)
+    mounts = [unnamed("new"), entry("old"), {"drive_name": "data", "mount_path": "/mnt/data"}]
     run = Running(h, dict(CONFIG), mount_drives=mounts)
     await run.until(lambda: h.create.call_count == 2 and h.get.call_count == 2)
     sandbox.open()
@@ -341,8 +359,29 @@ async def test_failed_sandbox_deletes_the_drives_this_call_created_and_only_thos
     h.delete_drive.assert_not_called()
     new.open()
     assert await run.result() is failure
-    h.delete_drive.assert_called_once_with("new")
+    assert deleted_ids(h) == ["new"]
     h.mount.assert_not_called()
+
+
+async def test_failed_sandbox_never_deletes_a_drive_created_under_the_callers_name(h):
+    # A concurrent call may have reused it (409, then get) and mounted it.
+    failure = RuntimeError("quota exceeded")
+    sandbox = h.gate()
+    h.create_sandbox.side_effect = effect(h, raising(failure), lambda *a: sandbox)
+    run = Running(h, dict(CONFIG), mount_drives=[entry("app-data")])
+    await run.until(lambda: h.create.call_count == 1)
+    await run.settle()
+    sandbox.open()
+    error = await run.result()
+    assert isinstance(error, SandboxDriveSetupError)
+    assert error.sandbox is None
+    assert error.__cause__ is failure
+    h.delete_drive.assert_not_called()
+    assert error.created_drives == ["app-data"]
+    assert str(error) == (
+        "Sandbox creation failed: quota exceeded. "
+        "Drives this call created (or may have created) are left in place: app-data."
+    )
 
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")
@@ -363,12 +402,12 @@ async def test_failed_drive_deletes_new_drives_it_did_not_mount_and_starts_no_mo
     h.create_sandbox.side_effect = effect(h, lambda *a: h.response, lambda *a: sandbox)
 
     def create(config):
-        if config.name == "d1":
+        if id_of(config) == "d1":
             raise cause
         return h.drive(config.name)
 
-    h.create.side_effect = effect(h, create, lambda config: fail if config.name == "d1" else rest)
-    mounts = [entry(f"d{i}") for i in range(total)] + [{"drive_name": "data", "mount_path": "/m"}]
+    h.create.side_effect = effect(h, create, lambda c: fail if id_of(c) == "d1" else rest)
+    mounts = [unnamed(f"d{i}") for i in range(total)] + [{"drive_name": "data", "mount_path": "/m"}]
     run = Running(h, dict(CONFIG), mount_drives=mounts)
     await run.until(lambda: h.create.call_count == MOUNT_DRIVES_CONCURRENCY)
     fail.open()
@@ -382,7 +421,7 @@ async def test_failed_drive_deletes_new_drives_it_did_not_mount_and_starts_no_mo
     # Drives in flight when d1 failed finished; the queued ones were never started.
     assert h.create.call_count == MOUNT_DRIVES_CONCURRENCY
     h.mount.assert_not_called()
-    assert sorted(c.args[0] for c in h.delete_drive.call_args_list) == ["d0", "d2", "d3", "d4"]
+    assert deleted_ids(h) == ["d0", "d2", "d3", "d4"]
     h.get.assert_not_called()
     assert error.drive_names == error.created_drives == []
 
@@ -390,21 +429,23 @@ async def test_failed_drive_deletes_new_drives_it_did_not_mount_and_starts_no_mo
 async def test_failed_mount_keeps_the_sandbox_and_mounted_drives_and_deletes_the_rest(h):
     cause = RuntimeError("409 mount path already in use")
 
-    def mount(name, *args):
-        if name == "b":
+    def mount(name, mount_path, *args):
+        if mount_path == "/mnt/b":
             raise cause
-        return h.real_mount(name, *args)
+        return h.real_mount(name, mount_path, *args)
 
     h.mount.side_effect = mount
-    run = Running(h, dict(CONFIG), mount_drives=[entry("a"), entry("b"), entry("c")])
+    run = Running(h, dict(CONFIG), mount_drives=[unnamed("a"), unnamed("b"), unnamed("c")])
     error = await run.result()
     assert isinstance(error, SandboxDriveSetupError)
     assert error.__cause__ is cause
     assert error.sandbox.metadata.name == "sandbox"
     # The sandbox's mount list, not the failed call, says what is mounted.
-    kept = sorted(c.args[0] for c in h.mount.call_args_list if c.args[0] != "b")
-    deleted = sorted(c.args[0] for c in h.delete_drive.call_args_list)
-    assert "b" in deleted and sorted(kept + deleted) == ["a", "b", "c"]
+    kept = sorted(c.args[0] for c in h.mount.call_args_list if c.args[1] != "/mnt/b")
+    deleted = deleted_ids(h)
+    # A drive whose creation had not started when b failed is never created.
+    created = sorted(id_of(c.args[0]) for c in h.create.call_args_list)
+    assert "b" in deleted and sorted([id_of_name(h, n) for n in kept] + deleted) == created
     assert sorted(error.drive_names) == sorted(error.created_drives) == kept
     assert h.list.call_count == 1
 
@@ -415,30 +456,54 @@ async def test_new_drive_whose_failed_mount_went_through_is_kept(h):
         raise TimeoutError("read timed out")
 
     h.mount.side_effect = mount
-    error = await Running(h, dict(CONFIG), mount_drives=[entry("a")]).result()
+    error = await Running(h, dict(CONFIG), mount_drives=[unnamed("a")]).result()
     assert isinstance(error, SandboxDriveSetupError)
     h.delete_drive.assert_not_called()
-    assert error.created_drives == ["a"]
-    assert "left in place: a." in str(error)
+    assert [id_of_name(h, n) for n in error.created_drives] == ["a"]
+    assert f"left in place: {error.created_drives[0]}." in str(error)
 
 
 async def test_new_drive_is_kept_when_the_mount_list_cannot_be_read(h):
     h.mount.side_effect = TimeoutError("read timed out")
     h.list.side_effect = TimeoutError("read timed out")
-    error = await Running(h, dict(CONFIG), mount_drives=[entry("a")]).result()
+    error = await Running(h, dict(CONFIG), mount_drives=[unnamed("a")]).result()
     assert isinstance(error, SandboxDriveSetupError)
     h.delete_drive.assert_not_called()
-    assert error.created_drives == ["a"]
+    assert [id_of_name(h, n) for n in error.created_drives] == ["a"]
 
 
 async def test_new_drive_the_sandbox_does_not_list_after_a_successful_mount_is_deleted(h):
-    # e.g. create_if_not_exist returned a sandbox that already mounts another drive there.
+    # e.g. the path was already mounted with another drive.
     h.mount.side_effect = lambda name, *args: h.real_mount("other", *args)
-    error = await Running(h, dict(CONFIG), mount_drives=[entry("a")]).result()
+    error = await Running(h, dict(CONFIG), mount_drives=[unnamed("a")]).result()
     assert isinstance(error, SandboxDriveSetupError)
     assert "/mnt/a is not mounted as requested" in str(error)
-    h.delete_drive.assert_called_once_with("a")
+    assert deleted_ids(h) == ["a"]
     assert error.created_drives == []
+
+
+async def test_drive_created_under_the_callers_name_and_not_mounted_is_kept_and_named(h):
+    cause = DriveAPIError("drive quota", status_code=429)
+    sandbox = h.gate()
+    h.create_sandbox.side_effect = effect(h, lambda *a: h.response, lambda *a: sandbox)
+
+    def create(config):
+        if config.name == "b":
+            raise cause
+        return h.drive(config.name)
+
+    h.create.side_effect = create
+    run = Running(h, dict(CONFIG), mount_drives=[entry("a"), entry("b")])
+    await run.until(lambda: h.create.call_count == 2)
+    await run.settle()
+    sandbox.open()
+    error = await run.result()
+    assert isinstance(error, SandboxDriveSetupError)
+    assert error.__cause__ is cause
+    h.mount.assert_not_called()
+    h.delete_drive.assert_not_called()
+    assert error.drive_names == error.created_drives == ["a"]
+    assert "left in place: a." in str(error)
 
 
 async def test_failed_sandbox_names_the_drives_it_could_not_delete(h):
@@ -447,21 +512,22 @@ async def test_failed_sandbox_names_the_drives_it_could_not_delete(h):
     h.create_sandbox.side_effect = effect(h, raising(failure), lambda *a: sandbox)
 
     def delete(name):
-        if name == "b":
+        if id_of_name(h, name) == "b":
             raise TimeoutError("read timed out")
 
     h.delete_drive.side_effect = delete
-    run = Running(h, dict(CONFIG), mount_drives=[entry("a"), entry("b")])
+    run = Running(h, dict(CONFIG), mount_drives=[unnamed("a"), unnamed("b")])
     await run.until(lambda: h.create.call_count == 2)
     sandbox.open()
     error = await run.result()
     assert isinstance(error, SandboxDriveSetupError)
     assert error.sandbox is None
     assert error.__cause__ is failure
-    assert error.created_drives == ["b"]
+    assert h.delete_drive.call_count == 2
+    assert [id_of_name(h, n) for n in error.created_drives] == ["b"]
     assert str(error) == (
         "Sandbox creation failed: quota exceeded. "
-        "Drives this call created (or may have created) are left in place: b."
+        f"Drives this call created (or may have created) are left in place: {error.created_drives[0]}."
     )
 
 
@@ -481,7 +547,7 @@ async def test_drives_use_the_region_the_request_sends_not_bl_region(h, monkeypa
     assert h.create.call_args.args[0].region == REGION
 
 
-async def test_new_drive_in_the_requested_region_is_deleted_when_the_sandbox_is_elsewhere(h):
+async def test_named_drive_in_the_requested_region_is_kept_when_the_sandbox_is_elsewhere(h):
     # create_if_not_exist returns an existing sandbox as is, whatever region was requested.
     elsewhere = Sandbox(metadata=Metadata(name="sandbox"), spec=SandboxSpec(region="eu-lon-1"))
     sandbox = h.gate()
@@ -501,10 +567,20 @@ async def test_new_drive_in_the_requested_region_is_deleted_when_the_sandbox_is_
     error = await run.result()
     assert isinstance(error, SandboxDriveSetupError)
     assert "is in us-was-1, but the sandbox is in eu-lon-1" in str(error)
-    h.delete_drive.assert_called_once_with("new")
-    assert error.drive_names == ["old"]
-    assert error.created_drives == []
+    h.delete_drive.assert_not_called()
+    assert error.drive_names == ["new", "old"]
+    assert error.created_drives == ["new"]
     h.mount.assert_not_called()
+
+
+async def test_drive_it_named_in_the_requested_region_is_deleted_when_the_sandbox_is_elsewhere(h):
+    elsewhere = Sandbox(metadata=Metadata(name="sandbox"), spec=SandboxSpec(region="eu-lon-1"))
+    h.create_sandbox.return_value = elsewhere
+    error = await Running(h, dict(CONFIG), mount_drives=[unnamed("new")]).result()
+    assert isinstance(error, SandboxDriveSetupError)
+    assert "but the sandbox is in eu-lon-1" in str(error)
+    assert deleted_ids(h) == ["new"]
+    assert error.created_drives == []
 
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")

@@ -3,7 +3,9 @@
 Drives are looked up or created while the sandbox is being created, at most
 ``MOUNT_DRIVES_CONCURRENCY`` at a time. Mounting is the only step that waits for
 both the sandbox and its drive, and each drive is mounted as soon as it is ready.
-On failure, drives this call created and did not mount are deleted.
+On failure, drives this call created under a generated name and did not mount
+are deleted; a drive created under a name the caller chose is never deleted,
+since a concurrent call may be using it, and is reported instead.
 """
 
 import asyncio
@@ -24,9 +26,11 @@ MOUNT_DRIVES_CONCURRENCY = 5
 class SandboxDriveSetupError(Exception):
     """``mount_drives`` could not be set up. The original error is ``__cause__``.
 
-    Drives this call created and did not mount are deleted first;
-    ``created_drives`` names the ones it created (or may have created, when a
-    response was lost) that are left in place.
+    Drives this call created under a name it generated and did not mount are
+    deleted first; a drive created under a name you chose is never deleted,
+    since a concurrent call may be using it. ``created_drives`` names the drives
+    this call created (or may have created, when a response was lost) that are
+    left in place.
 
     - ``sandbox`` is set when the sandbox is ready: it and the mounts made so far
       are kept. ``drive_names`` lists the drives this call looked up or created
@@ -111,6 +115,7 @@ def _new_drive_config(
         )
     # Name unnamed drives here so that a create whose response is lost can still be looked up.
     entry.name = create.name or f"drive-{uuid.uuid4().hex[:16]}"
+    entry.generated = not create.name
     return DriveCreateConfiguration(**{**vars(create), "name": entry.name, "region": region})
 
 
@@ -174,6 +179,8 @@ class _Entry:
         self.name: str | None = None  # the drive's name, once known
         self.exists = False  # looked up or created, and not deleted since
         self.created = False  # created by this call (not an existing drive it reused)
+        # Named by this call, so nobody else can be using it: the only kind rollback deletes.
+        self.generated = False
         self.unconfirmed = False  # the create request's outcome is unknown: the drive may exist
         # A mount was attempted; on failure the sandbox's mount list decides whether it took.
         self.mounted = False
@@ -184,15 +191,19 @@ class _Entries:
 
     _entries: list[_Entry]
 
+    def _deletable(self) -> list[_Entry]:
+        # A drive under a caller's name may be mounted by a concurrent call that reused it.
+        return [e for e in self._entries if e.created and e.generated and e.exists]
+
     def _to_delete(self, mounted_names: set | None) -> list[_Entry]:
-        created = [e for e in self._entries if e.created and e.exists]
+        created = self._deletable()
         if mounted_names is not None:
             for entry in created:
                 entry.mounted = entry.name in mounted_names
         return [e for e in created if not e.mounted]
 
     def _needs_mount_list(self) -> bool:
-        return any(e.created and e.exists and e.mounted for e in self._entries)
+        return any(e.mounted for e in self._deletable())
 
     def _left_names(self) -> list[str]:
         return [str(e.name) for e in self._entries if e.exists]
@@ -206,8 +217,8 @@ class _AsyncDriveSetup(_Entries):
 
     ``start`` runs the lookups/creations alongside the sandbox creation, ``mount``
     mounts them once the sandbox exists, and ``discard`` cleans up when the sandbox
-    could not be created. On failure, drives this call created and did not mount
-    are deleted.
+    could not be created. On failure, drives this call created under a generated
+    name and did not mount are deleted.
     """
 
     def __init__(self, mounts: list[_Mount], region: str | None):
@@ -283,7 +294,7 @@ class _AsyncDriveSetup(_Entries):
     async def discard(self, cause: BaseException) -> "SandboxDriveSetupError | None":
         """The sandbox could not be created: stop, wait for drives in flight, delete new ones.
 
-        Returns a ``SandboxDriveSetupError`` naming drives that could not be deleted, if any.
+        Returns a ``SandboxDriveSetupError`` naming drives left in place, if any.
         """
         self._stopped = True
         self._set_region(None)
@@ -336,7 +347,7 @@ class _AsyncDriveSetup(_Entries):
             ) from cause
 
     async def _rollback(self, sandbox) -> None:
-        """Delete the drives this call created and did not mount; a failed deletion is reported."""
+        """Delete the drives this call named, created and did not mount; others are reported."""
         mounted_names = None
         if sandbox is not None and self._needs_mount_list():
             # A failed mount call may still have mounted its drive (a lost response), and a
@@ -451,7 +462,7 @@ class _SyncDriveSetup(_Entries):
     def discard(self, cause: BaseException) -> "SandboxDriveSetupError | None":
         """The sandbox could not be created: stop, wait for drives in flight, delete new ones.
 
-        Returns a ``SandboxDriveSetupError`` naming drives that could not be deleted, if any.
+        Returns a ``SandboxDriveSetupError`` naming drives left in place, if any.
         """
         self._stopped.set()
         self._set_region(None)

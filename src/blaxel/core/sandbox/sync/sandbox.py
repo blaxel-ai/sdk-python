@@ -417,10 +417,11 @@ class SyncSandboxInstance:
                 while the sandbox is being created (a few at a time) and each is mounted
                 as soon as the sandbox and that drive are ready. New drives go in the region
                 the request sends (or, without one, the region the sandbox gets). On failure,
-                drives this call created and did not mount are deleted. If drive setup fails
-                the sandbox is kept and SandboxDriveSetupError is raised; if the sandbox cannot
-                be created, its error is raised (wrapped in a SandboxDriveSetupError only if a
-                drive created for it could not be deleted).
+                unnamed drives this call created and did not mount are deleted; named ones
+                are kept (a concurrent call may be using them) and listed in the error. If
+                drive setup fails the sandbox is kept and SandboxDriveSetupError is raised;
+                if the sandbox cannot be created, its error is raised (wrapped in a
+                SandboxDriveSetupError only if a drive created for it is left in place).
             timeout: Optional creation deadline in whole seconds (1 to
                 ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
                 in time the control plane cancels the creation, releases the
@@ -582,7 +583,7 @@ class SyncSandboxInstance:
         except BaseException as error:
             if drives is not None:
                 left_behind = drives.discard(error)
-                # Only when a drive created for the sandbox could not be deleted.
+                # Only when a drive created for the sandbox is left in place.
                 if left_behind is not None and isinstance(error, Exception):
                     raise left_behind from error
             raise

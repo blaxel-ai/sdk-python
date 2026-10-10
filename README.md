@@ -337,7 +337,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Each entry also takes `drive_path` (a sub-folder of the drive). With `create_if_not_exists`, a new drive needs a `name`. If anything fails, the drives this call created and did not mount are deleted. If a drive can't be set up or mounted, `create` raises `SandboxDriveSetupError` with the `sandbox`, the `drive_names` left in place, the `created_drives` among them that this call created (or may have created, if a response was lost) and the original error as `__cause__`; the sandbox and the mounts made so far are kept. If the sandbox itself can't be created, its error is raised, wrapped in a `SandboxDriveSetupError` without a `sandbox` only if a drive created for it could not be deleted.
+Each entry also takes `drive_path` (a sub-folder of the drive). With `create_if_not_exists`, a new drive needs a `name`. If anything fails, the drives this call created under a generated name (no `name` given) and did not mount are deleted; a drive created under a name you chose is never deleted, since a concurrent call may be using it, and is listed in `created_drives` instead. If a drive can't be set up or mounted, `create` raises `SandboxDriveSetupError` with the `sandbox`, the `drive_names` left in place, the `created_drives` among them that this call created (or may have created, if a response was lost) and the original error as `__cause__`; the sandbox and the mounts made so far are kept. If the sandbox itself can't be created, its error is raised, wrapped in a `SandboxDriveSetupError` without a `sandbox` only if a drive created for it is left in place.
 
 #### Volumes
 
