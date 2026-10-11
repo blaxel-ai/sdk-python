@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -76,7 +77,7 @@ class TestTTL(TestSandboxLifecycleAndExpiration):
     async def test_creates_sandbox_with_expires_date(self):
         """Test creating a sandbox with expires date."""
         name = unique_name("expires-date")
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
         sandbox = await SandboxInstance.create(
             {
@@ -176,7 +177,8 @@ class TestExpirationPolicies(TestSandboxLifecycleAndExpiration):
 
     async def test_supports_various_duration_formats(self):
         """Test that various duration formats are supported."""
-        durations = ["30s", "5m", "1h"]
+        # The API rejects any TTL under 5m, so each format uses a value of at least 5m.
+        durations = ["300s", "5m", "90m", "1h"]
 
         for duration in durations:
             # Extract numeric part for unique name
@@ -203,6 +205,10 @@ class TestExpirationPolicies(TestSandboxLifecycleAndExpiration):
 class TestTTLExpirationBehavior(TestSandboxLifecycleAndExpiration):
     """Test TTL expiration behavior."""
 
+    @pytest.mark.skipif(
+        not os.environ.get("RUN_SLOW_TESTS"),
+        reason="slow test (waits for the 5m minimum TTL); set RUN_SLOW_TESTS=1 to enable",
+    )
     async def test_sandbox_terminates_after_ttl_expires(self):
         """Test that sandbox terminates after TTL expires."""
         name = unique_name("ttl-expire")
@@ -210,19 +216,34 @@ class TestTTLExpirationBehavior(TestSandboxLifecycleAndExpiration):
             {
                 "name": name,
                 "image": default_image,
-                "ttl": "1s",
+                "ttl": "5m",  # API minimum
                 "labels": default_labels,
             }
         )
-        # Don't add to created_sandboxes - we expect it to auto-delete
+        # Registered for cleanup in case it never expires; a delete of a gone sandbox is ignored.
+        TestSandboxLifecycleAndExpiration.created_sandboxes.append(name)
 
-        # Wait for TTL + buffer (cron runs every minute)
-        await async_sleep(1.1)
+        # Wait for TTL + buffer (expiration cron runs every minute): 5m + 3m.
+        # Only a 404 or TERMINATED counts as expired, so a transient API error cannot pass the test.
+        expired = False
+        for _ in range(8 * 6):
+            try:
+                sbx = await SandboxInstance.get(name)
+                if getattr(sbx, "status", None) == "TERMINATED":
+                    expired = True
+                    break
+            except Exception as e:
+                if getattr(e, "status_code", None) == 404:
+                    expired = True
+                    break
+            await async_sleep(10)
+        assert expired, f"sandbox {name} did not expire within 8 minutes"
 
         # This should not fail - create a new sandbox with the same name
-        sbx = await SandboxInstance.create({"name": name, "labels": default_labels})
+        sbx = await SandboxInstance.create(
+            {"name": name, "image": default_image, "labels": default_labels}
+        )
         assert sbx.metadata.name == name
-        TestSandboxLifecycleAndExpiration.created_sandboxes.append(name)
 
 
 @pytest.mark.asyncio(loop_scope="class")

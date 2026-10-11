@@ -103,7 +103,7 @@ class TestSystemUpgrade(TestSystemOperations):
                 "image": "blaxel/nextjs:latest",
                 "memory": 4096,
                 "region": default_region,
-                "ports": [{"target": 3000}],
+                "ports": [{"target": 3001}],
                 "labels": default_labels,
             }
         )
@@ -124,19 +124,21 @@ class TestSystemUpgrade(TestSystemOperations):
         await sandbox.process.exec(
             {
                 "name": "nextjs-dev",
-                "command": "npm run dev -- --port 3000",
+                "command": "npm run dev -- --port 3001",
                 "working_dir": "/blaxel/app",
-                "wait_for_ports": [3000],
+                "wait_for_ports": [3001],
             }
         )
         print("[TEST] Next.js dev server started")
 
-        # Create a public preview on port 3000
-        print("[TEST] Creating preview on port 3000...")
+        # Port 3001: the nextjs image already runs its own dev server on 3000 at boot.
+
+        # Create a public preview on port 3001
+        print("[TEST] Creating preview on port 3001...")
         preview = await sandbox.previews.create(
             {
                 "metadata": {"name": "upgrade-test-preview"},
-                "spec": {"port": 3000, "public": True},
+                "spec": {"port": 3001, "public": True},
             }
         )
 
