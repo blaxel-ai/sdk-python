@@ -49,15 +49,20 @@ def _parse_response(
         return response_202
     if response.status_code == 400:
         response_400 = cast(Any, None)
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 404:
         response_404 = cast(Any, None)
+        errors.retain_response(response_404, response)
         return response_404
     if response.status_code == 409:
         response_409 = cast(Any, None)
+        errors.retain_response(response_409, response)
         return response_409
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 

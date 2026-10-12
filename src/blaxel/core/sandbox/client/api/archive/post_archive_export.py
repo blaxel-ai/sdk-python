@@ -49,17 +49,22 @@ def _parse_response(
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 409:
         response_409 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_409, response)
         return response_409
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
@@ -88,6 +93,8 @@ def sync_detailed(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem
@@ -128,6 +135,8 @@ def sync(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem
@@ -163,6 +172,8 @@ async def asyncio_detailed(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem
@@ -201,6 +212,8 @@ async def asyncio(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem

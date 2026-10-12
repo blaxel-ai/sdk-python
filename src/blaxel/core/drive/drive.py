@@ -27,15 +27,11 @@ from ..client.pagination import (
 )
 from ..client.types import UNSET, Unset
 from ..common.settings import settings
+from ..errors import _APIError
 
 
-class DriveAPIError(Exception):
+class DriveAPIError(_APIError):
     """Exception raised when drive API returns an error."""
-
-    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.code = code
 
 
 class _AsyncDeleteDescriptor:
@@ -249,7 +245,9 @@ class DriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -262,7 +260,9 @@ class DriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -303,7 +303,9 @@ class DriveInstance:
             if isinstance(response, Error):
                 status_code = int(response.code) if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise DriveAPIError(message, status_code=status_code, code=response.error)
+                raise DriveAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return await fetch_page(cursor)
@@ -446,7 +448,9 @@ class SyncDriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -460,7 +464,9 @@ class SyncDriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -499,7 +505,9 @@ class SyncDriveInstance:
             if isinstance(response, Error):
                 status_code = int(response.code) if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise DriveAPIError(message, status_code=status_code, code=response.error)
+                raise DriveAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)
@@ -616,7 +624,7 @@ async def _update_drive_by_name(
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise DriveAPIError(message, status_code=status_code, code=response.error)
+        raise DriveAPIError(message, status_code=status_code, code=response.error, error=response)
     # This is for safe update
     await asyncio.sleep(0.5)
     return DriveInstance(response)
@@ -691,7 +699,7 @@ def _update_drive_by_name_sync(
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise DriveAPIError(message, status_code=status_code, code=response.error)
+        raise DriveAPIError(message, status_code=status_code, code=response.error, error=response)
     # This is for safe update
     time.sleep(0.5)
     return SyncDriveInstance(response)

@@ -3,6 +3,7 @@
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from blaxel.core.client.models import Metadata, Sandbox, SandboxLifecycle, SandboxSpec
@@ -156,10 +157,7 @@ async def test_sandbox_forced_url_base():
 @pytest.mark.asyncio
 async def test_response_error():
     """Test ResponseError handling."""
-    # Mock an HTTP response with error
-    mock_response = MagicMock()
-    mock_response.status_code = 404
-    mock_response.reason_phrase = "Not Found"
+    mock_response = httpx.Response(404)
 
     error = ResponseError(mock_response)
     assert error.response.status_code == 404

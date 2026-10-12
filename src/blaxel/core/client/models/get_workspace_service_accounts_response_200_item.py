@@ -16,6 +16,7 @@ class GetWorkspaceServiceAccountsResponse200Item:
         created_at (Union[Unset, str]): Creation timestamp
         description (Union[Unset, str]): Service account description
         name (Union[Unset, str]): Service account name
+        role (Union[Unset, str]): Role of the service account in the workspace
         updated_at (Union[Unset, str]): Last update timestamp
     """
 
@@ -23,6 +24,7 @@ class GetWorkspaceServiceAccountsResponse200Item:
     created_at: Union[Unset, str] = UNSET
     description: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
+    role: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,6 +36,8 @@ class GetWorkspaceServiceAccountsResponse200Item:
         description = self.description
 
         name = self.name
+
+        role = self.role
 
         updated_at = self.updated_at
 
@@ -48,6 +52,8 @@ class GetWorkspaceServiceAccountsResponse200Item:
             field_dict["description"] = description
         if name is not UNSET:
             field_dict["name"] = name
+        if role is not UNSET:
+            field_dict["role"] = role
         if updated_at is not UNSET:
             field_dict["updated_at"] = updated_at
 
@@ -66,6 +72,8 @@ class GetWorkspaceServiceAccountsResponse200Item:
 
         name = d.pop("name", UNSET)
 
+        role = d.pop("role", UNSET)
+
         updated_at = d.pop("updated_at", UNSET)
 
         get_workspace_service_accounts_response_200_item = cls(
@@ -73,6 +81,7 @@ class GetWorkspaceServiceAccountsResponse200Item:
             created_at=created_at,
             description=description,
             name=name,
+            role=role,
             updated_at=updated_at,
         )
 

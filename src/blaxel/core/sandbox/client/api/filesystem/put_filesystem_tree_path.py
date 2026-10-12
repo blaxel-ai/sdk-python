@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from io import BytesIO
 from typing import Any, Union
 
 import httpx
@@ -8,9 +7,8 @@ from ... import errors
 from ...client import Client
 from ...models.directory import Directory
 from ...models.error_response import ErrorResponse
-from ...models.file_with_content import FileWithContent
 from ...models.tree_request import TreeRequest
-from ...types import File, Response
+from ...types import Response
 
 
 def _get_kwargs(
@@ -39,56 +37,37 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
+) -> Union[Directory, ErrorResponse] | None:
     if response.status_code == 200:
-
-        def _parse_response_200(data: object) -> Union["Directory", "FileWithContent", File]:
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                response_200_type_0 = Directory.from_dict(data)
-
-                return response_200_type_0
-            except:  # noqa: E722
-                pass
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                response_200_type_1 = FileWithContent.from_dict(data)
-
-                return response_200_type_1
-            except:  # noqa: E722
-                pass
-            if not isinstance(data, bytes):
-                raise TypeError()
-            response_200_type_2 = File(payload=BytesIO(data))
-
-            return response_200_type_2
-
-        response_200 = _parse_response_200(response.json())
+        response_200 = Directory.from_dict(response.json())
 
         return response_200
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_422, response)
         return response_422
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
+) -> Response[Union[Directory, ErrorResponse]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -102,10 +81,11 @@ def sync_detailed(
     *,
     client: Client,
     body: TreeRequest,
-) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
+) -> Response[Union[Directory, ErrorResponse]]:
     """Create or update directory tree
 
-     Create or update multiple files within a directory tree structure
+     Create or update multiple files within a directory tree structure. Idempotent: existing files are
+    overwritten, so retrying the same request is safe.
 
     Args:
         path (str):
@@ -116,7 +96,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]]
+        Response[Union[Directory, ErrorResponse]]
     """
 
     kwargs = _get_kwargs(
@@ -136,10 +116,11 @@ def sync(
     *,
     client: Client,
     body: TreeRequest,
-) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
+) -> Union[Directory, ErrorResponse] | None:
     """Create or update directory tree
 
-     Create or update multiple files within a directory tree structure
+     Create or update multiple files within a directory tree structure. Idempotent: existing files are
+    overwritten, so retrying the same request is safe.
 
     Args:
         path (str):
@@ -150,7 +131,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]
+        Union[Directory, ErrorResponse]
     """
 
     return sync_detailed(
@@ -165,10 +146,11 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: TreeRequest,
-) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
+) -> Response[Union[Directory, ErrorResponse]]:
     """Create or update directory tree
 
-     Create or update multiple files within a directory tree structure
+     Create or update multiple files within a directory tree structure. Idempotent: existing files are
+    overwritten, so retrying the same request is safe.
 
     Args:
         path (str):
@@ -179,7 +161,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]]
+        Response[Union[Directory, ErrorResponse]]
     """
 
     kwargs = _get_kwargs(
@@ -197,10 +179,11 @@ async def asyncio(
     *,
     client: Client,
     body: TreeRequest,
-) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
+) -> Union[Directory, ErrorResponse] | None:
     """Create or update directory tree
 
-     Create or update multiple files within a directory tree structure
+     Create or update multiple files within a directory tree structure. Idempotent: existing files are
+    overwritten, so retrying the same request is safe.
 
     Args:
         path (str):
@@ -211,7 +194,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]
+        Union[Directory, ErrorResponse]
     """
 
     return (

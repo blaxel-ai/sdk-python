@@ -1,5 +1,6 @@
 from typing import Any, TypeVar
 
+import httpx
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
@@ -13,6 +14,8 @@ class ErrorResponse:
         error (str):  Example: Error message.
     """
 
+    # Retain HTTP metadata without changing the serialized API body or constructor.
+    _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
     error: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 

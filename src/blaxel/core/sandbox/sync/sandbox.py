@@ -549,7 +549,7 @@ class SyncSandboxInstance:
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
-            raise SandboxAPIError(message, status_code=status_code, code=code)
+            raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
         instance = cls(response)
         if safe:
@@ -570,7 +570,9 @@ class SyncSandboxInstance:
         if isinstance(response, Error):
             status_code = response.code if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+            raise SandboxAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
 
         if response is None:
             raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
@@ -615,7 +617,9 @@ class SyncSandboxInstance:
             if isinstance(response, Error):
                 status_code = response.code if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise SandboxAPIError(message, status_code=status_code, code=response.error)
+                raise SandboxAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)
@@ -654,7 +658,7 @@ class SyncSandboxInstance:
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
+            ttl: The new TTL value (e.g., "5m", "1h"; minimum 5m), or None/"" to clear
 
         Returns:
             A new SyncSandboxInstance with updated TTL

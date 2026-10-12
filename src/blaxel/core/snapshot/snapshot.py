@@ -29,22 +29,20 @@ from ..client.pagination import (
     normalize_cursor,
 )
 from ..client.types import UNSET
+from ..errors import _APIError
 
 
-class SnapshotAPIError(Exception):
+class SnapshotAPIError(_APIError):
     """Exception raised when the snapshot API returns an error."""
-
-    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.code = code
 
 
 def _unwrap(response, action: str, *, allow_none: bool = False):
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise SnapshotAPIError(message, status_code=status_code, code=response.error)
+        raise SnapshotAPIError(
+            message, status_code=status_code, code=response.error, error=response
+        )
     if response is None and not allow_none:
         raise SnapshotAPIError(f"Failed to {action}")
     return response

@@ -36,18 +36,24 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, I
         return response_200
     if response.status_code == 403:
         response_403 = cast(Any, None)
+        errors.retain_response(response_403, response)
         return response_403
     if response.status_code == 404:
         response_404 = cast(Any, None)
+        errors.retain_response(response_404, response)
         return response_404
     if response.status_code == 409:
         response_409 = cast(Any, None)
+        errors.retain_response(response_409, response)
         return response_409
     if response.status_code == 410:
         response_410 = cast(Any, None)
+        errors.retain_response(response_410, response)
         return response_410
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 

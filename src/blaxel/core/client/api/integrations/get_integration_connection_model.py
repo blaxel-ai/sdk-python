@@ -24,7 +24,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Any | None:
     if response.status_code == 200:
         return None
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 

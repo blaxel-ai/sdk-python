@@ -55,12 +55,16 @@ def _parse_response(
         return response_200
     if response.status_code == 400:
         response_400 = cast(Any, None)
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 500:
         response_500 = cast(Any, None)
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 

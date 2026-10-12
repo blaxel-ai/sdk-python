@@ -7,6 +7,10 @@ from email.utils import format_datetime, parsedate_to_datetime
 from http import HTTPStatus
 from typing import Any, Mapping
 
+import httpx
+
+from blaxel.core.errors import BlaxelError, _decode_error_body, _response_snapshot
+
 _MAX_JSON_INSPECTION_BYTES = 64 * 1024
 _STABLE_CODE_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
 
@@ -90,15 +94,34 @@ def _retry_after_header(headers: Mapping[str, str] | None) -> str | None:
     return None
 
 
-class UnexpectedStatus(Exception):
+def retain_response(parsed: Any, response: httpx.Response) -> None:
+    """Keep modeled error return values unchanged, but retain their HTTP metadata."""
+    if hasattr(parsed, "_response"):
+        parsed._response = _response_snapshot(response)
+
+
+class UnexpectedStatus(BlaxelError):
     """Raised when an API returns a status absent from its OpenAPI contract."""
 
-    def __init__(self, status_code: int, content: bytes):
+    def __init__(
+        self,
+        status_code: int,
+        content: bytes,
+        headers: Mapping[str, str] | None = None,
+        *,
+        response: httpx.Response | None = None,
+    ):
         self.status_code = status_code
         self.content = content
         self.body_preview = _safe_body_preview(content)
 
-        super().__init__(f"Unexpected HTTP status {status_code}")
+        super().__init__(
+            f"Unexpected HTTP status {status_code}",
+            status=status_code,
+            body=_decode_error_body(content),
+            response=response,
+            headers=headers,
+        )
 
 
 class APIStatusError(UnexpectedStatus):
@@ -109,8 +132,14 @@ class APIStatusError(UnexpectedStatus):
         status_code: int,
         content: bytes,
         headers: Mapping[str, str] | None = None,
+        *,
+        response: httpx.Response | None = None,
     ):
-        self.error_code, self.retryable, body_retry_after = _extract_error_metadata(content)
+        super().__init__(status_code, content, headers, response=response)
+        self.error_code, legacy_retryable, body_retry_after = _extract_error_metadata(content)
+        if self.code is None:
+            self.code = self.error_code
+        self.retryable = legacy_retryable
         self.retry_after = _retry_after_header(headers) or body_retry_after
         self.retry_after_seconds = (
             int(self.retry_after)
@@ -120,13 +149,12 @@ class APIStatusError(UnexpectedStatus):
         if self.retryable is None and self.retry_after is not None:
             self.retryable = True
 
-        super().__init__(status_code, content)
-
         try:
             status_name = HTTPStatus(status_code).phrase
         except ValueError:
             status_name = "HTTP error"
-        Exception.__init__(self, f"HTTP {status_code} {status_name}")
+        self.message = f"HTTP {status_code} {status_name}"
+        Exception.__init__(self, self.message)
 
 
 class ConflictError(APIStatusError):
@@ -141,13 +169,15 @@ def from_response(
     status_code: int,
     content: bytes,
     headers: Mapping[str, str] | None = None,
+    *,
+    response: httpx.Response | None = None,
 ) -> UnexpectedStatus:
     """Build the most specific safe error for an undocumented response."""
     if status_code == HTTPStatus.CONFLICT:
-        return ConflictError(status_code, content, headers)
+        return ConflictError(status_code, content, headers, response=response)
     if status_code == HTTPStatus.TOO_MANY_REQUESTS:
-        return RateLimitError(status_code, content, headers)
-    return UnexpectedStatus(status_code, content)
+        return RateLimitError(status_code, content, headers, response=response)
+    return UnexpectedStatus(status_code, content, headers, response=response)
 
 
 __all__ = [

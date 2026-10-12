@@ -51,17 +51,22 @@ def _parse_response(
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_404, response)
         return response_404
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
@@ -86,7 +91,8 @@ def sync_detailed(
 ) -> Response[Union[ErrorResponse, MultipartUploadPartResponse]]:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
@@ -123,7 +129,8 @@ def sync(
 ) -> Union[ErrorResponse, MultipartUploadPartResponse] | None:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
@@ -155,7 +162,8 @@ async def asyncio_detailed(
 ) -> Response[Union[ErrorResponse, MultipartUploadPartResponse]]:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
@@ -190,7 +198,8 @@ async def asyncio(
 ) -> Union[ErrorResponse, MultipartUploadPartResponse] | None:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):

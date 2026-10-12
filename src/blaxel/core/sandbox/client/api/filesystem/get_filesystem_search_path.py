@@ -13,12 +13,15 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     path: str,
     *,
+    query: Union[Unset, str] = UNSET,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
     exclude_hidden: Union[Unset, bool] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
+
+    params["query"] = query
 
     params["maxResults"] = max_results
 
@@ -49,17 +52,22 @@ def _parse_response(
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_400, response)
         return response_400
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_422, response)
         return response_422
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.from_response(response.status_code, response.content, response.headers)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
@@ -79,18 +87,23 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
+    query: Union[Unset, str] = UNSET,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
     exclude_hidden: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, FuzzySearchResponse]]:
-    """Fuzzy search for files and directories
+    r"""Fuzzy search for files and directories
 
-     Performs fuzzy search on filesystem paths using fuzzy matching algorithm. Optimized alternative to
-    find and grep commands.
+     Ranks the files and directories under a path by how well their relative path fuzzy-matches `query`
+    (fzf algorithm: the query's characters must appear in order, not necessarily next to each other),
+    best match first.
+    Fuzzy search is for \"jump to file\" lookups from a partial name. The `patterns` parameter is
+    currently ignored by this endpoint; use find for exact glob filtering.
 
     Args:
         path (str):
+        query (Union[Unset, str]):
         max_results (Union[Unset, int]):
         patterns (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
@@ -106,6 +119,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         path=path,
+        query=query,
         max_results=max_results,
         patterns=patterns,
         exclude_dirs=exclude_dirs,
@@ -123,18 +137,23 @@ def sync(
     path: str,
     *,
     client: Client,
+    query: Union[Unset, str] = UNSET,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
     exclude_hidden: Union[Unset, bool] = UNSET,
 ) -> Union[ErrorResponse, FuzzySearchResponse] | None:
-    """Fuzzy search for files and directories
+    r"""Fuzzy search for files and directories
 
-     Performs fuzzy search on filesystem paths using fuzzy matching algorithm. Optimized alternative to
-    find and grep commands.
+     Ranks the files and directories under a path by how well their relative path fuzzy-matches `query`
+    (fzf algorithm: the query's characters must appear in order, not necessarily next to each other),
+    best match first.
+    Fuzzy search is for \"jump to file\" lookups from a partial name. The `patterns` parameter is
+    currently ignored by this endpoint; use find for exact glob filtering.
 
     Args:
         path (str):
+        query (Union[Unset, str]):
         max_results (Union[Unset, int]):
         patterns (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
@@ -151,6 +170,7 @@ def sync(
     return sync_detailed(
         path=path,
         client=client,
+        query=query,
         max_results=max_results,
         patterns=patterns,
         exclude_dirs=exclude_dirs,
@@ -162,18 +182,23 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
+    query: Union[Unset, str] = UNSET,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
     exclude_hidden: Union[Unset, bool] = UNSET,
 ) -> Response[Union[ErrorResponse, FuzzySearchResponse]]:
-    """Fuzzy search for files and directories
+    r"""Fuzzy search for files and directories
 
-     Performs fuzzy search on filesystem paths using fuzzy matching algorithm. Optimized alternative to
-    find and grep commands.
+     Ranks the files and directories under a path by how well their relative path fuzzy-matches `query`
+    (fzf algorithm: the query's characters must appear in order, not necessarily next to each other),
+    best match first.
+    Fuzzy search is for \"jump to file\" lookups from a partial name. The `patterns` parameter is
+    currently ignored by this endpoint; use find for exact glob filtering.
 
     Args:
         path (str):
+        query (Union[Unset, str]):
         max_results (Union[Unset, int]):
         patterns (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
@@ -189,6 +214,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         path=path,
+        query=query,
         max_results=max_results,
         patterns=patterns,
         exclude_dirs=exclude_dirs,
@@ -204,18 +230,23 @@ async def asyncio(
     path: str,
     *,
     client: Client,
+    query: Union[Unset, str] = UNSET,
     max_results: Union[Unset, int] = UNSET,
     patterns: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
     exclude_hidden: Union[Unset, bool] = UNSET,
 ) -> Union[ErrorResponse, FuzzySearchResponse] | None:
-    """Fuzzy search for files and directories
+    r"""Fuzzy search for files and directories
 
-     Performs fuzzy search on filesystem paths using fuzzy matching algorithm. Optimized alternative to
-    find and grep commands.
+     Ranks the files and directories under a path by how well their relative path fuzzy-matches `query`
+    (fzf algorithm: the query's characters must appear in order, not necessarily next to each other),
+    best match first.
+    Fuzzy search is for \"jump to file\" lookups from a partial name. The `patterns` parameter is
+    currently ignored by this endpoint; use find for exact glob filtering.
 
     Args:
         path (str):
+        query (Union[Unset, str]):
         max_results (Union[Unset, int]):
         patterns (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
@@ -233,6 +264,7 @@ async def asyncio(
         await asyncio_detailed(
             path=path,
             client=client,
+            query=query,
             max_results=max_results,
             patterns=patterns,
             exclude_dirs=exclude_dirs,
