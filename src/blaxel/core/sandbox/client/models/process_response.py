@@ -14,12 +14,14 @@ class ProcessResponse:
     """
     Attributes:
         command (str):  Example: ls -la.
-        completed_at (str):  Example: Wed, 01 Jan 2023 12:01:00 GMT.
+        completed_at (str): Completion time, same format as startedAt. Empty string while the process runs Example: Wed,
+            01 Jan 2023 12:01:00 GMT.
         exit_code (int):
         logs (str):  Example: logs output.
         name (str):  Example: my-process.
         pid (str):  Example: 1234.
-        started_at (str):  Example: Wed, 01 Jan 2023 12:00:00 GMT.
+        started_at (str): Start time as an HTTP date (RFC 1123, e.g. Wed, 01 Jan 2023 12:00:00 GMT) Example: Wed, 01 Jan
+            2023 12:00:00 GMT.
         status (ProcessResponseStatus):  Example: running.
         stderr (str):  Example: stderr output.
         stdout (str):  Example: stdout output.

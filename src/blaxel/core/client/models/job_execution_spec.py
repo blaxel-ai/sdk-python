@@ -23,14 +23,18 @@ class JobExecutionSpec:
         memory_override (Union[Unset, int]): Memory override in megabytes (if provided for this execution) Example:
             2048.
         parallelism (Union[Unset, int]): Number of parallel tasks Example: 5.
+        task_count (Union[Unset, int]): Number of tasks of this execution Example: 12.
         tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
+        tasks_ref (Union[Unset, str]): Where this execution's task list is stored (server-managed)
         timeout (Union[Unset, int]): Job timeout in seconds (captured at execution creation time) Example: 3600.
     """
 
     env_override: Union[Unset, "JobExecutionSpecEnvOverride"] = UNSET
     memory_override: Union[Unset, int] = UNSET
     parallelism: Union[Unset, int] = UNSET
+    task_count: Union[Unset, int] = UNSET
     tasks: Union[Unset, list["JobExecutionTask"]] = UNSET
+    tasks_ref: Union[Unset, str] = UNSET
     timeout: Union[Unset, int] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -50,6 +54,8 @@ class JobExecutionSpec:
 
         parallelism = self.parallelism
 
+        task_count = self.task_count
+
         tasks: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.tasks, Unset):
             tasks = []
@@ -59,6 +65,8 @@ class JobExecutionSpec:
                 else:
                     tasks_item = tasks_item_data.to_dict()
                 tasks.append(tasks_item)
+
+        tasks_ref = self.tasks_ref
 
         timeout = self.timeout
 
@@ -71,8 +79,12 @@ class JobExecutionSpec:
             field_dict["memoryOverride"] = memory_override
         if parallelism is not UNSET:
             field_dict["parallelism"] = parallelism
+        if task_count is not UNSET:
+            field_dict["taskCount"] = task_count
         if tasks is not UNSET:
             field_dict["tasks"] = tasks
+        if tasks_ref is not UNSET:
+            field_dict["tasksRef"] = tasks_ref
         if timeout is not UNSET:
             field_dict["timeout"] = timeout
 
@@ -97,6 +109,8 @@ class JobExecutionSpec:
 
         parallelism = d.pop("parallelism", UNSET)
 
+        task_count = d.pop("taskCount", d.pop("task_count", UNSET))
+
         tasks = []
         _tasks = d.pop("tasks", UNSET)
         for tasks_item_data in _tasks or []:
@@ -104,13 +118,17 @@ class JobExecutionSpec:
 
             tasks.append(tasks_item)
 
+        tasks_ref = d.pop("tasksRef", d.pop("tasks_ref", UNSET))
+
         timeout = d.pop("timeout", UNSET)
 
         job_execution_spec = cls(
             env_override=env_override,
             memory_override=memory_override,
             parallelism=parallelism,
+            task_count=task_count,
             tasks=tasks,
+            tasks_ref=tasks_ref,
             timeout=timeout,
         )
 

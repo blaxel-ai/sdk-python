@@ -7,6 +7,7 @@ from ... import errors
 from ...client import Client
 from ...models.error_response import ErrorResponse
 from ...models.file_request import FileRequest
+from ...models.put_filesystem_path_files_body import PutFilesystemPathFilesBody
 from ...models.success_response import SuccessResponse
 from ...types import Response
 
@@ -14,7 +15,10 @@ from ...types import Response
 def _get_kwargs(
     path: str,
     *,
-    body: FileRequest,
+    body: Union[
+        FileRequest,
+        PutFilesystemPathFilesBody,
+    ],
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,13 +27,18 @@ def _get_kwargs(
         "url": f"/filesystem/{path}",
     }
 
-    if type(body) is dict:
-        _body = body
-    else:
-        _body = body.to_dict()
+    if isinstance(body, FileRequest | dict):
+        if type(body) is dict:
+            _json_body = body
+        else:
+            _json_body = body.to_dict()
 
-    _kwargs["json"] = _body
-    headers["Content-Type"] = "application/json"
+        _kwargs["json"] = _json_body
+        headers["Content-Type"] = "application/json"
+    if isinstance(body, PutFilesystemPathFilesBody):
+        _files_body = body.to_multipart()
+
+        _kwargs["files"] = _files_body
 
     _kwargs["headers"] = headers
     return _kwargs
@@ -80,15 +89,27 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
-    body: FileRequest,
+    body: Union[
+        FileRequest,
+        PutFilesystemPathFilesBody,
+    ],
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Create or update a file or directory
 
-     Create or update a file or directory
+     Create or update a file or directory.
+
+    Idempotent: an existing file is overwritten (truncated, not appended to) and an existing directory
+    is kept, so retrying the same request is safe.
+
+    Send either a JSON body (FileRequest) or `multipart/form-data` for binary files. Multipart fields,
+    in any order: `file` (required, the file content), `permissions` (optional octal mode such as
+    `0755`, applied when the file is created, default `0644`; an existing file keeps its mode), `path`
+    (optional, ignored: the target is always the URL path).
 
     Args:
         path (str):
         body (FileRequest):
+        body (PutFilesystemPathFilesBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -114,15 +135,27 @@ def sync(
     path: str,
     *,
     client: Client,
-    body: FileRequest,
+    body: Union[
+        FileRequest,
+        PutFilesystemPathFilesBody,
+    ],
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Create or update a file or directory
 
-     Create or update a file or directory
+     Create or update a file or directory.
+
+    Idempotent: an existing file is overwritten (truncated, not appended to) and an existing directory
+    is kept, so retrying the same request is safe.
+
+    Send either a JSON body (FileRequest) or `multipart/form-data` for binary files. Multipart fields,
+    in any order: `file` (required, the file content), `permissions` (optional octal mode such as
+    `0755`, applied when the file is created, default `0644`; an existing file keeps its mode), `path`
+    (optional, ignored: the target is always the URL path).
 
     Args:
         path (str):
         body (FileRequest):
+        body (PutFilesystemPathFilesBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -143,15 +176,27 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
-    body: FileRequest,
+    body: Union[
+        FileRequest,
+        PutFilesystemPathFilesBody,
+    ],
 ) -> Response[Union[ErrorResponse, SuccessResponse]]:
     """Create or update a file or directory
 
-     Create or update a file or directory
+     Create or update a file or directory.
+
+    Idempotent: an existing file is overwritten (truncated, not appended to) and an existing directory
+    is kept, so retrying the same request is safe.
+
+    Send either a JSON body (FileRequest) or `multipart/form-data` for binary files. Multipart fields,
+    in any order: `file` (required, the file content), `permissions` (optional octal mode such as
+    `0755`, applied when the file is created, default `0644`; an existing file keeps its mode), `path`
+    (optional, ignored: the target is always the URL path).
 
     Args:
         path (str):
         body (FileRequest):
+        body (PutFilesystemPathFilesBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -175,15 +220,27 @@ async def asyncio(
     path: str,
     *,
     client: Client,
-    body: FileRequest,
+    body: Union[
+        FileRequest,
+        PutFilesystemPathFilesBody,
+    ],
 ) -> Union[ErrorResponse, SuccessResponse] | None:
     """Create or update a file or directory
 
-     Create or update a file or directory
+     Create or update a file or directory.
+
+    Idempotent: an existing file is overwritten (truncated, not appended to) and an existing directory
+    is kept, so retrying the same request is safe.
+
+    Send either a JSON body (FileRequest) or `multipart/form-data` for binary files. Multipart fields,
+    in any order: `file` (required, the file content), `permissions` (optional octal mode such as
+    `0755`, applied when the file is created, default `0644`; an existing file keeps its mode), `path`
+    (optional, ignored: the target is always the URL path).
 
     Args:
         path (str):
         body (FileRequest):
+        body (PutFilesystemPathFilesBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

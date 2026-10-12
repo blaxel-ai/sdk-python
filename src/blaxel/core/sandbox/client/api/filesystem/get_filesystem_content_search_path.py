@@ -18,6 +18,7 @@ def _get_kwargs(
     max_results: Union[Unset, int] = UNSET,
     file_pattern: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
+    context_lines: Union[Unset, int] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -30,6 +31,8 @@ def _get_kwargs(
     params["filePattern"] = file_pattern
 
     params["excludeDirs"] = exclude_dirs
+
+    params["contextLines"] = context_lines
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -92,10 +95,12 @@ def sync_detailed(
     max_results: Union[Unset, int] = UNSET,
     file_pattern: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
+    context_lines: Union[Unset, int] = UNSET,
 ) -> Response[Union[ContentSearchResponse, ErrorResponse]]:
     """Search for text content in files
 
-     Searches for text content inside files using ripgrep. Returns matching lines with context.
+     Searches for text content inside files. Returns each matching line, with the lines around it when
+    contextLines is set.
 
     Args:
         path (str):
@@ -104,6 +109,7 @@ def sync_detailed(
         max_results (Union[Unset, int]):
         file_pattern (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
+        context_lines (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,6 +126,7 @@ def sync_detailed(
         max_results=max_results,
         file_pattern=file_pattern,
         exclude_dirs=exclude_dirs,
+        context_lines=context_lines,
     )
 
     response = client.get_httpx_client().request(
@@ -138,10 +145,12 @@ def sync(
     max_results: Union[Unset, int] = UNSET,
     file_pattern: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
+    context_lines: Union[Unset, int] = UNSET,
 ) -> Union[ContentSearchResponse, ErrorResponse] | None:
     """Search for text content in files
 
-     Searches for text content inside files using ripgrep. Returns matching lines with context.
+     Searches for text content inside files. Returns each matching line, with the lines around it when
+    contextLines is set.
 
     Args:
         path (str):
@@ -150,6 +159,7 @@ def sync(
         max_results (Union[Unset, int]):
         file_pattern (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
+        context_lines (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -167,6 +177,7 @@ def sync(
         max_results=max_results,
         file_pattern=file_pattern,
         exclude_dirs=exclude_dirs,
+        context_lines=context_lines,
     ).parsed
 
 
@@ -179,10 +190,12 @@ async def asyncio_detailed(
     max_results: Union[Unset, int] = UNSET,
     file_pattern: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
+    context_lines: Union[Unset, int] = UNSET,
 ) -> Response[Union[ContentSearchResponse, ErrorResponse]]:
     """Search for text content in files
 
-     Searches for text content inside files using ripgrep. Returns matching lines with context.
+     Searches for text content inside files. Returns each matching line, with the lines around it when
+    contextLines is set.
 
     Args:
         path (str):
@@ -191,6 +204,7 @@ async def asyncio_detailed(
         max_results (Union[Unset, int]):
         file_pattern (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
+        context_lines (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -207,6 +221,7 @@ async def asyncio_detailed(
         max_results=max_results,
         file_pattern=file_pattern,
         exclude_dirs=exclude_dirs,
+        context_lines=context_lines,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -223,10 +238,12 @@ async def asyncio(
     max_results: Union[Unset, int] = UNSET,
     file_pattern: Union[Unset, str] = UNSET,
     exclude_dirs: Union[Unset, str] = UNSET,
+    context_lines: Union[Unset, int] = UNSET,
 ) -> Union[ContentSearchResponse, ErrorResponse] | None:
     """Search for text content in files
 
-     Searches for text content inside files using ripgrep. Returns matching lines with context.
+     Searches for text content inside files. Returns each matching line, with the lines around it when
+    contextLines is set.
 
     Args:
         path (str):
@@ -235,6 +252,7 @@ async def asyncio(
         max_results (Union[Unset, int]):
         file_pattern (Union[Unset, str]):
         exclude_dirs (Union[Unset, str]):
+        context_lines (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -253,5 +271,6 @@ async def asyncio(
             max_results=max_results,
             file_pattern=file_pattern,
             exclude_dirs=exclude_dirs,
+            context_lines=context_lines,
         )
     ).parsed
