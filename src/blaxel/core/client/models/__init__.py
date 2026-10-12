@@ -32,6 +32,7 @@ from .create_job_execution_request import CreateJobExecutionRequest
 from .create_job_execution_request_env import CreateJobExecutionRequestEnv
 from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
+from .create_workspace_service_account_body_role import CreateWorkspaceServiceAccountBodyRole
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
@@ -296,6 +297,7 @@ from .trigger_configuration import TriggerConfiguration
 from .trigger_configuration_task import TriggerConfigurationTask
 from .trigger_type import TriggerType
 from .update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
+from .update_workspace_service_account_body_role import UpdateWorkspaceServiceAccountBodyRole
 from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .volume import Volume
@@ -357,6 +359,7 @@ __all__ = (
     "CreateJobExecutionRequestEnv",
     "CreateJobExecutionRequestTasksItem",
     "CreateWorkspaceServiceAccountBody",
+    "CreateWorkspaceServiceAccountBodyRole",
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
     "CustomDomainMetadata",
@@ -615,6 +618,7 @@ __all__ = (
     "TriggerConfigurationTask",
     "TriggerType",
     "UpdateWorkspaceServiceAccountBody",
+    "UpdateWorkspaceServiceAccountBodyRole",
     "UpdateWorkspaceServiceAccountResponse200",
     "UpdateWorkspaceUserRoleBody",
     "Volume",

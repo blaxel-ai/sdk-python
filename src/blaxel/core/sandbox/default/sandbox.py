@@ -869,7 +869,7 @@ class SandboxInstance:
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
+            ttl: The new TTL value (e.g., "5m", "1h"; minimum 5m), or None/"" to clear
 
         Returns:
             A new SandboxInstance with updated TTL

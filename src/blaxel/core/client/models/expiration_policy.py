@@ -19,8 +19,8 @@ class ExpirationPolicy:
             delete.
         type_ (Union[Unset, ExpirationPolicyType]): Type of expiration policy: ttl-idle (delete after inactivity), ttl-
             max-age (delete after total lifetime), or date (delete at specific time) Example: ttl-idle.
-        value (Union[Unset, str]): Duration value for TTL policies (e.g., '30m', '24h', '7d') or ISO 8601 date for date
-            policies Example: 24h.
+        value (Union[Unset, str]): Duration value for TTL policies (e.g., '30m', '24h', '7d', minimum '5m') or ISO 8601
+            date for date policies Example: 24h.
     """
 
     action: Union[Unset, ExpirationPolicyAction] = UNSET

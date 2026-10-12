@@ -93,6 +93,8 @@ def sync_detailed(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem
@@ -133,6 +135,8 @@ def sync(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem
@@ -168,6 +172,8 @@ async def asyncio_detailed(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem
@@ -206,6 +212,8 @@ async def asyncio(
     process is stopped, and the API then refuses the calls that would write to the filesystem. The
     freeze is not lifted afterwards, since an exported sandbox is meant to be restored elsewhere; call
     POST /archive/resume to lift it.
+    A sandbox still frozen by an earlier export is exported as it is, with the process list that export
+    saved.
     Use dryRun to get the archive's content and exact size without stopping anything and without
     uploading.
     Set async to start the export and answer immediately, which is what archiving a large filesystem

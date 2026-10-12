@@ -3,6 +3,9 @@ from typing import Any, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.update_workspace_service_account_body_role import (
+    UpdateWorkspaceServiceAccountBodyRole,
+)
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="UpdateWorkspaceServiceAccountBody")
@@ -14,16 +17,23 @@ class UpdateWorkspaceServiceAccountBody:
     Attributes:
         description (Union[Unset, str]): Service account description
         name (Union[Unset, str]): Service account name
+        role (Union[Unset, UpdateWorkspaceServiceAccountBodyRole]): Role of the service account in the workspace.
+            Defaults to admin on creation; unchanged on update when omitted.
     """
 
     description: Union[Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
+    role: Union[Unset, UpdateWorkspaceServiceAccountBodyRole] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         description = self.description
 
         name = self.name
+
+        role: Union[Unset, str] = UNSET
+        if not isinstance(self.role, Unset):
+            role = self.role.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -32,6 +42,8 @@ class UpdateWorkspaceServiceAccountBody:
             field_dict["description"] = description
         if name is not UNSET:
             field_dict["name"] = name
+        if role is not UNSET:
+            field_dict["role"] = role
 
         return field_dict
 
@@ -44,9 +56,17 @@ class UpdateWorkspaceServiceAccountBody:
 
         name = d.pop("name", UNSET)
 
+        _role = d.pop("role", UNSET)
+        role: Union[Unset, UpdateWorkspaceServiceAccountBodyRole]
+        if isinstance(_role, Unset):
+            role = UNSET
+        else:
+            role = UpdateWorkspaceServiceAccountBodyRole(_role)
+
         update_workspace_service_account_body = cls(
             description=description,
             name=name,
+            role=role,
         )
 
         update_workspace_service_account_body.additional_properties = d

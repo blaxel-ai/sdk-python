@@ -15,12 +15,13 @@ class HealthResponse:
     """
     Attributes:
         arch (str):  Example: amd64.
-        build_time (str):  Example: 2026-01-29 17:36:52+00:00.
+        build_time (str): Build time in RFC 3339 (UTC), or "unknown" for builds without it Example: 2026-01-29
+            17:36:52+00:00.
         git_commit (str):  Example: abc123.
         go_version (str):  Example: go1.25.0.
         last_upgrade (UpgradeStatus):
         os (str):  Example: linux.
-        started_at (str):  Example: 2026-01-29 18:45:49+00:00.
+        started_at (str): API start time in RFC 3339 Example: 2026-01-29 18:45:49+00:00.
         status (str):  Example: ok.
         upgrade_count (int):
         uptime (str):  Example: 1h30m.
@@ -43,7 +44,6 @@ class HealthResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         arch = self.arch
 
         build_time = self.build_time
