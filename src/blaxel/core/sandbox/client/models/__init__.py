@@ -54,6 +54,7 @@ from .process_response import ProcessResponse
 from .process_response_status import ProcessResponseStatus
 from .process_upgrade_state import ProcessUpgradeState
 from .put_filesystem_multipart_upload_id_part_body import PutFilesystemMultipartUploadIdPartBody
+from .put_filesystem_path_files_body import PutFilesystemPathFilesBody
 from .quiesce_status import QuiesceStatus
 from .ranked_file import RankedFile
 from .reranking_response import RerankingResponse
@@ -119,6 +120,7 @@ __all__ = (
     "ProcessResponseStatus",
     "ProcessUpgradeState",
     "PutFilesystemMultipartUploadIdPartBody",
+    "PutFilesystemPathFilesBody",
     "QuiesceStatus",
     "RankedFile",
     "RerankingResponse",

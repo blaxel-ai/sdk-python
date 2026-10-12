@@ -91,7 +91,8 @@ def sync_detailed(
 ) -> Response[Union[ErrorResponse, MultipartUploadPartResponse]]:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
@@ -128,7 +129,8 @@ def sync(
 ) -> Union[ErrorResponse, MultipartUploadPartResponse] | None:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
@@ -160,7 +162,8 @@ async def asyncio_detailed(
 ) -> Response[Union[ErrorResponse, MultipartUploadPartResponse]]:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
@@ -195,7 +198,8 @@ async def asyncio(
 ) -> Union[ErrorResponse, MultipartUploadPartResponse] | None:
     """Upload part
 
-     Upload a single part of a multipart upload
+     Upload a single part of a multipart upload. Re-uploading a part number replaces that part. Wait for
+    the previous request for that part to finish before retrying.
 
     Args:
         upload_id (str):
