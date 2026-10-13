@@ -1256,3 +1256,98 @@ class TestSandboxApiPreparation:
         assert entrypoint_idx > run_idx
         # Entrypoint should be last
         assert entrypoint_idx > copy_idx
+
+
+class TestImageBuildWorkerResources:
+    """build()/build_sync() pass build worker sizing like `bl push --memory/--volume`."""
+
+    def _run(self, monkeypatch, stored_labels=None, use_async=False, **kwargs):
+        import asyncio
+
+        import httpx
+
+        from blaxel.core.image import image as image_module
+
+        calls = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = json.loads(request.content) if request.content[:1] == b"{" else None
+            calls.append((request, body))
+            sandbox = {"metadata": {"name": "img"}, "spec": {"runtime": {"memory": 4096}}}
+            if request.url.params.get("upload") == "true":
+                labels = stored_labels if stored_labels is not None else body["metadata"]["labels"]
+                sandbox["metadata"]["labels"] = labels
+                return httpx.Response(
+                    200, json=sandbox, headers={"x-blaxel-upload-url": "https://upload.test/object"}
+                )
+            if request.url.host == "upload.test":
+                return httpx.Response(200)
+            return httpx.Response(200, json={**sandbox, "status": "DEPLOYED"})
+
+        transport = httpx.MockTransport(handler)
+        sync_client = httpx.Client(transport=transport, base_url="https://api.test")
+        async_client = httpx.AsyncClient(transport=transport, base_url="https://api.test")
+        upload_client = httpx.Client(transport=transport)
+        async_upload_client = httpx.AsyncClient(transport=transport)
+        client_type = type(image_module.client)
+        monkeypatch.setattr(client_type, "get_httpx_client", lambda self: sync_client)
+        monkeypatch.setattr(client_type, "get_async_httpx_client", lambda self: async_client)
+        monkeypatch.setattr(image_module.httpx, "Client", lambda: upload_client)
+        monkeypatch.setattr(image_module.httpx, "AsyncClient", lambda: async_upload_client)
+
+        image = ImageInstance.from_registry("alpine:3.20")
+        monkeypatch.setattr(ImageInstance, "_prepare_for_sandbox", lambda self, version: self)
+        monkeypatch.setattr(ImageInstance, "_wait_for_deployment_sync", lambda *a, **k: "DEPLOYED")
+
+        async def deployed(*args, **kwargs):
+            return "DEPLOYED"
+
+        monkeypatch.setattr(ImageInstance, "_wait_for_deployment", deployed)
+        if use_async:
+            asyncio.run(image.build(name="img", **kwargs))
+        else:
+            image.build_sync(name="img", **kwargs)
+        create = next(body for request, body in calls if request.url.params.get("upload"))
+        upload = next(request for request, _ in calls if request.url.host == "upload.test")
+        return create, upload
+
+    @pytest.mark.parametrize("use_async", [False, True])
+    def test_sends_labels_and_signed_upload_headers(self, monkeypatch, use_async):
+        create, upload = self._run(
+            monkeypatch, use_async=use_async, build_memory_mb=16384, build_volume_mb=32768
+        )
+        assert create["metadata"]["labels"]["x-blaxel-build-memory"] == "16384"
+        assert create["metadata"]["labels"]["x-blaxel-build-volume"] == "32768"
+        assert create["spec"]["runtime"]["memory"] == 4096
+        assert upload.headers["x-amz-meta-x-blaxel-build-memory"] == "16384"
+        assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "32768"
+        assert "x-amz-meta-x-blaxel-auto-generated" not in upload.headers
+
+    def test_keeps_explicit_zero_volume(self, monkeypatch):
+        _, upload = self._run(monkeypatch, build_volume_mb=0)
+        assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "0"
+        assert "x-amz-meta-x-blaxel-build-memory" not in upload.headers
+
+    def test_no_build_headers_by_default(self, monkeypatch):
+        _, upload = self._run(monkeypatch)
+        assert not [name for name in upload.headers if name.startswith("x-amz-meta-")]
+
+    def test_mirrors_labels_already_stored(self, monkeypatch):
+        stored = {"x-blaxel-auto-generated": "true", "x-blaxel-build-memory": "8192"}
+        _, upload = self._run(monkeypatch, stored_labels=stored)
+        assert upload.headers["x-amz-meta-x-blaxel-build-memory"] == "8192"
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"build_memory_mb": 0},
+            {"build_memory_mb": 32769},
+            {"build_memory_mb": True},
+            {"build_memory_mb": 1.5},
+            {"build_volume_mb": -1},
+            {"build_volume_mb": 131073},
+        ],
+    )
+    def test_rejects_invalid_sizes_before_any_request(self, kwargs):
+        with pytest.raises(ValueError, match=next(iter(kwargs))):
+            ImageInstance.from_registry("alpine:3.20").build_sync(name="img", **kwargs)
