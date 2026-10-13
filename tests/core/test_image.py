@@ -1261,25 +1261,34 @@ class TestSandboxApiPreparation:
 class TestImageBuildWorkerResources:
     """build()/build_sync() pass build worker sizing like `bl push --memory/--volume`."""
 
-    def _run(self, monkeypatch, stored_labels=None, use_async=False, **kwargs):
+    def _run(self, monkeypatch, stored_labels=None, use_async=False, signing="all", **kwargs):
+        """signing: "all" signs every build label, "update" signs only on PUT after a
+        404 then POST create (production today), "none" never signs them."""
         import asyncio
 
         import httpx
 
         from blaxel.core.image import image as image_module
 
-        calls = []
+        calls = self.calls = []
+        created = []
 
         def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content) if request.content[:1] == b"{" else None
             calls.append((request, body))
             sandbox = {"metadata": {"name": "img"}, "spec": {"runtime": {"memory": 4096}}}
             if request.url.params.get("upload") == "true":
+                if signing == "update" and request.method == "PUT" and not created:
+                    return httpx.Response(404, json={"error": "not found"})
+                if request.method == "POST":
+                    created.append(True)
                 labels = stored_labels if stored_labels is not None else body["metadata"]["labels"]
                 sandbox["metadata"]["labels"] = labels
-                return httpx.Response(
-                    200, json=sandbox, headers={"x-blaxel-upload-url": "https://upload.test/object"}
-                )
+                signed = ["host"]
+                if signing == "all" or (signing == "update" and request.method == "PUT"):
+                    signed += [f"x-amz-meta-{k}" for k in labels if k.startswith("x-blaxel-build")]
+                url = "https://upload.test/object?X-Amz-SignedHeaders=" + ";".join(signed)
+                return httpx.Response(200, json=sandbox, headers={"x-blaxel-upload-url": url})
             if request.url.host == "upload.test":
                 return httpx.Response(200)
             return httpx.Response(200, json={**sandbox, "status": "DEPLOYED"})
@@ -1322,6 +1331,25 @@ class TestImageBuildWorkerResources:
         assert upload.headers["x-amz-meta-x-blaxel-build-memory"] == "16384"
         assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "32768"
         assert "x-amz-meta-x-blaxel-auto-generated" not in upload.headers
+
+    @pytest.mark.parametrize("use_async", [False, True])
+    def test_new_sandbox_asks_again_when_create_does_not_sign(self, monkeypatch, use_async):
+        _, upload = self._run(
+            monkeypatch, use_async=use_async, signing="update", build_memory_mb=2048
+        )
+        methods = [r.method for r, _ in self.calls if r.url.params.get("upload")]
+        assert methods == ["PUT", "POST", "PUT"]
+        assert upload.headers["x-amz-meta-x-blaxel-build-memory"] == "2048"
+
+    def test_fails_clearly_when_settings_are_never_signed(self, monkeypatch):
+        with pytest.raises(RuntimeError, match="x-blaxel-build-volume"):
+            self._run(monkeypatch, signing="none", build_volume_mb=32768)
+        assert not [r for r, _ in self.calls if r.url.host == "upload.test"]
+
+    def test_drops_unsigned_stored_labels(self, monkeypatch):
+        stored = {"x-blaxel-auto-generated": "true", "x-blaxel-build-memory": "8192"}
+        _, upload = self._run(monkeypatch, stored_labels=stored, signing="none")
+        assert "x-amz-meta-x-blaxel-build-memory" not in upload.headers
 
     def test_keeps_explicit_zero_volume(self, monkeypatch):
         _, upload = self._run(monkeypatch, build_volume_mb=0)
