@@ -40,6 +40,65 @@ from ..client.types import Response
 SANDBOX_API_IMAGE = "ghcr.io/blaxel-ai/sandbox"
 SANDBOX_API_PATH = "/usr/local/bin/sandbox-api"
 
+# Build settings travel as sandbox labels. The control plane signs the allowed
+# ones into the upload URL, and the upload must send them back as matching
+# x-amz-meta-* headers or storage rejects it.
+BUILD_UPLOAD_LABELS = (
+    "x-blaxel-builder",
+    "x-blaxel-experimental",
+    "x-blaxel-build-memory",
+    "x-blaxel-build-volume",
+    "x-blaxel-build-region",
+    "x-blaxel-build-cache",
+)
+MAX_BUILD_UPLOAD_LABEL_VALUE = 64
+
+
+def _build_size_label(option: str, value: int | None, minimum: int, maximum: int) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise ValueError(f"{option} must be an integer between {minimum} and {maximum} MiB")
+    return str(value)
+
+
+def _build_labels(build_memory_mb: int | None, build_volume_mb: int | None) -> dict[str, str]:
+    labels: dict[str, str] = {}
+    memory = _build_size_label("build_memory_mb", build_memory_mb, 1, 32768)
+    if memory is not None:
+        labels["x-blaxel-build-memory"] = memory
+    # Keep an explicit 0: it asks for memory-backed scratch instead of the default.
+    volume = _build_size_label("build_volume_mb", build_volume_mb, 0, 131072)
+    if volume is not None:
+        labels["x-blaxel-build-volume"] = volume
+    return labels
+
+
+def _build_upload_metadata(response: Response[Sandbox], sent: dict[str, str]) -> dict[str, str]:
+    """Sign-matching headers come from the labels the control plane stored,
+    which can include build settings already on an existing sandbox."""
+    labels: dict = sent
+    try:
+        stored = (json.loads(response.content).get("metadata") or {}).get("labels")
+        if isinstance(stored, dict):
+            labels = stored
+    except (json.JSONDecodeError, ValueError, AttributeError):
+        pass
+    return {
+        name: value
+        for name in BUILD_UPLOAD_LABELS
+        if isinstance(value := labels.get(name), str)
+        and value
+        and len(value) <= MAX_BUILD_UPLOAD_LABEL_VALUE
+    }
+
+
+def _upload_headers(metadata: dict[str, str] | None) -> dict[str, str]:
+    headers = {"Content-Type": "application/zip"}
+    for name, value in (metadata or {}).items():
+        headers[f"x-amz-meta-{name}"] = value
+    return headers
+
 
 @dataclass
 class LocalFile:
@@ -957,19 +1016,24 @@ class ImageInstance:
         zip_buffer.seek(0)
         return zip_buffer.getvalue()
 
-    def _create_sandbox_payload(self, name: str, memory: int = 4096) -> Sandbox:
+    def _create_sandbox_payload(
+        self, name: str, memory: int = 4096, build_labels: dict[str, str] | None = None
+    ) -> Sandbox:
         """
         Create the sandbox payload for deployment.
 
         Args:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
+            build_labels: Build settings labels signed into the upload
 
         Returns:
             Sandbox object
         """
         labels = MetadataLabels()
         labels["x-blaxel-auto-generated"] = "true"
+        for key, value in (build_labels or {}).items():
+            labels[key] = value
 
         metadata = Metadata(
             name=name,
@@ -1097,20 +1161,23 @@ class ImageInstance:
 
         return result, upload_url
 
-    def _upload_zip_sync(self, upload_url: str, zip_content: bytes) -> None:
+    def _upload_zip_sync(
+        self, upload_url: str, zip_content: bytes, metadata: dict[str, str] | None = None
+    ) -> None:
         """
         Upload the zip file to the given URL.
 
         Args:
             upload_url: URL to upload to
             zip_content: Zip file content
+            metadata: Object metadata the upload URL was signed for
         """
         # Use a standalone client for upload (not the Blaxel client)
         with httpx.Client() as http_client:
             response = http_client.put(
                 upload_url,
                 content=zip_content,
-                headers={"Content-Type": "application/zip"},
+                headers=_upload_headers(metadata),
                 timeout=300.0,  # 5 minute timeout for uploads
             )
             if response.status_code >= 400:
@@ -1118,19 +1185,22 @@ class ImageInstance:
                     f"Upload failed with status {response.status_code}: {response.text}"
                 )
 
-    async def _upload_zip(self, upload_url: str, zip_content: bytes) -> None:
+    async def _upload_zip(
+        self, upload_url: str, zip_content: bytes, metadata: dict[str, str] | None = None
+    ) -> None:
         """
         Upload the zip file to the given URL (async).
 
         Args:
             upload_url: URL to upload to
             zip_content: Zip file content
+            metadata: Object metadata the upload URL was signed for
         """
         async with httpx.AsyncClient() as http_client:
             response = await http_client.put(
                 upload_url,
                 content=zip_content,
-                headers={"Content-Type": "application/zip"},
+                headers=_upload_headers(metadata),
                 timeout=300.0,  # 5 minute timeout for uploads
             )
             if response.status_code >= 400:
@@ -1293,6 +1363,8 @@ class ImageInstance:
         timeout: float = 900.0,
         on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
+        build_memory_mb: int | None = None,
+        build_volume_mb: int | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox.
@@ -1311,6 +1383,10 @@ class ImageInstance:
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
+            build_memory_mb: Memory for the temporary build worker in MiB (1-32768).
+                Same as `bl push --memory`; does not change the sandbox's memory.
+            build_volume_mb: Scratch disk for the temporary build worker in MiB
+                (0-131072). Same as `bl push --volume`; 0 uses memory-backed scratch.
 
         Returns:
             The deployed Sandbox object
@@ -1319,6 +1395,8 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
+        build_labels = _build_labels(build_memory_mb, build_volume_mb)
+
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
 
@@ -1330,7 +1408,7 @@ class ImageInstance:
             zip_content = self._create_zip(build_dir)
 
             # Create sandbox payload
-            sandbox_payload = self._create_sandbox_payload(name, memory)
+            sandbox_payload = self._create_sandbox_payload(name, memory, build_labels)
 
             # Create/update sandbox and get upload URL
             response, upload_url = self._create_sandbox_with_upload_sync(sandbox_payload)
@@ -1344,7 +1422,9 @@ class ImageInstance:
                 raise RuntimeError("No upload URL returned from API")
 
             # Upload the zip
-            self._upload_zip_sync(upload_url, zip_content)
+            self._upload_zip_sync(
+                upload_url, zip_content, _build_upload_metadata(response, build_labels)
+            )
 
             # Wait for deployment to complete
             self._wait_for_deployment_sync(name, timeout=timeout, on_status_change=on_status_change)
@@ -1376,6 +1456,8 @@ class ImageInstance:
         timeout: float = 900.0,
         on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
+        build_memory_mb: int | None = None,
+        build_volume_mb: int | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox (async).
@@ -1394,6 +1476,10 @@ class ImageInstance:
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
+            build_memory_mb: Memory for the temporary build worker in MiB (1-32768).
+                Same as `bl push --memory`; does not change the sandbox's memory.
+            build_volume_mb: Scratch disk for the temporary build worker in MiB
+                (0-131072). Same as `bl push --volume`; 0 uses memory-backed scratch.
 
         Returns:
             The deployed Sandbox object
@@ -1402,6 +1488,8 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
+        build_labels = _build_labels(build_memory_mb, build_volume_mb)
+
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
 
@@ -1413,7 +1501,7 @@ class ImageInstance:
             zip_content = self._create_zip(build_dir)
 
             # Create sandbox payload
-            sandbox_payload = self._create_sandbox_payload(name, memory)
+            sandbox_payload = self._create_sandbox_payload(name, memory, build_labels)
 
             # Create/update sandbox and get upload URL
             response, upload_url = await self._create_sandbox_with_upload(sandbox_payload)
@@ -1427,7 +1515,9 @@ class ImageInstance:
                 raise RuntimeError("No upload URL returned from API")
 
             # Upload the zip
-            await self._upload_zip(upload_url, zip_content)
+            await self._upload_zip(
+                upload_url, zip_content, _build_upload_metadata(response, build_labels)
+            )
 
             # Wait for deployment to complete
             await self._wait_for_deployment(
