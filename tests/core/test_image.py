@@ -1349,6 +1349,26 @@ class TestImageBuildWorkerResources:
         _, upload = self._run(monkeypatch, stored_labels=stored, signing="none")
         assert "x-amz-meta-x-blaxel-build-memory" not in upload.headers
 
+    @pytest.mark.parametrize("use_async", [False, True])
+    def test_sends_build_region(self, monkeypatch, use_async):
+        create, upload = self._run(
+            monkeypatch, use_async=use_async, build_region="us-was-1", build_memory=2048
+        )
+        assert create["metadata"]["labels"]["x-blaxel-build-region"] == "us-was-1"
+        assert upload.headers["x-amz-meta-x-blaxel-build-region"] == "us-was-1"
+        assert upload.headers["x-amz-meta-x-blaxel-build-memory"] == "2048"
+
+    def test_new_sandbox_asks_again_for_region(self, monkeypatch):
+        _, upload = self._run(monkeypatch, signing="update", build_region="us-was-1")
+        methods = [r.method for r, _ in self.calls if r.url.params.get("upload")]
+        assert methods == ["PUT", "POST", "PUT"]
+        assert upload.headers["x-amz-meta-x-blaxel-build-region"] == "us-was-1"
+
+    @pytest.mark.parametrize("region", ["", "US-WAS-1", " us-was-1", "-us", "a" * 64, 1])
+    def test_rejects_invalid_region_before_any_request(self, region):
+        with pytest.raises(ValueError, match="build_region must"):
+            ImageInstance.from_registry("alpine:3.20").build_sync(name="img", build_region=region)
+
     def test_still_accepts_deprecated_mb_spellings(self, monkeypatch):
         with pytest.warns(DeprecationWarning) as record:
             create, upload = self._run(monkeypatch, build_memory_mb=8192, build_volume_mb=0)
