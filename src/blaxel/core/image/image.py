@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import io
 import json
+import re
 import shutil
 import tempfile
 import time
@@ -54,6 +55,8 @@ BUILD_UPLOAD_LABELS = (
     "x-blaxel-build-cache",
 )
 MAX_BUILD_UPLOAD_LABEL_VALUE = 64
+# The builder ignores a region that is not a resource name, so reject it here.
+BUILD_REGION_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
 
 
 def _build_size_label(
@@ -77,6 +80,7 @@ def _build_labels(
     build_volume: int | None,
     build_memory_mb: int | None = None,
     build_volume_mb: int | None = None,
+    build_region: str | None = None,
 ) -> dict[str, str]:
     labels: dict[str, str] = {}
     memory = _build_size_label("build_memory", build_memory, build_memory_mb, 1, 32768)
@@ -86,6 +90,10 @@ def _build_labels(
     volume = _build_size_label("build_volume", build_volume, build_volume_mb, 0, 131072)
     if volume is not None:
         labels["x-blaxel-build-volume"] = volume
+    if build_region is not None:
+        if not isinstance(build_region, str) or not BUILD_REGION_PATTERN.fullmatch(build_region):
+            raise ValueError("build_region must be a region name such as us-was-1")
+        labels["x-blaxel-build-region"] = build_region
     return labels
 
 
@@ -1414,6 +1422,7 @@ class ImageInstance:
         build_volume: int | None = None,
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
+        build_region: str | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox.
@@ -1438,6 +1447,8 @@ class ImageInstance:
                 (0-131072). Same as `bl push --volume`; 0 builds in memory.
             build_memory_mb: Deprecated; use build_memory.
             build_volume_mb: Deprecated; use build_volume.
+            build_region: Region the image is built in, such as "us-was-1". Same as
+                [build].region in blaxel.toml; defaults to the platform's build region.
 
         Returns:
             The deployed Sandbox object
@@ -1446,7 +1457,9 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
-        build_labels = _build_labels(build_memory, build_volume, build_memory_mb, build_volume_mb)
+        build_labels = _build_labels(
+            build_memory, build_volume, build_memory_mb, build_volume_mb, build_region
+        )
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
@@ -1511,6 +1524,7 @@ class ImageInstance:
         build_volume: int | None = None,
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
+        build_region: str | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox (async).
@@ -1535,6 +1549,8 @@ class ImageInstance:
                 (0-131072). Same as `bl push --volume`; 0 builds in memory.
             build_memory_mb: Deprecated; use build_memory.
             build_volume_mb: Deprecated; use build_volume.
+            build_region: Region the image is built in, such as "us-was-1". Same as
+                [build].region in blaxel.toml; defaults to the platform's build region.
 
         Returns:
             The deployed Sandbox object
@@ -1543,7 +1559,9 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
-        build_labels = _build_labels(build_memory, build_volume, build_memory_mb, build_volume_mb)
+        build_labels = _build_labels(
+            build_memory, build_volume, build_memory_mb, build_volume_mb, build_region
+        )
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
