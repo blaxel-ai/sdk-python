@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
 from typing import Callable, List
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 from dockerfile_parse import DockerfileParser  # type: ignore[import-untyped]
@@ -91,6 +92,38 @@ def _build_upload_metadata(response: Response[Sandbox], sent: dict[str, str]) ->
         and value
         and len(value) <= MAX_BUILD_UPLOAD_LABEL_VALUE
     }
+
+
+def _signed_build_metadata(
+    upload_url: str, response: Response[Sandbox], requested: dict[str, str]
+) -> tuple[dict[str, str], list[str]]:
+    """Build metadata the upload URL was signed for, and requested settings it was not.
+
+    Storage rejects headers the URL was not signed for, so unsigned ones are dropped.
+    """
+    metadata = _build_upload_metadata(response, requested)
+    query = parse_qs(urlsplit(upload_url).query)
+    signed_headers = query.get("X-Amz-SignedHeaders") or query.get("X-Goog-SignedHeaders")
+    if signed_headers:
+        signed = {header.strip().lower() for header in signed_headers[0].split(";")}
+        metadata = {k: v for k, v in metadata.items() if f"x-amz-meta-{k}" in signed}
+    return metadata, [name for name in requested if name not in metadata]
+
+
+def _check_upload_response(response: Response[Sandbox], upload_url: str | None) -> str:
+    if response.status_code.value >= 400:
+        raise RuntimeError(
+            f"Failed to create sandbox: {response.status_code.value} - {response.content.decode()}"
+        )
+    if not upload_url:
+        raise RuntimeError("No upload URL returned from API")
+    return upload_url
+
+
+def _unsigned_build_settings_error(missing: list[str]) -> RuntimeError:
+    return RuntimeError(
+        f"The platform did not accept build settings {', '.join(missing)}; retry without them"
+    )
 
 
 def _upload_headers(metadata: dict[str, str] | None) -> dict[str, str]:
@@ -1412,19 +1445,19 @@ class ImageInstance:
 
             # Create/update sandbox and get upload URL
             response, upload_url = self._create_sandbox_with_upload_sync(sandbox_payload)
-
-            if response.status_code.value >= 400:
-                raise RuntimeError(
-                    f"Failed to create sandbox: {response.status_code.value} - {response.content.decode()}"
-                )
-
-            if not upload_url:
-                raise RuntimeError("No upload URL returned from API")
+            upload_url = _check_upload_response(response, upload_url)
+            metadata, missing = _signed_build_metadata(upload_url, response, build_labels)
+            if missing:
+                # Creating a sandbox can return a URL without the build settings
+                # signed; asking again updates the now existing sandbox, which does.
+                response, upload_url = self._create_sandbox_with_upload_sync(sandbox_payload)
+                upload_url = _check_upload_response(response, upload_url)
+                metadata, missing = _signed_build_metadata(upload_url, response, build_labels)
+                if missing:
+                    raise _unsigned_build_settings_error(missing)
 
             # Upload the zip
-            self._upload_zip_sync(
-                upload_url, zip_content, _build_upload_metadata(response, build_labels)
-            )
+            self._upload_zip_sync(upload_url, zip_content, metadata)
 
             # Wait for deployment to complete
             self._wait_for_deployment_sync(name, timeout=timeout, on_status_change=on_status_change)
@@ -1505,19 +1538,19 @@ class ImageInstance:
 
             # Create/update sandbox and get upload URL
             response, upload_url = await self._create_sandbox_with_upload(sandbox_payload)
-
-            if response.status_code.value >= 400:
-                raise RuntimeError(
-                    f"Failed to create sandbox: {response.status_code.value} - {response.content.decode()}"
-                )
-
-            if not upload_url:
-                raise RuntimeError("No upload URL returned from API")
+            upload_url = _check_upload_response(response, upload_url)
+            metadata, missing = _signed_build_metadata(upload_url, response, build_labels)
+            if missing:
+                # Creating a sandbox can return a URL without the build settings
+                # signed; asking again updates the now existing sandbox, which does.
+                response, upload_url = await self._create_sandbox_with_upload(sandbox_payload)
+                upload_url = _check_upload_response(response, upload_url)
+                metadata, missing = _signed_build_metadata(upload_url, response, build_labels)
+                if missing:
+                    raise _unsigned_build_settings_error(missing)
 
             # Upload the zip
-            await self._upload_zip(
-                upload_url, zip_content, _build_upload_metadata(response, build_labels)
-            )
+            await self._upload_zip(upload_url, zip_content, metadata)
 
             # Wait for deployment to complete
             await self._wait_for_deployment(
