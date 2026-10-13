@@ -1323,6 +1323,12 @@ class TestImageBuildWorkerResources:
         assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "32768"
         assert "x-amz-meta-x-blaxel-auto-generated" not in upload.headers
 
+    def test_sends_build_region(self, monkeypatch):
+        create, upload = self._run(monkeypatch, build_region="us-was-1")
+        assert create["metadata"]["labels"]["x-blaxel-build-region"] == "us-was-1"
+        assert upload.headers["x-amz-meta-x-blaxel-build-region"] == "us-was-1"
+        assert "region" not in create["spec"]
+
     def test_keeps_explicit_zero_volume(self, monkeypatch):
         _, upload = self._run(monkeypatch, build_volume_mb=0)
         assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "0"
@@ -1346,6 +1352,9 @@ class TestImageBuildWorkerResources:
             {"build_memory_mb": 1.5},
             {"build_volume_mb": -1},
             {"build_volume_mb": 131073},
+            {"build_region": ""},
+            {"build_region": "x" * 65},
+            {"build_region": 1},
         ],
     )
     def test_rejects_invalid_sizes_before_any_request(self, kwargs):

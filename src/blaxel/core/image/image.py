@@ -62,7 +62,9 @@ def _build_size_label(option: str, value: int | None, minimum: int, maximum: int
     return str(value)
 
 
-def _build_labels(build_memory_mb: int | None, build_volume_mb: int | None) -> dict[str, str]:
+def _build_labels(
+    build_memory_mb: int | None, build_volume_mb: int | None, build_region: str | None = None
+) -> dict[str, str]:
     labels: dict[str, str] = {}
     memory = _build_size_label("build_memory_mb", build_memory_mb, 1, 32768)
     if memory is not None:
@@ -71,6 +73,11 @@ def _build_labels(build_memory_mb: int | None, build_volume_mb: int | None) -> d
     volume = _build_size_label("build_volume_mb", build_volume_mb, 0, 131072)
     if volume is not None:
         labels["x-blaxel-build-volume"] = volume
+    if build_region is not None:
+        # The control plane drops longer values instead of rejecting them.
+        if not isinstance(build_region, str) or not 0 < len(build_region.strip()) <= 64:
+            raise ValueError("build_region must be a region name such as us-was-1")
+        labels["x-blaxel-build-region"] = build_region.strip()
     return labels
 
 
@@ -1365,6 +1372,7 @@ class ImageInstance:
         sandbox_version: str = "latest",
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
+        build_region: str | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox.
@@ -1387,6 +1395,8 @@ class ImageInstance:
                 Same as `bl push --memory`; does not change the sandbox's memory.
             build_volume_mb: Scratch disk for the temporary build worker in MiB
                 (0-131072). Same as `bl push --volume`; 0 uses memory-backed scratch.
+            build_region: Region to run the build in, such as "us-was-1". Same as
+                [build].region in blaxel.toml; defaults to the platform build region.
 
         Returns:
             The deployed Sandbox object
@@ -1395,7 +1405,7 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
-        build_labels = _build_labels(build_memory_mb, build_volume_mb)
+        build_labels = _build_labels(build_memory_mb, build_volume_mb, build_region)
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
@@ -1458,6 +1468,7 @@ class ImageInstance:
         sandbox_version: str = "latest",
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
+        build_region: str | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox (async).
@@ -1480,6 +1491,8 @@ class ImageInstance:
                 Same as `bl push --memory`; does not change the sandbox's memory.
             build_volume_mb: Scratch disk for the temporary build worker in MiB
                 (0-131072). Same as `bl push --volume`; 0 uses memory-backed scratch.
+            build_region: Region to run the build in, such as "us-was-1". Same as
+                [build].region in blaxel.toml; defaults to the platform build region.
 
         Returns:
             The deployed Sandbox object
@@ -1488,7 +1501,7 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
-        build_labels = _build_labels(build_memory_mb, build_volume_mb)
+        build_labels = _build_labels(build_memory_mb, build_volume_mb, build_region)
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
