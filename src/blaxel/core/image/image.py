@@ -7,6 +7,7 @@ import json
 import shutil
 import tempfile
 import time
+import warnings
 import zipfile
 from dataclasses import dataclass, field
 from http import HTTPStatus
@@ -55,21 +56,34 @@ BUILD_UPLOAD_LABELS = (
 MAX_BUILD_UPLOAD_LABEL_VALUE = 64
 
 
-def _build_size_label(option: str, value: int | None, minimum: int, maximum: int) -> str | None:
+def _build_size_label(
+    option: str, value: int | None, deprecated_value: int | None, minimum: int, maximum: int
+) -> str | None:
+    """Reads an option that also has a deprecated ``..._mb`` spelling."""
+    if value is not None and deprecated_value is not None:
+        raise ValueError(f"Set {option} or {option}_mb, not both")
+    if deprecated_value is not None:
+        warnings.warn(f"{option}_mb is deprecated; use {option}", DeprecationWarning, stacklevel=4)
+        option, value = f"{option}_mb", deprecated_value
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
-        raise ValueError(f"{option} must be an integer between {minimum} and {maximum} MiB")
+        raise ValueError(f"{option} must be an integer between {minimum} and {maximum} MB")
     return str(value)
 
 
-def _build_labels(build_memory_mb: int | None, build_volume_mb: int | None) -> dict[str, str]:
+def _build_labels(
+    build_memory: int | None,
+    build_volume: int | None,
+    build_memory_mb: int | None = None,
+    build_volume_mb: int | None = None,
+) -> dict[str, str]:
     labels: dict[str, str] = {}
-    memory = _build_size_label("build_memory_mb", build_memory_mb, 1, 32768)
+    memory = _build_size_label("build_memory", build_memory, build_memory_mb, 1, 32768)
     if memory is not None:
         labels["x-blaxel-build-memory"] = memory
     # Keep an explicit 0: it asks for memory-backed scratch instead of the default.
-    volume = _build_size_label("build_volume_mb", build_volume_mb, 0, 131072)
+    volume = _build_size_label("build_volume", build_volume, build_volume_mb, 0, 131072)
     if volume is not None:
         labels["x-blaxel-build-volume"] = volume
     return labels
@@ -1396,6 +1410,8 @@ class ImageInstance:
         timeout: float = 900.0,
         on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
+        build_memory: int | None = None,
+        build_volume: int | None = None,
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
     ) -> Sandbox:
@@ -1416,10 +1432,12 @@ class ImageInstance:
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
-            build_memory_mb: Memory for the temporary build worker in MiB (1-32768).
-                Same as `bl push --memory`; does not change the sandbox's memory.
-            build_volume_mb: Scratch disk for the temporary build worker in MiB
-                (0-131072). Same as `bl push --volume`; 0 uses memory-backed scratch.
+            build_memory: Memory of the environment the image is built in, in MB
+                (1-32768). Same as `bl push --memory`; does not change `memory`.
+            build_volume: Disk attached to the build for its intermediate layers, in MB
+                (0-131072). Same as `bl push --volume`; 0 builds in memory.
+            build_memory_mb: Deprecated; use build_memory.
+            build_volume_mb: Deprecated; use build_volume.
 
         Returns:
             The deployed Sandbox object
@@ -1428,7 +1446,7 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
-        build_labels = _build_labels(build_memory_mb, build_volume_mb)
+        build_labels = _build_labels(build_memory, build_volume, build_memory_mb, build_volume_mb)
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
@@ -1489,6 +1507,8 @@ class ImageInstance:
         timeout: float = 900.0,
         on_status_change: Callable[[str], None] | None = None,
         sandbox_version: str = "latest",
+        build_memory: int | None = None,
+        build_volume: int | None = None,
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
     ) -> Sandbox:
@@ -1509,10 +1529,12 @@ class ImageInstance:
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
-            build_memory_mb: Memory for the temporary build worker in MiB (1-32768).
-                Same as `bl push --memory`; does not change the sandbox's memory.
-            build_volume_mb: Scratch disk for the temporary build worker in MiB
-                (0-131072). Same as `bl push --volume`; 0 uses memory-backed scratch.
+            build_memory: Memory of the environment the image is built in, in MB
+                (1-32768). Same as `bl push --memory`; does not change `memory`.
+            build_volume: Disk attached to the build for its intermediate layers, in MB
+                (0-131072). Same as `bl push --volume`; 0 builds in memory.
+            build_memory_mb: Deprecated; use build_memory.
+            build_volume_mb: Deprecated; use build_volume.
 
         Returns:
             The deployed Sandbox object
@@ -1521,7 +1543,7 @@ class ImageInstance:
             RuntimeError: If deployment fails
             TimeoutError: If deployment times out
         """
-        build_labels = _build_labels(build_memory_mb, build_volume_mb)
+        build_labels = _build_labels(build_memory, build_volume, build_memory_mb, build_volume_mb)
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)

@@ -1323,7 +1323,7 @@ class TestImageBuildWorkerResources:
     @pytest.mark.parametrize("use_async", [False, True])
     def test_sends_labels_and_signed_upload_headers(self, monkeypatch, use_async):
         create, upload = self._run(
-            monkeypatch, use_async=use_async, build_memory_mb=16384, build_volume_mb=32768
+            monkeypatch, use_async=use_async, build_memory=16384, build_volume=32768
         )
         assert create["metadata"]["labels"]["x-blaxel-build-memory"] == "16384"
         assert create["metadata"]["labels"]["x-blaxel-build-volume"] == "32768"
@@ -1334,16 +1334,14 @@ class TestImageBuildWorkerResources:
 
     @pytest.mark.parametrize("use_async", [False, True])
     def test_new_sandbox_asks_again_when_create_does_not_sign(self, monkeypatch, use_async):
-        _, upload = self._run(
-            monkeypatch, use_async=use_async, signing="update", build_memory_mb=2048
-        )
+        _, upload = self._run(monkeypatch, use_async=use_async, signing="update", build_memory=2048)
         methods = [r.method for r, _ in self.calls if r.url.params.get("upload")]
         assert methods == ["PUT", "POST", "PUT"]
         assert upload.headers["x-amz-meta-x-blaxel-build-memory"] == "2048"
 
     def test_fails_clearly_when_settings_are_never_signed(self, monkeypatch):
         with pytest.raises(RuntimeError, match="x-blaxel-build-volume"):
-            self._run(monkeypatch, signing="none", build_volume_mb=32768)
+            self._run(monkeypatch, signing="none", build_volume=32768)
         assert not [r for r, _ in self.calls if r.url.host == "upload.test"]
 
     def test_drops_unsigned_stored_labels(self, monkeypatch):
@@ -1351,8 +1349,31 @@ class TestImageBuildWorkerResources:
         _, upload = self._run(monkeypatch, stored_labels=stored, signing="none")
         assert "x-amz-meta-x-blaxel-build-memory" not in upload.headers
 
+    def test_still_accepts_deprecated_mb_spellings(self, monkeypatch):
+        with pytest.warns(DeprecationWarning) as record:
+            create, upload = self._run(monkeypatch, build_memory_mb=8192, build_volume_mb=0)
+        assert sorted(str(w.message).split()[0] for w in record) == [
+            "build_memory_mb",
+            "build_volume_mb",
+        ]
+        assert create["metadata"]["labels"]["x-blaxel-build-memory"] == "8192"
+        assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "0"
+
+    @pytest.mark.parametrize(
+        "kwargs, message",
+        [
+            ({"build_memory_mb": 0}, "build_memory_mb must"),
+            ({"build_memory": 2048, "build_memory_mb": 2048}, "not both"),
+            ({"build_volume": 0, "build_volume_mb": 0}, "not both"),
+        ],
+    )
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    def test_rejects_invalid_deprecated_use(self, kwargs, message):
+        with pytest.raises(ValueError, match=message):
+            ImageInstance.from_registry("alpine:3.20").build_sync(name="img", **kwargs)
+
     def test_keeps_explicit_zero_volume(self, monkeypatch):
-        _, upload = self._run(monkeypatch, build_volume_mb=0)
+        _, upload = self._run(monkeypatch, build_volume=0)
         assert upload.headers["x-amz-meta-x-blaxel-build-volume"] == "0"
         assert "x-amz-meta-x-blaxel-build-memory" not in upload.headers
 
@@ -1368,12 +1389,12 @@ class TestImageBuildWorkerResources:
     @pytest.mark.parametrize(
         "kwargs",
         [
-            {"build_memory_mb": 0},
-            {"build_memory_mb": 32769},
-            {"build_memory_mb": True},
-            {"build_memory_mb": 1.5},
-            {"build_volume_mb": -1},
-            {"build_volume_mb": 131073},
+            {"build_memory": 0},
+            {"build_memory": 32769},
+            {"build_memory": True},
+            {"build_memory": 1.5},
+            {"build_volume": -1},
+            {"build_volume": 131073},
         ],
     )
     def test_rejects_invalid_sizes_before_any_request(self, kwargs):
