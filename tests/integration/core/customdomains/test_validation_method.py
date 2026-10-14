@@ -17,7 +17,7 @@ from blaxel.core.client.api.customdomains.get_custom_domain import (
     asyncio as get_custom_domain,
 )
 from blaxel.core.client.api.customdomains.update_custom_domain import (
-    asyncio as update_custom_domain,
+    asyncio_detailed as update_custom_domain_detailed,
 )
 from blaxel.core.client.client import client
 from blaxel.core.client.errors import UnexpectedStatus
@@ -157,7 +157,7 @@ async def test_unknown_validation_method_rejected(created_domains):
 
 
 async def test_validation_method_is_immutable_on_update(created_domains):
-    """Changing the method is refused with 400, or ignored so the stored value is kept."""
+    """Changing the method on update is accepted (200) but the stored value is kept."""
     name = _domain_name("cd-immut")
     await _create(created_domains, _custom_domain(name))
 
@@ -165,15 +165,10 @@ async def test_validation_method_is_immutable_on_update(created_domains):
     assert isinstance(existing, CustomDomain)
     existing.spec.validation_method = CustomDomainSpecValidationMethod.HTTP
 
-    try:
-        updated = await update_custom_domain(name, client=client, body=existing)
-    except UnexpectedStatus as e:
-        assert e.status_code == 400, e.content
-        logger.warning("changing the validation method on update: rejected with 400")
-    else:
-        logger.warning("changing the validation method on update: accepted, method kept")
-        assert isinstance(updated, CustomDomain)
-        assert updated.spec.validation_method == CustomDomainSpecValidationMethod.DNS
+    response = await update_custom_domain_detailed(name, client=client, body=existing)
+    assert response.status_code == 200, response.content
+    assert isinstance(response.parsed, CustomDomain)
+    assert response.parsed.spec.validation_method == CustomDomainSpecValidationMethod.DNS
 
     fetched = await get_custom_domain(name, client=client)
     assert isinstance(fetched, CustomDomain)
