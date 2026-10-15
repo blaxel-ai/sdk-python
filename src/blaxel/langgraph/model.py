@@ -128,7 +128,25 @@ class TokenRefreshingWrapper:
             self.wrapped_model = self._create_model()
 
     def __getattr__(self, name):
-        """Delegate attribute access to wrapped model."""
+        """Delegate attribute access to the wrapped model.
+
+        ``__getattr__`` only runs after normal lookup fails, so two guards keep
+        the delegation robust:
+
+        - ``wrapped_model`` is never delegated. Otherwise, accessing any
+          attribute on a wrapper whose ``wrapped_model`` is not set yet (for
+          example an instance rebuilt by ``copy``/``pickle`` without calling
+          ``__init__``) re-enters ``__getattr__`` for ``wrapped_model`` and
+          recurses until ``RecursionError``.
+        - Dunder (special) names are not delegated. Python resolves special
+          methods on the type for implicit use, so delegating them here never
+          enabled real behavior; it only answered explicit probes such as
+          ``hasattr(model, "__self__")`` (bound-method detection) or handed out
+          the wrapped model's ``__deepcopy__``/``__getstate__``, which made the
+          wrapper impersonate the model and silently drop itself on copy/pickle.
+        """
+        if name == "wrapped_model" or (name.startswith("__") and name.endswith("__")):
+            raise AttributeError(name)
         return getattr(self.wrapped_model, name)
 
 
