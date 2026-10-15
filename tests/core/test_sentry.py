@@ -22,11 +22,31 @@ import pytest
 import blaxel
 import blaxel.core.common.sentry as sentry
 from blaxel.core.client import Client, errors
+from blaxel.core.client.api.compute.create_sandbox import (
+    _parse_response as _parse_create_sandbox_response,
+)
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+
+
+def _create_sandbox_status_error(status_code: int) -> errors.UnexpectedStatus:
+    """Return the error the create-sandbox client raises for an undocumented status.
+
+    The traceback points at ``create_sandbox.py:_parse_response`` inside the
+    installed package, exactly like the reported Sentry event, so the error is
+    SDK-origin even though only the HTTP status is being reported.
+    """
+    try:
+        _parse_create_sandbox_response(
+            client=Client(base_url="https://api.blaxel.ai"),
+            response=httpx.Response(status_code, content=b'{"error":"server condition"}'),
+        )
+    except errors.UnexpectedStatus as exc:
+        return exc
+    raise AssertionError(f"status {status_code} did not raise")
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -50,6 +70,23 @@ def _sdk_filename(relative_path: str) -> str:
 
 def _raise_in_sdk(relative_path: str, code: str) -> BaseException:
     return _raise_in_file(_sdk_filename(relative_path), code)
+
+
+def _raise_status_error_in_sdk(status_code: int) -> errors.UnexpectedStatus:
+    """Build the client's HTTP-status error from inside the installed package.
+
+    Endpoints that do not model a status call ``errors.from_response`` from a
+    generated parse frame; reproduce that with an SDK-rooted frame so the error
+    is SDK-origin regardless of which endpoint raised it (used for statuses like
+    409 that ``create_sandbox`` models and therefore does not raise).
+    """
+    exc = _raise_in_sdk(
+        "core/client/errors.py",
+        "from blaxel.core.client import errors\n"
+        f"raise errors.from_response({status_code}, b'{{}}')",
+    )
+    assert isinstance(exc, errors.UnexpectedStatus)
+    return exc
 
 
 def _exception_group_leaves(error: BaseException) -> list[BaseException]:
@@ -569,6 +606,112 @@ class BrokenFinalizer:
 
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.thread_hook_calls == [args]
+
+
+class TestServerStatusErrorBoundary:
+    """Regression for SDK-PYTHON-11P: server HTTP status errors are not SDK defects.
+
+    ``UnexpectedStatus`` and its typed subclasses (``RateLimitError`` for HTTP 429,
+    ``ConflictError`` for HTTP 409, ...) are raised by the generated client to
+    report the status the server returned. They are server-side operational
+    conditions the caller is expected to handle, so an unhandled one reaching a
+    last-chance hook must not be reported as an "Unhandled SDK exception".
+    """
+
+    def test_unhandled_rate_limit_error_is_not_captured(self, installed_sentry_hooks):
+        exc = _create_sandbox_status_error(429)
+
+        assert isinstance(exc, errors.RateLimitError)
+        # The scrubbed value matches the reported event signature.
+        assert sentry._safe_exception_value(exc) == "Unhandled SDK exception (HTTP 429)"
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_unexpected_status_is_not_captured(self, installed_sentry_hooks):
+        exc = _create_sandbox_status_error(503)
+
+        assert type(exc) is errors.UnexpectedStatus
+        assert sentry._is_from_sdk(exc)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_conflict_error_is_not_captured(self, installed_sentry_hooks):
+        exc = _raise_status_error_in_sdk(409)
+
+        assert isinstance(exc, errors.ConflictError)
+        assert sentry._is_from_sdk(exc)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+
+    def test_server_status_error_classification(self):
+        rate_limit = _create_sandbox_status_error(429)
+        unexpected = _create_sandbox_status_error(503)
+        sdk_bug = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+
+        assert sentry._is_server_status_error(rate_limit) is True
+        assert sentry._is_server_status_error(unexpected) is True
+        assert sentry._is_server_status_error(sdk_bug) is False
+
+        assert sentry._should_capture_unhandled_exception(type(rate_limit), rate_limit) is False
+        assert sentry._should_capture_unhandled_exception(type(unexpected), unexpected) is False
+
+    def test_genuine_sdk_failure_from_client_path_is_still_captured(self, installed_sentry_hooks):
+        """Suppression keys on the exception type, not on touching the client code."""
+        exc = _raise_in_sdk(
+            "core/client/client.py",
+            "raise RuntimeError('genuine client defect')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_exception_group_drops_status_error_but_keeps_sdk_leaf(self, installed_sentry_hooks):
+        rate_limit = _create_sandbox_status_error(429)
+        sdk_bug = _raise_in_sdk("core/broken.py", "raise RuntimeError('genuine sdk failure')")
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [rate_limit, sdk_bug])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert len(installed_sentry_hooks.captured) == 1
+        captured_group, mechanism = installed_sentry_hooks.captured[0]
+        assert mechanism == "excepthook"
+        assert _exception_group_leaves(captured_group) == [sdk_bug]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_status_error_only_exception_group_is_filtered(self, installed_sentry_hooks):
+        rate_limit = _create_sandbox_status_error(429)
+        conflict = _raise_status_error_in_sdk(409)
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [rate_limit, conflict])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(group), group, group.__traceback__)]
 
 
 class TestSentryDelivery:
