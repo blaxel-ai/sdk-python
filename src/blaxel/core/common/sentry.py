@@ -110,6 +110,19 @@ _EXCEPTION_GROUP_TYPES = tuple(
     )
 )
 
+# Frames that only launch user-supplied code. ``BlJobWrapper.start`` exists solely
+# to run a customer's job function in-process, so an exception raised by that user
+# code (or anything it calls) travels back out through this frame. Its presence in a
+# traceback therefore does not mean the failure originated in the SDK: a user job
+# error whose only SDK frame is this launcher is application code, not an SDK defect,
+# and must not be reported to the SDK's Sentry project. A genuine SDK failure reached
+# from inside a job still leaves a deeper SDK frame and remains reportable.
+_USER_CODE_LAUNCHER_FRAMES = frozenset(
+    {
+        ((Path(_SDK_PACKAGE_ROOT.name) / "core" / "jobs" / "__init__.py").as_posix(), "start"),
+    }
+)
+
 
 def _is_path_within(filename: str, root: Path) -> bool:
     """Return whether a traceback filename resolves inside a trusted package root."""
@@ -129,11 +142,20 @@ def _sdk_relative_filename(filename: str) -> str | None:
     return (Path(_SDK_PACKAGE_ROOT.name) / relative_path).as_posix()
 
 
+def _is_sdk_origin_frame(filename: str, function: str) -> bool:
+    """Return whether a frame represents SDK logic rather than a user-code launcher."""
+    relative = _sdk_relative_filename(filename)
+    if relative is None:
+        return False
+    return (relative, function) not in _USER_CODE_LAUNCHER_FRAMES
+
+
 def _is_from_sdk(error: BaseException) -> bool:
     """Check whether an error has a frame inside this installed SDK package."""
     tb = error.__traceback__
     while tb is not None:
-        if _sdk_relative_filename(tb.tb_frame.f_code.co_filename) is not None:
+        code = tb.tb_frame.f_code
+        if _is_sdk_origin_frame(code.co_filename, code.co_name):
             return True
         tb = tb.tb_next
     return False
