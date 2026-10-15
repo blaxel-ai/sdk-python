@@ -443,6 +443,10 @@ class SyncSandboxInstance:
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "termination_grace_period_seconds"
+                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "standby_grace_period_seconds"
+                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
