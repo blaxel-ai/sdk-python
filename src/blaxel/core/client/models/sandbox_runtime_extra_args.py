@@ -8,8 +8,11 @@ T = TypeVar("T", bound="SandboxRuntimeExtraArgs")
 
 @_attrs_define
 class SandboxRuntimeExtraArgs:
-    """Extra arguments for sandbox kernel selection. Supported keys: 'iptables', 'nvme', 'nfs'. Values: 'enabled' or
-    'disabled'. Determines which kernel variant the sandbox runs on. Immutable after creation.
+    """Extra arguments for kernel selection. Supported keys: 'iptables', 'nfs' (mk3.0), 'tun', 'android' and 'landlock'
+    (mk3.1). The android variant includes tun and iptables and cannot be combined with nfs. The landlock variant enables
+    the Landlock LSM, includes tun and iptables, and cannot be combined with android or nfs. Android and landlock
+    requests are rejected if routing selects mk3.0. Values: 'enabled' or 'disabled'. Determines which kernel variant the
+    workload runs on. Immutable after creation.
 
     """
 

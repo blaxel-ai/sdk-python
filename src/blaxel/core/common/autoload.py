@@ -18,35 +18,38 @@ def telemetry() -> None:
     telemetry_manager.initialize(settings)
 
 
+def _set_user_agent(request) -> None:
+    # Resolved per request so a later `settings.integration = ...` is honored.
+    request.headers["User-Agent"] = settings.user_agent
+
+
+async def _set_user_agent_async(request) -> None:
+    _set_user_agent(request)
+
+
 def autoload() -> None:
     client.with_base_url(settings.base_url)
     client.with_auth(settings.auth)
-    # Send SDK-identifying headers on every control-plane request so backend
-    # observability can classify Python SDK traffic and list endpoints return
-    # cursor-paginated `{data, meta}` responses (>= 2026-04-28). Without the
-    # User-Agent httpx falls back to `python-httpx/<version>`, which is tracked
-    # as a generic API request instead of SDK usage.
-    client.with_headers(
-        {
-            "Blaxel-Version": settings.api_version,
-            "User-Agent": settings.user_agent,
-        }
+    # Send the Blaxel-Version header on every control-plane request so list
+    # endpoints, including images, return cursor-paginated `{data, meta}` responses.
+    # Without it the API falls back to legacy bare-array listings and pagination
+    # (limit/cursor/next_page) is silently ignored.
+    client.with_headers({"Blaxel-Version": settings.api_version})
+
+    # Register request/response hooks through the client so they survive re-creation
+    # of the httpx clients (the async client is rebuilt whenever the event loop changes).
+    # Use sync hooks for sync clients and async hooks for async clients.
+    client.with_event_hooks(
+        sync_hooks={"request": [_set_user_agent], "response": response_interceptors_sync},
+        async_hooks={
+            "request": [_set_user_agent_async],
+            "response": response_interceptors_async,
+        },
     )
-
-    # Register response interceptors for authentication error handling
-    # Access the underlying httpx clients and add event hooks
-    # Use sync interceptors for sync clients and async interceptors for async clients
-    httpx_client = client.get_httpx_client()
-    httpx_client.event_hooks["response"] = response_interceptors_sync
-
-    httpx_async_client = client.get_async_httpx_client()
-    httpx_async_client.event_hooks["response"] = response_interceptors_async
-
-    httpx_sandbox_client = client_sandbox.get_httpx_client()
-    httpx_sandbox_client.event_hooks["response"] = response_interceptors_sync
-
-    httpx_sandbox_async_client = client_sandbox.get_async_httpx_client()
-    httpx_sandbox_async_client.event_hooks["response"] = response_interceptors_async
+    client_sandbox.with_event_hooks(
+        sync_hooks={"response": response_interceptors_sync},
+        async_hooks={"response": response_interceptors_async},
+    )
 
     if settings.tracking:
         try:

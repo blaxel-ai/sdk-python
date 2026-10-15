@@ -1,12 +1,26 @@
 """Blaxel core module."""
 
 from .agents import BlAgent, bl_agent
+from .application import (
+    ApplicationAPIError,
+    ApplicationCreateConfiguration,
+    ApplicationInstance,
+    SyncApplicationInstance,
+)
 from .authentication import BlaxelAuth, auth, get_credentials
 from .cache import find_from_cache
 from .client.client import client
 from .common import (
+    BlaxelActionErrorBody,
+    BlaxelApiErrorBody,
+    BlaxelError,
+    BlaxelErrorCode,
+    BlaxelErrorCodeValue,
+    BlaxelPlatformErrorBody,
+    BlaxelSandboxApiErrorBody,
     autoload,
     env,
+    is_blaxel_error,
     settings,
     verify_webhook_from_request,
     verify_webhook_signature,
@@ -18,9 +32,13 @@ from .mcp import BlaxelMcpServerTransport, websocket_client
 from .models import BLModel, bl_model
 from .sandbox import (
     CodeInterpreter,
+    ResponseError,
+    SandboxAPIError,
     SandboxCodegen,
+    SandboxCreationTimeoutError,
     SandboxFileSystem,
     SandboxInstance,
+    SandboxPreviewCreateConfiguration,
     SandboxPreviews,
     SandboxProcess,
     SyncCodeInterpreter,
@@ -29,12 +47,24 @@ from .sandbox import (
     SyncSandboxInstance,
     SyncSandboxPreviews,
     SyncSandboxProcess,
+    is_creation_timeout_error,
 )
 from .sandbox.types import Sandbox
+from .snapshot import Snapshot, SnapshotAPIError, SyncSnapshot
 from .tools import BlTools, bl_tools, convert_mcp_tool_to_blaxel_tool
-from .volume import SyncVolumeInstance, VolumeCreateConfiguration, VolumeInstance
+from .volume import SyncVolumeInstance, VolumeAPIError, VolumeCreateConfiguration, VolumeInstance
 
 __all__ = [
+    "BlaxelError",
+    "BlaxelErrorCode",
+    "BlaxelErrorCodeValue",
+    "BlaxelApiErrorBody",
+    "BlaxelActionErrorBody",
+    "BlaxelPlatformErrorBody",
+    "BlaxelSandboxApiErrorBody",
+    "is_blaxel_error",
+    "ResponseError",
+    "VolumeAPIError",
     "BlAgent",
     "bl_agent",
     "BlaxelAuth",
@@ -52,6 +82,10 @@ __all__ = [
     "Sandbox",
     "SandboxFileSystem",
     "SandboxInstance",
+    "SandboxAPIError",
+    "SandboxCreationTimeoutError",
+    "is_creation_timeout_error",
+    "SandboxPreviewCreateConfiguration",
     "SandboxPreviews",
     "SandboxProcess",
     "SandboxCodegen",
@@ -66,6 +100,9 @@ __all__ = [
     "bl_tools",
     "convert_mcp_tool_to_blaxel_tool",
     "websocket_client",
+    "Snapshot",
+    "SyncSnapshot",
+    "SnapshotAPIError",
     "VolumeInstance",
     "SyncVolumeInstance",
     "VolumeCreateConfiguration",
@@ -73,6 +110,10 @@ __all__ = [
     "SyncDriveInstance",
     "DriveCreateConfiguration",
     "DriveAPIError",
+    "ApplicationInstance",
+    "SyncApplicationInstance",
+    "ApplicationCreateConfiguration",
+    "ApplicationAPIError",
     "verify_webhook_signature",
     "verify_webhook_from_request",
     "ImageInstance",

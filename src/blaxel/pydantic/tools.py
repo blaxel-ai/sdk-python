@@ -73,6 +73,7 @@ def get_pydantic_tool(tool: Tool) -> PydanticTool:
         description=tool.description,
         prepare=prepare_tool,
         takes_ctx=False,
+        strict=False,
     )
 
 

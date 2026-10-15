@@ -27,15 +27,11 @@ from ..client.pagination import (
 )
 from ..client.types import UNSET, Unset
 from ..common.settings import settings
+from ..errors import _APIError
 
 
-class DriveAPIError(Exception):
+class DriveAPIError(_APIError):
     """Exception raised when drive API returns an error."""
-
-    def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.code = code
 
 
 class _AsyncDeleteDescriptor:
@@ -122,7 +118,7 @@ class DriveCreateConfiguration:
         name: str | None = None,
         display_name: str | None = None,
         labels: Dict[str, str] | None = None,
-        size: int | None = None,  # Size in GB
+        size: int | None = None,  # Deprecated: drives have no size limit, this is ignored
         region: str | None = None,  # Region
         permissions: list | None = None,
     ):
@@ -173,7 +169,10 @@ class DriveInstance:
 
     @property
     def size(self):
-        return self.drive.spec.size if self.drive.spec else None
+        """Deprecated: only legacy drives created with a size still report one."""
+        if not self.drive.spec:
+            return None
+        return self.drive.spec.additional_properties.get("size")
 
     @property
     def region(self):
@@ -201,7 +200,6 @@ class DriveInstance:
                     labels=config.labels,
                 ),
                 spec=DriveSpec(
-                    size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
                     permissions=config.permissions if config.permissions is not None else UNSET,
                 ),
@@ -215,7 +213,6 @@ class DriveInstance:
                     labels=drive_config.labels,
                 ),
                 spec=DriveSpec(
-                    size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
                     permissions=drive_config.permissions
                     if drive_config.permissions is not None
@@ -248,7 +245,9 @@ class DriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -261,7 +260,9 @@ class DriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -302,7 +303,9 @@ class DriveInstance:
             if isinstance(response, Error):
                 status_code = int(response.code) if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise DriveAPIError(message, status_code=status_code, code=response.error)
+                raise DriveAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return await fetch_page(cursor)
@@ -368,7 +371,10 @@ class SyncDriveInstance:
 
     @property
     def size(self):
-        return self.drive.spec.size if self.drive.spec else None
+        """Deprecated: only legacy drives created with a size still report one."""
+        if not self.drive.spec:
+            return None
+        return self.drive.spec.additional_properties.get("size")
 
     @property
     def region(self):
@@ -397,7 +403,6 @@ class SyncDriveInstance:
                     labels=config.labels,
                 ),
                 spec=DriveSpec(
-                    size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
                     permissions=config.permissions if config.permissions is not None else UNSET,
                 ),
@@ -411,7 +416,6 @@ class SyncDriveInstance:
                     labels=drive_config.labels,
                 ),
                 spec=DriveSpec(
-                    size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
                     permissions=drive_config.permissions
                     if drive_config.permissions is not None
@@ -444,7 +448,9 @@ class SyncDriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -458,7 +464,9 @@ class SyncDriveInstance:
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(message, status_code=status_code, code=response.error)
+            raise DriveAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
         return cls(response)
 
     @classmethod
@@ -497,7 +505,9 @@ class SyncDriveInstance:
             if isinstance(response, Error):
                 status_code = int(response.code) if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise DriveAPIError(message, status_code=status_code, code=response.error)
+                raise DriveAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)
@@ -564,7 +574,6 @@ async def _update_drive_by_name(
             labels=updates.labels,
         )
         new_spec = DriveSpec(
-            size=updates.size,
             region=updates.region,
             permissions=updates.permissions,
         )
@@ -576,7 +585,6 @@ async def _update_drive_by_name(
             labels=config.labels,
         )
         new_spec = DriveSpec(
-            size=config.size,
             region=config.region,
             permissions=config.permissions,
         )
@@ -597,9 +605,6 @@ async def _update_drive_by_name(
     )
 
     merged_spec = DriveSpec(
-        size=new_spec.size
-        if new_spec and new_spec.size
-        else (current_drive.spec.size if current_drive.spec else None),
         region=new_spec.region
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
@@ -619,7 +624,7 @@ async def _update_drive_by_name(
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise DriveAPIError(message, status_code=status_code, code=response.error)
+        raise DriveAPIError(message, status_code=status_code, code=response.error, error=response)
     # This is for safe update
     await asyncio.sleep(0.5)
     return DriveInstance(response)
@@ -644,7 +649,6 @@ def _update_drive_by_name_sync(
             labels=updates.labels,
         )
         new_spec = DriveSpec(
-            size=updates.size,
             region=updates.region,
             permissions=updates.permissions,
         )
@@ -656,7 +660,6 @@ def _update_drive_by_name_sync(
             labels=config.labels,
         )
         new_spec = DriveSpec(
-            size=config.size,
             region=config.region,
             permissions=config.permissions,
         )
@@ -677,9 +680,6 @@ def _update_drive_by_name_sync(
     )
 
     merged_spec = DriveSpec(
-        size=new_spec.size
-        if new_spec and new_spec.size
-        else (current_drive.spec.size if current_drive.spec else None),
         region=new_spec.region
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
@@ -699,7 +699,7 @@ def _update_drive_by_name_sync(
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise DriveAPIError(message, status_code=status_code, code=response.error)
+        raise DriveAPIError(message, status_code=status_code, code=response.error, error=response)
     # This is for safe update
     time.sleep(0.5)
     return SyncDriveInstance(response)

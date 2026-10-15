@@ -1,17 +1,26 @@
 import asyncio
+import math
 from typing import Any, Callable, Dict, Literal, Union
 
 import httpx
 
 from ...common.settings import settings
+from ..client.api.process.delete_process_identifier_stdin import (
+    asyncio_detailed as delete_process_stdin,
+)
+from ..client.api.process.get_process_identifier import asyncio_detailed as get_process
+from ..client.api.process.post_process_identifier_stdin import (
+    asyncio_detailed as post_process_stdin,
+)
 from ..client.models import ProcessResponse, SuccessResponse
 from ..client.models.process_request import ProcessRequest
-from ..transient_retry import retry_on_transient_reset_async
+from ..transient_retry import is_retryable_read_error, retry_on_transient_reset_async
 from ..types import (
     AsyncStreamHandle,
     ProcessRequestWithLog,
     ProcessResponseWithLog,
     SandboxConfiguration,
+    api_result,
 )
 from .action import SandboxAction
 
@@ -207,7 +216,8 @@ class SandboxProcess(SandboxAction):
             try:
                 await task
             except asyncio.CancelledError:
-                pass
+                if not closed:
+                    raise
 
         return AsyncStreamHandle(close, wait_func)
 
@@ -227,6 +237,7 @@ class SandboxProcess(SandboxAction):
             process = process.to_dict()
 
         if isinstance(process, dict):
+            process = dict(process)
             if "on_log" in process:
                 on_log = process["on_log"]
                 del process["on_log"]
@@ -397,40 +408,65 @@ class SandboxProcess(SandboxAction):
     async def wait(
         self, identifier: str, max_wait: int = 60000, interval: int = 1000
     ) -> ProcessResponse:
-        """Wait for a process to complete."""
-        start_time = asyncio.get_running_loop().time() * 1000  # Convert to milliseconds
-        status = "running"
-        data = await self.get(identifier)
-
-        while status == "running":
-            await asyncio.sleep(interval / 1000)  # Convert to seconds
+        """Wait for a terminal API state; max_wait=-1 waits indefinitely. Never stops the command."""
+        if (
+            not math.isfinite(max_wait)
+            or (max_wait < 0 and max_wait != -1)
+            or not math.isfinite(interval)
+            or interval <= 0
+        ):
+            raise ValueError(
+                "max_wait must be -1 or finite and non-negative; interval must be finite and positive"
+            )
+        deadline = (
+            math.inf if max_wait == -1 else asyncio.get_running_loop().time() + max_wait / 1000
+        )
+        last_error = None
+        while True:
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                raise TimeoutError(
+                    f"Process did not finish in time ({identifier}); it may still be running"
+                ) from last_error
             try:
-                data = await self.get(identifier)
-                status = data.status or "running"
-            except:
-                break
+                # wait_for on Python 3.10 can swallow cancellation when a read
+                # completes at the same instant. wait keeps caller cancellation intact.
+                read = asyncio.create_task(self.get(identifier, retry=False))
+                try:
+                    done, _ = await asyncio.wait(
+                        {read}, timeout=None if max_wait == -1 else remaining
+                    )
+                    if not done:
+                        raise asyncio.TimeoutError()
+                    result = read.result()
+                finally:
+                    read.cancel()
+                    await asyncio.gather(read, return_exceptions=True)
+            except Exception as error:
+                if not is_retryable_read_error(error):
+                    raise
+                last_error = error
+            else:
+                if asyncio.get_running_loop().time() >= deadline:
+                    raise TimeoutError(
+                        f"Process did not finish in time ({identifier}); it may still be running"
+                    ) from last_error
+                if result.status in {"completed", "failed", "killed", "stopped"}:
+                    return result
+                if result.status != "running":
+                    raise ValueError(f"Unknown process status: {result.status}")
+                last_error = None
+            await asyncio.sleep(
+                max(0, min(interval / 1000, deadline - asyncio.get_running_loop().time()))
+            )
 
-            if (asyncio.get_running_loop().time() * 1000) - start_time > max_wait:
-                raise Exception("Process did not finish in time")
+    async def get(self, identifier: str, *, retry: bool = True) -> ProcessResponse:
+        async def read() -> ProcessResponse:
+            client = self.get_api_client().set_async_httpx_client(self.get_client())
+            return api_result(await get_process(identifier, client=client), ProcessResponse)
 
-        return data
-
-    async def get(self, identifier: str) -> ProcessResponse:
-        import json
-
-        async def get_once() -> ProcessResponse:
-            client = self.get_client()
-            response = await client.get(f"/process/{identifier}")
-            try:
-                data = json.loads(await response.aread())
-                self.handle_response_error(response)
-                result = ProcessResponse.from_dict(data)
-                assert result is not None
-                return result
-            finally:
-                await response.aclose()
-
-        return await retry_on_transient_reset_async(get_once)
+        # wait owns its deadline and retry cadence; standalone GET keeps its retries.
+        return await retry_on_transient_reset_async(read) if retry else await read()
 
     async def list(self) -> list[ProcessResponse]:
         import json
@@ -479,6 +515,26 @@ class SandboxProcess(SandboxAction):
             return result
         finally:
             await response.aclose()
+
+    async def write_stdin(self, identifier: str, data: Union[str, bytes]) -> SuccessResponse:
+        """Write raw bytes to the stdin of a process started with ``stdin=True``.
+
+        Bytes are forwarded verbatim, so include the trailing newline your protocol
+        expects. Not retried: a duplicate write would corrupt the stream.
+        """
+        async with self.get_api_client() as client:
+            # str or bytes, sent as-is with the octet-stream content type.
+            response = await post_process_stdin(identifier, client=client, body=data)
+        return api_result(response, SuccessResponse)
+
+    async def close_stdin(self, identifier: str) -> SuccessResponse:
+        """Close the process's stdin (EOF). Idempotent.
+
+        For stdio protocols such as MCP this is the clean shutdown path.
+        """
+        async with self.get_api_client() as client:
+            response = await delete_process_stdin(identifier, client=client)
+        return api_result(response, SuccessResponse)
 
     async def logs(
         self,

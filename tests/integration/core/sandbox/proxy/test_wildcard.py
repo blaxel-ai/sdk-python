@@ -11,6 +11,7 @@ from .helpers import (
     default_region,
     lowercase_keys,
     parse_json_output,
+    write_echo_url,
 )
 
 
@@ -44,16 +45,17 @@ class TestProxyWildcardDestination:
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
         except Exception:
             pass
 
-    async def test_applies_global_rule_to_httpbin(self):
+    async def test_applies_global_rule_to_any_destination(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )

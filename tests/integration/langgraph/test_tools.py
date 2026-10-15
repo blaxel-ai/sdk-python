@@ -41,9 +41,9 @@ class TestBlTools:
         except Exception:
             pass
 
-    async def test_agent_can_use_tools(self):
+    async def test_agent_can_use_tools(self, model_http_client):
         """Test that an agent can use sandbox tools to list files."""
-        model = await bl_model("sandbox-openai")
+        model = await bl_model("sandbox-openai", http_async_client=model_http_client)
         tools = await bl_tools([f"sandbox/{self.sandbox_name}"])
 
         agent = create_react_agent(model, tools)

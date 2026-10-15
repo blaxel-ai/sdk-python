@@ -7,8 +7,12 @@ import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
+from tests.helpers.echo import echo_host
 
-from .helpers import default_region
+from .helpers import (
+    default_region,
+    write_echo_url,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("ANTHROPIC_API_KEY"),
@@ -39,6 +43,8 @@ class TestProxyClaudeCode:
     async def setup_sandbox(self, request):
         api_key = os.environ["ANTHROPIC_API_KEY"]
 
+        echo_hostname = await echo_host()
+
         request.cls.sandbox_name = unique_name("proxy-claude")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -51,7 +57,7 @@ class TestProxyClaudeCode:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [echo_hostname],
                                 "headers": {"X-Agent-Test": "claude-injected"},
                             },
                         ],
@@ -72,6 +78,8 @@ class TestProxyClaudeCode:
         )
         if setup.exit_code != 0:
             raise RuntimeError(f"setup failed: {(setup.logs or '')[:500]}")
+
+        await write_echo_url(request.cls.sandbox)
 
         yield
         try:
@@ -100,7 +108,7 @@ class TestProxyClaudeCode:
                 "command": (
                     f'su - agent -c "{CLAUDE_ENV} && '
                     "claude --dangerously-skip-permissions -p "
-                    '\\"Run: curl -s https://httpbin.org/headers — then print the full JSON output.\\" '
+                    '\\"Run: curl -s $(cat /tmp/echo-url)/headers — then print the full JSON output.\\" '
                     '--output-format text" 2>&1'
                 ),
                 "wait_for_completion": True,

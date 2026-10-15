@@ -71,9 +71,7 @@ class SyncSandboxSchedules:
             )
             if response is None:
                 raise errors.UnexpectedStatus(400, b"Failed to list schedules")
-            return make_paginated_list(
-                response, mapper=lambda item: item, fetch_next=fetch_page
-            )
+            return make_paginated_list(response, mapper=lambda item: item, fetch_next=fetch_page)
 
         return fetch_page(cursor)
 
@@ -138,8 +136,6 @@ class SyncSandboxSchedules:
             )
             if response is None:
                 raise errors.UnexpectedStatus(400, b"Failed to list schedule executions")
-            return make_paginated_list(
-                response, mapper=lambda item: item, fetch_next=fetch_page
-            )
+            return make_paginated_list(response, mapper=lambda item: item, fetch_next=fetch_page)
 
         return fetch_page(cursor)

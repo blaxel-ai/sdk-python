@@ -4,25 +4,88 @@ import asyncio
 import os
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from blaxel.core.client.api.workspaces.get_workspace_features import (
+    asyncio as get_workspace_features,
+)
+from blaxel.core.client.client import client
+from blaxel.core.client.models.error import Error
+from blaxel.core.client.types import Unset
 from blaxel.core.sandbox import SandboxInstance
 from blaxel.core.volume import VolumeInstance
 
+# Sandboxes run on mk3.0 unless the workspace is granted mk3.1, and features
+# that only exist on mk3.1 (snapshots, ephemeral volumes, ...) must be skipped
+# rather than failed on a mk3.0 workspace. Set BL_REQUIRE_GENERATION_MK31=1 in
+# a lane that is meant to run on mk3.1 to turn the skip into a failure.
+GENERATION_MK31_FEATURE = "generation_mk31"
+REQUIRE_GENERATION_MK31_ENV = "BL_REQUIRE_GENERATION_MK31"
+
 # Environment-aware configuration
 env = os.environ.get("BL_ENV", "prod")
-default_region = "eu-dub-1" if env == "dev" else "us-pdx-1"
+default_region = os.environ.get("BL_REGION") or ("eu-dub-1" if env == "dev" else "us-pdx-1")
 default_image = "blaxel/base-image:latest"
+
+# Unique per pytest run. CI runs of several PRs share one workspace, so the
+# end-of-session cleanup must only delete what *this* run created -- deleting by
+# ``env=integration-test`` alone tears down sandboxes a concurrent run is still
+# using, which is a large part of the suite's cross-run flakiness.
+#
+# Kept in the environment rather than in module state so that pytest-xdist
+# workers, which import this module in their own process, share the master's id
+# instead of minting one each. Otherwise the master's teardown -- the only one
+# that runs -- would match nothing the workers created.
+run_id = os.environ.setdefault("BL_TEST_RUN_ID", uuid.uuid4().hex[:12])
 
 # Default labels to identify test sandboxes in the UI
 default_labels = {
     "env": "integration-test",
     "created-by": "pytest",
+    "run-id": run_id,
 }
 
 
 def unique_name(prefix: str = "test") -> str:
     """Generate a unique sandbox/volume name for testing."""
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
+
+
+async def workspace_feature_enabled(feature: str) -> bool:
+    """Whether a workspace feature flag is enabled for the tested workspace."""
+    response = await get_workspace_features(client=client)
+    if response is None:
+        pytest.fail(f"Could not determine whether workspace feature {feature!r} is enabled")
+    if isinstance(response, Error):
+        pytest.fail(
+            f"Could not determine whether workspace feature {feature!r} is enabled: "
+            f"{response.code}: {response.error}"
+        )
+
+    features = response.features
+    if isinstance(features, Unset) or features is None:
+        return False
+    return features.additional_properties.get(feature) is True
+
+
+async def skip_unless_generation_mk31(what: str) -> None:
+    """Skip the calling test when the workspace does not run on mk3.1.
+
+    Args:
+        what: the mk3.1-only capability the test exercises, used in the message.
+    """
+    if await workspace_feature_enabled(GENERATION_MK31_FEATURE):
+        return
+
+    message = (
+        f"{what} require the {GENERATION_MK31_FEATURE} workspace feature; "
+        f"set {REQUIRE_GENERATION_MK31_ENV}=1 in the MK3.1 lane to make absence a failure"
+    )
+    if os.environ.get(REQUIRE_GENERATION_MK31_ENV) == "1":
+        pytest.fail(message)
+    pytest.skip(message)
 
 
 async def wait_for_sandbox_deployed(sandbox_name: str, max_attempts: int = 30) -> bool:
@@ -105,6 +168,50 @@ async def wait_for_volume_deletion(volume_name: str, max_attempts: int = 30) -> 
 
     print(f"Timeout waiting for {volume_name} deletion to complete")
     return False
+
+
+# Orphans older than this were left behind by a crashed run, never by a live one.
+ORPHAN_MAX_AGE = timedelta(hours=2)
+
+
+def resource_labels(resource) -> dict:
+    """Labels of a sandbox/volume, or an empty dict when the API omits them."""
+    metadata = getattr(resource, "metadata", None)
+    labels = getattr(metadata, "labels", None) if metadata else None
+    if isinstance(labels, dict):
+        return labels
+    return getattr(labels, "additional_properties", {}) or {}
+
+
+def is_stale_orphan(resource, now: datetime | None = None) -> bool:
+    """True for a pytest resource old enough that no live run still needs it."""
+    created_at = getattr(getattr(resource, "metadata", None), "created_at", None)
+    if not isinstance(created_at, str):
+        return False
+    try:
+        # Timestamps arrive as RFC3339 with a trailing Z and up to nanosecond
+        # precision, both of which fromisoformat rejects on Python 3.10: drop
+        # the Z and truncate the fraction to microseconds.
+        head, _, tail = created_at.rstrip("Zz").partition(".")
+        created = datetime.fromisoformat(f"{head}.{tail[:6]}+00:00" if tail else f"{head}+00:00")
+    except ValueError:
+        return False
+    return (now or datetime.now(timezone.utc)) - created > ORPHAN_MAX_AGE
+
+
+async def wait_until(predicate, timeout: float = 10.0, interval: float = 0.1) -> bool:
+    """Poll ``predicate`` until it is true or ``timeout`` elapses.
+
+    Callbacks (watch events, log streams) usually fire in well under a second,
+    but a fixed sleep turns a slow round-trip into a test failure. Polling keeps
+    the fast path fast and the slow path green.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        await asyncio.sleep(interval)
+    return predicate()
 
 
 def sleep(seconds: float) -> None:

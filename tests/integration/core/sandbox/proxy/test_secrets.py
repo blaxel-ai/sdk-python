@@ -5,12 +5,14 @@ import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
+from tests.helpers.echo import echo_host
 
 from .helpers import (
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
     parse_json_output,
+    write_echo_url,
 )
 
 
@@ -23,6 +25,7 @@ class TestSecretsReplacementValidation:
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
         request.cls.sandbox_name = unique_name("proxy-sec")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -34,7 +37,7 @@ class TestSecretsReplacementValidation:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [echo_hostname],
                                 "headers": {
                                     "X-Token": "Bearer {{SECRET:api-token}}",
                                     "X-Multi": "{{SECRET:part-a}}-{{SECRET:part-b}}",
@@ -61,6 +64,7 @@ class TestSecretsReplacementValidation:
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
@@ -70,7 +74,7 @@ class TestSecretsReplacementValidation:
     async def test_resolves_secret_in_headers_to_actual_value(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )
@@ -82,7 +86,7 @@ class TestSecretsReplacementValidation:
     async def test_resolves_multiple_secret_placeholders_in_single_header(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )
@@ -93,7 +97,7 @@ class TestSecretsReplacementValidation:
     async def test_resolves_secret_in_post_body_fields(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """node /tmp/proxy-test.js POST https://httpbin.org/post '{}' '{"user_field":"untouched"}'""",
+                "command": """node /tmp/proxy-test.js POST $(cat /tmp/echo-url)/post '{}' '{"user_field":"untouched"}'""",
                 "wait_for_completion": True,
             }
         )
@@ -106,7 +110,7 @@ class TestSecretsReplacementValidation:
     async def test_does_not_leak_secrets_from_one_route_to_another(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )
@@ -117,7 +121,7 @@ class TestSecretsReplacementValidation:
     async def test_does_not_expose_raw_secret_template_on_the_wire(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )
@@ -128,7 +132,7 @@ class TestSecretsReplacementValidation:
         result = await self.sandbox.process.exec(
             {
                 "command": (
-                    "node /tmp/proxy-test.js GET https://httpbin.org/headers "
+                    "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers "
                     """'{"X-User-Token":"{{SECRET:api-token}}","X-User-Combo":"pre-{{SECRET:part-a}}-post"}'"""
                 ),
                 "wait_for_completion": True,
@@ -143,7 +147,7 @@ class TestSecretsReplacementValidation:
         result = await self.sandbox.process.exec(
             {
                 "command": (
-                    "node /tmp/proxy-test.js POST https://httpbin.org/post "
+                    "node /tmp/proxy-test.js POST $(cat /tmp/echo-url)/post "
                     """'{}' '{"api_key":"{{SECRET:api-token}}","mixed":"hello-{{SECRET:part-b}}-world"}'"""
                 ),
                 "wait_for_completion": True,
@@ -158,7 +162,7 @@ class TestSecretsReplacementValidation:
         result = await self.sandbox.process.exec(
             {
                 "command": (
-                    "node /tmp/proxy-test.js GET https://httpbin.org/headers "
+                    "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers "
                     """'{"X-Wrong-Route":"{{SECRET:other-key}}"}'"""
                 ),
                 "wait_for_completion": True,

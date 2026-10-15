@@ -4,8 +4,6 @@ from enum import Enum
 class ListSandboxSchedulesSort(str, Enum):
     CREATEDATASC = "createdAt:asc"
     CREATEDATDESC = "createdAt:desc"
-    NAMEASC = "name:asc"
-    NAMEDESC = "name:desc"
 
     def __str__(self) -> str:
         return str(self.value)

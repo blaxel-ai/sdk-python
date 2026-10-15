@@ -87,6 +87,16 @@ def is_transient_reset_error(error: BaseException) -> bool:
     return any(marker in message for message in messages for marker in TRANSIENT_RESET_MARKERS)
 
 
+def is_retryable_read_error(error: Exception) -> bool:
+    """Temporary failures that a bounded process status poll can observe again."""
+    status = getattr(getattr(error, "response", None), "status_code", None)
+    return (
+        status in {408, 429, 500, 502, 503, 504}
+        or isinstance(error, TimeoutError | asyncio.TimeoutError)
+        or is_transient_reset_error(error)
+    )
+
+
 def _backoff_delay_seconds(
     attempt: int,
     base_delay_seconds: float,

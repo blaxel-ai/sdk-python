@@ -1,24 +1,38 @@
 import logging
 import time
-import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 if TYPE_CHECKING:
     import httpx
 
+from ...client import errors as client_errors
+from ...client.api.compute.archive_sandbox import sync as archive_sandbox
 from ...client.api.compute.create_sandbox import sync as create_sandbox
+from ...client.api.compute.create_sandbox_snapshot import sync as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import sync as delete_sandbox
+from ...client.api.compute.delete_sandbox_snapshot import sync as delete_sandbox_snapshot
+from ...client.api.compute.fork_sandbox import sync as fork_sandbox
 from ...client.api.compute.get_sandbox import sync as get_sandbox
+from ...client.api.compute.list_sandbox_snapshots import sync as list_sandbox_snapshots
 from ...client.api.compute.list_sandboxes import sync as list_sandboxes
+from ...client.api.compute.restore_sandbox_snapshot import sync as restore_sandbox_snapshot
+from ...client.api.compute.unarchive_sandbox import sync as unarchive_sandbox
 from ...client.api.compute.update_sandbox import sync as update_sandbox
 from ...client.client import client
 from ...client.models import (
+    Env,
     Metadata,
     Sandbox,
+    SandboxForkRequest,
+    SandboxForkResponse,
+    SandboxInfrastructureError,
     SandboxLifecycle,
+    SandboxRestoreResponse,
     SandboxRuntime,
     SandboxRuntimeExtraArgs,
+    SandboxSnapshot,
+    SandboxSnapshotRequest,
     SandboxSpec,
 )
 from ...client.models import (
@@ -27,17 +41,24 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import PaginatedList, make_paginated_list, normalize_cursor
-from ...client.types import UNSET
+from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ..default.sandbox import (
-    NON_REUSABLE_SANDBOX_STATUSES,
-    TRANSIENT_SANDBOX_STATUSES,
-    TRANSIENT_STATUS_MAX_WAIT_SECONDS,
-    TRANSIENT_STATUS_POLL_SECONDS,
+    ARCHIVE_ENTRY_MAX_WAIT_MS,
+    ARCHIVE_ENTRY_STATUS,
+    ARCHIVE_MAX_WAIT_MS,
+    ARCHIVE_WAIT_POLL_MS,
+    ARCHIVING_STATUSES,
+    UNARCHIVE_ENTRY_STATUS,
+    UNARCHIVING_STATUSES,
     SandboxAPIError,
-    _is_sandbox_conflict,
-    _is_sandbox_not_found,
+    _create_body,
+    _creation_client,
+    _raise_if_creation_timeout,
     _sandbox_name,
+    _status_of,
+    _unwrap_response,
+    _validate_creation_timeout,
 )
 from ..types import (
     SandboxConfiguration,
@@ -54,6 +75,7 @@ from .preview import SyncSandboxPreviews
 from .process import SyncSandboxProcess
 from .schedule import SyncSandboxSchedules
 from .session import SyncSandboxSessions
+from .snapshot import SyncSandboxSnapshots
 from .system import SyncSandboxSystem
 
 logger = logging.getLogger(__name__)
@@ -77,7 +99,96 @@ class _SyncDeleteDescriptor:
             return instance_delete
 
 
+class _SyncSandboxCallDescriptor:
+    """Expose an operation as both ``SyncSandboxInstance.op("name")`` and ``instance.op()``.
+
+    Both forms answer a ``SyncSandboxInstance``; the instance form refreshes the
+    record it was called on. The archive of a filesystem and its restore run in
+    the background, so both forms wait for the sandbox to reach ``target`` unless
+    ``wait=False``.
+    """
+
+    def __init__(
+        self,
+        api_call: Callable,
+        action: str,
+        target: str,
+        pending: set[str],
+        entry: str,
+        doc: str,
+    ):
+        self._api_call = api_call
+        self._action = action
+        self._target = target
+        self._pending = pending
+        self._entry = entry
+        self.__doc__ = doc
+
+    def _call(self, sandbox_name: str, wait: bool, max_wait: int, interval: int) -> Sandbox:
+        response = self._api_call(sandbox_name)
+        sandbox = _unwrap_response(response, f"{self._action} sandbox {sandbox_name}")
+        if not wait or _status_of(sandbox) == self._target:
+            return sandbox
+        return self._wait(sandbox_name, max_wait, interval)
+
+    def _wait(self, sandbox_name: str, max_wait: int, interval: int) -> Sandbox:
+        deadline = time.monotonic() + max_wait / 1000
+        entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
+        started = False
+        while True:
+            time.sleep(interval / 1000)
+            response = get_sandbox(sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            status = _status_of(sandbox)
+            if status == self._target:
+                return sandbox
+            if status in self._pending:
+                started = True
+            elif status == self._entry and not started and time.monotonic() < entry_deadline:
+                continue
+            if status not in self._pending:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is {status} while it should {self._action}"
+                )
+            if time.monotonic() >= deadline:
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} is still {status} "
+                    f"after waiting {max_wait / 1000:.0f}s for it to {self._action}"
+                )
+
+    def __get__(self, instance, owner):
+        if instance is None:
+
+            def class_call(
+                sandbox_name: str,
+                *,
+                wait: bool = True,
+                max_wait: int = ARCHIVE_MAX_WAIT_MS,
+                interval: int = ARCHIVE_WAIT_POLL_MS,
+            ) -> "SyncSandboxInstance":
+                return SyncSandboxInstance(self._call(sandbox_name, wait, max_wait, interval))
+
+            class_call.__doc__ = self.__doc__
+            return class_call
+
+        def instance_call(
+            *,
+            wait: bool = True,
+            max_wait: int = ARCHIVE_MAX_WAIT_MS,
+            interval: int = ARCHIVE_WAIT_POLL_MS,
+        ) -> "SyncSandboxInstance":
+            instance.sandbox = self._call(instance.metadata.name, wait, max_wait, interval)
+            instance.config.sandbox = instance.sandbox
+            return instance
+
+        instance_call.__doc__ = self.__doc__
+        return instance_call
+
+
 class SyncSandboxInstance:
+    archive: "_SyncSandboxCallDescriptor"
+    unarchive: "_SyncSandboxCallDescriptor"
+
     def __init__(
         self,
         sandbox: Union[Sandbox, SandboxConfiguration],
@@ -105,6 +216,7 @@ class SyncSandboxInstance:
         self.codegen = SyncSandboxCodegen(self.config)
         self.system = SyncSandboxSystem(self.config)
         self.drives = SyncSandboxDrive(self.config)
+        self.snapshots = SyncSandboxSnapshots(self.sandbox, _unwrap_response)
 
     @property
     def metadata(self):
@@ -121,6 +233,17 @@ class SyncSandboxInstance:
     @property
     def spec(self):
         return self.sandbox.spec
+
+    @property
+    def errors(self) -> list[SandboxInfrastructureError]:
+        """Infrastructure failures the compute plane recorded for this sandbox, oldest first.
+
+        Entries with ``fatal`` set are the ones that moved the sandbox to FAILED; the
+        others (e.g. a microVM that exited and restarted) are informational. Only
+        returned when a single sandbox is read, never in listings.
+        """
+        errors = self.sandbox.errors
+        return list(errors) if not isinstance(errors, Unset) and errors else []
 
     @property
     def last_used_at(self):
@@ -141,6 +264,134 @@ class SyncSandboxInstance:
         """
         return self.network.fetch(port, path, method, **kwargs)
 
+    def snapshot(self, name: str | None = None) -> SandboxSnapshot:
+        """Create a point-in-time snapshot of this sandbox.
+
+        Snapshots capture the sandbox state and can be forked into new sandboxes
+        or applications.
+
+        Args:
+            name: Optional human-readable name for the snapshot.
+
+        .. deprecated:: Use ``sandbox.snapshots.create(name)``.
+        """
+        body = SandboxSnapshotRequest(name=name) if name is not None else SandboxSnapshotRequest()
+        response = create_sandbox_snapshot(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "create snapshot")
+
+    def list_snapshots(self) -> list[SandboxSnapshot]:
+        """List the snapshots of this sandbox.
+
+        .. deprecated:: Use ``sandbox.snapshots.list()``.
+        """
+        response = list_sandbox_snapshots(
+            self.metadata.name,
+            client=client,
+        )
+        return _unwrap_response(response, "list snapshots")
+
+    def delete_snapshot(self, snapshot_id: str) -> None:
+        """Delete a snapshot of this sandbox by its ID.
+
+        .. deprecated:: Use ``sandbox.snapshots.delete(name)``.
+        """
+        response = delete_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        _unwrap_response(response, "delete snapshot", allow_none=True)
+
+    def restore(self, snapshot_id: str) -> SandboxRestoreResponse:
+        """Restore this sandbox to one of its own snapshots.
+
+        The sandbox keeps its name, its URLs and its previews: the running
+        instance is torn down and rebuilt from the snapshot, so everything
+        written since the snapshot was taken is lost unless it was snapshotted
+        too.
+
+        The restore is asked for without waiting on the instance, the same way a
+        fork is: connections to a sandbox still resuming are retried.
+
+        Args:
+            snapshot_id: ID of the snapshot to restore this sandbox to.
+
+        .. deprecated:: Use ``sandbox.snapshots.restore(name)``.
+        """
+        response = restore_sandbox_snapshot(
+            self.metadata.name,
+            snapshot_id,
+            client=client,
+        )
+        return _unwrap_response(response, "restore snapshot")
+
+    def fork(
+        self,
+        target_name: str,
+        *,
+        target_type: str = "sandbox",
+        port: int | None = None,
+        traffic: int | None = None,
+        custom_domain: str | None = None,
+        prefix: str | None = None,
+        snapshot_id: str | None = None,
+        envs: list[Env] | None = None,
+        lifecycle: SandboxLifecycle | Dict[str, Any] | None = None,
+    ) -> SandboxForkResponse:
+        """Fork this sandbox into a new sandbox or application.
+
+        Forking into a sandbox copies this sandbox's live state straight into
+        the fork: no snapshot is created, persisted, or listed under this
+        sandbox. Pass ``snapshot_id`` to fork from a snapshot taken earlier
+        instead. Forking into an application still goes through a snapshot,
+        which the application's revision references so that revision can be
+        re-activated later.
+
+        Args:
+            target_name: Name of the sandbox/application to create.
+            target_type: Resource type to fork into ("sandbox" or "application").
+            port: Port to expose from the fork.
+            traffic: Canary traffic percentage (0-100) for an application fork.
+            custom_domain: Custom domain for an application fork.
+            prefix: URL prefix for an application fork.
+            snapshot_id: Snapshot ID to fork from, instead of this sandbox's
+                live state.
+            envs: Environment variables the fork runs with, on top of the ones
+                the source has: a variable the source already carries takes this
+                value in the fork, one it does not is added, and every other
+                variable of the source is kept.
+            lifecycle: Lifecycle the fork runs with, replacing the source's.
+                When omitted, a sandbox fork keeps the source's lifecycle and
+                its runtime ttl and expires. Only valid for a sandbox fork.
+        """
+        body = SandboxForkRequest(target_name=target_name, target_type=target_type)
+        if port is not None:
+            body.port = port
+        if traffic is not None:
+            body.traffic = traffic
+        if custom_domain is not None:
+            body.custom_domain = custom_domain
+        if prefix is not None:
+            body.prefix = prefix
+        if snapshot_id is not None:
+            body.snapshot_id = snapshot_id
+        if envs is not None:
+            body.envs = envs
+        if lifecycle is not None:
+            if isinstance(lifecycle, dict):
+                lifecycle = SandboxLifecycle.from_dict(lifecycle) or SandboxLifecycle()
+            body.additional_properties["lifecycle"] = lifecycle.to_dict()
+        response = fork_sandbox(
+            self.metadata.name,
+            client=client,
+            body=body,
+        )
+        return _unwrap_response(response, "fork sandbox")
+
     def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SyncSandboxInstance":
         logger.warning(
             "⚠️  Warning: sandbox.wait() is deprecated. You don't need to wait for the sandbox to be deployed anymore."
@@ -153,8 +404,22 @@ class SyncSandboxInstance:
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
         create_if_not_exist: bool = False,
+        timeout: int | None = None,
     ) -> "SyncSandboxInstance":
-        default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
+        """Create a sandbox.
+
+        Args:
+            timeout: Optional creation deadline in whole seconds (1 to
+                ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
+                in time the control plane cancels the creation, releases the
+                sandbox and ``SandboxCreationTimeoutError`` is raised. Omitted, the
+                platform default deadline applies; an explicit value can only
+                shorten it.
+        """
+        timeout = _validate_creation_timeout(timeout)
+        # No client-side default name: when the caller omits a name we send the
+        # creation without metadata.name so the server can assign one and unnamed
+        # creations become eligible for warm sandbox pools (ENG-3931).
         default_image = "blaxel/base-image:latest"
         default_memory = 4096
         if (
@@ -190,7 +455,7 @@ class SyncSandboxInstance:
                 config = sandbox
             else:
                 raise ValueError(f"Unexpected sandbox type: {type(sandbox)}")
-            name = config.name or default_name
+            name = config.name
             image = config.image or default_image
             memory = config.memory or default_memory
             ports = config._normalize_ports() or UNSET
@@ -254,7 +519,7 @@ class SyncSandboxInstance:
             assert isinstance(sandbox, Sandbox)
 
             if not sandbox.metadata:
-                sandbox.metadata = Metadata(name=default_name)
+                sandbox.metadata = Metadata(name=None)
             if not sandbox.spec:
                 sandbox.spec = SandboxSpec(
                     runtime=SandboxRuntime(image=default_image, memory=default_memory)
@@ -263,18 +528,28 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-        response = create_sandbox(
-            client=client,
-            body=sandbox,
-            create_if_not_exist=create_if_not_exist,
-        )
+        body = _create_body(sandbox)
+        try:
+            if timeout is None:
+                response = create_sandbox(
+                    client=client, body=body, create_if_not_exist=create_if_not_exist
+                )
+            else:
+                with _creation_client(timeout) as creation_client:
+                    response = create_sandbox(
+                        client=creation_client, body=body, create_if_not_exist=create_if_not_exist
+                    )
+        except client_errors.UnexpectedStatus as e:
+            _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
+            raise
 
         # Check if response is an error
         if isinstance(response, SandboxError):
+            _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
             message = response.message if response.message else str(response)
-            raise SandboxAPIError(message, status_code=status_code, code=code)
+            raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
         instance = cls(response)
         if safe:
@@ -295,7 +570,9 @@ class SyncSandboxInstance:
         if isinstance(response, Error):
             status_code = response.code if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
-            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+            raise SandboxAPIError(
+                message, status_code=status_code, code=response.error, error=response
+            )
 
         if response is None:
             raise SandboxAPIError(f"Sandbox '{sandbox_name}' not found", status_code=404)
@@ -340,7 +617,9 @@ class SyncSandboxInstance:
             if isinstance(response, Error):
                 status_code = response.code if response.code is not UNSET else None
                 message = response.message if response.message is not UNSET else response.error
-                raise SandboxAPIError(message, status_code=status_code, code=response.error)
+                raise SandboxAPIError(
+                    message, status_code=status_code, code=response.error, error=response
+                )
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)
@@ -371,7 +650,7 @@ class SyncSandboxInstance:
             client=client,
             body=updated_sandbox,
         )
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox metadata"))
 
     @classmethod
     def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SyncSandboxInstance":
@@ -379,7 +658,7 @@ class SyncSandboxInstance:
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
+            ttl: The new TTL value (e.g., "5m", "1h"; minimum 5m), or None/"" to clear
 
         Returns:
             A new SyncSandboxInstance with updated TTL
@@ -403,7 +682,7 @@ class SyncSandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox TTL"))
 
     @classmethod
     def update_lifecycle(
@@ -435,7 +714,7 @@ class SyncSandboxInstance:
             body=body,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox lifecycle"))
 
     @classmethod
     def update_network(
@@ -471,76 +750,25 @@ class SyncSandboxInstance:
             body=updated_sandbox,
         )
 
-        return cls(response)
+        return cls(_unwrap_response(response, "update sandbox network"))
 
     @classmethod
     def create_if_not_exists(
-        cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
+        cls,
+        sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]],
+        timeout: int | None = None,
     ) -> "SyncSandboxInstance":
-        attempts = 3
-        last_status = "unknown"
-        for attempt in range(attempts):
-            final_attempt = attempt == attempts - 1
-            try:
-                return cls.create(sandbox, create_if_not_exist=True)
-            except SandboxAPIError as e:
-                if not _is_sandbox_conflict(e):
-                    raise
+        """Create the sandbox, or return the one already holding this name.
 
-                name = _sandbox_name(sandbox)
-                if not name:
-                    raise ValueError("Sandbox name is required")
+        ``timeout`` is forwarded to :meth:`create`.
 
-                try:
-                    sandbox_instance = cls.get(name)
-                except SandboxAPIError as get_error:
-                    if _is_sandbox_not_found(get_error):
-                        # The record vanished between the create conflict and this status
-                        # check (its deletion just finished); give the control plane a
-                        # beat and retry.
-                        last_status = "vanished"
-                        if not final_attempt:
-                            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
-                        continue
-                    raise
-
-                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
-                    return sandbox_instance
-
-                # A delete or deactivation in flight rejects creates until it finishes;
-                # wait it out instead of burning the remaining attempts inside the window.
-                # No point waiting after the last attempt: nothing will use the result.
-                last_status = str(sandbox_instance.status)
-                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
-                    cls._wait_while_dying(name)
-
-        raise RuntimeError(
-            f"Unable to create sandbox after {attempts} attempts."
-            f" Last conflicting status: {last_status}."
-        )
-
-    @classmethod
-    def _wait_while_dying(cls, name: str) -> None:
-        """Poll until an in-flight delete/deactivation settles or the record disappears.
-
-        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
-        the record is gone) end the wait: the caller's create retry decides next.
+        The control plane owns the reconciliation: an alive sandbox is returned as
+        is, a FAILED/TERMINATED one is replaced, and a deletion or concurrent
+        creation still in flight is waited for server-side. A 409 therefore only
+        surfaces when the name really cannot be used, and is raised as is.
         """
-        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
-        while time.monotonic() < deadline:
-            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
-            try:
-                current = cls.get(name)
-            except Exception:
-                return
-            status = str(current.status)
-            if status not in TRANSIENT_SANDBOX_STATUSES:
-                return
-            logger.debug(
-                "Sandbox %s still %s; waiting for the record to settle before recreating",
-                name,
-                status,
-            )
+        create_kwargs: Dict[str, Any] = {} if timeout is None else {"timeout": timeout}
+        return cls.create(sandbox, create_if_not_exist=True, **create_kwargs)
 
     @classmethod
     def from_session(
@@ -561,14 +789,52 @@ class SyncSandboxInstance:
         )
 
 
+def _archive_sandbox_by_name(sandbox_name: str):
+    return archive_sandbox(sandbox_name, client=client)
+
+
+def _unarchive_sandbox_by_name(sandbox_name: str):
+    return unarchive_sandbox(sandbox_name, client=client)
+
+
 def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
     """Delete a sandbox by name."""
     response = delete_sandbox(
         sandbox_name,
         client=client,
     )
-    return response
+    return _unwrap_response(response, f"delete sandbox {sandbox_name}")
 
 
 # Assign the delete descriptor to support both class-level and instance-level calls
 SyncSandboxInstance.delete = _SyncDeleteDescriptor(_delete_sandbox_by_name)
+SyncSandboxInstance.archive = _SyncSandboxCallDescriptor(
+    _archive_sandbox_by_name,
+    "archive",
+    "ARCHIVED",
+    ARCHIVING_STATUSES,
+    ARCHIVE_ENTRY_STATUS,
+    """Archive a sandbox: keep its filesystem, stop the sandbox.
+
+    The filesystem changes made over the image are exported to the archive store
+    and the sandbox is shut down; memory and running processes are lost, and the
+    saved processes start again from their configuration when the sandbox is
+    unarchived. The export runs in the background: this waits until the sandbox
+    is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+    """,
+)
+SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
+    _unarchive_sandbox_by_name,
+    "unarchive",
+    "DEPLOYED",
+    UNARCHIVING_STATUSES,
+    UNARCHIVE_ENTRY_STATUS,
+    """Recreate an archived sandbox from its archive.
+
+    The sandbox is started again from its image, and the archived filesystem is
+    written back over it. The sandbox answers, and its terminal is reachable, while the archived
+    filesystem is written back over its image. This waits until the restore is
+    done and the saved processes are running again; pass ``wait=False`` to return
+    while the sandbox is still UNARCHIVING.
+    """,
+)

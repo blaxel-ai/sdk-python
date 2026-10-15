@@ -1,5 +1,6 @@
 from typing import Any, TypeVar, Union
 
+import httpx
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
@@ -19,6 +20,8 @@ class Error:
             body.
     """
 
+    # Retain HTTP metadata without changing the serialized API body or constructor.
+    _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
     error: str
     code: Union[Unset, int] = UNSET
     message: Union[Unset, str] = UNSET

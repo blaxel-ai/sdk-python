@@ -159,6 +159,34 @@ class TestJobExecutions:
         assert execution is not None
         assert execution.status is not None
 
+    async def test_run_job_with_allow_queue_false(self):
+        """Test running a job with allow_queue=False.
+
+        With allow_queue=False the execution is either created immediately
+        (capacity available) or rejected with a 429 (capacity unavailable),
+        never queued for background retry.
+        """
+        job = bl_job(TEST_JOB_NAME)
+
+        try:
+            execution_id = await job.arun(tasks=[{"name": "AllowQueueTest"}], allow_queue=False)
+        except KeyError as e:
+            pytest.skip(f"Job API response missing expected field: {e}")
+        except Exception as e:
+            if "not found" in str(e).lower() or "404" in str(e):
+                pytest.skip(f"Job '{TEST_JOB_NAME}' not found in workspace")
+            if "429" in str(e):
+                pytest.skip("No capacity available right now; immediate 429 rejection is expected")
+            raise
+
+        assert execution_id is not None
+        assert isinstance(execution_id, str)
+
+        # Verify execution was created
+        execution = await job.aget_execution(execution_id)
+        assert execution is not None
+        assert execution.status is not None
+
     async def test_run_job_with_both_memory_and_env_overrides(self):
         """Test running a job with both memory and env overrides."""
         job = bl_job(TEST_JOB_NAME)

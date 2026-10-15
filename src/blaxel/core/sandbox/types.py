@@ -12,10 +12,28 @@ from ..client.models import (
     SandboxLifecycle,
     SandboxNetwork,
     VolumeAttachment,
+    VolumeAttachmentType,
 )
 from ..client.types import UNSET
+from ..errors import BlaxelError
 from .client.models.process_request import ProcessRequest
 from .client.models.process_response import ProcessResponse
+from .client.types import Response as ApiResponse
+
+
+class SandboxPreviewCreateConfiguration:
+    """Port shorthand for a preview; existing previews are never reconciled."""
+
+    def __init__(self, port: int, name: str | None = None, public: bool = False):
+        self.port = port
+        self.name = name
+        self.public = public
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SandboxPreviewCreateConfiguration":
+        return cls(
+            port=data.get("port", 0), name=data.get("name"), public=data.get("public", False)
+        )
 
 
 class SessionCreateOptions:
@@ -67,12 +85,26 @@ class SessionWithToken:
 
 
 class VolumeBinding:
-    """Volume binding configuration for sandbox."""
+    """Volume binding configuration for sandbox.
 
-    def __init__(self, name: str, mount_path: str, read_only: bool | None = False):
+    ``type`` defaults to a persistent volume (an existing volume resource). Set it to
+    ``"ephemeral"`` for temporary disk-backed scratch storage created together with the
+    sandbox and destroyed when it stops; ephemeral volumes require a positive ``size_mb``.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        mount_path: str,
+        read_only: bool | None = False,
+        type: str | None = None,
+        size_mb: int | None = None,
+    ):
         self.name = name
         self.mount_path = mount_path
         self.read_only = read_only or False
+        self.type = type
+        self.size_mb = size_mb
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "VolumeBinding":
@@ -80,6 +112,8 @@ class VolumeBinding:
             name=data["name"],
             mount_path=data["mount_path"],
             read_only=data.get("read_only", False),
+            type=data.get("type"),
+            size_mb=data.get("size_mb"),
         )
 
 
@@ -270,7 +304,13 @@ class SandboxCreateConfiguration:
         return env_objects
 
     def _normalize_volumes(self) -> List[VolumeAttachment] | None:
-        """Convert volumes to VolumeAttachment objects."""
+        """Convert volumes to VolumeAttachment objects.
+
+        A volume with no ``type`` (or ``type="persistent"``) references an existing volume
+        resource, exactly as before. A volume with ``type="ephemeral"`` is temporary
+        disk-backed scratch storage created together with the sandbox and requires a
+        positive ``size_mb``.
+        """
         if not self.volumes:
             return None
 
@@ -279,13 +319,15 @@ class SandboxCreateConfiguration:
             if isinstance(volume, VolumeAttachment):
                 volume_objects.append(volume)
             elif isinstance(volume, VolumeBinding):
-                # Convert VolumeBinding to VolumeAttachment format
-                volume_attachment = VolumeAttachment(
-                    name=volume.name,
-                    mount_path=volume.mount_path,
-                    read_only=volume.read_only,
+                volume_objects.append(
+                    self._build_volume_attachment(
+                        name=volume.name,
+                        mount_path=volume.mount_path,
+                        read_only=volume.read_only,
+                        type_=volume.type,
+                        size_mb=volume.size_mb,
+                    )
                 )
-                volume_objects.append(volume_attachment)
             elif isinstance(volume, dict):
                 # Validate that the dict has the required keys
                 if "name" not in volume or "mount_path" not in volume:
@@ -297,19 +339,53 @@ class SandboxCreateConfiguration:
                         f"Volume binding 'name' and 'mount_path' must be strings: {volume}"
                     )
 
-                # Convert dict to VolumeAttachment object
-                volume_attachment = VolumeAttachment(
-                    name=volume["name"],
-                    mount_path=volume["mount_path"],
-                    read_only=volume.get("read_only", False),
+                volume_objects.append(
+                    self._build_volume_attachment(
+                        name=volume["name"],
+                        mount_path=volume["mount_path"],
+                        read_only=volume.get("read_only", False),
+                        type_=volume.get("type"),
+                        size_mb=volume.get("size_mb"),
+                    )
                 )
-                volume_objects.append(volume_attachment)
             else:
                 raise ValueError(
                     f"Invalid volume type: {type(volume)}. Expected VolumeAttachment, VolumeBinding, or dict with 'name' and 'mount_path' keys."
                 )
 
         return volume_objects
+
+    @staticmethod
+    def _build_volume_attachment(
+        name: str,
+        mount_path: str,
+        read_only: bool | None,
+        type_: str | VolumeAttachmentType | None,
+        size_mb: int | None,
+    ) -> VolumeAttachment:
+        """Build a VolumeAttachment, resolving the optional type and validating ephemeral size."""
+        volume_attachment = VolumeAttachment(
+            name=name,
+            mount_path=mount_path,
+            read_only=read_only or False,
+        )
+
+        if type_ is not None:
+            resolved_type = (
+                type_ if isinstance(type_, VolumeAttachmentType) else VolumeAttachmentType(type_)
+            )
+            volume_attachment.type_ = resolved_type
+
+        if volume_attachment.type_ == VolumeAttachmentType.EPHEMERAL:
+            if not isinstance(size_mb, int) or isinstance(size_mb, bool) or size_mb <= 0:
+                raise ValueError(
+                    f"Ephemeral volume '{name}' must have a positive 'size_mb': {size_mb}"
+                )
+            volume_attachment.size_mb = size_mb
+        elif size_mb is not None:
+            volume_attachment.size_mb = size_mb
+
+        return volume_attachment
 
 
 @_attrs_define
@@ -342,26 +418,63 @@ class ProcessResponseWithLog:
             setattr(self._process_response, name, value)
 
 
-class ResponseError(Exception):
+class ResponseError(BlaxelError):
+    # Unlike the base, this legacy exception always has an HTTP response.
+    response: httpx.Response
+
     def __init__(self, response: httpx.Response):
         data_error = {}
         data = None
+        body = ""
         if response.content:
             try:
                 data = response.json()
+                # Keep the legacy data object and its mutation semantics.
+                # Only the new body field gets a copy without status/statusText.
+                body = dict(data) if isinstance(data, dict) else data
                 data_error = data
             except Exception:
                 data = response.text
+                body = data
                 data_error["response"] = data
         if response.status_code:
             data_error["status"] = response.status_code
         if response.reason_phrase:
             data_error["statusText"] = response.reason_phrase
 
-        super().__init__(str(data_error))
-        self.response = response
+        # This response was already retained on main; add metadata directly
+        # rather than create a snapshot for the existing legacy field.
+        super().__init__(
+            str(data_error), status=response.status_code, body=body, headers=response.headers
+        )
+        self.response = response  # pyright: ignore[reportIncompatibleVariableOverride]
         self.data = data
         self.error = None
+
+    @classmethod
+    def from_api_response(cls, response: ApiResponse[Any]) -> "ResponseError":
+        """Wrap a generated-client ``Response`` so every sandbox call raises one error type."""
+        return cls(
+            httpx.Response(
+                int(response.status_code),
+                content=response.content,
+                headers=dict(response.headers),
+            )
+        )
+
+
+ParsedT = TypeVar("ParsedT")
+
+
+def api_result(response: ApiResponse[Any], model: type[ParsedT]) -> ParsedT:
+    """Return the parsed body of a generated-client ``Response`` when it is a ``model``.
+
+    Anything else (an error status, an ``ErrorResponse`` body, an undocumented
+    status the client did not parse) raises ``ResponseError``.
+    """
+    if response.status_code < 300 and isinstance(response.parsed, model):
+        return response.parsed
+    raise ResponseError.from_api_response(response)
 
 
 # -----------------------------

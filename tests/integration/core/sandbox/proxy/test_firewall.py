@@ -8,12 +8,14 @@ import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
+from tests.helpers.echo import echo_host
 
 from .helpers import (
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
     parse_json_output,
+    write_echo_url,
 )
 
 
@@ -30,9 +32,12 @@ class TestFirewallAllowedDomains:
 
     sandbox: SandboxInstance
     sandbox_name: str
+    echo_hostname: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
+        request.cls.echo_hostname = echo_hostname
         request.cls.sandbox_name = unique_name("fw-allow")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -41,12 +46,13 @@ class TestFirewallAllowedDomains:
                 "region": default_region,
                 "labels": default_labels,
                 "network": {
-                    "allowedDomains": ["httpbin.org"],
+                    "allowedDomains": [echo_hostname],
                     "proxy": {"routing": []},
                 },
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
@@ -56,12 +62,12 @@ class TestFirewallAllowedDomains:
     async def test_allows_requests_to_allowlisted_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
-        assert _logs_contain_host(result.logs, "httpbin.org")
+        assert _logs_contain_host(result.logs, self.echo_hostname)
 
     async def test_blocks_requests_to_non_allowlisted_domain(self):
         result = await self.sandbox.process.exec(
@@ -79,9 +85,11 @@ class TestFirewallForbiddenDomains:
 
     sandbox: SandboxInstance
     sandbox_name: str
+    echo_hostname: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        request.cls.echo_hostname = await echo_host()
         request.cls.sandbox_name = unique_name("fw-deny")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -96,6 +104,7 @@ class TestFirewallForbiddenDomains:
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
@@ -105,12 +114,12 @@ class TestFirewallForbiddenDomains:
     async def test_allows_requests_to_non_forbidden_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
-        assert _logs_contain_host(result.logs, "httpbin.org")
+        assert _logs_contain_host(result.logs, self.echo_hostname)
 
     async def test_blocks_requests_to_forbidden_domain(self):
         result = await self.sandbox.process.exec(
@@ -128,9 +137,12 @@ class TestFirewallCombined:
 
     sandbox: SandboxInstance
     sandbox_name: str
+    echo_hostname: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
+        request.cls.echo_hostname = echo_hostname
         request.cls.sandbox_name = unique_name("fw-combo")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -139,13 +151,14 @@ class TestFirewallCombined:
                 "region": default_region,
                 "labels": default_labels,
                 "network": {
-                    "allowedDomains": ["httpbin.org", "example.com"],
+                    "allowedDomains": [echo_hostname, "example.com"],
                     "forbiddenDomains": ["example.com"],
                     "proxy": {"routing": []},
                 },
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
@@ -155,12 +168,12 @@ class TestFirewallCombined:
     async def test_allowed_domains_takes_precedence_over_forbidden_domains(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get",
                 "wait_for_completion": True,
             }
         )
         assert result.exit_code == 0
-        assert "httpbin.org" in (result.logs or "")
+        assert self.echo_hostname in (result.logs or "")
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -169,9 +182,12 @@ class TestFirewallWithProxyRouting:
 
     sandbox: SandboxInstance
     sandbox_name: str
+    echo_hostname: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
+        request.cls.echo_hostname = echo_hostname
         request.cls.sandbox_name = unique_name("fw-proxy")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -180,11 +196,11 @@ class TestFirewallWithProxyRouting:
                 "region": default_region,
                 "labels": default_labels,
                 "network": {
-                    "allowedDomains": ["httpbin.org"],
+                    "allowedDomains": [echo_hostname],
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [echo_hostname],
                                 "headers": {"X-Firewall-Test": "allowed-and-injected"},
                             },
                         ],
@@ -193,6 +209,7 @@ class TestFirewallWithProxyRouting:
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         yield
         try:
             await SandboxInstance.delete(request.cls.sandbox_name)
@@ -202,7 +219,7 @@ class TestFirewallWithProxyRouting:
     async def test_injects_headers_for_allowlisted_and_routed_domain(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                 "wait_for_completion": True,
             }
         )
@@ -227,9 +244,12 @@ class TestFirewallNoProxyBypass:
 
     sandbox: SandboxInstance
     sandbox_name: str
+    echo_hostname: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
+        request.cls.echo_hostname = echo_hostname
         request.cls.sandbox_name = unique_name("fw-bypass")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -239,16 +259,17 @@ class TestFirewallNoProxyBypass:
                 "labels": default_labels,
                 "network": {
                     "firewall": {"rulesets": ["proxy"]},
-                    "allowedDomains": ["httpbin.org"],
+                    "allowedDomains": [echo_hostname],
                     "proxy": {"routing": []},
                 },
             }
         )
         await request.cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
         # Warm up the proxy path so the first real assertion isn't racing setup.
         await request.cls.sandbox.process.exec(
             {
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/get",
+                "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get",
                 "wait_for_completion": True,
             }
         )
@@ -269,7 +290,7 @@ class TestFirewallNoProxyBypass:
             {
                 "command": (
                     "timeout 10 env -u HTTP_PROXY -u http_proxy -u HTTPS_PROXY "
-                    "-u https_proxy node /tmp/proxy-test.js GET https://httpbin.org/get"
+                    "-u https_proxy node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get"
                 ),
                 "wait_for_completion": True,
             }

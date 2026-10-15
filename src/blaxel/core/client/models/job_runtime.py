@@ -23,8 +23,8 @@ class JobRuntime:
             10-95, default 50. Only applies to mk3.1 (microVM) generation. Example: 80.
         envs (Union[Unset, list['Env']]): Environment variables injected into job tasks. Supports Kubernetes EnvVar
             format with valueFrom references.
-        generation (Union[Unset, JobRuntimeGeneration]): Infrastructure generation: mk2 (containers, 2-10s cold starts)
-            or mk3 (microVMs, sub-25ms cold starts) Example: mk3.
+        generation (Union[Unset, JobRuntimeGeneration]): Infrastructure generation. Jobs always run on mk3 (microVMs);
+            any value sent on input is ignored. Example: mk3.
         image (Union[Unset, str]): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
             populated during deployment.
         max_retries (Union[Unset, int]): Number of automatic retry attempts for failed tasks before marking as failed

@@ -10,8 +10,12 @@ from .app_revision import AppRevision
 from .app_revision_configuration import AppRevisionConfiguration
 from .app_url import AppUrl
 from .application import Application
+from .application_extension import ApplicationExtension
+from .application_extensions import ApplicationExtensions
 from .application_list import ApplicationList
 from .application_spec import ApplicationSpec
+from .changelog_entry import ChangelogEntry
+from .changelog_response import ChangelogResponse
 from .check_workspace_availability_body import CheckWorkspaceAvailabilityBody
 from .cleanup_images_response_200 import CleanupImagesResponse200
 from .configuration import Configuration
@@ -28,10 +32,13 @@ from .create_job_execution_request import CreateJobExecutionRequest
 from .create_job_execution_request_env import CreateJobExecutionRequestEnv
 from .create_job_execution_request_tasks_item import CreateJobExecutionRequestTasksItem
 from .create_workspace_service_account_body import CreateWorkspaceServiceAccountBody
+from .create_workspace_service_account_body_role import CreateWorkspaceServiceAccountBodyRole
 from .create_workspace_service_account_response_200 import CreateWorkspaceServiceAccountResponse200
 from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
+from .custom_domain_share_target import CustomDomainShareTarget
 from .custom_domain_spec import CustomDomainSpec
+from .custom_domain_spec_domain_type import CustomDomainSpecDomainType
 from .custom_domain_spec_status import CustomDomainSpecStatus
 from .custom_domain_spec_subject_alternative_names_item import (
     CustomDomainSpecSubjectAlternativeNamesItem,
@@ -93,6 +100,8 @@ from .image import Image
 from .image_metadata import ImageMetadata
 from .image_share_target import ImageShareTarget
 from .image_spec import ImageSpec
+from .image_summary import ImageSummary
+from .image_summary_spec import ImageSummarySpec
 from .image_tag import ImageTag
 from .integration import Integration
 from .integration_additional_infos import IntegrationAdditionalInfos
@@ -138,6 +147,9 @@ from .list_drives_anchor import ListDrivesAnchor
 from .list_drives_sort import ListDrivesSort
 from .list_functions_anchor import ListFunctionsAnchor
 from .list_functions_sort import ListFunctionsSort
+from .list_image_tags_response_200 import ListImageTagsResponse200
+from .list_image_tags_sort import ListImageTagsSort
+from .list_images_response_200 import ListImagesResponse200
 from .list_job_execution_tasks_sort import ListJobExecutionTasksSort
 from .list_job_executions_sort import ListJobExecutionsSort
 from .list_jobs_anchor import ListJobsAnchor
@@ -152,6 +164,12 @@ from .list_sandbox_schedules_sort import ListSandboxSchedulesSort
 from .list_sandbox_schedules_type import ListSandboxSchedulesType
 from .list_sandboxes_anchor import ListSandboxesAnchor
 from .list_sandboxes_sort import ListSandboxesSort
+from .list_schedule_executions_sort import ListScheduleExecutionsSort
+from .list_schedule_executions_status import ListScheduleExecutionsStatus
+from .list_schedules_sort import ListSchedulesSort
+from .list_schedules_type import ListSchedulesType
+from .list_snapshots_anchor import ListSnapshotsAnchor
+from .list_snapshots_sort import ListSnapshotsSort
 from .list_volumes_anchor import ListVolumesAnchor
 from .list_volumes_sort import ListVolumesSort
 from .lite_volume import LiteVolume
@@ -224,13 +242,23 @@ from .repository import Repository
 from .revision_configuration import RevisionConfiguration
 from .revision_metadata import RevisionMetadata
 from .sandbox import Sandbox
+from .sandbox_archive import SandboxArchive
+from .sandbox_archive_restore import SandboxArchiveRestore
+from .sandbox_archive_restore_state import SandboxArchiveRestoreState
+from .sandbox_creation_options import SandboxCreationOptions
+from .sandbox_creation_options_extra_args import SandboxCreationOptionsExtraArgs
 from .sandbox_definition import SandboxDefinition
 from .sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 from .sandbox_error import SandboxError
 from .sandbox_error_details import SandboxErrorDetails
+from .sandbox_fork_request import SandboxForkRequest
+from .sandbox_fork_response import SandboxForkResponse
+from .sandbox_fork_response_type import SandboxForkResponseType
+from .sandbox_infrastructure_error import SandboxInfrastructureError
 from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_list import SandboxList
 from .sandbox_network import SandboxNetwork
+from .sandbox_restore_response import SandboxRestoreResponse
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_runtime_extra_args import SandboxRuntimeExtraArgs
 from .sandbox_schedule_entry import SandboxScheduleEntry
@@ -238,10 +266,21 @@ from .sandbox_schedule_entry_list import SandboxScheduleEntryList
 from .sandbox_schedule_entry_type import SandboxScheduleEntryType
 from .sandbox_schedule_execution import SandboxScheduleExecution
 from .sandbox_schedule_execution_list import SandboxScheduleExecutionList
+from .sandbox_schedule_execution_status import SandboxScheduleExecutionStatus
+from .sandbox_schedule_execution_status_metrics import SandboxScheduleExecutionStatusMetrics
 from .sandbox_schedule_input import SandboxScheduleInput
 from .sandbox_schedule_input_env import SandboxScheduleInputEnv
+from .sandbox_schedule_metrics import SandboxScheduleMetrics
+from .sandbox_snapshot import SandboxSnapshot
+from .sandbox_snapshot_list import SandboxSnapshotList
+from .sandbox_snapshot_request import SandboxSnapshotRequest
+from .sandbox_snapshot_source import SandboxSnapshotSource
+from .sandbox_snapshot_source_kind import SandboxSnapshotSourceKind
+from .sandbox_snapshot_spec import SandboxSnapshotSpec
+from .sandbox_snapshot_spec_generation import SandboxSnapshotSpecGeneration
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
+from .share_custom_domain_body import ShareCustomDomainBody
 from .share_image_body import ShareImageBody
 from .sso_domain import SSODomain
 from .sso_domain_metadata import SSODomainMetadata
@@ -258,10 +297,12 @@ from .trigger_configuration import TriggerConfiguration
 from .trigger_configuration_task import TriggerConfigurationTask
 from .trigger_type import TriggerType
 from .update_workspace_service_account_body import UpdateWorkspaceServiceAccountBody
+from .update_workspace_service_account_body_role import UpdateWorkspaceServiceAccountBodyRole
 from .update_workspace_service_account_response_200 import UpdateWorkspaceServiceAccountResponse200
 from .update_workspace_user_role_body import UpdateWorkspaceUserRoleBody
 from .volume import Volume
 from .volume_attachment import VolumeAttachment
+from .volume_attachment_type import VolumeAttachmentType
 from .volume_list import VolumeList
 from .volume_spec import VolumeSpec
 from .volume_state import VolumeState
@@ -293,11 +334,15 @@ __all__ = (
     "AgentSpec",
     "ApiKey",
     "Application",
+    "ApplicationExtension",
+    "ApplicationExtensions",
     "ApplicationList",
     "ApplicationSpec",
     "AppRevision",
     "AppRevisionConfiguration",
     "AppUrl",
+    "ChangelogEntry",
+    "ChangelogResponse",
     "CheckWorkspaceAvailabilityBody",
     "CleanupImagesResponse200",
     "Configuration",
@@ -314,10 +359,13 @@ __all__ = (
     "CreateJobExecutionRequestEnv",
     "CreateJobExecutionRequestTasksItem",
     "CreateWorkspaceServiceAccountBody",
+    "CreateWorkspaceServiceAccountBodyRole",
     "CreateWorkspaceServiceAccountResponse200",
     "CustomDomain",
     "CustomDomainMetadata",
+    "CustomDomainShareTarget",
     "CustomDomainSpec",
+    "CustomDomainSpecDomainType",
     "CustomDomainSpecStatus",
     "CustomDomainSpecSubjectAlternativeNamesItem",
     "CustomDomainSpecTxtRecords",
@@ -375,6 +423,8 @@ __all__ = (
     "ImageMetadata",
     "ImageShareTarget",
     "ImageSpec",
+    "ImageSummary",
+    "ImageSummarySpec",
     "ImageTag",
     "Integration",
     "IntegrationAdditionalInfos",
@@ -420,6 +470,9 @@ __all__ = (
     "ListDrivesSort",
     "ListFunctionsAnchor",
     "ListFunctionsSort",
+    "ListImagesResponse200",
+    "ListImageTagsResponse200",
+    "ListImageTagsSort",
     "ListJobExecutionsSort",
     "ListJobExecutionTasksSort",
     "ListJobsAnchor",
@@ -434,6 +487,12 @@ __all__ = (
     "ListSandboxScheduleExecutionsSort",
     "ListSandboxSchedulesSort",
     "ListSandboxSchedulesType",
+    "ListScheduleExecutionsSort",
+    "ListScheduleExecutionsStatus",
+    "ListSchedulesSort",
+    "ListSchedulesType",
+    "ListSnapshotsAnchor",
+    "ListSnapshotsSort",
     "ListVolumesAnchor",
     "ListVolumesSort",
     "LiteVolume",
@@ -504,13 +563,23 @@ __all__ = (
     "RevisionConfiguration",
     "RevisionMetadata",
     "Sandbox",
+    "SandboxArchive",
+    "SandboxArchiveRestore",
+    "SandboxArchiveRestoreState",
+    "SandboxCreationOptions",
+    "SandboxCreationOptionsExtraArgs",
     "SandboxDefinition",
     "SandboxDefinitionCategoriesItem",
     "SandboxError",
     "SandboxErrorDetails",
+    "SandboxForkRequest",
+    "SandboxForkResponse",
+    "SandboxForkResponseType",
+    "SandboxInfrastructureError",
     "SandboxLifecycle",
     "SandboxList",
     "SandboxNetwork",
+    "SandboxRestoreResponse",
     "SandboxRuntime",
     "SandboxRuntimeExtraArgs",
     "SandboxScheduleEntry",
@@ -518,10 +587,21 @@ __all__ = (
     "SandboxScheduleEntryType",
     "SandboxScheduleExecution",
     "SandboxScheduleExecutionList",
+    "SandboxScheduleExecutionStatus",
+    "SandboxScheduleExecutionStatusMetrics",
     "SandboxScheduleInput",
     "SandboxScheduleInputEnv",
+    "SandboxScheduleMetrics",
+    "SandboxSnapshot",
+    "SandboxSnapshotList",
+    "SandboxSnapshotRequest",
+    "SandboxSnapshotSource",
+    "SandboxSnapshotSourceKind",
+    "SandboxSnapshotSpec",
+    "SandboxSnapshotSpecGeneration",
     "SandboxSpec",
     "SandboxState",
+    "ShareCustomDomainBody",
     "ShareImageBody",
     "SSODomain",
     "SSODomainMetadata",
@@ -538,10 +618,12 @@ __all__ = (
     "TriggerConfigurationTask",
     "TriggerType",
     "UpdateWorkspaceServiceAccountBody",
+    "UpdateWorkspaceServiceAccountBodyRole",
     "UpdateWorkspaceServiceAccountResponse200",
     "UpdateWorkspaceUserRoleBody",
     "Volume",
     "VolumeAttachment",
+    "VolumeAttachmentType",
     "VolumeList",
     "VolumeSpec",
     "VolumeState",

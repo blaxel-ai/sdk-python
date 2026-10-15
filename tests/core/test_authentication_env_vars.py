@@ -110,16 +110,3 @@ def test_settings_headers_clear_error_without_credentials(no_config, clear_auth_
     s = Settings()
     with pytest.raises(CredentialsError):
         _ = s.headers
-
-
-def test_autoload_does_not_read_credentials(no_config, clear_auth_env):
-    """Import-time setup should stay lazy when credentials are missing."""
-    from blaxel.core.client import client
-    from blaxel.core.common.autoload import autoload
-    from blaxel.core.common.settings import Settings
-
-    autoload()
-
-    current_settings = Settings()
-    assert client._headers["Blaxel-Version"] == current_settings.api_version
-    assert client._headers["User-Agent"] == current_settings.user_agent

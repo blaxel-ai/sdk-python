@@ -1,44 +1,37 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.pending_invitation_accept import PendingInvitationAccept
+from ...models.quiesce_status import QuiesceStatus
 from ...types import Response
 
 
-def _get_kwargs(
-    workspace_name: str,
-) -> dict[str, Any]:
+def _get_kwargs() -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": f"/workspaces/{workspace_name}/join",
+        "method": "get",
+        "url": "/archive/status",
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Any, PendingInvitationAccept] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> QuiesceStatus | None:
     if response.status_code == 200:
-        response_200 = PendingInvitationAccept.from_dict(response.json())
+        response_200 = QuiesceStatus.from_dict(response.json())
 
         return response_200
-    if response.status_code == 404:
-        response_404 = cast(Any, None)
-        return response_404
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Any, PendingInvitationAccept]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[QuiesceStatus]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -48,28 +41,23 @@ def _build_response(
 
 
 def sync_detailed(
-    workspace_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, PendingInvitationAccept]]:
-    """Accept invitation to workspace
+) -> Response[QuiesceStatus]:
+    """Get the archive status
 
-     Accepts an invitation to a workspace.
-
-    Args:
-        workspace_name (str):
+     Reports whether the sandbox is frozen for an archive export, and which processes were stopped for
+    it.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PendingInvitationAccept]]
+        Response[QuiesceStatus]
     """
 
-    kwargs = _get_kwargs(
-        workspace_name=workspace_name,
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -79,54 +67,45 @@ def sync_detailed(
 
 
 def sync(
-    workspace_name: str,
     *,
     client: Client,
-) -> Union[Any, PendingInvitationAccept] | None:
-    """Accept invitation to workspace
+) -> QuiesceStatus | None:
+    """Get the archive status
 
-     Accepts an invitation to a workspace.
-
-    Args:
-        workspace_name (str):
+     Reports whether the sandbox is frozen for an archive export, and which processes were stopped for
+    it.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PendingInvitationAccept]
+        QuiesceStatus
     """
 
     return sync_detailed(
-        workspace_name=workspace_name,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    workspace_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, PendingInvitationAccept]]:
-    """Accept invitation to workspace
+) -> Response[QuiesceStatus]:
+    """Get the archive status
 
-     Accepts an invitation to a workspace.
-
-    Args:
-        workspace_name (str):
+     Reports whether the sandbox is frozen for an archive export, and which processes were stopped for
+    it.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PendingInvitationAccept]]
+        Response[QuiesceStatus]
     """
 
-    kwargs = _get_kwargs(
-        workspace_name=workspace_name,
-    )
+    kwargs = _get_kwargs()
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -134,28 +113,24 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    workspace_name: str,
     *,
     client: Client,
-) -> Union[Any, PendingInvitationAccept] | None:
-    """Accept invitation to workspace
+) -> QuiesceStatus | None:
+    """Get the archive status
 
-     Accepts an invitation to a workspace.
-
-    Args:
-        workspace_name (str):
+     Reports whether the sandbox is frozen for an archive export, and which processes were stopped for
+    it.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PendingInvitationAccept]
+        QuiesceStatus
     """
 
     return (
         await asyncio_detailed(
-            workspace_name=workspace_name,
             client=client,
         )
     ).parsed

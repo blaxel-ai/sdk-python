@@ -18,6 +18,9 @@ class CreateJobExecutionRequest:
     """Request to create a job execution
 
     Attributes:
+        allow_queue (Union[Unset, bool]): When false, capacity is checked synchronously and the request is rejected
+            immediately with a 429 error if the execution cannot start right now, instead of being queued and retried in the
+            background. No execution is created on rejection. Defaults to true (queue and retry).
         env (Union[Unset, CreateJobExecutionRequestEnv]): Environment variable overrides (optional, will merge with
             job's environment variables) Example: {"MY_VAR": "custom_value", "BATCH_SIZE": "100"}.
         execution_id (Union[Unset, str]): Execution ID (optional, will be generated if not provided)
@@ -30,6 +33,7 @@ class CreateJobExecutionRequest:
         workspace_id (Union[Unset, str]): Workspace ID
     """
 
+    allow_queue: Union[Unset, bool] = UNSET
     env: Union[Unset, "CreateJobExecutionRequestEnv"] = UNSET
     execution_id: Union[Unset, str] = UNSET
     id: Union[Unset, str] = UNSET
@@ -40,6 +44,8 @@ class CreateJobExecutionRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
+        allow_queue = self.allow_queue
 
         env: Union[Unset, dict[str, Any]] = UNSET
         if self.env and not isinstance(self.env, Unset) and not isinstance(self.env, dict):
@@ -70,6 +76,8 @@ class CreateJobExecutionRequest:
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
+        if allow_queue is not UNSET:
+            field_dict["allowQueue"] = allow_queue
         if env is not UNSET:
             field_dict["env"] = env
         if execution_id is not UNSET:
@@ -97,6 +105,8 @@ class CreateJobExecutionRequest:
         if not src_dict:
             return None
         d = src_dict.copy()
+        allow_queue = d.pop("allowQueue", d.pop("allow_queue", UNSET))
+
         _env = d.pop("env", UNSET)
         env: Union[Unset, CreateJobExecutionRequestEnv]
         if isinstance(_env, Unset):
@@ -122,6 +132,7 @@ class CreateJobExecutionRequest:
         workspace_id = d.pop("workspaceId", d.pop("workspace_id", UNSET))
 
         create_job_execution_request = cls(
+            allow_queue=allow_queue,
             env=env,
             execution_id=execution_id,
             id=id,

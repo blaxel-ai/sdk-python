@@ -26,6 +26,8 @@ class AppRevision:
             Example: 2048.
         port (Union[Unset, int]): Port the application listens on for this revision (default uses spec-level port or
             8080) Example: 8080.
+        snapshot (Union[Unset, str]): Snapshot ID this revision was forked from (optional, only set when created via
+            fork)
     """
 
     image: str
@@ -35,6 +37,7 @@ class AppRevision:
     id: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
     port: Union[Unset, int] = UNSET
+    snapshot: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,6 +64,8 @@ class AppRevision:
 
         port = self.port
 
+        snapshot = self.snapshot
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -80,6 +85,8 @@ class AppRevision:
             field_dict["memory"] = memory
         if port is not UNSET:
             field_dict["port"] = port
+        if snapshot is not UNSET:
+            field_dict["snapshot"] = snapshot
 
         return field_dict
 
@@ -109,6 +116,8 @@ class AppRevision:
 
         port = d.pop("port", UNSET)
 
+        snapshot = d.pop("snapshot", UNSET)
+
         app_revision = cls(
             image=image,
             created_at=created_at,
@@ -117,6 +126,7 @@ class AppRevision:
             id=id,
             memory=memory,
             port=port,
+            snapshot=snapshot,
         )
 
         app_revision.additional_properties = d

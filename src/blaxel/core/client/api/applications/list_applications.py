@@ -19,6 +19,7 @@ def _get_kwargs(
     sort: Union[Unset, ListApplicationsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListApplicationsAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -39,6 +40,8 @@ def _get_kwargs(
         json_anchor = anchor.value
 
     params["anchor"] = json_anchor
+
+    params["status"] = status
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -61,17 +64,22 @@ def _parse_response(
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
+        errors.retain_response(response_401, response)
         return response_401
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
+        errors.retain_response(response_403, response)
         return response_403
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
+        errors.retain_response(response_500, response)
         return response_500
     if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
+        raise errors.from_response(
+            response.status_code, response.content, response.headers, response=response
+        )
     else:
         return None
 
@@ -95,6 +103,7 @@ def sync_detailed(
     sort: Union[Unset, ListApplicationsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListApplicationsAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Response[Union[ApplicationList, Error]]:
     """List all applications
 
@@ -109,6 +118,7 @@ def sync_detailed(
         sort (Union[Unset, ListApplicationsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListApplicationsAnchor]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -124,6 +134,7 @@ def sync_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        status=status,
     )
 
     response = client.get_httpx_client().request(
@@ -141,6 +152,7 @@ def sync(
     sort: Union[Unset, ListApplicationsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListApplicationsAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Union[ApplicationList, Error] | None:
     """List all applications
 
@@ -155,6 +167,7 @@ def sync(
         sort (Union[Unset, ListApplicationsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListApplicationsAnchor]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -171,6 +184,7 @@ def sync(
         sort=sort,
         q=q,
         anchor=anchor,
+        status=status,
     ).parsed
 
 
@@ -182,6 +196,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListApplicationsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListApplicationsAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Response[Union[ApplicationList, Error]]:
     """List all applications
 
@@ -196,6 +211,7 @@ async def asyncio_detailed(
         sort (Union[Unset, ListApplicationsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListApplicationsAnchor]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -211,6 +227,7 @@ async def asyncio_detailed(
         sort=sort,
         q=q,
         anchor=anchor,
+        status=status,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -226,6 +243,7 @@ async def asyncio(
     sort: Union[Unset, ListApplicationsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListApplicationsAnchor] = UNSET,
+    status: Union[Unset, str] = UNSET,
 ) -> Union[ApplicationList, Error] | None:
     """List all applications
 
@@ -240,6 +258,7 @@ async def asyncio(
         sort (Union[Unset, ListApplicationsSort]):
         q (Union[Unset, str]):
         anchor (Union[Unset, ListApplicationsAnchor]):
+        status (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -257,5 +276,6 @@ async def asyncio(
             sort=sort,
             q=q,
             anchor=anchor,
+            status=status,
         )
     ).parsed

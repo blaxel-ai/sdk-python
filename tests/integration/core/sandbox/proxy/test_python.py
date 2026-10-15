@@ -5,12 +5,15 @@ import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_labels, unique_name
+from tests.helpers.echo import echo_host
 
 from .helpers import (
     PYTHON_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
     parse_json_output,
+    parse_response_headers,
+    write_echo_url,
 )
 
 
@@ -23,6 +26,7 @@ class TestProxyPythonRequests:
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandbox(self, request):
+        echo_hostname = await echo_host()
         request.cls.sandbox_name = unique_name("proxy-py")
         request.cls.sandbox = await SandboxInstance.create(
             {
@@ -34,7 +38,7 @@ class TestProxyPythonRequests:
                     "proxy": {
                         "routing": [
                             {
-                                "destinations": ["httpbin.org"],
+                                "destinations": [echo_hostname],
                                 "headers": {
                                     "X-Proxy-Test": "header-injected",
                                     "X-Api-Key": "{{SECRET:test-api-key}}",
@@ -52,6 +56,7 @@ class TestProxyPythonRequests:
         )
 
         await request.cls.sandbox.fs.write("/tmp/proxy-test.py", PYTHON_HELPER_SCRIPT)
+        await write_echo_url(request.cls.sandbox)
 
         pip_result = await request.cls.sandbox.process.exec(
             {
@@ -71,21 +76,21 @@ class TestProxyPythonRequests:
     async def test_python_requests_get_with_header_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": "python3 /tmp/proxy-test.py GET https://httpbin.org/headers 2>&1",
+                "command": "python3 /tmp/proxy-test.py GET $(cat /tmp/echo-url)/headers 2>&1",
                 "wait_for_completion": True,
             }
         )
         if result.exit_code != 0:
             raise RuntimeError(f"python3 exited {result.exit_code}: {(result.logs or '')[:1500]}")
         headers = lowercase_keys(parse_json_output(result.logs)["headers"])
-        assert headers.get("x-blaxel-request-id") is not None
+        assert parse_response_headers(result.logs).get("x-blaxel-request-id") is not None
         assert headers["x-proxy-test"] == "header-injected"
         assert headers["x-api-key"] == "resolved-secret-42"
 
     async def test_python_requests_post_with_body_injection(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """python3 /tmp/proxy-test.py POST https://httpbin.org/post '{}' '{"user_data":"from-python"}'""",
+                "command": """python3 /tmp/proxy-test.py POST $(cat /tmp/echo-url)/post '{}' '{"user_data":"from-python"}'""",
                 "wait_for_completion": True,
             }
         )
@@ -98,7 +103,7 @@ class TestProxyPythonRequests:
     async def test_python_requests_preserves_user_headers(self):
         result = await self.sandbox.process.exec(
             {
-                "command": """python3 /tmp/proxy-test.py GET https://httpbin.org/headers '{"X-User-Custom":"from-python"}'""",
+                "command": """python3 /tmp/proxy-test.py GET $(cat /tmp/echo-url)/headers '{"X-User-Custom":"from-python"}'""",
                 "wait_for_completion": True,
             }
         )

@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
-from tests.helpers import async_sleep, default_image, default_labels, unique_name
+from tests.helpers import async_sleep, default_image, default_labels, unique_name, wait_until
 
 
 @pytest.mark.asyncio(loop_scope="class")
@@ -285,8 +285,7 @@ class TestStreamLogs(TestProcessOperations):
 
         try:
             await self.sandbox.process.wait("stream-test")
-            await async_sleep(1)
-            assert len(logs) > 0
+            assert await wait_until(lambda: len(logs) > 0)
         finally:
             stream.close()
 

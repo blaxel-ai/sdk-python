@@ -16,7 +16,7 @@ class ApplyEditRequest:
             function hello(world) {
               console.log('Hello', world);
             }.
-        model (Union[Unset, str]):  Example: auto.
+        model (Union[Unset, str]):  Example: relace-apply-3.
     """
 
     code_edit: str

@@ -1,6 +1,6 @@
 import asyncio
 import ssl
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 import httpx
 from attrs import define, evolve, field
@@ -52,6 +52,10 @@ class Client:
     _client: httpx.Client | None = field(default=None, init=False)
     _async_client: httpx.AsyncClient | None = field(default=None, init=False)
     _async_client_loop: asyncio.AbstractEventLoop | None = field(default=None, init=False)
+    # Event hooks are kept here so they survive re-creation of the httpx clients
+    # (the async client is rebuilt whenever the running event loop changes).
+    _event_hooks: dict[str, list[Callable[..., Any]]] = field(factory=dict, init=False)
+    _async_event_hooks: dict[str, list[Callable[..., Any]]] = field(factory=dict, init=False)
 
     def with_base_url(self, base_url: str) -> "Client":
         """Get a new client matching this one with a new base URL"""
@@ -64,21 +68,23 @@ class Client:
 
     def with_headers(self, headers: dict[str, str]) -> "Client":
         """Get a new client matching this one with additional headers"""
-        self._headers = headers
+        merged_headers = {**self._headers, **headers}
+        self._headers = merged_headers
         if self._client is not None:
             self._client.headers.update(headers)
         if self._async_client is not None:
             self._async_client.headers.update(headers)
-        return evolve(self, headers={**self._headers, **headers})
+        return evolve(self, headers=merged_headers)
 
     def with_cookies(self, cookies: dict[str, str]) -> "Client":
         """Get a new client matching this one with additional cookies"""
-        self._cookies = cookies
+        merged_cookies = {**self._cookies, **cookies}
+        self._cookies = merged_cookies
         if self._client is not None:
             self._client.cookies.update(cookies)
         if self._async_client is not None:
             self._async_client.cookies.update(cookies)
-        return evolve(self, cookies={**self._cookies, **cookies})
+        return evolve(self, cookies=merged_cookies)
 
     def with_timeout(self, timeout: httpx.Timeout) -> "Client":
         """Get a new client matching this one with a new timeout (in seconds)"""
@@ -98,6 +104,27 @@ class Client:
             self._async_client.auth = auth
         return evolve(self, auth=auth)
 
+    def with_event_hooks(
+        self,
+        sync_hooks: dict[str, list[Callable[..., Any]]] | None = None,
+        async_hooks: dict[str, list[Callable[..., Any]]] | None = None,
+    ) -> "Client":
+        """Set httpx event hooks, kept when the underlying httpx clients are re-created.
+
+        ``sync_hooks`` apply to the ``httpx.Client`` and ``async_hooks`` to the
+        ``httpx.AsyncClient``. Each maps an event name (``request``/``response``) to
+        its hook list and replaces any hooks previously set for that event.
+        """
+        if sync_hooks is not None:
+            self._event_hooks = {**self._event_hooks, **sync_hooks}
+            if self._client is not None:
+                self._client.event_hooks = self._event_hooks
+        if async_hooks is not None:
+            self._async_event_hooks = {**self._async_event_hooks, **async_hooks}
+            if self._async_client is not None:
+                self._async_client.event_hooks = self._async_event_hooks
+        return self
+
     def set_httpx_client(self, client: httpx.Client) -> "Client":
         """Manually set the underlying httpx.Client
 
@@ -110,6 +137,7 @@ class Client:
         """Get the underlying httpx.Client, constructing a new one if not previously set"""
         if self._client is None:
             self._client = httpx.Client(
+                event_hooks=self._event_hooks or None,
                 base_url=self._base_url,
                 cookies=self._cookies,
                 headers=self._headers,
@@ -151,6 +179,7 @@ class Client:
 
         if self._async_client is None:
             self._async_client = httpx.AsyncClient(
+                event_hooks=self._async_event_hooks or None,
                 base_url=self._base_url,
                 cookies=self._cookies,
                 headers=self._headers,

@@ -8,6 +8,7 @@ from .sandbox import (
     SyncSandboxProcess,
     SyncSandboxSchedules,
 )
+from .snapshot import SyncSandboxSnapshots
 from .system import SyncSandboxSystem
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "SyncSandboxCodegen",
     "SyncSandboxSystem",
     "SyncSandboxDrive",
+    "SyncSandboxSnapshots",
     "SyncCodeInterpreter",
 ]

@@ -5,6 +5,8 @@ import time
 import pytest
 import pytest_asyncio
 
+from blaxel.core.client.api.drives.get_drive import asyncio_detailed as get_drive
+from blaxel.core.client.client import client
 from blaxel.core.drive import DriveInstance
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import (
@@ -78,7 +80,6 @@ class TestDriveInstanceCRUD(TestDriveOperations):
         self.created_drives.append(name)
 
         assert drive.name == name
-        assert drive.size == 10
         assert drive.region == default_region
 
     async def test_creates_a_drive_with_display_name(self):
@@ -209,11 +210,19 @@ class TestDriveInstanceCRUD(TestDriveOperations):
                 "labels": default_labels,
             }
         )
+        self.created_drives.append(name)
         await drive.delete()
 
-        # Drive should no longer exist
-        with pytest.raises(Exception):
-            await DriveInstance.get(name)
+        async def wait_until_deleted():
+            # Storage cleanup is asynchronous; only an actual HTTP 404 confirms deletion.
+            while True:
+                response = await get_drive(drive_name=name, client=client)
+                if response.status_code == 404:
+                    return
+                assert response.status_code == 200, response.status_code
+                await asyncio.sleep(1)
+
+        await asyncio.wait_for(wait_until_deleted(), timeout=45)
 
     async def test_creates_drive_if_not_exists(self):
         """Test creating a drive with idempotency."""

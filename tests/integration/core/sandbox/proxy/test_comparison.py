@@ -8,12 +8,15 @@ import pytest_asyncio
 
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import async_sleep, default_image, default_labels, unique_name
+from tests.helpers.echo import echo_host, echo_url
 
 from .helpers import (
     PROXY_HELPER_SCRIPT,
     default_region,
     lowercase_keys,
     parse_json_output,
+    parse_response_headers,
+    write_echo_url,
 )
 
 
@@ -27,18 +30,6 @@ async def _timed_exec(sandbox: SandboxInstance, command: str):
     }
 
 
-def _is_transient_httpbin_gateway_response(*logs: str | None) -> bool:
-    output = "\n".join(log or "" for log in logs).lower()
-    return any(
-        fragment in output
-        for fragment in (
-            "502 bad gateway",
-            "503 service unavailable",
-            "504 gateway",
-        )
-    )
-
-
 @pytest.mark.asyncio(loop_scope="class")
 class TestProxyComparison:
     """Compare behavior and latency between a proxy and a no-proxy sandbox."""
@@ -50,6 +41,7 @@ class TestProxyComparison:
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup_sandboxes(self, request):
+        echo_hostname = await echo_host()
         request.cls.proxy_name = unique_name("cmp-proxy")
         request.cls.no_proxy_name = unique_name("cmp-noproxy")
 
@@ -64,7 +56,7 @@ class TestProxyComparison:
                         "proxy": {
                             "routing": [
                                 {
-                                    "destinations": ["httpbin.org"],
+                                    "destinations": [echo_hostname],
                                     "headers": {
                                         "X-Proxy-Compare": "with-proxy",
                                         "X-Api-Key": "{{SECRET:cmp-key}}",
@@ -92,13 +84,15 @@ class TestProxyComparison:
         await asyncio.gather(
             proxy_sb.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT),
             no_proxy_sb.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT),
+            write_echo_url(proxy_sb),
+            write_echo_url(no_proxy_sb),
         )
 
         # Warm up the proxy path: the proxy config may take a moment to propagate.
         for _ in range(10):
             warmup = await proxy_sb.process.exec(
                 {
-                    "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                    "command": "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers",
                     "wait_for_completion": True,
                 }
             )
@@ -119,7 +113,7 @@ class TestProxyComparison:
                 pass
 
     async def test_proxy_injects_headers_no_proxy_does_not(self):
-        cmd = "node /tmp/proxy-test.js GET https://httpbin.org/headers"
+        cmd = "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/headers"
         proxy_result, no_proxy_result = await asyncio.gather(
             _timed_exec(self.proxy_sandbox, cmd),
             _timed_exec(self.no_proxy_sandbox, cmd),
@@ -132,11 +126,11 @@ class TestProxyComparison:
 
         assert proxy_headers["x-proxy-compare"] == "with-proxy"
         assert proxy_headers["x-api-key"] == "comparison-secret-123"
-        assert proxy_headers.get("x-blaxel-request-id") is not None
+        assert parse_response_headers(proxy_result["logs"]).get("x-blaxel-request-id") is not None
 
         assert no_proxy_headers.get("x-proxy-compare") is None
         assert no_proxy_headers.get("x-api-key") is None
-        assert no_proxy_headers.get("x-blaxel-request-id") is None
+        assert parse_response_headers(no_proxy_result["logs"]).get("x-blaxel-request-id") is None
 
         print(
             f"[compare GET headers] proxy: {proxy_result['duration_ms']}ms, "
@@ -146,7 +140,7 @@ class TestProxyComparison:
 
     async def test_proxy_injects_body_fields_no_proxy_does_not(self):
         cmd = (
-            """node /tmp/proxy-test.js POST https://httpbin.org/post """
+            """node /tmp/proxy-test.js POST $(cat /tmp/echo-url)/post """
             """'{}' '{"user_data":"original"}'"""
         )
         proxy_result, no_proxy_result = await asyncio.gather(
@@ -197,35 +191,20 @@ class TestProxyComparison:
         assert np_envs["NODE_EXTRA_CA_CERTS"] == "unset"
 
     async def test_both_sandboxes_reach_same_endpoint_successfully(self):
-        cmd = "node /tmp/proxy-test.js GET https://httpbin.org/get"
-        last_error: ValueError | None = None
-        for attempt in range(3):
-            proxy_result, no_proxy_result = await asyncio.gather(
-                _timed_exec(self.proxy_sandbox, cmd),
-                _timed_exec(self.no_proxy_sandbox, cmd),
-            )
-            assert proxy_result["exit_code"] == 0
-            assert no_proxy_result["exit_code"] == 0
+        cmd = "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get"
+        proxy_result, no_proxy_result = await asyncio.gather(
+            _timed_exec(self.proxy_sandbox, cmd),
+            _timed_exec(self.no_proxy_sandbox, cmd),
+        )
+        assert proxy_result["exit_code"] == 0
+        assert no_proxy_result["exit_code"] == 0
 
-            try:
-                proxy_json = parse_json_output(proxy_result["logs"])
-                no_proxy_json = parse_json_output(no_proxy_result["logs"])
-                break
-            except ValueError as e:
-                last_error = e
-                if not _is_transient_httpbin_gateway_response(
-                    proxy_result["logs"], no_proxy_result["logs"]
-                ):
-                    raise
-                if attempt < 2:
-                    await async_sleep(2)
-                    continue
-                pytest.skip(f"httpbin gateway response while comparing proxy path: {e}")
-        else:
-            raise last_error or AssertionError("comparison did not produce JSON")
+        proxy_json = parse_json_output(proxy_result["logs"])
+        no_proxy_json = parse_json_output(no_proxy_result["logs"])
 
-        assert proxy_json["url"] == "https://httpbin.org/get"
-        assert no_proxy_json["url"] == "https://httpbin.org/get"
+        expected_url = await echo_url() + "/get"
+        assert proxy_json["url"] == expected_url
+        assert no_proxy_json["url"] == expected_url
         print(
             f"[compare GET /get] proxy: {proxy_result['duration_ms']}ms, "
             f"no-proxy: {no_proxy_result['duration_ms']}ms, "
@@ -239,10 +218,10 @@ class TestProxyComparison:
         for _ in range(iterations):
             p, np = await asyncio.gather(
                 _timed_exec(
-                    self.proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"
+                    self.proxy_sandbox, "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get"
                 ),
                 _timed_exec(
-                    self.no_proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"
+                    self.no_proxy_sandbox, "node /tmp/proxy-test.js GET $(cat /tmp/echo-url)/get"
                 ),
             )
             assert p["exit_code"] == 0

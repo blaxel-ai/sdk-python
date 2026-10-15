@@ -1,5 +1,7 @@
+import httpx
 import pytest
 
+from blaxel.core import ResponseError
 from blaxel.core.sandbox.default.filesystem import SandboxFileSystem
 from blaxel.core.sandbox.sync.filesystem import SyncSandboxFileSystem
 
@@ -97,3 +99,28 @@ def test_sync_multipart_upload_aborts_when_part_thread_fails():
     assert 2 in uploaded_parts
     assert aborted_uploads == ["upload-1"]
     assert completed_parts == []
+
+
+@pytest.mark.parametrize("sync", [False, True])
+async def test_write_tree_raises_typed_error_before_decoding_html(sync):
+    html = "<html>413 Request Entity Too Large</html>"
+    transport = httpx.MockTransport(lambda request: httpx.Response(413, text=html))
+    if sync:
+        filesystem = object.__new__(SyncSandboxFileSystem)
+        filesystem.get_client = lambda: httpx.Client(
+            base_url="https://sandbox.test", transport=transport
+        )
+        with pytest.raises(ResponseError) as caught:
+            filesystem.write_tree([])
+    else:
+        filesystem = object.__new__(SandboxFileSystem)
+        async with httpx.AsyncClient(
+            base_url="https://sandbox.test", transport=transport
+        ) as client:
+            filesystem.get_client = lambda: client
+            with pytest.raises(ResponseError) as caught:
+                await filesystem.write_tree([])
+    assert caught.value.status == 413
+    assert caught.value.body == html
+    assert caught.value.code is None
+    assert caught.value.retryable is None

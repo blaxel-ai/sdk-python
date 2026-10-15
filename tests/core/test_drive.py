@@ -153,13 +153,13 @@ class TestDriveUpdateWithPermissions:
     async def test_update_permissions_via_config(self, mock_get, mock_update):
         existing = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1"),
+            spec=DriveSpec(region="us-pdx-1"),
         )
         mock_get.return_value = DriveInstance(existing)
 
         updated = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
+            spec=DriveSpec(region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
         )
         mock_update.return_value = updated
 
@@ -175,13 +175,13 @@ class TestDriveUpdateWithPermissions:
     async def test_update_permissions_via_dict(self, mock_get, mock_update):
         existing = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1"),
+            spec=DriveSpec(region="us-pdx-1"),
         )
         mock_get.return_value = DriveInstance(existing)
 
         updated = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
+            spec=DriveSpec(region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
         )
         mock_update.return_value = updated
 
@@ -196,17 +196,17 @@ class TestDriveUpdateWithPermissions:
     async def test_update_preserves_existing_permissions(self, mock_get, mock_update):
         existing = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
+            spec=DriveSpec(region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
         )
         mock_get.return_value = DriveInstance(existing)
 
         updated = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=20, region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
+            spec=DriveSpec(region="us-pdx-1", permissions=SAMPLE_PERMISSIONS),
         )
         mock_update.return_value = updated
 
-        await DriveInstance.update("d1", {"size": 20})
+        await DriveInstance.update("d1", {"display_name": "D1"})
 
         body = mock_update.call_args.kwargs["body"]
         assert body.spec.permissions is SAMPLE_PERMISSIONS
@@ -217,13 +217,13 @@ class TestDriveUpdateWithPermissions:
         new_perms = [make_permission(mode="read", path="/shared")]
         existing = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1"),
+            spec=DriveSpec(region="us-pdx-1"),
         )
         mock_get.return_value = DriveInstance(existing)
 
         updated = Drive(
             metadata=Metadata(name="d1"),
-            spec=DriveSpec(size=10, region="us-pdx-1", permissions=new_perms),
+            spec=DriveSpec(region="us-pdx-1", permissions=new_perms),
         )
         mock_update.return_value = updated
 

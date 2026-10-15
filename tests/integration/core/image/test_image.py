@@ -113,3 +113,24 @@ class TestImage:
 
         assert logs is not None
         assert "vim" in logs.lower()
+
+
+@pytest.mark.skipif(not IMAGE_BUILD, reason="IMAGE_BUILD environment variable is not set to true")
+@pytest.mark.asyncio
+async def test_build_with_worker_memory_and_volume():
+    """build_memory/build_volume reach the builder like `bl push --memory/--volume`."""
+    image_name = f"image-resources-{uuid.uuid4().hex[:8]}"
+    try:
+        sandbox = await ImageInstance.from_registry("alpine:3.20").build(
+            name=image_name,
+            memory=2048,
+            timeout=900.0,
+            build_memory=8192,
+            build_volume=16384,
+        )
+        labels = sandbox.metadata.labels.to_dict()
+        assert sandbox.status == "DEPLOYED"
+        assert labels["x-blaxel-build-memory"] == "8192"
+        assert labels["x-blaxel-build-volume"] == "16384"
+    finally:
+        await SandboxInstance.delete(image_name)
