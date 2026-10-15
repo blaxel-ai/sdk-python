@@ -310,6 +310,27 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+Protected copy is opt-in; ordinary `cp` still overwrites:
+
+```python
+try:
+    await sandbox.fs.cp("/tmp/source.txt", "/tmp/target.txt", no_overwrite=True)
+except FileExistsError:
+    pass  # Existing effective target was left unchanged.
+# SyncSandboxInstance: same method and keyword, without await.
+```
+
+With `no_overwrite`, the sandbox API copies in one request (`POST /filesystem-copy`) and
+creates every entry exclusively, so there is no check-then-write race. Like `cp -r`, an
+existing destination directory (or symlink to one) is a container: the protected target is
+its child named after the source. An existing target, including an empty directory or a
+dangling symlink, is a conflict and is left unchanged; directories are never merged.
+
+The copy is not a transaction: if it fails part-way, entries it already created remain, and
+a retry conflicts with them. Source symlinks are copied as symlinks; special files are refused.
+It needs a sandbox image whose API has the copy endpoint and raises `RuntimeError` on older
+ones, never falling back to an overwriting copy.
+
 #### Volumes
 
 Persist data by attaching and using volumes:
