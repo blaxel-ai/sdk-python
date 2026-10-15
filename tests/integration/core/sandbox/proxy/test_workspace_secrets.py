@@ -19,10 +19,11 @@ from .helpers import (
     write_echo_url,
 )
 
-# /secrets ships with controlplane#5736; skip until the target environment serves it.
+# Workspace secrets are behind the "workspace-secrets" feature flag (403 when off,
+# 404 on environments that predate controlplane#5736): skip unless the workspace has them.
 pytestmark = pytest.mark.skipif(
-    client.get_httpx_client().get("/secrets").status_code == 404,
-    reason="workspace secrets API not deployed on this environment",
+    client.get_httpx_client().get("/secrets").status_code in (403, 404),
+    reason="workspace secrets not enabled for this workspace/environment",
 )
 
 
