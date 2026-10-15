@@ -8,6 +8,7 @@ failures remain filtered even when they are unhandled.
 import asyncio
 import gc
 import json
+import socket
 import sys
 import threading
 import time
@@ -18,6 +19,7 @@ from typing import Any, cast
 
 import httpx
 import pytest
+import requests
 
 import blaxel
 import blaxel.core.common.sentry as sentry
@@ -777,3 +779,78 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestTransientNetworkErrors:
+    """Network connectivity failures are environment issues, not SDK defects.
+
+    Regression coverage for SDK-PYTHON-120: a DNS resolution failure while fetching
+    an OAuth token (``requests.exceptions.ConnectionError`` wrapping a
+    ``NameResolutionError`` / ``[Errno -5]``) reaches an unhandled boundary through an
+    SDK frame but must not be reported to Sentry as an SDK bug.
+    """
+
+    _DNS_FAILURE_MESSAGE = (
+        "HTTPSConnectionPool(host='api.blaxel.ai', port=443): Max retries exceeded with "
+        'url: /v0/oauth/token (Caused by NameResolutionError("HTTPSConnection('
+        "host='api.blaxel.ai', port=443): Failed to resolve 'api.blaxel.ai' ([Errno -5] "
+        'No address associated with hostname)"))'
+    )
+
+    def test_dns_resolution_failure_is_transient(self):
+        exc = requests.exceptions.ConnectionError(self._DNS_FAILURE_MESSAGE)
+        assert sentry._is_transient_network_error(exc) is True
+
+    def test_connectivity_and_timeout_failures_are_transient(self):
+        transient = [
+            httpx.ConnectError("failed to connect"),
+            httpx.ConnectTimeout("connect timed out"),
+            httpx.ReadTimeout("read timed out"),
+            requests.exceptions.ReadTimeout("read timed out"),
+            requests.exceptions.ConnectTimeout("connect timed out"),
+            socket.gaierror(-5, "No address associated with hostname"),
+            ConnectionResetError("connection reset by peer"),
+        ]
+        for exc in transient:
+            assert sentry._is_transient_network_error(exc) is True, type(exc).__name__
+
+    def test_http_status_and_url_errors_are_not_transient(self):
+        request = httpx.Request("POST", "https://api.blaxel.ai/v0/oauth/token")
+        not_transient = [
+            httpx.HTTPStatusError("500", request=request, response=httpx.Response(500)),
+            requests.exceptions.HTTPError("500 Server Error"),
+            requests.exceptions.InvalidURL("malformed url"),
+            requests.exceptions.MissingSchema("no scheme"),
+            RuntimeError("sdk logic failure"),
+        ]
+        for exc in not_transient:
+            assert sentry._is_transient_network_error(exc) is False, type(exc).__name__
+
+    def test_sdk_originated_network_error_is_not_captured(self):
+        exc = _raise_in_file(
+            _sdk_filename("core/authentication/clientcredentials.py"),
+            "raise requests.exceptions.ConnectionError(message)",
+            {"requests": requests, "message": self._DNS_FAILURE_MESSAGE},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_sdk_originated_http_status_error_is_still_captured(self):
+        exc = _raise_in_file(
+            _sdk_filename("core/authentication/clientcredentials.py"),
+            "raise requests.exceptions.HTTPError('500 Server Error')",
+            {"requests": requests},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_unhandled_network_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_file(
+            _sdk_filename("core/authentication/clientcredentials.py"),
+            "raise requests.exceptions.ConnectionError(message)",
+            {"requests": requests, "message": self._DNS_FAILURE_MESSAGE},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
