@@ -405,11 +405,33 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_expected_api_error(error: BaseException) -> bool:
+    """Check whether an exception is the SDK surfacing a control-plane HTTP status.
+
+    Every non-success response from the control plane is raised as an exception
+    that carries the HTTP status the server returned (``SandboxAPIError``,
+    ``UnexpectedStatus`` and its subclasses, ...). Such an error is the SDK
+    faithfully reporting a server-side rejection or a caller configuration
+    problem -- an invalid create request (HTTP 400), a missing resource
+    (HTTP 404), a conflict (HTTP 409) -- not a defect in SDK code. Reporting
+    these to the SDK's own error tracker turns expected API failures into false
+    "SDK bug" noise, so they are filtered out the same way expected
+    optional-dependency import errors are. Errors that carry no HTTP status
+    stay reportable: they are not a plain server response.
+    """
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        status_code = getattr(getattr(error, "response", None), "status_code", None)
+    return type(status_code) is int and 100 <= status_code <= 599
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_expected_api_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
