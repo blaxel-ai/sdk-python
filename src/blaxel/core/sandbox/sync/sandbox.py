@@ -60,6 +60,7 @@ from ..default.sandbox import (
     _unwrap_response,
     _validate_creation_timeout,
 )
+from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -464,6 +465,14 @@ class SyncSandboxInstance:
             ttl = config.ttl
             expires = config.expires
             region = config.region or settings.region
+            # What the caller asked for, read before the defaults above fill the gaps:
+            # create_if_not_exists compares only these with the sandbox it gets back.
+            requested = RequestedSandbox(
+                image=config.image,
+                memory=config.memory,
+                region=config.region,
+                envs=config._normalize_envs(),
+            )
             if not region:
                 warnings.warn(
                     "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
@@ -517,6 +526,7 @@ class SyncSandboxInstance:
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
             assert isinstance(sandbox, Sandbox)
+            requested = requested_from_model(sandbox)
 
             if not sandbox.metadata:
                 sandbox.metadata = Metadata(name=None)
@@ -551,6 +561,12 @@ class SyncSandboxInstance:
             message = response.message if response.message else str(response)
             raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
+        if create_if_not_exist:
+            # The sandbox already holding the name comes back as is, whatever it was
+            # created with. Say so when it is not what was asked for; only a warning.
+            drift = drift_message(requested, response)
+            if drift:
+                warnings.warn(drift, stacklevel=caller_stacklevel())
         instance = cls(response)
         if safe:
             try:
