@@ -86,9 +86,9 @@ class VolumeTemplate:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = Metadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = VolumeTemplateSpec.from_dict(d.pop("spec"))
+        spec = VolumeTemplateSpec.from_dict(d.pop("spec", UNSET))
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, VolumeTemplateState]
