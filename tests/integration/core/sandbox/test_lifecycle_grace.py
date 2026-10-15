@@ -19,7 +19,7 @@ class TestSandboxLifecycleGrace:
                 "name": name,
                 "image": default_image,
                 "termination_grace_period_seconds": 30,
-                "standby_grace_period_seconds": 10,
+                "standby_grace_period_seconds": 30,
                 "labels": default_labels,
             }
         )
@@ -27,7 +27,7 @@ class TestSandboxLifecycleGrace:
         try:
             retrieved = await SandboxInstance.get(name)
             assert retrieved.spec.runtime.termination_grace_period_seconds == 30
-            assert retrieved.spec.runtime.standby_grace_period_seconds == 10
+            assert retrieved.spec.runtime.standby_grace_period_seconds == 30
         finally:
             await SandboxInstance.delete(name)
 
@@ -38,7 +38,7 @@ class TestSandboxLifecycleGrace:
                 {
                     "name": name,
                     "image": default_image,
-                    "standby_grace_period_seconds": 11,
+                    "standby_grace_period_seconds": 31,
                     "labels": default_labels,
                 }
             )
