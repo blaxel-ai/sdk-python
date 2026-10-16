@@ -67,7 +67,7 @@ def sync_detailed(
     Args:
         body (Secret): Workspace secret, referenced from proxy routing as {{SECRET:name}}. Values
             are write-only and can never be read back. Every upsert stores a new immutable version and
-            the latest one is resolved at runtime.
+            the latest one is resolved at runtime, only for requests to its destinations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -101,7 +101,7 @@ def sync(
     Args:
         body (Secret): Workspace secret, referenced from proxy routing as {{SECRET:name}}. Values
             are write-only and can never be read back. Every upsert stores a new immutable version and
-            the latest one is resolved at runtime.
+            the latest one is resolved at runtime, only for requests to its destinations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -130,7 +130,7 @@ async def asyncio_detailed(
     Args:
         body (Secret): Workspace secret, referenced from proxy routing as {{SECRET:name}}. Values
             are write-only and can never be read back. Every upsert stores a new immutable version and
-            the latest one is resolved at runtime.
+            the latest one is resolved at runtime, only for requests to its destinations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -162,7 +162,7 @@ async def asyncio(
     Args:
         body (Secret): Workspace secret, referenced from proxy routing as {{SECRET:name}}. Values
             are write-only and can never be read back. Every upsert stores a new immutable version and
-            the latest one is resolved at runtime.
+            the latest one is resolved at runtime, only for requests to its destinations.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
