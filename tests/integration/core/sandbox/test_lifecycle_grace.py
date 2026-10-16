@@ -38,7 +38,7 @@ class TestSandboxLifecycleGrace:
                 {
                     "name": name,
                     "image": default_image,
-                    "standby_grace_period_seconds": 31,
+                    "standby_grace_period_seconds": 301,
                     "labels": default_labels,
                 }
             )
