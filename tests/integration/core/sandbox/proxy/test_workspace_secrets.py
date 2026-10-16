@@ -65,10 +65,10 @@ class TestWorkspaceSecretsResolvedByProxy:
         cls.ws_secret = unique_name("ws-token")
         cls.shared_name = unique_name("ws-shared")
         cls.missing_name = unique_name("ws-missing")
-        await SecretInstance.set(cls.ws_secret, "ws-value-1")
-        await SecretInstance.set(cls.shared_name, "workspace-level")
-
         echo_hostname = await echo_host()
+        await SecretInstance.set(cls.ws_secret, "ws-value-1", [echo_hostname])
+        await SecretInstance.set(cls.shared_name, "workspace-level", [echo_hostname])
+
         cls.sandbox_name = unique_name("proxy-ws-sec")
         cls.sandbox = await SandboxInstance.create(
             {
@@ -109,8 +109,7 @@ class TestWorkspaceSecretsResolvedByProxy:
             pass
 
     async def test_resolves_workspace_secret_the_rule_does_not_declare(self):
-        headers = await headers_seen_by_upstream(self.sandbox)
-        assert headers["x-ws-token"] == "Bearer ws-value-1"
+        await wait_for_header(self.sandbox, "x-ws-token", "Bearer ws-value-1")
 
     async def test_resolves_workspace_secret_in_post_body(self):
         result = await self.sandbox.process.exec(
@@ -139,7 +138,7 @@ class TestWorkspaceSecretsResolvedByProxy:
         assert "x-missing" not in headers
 
     async def test_serves_latest_value_after_rotation(self):
-        await SecretInstance.set(self.ws_secret, "ws-value-2")
+        await SecretInstance.set(self.ws_secret, "ws-value-2", [await echo_host()])
         await wait_for_header(self.sandbox, "x-ws-token", "Bearer ws-value-2")
 
     async def test_stops_injecting_header_once_workspace_secret_is_deleted(self):
