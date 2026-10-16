@@ -443,6 +443,10 @@ class SyncSandboxInstance:
                     or "snapshot_enabled"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "labels" in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "termination_grace_period_seconds"
+                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "standby_grace_period_seconds"
+                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -491,6 +495,14 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime.ttl = ttl
             if expires and sandbox.spec.runtime:
                 sandbox.spec.runtime.expires = expires.isoformat()
+            if config.termination_grace_period_seconds is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime.termination_grace_period_seconds = (
+                    config.termination_grace_period_seconds
+                )
+            if config.standby_grace_period_seconds is not None and sandbox.spec.runtime:
+                sandbox.spec.runtime.standby_grace_period_seconds = (
+                    config.standby_grace_period_seconds
+                )
             if region:
                 sandbox.spec.region = region
             if lifecycle:
