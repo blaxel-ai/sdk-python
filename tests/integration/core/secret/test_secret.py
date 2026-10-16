@@ -4,34 +4,18 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core import SecretInstance, SyncSecretInstance
-from blaxel.core.client.client import client
 from blaxel.core.client.types import UNSET
 from blaxel.core.errors import BlaxelError
 from tests.helpers import unique_name
+from tests.helpers.secrets import destinations_supported
 
 
 def _secret_name(prefix: str) -> str:
     return unique_name(prefix).replace(".", "-")
 
 
-def _destinations_supported() -> bool:
-    """Workspace secrets are behind the "workspace-secrets" feature flag (403 when off, 404 on
-    environments that predate controlplane#5736), and environments that predate
-    controlplane#5802 accept but silently drop `destinations`. Probe with a throwaway secret
-    and only run when the API echoes the destinations back."""
-    http = client.get_httpx_client()
-    name = _secret_name("sdk-test-secret-probe")
-    response = http.post(
-        "/secrets", json={"name": name, "value": "probe", "destinations": ["api.stripe.com"]}
-    )
-    if response.status_code != 200:
-        return False
-    http.delete(f"/secrets/{name}")
-    return isinstance(response.json().get("destinations"), list)
-
-
 pytestmark = pytest.mark.skipif(
-    not _destinations_supported(),
+    not destinations_supported(),
     reason="destination-scoped workspace secrets not available in this workspace/environment",
 )
 

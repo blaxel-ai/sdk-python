@@ -6,10 +6,10 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core import SecretInstance
-from blaxel.core.client.client import client
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 from tests.helpers.echo import echo_host
+from tests.helpers.secrets import destinations_supported
 
 from .helpers import (
     PROXY_HELPER_SCRIPT,
@@ -19,11 +19,9 @@ from .helpers import (
     write_echo_url,
 )
 
-# Workspace secrets are behind the "workspace-secrets" feature flag (403 when off,
-# 404 on environments that predate controlplane#5736): skip unless the workspace has them.
 pytestmark = pytest.mark.skipif(
-    client.get_httpx_client().get("/secrets").status_code in (403, 404),
-    reason="workspace secrets not enabled for this workspace/environment",
+    not destinations_supported(),
+    reason="destination-scoped workspace secrets not available in this workspace/environment",
 )
 
 
