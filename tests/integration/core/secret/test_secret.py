@@ -9,16 +9,31 @@ from blaxel.core.client.types import UNSET
 from blaxel.core.errors import BlaxelError
 from tests.helpers import unique_name
 
-# Workspace secrets are behind the "workspace-secrets" feature flag (403 when off,
-# 404 on environments that predate controlplane#5736): skip unless the workspace has them.
-pytestmark = pytest.mark.skipif(
-    client.get_httpx_client().get("/secrets").status_code in (403, 404),
-    reason="workspace secrets not enabled for this workspace/environment",
-)
-
 
 def _secret_name(prefix: str) -> str:
     return unique_name(prefix).replace(".", "-")
+
+
+def _destinations_supported() -> bool:
+    """Workspace secrets are behind the "workspace-secrets" feature flag (403 when off, 404 on
+    environments that predate controlplane#5736), and environments that predate
+    controlplane#5802 accept but silently drop `destinations`. Probe with a throwaway secret
+    and only run when the API echoes the destinations back."""
+    http = client.get_httpx_client()
+    name = _secret_name("sdk-test-secret-probe")
+    response = http.post(
+        "/secrets", json={"name": name, "value": "probe", "destinations": ["api.stripe.com"]}
+    )
+    if response.status_code != 200:
+        return False
+    http.delete(f"/secrets/{name}")
+    return isinstance(response.json().get("destinations"), list)
+
+
+pytestmark = pytest.mark.skipif(
+    not _destinations_supported(),
+    reason="destination-scoped workspace secrets not available in this workspace/environment",
+)
 
 
 def _by_name(secrets: list[SecretInstance], name: str) -> list[SecretInstance]:
