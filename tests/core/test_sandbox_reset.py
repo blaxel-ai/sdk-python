@@ -113,6 +113,11 @@ def body_of(mock, call: int) -> dict:
     return mock.call_args_list[call].kwargs["body"]
 
 
+def key_of(post, call: int) -> str:
+    """The Idempotency-Key a reset call carried."""
+    return post.call_args_list[call].args[2]
+
+
 ASYNC = "blaxel.core.sandbox.default.sandbox"
 SYNC = "blaxel.core.sandbox.sync.sandbox"
 
@@ -129,6 +134,8 @@ def aio():
         patch(f"{ASYNC}.get_health", new_callable=AsyncMock) as probe,
     ):
         probe.return_value = healthy()
+        # The record read alongside the reset call.
+        get.return_value = record("DEPLOYED")
         yield SimpleNamespace(post=post, get=get, update=update, probe=probe)
 
 
@@ -151,9 +158,10 @@ async def test_reset_resets_the_sandbox_in_one_call_and_waits_until_it_answers(a
     assert instance.status == "DEPLOYED"
     assert aio.post.await_count == 1
     assert aio.post.call_args.args[0] == "my-sandbox"
+    assert len(key_of(aio.post, 0)) == 36
     assert aio.probe.await_count == 1
-    # Nothing is switched off and on.
-    aio.get.assert_not_called()
+    # The record is read once, alongside the call, and nothing is switched off and on.
+    assert aio.get.await_count == 1
     aio.update.assert_not_called()
 
 
@@ -187,7 +195,7 @@ async def test_reset_propagates_what_the_control_plane_refuses_without_switching
         await SandboxInstance.reset("my-sandbox", interval=0)
 
     assert err.value.status_code == 409
-    aio.get.assert_not_called()
+    assert aio.post.await_count == 1
     aio.update.assert_not_called()
 
 
@@ -209,6 +217,67 @@ async def test_reset_asks_again_after_an_edge_error_or_a_dropped_connection(aio)
 
     assert instance.status == "DEPLOYED"
     assert aio.post.await_count == 3
+    # Each call sent again follows a read showing the same sandbox, and carries
+    # the key of the first: a control plane that already ran the reset does not
+    # run it again.
+    assert aio.get.await_count == 3
+    assert key_of(aio.post, 1) == key_of(aio.post, 0)
+    assert key_of(aio.post, 2) == key_of(aio.post, 0)
+
+
+async def test_reset_gives_every_reset_its_own_key(aio):
+    aio.post.return_value = reset_done()
+
+    await SandboxInstance.reset("my-sandbox", interval=0)
+    await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert key_of(aio.post, 1) != key_of(aio.post, 0)
+
+
+async def test_reset_does_not_ask_again_once_the_sandbox_is_created_again(aio):
+    aio.post.return_value = refused(502, "Bad Gateway")
+    aio.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED", created_at="2026-10-19T12:05:00Z"),
+    ]
+
+    with (
+        patch(f"{ASYNC}._retry_delay", return_value=0),
+        pytest.raises(
+            SandboxAPIError,
+            match="deleted and created again during its reset; the reset call whose answer "
+            "was lost may have reached the new sandbox, which is not reset again",
+        ),
+    ):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert aio.post.await_count == 1
+
+
+async def test_reset_does_not_ask_again_once_the_sandbox_is_deleted(aio):
+    aio.post.return_value = refused(504, "Gateway Timeout")
+    aio.get.side_effect = [record("DEPLOYED"), not_found()]
+
+    with (
+        patch(f"{ASYNC}._retry_delay", return_value=0),
+        pytest.raises(SandboxAPIError, match="was deleted"),
+    ):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert aio.post.await_count == 1
+
+
+async def test_reset_says_so_when_it_reset_another_sandbox_than_the_one_it_started_on(aio):
+    aio.post.return_value = httpx.Response(
+        200, json=record("DEPLOYED", created_at="2026-10-19T12:05:00Z").to_dict()
+    )
+
+    with pytest.raises(
+        SandboxAPIError, match="deleted and created again as its reset started; the new sandbox"
+    ):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    aio.probe.assert_not_called()
 
 
 async def test_reset_gives_up_waiting_on_the_control_plane_at_max_wait(aio):
@@ -255,7 +324,14 @@ async def test_reset_posts_through_the_control_plane_client_cut_at_max_wait():
     seen = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        seen.append((request.method, request.url.path, request.extensions.get("timeout")))
+        seen.append(
+            (
+                request.method,
+                request.url.path,
+                request.extensions.get("timeout"),
+                request.headers.get("Idempotency-Key"),
+            )
+        )
         return httpx.Response(200, json=record("DEPLOYED").to_dict())
 
     control_plane = Client(
@@ -263,12 +339,12 @@ async def test_reset_posts_through_the_control_plane_client_cut_at_max_wait():
     )
     with patch(f"{ASYNC}.client", control_plane):
         response = await async_module._post_reset(
-            "my-sandbox", async_module._reset_deadline(60_000)
+            "my-sandbox", async_module._reset_deadline(60_000), "key-1"
         )
 
     assert response.status_code == 200
-    method, path, timeout = seen[0]
-    assert (method, path) == ("POST", "/sandboxes/my-sandbox/reset")
+    method, path, timeout, key = seen[0]
+    assert (method, path, key) == ("POST", "/sandboxes/my-sandbox/reset", "key-1")
     assert 0 < timeout["read"] <= 60
 
 
@@ -783,6 +859,8 @@ def blocking():
         patch(f"{SYNC}.get_health", new_callable=MagicMock) as probe,
     ):
         probe.return_value = healthy()
+        # The record read alongside the reset call.
+        get.return_value = record("DEPLOYED")
         yield SimpleNamespace(post=post, get=get, update=update, probe=probe)
 
 
@@ -801,8 +879,10 @@ def test_sync_reset_resets_the_sandbox_in_one_call_and_waits_until_it_answers(bl
     assert isinstance(instance, SyncSandboxInstance)
     assert instance.status == "DEPLOYED"
     assert blocking.post.call_count == 1
+    assert len(key_of(blocking.post, 0)) == 36
     assert blocking.probe.call_count == 2
-    blocking.get.assert_not_called()
+    # The record is read once, alongside the call, and nothing is switched off and on.
+    assert blocking.get.call_count == 1
     blocking.update.assert_not_called()
 
 
@@ -839,19 +919,66 @@ def test_sync_reset_posts_through_the_control_plane_client_cut_at_max_wait():
     seen = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        seen.append((request.method, request.url.path, request.extensions.get("timeout")))
+        seen.append(
+            (
+                request.method,
+                request.url.path,
+                request.extensions.get("timeout"),
+                request.headers.get("Idempotency-Key"),
+            )
+        )
         return httpx.Response(200, json=record("DEPLOYED").to_dict())
 
     control_plane = Client(
         base_url="https://api.example", httpx_args={"transport": httpx.MockTransport(handler)}
     )
     with patch(f"{SYNC}.client", control_plane):
-        response = sync_module._post_reset("my-sandbox", sync_module._reset_deadline(60_000))
+        response = sync_module._post_reset(
+            "my-sandbox", sync_module._reset_deadline(60_000), "key-1"
+        )
 
     assert response.status_code == 200
-    method, path, timeout = seen[0]
-    assert (method, path) == ("POST", "/sandboxes/my-sandbox/reset")
+    method, path, timeout, key = seen[0]
+    assert (method, path, key) == ("POST", "/sandboxes/my-sandbox/reset", "key-1")
     assert 0 < timeout["read"] <= 60
+
+
+def test_sync_reset_asks_again_with_the_same_key_while_it_is_the_same_sandbox(blocking):
+    blocking.post.side_effect = [refused(502, "Bad Gateway"), reset_done()]
+
+    with patch(f"{SYNC}._retry_delay", return_value=0):
+        SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert blocking.post.call_count == 2
+    assert blocking.get.call_count == 2
+    assert key_of(blocking.post, 1) == key_of(blocking.post, 0)
+
+
+def test_sync_reset_does_not_ask_again_once_the_sandbox_is_created_again(blocking):
+    blocking.post.return_value = refused(502, "Bad Gateway")
+    blocking.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED", created_at="2026-10-19T12:05:00Z"),
+    ]
+
+    with (
+        patch(f"{SYNC}._retry_delay", return_value=0),
+        pytest.raises(SandboxAPIError, match="which is not reset again"),
+    ):
+        SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert blocking.post.call_count == 1
+
+
+def test_sync_reset_says_so_when_it_reset_another_sandbox_than_the_one_it_started_on(blocking):
+    blocking.post.return_value = httpx.Response(
+        200, json=record("DEPLOYED", created_at="2026-10-19T12:05:00Z").to_dict()
+    )
+
+    with pytest.raises(SandboxAPIError, match="as its reset started; the new sandbox was reset"):
+        SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    blocking.probe.assert_not_called()
 
 
 def test_sync_reset_switches_off_waits_for_the_platform_and_switches_on(blocking_switch):

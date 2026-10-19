@@ -1,6 +1,8 @@
 import logging
 import time
+import uuid
 import warnings
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, Callable, Dict, Union
 
 import httpx
@@ -55,9 +57,11 @@ from ..default.sandbox import (
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     SandboxAPIError,
+    _check_reset_same,
     _check_reset_status,
     _check_resettable,
     _check_same_after_lost_write,
+    _check_same_before_reset_again,
     _check_same_sandbox,
     _check_still_off,
     _check_still_running,
@@ -872,15 +876,39 @@ def _reset_sandbox_by_name(
 ) -> "SyncSandboxInstance":
     deadline = _reset_deadline(max_wait)
     seconds = round(max_wait / 1000)
-    record = _reset_on_control_plane(sandbox_name, deadline, seconds)
-    if record is not None:
-        return _wait_until_answering(
-            sandbox_name, SyncSandboxInstance(record), deadline, seconds, interval
-        )
-    return _reset_by_switching(sandbox_name, deadline, seconds, interval)
+    # The sandbox the reset is for, read alongside the reset call (see the async version).
+    pool = ThreadPoolExecutor(max_workers=1)
+    try:
+        entry = pool.submit(_read_for_reset, sandbox_name, deadline, seconds)
+        record = _reset_on_control_plane(sandbox_name, entry, deadline, seconds)
+        if record is not None:
+            return _wait_until_answering(
+                sandbox_name, SyncSandboxInstance(record), deadline, seconds, interval
+            )
+        return _reset_by_switching(sandbox_name, entry.result(), deadline, seconds, interval)
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
 
-def _post_reset(sandbox_name: str, deadline: float) -> httpx.Response:
+def _entry_or_none(entry: "Future[Sandbox]") -> Sandbox | None:
+    try:
+        return entry.result()
+    except Exception:
+        return None
+
+
+def _check_still_there(sandbox_name: str, entry: Sandbox, deadline: float, seconds: int) -> None:
+    """Before a reset call is sent again: the sandbox must still be the one the reset is for."""
+    try:
+        latest = _read_for_reset(sandbox_name, deadline, seconds)
+    except Exception as e:
+        if _error_status(e) == 404:
+            raise _deleted(sandbox_name) from e
+        raise
+    _check_same_before_reset_again(sandbox_name, entry, latest)
+
+
+def _post_reset(sandbox_name: str, deadline: float, idempotency_key: str) -> httpx.Response:
     """POST /sandboxes/{name}/reset on the control plane, cut at the reset's deadline.
 
     The generated client has no function for it yet, so it goes through the
@@ -889,23 +917,26 @@ def _post_reset(sandbox_name: str, deadline: float) -> httpx.Response:
     return (
         _deadline_client(client, deadline)
         .get_httpx_client()
-        .request("post", f"/sandboxes/{sandbox_name}/reset")
+        .request(
+            "post",
+            f"/sandboxes/{sandbox_name}/reset",
+            headers={"Idempotency-Key": idempotency_key},
+        )
     )
 
 
-def _reset_on_control_plane(sandbox_name: str, deadline: float, seconds: int) -> Sandbox | None:
-    """Ask the control plane to replace the sandbox's instance.
-
-    Answers the sandbox once its new instance runs, or None when the control
-    plane has no such call, for the reset to switch the sandbox off and on
-    instead. A reset asked for twice resets twice, so an answer lost at the edge
-    or on the way is asked for again while there is time.
-    """
+def _reset_on_control_plane(
+    sandbox_name: str, entry: "Future[Sandbox]", deadline: float, seconds: int
+) -> Sandbox | None:
+    """Ask the control plane to replace the sandbox's instance (see the async version)."""
+    idempotency_key = str(uuid.uuid4())
     attempt = 0
     while True:
         attempt += 1
+        if attempt > 1:
+            _check_still_there(sandbox_name, entry.result(), deadline, seconds)
         try:
-            response = _post_reset(sandbox_name, deadline)
+            response = _post_reset(sandbox_name, deadline, idempotency_key)
         except Exception as e:
             if _hit_deadline(e, deadline):
                 raise _not_reset_in_time(sandbox_name, seconds) from e
@@ -915,7 +946,9 @@ def _reset_on_control_plane(sandbox_name: str, deadline: float, seconds: int) ->
         else:
             status = response.status_code
             if 200 <= status < 300:
-                return Sandbox.from_dict(response.json())
+                record = Sandbox.from_dict(response.json())
+                _check_reset_same(sandbox_name, _entry_or_none(entry), record)
+                return record
             if _is_unknown_route(status, response.content):
                 return None
             failure = _reset_refusal(sandbox_name, response)
@@ -1024,10 +1057,9 @@ def _write_enabled(
 
 
 def _reset_by_switching(
-    sandbox_name: str, deadline: float, seconds: int, interval: int
+    sandbox_name: str, current: Sandbox, deadline: float, seconds: int, interval: int
 ) -> "SyncSandboxInstance":
     """Reset a sandbox on a control plane without the reset call (see the async version)."""
-    current = _read_for_reset(sandbox_name, deadline, seconds)
     if _check_resettable(sandbox_name, current):
         try:
             off = _write_enabled(sandbox_name, current, False, current, deadline, seconds)

@@ -3,6 +3,7 @@ import json
 import logging
 import math
 import time
+import uuid
 import warnings
 from typing import Any, Callable, Dict, Union
 
@@ -491,6 +492,30 @@ def _check_same_after_lost_write(
             f"Sandbox {sandbox_name} was deleted and created again during its reset; the "
             f"reset's {switch} write whose answer was lost may have reached the new sandbox, "
             "which is left as it is now"
+        )
+
+
+def _check_same_before_reset_again(sandbox_name: str, entry: Sandbox, record: Sandbox) -> None:
+    """Before a reset call is sent again: the call goes by name, so one whose answer
+    was lost may have reached a sandbox created again under it, which is not reset
+    a second time.
+    """
+    if _created_at(record) != _created_at(entry):
+        raise _ResetStopped(
+            f"Sandbox {sandbox_name} was deleted and created again during its reset; the "
+            "reset call whose answer was lost may have reached the new sandbox, which is not "
+            "reset again"
+        )
+
+
+def _check_reset_same(sandbox_name: str, entry: "Sandbox | None", record: Sandbox) -> None:
+    """A reset that answered for another sandbox than the one under the name as the
+    reset started (when that read succeeded) reset a sandbox created again under it.
+    """
+    if entry is not None and _created_at(record) != _created_at(entry):
+        raise _ResetStopped(
+            f"Sandbox {sandbox_name} was deleted and created again as its reset started; the "
+            "new sandbox was reset"
         )
 
 
@@ -1432,15 +1457,44 @@ async def _reset_sandbox_by_name(
 ) -> "SandboxInstance":
     deadline = _reset_deadline(max_wait)
     seconds = round(max_wait / 1000)
-    record = await _reset_on_control_plane(sandbox_name, deadline, seconds)
-    if record is not None:
-        return await _wait_until_answering(
-            sandbox_name, SandboxInstance(record), deadline, seconds, interval
-        )
-    return await _reset_by_switching(sandbox_name, deadline, seconds, interval)
+    # The sandbox the reset is for, read alongside the reset call so that it adds
+    # no wait: every later step checks it still has that creation date.
+    entry = asyncio.ensure_future(_read_for_reset(sandbox_name, deadline, seconds))
+    try:
+        record = await _reset_on_control_plane(sandbox_name, entry, deadline, seconds)
+        if record is not None:
+            return await _wait_until_answering(
+                sandbox_name, SandboxInstance(record), deadline, seconds, interval
+            )
+        return await _reset_by_switching(sandbox_name, await entry, deadline, seconds, interval)
+    finally:
+        if not entry.done():
+            entry.cancel()
+        elif not entry.cancelled():
+            entry.exception()
 
 
-async def _post_reset(sandbox_name: str, deadline: float) -> httpx.Response:
+async def _entry_or_none(entry: "asyncio.Future[Sandbox]") -> Sandbox | None:
+    try:
+        return await entry
+    except Exception:
+        return None
+
+
+async def _check_still_there(
+    sandbox_name: str, entry: Sandbox, deadline: float, seconds: int
+) -> None:
+    """Before a reset call is sent again: the sandbox must still be the one the reset is for."""
+    try:
+        latest = await _read_for_reset(sandbox_name, deadline, seconds)
+    except Exception as e:
+        if _error_status(e) == 404:
+            raise _deleted(sandbox_name) from e
+        raise
+    _check_same_before_reset_again(sandbox_name, entry, latest)
+
+
+async def _post_reset(sandbox_name: str, deadline: float, idempotency_key: str) -> httpx.Response:
     """POST /sandboxes/{name}/reset on the control plane, cut at the reset's deadline.
 
     The generated client has no function for it yet, so it goes through the
@@ -1449,25 +1503,36 @@ async def _post_reset(sandbox_name: str, deadline: float) -> httpx.Response:
     return await (
         _deadline_client(client, deadline)
         .get_async_httpx_client()
-        .request("post", f"/sandboxes/{sandbox_name}/reset")
+        .request(
+            "post",
+            f"/sandboxes/{sandbox_name}/reset",
+            headers={"Idempotency-Key": idempotency_key},
+        )
     )
 
 
 async def _reset_on_control_plane(
-    sandbox_name: str, deadline: float, seconds: int
+    sandbox_name: str, entry: "asyncio.Future[Sandbox]", deadline: float, seconds: int
 ) -> Sandbox | None:
     """Ask the control plane to replace the sandbox's instance.
 
     Answers the sandbox once its new instance runs, or None when the control
     plane has no such call, for the reset to switch the sandbox off and on
-    instead. A reset asked for twice resets twice, so an answer lost at the edge
-    or on the way is asked for again while there is time.
+    instead. An answer lost at the edge or on the way is asked for again while
+    there is time, with the same Idempotency-Key: a control plane that already
+    ran the reset, or is still running it, answers with the sandbox instead of
+    replacing its instance a second time. The call goes by name, so it is asked
+    for again only while the name still holds the sandbox the reset is for
+    (``entry``).
     """
+    idempotency_key = str(uuid.uuid4())
     attempt = 0
     while True:
         attempt += 1
+        if attempt > 1:
+            await _check_still_there(sandbox_name, await entry, deadline, seconds)
         try:
-            response = await _post_reset(sandbox_name, deadline)
+            response = await _post_reset(sandbox_name, deadline, idempotency_key)
         except Exception as e:
             if _hit_deadline(e, deadline):
                 raise _not_reset_in_time(sandbox_name, seconds) from e
@@ -1477,7 +1542,9 @@ async def _reset_on_control_plane(
         else:
             status = response.status_code
             if 200 <= status < 300:
-                return Sandbox.from_dict(response.json())
+                record = Sandbox.from_dict(response.json())
+                _check_reset_same(sandbox_name, await _entry_or_none(entry), record)
+                return record
             if _is_unknown_route(status, response.content):
                 return None
             failure = _reset_refusal(sandbox_name, response)
@@ -1595,7 +1662,7 @@ async def _write_enabled(
 
 
 async def _reset_by_switching(
-    sandbox_name: str, deadline: float, seconds: int, interval: int
+    sandbox_name: str, current: Sandbox, deadline: float, seconds: int, interval: int
 ) -> "SandboxInstance":
     """Reset a sandbox on a control plane without the reset call.
 
@@ -1604,7 +1671,6 @@ async def _reset_by_switching(
     preceded by a fresh read of the record, and refused unless the sandbox is
     still the one being reset and still in a state the write is meant for.
     """
-    current = await _read_for_reset(sandbox_name, deadline, seconds)
     if _check_resettable(sandbox_name, current):
         try:
             off = await _write_enabled(sandbox_name, current, False, current, deadline, seconds)
