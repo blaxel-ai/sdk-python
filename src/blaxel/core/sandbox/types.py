@@ -210,6 +210,8 @@ class SandboxCreateConfiguration:
         snapshot_enabled: bool | None = None,
         labels: Dict[str, str] | None = None,
         extra_args: Dict[str, str] | None = None,
+        termination_grace_period_seconds: int | None = None,
+        standby_grace_period_seconds: int | None = None,
     ):
         self.name = name
         self.image = image
@@ -225,6 +227,8 @@ class SandboxCreateConfiguration:
         self.snapshot_enabled = snapshot_enabled
         self.labels = labels
         self.extra_args = extra_args
+        self.termination_grace_period_seconds = termination_grace_period_seconds
+        self.standby_grace_period_seconds = standby_grace_period_seconds
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -255,6 +259,8 @@ class SandboxCreateConfiguration:
             snapshot_enabled=data.get("snapshot_enabled"),
             labels=data.get("labels"),
             extra_args=data.get("extra_args"),
+            termination_grace_period_seconds=data.get("termination_grace_period_seconds"),
+            standby_grace_period_seconds=data.get("standby_grace_period_seconds"),
         )
 
     def _normalize_ports(self) -> List[Port] | None:
