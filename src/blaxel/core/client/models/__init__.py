@@ -44,6 +44,7 @@ from .custom_domain_spec_subject_alternative_names_item import (
     CustomDomainSpecSubjectAlternativeNamesItem,
 )
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
+from .custom_domain_spec_validation_method import CustomDomainSpecValidationMethod
 from .delete_drive_response_200 import DeleteDriveResponse200
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
@@ -280,6 +281,7 @@ from .sandbox_snapshot_spec import SandboxSnapshotSpec
 from .sandbox_snapshot_spec_generation import SandboxSnapshotSpecGeneration
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
+from .secret import Secret
 from .share_custom_domain_body import ShareCustomDomainBody
 from .share_image_body import ShareImageBody
 from .sso_domain import SSODomain
@@ -369,6 +371,7 @@ __all__ = (
     "CustomDomainSpecStatus",
     "CustomDomainSpecSubjectAlternativeNamesItem",
     "CustomDomainSpecTxtRecords",
+    "CustomDomainSpecValidationMethod",
     "DeleteDriveResponse200",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteVolumeTemplateVersionResponse200",
@@ -601,6 +604,7 @@ __all__ = (
     "SandboxSnapshotSpecGeneration",
     "SandboxSpec",
     "SandboxState",
+    "Secret",
     "ShareCustomDomainBody",
     "ShareImageBody",
     "SSODomain",

@@ -27,8 +27,9 @@ class SandboxRuntime:
             'iptables', 'nfs' (mk3.0), 'tun', 'android' and 'landlock' (mk3.1). The android variant includes tun and
             iptables and cannot be combined with nfs. The landlock variant enables the Landlock LSM, includes tun and
             iptables, and cannot be combined with android or nfs. Android and landlock requests are rejected if routing
-            selects mk3.0. Values: 'enabled' or 'disabled'. Determines which kernel variant the workload runs on. Immutable
-            after creation.
+            selects mk3.0. 'kernelExtensions' (mk3.1, android only for now) switches on the selected kernel's loadable
+            modules and kernel tracing (eBPF, kprobes, perf); without it they are disabled, even for root. Values: 'enabled'
+            or 'disabled'. Determines which kernel variant the workload runs on. Immutable after creation.
         image (Union[Unset, str]): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest)
             or a custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
