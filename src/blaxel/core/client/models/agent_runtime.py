@@ -101,7 +101,10 @@ class AgentRuntime:
         if isinstance(_generation, Unset):
             generation = UNSET
         else:
-            generation = AgentRuntimeGeneration(_generation)
+            try:
+                generation = AgentRuntimeGeneration(_generation)
+            except ValueError:
+                generation = UNSET
 
         image = d.pop("image", UNSET)
 
