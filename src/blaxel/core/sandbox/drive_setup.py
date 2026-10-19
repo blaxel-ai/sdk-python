@@ -4,8 +4,9 @@ Drives are looked up or created while the sandbox is being created, at most
 ``MOUNT_DRIVES_CONCURRENCY`` at a time. Mounting is the only step that waits for
 both the sandbox and its drive, and each drive is mounted as soon as it is ready.
 On failure, cancellation and KeyboardInterrupt included, drives this call created
-under a generated name and did not mount are deleted; a drive created under a name the caller chose is never deleted,
-since a concurrent call may be using it, and is reported instead.
+under a generated name and did not mount are deleted; a drive created under a
+name the caller chose is never deleted, since a concurrent call may be using it,
+and is reported instead.
 """
 
 import asyncio
