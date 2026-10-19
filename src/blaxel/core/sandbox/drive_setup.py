@@ -3,8 +3,8 @@
 Drives are looked up or created while the sandbox is being created, at most
 ``MOUNT_DRIVES_CONCURRENCY`` at a time. Mounting is the only step that waits for
 both the sandbox and its drive, and each drive is mounted as soon as it is ready.
-On failure, drives this call created under a generated name and did not mount
-are deleted; a drive created under a name the caller chose is never deleted,
+On failure, cancellation and KeyboardInterrupt included, drives this call created
+under a generated name and did not mount are deleted; a drive created under a name the caller chose is never deleted,
 since a concurrent call may be using it, and is reported instead.
 """
 
@@ -172,6 +172,25 @@ def _first_error(errors: dict[int, BaseException]) -> BaseException | None:
     return errors[min(errors)] if errors else None
 
 
+async def _uninterrupted(cleanup) -> None:
+    """Run ``cleanup`` to the end even if the calling task is cancelled meanwhile.
+
+    A cancellation that arrives during cleanup is raised once cleanup is done.
+    """
+    task = asyncio.ensure_future(cleanup)
+    cancelled: asyncio.CancelledError | None = None
+    while True:
+        try:
+            await asyncio.shield(task)
+            break
+        except asyncio.CancelledError as error:
+            if task.done():
+                raise
+            cancelled = error
+    if cancelled is not None:
+        raise cancelled
+
+
 class _Entry:
     """What this call did with one ``mount_drives`` entry."""
 
@@ -291,15 +310,19 @@ class _AsyncDriveSetup(_Entries):
             entry.created = not create.name
             return drive
 
+    async def _clean_up(self, sandbox) -> None:
+        """Stop, wait for drives in flight, then delete the new ones (see ``_rollback``)."""
+        self._stopped = True
+        self._set_region(None)
+        await asyncio.gather(*self._prepared, return_exceptions=True)
+        await self._rollback(sandbox)
+
     async def discard(self, cause: BaseException) -> "SandboxDriveSetupError | None":
         """The sandbox could not be created: stop, wait for drives in flight, delete new ones.
 
         Returns a ``SandboxDriveSetupError`` naming drives left in place, if any.
         """
-        self._stopped = True
-        self._set_region(None)
-        await asyncio.gather(*self._prepared, return_exceptions=True)
-        await self._rollback(None)
+        await _uninterrupted(self._clean_up(None))
         left = self._left_created()
         return SandboxDriveSetupError(None, self._left_names(), left, cause) if left else None
 
@@ -311,7 +334,9 @@ class _AsyncDriveSetup(_Entries):
 
         async def mount_one(entry: _Entry, mount: _Mount, prepared: asyncio.Future) -> None:
             try:
-                drive = await prepared
+                # Shielded: if this is cancelled, the drive's creation still finishes, so
+                # cleanup knows whether there is a drive to delete.
+                drive = await asyncio.shield(prepared)
                 if drive is None:
                     return
                 _check_region(drive, region)
@@ -326,22 +351,25 @@ class _AsyncDriveSetup(_Entries):
                 self._stopped = True
                 raise
 
-        results = await asyncio.gather(
-            *(
-                mount_one(entry, mount, prepared)
-                for entry, mount, prepared in zip(self._entries, self._mounts, self._prepared)
-            ),
-            return_exceptions=True,
-        )
-        failed = _first_error(
-            {index: r for index, r in enumerate(results) if isinstance(r, BaseException)}
-        )
         try:
+            results = await asyncio.gather(
+                *(
+                    mount_one(entry, mount, prepared)
+                    for entry, mount, prepared in zip(self._entries, self._mounts, self._prepared)
+                ),
+                return_exceptions=True,
+            )
+            failed = _first_error(
+                {index: r for index, r in enumerate(results) if isinstance(r, BaseException)}
+            )
             if failed is not None:
                 raise failed
             _check_mounted(requests, await sandbox.drives.list())
-        except Exception as cause:
-            await self._rollback(sandbox)
+        except BaseException as cause:
+            # Cleanup also runs when this call is cancelled, and a cancellation is raised as is.
+            await _uninterrupted(self._clean_up(sandbox))
+            if not isinstance(cause, Exception):
+                raise
             raise SandboxDriveSetupError(
                 sandbox, self._left_names(), self._left_created(), cause
             ) from cause
@@ -490,9 +518,10 @@ class _SyncDriveSetup(_Entries):
         requests: list[tuple] = []
         mounting: dict[Future, int] = {}
         indexes = {future: index for index, future in enumerate(self._prepared)}
-        with ThreadPoolExecutor(
+        pool = ThreadPoolExecutor(
             max_workers=MOUNT_DRIVES_CONCURRENCY, thread_name_prefix="blaxel-mount-drives"
-        ) as pool:
+        )
+        try:
             # Mount each drive as soon as it is ready.
             for future in as_completed(self._prepared):
                 index = indexes[future]
@@ -513,14 +542,21 @@ class _SyncDriveSetup(_Entries):
                 error = future.exception()
                 if error is not None:
                     errors[index] = error
-        self._shutdown()
-        failed = _first_error(errors)
-        try:
+            pool.shutdown(wait=True)
+            self._shutdown()
+            failed = _first_error(errors)
             if failed is not None:
                 raise failed
             _check_mounted(requests, sandbox.drives.list())
-        except Exception as cause:
+        except BaseException as cause:
+            # Cleanup also runs on KeyboardInterrupt, which is raised as is: stop, let the
+            # calls in flight finish, then delete the new drives (see _rollback).
+            self._stopped.set()
+            pool.shutdown(wait=True)
+            self._shutdown()
             self._rollback(sandbox)
+            if not isinstance(cause, Exception):
+                raise
             raise SandboxDriveSetupError(
                 sandbox, self._left_names(), self._left_created(), cause
             ) from cause

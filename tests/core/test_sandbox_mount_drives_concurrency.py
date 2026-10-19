@@ -659,3 +659,55 @@ async def test_a_drive_whose_name_collides_with_a_generated_one_is_not_taken_ove
     assert isinstance(error, SandboxDriveSetupError)
     h.get.assert_not_called()
     h.delete_drive.assert_not_called()
+
+
+async def test_cancelled_sandbox_creation_still_deletes_the_drives_this_call_named_and_created(h):
+    # Async: the call is cancelled, then cancelled again during cleanup. Sync: KeyboardInterrupt.
+    sandbox, new = h.gate(), h.gate()
+    produce = (lambda *a: h.response) if h.is_async else raising(KeyboardInterrupt())
+    h.create_sandbox.side_effect = effect(h, produce, lambda *a: sandbox)
+    h.create.side_effect = effect(
+        h, lambda c: h.drive(c.name), lambda c: new if id_of(c) == "new" else None
+    )
+    run = Running(h, dict(CONFIG), mount_drives=[unnamed("new"), entry("kept")])
+    await run.until(lambda: h.create.call_count == 2)
+    if h.is_async:
+        run.task.cancel()
+        await run.settle()
+        run.task.cancel()
+    else:
+        sandbox.open()
+    await run.settle()
+    # The drive still being created is waited for, then deleted; the named one is kept.
+    h.delete_drive.assert_not_called()
+    new.open()
+    error = await run.result()
+    assert isinstance(error, asyncio.CancelledError if h.is_async else KeyboardInterrupt)
+    assert deleted_ids(h) == ["new"]
+    h.mount.assert_not_called()
+
+
+async def test_cancelled_mounting_still_deletes_the_drives_this_call_named_and_did_not_mount(h):
+    # Async: the call is cancelled while a drive is being mounted. Sync: that mount raises
+    # KeyboardInterrupt.
+    mount_gate, b = h.gate(), h.gate()
+    produce = h.real_mount if h.is_async else raising(KeyboardInterrupt())
+    h.mount.side_effect = effect(h, produce, lambda *a: mount_gate)
+    h.create.side_effect = effect(
+        h, lambda c: h.drive(c.name), lambda c: b if id_of(c) == "b" else None
+    )
+    run = Running(h, dict(CONFIG), mount_drives=[unnamed("a"), unnamed("b")])
+    await run.until(lambda: h.mount.call_count == 1 and h.create.call_count == 2)
+    if h.is_async:
+        run.task.cancel()
+    else:
+        mount_gate.open()
+    await run.settle()
+    # The drive still being created is waited for, then deleted with the one whose mount
+    # the sandbox does not list.
+    h.delete_drive.assert_not_called()
+    b.open()
+    error = await run.result()
+    assert isinstance(error, asyncio.CancelledError if h.is_async else KeyboardInterrupt)
+    assert deleted_ids(h) == ["a", "b"]
+    assert h.mount.call_count == 1

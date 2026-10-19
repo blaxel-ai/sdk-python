@@ -416,12 +416,13 @@ class SyncSandboxInstance:
             mount_drives: Drives to mount on the sandbox. Drives are looked up or created
                 while the sandbox is being created (a few at a time) and each is mounted
                 as soon as the sandbox and that drive are ready. New drives go in the region
-                the request sends (or, without one, the region the sandbox gets). On failure,
-                unnamed drives this call created and did not mount are deleted; named ones
-                are kept (a concurrent call may be using them) and listed in the error. If
-                drive setup fails the sandbox is kept and SandboxDriveSetupError is raised;
-                if the sandbox cannot be created, its error is raised (wrapped in a
-                SandboxDriveSetupError only if a drive created for it is left in place).
+                the request sends (or, without one, the region the sandbox gets). On failure
+                (cancellation included), unnamed drives this call created and did not mount
+                are deleted; named ones are kept (a concurrent call may be using them) and
+                listed in the error. If drive setup fails the sandbox is kept and
+                SandboxDriveSetupError is raised; if the sandbox cannot be created, its
+                error is raised (wrapped in a SandboxDriveSetupError only if a drive
+                created for it is left in place).
             timeout: Optional creation deadline in whole seconds (1 to
                 ``MAX_CREATION_TIMEOUT_SECONDS``). When the sandbox is not ready
                 in time the control plane cancels the creation, releases the
