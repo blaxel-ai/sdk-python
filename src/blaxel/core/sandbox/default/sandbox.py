@@ -479,6 +479,21 @@ def _check_written_same(sandbox_name: str, entry: Sandbox, answer: Sandbox, enab
         )
 
 
+def _check_same_after_lost_write(
+    sandbox_name: str, entry: Sandbox, record: Sandbox, enabled: bool
+) -> None:
+    """After a write whose answer was lost, a sandbox created again under the same
+    name may have received it: the write goes by name, so say so.
+    """
+    if _created_at(record) != _created_at(entry):
+        switch = "switch-on" if enabled else "switch-off"
+        raise _ResetStopped(
+            f"Sandbox {sandbox_name} was deleted and created again during its reset; the "
+            f"reset's {switch} write whose answer was lost may have reached the new sandbox, "
+            "which is left as it is now"
+        )
+
+
 def _write_landed(record: Sandbox, enabled: bool) -> bool:
     """Whether the record already holds the switch a write cut short was sending."""
     return record.spec.enabled is not False if enabled else record.spec.enabled is False
@@ -1569,7 +1584,7 @@ async def _write_enabled(
             if _error_status(e) == 404:
                 raise _deleted(sandbox_name) from e
             raise
-        _check_same_sandbox(sandbox_name, entry, latest)
+        _check_same_after_lost_write(sandbox_name, entry, latest, enabled)
         if _write_landed(latest, enabled):
             return latest
         if enabled:

@@ -57,6 +57,7 @@ from ..default.sandbox import (
     SandboxAPIError,
     _check_reset_status,
     _check_resettable,
+    _check_same_after_lost_write,
     _check_same_sandbox,
     _check_still_off,
     _check_still_running,
@@ -1012,7 +1013,7 @@ def _write_enabled(
             if _error_status(e) == 404:
                 raise _deleted(sandbox_name) from e
             raise
-        _check_same_sandbox(sandbox_name, entry, latest)
+        _check_same_after_lost_write(sandbox_name, entry, latest, enabled)
         if _write_landed(latest, enabled):
             return latest
         if enabled:

@@ -587,7 +587,7 @@ async def test_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_aga
 
     with (
         patch(f"{ASYNC}._retry_delay", return_value=0),
-        pytest.raises(SandboxAPIError, match="was deleted and created again during its reset"),
+        pytest.raises(SandboxAPIError, match="answer was lost may have reached the new sandbox"),
     ):
         await SandboxInstance.reset("my-sandbox", interval=0)
 
@@ -618,7 +618,7 @@ async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_created_agai
 
     with (
         patch(f"{ASYNC}._retry_delay", return_value=0),
-        pytest.raises(SandboxAPIError, match="was deleted and created again during its reset"),
+        pytest.raises(SandboxAPIError, match="answer was lost may have reached the new sandbox"),
     ):
         await SandboxInstance.reset("my-sandbox", interval=0)
 
@@ -982,7 +982,7 @@ def test_sync_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_agai
 
     with (
         patch(f"{SYNC}._retry_delay", return_value=0),
-        pytest.raises(SandboxAPIError, match="was deleted and created again during its reset"),
+        pytest.raises(SandboxAPIError, match="answer was lost may have reached the new sandbox"),
     ):
         SyncSandboxInstance.reset("my-sandbox", interval=0)
 
