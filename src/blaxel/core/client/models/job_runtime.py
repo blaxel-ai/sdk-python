@@ -122,7 +122,7 @@ class JobRuntime:
 
         _generation = d.pop("generation", UNSET)
         generation: Union[Unset, JobRuntimeGeneration]
-        if isinstance(_generation, Unset):
+        if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:
             generation = JobRuntimeGeneration(_generation)

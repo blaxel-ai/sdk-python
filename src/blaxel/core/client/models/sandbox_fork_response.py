@@ -59,7 +59,7 @@ class SandboxForkResponse:
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
         type_: Union[Unset, SandboxForkResponseType]
-        if isinstance(_type_, Unset):
+        if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:
             type_ = SandboxForkResponseType(_type_)

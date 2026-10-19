@@ -48,7 +48,7 @@ class Flavor:
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
         type_: Union[Unset, FlavorType]
-        if isinstance(_type_, Unset):
+        if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:
             type_ = FlavorType(_type_)

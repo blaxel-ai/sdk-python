@@ -5,7 +5,17 @@
 {% from "property_templates/property_macros.py.jinja" import construct_template %}
 
 {% macro construct(property, source) %}
+{% if property.required %}
 {{ construct_template(construct_function, property, source) }}
+{% else %}
+{# The API can send "" for an optional enum it has no value for; read it as unset instead of failing the whole model. #}
+_{{ property.python_name }} = {{ source }}
+{{ property.python_name }}: {{ property.get_type_string() }}
+if isinstance(_{{ property.python_name }}, Unset) or _{{ property.python_name }} == "":
+    {{ property.python_name }} = UNSET
+else:
+    {{ property.python_name }} = {{ construct_function(property, "_" + property.python_name) }}
+{% endif %}
 {% endmacro %}
 
 {% macro check_type_for_construct(property, source) %}isinstance({{ source }}, {{ property.value_type.__name__ }}){% endmacro %}
