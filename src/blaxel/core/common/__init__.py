@@ -6,6 +6,7 @@ from ..errors import (
     BlaxelErrorCodeValue,
     BlaxelPlatformErrorBody,
     BlaxelSandboxApiErrorBody,
+    ModelNotFoundError,
     is_blaxel_error,
 )
 from .autoload import autoload
@@ -28,6 +29,7 @@ __all__ = [
     "BlaxelActionErrorBody",
     "BlaxelPlatformErrorBody",
     "BlaxelSandboxApiErrorBody",
+    "ModelNotFoundError",
     "is_blaxel_error",
     "autoload",
     "capture_exception",

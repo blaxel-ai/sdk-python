@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.errors import ModelNotFoundError
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -688,6 +689,35 @@ _parse_response(
         assert "top-secret-customer-value" not in serialized_event
         assert "CUSTOMER_SECRET" not in serialized_event
         assert event["exception"]["values"][0]["value"] == ("Unhandled SDK exception (HTTP 404)")
+
+
+class TestModelNotFoundFiltering:
+    """A missing model is a workspace config/usage error, not an SDK defect."""
+
+    def _raise_model_not_found(self) -> BaseException:
+        return _raise_in_file(
+            _sdk_filename("core/models/__init__.py"),
+            "raise ModelNotFoundError('Model sandbox-openai not found')",
+            {"ModelNotFoundError": ModelNotFoundError},
+        )
+
+    def test_should_capture_rejects_model_not_found(self):
+        exc = self._raise_model_not_found()
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_should_capture_still_accepts_real_sdk_error(self):
+        """Anti-over-suppression: a genuine SDK error from the same file is captured."""
+        exc = _raise_in_sdk("core/models/__init__.py", "raise RuntimeError('real model bug')")
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_unhandled_model_not_found_is_not_captured_but_chains(self, installed_sentry_hooks):
+        exc = self._raise_model_not_found()
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
 
 class TestIsOptionalDependencyError:
