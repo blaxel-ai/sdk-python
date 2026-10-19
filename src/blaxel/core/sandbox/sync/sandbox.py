@@ -59,8 +59,9 @@ from ..default.sandbox import (
     _check_resettable,
     _check_same_sandbox,
     _check_still_off,
-    _check_switched_off_same,
+    _check_still_running,
     _check_taken_down,
+    _check_written_same,
     _create_body,
     _creation_client,
     _deadline_client,
@@ -93,6 +94,7 @@ from ..default.sandbox import (
     _transport_detail,
     _unwrap_response,
     _validate_creation_timeout,
+    _write_landed,
 )
 from ..transient_retry import is_transient_reset_error
 from ..types import (
@@ -1010,11 +1012,14 @@ def _write_enabled(
             if _error_status(e) == 404:
                 raise _deleted(sandbox_name) from e
             raise
+        _check_same_sandbox(sandbox_name, entry, latest)
+        if _write_landed(latest, enabled):
+            return latest
         if enabled:
             _check_still_off(sandbox_name, entry, latest)
-            record = latest
         else:
-            _check_same_sandbox(sandbox_name, entry, latest)
+            _check_still_running(sandbox_name, entry, latest)
+        record = latest
 
 
 def _reset_by_switching(
@@ -1031,11 +1036,11 @@ def _reset_by_switching(
             raise _reset_failure(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
-        _check_switched_off_same(sandbox_name, current, off)
+        _check_written_same(sandbox_name, current, off, False)
         _check_taken_down(sandbox_name, off)
     stopped = _wait_for_teardown(sandbox_name, current, deadline, seconds, interval)
     try:
-        _write_enabled(sandbox_name, stopped, True, current, deadline, seconds)
+        on = _write_enabled(sandbox_name, stopped, True, current, deadline, seconds)
     except _ResetStopped:
         raise
     except Exception as e:
@@ -1045,6 +1050,7 @@ def _reset_by_switching(
             + _left_off(sandbox_name, _RESET_OWNER),
             e,
         ) from e
+    _check_written_same(sandbox_name, current, on, True)
     return _wait_for_redeploy(sandbox_name, current, deadline, seconds, interval)
 
 

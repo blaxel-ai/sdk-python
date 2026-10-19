@@ -608,29 +608,90 @@ async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_deleted_mean
     assert aio_switch.update.await_count == 2
 
 
-@pytest.mark.parametrize(
-    "reread",
-    [
-        record("DEPLOYING"),
+async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_created_again(aio_switch):
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        off(TORN_DOWN),
         record("DEACTIVATED", False, (TORN_DOWN,), "2026-10-19T12:05:00Z"),
-    ],
-    ids=["switched-on-elsewhere", "created-again"],
-)
-async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_that_changed(
-    aio_switch, reread
-):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), reread]
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), dropped()]
 
     with (
         patch(f"{ASYNC}._retry_delay", return_value=0),
-        pytest.raises(
-            SandboxAPIError, match="is DEPLOYING while it should be switched off|created again"
-        ),
+        pytest.raises(SandboxAPIError, match="was deleted and created again during its reset"),
     ):
         await SandboxInstance.reset("my-sandbox", interval=0)
 
     assert aio_switch.update.await_count == 2
+
+
+async def test_reset_does_not_send_a_switch_on_that_landed_again(aio_switch):
+    # The write was cut short but the record already reads switched on.
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        record("DEPLOYING"),
+        record("DEPLOYED"),
+    ]
+    aio_switch.update.side_effect = [off(DEACTIVATE), dropped()]
+
+    with patch(f"{ASYNC}._retry_delay", return_value=0):
+        instance = await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert aio_switch.update.await_count == 2
+
+
+async def test_reset_does_not_send_a_switch_off_that_landed_again(aio_switch):
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        off(DEACTIVATE),  # the re-read after the cut write: it landed
+        off(DEACTIVATE, TORN_DOWN),
+        record("DEPLOYED"),
+    ]
+    aio_switch.update.side_effect = [dropped(), record("DEPLOYING")]
+
+    with patch(f"{ASYNC}._retry_delay", return_value=0):
+        instance = await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert aio_switch.update.await_count == 2
+    assert body_of(aio_switch.update, 1)["spec"]["enabled"] is True
+
+
+async def test_reset_does_not_send_the_switch_off_again_to_a_sandbox_no_longer_running(
+    aio_switch,
+):
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DELETING")]
+    aio_switch.update.side_effect = [dropped()]
+
+    with (
+        patch(f"{ASYNC}._retry_delay", return_value=0),
+        pytest.raises(
+            SandboxAPIError, match="is DELETING while it should be running for the reset"
+        ),
+    ):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert aio_switch.update.await_count == 1
+
+
+async def test_reset_stops_when_the_switch_on_answers_for_a_sandbox_created_again(aio_switch):
+    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)]
+    aio_switch.update.side_effect = [
+        off(DEACTIVATE),
+        record("DEPLOYING", True, (), "2026-10-19T12:05:00Z"),
+    ]
+
+    with pytest.raises(SandboxAPIError) as err:
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert str(err.value) == (
+        "Sandbox my-sandbox was deleted and created again while it was being switched back on "
+        "for its reset; the new sandbox was written to and is left switched on"
+    )
+    assert err.value.status_code is None
+    aio_switch.probe.assert_not_called()
 
 
 async def test_reset_stops_waiting_for_the_redeploy_of_a_sandbox_created_again(aio_switch):
@@ -926,6 +987,35 @@ def test_sync_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_agai
         SyncSandboxInstance.reset("my-sandbox", interval=0)
 
     assert blocking_switch.update.call_count == 1
+
+
+def test_sync_reset_does_not_send_a_switch_on_that_landed_again(blocking_switch):
+    blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        record("DEPLOYING"),
+        record("DEPLOYED"),
+    ]
+    blocking_switch.update.side_effect = [off(DEACTIVATE), dropped()]
+
+    with patch(f"{SYNC}._retry_delay", return_value=0):
+        instance = SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert blocking_switch.update.call_count == 2
+
+
+def test_sync_reset_stops_when_the_switch_on_answers_for_a_sandbox_created_again(
+    blocking_switch,
+):
+    blocking_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)]
+    blocking_switch.update.side_effect = [
+        off(DEACTIVATE),
+        record("DEPLOYING", True, (), "2026-10-19T12:05:00Z"),
+    ]
+
+    with pytest.raises(SandboxAPIError, match="while it was being switched back on for its reset"):
+        SyncSandboxInstance.reset("my-sandbox", interval=0)
 
 
 def test_sync_reset_stops_waiting_for_the_redeploy_of_a_sandbox_created_again(blocking_switch):

@@ -469,12 +469,31 @@ def _check_same_sandbox(sandbox_name: str, entry: Sandbox, record: Sandbox) -> N
         raise _recreated(sandbox_name)
 
 
-def _check_switched_off_same(sandbox_name: str, entry: Sandbox, off: Sandbox) -> None:
-    """The switch-off answered for another sandbox of the same name: it was written to."""
-    if _created_at(off) != _created_at(entry):
+def _check_written_same(sandbox_name: str, entry: Sandbox, answer: Sandbox, enabled: bool) -> None:
+    """A switch answered for another sandbox of the same name: it was written to."""
+    if _created_at(answer) != _created_at(entry):
+        switching, left = ("back on", "on") if enabled else ("off", "off")
         raise _ResetStopped(
             f"Sandbox {sandbox_name} was deleted and created again while it was being switched "
-            "off for its reset; the new sandbox was written to and is left switched off"
+            f"{switching} for its reset; the new sandbox was written to and is left switched {left}"
+        )
+
+
+def _write_landed(record: Sandbox, enabled: bool) -> bool:
+    """Whether the record already holds the switch a write cut short was sending."""
+    return record.spec.enabled is not False if enabled else record.spec.enabled is False
+
+
+def _check_still_running(sandbox_name: str, entry: Sandbox, record: Sandbox) -> None:
+    """Refuse to send the switch-off again to anything but the sandbox being reset,
+    still in a state a reset can start from.
+    """
+    _check_same_sandbox(sandbox_name, entry, record)
+    status = _status_of(record)
+    if status not in RESETTABLE_STATUSES:
+        raise _ResetStopped(
+            f"Sandbox {sandbox_name} is {status} while it should be running for the reset; "
+            "it is left as it is"
         )
 
 
@@ -1522,9 +1541,10 @@ async def _write_enabled(
     control plane last returned it.
 
     A write cut short may or may not have landed, so before it is sent again the
-    record is read again, and the write is only sent again to the sandbox the
-    reset started on (same creation date as ``entry``). The switch-on is also
-    only sent again to a sandbox still switched off, and from that fresh read.
+    record is read again: a write that landed is not sent again, and one that did
+    not is only sent again to the sandbox the reset started on (same creation
+    date as ``entry``), still in the state the write is meant for, from that
+    fresh read.
     """
     attempt = 0
     while True:
@@ -1549,11 +1569,14 @@ async def _write_enabled(
             if _error_status(e) == 404:
                 raise _deleted(sandbox_name) from e
             raise
+        _check_same_sandbox(sandbox_name, entry, latest)
+        if _write_landed(latest, enabled):
+            return latest
         if enabled:
             _check_still_off(sandbox_name, entry, latest)
-            record = latest
         else:
-            _check_same_sandbox(sandbox_name, entry, latest)
+            _check_still_running(sandbox_name, entry, latest)
+        record = latest
 
 
 async def _reset_by_switching(
@@ -1576,11 +1599,11 @@ async def _reset_by_switching(
             raise _reset_failure(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
-        _check_switched_off_same(sandbox_name, current, off)
+        _check_written_same(sandbox_name, current, off, False)
         _check_taken_down(sandbox_name, off)
     stopped = await _wait_for_teardown(sandbox_name, current, deadline, seconds, interval)
     try:
-        await _write_enabled(sandbox_name, stopped, True, current, deadline, seconds)
+        on = await _write_enabled(sandbox_name, stopped, True, current, deadline, seconds)
     except _ResetStopped:
         raise
     except Exception as e:
@@ -1590,6 +1613,7 @@ async def _reset_by_switching(
             + _left_off(sandbox_name, _RESET_OWNER),
             e,
         ) from e
+    _check_written_same(sandbox_name, current, on, True)
     return await _wait_for_redeploy(sandbox_name, current, deadline, seconds, interval)
 
 
