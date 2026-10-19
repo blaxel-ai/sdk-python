@@ -4,12 +4,10 @@ import logging
 import math
 import time
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Union
 
+import httpx
 from attrs import evolve
-
-if TYPE_CHECKING:
-    import httpx
 
 from ...client import errors as client_errors
 from ...client.api.compute.archive_sandbox import asyncio as archive_sandbox
@@ -50,7 +48,13 @@ from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, 
 from ...client.types import UNSET, Unset
 from ...common.settings import settings
 from ...errors import _APIError
-from ..transient_retry import retry_on_transient_reset_async
+from ..client.api.system.get_health import asyncio_detailed as get_health
+from ..transient_retry import (
+    DEFAULT_BASE_DELAY_SECONDS,
+    DEFAULT_MAX_DELAY_SECONDS,
+    _backoff_delay_seconds,
+    is_transient_reset_error,
+)
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -187,19 +191,33 @@ ARCHIVE_ENTRY_STATUS = "DEPLOYED"
 UNARCHIVE_ENTRY_STATUS = "ARCHIVED"
 ARCHIVE_ENTRY_MAX_WAIT_MS = 30_000
 
-# A reset switches the sandbox off and on again: the instance is torn down and
-# deployed again from its image, which takes a few seconds (2-7s measured).
+# A reset gives the sandbox a fresh instance booted from its image. The control
+# plane does it in one call, which replaces the instance and answers once the
+# new one runs. A control plane without that call is reset by switching
+# spec.enabled off and on, which runs the deployment pipeline twice.
 RESET_MAX_WAIT_MS = 120_000
-RESET_POLL_MS = 500
-# The statuses a reset can start from. Any other status (TERMINATED and
-# DELETING above all: updating a record that is being, or has been, deleted
-# brings the sandbox back to life) is refused before anything is written.
-RESETTABLE_STATUSES = {"DEPLOYED", "DEPLOYING", "DEACTIVATING", "DEACTIVATED", "FAILED"}
+RESET_POLL_MS = 200
+# The longest single call made while waiting on the sandbox, so that one slow
+# answer cannot hold the reset much past its own deadline.
+RESET_PROBE_TIMEOUT_MS = 5_000
+# The statuses a switch-off/switch-on reset can start from. Any other status is
+# refused before anything is written: TERMINATED and DELETING above all
+# (updating a record that is being, or has been, deleted brings the sandbox
+# back to life), and FAILED (a write makes the control plane release the record
+# and create it again).
+RESETTABLE_STATUSES = {"DEPLOYED", "DEPLOYING", "DEACTIVATING", "DEACTIVATED"}
 RESET_OFF_STATUSES = {"DEACTIVATING", "DEACTIVATED"}
 # Right after the switch-on write the record can still read as off while the
 # control plane starts the redeploy. That is tolerated only until the redeploy
 # has been seen, and never past the wait the caller asked for.
 RESET_ENTRY_MAX_WAIT_MS = 30_000
+# What the deployment pipeline writes on a sandbox once it has applied, or
+# failed to apply, a change to it.
+DEPLOYMENT_SUCCEEDED_EVENT = "ai.blaxel.controlplane.deployment.succeeded"
+DEPLOYMENT_FAILED_EVENT = "ai.blaxel.controlplane.deployment.failed"
+# What the edge in front of the control plane or the sandbox answers when it
+# could not reach it: worth asking again while there is time.
+GATEWAY_ERROR_STATUSES = {502, 503, 504}
 
 
 def _unwrap_response(response, action: str, *, allow_none: bool = False):
@@ -250,7 +268,7 @@ def _check_resettable(sandbox_name: str, sandbox: Sandbox) -> bool:
 
 
 def _enabled_body(sandbox: Sandbox, enabled: bool) -> Dict[str, Any]:
-    """The sandbox as the control plane returned it, with ``spec.enabled`` set.
+    """The sandbox as the control plane last returned it, with ``spec.enabled`` set.
 
     Secret environment variable values come back masked and are kept as stored.
     """
@@ -285,19 +303,22 @@ def _error_status(error: Exception) -> int | None:
     return status if isinstance(status, int) else None
 
 
-def _is_not_yet_routable(error: Exception) -> bool:
-    """A call that reached no sandbox yet: the route is not up (404 WORKLOAD_UNAVAILABLE),
-    the edge could not reach it, or the connection dropped. Safe to try again.
-    """
+def _is_retryable(error: Exception) -> bool:
+    """An edge error in front of the control plane, or a dropped connection."""
     status = _error_status(error)
     if status is not None:
-        return status == 404 or status in (502, 503, 504)
-    return True
+        return status in GATEWAY_ERROR_STATUSES
+    return is_transient_reset_error(error)
 
 
 def _reset_deadline(max_wait: int) -> float:
-    """When the reset gives up: ``max_wait`` covers the teardown and the redeploy together."""
+    """When the reset gives up: ``max_wait`` covers every call and every wait of it."""
     return math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
+
+
+def _remaining(deadline: float) -> float:
+    """Seconds left before the reset's deadline (inf without one)."""
+    return deadline - time.monotonic()
 
 
 def _reset_entry_deadline(deadline: float) -> float:
@@ -305,36 +326,189 @@ def _reset_entry_deadline(deadline: float) -> float:
     return min(time.monotonic() + RESET_ENTRY_MAX_WAIT_MS / 1000, deadline)
 
 
-def _teardown_done(sandbox_name: str, error: Exception, owner: str = "SandboxInstance") -> bool:
-    """Whether a failed call to the switched-off sandbox says its old instance is gone.
+def _retry_delay(attempt: int) -> float:
+    return _backoff_delay_seconds(attempt, DEFAULT_BASE_DELAY_SECONDS, DEFAULT_MAX_DELAY_SECONDS)
 
-    The gateway routes only to a running instance and answers 404
-    (WORKLOAD_UNAVAILABLE) once there is none. A gateway error or a dropped
-    connection says nothing yet; anything else cannot be read and is raised.
+
+class _TimedRequests:
+    """An httpx client whose requests carry a timeout unless the caller sets one."""
+
+    def __init__(self, httpx_client: Any, timeout: float):
+        self._httpx_client = httpx_client
+        self._timeout = timeout
+
+    def request(self, *args: Any, **kwargs: Any) -> Any:
+        kwargs.setdefault("timeout", self._timeout)
+        return self._httpx_client.request(*args, **kwargs)
+
+
+class _DeadlineClient:
+    """The control plane client, with every request cut at a reset's deadline.
+
+    The generated API functions only ask a client for its httpx client and for
+    ``raise_on_unexpected_status``, so this stands in for it while sharing its
+    connections, so that no call, retried or not, outlives the reset.
     """
-    if _error_status(error) == 404:
+
+    def __init__(self, base: Client, timeout: float):
+        self._base = base
+        self.timeout = timeout
+        self.raise_on_unexpected_status = base.raise_on_unexpected_status
+
+    def get_httpx_client(self) -> _TimedRequests:
+        return _TimedRequests(self._base.get_httpx_client(), self.timeout)
+
+    def get_async_httpx_client(self) -> _TimedRequests:
+        return _TimedRequests(self._base.get_async_httpx_client(), self.timeout)
+
+
+def _deadline_client(base: Client, deadline: float) -> Any:
+    """``base`` with its requests cut at ``deadline``; ``base`` itself without one."""
+    remaining = _remaining(deadline)
+    if math.isinf(remaining):
+        return base
+    return _DeadlineClient(base, max(remaining, 0.001))
+
+
+def _hit_deadline(error: Exception, deadline: float) -> bool:
+    """A call cut by the reset's deadline (calls only time out when there is one)."""
+    return isinstance(error, httpx.TimeoutException) and not math.isinf(deadline)
+
+
+def _is_unknown_route(status: int, content: bytes) -> bool:
+    """A control plane that has no reset call answers its route as unknown."""
+    if status == 405:
         return True
-    if not _is_not_yet_routable(error):
-        raise _reset_failure(
-            sandbox_name,
-            "is switched off for the reset, but whether its old instance is gone could not be "
-            f"checked, {_left_off(sandbox_name, owner)}",
-            error,
-        ) from error
-    return False
+    if status != 404:
+        return False
+    body = _decode_error_content(content)
+    text = body.get("error") if isinstance(body, dict) else body
+    return isinstance(text, str) and "route not found" in text.lower()
 
 
-def _teardown_timeout(
-    sandbox_name: str, max_wait: int, owner: str = "SandboxInstance"
-) -> SandboxAPIError:
+def _reset_refusal(sandbox_name: str, response: "httpx.Response") -> SandboxAPIError:
+    """What the control plane answered instead of resetting the sandbox."""
+    body = _decode_error_content(response.content)
+    message = None
+    code = None
+    if isinstance(body, dict):
+        message = body.get("message") or body.get("error")
+        code = body.get("error") if isinstance(body.get("error"), str) else None
+    if not isinstance(message, str) or not message:
+        message = f"Failed to reset sandbox {sandbox_name} (HTTP {response.status_code})"
     return SandboxAPIError(
-        f"Sandbox {sandbox_name} is switched off for the reset, but its old instance was still "
-        f"running after {round(max_wait / 1000)}s, {_left_off(sandbox_name, owner)}"
+        message, status_code=response.status_code, code=code, body=body, response=response
     )
+
+
+def _not_reset_in_time(sandbox_name: str, seconds: int) -> SandboxAPIError:
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} was not reset within {seconds}s; a reset the control plane "
+        "started still finishes, so the sandbox may yet get its fresh instance"
+    )
+
+
+def _probe_timeout(deadline: float) -> "httpx.Timeout":
+    seconds = min(_remaining(deadline), RESET_PROBE_TIMEOUT_MS / 1000)
+    return httpx.Timeout(max(seconds, 0.001))
+
+
+def _probe_answer(sandbox_name: str, status: int, content: bytes) -> "bool | str":
+    """True when the health route answered; why not yet when the gateway has no
+    instance to route to (404 WORKLOAD_UNAVAILABLE) or the edge could not reach
+    it. Anything else is an answer the reset cannot read, and is raised.
+    """
+    if 200 <= status < 300:
+        return True
+    body = _decode_error_content(content)
+    detail = json.dumps(body) if isinstance(body, dict | list) else str(body)
+    if status == 404 or status in GATEWAY_ERROR_STATUSES:
+        return f"{status} {detail}"
+    raise SandboxAPIError(
+        f"Sandbox {sandbox_name} answered {status} after the reset: {detail}",
+        status_code=status,
+    )
+
+
+def _transport_detail(error: Exception) -> str:
+    return str(error) or type(error).__name__
+
+
+def _not_answering(sandbox_name: str, seconds: int, answer: str) -> SandboxAPIError:
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} has a fresh instance but it did not answer within {seconds}s "
+        f"after the reset: {answer}"
+    )
+
+
+def _created_at(sandbox: Sandbox) -> str | None:
+    value = sandbox.metadata.created_at if sandbox.metadata else UNSET
+    return None if isinstance(value, Unset) else value
+
+
+def _check_still_off(sandbox_name: str, entry: Sandbox, record: Sandbox) -> None:
+    """Refuse to switch back on anything but the sandbox being reset, still off."""
+    if _created_at(record) != _created_at(entry):
+        raise SandboxAPIError(
+            f"Sandbox {sandbox_name} was deleted and created again during its reset; the new "
+            "sandbox is left as it is"
+        )
+    status = _status_of(record)
+    if status not in RESET_OFF_STATUSES or record.spec.enabled is not False:
+        raise SandboxAPIError(
+            f"Sandbox {sandbox_name} is {status} while it should be switched off for the reset; "
+            "it is left as it is"
+        )
+
+
+def _teardown_state(record: Sandbox) -> str:
+    """Where the deployment pipeline is with taking a switched-off sandbox's
+    instance down, read from the newest event it or the API wrote: "done",
+    "failed", or "pending" while an API write is not applied yet or a deployment
+    is still running.
+    """
+    events = record.events if isinstance(record.events, list) else []
+    for event in reversed(events):
+        type_ = event.type_ if isinstance(event.type_, str) else None
+        status = event.status if isinstance(event.status, str) else None
+        if type_ == DEPLOYMENT_SUCCEEDED_EVENT:
+            return "done" if status == "DEACTIVATED" else "pending"
+        if type_ == DEPLOYMENT_FAILED_EVENT:
+            return "failed"
+        if type_ and type_.startswith("ai.blaxel.controlplane."):
+            return "pending"
+    return "pending"
 
 
 def _left_off(sandbox_name: str, owner: str) -> str:
     return f'it is left DEACTIVATED; call {owner}.reset("{sandbox_name}") again to finish the reset'
+
+
+def _teardown_failed(sandbox_name: str, owner: str) -> SandboxAPIError:
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} could not be taken down for the reset, "
+        f"{_left_off(sandbox_name, owner)}"
+    )
+
+
+def _teardown_timeout(sandbox_name: str, seconds: int, owner: str) -> SandboxAPIError:
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} is switched off for the reset, but its old instance was not "
+        f"reported gone within {seconds}s, {_left_off(sandbox_name, owner)}"
+    )
+
+
+def _teardown_unreadable(sandbox_name: str, error: Exception, owner: str) -> SandboxAPIError:
+    if _error_status(error) == 404:
+        return SandboxAPIError(
+            f"Sandbox {sandbox_name} was deleted during its reset", status_code=404
+        )
+    return _reset_failure(
+        sandbox_name,
+        "is switched off for the reset, but it could not be read again, "
+        + _left_off(sandbox_name, owner),
+        error,
+    )
 
 
 def _check_reset_status(sandbox_name: str, sandbox: Sandbox, *, tolerate_off: bool = False) -> bool:
@@ -355,6 +529,13 @@ def _check_reset_status(sandbox_name: str, sandbox: Sandbox, *, tolerate_off: bo
             f"Sandbox {sandbox_name} is {status} while it should be deployed again after the reset"
         )
     return False
+
+
+def _still_redeploying(sandbox_name: str, sandbox: Sandbox, seconds: int) -> SandboxAPIError:
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} is still {_status_of(sandbox)} after waiting {seconds}s for it "
+        "to deploy again after the reset"
+    )
 
 
 class _AsyncDeleteDescriptor:
@@ -1178,114 +1359,235 @@ class _AsyncResetDescriptor:
         return instance_call
 
 
+_RESET_OWNER = "SandboxInstance"
+
+
 async def _reset_sandbox_by_name(
     sandbox_name: str, max_wait: int, interval: int
 ) -> "SandboxInstance":
     deadline = _reset_deadline(max_wait)
-    response = await get_sandbox(sandbox_name, client=client)
-    current = _unwrap_response(response, f"read sandbox {sandbox_name}")
-    record = current
+    seconds = round(max_wait / 1000)
+    record = await _reset_on_control_plane(sandbox_name, deadline, seconds)
+    if record is not None:
+        return await _wait_until_answering(
+            sandbox_name, SandboxInstance(record), deadline, seconds, interval
+        )
+    return await _reset_by_switching(sandbox_name, deadline, seconds, interval)
+
+
+async def _post_reset(sandbox_name: str, deadline: float) -> httpx.Response:
+    """POST /sandboxes/{name}/reset on the control plane, cut at the reset's deadline.
+
+    The generated client has no function for it yet, so it goes through the
+    configured httpx client the generated functions use, with the same auth.
+    """
+    return await (
+        _deadline_client(client, deadline)
+        .get_async_httpx_client()
+        .request("post", f"/sandboxes/{sandbox_name}/reset")
+    )
+
+
+async def _reset_on_control_plane(
+    sandbox_name: str, deadline: float, seconds: int
+) -> Sandbox | None:
+    """Ask the control plane to replace the sandbox's instance.
+
+    Answers the sandbox once its new instance runs, or None when the control
+    plane has no such call, for the reset to switch the sandbox off and on
+    instead. A reset asked for twice resets twice, so an answer lost at the edge
+    or on the way is asked for again while there is time.
+    """
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            response = await _post_reset(sandbox_name, deadline)
+        except Exception as e:
+            if _hit_deadline(e, deadline):
+                raise _not_reset_in_time(sandbox_name, seconds) from e
+            if not is_transient_reset_error(e):
+                raise
+            failure: Exception = e
+        else:
+            status = response.status_code
+            if 200 <= status < 300:
+                return Sandbox.from_dict(response.json())
+            if _is_unknown_route(status, response.content):
+                return None
+            failure = _reset_refusal(sandbox_name, response)
+            if status not in GATEWAY_ERROR_STATUSES:
+                raise failure
+        delay = _retry_delay(attempt)
+        if _remaining(deadline) <= delay:
+            raise SandboxAPIError(
+                f"Sandbox {sandbox_name} could not be reset within {seconds}s: {failure}",
+                status_code=_error_status(failure),
+            ) from failure
+        await asyncio.sleep(delay)
+
+
+async def _probe(sandbox_name: str, instance: "SandboxInstance", deadline: float) -> "bool | str":
+    """One call to the sandbox's health route, cut at the reset's deadline."""
+    api = instance.system.get_api_client().with_timeout(_probe_timeout(deadline))
+    try:
+        async with api:
+            response = await get_health(client=api)
+    except httpx.TransportError as e:
+        return _transport_detail(e)
+    return _probe_answer(sandbox_name, int(response.status_code), response.content)
+
+
+async def _wait_until_answering(
+    sandbox_name: str, instance: "SandboxInstance", deadline: float, seconds: int, interval: int
+) -> "SandboxInstance":
+    """Wait until the sandbox answers on its new instance.
+
+    The control plane answers once the instance runs; the gateway can take a
+    moment more to route to it.
+    """
+    while True:
+        answer = await _probe(sandbox_name, instance, deadline)
+        if answer is True:
+            return instance
+        if _remaining(deadline) <= interval / 1000:
+            raise _not_answering(sandbox_name, seconds, str(answer))
+        await asyncio.sleep(interval / 1000)
+
+
+async def _read_for_reset(sandbox_name: str, deadline: float, seconds: int) -> Sandbox:
+    """Read the sandbox's record within the reset's deadline.
+
+    A read is idempotent, so a dropped connection or an edge error is read again
+    while there is time; anything else, a missing sandbox above all, is raised
+    as the control plane answered it.
+    """
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            response = await get_sandbox(sandbox_name, client=_deadline_client(client, deadline))
+            return _unwrap_response(response, f"read sandbox {sandbox_name}")
+        except Exception as e:
+            if _hit_deadline(e, deadline):
+                raise SandboxAPIError(
+                    f"Sandbox {sandbox_name} could not be read within the {seconds}s of its reset"
+                ) from e
+            delay = _retry_delay(attempt)
+            if not _is_retryable(e) or _remaining(deadline) <= delay:
+                raise
+            await asyncio.sleep(delay)
+
+
+async def _write_enabled(
+    sandbox_name: str, record: Sandbox, enabled: bool, deadline: float, seconds: int
+) -> Sandbox:
+    """Write the sandbox back with ``spec.enabled`` set, from the record as the
+    control plane last returned it. Writing the same bytes twice is harmless, so a
+    transient failure is written again within the deadline.
+    """
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            response = await update_sandbox(
+                sandbox_name=sandbox_name,
+                client=_deadline_client(client, deadline),
+                body=_enabled_body(record, enabled),
+            )
+            return _unwrap_response(response, f"update sandbox {sandbox_name}")
+        except Exception as e:
+            if _hit_deadline(e, deadline):
+                raise SandboxAPIError(f"no answer within the {seconds}s of the reset") from e
+            delay = _retry_delay(attempt)
+            if not _is_retryable(e) or _remaining(deadline) <= delay:
+                raise
+            await asyncio.sleep(delay)
+
+
+async def _reset_by_switching(
+    sandbox_name: str, deadline: float, seconds: int, interval: int
+) -> "SandboxInstance":
+    """Reset a sandbox on a control plane without the reset call.
+
+    Switch it off, wait until the platform reports its instance gone, switch it
+    back on and wait until it is deployed again and answers. Every write is
+    preceded by a fresh read of the record, and refused unless the sandbox is
+    still the one being reset and still in a state the write is meant for.
+    """
+    current = await _read_for_reset(sandbox_name, deadline, seconds)
     if _check_resettable(sandbox_name, current):
         try:
-            response = await retry_on_transient_reset_async(
-                lambda: update_sandbox(
-                    sandbox_name=sandbox_name, client=client, body=_enabled_body(current, False)
-                )
-            )
-            record = _unwrap_response(response, f"disable sandbox {sandbox_name}")
+            off = await _write_enabled(sandbox_name, current, False, deadline, seconds)
         except Exception as e:
             raise _reset_failure(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
-        _check_taken_down(sandbox_name, record)
-    await _wait_for_teardown(sandbox_name, current, deadline, max_wait, interval)
+        _check_taken_down(sandbox_name, off)
+    stopped = await _wait_for_teardown(sandbox_name, current, deadline, seconds, interval)
     try:
-        response = await retry_on_transient_reset_async(
-            lambda: update_sandbox(
-                sandbox_name=sandbox_name, client=client, body=_enabled_body(record, True)
-            )
-        )
-        _unwrap_response(response, f"enable sandbox {sandbox_name}")
+        await _write_enabled(sandbox_name, stopped, True, deadline, seconds)
     except Exception as e:
         raise _reset_failure(
             sandbox_name,
-            "was taken down for the reset but could not be switched back on, it is left "
-            f'DEACTIVATED; call SandboxInstance.reset("{sandbox_name}") again to bring it back',
+            "was taken down for the reset but could not be switched back on, "
+            + _left_off(sandbox_name, _RESET_OWNER),
             e,
         ) from e
-    return await _wait_for_reset(sandbox_name, deadline, max_wait, interval)
+    return await _wait_for_redeploy(sandbox_name, deadline, seconds, interval)
 
 
 async def _wait_for_teardown(
-    sandbox_name: str, current: Sandbox, deadline: float, max_wait: int, interval: int
-) -> None:
-    """Wait until the instance that was switched off is gone.
+    sandbox_name: str, entry: Sandbox, deadline: float, seconds: int, interval: int
+) -> Sandbox:
+    """Wait until the platform reports the switched-off instance gone.
 
-    Switched back on while it is still there, the sandbox keeps it, and its
-    filesystem: the compute plane finds the instance it would create already
-    running and leaves it in place. The record cannot tell: the control plane
-    stamps DEACTIVATED as soon as the switch-off is written and tears the
-    instance down afterwards. The sandbox's URL can (see ``_teardown_done``).
+    Answers the record read last, the one the switch-on is written from.
+    Switched back on while the old instance still runs, the sandbox could keep
+    it. The record says when it is gone: the deployment pipeline writes a
+    succeeded deployment once it has taken the instance down. Nothing the old
+    guest answers is taken as a sign of it.
     """
-    old = SandboxInstance(current)
     while True:
         try:
-            await old.fs.ls("/")
+            record = await _read_for_reset(sandbox_name, deadline, seconds)
         except Exception as e:
-            if _teardown_done(sandbox_name, e):
-                return
-        if time.monotonic() >= deadline:
-            raise _teardown_timeout(sandbox_name, max_wait)
+            raise _teardown_unreadable(sandbox_name, e, _RESET_OWNER) from e
+        _check_still_off(sandbox_name, entry, record)
+        state = _teardown_state(record)
+        if state == "done":
+            return record
+        if state == "failed":
+            raise _teardown_failed(sandbox_name, _RESET_OWNER)
+        if _remaining(deadline) <= interval / 1000:
+            raise _teardown_timeout(sandbox_name, seconds, _RESET_OWNER)
         await asyncio.sleep(interval / 1000)
 
 
-async def _wait_for_reset(
-    sandbox_name: str, deadline: float, max_wait: int, interval: int
+async def _wait_for_redeploy(
+    sandbox_name: str, deadline: float, seconds: int, interval: int
 ) -> "SandboxInstance":
     """Wait until the sandbox is DEPLOYED again and answers.
 
-    The record turns DEPLOYED a couple of seconds before the sandbox is routable,
-    during which calls get a 404 WORKLOAD_UNAVAILABLE (retryable), so DEPLOYED
-    alone is not ready.
+    The record turns DEPLOYED a moment before the sandbox is routable, so
+    DEPLOYED alone is not ready.
     """
     entry_deadline = _reset_entry_deadline(deadline)
-    seconds = round(max_wait / 1000)
     redeploying = False
-    instance: SandboxInstance | None = None
     while True:
         await asyncio.sleep(interval / 1000)
-        if instance is None:
-            response = await retry_on_transient_reset_async(
-                lambda: get_sandbox(sandbox_name, client=client)
+        record = await _read_for_reset(sandbox_name, deadline, seconds)
+        redeploying = redeploying or _status_of(record) == "DEPLOYING"
+        if _check_reset_status(
+            sandbox_name,
+            record,
+            tolerate_off=not redeploying and time.monotonic() < entry_deadline,
+        ):
+            return await _wait_until_answering(
+                sandbox_name, SandboxInstance(record), deadline, seconds, interval
             )
-            record = _unwrap_response(response, f"read sandbox {sandbox_name}")
-            redeploying = redeploying or _status_of(record) == "DEPLOYING"
-            if _check_reset_status(
-                sandbox_name,
-                record,
-                tolerate_off=not redeploying and time.monotonic() < entry_deadline,
-            ):
-                instance = SandboxInstance(record)
-            elif time.monotonic() >= deadline:
-                raise SandboxAPIError(
-                    f"Sandbox {sandbox_name} is still DEPLOYING after waiting {seconds}s "
-                    "for it to deploy again after the reset"
-                )
-        if instance is not None:
-            try:
-                await instance.fs.ls("/")
-                return instance
-            except Exception as e:
-                if not _is_not_yet_routable(e):
-                    raise _reset_failure(
-                        sandbox_name, "was deployed again but does not answer after the reset", e
-                    ) from e
-                if time.monotonic() >= deadline:
-                    raise _reset_failure(
-                        sandbox_name,
-                        f"was deployed again but did not answer within {seconds}s after the reset",
-                        e,
-                    ) from e
+        if _remaining(deadline) <= interval / 1000:
+            raise _still_redeploying(sandbox_name, record, seconds)
 
 
 async def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
@@ -1340,27 +1642,33 @@ SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
 SandboxInstance.reset = _AsyncResetDescriptor(
     """Reset a sandbox to a fresh copy of its image.
 
-    The sandbox is taken down and deployed again from its image: everything
-    written to its filesystem since it started and every running process are
-    gone, as after a delete and a create. Unlike a delete and a create, the
-    sandbox is never absent: it keeps its name and URL, its spec, its
-    environment variables (secret values included), its volumes and the data
-    on them, its previews, preview tokens and sessions. Running processes, and
-    anything mounted from inside the sandbox such as a drive, belong to the old
-    instance and have to be started or mounted again.
+    The sandbox gets a new instance booted from its image: everything written
+    to its filesystem since it started and every running process are gone, as
+    after a delete and a create. Unlike a delete and a create, the sandbox is
+    never absent: it keeps its name and URL, its spec, its environment
+    variables (secret values included), its volumes and the data on them, its
+    previews, preview tokens and sessions. Running processes, and anything
+    mounted from inside the sandbox such as a drive, belong to the old instance
+    and have to be started or mounted again.
 
-    This waits until the old instance is gone and the sandbox is DEPLOYED again
-    and answers, a few seconds. A sandbox that is disabled is switched back on.
-    Sandboxes that are archived or being deleted cannot be reset.
+    The control plane replaces the instance in one call: the platform deletes
+    the old instance and boots the new one, whatever ran in the old one. This
+    then waits until the sandbox answers. Only a running (DEPLOYED) sandbox can
+    be reset that way.
 
-    It works by switching the sandbox off and on again (``spec.enabled``). If the
-    old instance is still running when ``max_wait`` runs out, or the second
-    write fails, the sandbox is left DEACTIVATED and the error says so: calling
-    ``reset`` again finishes the reset.
+    On a control plane without that call, the sandbox is switched off and on
+    again (``spec.enabled``): the reset waits for the platform to report the old
+    instance gone, then for the redeploy. A sandbox that is disabled is switched
+    back on. If ``max_wait`` runs out before the old instance is gone, or the
+    second write fails, the sandbox is left DEACTIVATED and the error says so:
+    calling ``reset`` again finishes the reset.
+
+    Sandboxes that are archived, failed or being deleted cannot be reset.
+    ``max_wait`` bounds the whole reset, every call included.
 
     Args:
         max_wait: Give up waiting for the reset after this many milliseconds;
             -1 waits indefinitely.
-        interval: Milliseconds between two reads of the sandbox.
+        interval: Milliseconds between two reads of the sandbox while waiting on it.
     """
 )

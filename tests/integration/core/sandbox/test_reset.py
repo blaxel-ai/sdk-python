@@ -166,8 +166,9 @@ class TestSandboxReset:
 
         with pytest.raises(SandboxAPIError) as raised:
             await SandboxInstance.reset(name)
-        # Either the record is gone (404) or it is still there as TERMINATED/DELETING.
-        assert raised.value.status_code == 404 or "cannot be reset" in str(raised.value)
+        # Either the record is gone (404) or it is still there as TERMINATED/DELETING
+        # and the reset is refused (409 from the control plane, or by the SDK).
+        assert raised.value.status_code in (404, 409) or "cannot be reset" in str(raised.value)
 
         # Still not running after the refused call.
         try:
