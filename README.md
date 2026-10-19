@@ -328,8 +328,9 @@ dangling symlink, is a conflict and is left unchanged; directories are never mer
 
 The copy is not a transaction: if it fails part-way, entries it already created remain, and
 a retry conflicts with them. Source symlinks are copied as symlinks; special files are refused.
-It needs a sandbox image whose API has the copy endpoint and raises `RuntimeError` on older
-ones, never falling back to an overwriting copy.
+`max_wait` bounds the request (`-1` waits indefinitely); past it `cp` raises `TimeoutError`
+while the sandbox may still be copying. It needs a sandbox image whose API has the copy
+endpoint and raises `RuntimeError` on older ones, never falling back to an overwriting copy.
 
 #### Volumes
 

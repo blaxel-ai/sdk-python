@@ -131,6 +131,35 @@ def test_rejects_empty_paths_before_any_request(mode, source, destination):
 
 
 @modes
+@pytest.mark.parametrize("max_wait, expected", [(180000, 180.0), (2500, 2.5), (-1, None)])
+def test_max_wait_bounds_the_copy_request(mode, max_wait, expected):
+    call, requests, _ = harness(mode, ok)
+    call("src", "dst", max_wait, no_overwrite=True)
+    timeouts = requests[0].extensions["timeout"]
+    assert {timeouts[key] for key in ("connect", "read", "write", "pool")} == {expected}
+
+
+@modes
+def test_a_timed_out_copy_raises_timeout_error(mode):
+    def slow(request):
+        raise httpx.ReadTimeout("timed out", request=request)
+
+    call, requests, _ = harness(mode, slow)
+    with pytest.raises(TimeoutError, match="Could not copy src to dst within 50 ms"):
+        call("src", "dst", max_wait=50, no_overwrite=True)
+    assert len(requests) == 1
+
+
+@modes
+@pytest.mark.parametrize("max_wait", [-2, float("inf"), float("nan")])
+def test_rejects_invalid_max_wait_before_any_request(mode, max_wait):
+    call, requests, _ = harness(mode, ok)
+    with pytest.raises(ValueError, match="max_wait"):
+        call("src", "dst", max_wait=max_wait, no_overwrite=True)
+    assert requests == []
+
+
+@modes
 def test_a_failed_request_is_not_retried(mode):
     def reset(request):
         raise httpx.ReadError("connection reset")

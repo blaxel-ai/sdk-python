@@ -5,6 +5,7 @@ when the final target exists. Requests are not retried: a copy may have created
 entries before a connection reset.
 """
 
+import math
 from typing import Any, Callable
 
 import httpx
@@ -18,6 +19,20 @@ def _copy_body(source: str, destination: str) -> dict[str, Any]:
     if not source or not destination:
         raise ValueError("source and destination must be nonempty paths")
     return {"source": source, "destination": destination, "noOverwrite": True}
+
+
+def _copy_timeout(max_wait: int) -> httpx.Timeout | None:
+    """``max_wait`` (ms) bounds the copy request like the default path's wait; -1 waits indefinitely."""
+    if not math.isfinite(max_wait) or (max_wait < 0 and max_wait != -1):
+        raise ValueError("max_wait must be -1 or finite and non-negative")
+    return None if max_wait == -1 else httpx.Timeout(max_wait / 1000)
+
+
+def _copy_timeout_error(source: str, destination: str, max_wait: int) -> TimeoutError:
+    return TimeoutError(
+        f"Could not copy {source} to {destination} within {max_wait} ms; "
+        "the sandbox may still be copying"
+    )
 
 
 def _copy_result(
