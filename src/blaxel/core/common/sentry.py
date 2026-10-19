@@ -405,11 +405,42 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+# HTTP 404 from any Blaxel backend means the addressed resource does not exist.
+# The SDK faithfully relays that status to the caller; it is a usage/existence
+# condition, not an SDK defect, so an unhandled 404 must not be reported.
+_HTTP_NOT_FOUND = 404
+
+
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status an API error carries, if any.
+
+    Covers the generated client's ``UnexpectedStatus`` (``status_code``), the
+    sandbox wrapper's ``ResponseError`` (``status`` / ``response.status_code``),
+    and ``httpx.HTTPStatusError`` (``response.status_code``). ``type(x) is int``
+    rejects ``bool`` (a subclass of ``int``).
+    """
+    for candidate in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        if type(candidate) is int and 100 <= candidate <= 599:
+            return candidate
+    return None
+
+
+def _is_resource_not_found_error(error: BaseException) -> bool:
+    """Check whether an error is an HTTP 404 (resource not found) response."""
+    return _http_status_code(error) == _HTTP_NOT_FOUND
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_resource_not_found_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
