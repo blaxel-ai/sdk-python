@@ -123,6 +123,10 @@ Key points:
       reason="slow test; set RUN_SLOW_TESTS=1 to enable",
   )
   ```
+- Opt-in variables currently in use:
+  - `RUN_SLOW_TESTS=1`: tests that wait on slow backend behavior (TTLs, snapshots, archives)
+  - `RUN_CUSTOM_DOMAIN_TESTS=1`: `tests/integration/core/customdomains/`, which creates
+    (and deletes) custom domains in the tested workspace
 - Integration tests require `BL_WORKSPACE` and `BL_API_KEY` environment variables
 - Use helpers from `tests/helpers.py` (`unique_name`, `default_labels`, `default_image`, etc.)
 - Always label test resources with `default_labels` for automatic cleanup
