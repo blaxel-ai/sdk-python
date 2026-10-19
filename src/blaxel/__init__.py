@@ -7,6 +7,7 @@ from .core.common.settings import settings
 __version__ = ""
 __commit__ = ""
 __sentry_dsn__ = ""
+__posthog_key__ = ""
 __all__ = ["autoload", "settings", "env"]
 
 autoload()
