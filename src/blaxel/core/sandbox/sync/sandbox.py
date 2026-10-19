@@ -57,11 +57,14 @@ from ..default.sandbox import (
     SandboxAPIError,
     _check_reset_status,
     _check_resettable,
+    _check_same_sandbox,
     _check_still_off,
+    _check_switched_off_same,
     _check_taken_down,
     _create_body,
     _creation_client,
     _deadline_client,
+    _deleted,
     _enabled_body,
     _error_status,
     _hit_deadline,
@@ -78,6 +81,7 @@ from ..default.sandbox import (
     _reset_entry_deadline,
     _reset_failure,
     _reset_refusal,
+    _ResetStopped,
     _retry_delay,
     _sandbox_name,
     _status_of,
@@ -975,7 +979,12 @@ def _read_for_reset(sandbox_name: str, deadline: float, seconds: int) -> Sandbox
 
 
 def _write_enabled(
-    sandbox_name: str, record: Sandbox, enabled: bool, deadline: float, seconds: int
+    sandbox_name: str,
+    record: Sandbox,
+    enabled: bool,
+    entry: Sandbox,
+    deadline: float,
+    seconds: int,
 ) -> Sandbox:
     """Write the sandbox back with ``spec.enabled`` set (see the async version)."""
     attempt = 0
@@ -995,6 +1004,17 @@ def _write_enabled(
             if not _is_retryable(e) or _remaining(deadline) <= delay:
                 raise
             time.sleep(delay)
+        try:
+            latest = _read_for_reset(sandbox_name, deadline, seconds)
+        except Exception as e:
+            if _error_status(e) == 404:
+                raise _deleted(sandbox_name) from e
+            raise
+        if enabled:
+            _check_still_off(sandbox_name, entry, latest)
+            record = latest
+        else:
+            _check_same_sandbox(sandbox_name, entry, latest)
 
 
 def _reset_by_switching(
@@ -1004,15 +1024,20 @@ def _reset_by_switching(
     current = _read_for_reset(sandbox_name, deadline, seconds)
     if _check_resettable(sandbox_name, current):
         try:
-            off = _write_enabled(sandbox_name, current, False, deadline, seconds)
+            off = _write_enabled(sandbox_name, current, False, current, deadline, seconds)
+        except _ResetStopped:
+            raise
         except Exception as e:
             raise _reset_failure(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
+        _check_switched_off_same(sandbox_name, current, off)
         _check_taken_down(sandbox_name, off)
     stopped = _wait_for_teardown(sandbox_name, current, deadline, seconds, interval)
     try:
-        _write_enabled(sandbox_name, stopped, True, deadline, seconds)
+        _write_enabled(sandbox_name, stopped, True, current, deadline, seconds)
+    except _ResetStopped:
+        raise
     except Exception as e:
         raise _reset_failure(
             sandbox_name,
@@ -1020,7 +1045,7 @@ def _reset_by_switching(
             + _left_off(sandbox_name, _RESET_OWNER),
             e,
         ) from e
-    return _wait_for_redeploy(sandbox_name, deadline, seconds, interval)
+    return _wait_for_redeploy(sandbox_name, current, deadline, seconds, interval)
 
 
 def _wait_for_teardown(
@@ -1037,14 +1062,14 @@ def _wait_for_teardown(
         if state == "done":
             return record
         if state == "failed":
-            raise _teardown_failed(sandbox_name, _RESET_OWNER)
+            raise _teardown_failed(sandbox_name)
         if _remaining(deadline) <= interval / 1000:
             raise _teardown_timeout(sandbox_name, seconds, _RESET_OWNER)
         time.sleep(interval / 1000)
 
 
 def _wait_for_redeploy(
-    sandbox_name: str, deadline: float, seconds: int, interval: int
+    sandbox_name: str, entry: Sandbox, deadline: float, seconds: int, interval: int
 ) -> "SyncSandboxInstance":
     """Wait until the sandbox is DEPLOYED again and answers (see the async version)."""
     entry_deadline = _reset_entry_deadline(deadline)
@@ -1052,6 +1077,7 @@ def _wait_for_redeploy(
     while True:
         time.sleep(interval / 1000)
         record = _read_for_reset(sandbox_name, deadline, seconds)
+        _check_same_sandbox(sandbox_name, entry, record)
         redeploying = redeploying or _status_of(record) == "DEPLOYING"
         if _check_reset_status(
             sandbox_name,

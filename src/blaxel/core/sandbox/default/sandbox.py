@@ -446,16 +446,44 @@ def _created_at(sandbox: Sandbox) -> str | None:
     return None if isinstance(value, Unset) else value
 
 
+class _ResetStopped(SandboxAPIError):
+    """An error that ends a reset as it is, without being reworded by the step it stopped."""
+
+
+def _recreated(sandbox_name: str) -> _ResetStopped:
+    return _ResetStopped(
+        f"Sandbox {sandbox_name} was deleted and created again during its reset; the new "
+        "sandbox is left as it is"
+    )
+
+
+def _deleted(sandbox_name: str) -> _ResetStopped:
+    return _ResetStopped(f"Sandbox {sandbox_name} was deleted during its reset", status_code=404)
+
+
+def _check_same_sandbox(sandbox_name: str, entry: Sandbox, record: Sandbox) -> None:
+    """Refuse to go on with a sandbox created again under the same name since the
+    reset read it first: its creation date tells the two apart.
+    """
+    if _created_at(record) != _created_at(entry):
+        raise _recreated(sandbox_name)
+
+
+def _check_switched_off_same(sandbox_name: str, entry: Sandbox, off: Sandbox) -> None:
+    """The switch-off answered for another sandbox of the same name: it was written to."""
+    if _created_at(off) != _created_at(entry):
+        raise _ResetStopped(
+            f"Sandbox {sandbox_name} was deleted and created again while it was being switched "
+            "off for its reset; the new sandbox was written to and is left switched off"
+        )
+
+
 def _check_still_off(sandbox_name: str, entry: Sandbox, record: Sandbox) -> None:
     """Refuse to switch back on anything but the sandbox being reset, still off."""
-    if _created_at(record) != _created_at(entry):
-        raise SandboxAPIError(
-            f"Sandbox {sandbox_name} was deleted and created again during its reset; the new "
-            "sandbox is left as it is"
-        )
+    _check_same_sandbox(sandbox_name, entry, record)
     status = _status_of(record)
     if status not in RESET_OFF_STATUSES or record.spec.enabled is not False:
-        raise SandboxAPIError(
+        raise _ResetStopped(
             f"Sandbox {sandbox_name} is {status} while it should be switched off for the reset; "
             "it is left as it is"
         )
@@ -484,10 +512,15 @@ def _left_off(sandbox_name: str, owner: str) -> str:
     return f'it is left DEACTIVATED; call {owner}.reset("{sandbox_name}") again to finish the reset'
 
 
-def _teardown_failed(sandbox_name: str, owner: str) -> SandboxAPIError:
+def _teardown_failed(sandbox_name: str) -> SandboxAPIError:
+    """The platform could not take the instance down. Resetting again cannot get
+    past it: the sandbox is already off and the failed teardown stays its newest
+    event.
+    """
     return SandboxAPIError(
-        f"Sandbox {sandbox_name} could not be taken down for the reset, "
-        f"{_left_off(sandbox_name, owner)}"
+        f"Sandbox {sandbox_name} could not be taken down for the reset: the platform reported "
+        "the teardown failed. It is left switched off; delete it and create it again to get a "
+        "fresh instance"
     )
 
 
@@ -500,9 +533,7 @@ def _teardown_timeout(sandbox_name: str, seconds: int, owner: str) -> SandboxAPI
 
 def _teardown_unreadable(sandbox_name: str, error: Exception, owner: str) -> SandboxAPIError:
     if _error_status(error) == 404:
-        return SandboxAPIError(
-            f"Sandbox {sandbox_name} was deleted during its reset", status_code=404
-        )
+        return _deleted(sandbox_name)
     return _reset_failure(
         sandbox_name,
         "is switched off for the reset, but it could not be read again, "
@@ -1480,11 +1511,20 @@ async def _read_for_reset(sandbox_name: str, deadline: float, seconds: int) -> S
 
 
 async def _write_enabled(
-    sandbox_name: str, record: Sandbox, enabled: bool, deadline: float, seconds: int
+    sandbox_name: str,
+    record: Sandbox,
+    enabled: bool,
+    entry: Sandbox,
+    deadline: float,
+    seconds: int,
 ) -> Sandbox:
     """Write the sandbox back with ``spec.enabled`` set, from the record as the
-    control plane last returned it. Writing the same bytes twice is harmless, so a
-    transient failure is written again within the deadline.
+    control plane last returned it.
+
+    A write cut short may or may not have landed, so before it is sent again the
+    record is read again, and the write is only sent again to the sandbox the
+    reset started on (same creation date as ``entry``). The switch-on is also
+    only sent again to a sandbox still switched off, and from that fresh read.
     """
     attempt = 0
     while True:
@@ -1503,6 +1543,17 @@ async def _write_enabled(
             if not _is_retryable(e) or _remaining(deadline) <= delay:
                 raise
             await asyncio.sleep(delay)
+        try:
+            latest = await _read_for_reset(sandbox_name, deadline, seconds)
+        except Exception as e:
+            if _error_status(e) == 404:
+                raise _deleted(sandbox_name) from e
+            raise
+        if enabled:
+            _check_still_off(sandbox_name, entry, latest)
+            record = latest
+        else:
+            _check_same_sandbox(sandbox_name, entry, latest)
 
 
 async def _reset_by_switching(
@@ -1518,15 +1569,20 @@ async def _reset_by_switching(
     current = await _read_for_reset(sandbox_name, deadline, seconds)
     if _check_resettable(sandbox_name, current):
         try:
-            off = await _write_enabled(sandbox_name, current, False, deadline, seconds)
+            off = await _write_enabled(sandbox_name, current, False, current, deadline, seconds)
+        except _ResetStopped:
+            raise
         except Exception as e:
             raise _reset_failure(
                 sandbox_name, "could not be reset, it was left as it was", e
             ) from e
+        _check_switched_off_same(sandbox_name, current, off)
         _check_taken_down(sandbox_name, off)
     stopped = await _wait_for_teardown(sandbox_name, current, deadline, seconds, interval)
     try:
-        await _write_enabled(sandbox_name, stopped, True, deadline, seconds)
+        await _write_enabled(sandbox_name, stopped, True, current, deadline, seconds)
+    except _ResetStopped:
+        raise
     except Exception as e:
         raise _reset_failure(
             sandbox_name,
@@ -1534,7 +1590,7 @@ async def _reset_by_switching(
             + _left_off(sandbox_name, _RESET_OWNER),
             e,
         ) from e
-    return await _wait_for_redeploy(sandbox_name, deadline, seconds, interval)
+    return await _wait_for_redeploy(sandbox_name, current, deadline, seconds, interval)
 
 
 async def _wait_for_teardown(
@@ -1558,25 +1614,27 @@ async def _wait_for_teardown(
         if state == "done":
             return record
         if state == "failed":
-            raise _teardown_failed(sandbox_name, _RESET_OWNER)
+            raise _teardown_failed(sandbox_name)
         if _remaining(deadline) <= interval / 1000:
             raise _teardown_timeout(sandbox_name, seconds, _RESET_OWNER)
         await asyncio.sleep(interval / 1000)
 
 
 async def _wait_for_redeploy(
-    sandbox_name: str, deadline: float, seconds: int, interval: int
+    sandbox_name: str, entry: Sandbox, deadline: float, seconds: int, interval: int
 ) -> "SandboxInstance":
     """Wait until the sandbox is DEPLOYED again and answers.
 
     The record turns DEPLOYED a moment before the sandbox is routable, so
-    DEPLOYED alone is not ready.
+    DEPLOYED alone is not ready. Every read must still be the sandbox the reset
+    started on.
     """
     entry_deadline = _reset_entry_deadline(deadline)
     redeploying = False
     while True:
         await asyncio.sleep(interval / 1000)
         record = await _read_for_reset(sandbox_name, deadline, seconds)
+        _check_same_sandbox(sandbox_name, entry, record)
         redeploying = redeploying or _status_of(record) == "DEPLOYING"
         if _check_reset_status(
             sandbox_name,
