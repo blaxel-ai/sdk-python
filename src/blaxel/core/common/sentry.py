@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from ..errors import ModelNotFoundError
 from .settings import settings
 
 try:
@@ -405,11 +406,25 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_model_not_found_error(exc_value: BaseException) -> bool:
+    """Check whether an exception reports a missing/unusable model gateway endpoint.
+
+    ``bl_model(name)`` raises ``ModelNotFoundError`` when a workspace does not
+    contain the requested model (the canonical quickstart example, e.g.
+    ``sandbox-openai``, is a common trigger). That is a workspace configuration
+    or usage error, not an SDK defect, so it should not be captured as an
+    unhandled SDK exception.
+    """
+    return isinstance(exc_value, ModelNotFoundError)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_model_not_found_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
