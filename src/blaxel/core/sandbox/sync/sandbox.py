@@ -75,7 +75,6 @@ from ..default.sandbox import (
     _error_status,
     _hit_deadline,
     _is_retryable,
-    _is_unknown_route,
     _left_off,
     _not_answering,
     _not_reset_in_time,
@@ -87,6 +86,7 @@ from ..default.sandbox import (
     _reset_entry_deadline,
     _reset_failure,
     _reset_refusal,
+    _resets_by_switching,
     _ResetStopped,
     _retry_delay,
     _sandbox_name,
@@ -949,7 +949,7 @@ def _reset_on_control_plane(
                 record = Sandbox.from_dict(response.json())
                 _check_reset_same(sandbox_name, _entry_or_none(entry), record)
                 return record
-            if _is_unknown_route(status, response.content):
+            if _resets_by_switching(status, response.content):
                 return None
             failure = _reset_refusal(sandbox_name, response)
             if status not in GATEWAY_ERROR_STATUSES:

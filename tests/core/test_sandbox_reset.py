@@ -81,6 +81,17 @@ def unknown_route() -> httpx.Response:
     return httpx.Response(404, json={"code": 404, "error": "Route not found"})
 
 
+def not_in_one_call() -> httpx.Response:
+    return httpx.Response(
+        501,
+        json={
+            "code": 501,
+            "error": "This sandbox cannot be reset in one call yet: stop it and start it "
+            "again to run a fresh copy of its image",
+        },
+    )
+
+
 def refused(code: int, error: str) -> httpx.Response:
     return httpx.Response(code, json={"code": code, "error": error})
 
@@ -408,6 +419,22 @@ async def test_reset_switches_off_waits_for_the_platform_to_report_it_gone_and_s
     assert aio_switch.probe.await_count == 1
     for call in [*get.call_args_list, *update.call_args_list]:
         assert (call.args or (call.kwargs["sandbox_name"],))[0] == "my-sandbox"
+
+
+async def test_reset_switches_off_and_on_when_the_control_plane_cannot_reset_it_in_one_call(aio):
+    aio.post.return_value = not_in_one_call()
+    aio.get.side_effect = [
+        record("DEPLOYED"),
+        off(DEACTIVATE, TEARING_DOWN, TORN_DOWN),
+        record("DEPLOYED"),
+    ]
+    aio.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
+
+    instance = await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert aio.post.await_count == 1
+    assert [body_of(aio.update, i)["spec"]["enabled"] for i in range(2)] == [False, True]
 
 
 async def test_reset_does_not_switch_it_back_on_before_the_platform_reports_it_gone(aio_switch):
@@ -998,6 +1025,24 @@ def test_sync_reset_switches_off_waits_for_the_platform_and_switches_on(blocking
     assert get.call_count == 4
     for call in [*get.call_args_list, *update.call_args_list]:
         assert isinstance(call.kwargs["client"], async_module._DeadlineClient)
+
+
+def test_sync_reset_switches_off_and_on_when_the_control_plane_cannot_reset_it_in_one_call(
+    blocking,
+):
+    blocking.post.return_value = not_in_one_call()
+    blocking.get.side_effect = [
+        record("DEPLOYED"),
+        off(DEACTIVATE, TEARING_DOWN, TORN_DOWN),
+        record("DEPLOYED"),
+    ]
+    blocking.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
+
+    instance = SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert blocking.post.call_count == 1
+    assert [body_of(blocking.update, i)["spec"]["enabled"] for i in range(2)] == [False, True]
 
 
 @pytest.mark.parametrize("status", ["TERMINATED", "DELETING", "ARCHIVED", "FAILED"])

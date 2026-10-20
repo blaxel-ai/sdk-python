@@ -376,9 +376,12 @@ def _hit_deadline(error: Exception, deadline: float) -> bool:
     return isinstance(error, httpx.TimeoutException) and not math.isinf(deadline)
 
 
-def _is_unknown_route(status: int, content: bytes) -> bool:
-    """A control plane that has no reset call answers its route as unknown."""
-    if status == 405:
+def _resets_by_switching(status: int, content: bytes) -> bool:
+    """A control plane that has no reset call answers its route as unknown, and
+    one that cannot reset this sandbox in one call answers 501: either way the
+    sandbox is reset by switching it off and on.
+    """
+    if status in (405, 501):
         return True
     if status != 404:
         return False
@@ -1545,7 +1548,7 @@ async def _reset_on_control_plane(
                 record = Sandbox.from_dict(response.json())
                 _check_reset_same(sandbox_name, await _entry_or_none(entry), record)
                 return record
-            if _is_unknown_route(status, response.content):
+            if _resets_by_switching(status, response.content):
                 return None
             failure = _reset_refusal(sandbox_name, response)
             if status not in GATEWAY_ERROR_STATUSES:
