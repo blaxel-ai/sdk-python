@@ -55,15 +55,19 @@ class TestReadTree:
 
     @pytest.mark.parametrize("mode", ["async", "sync"])
     async def test_reads_selected_files_in_one_request(self, mode):
-        selected = await self.read_tree(
-            mode, ROOT, patterns=["*.json"], exclude_dirs=["node_modules"]
-        )
-        assert selected == {
-            "a.json": FILES["a.json"],
-            "nested/b c#1.json": FILES["nested/b c#1.json"],
-        }
-        assert await self.read_tree(mode, "/tmp/read-tree-empty") == {}
-        assert list(await self.read_tree(mode, ROOT)) == sorted(FILES)
+        tree = await self.read_tree(mode, ROOT, patterns=["*.json"], exclude_dirs=["node_modules"])
+        assert tree.recursive is True
+        assert tree.path == ROOT
+        assert sorted((file.path, file.content) for file in tree.files) == [
+            (f"{ROOT}/a.json", FILES["a.json"]),
+            (f"{ROOT}/nested/b c#1.json", FILES["nested/b c#1.json"]),
+        ]
+        assert [directory.path for directory in tree.subdirectories] == [f"{ROOT}/nested"]
+        assert (await self.read_tree(mode, "/tmp/read-tree-empty")).files == []
+        everything = await self.read_tree(mode, ROOT)
+        assert sorted(file.path for file in everything.files) == [
+            f"{ROOT}/{path}" for path in sorted(FILES)
+        ]
 
     @pytest.mark.parametrize("mode", ["async", "sync"])
     async def test_rejects_instead_of_truncating(self, mode):

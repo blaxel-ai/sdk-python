@@ -10,7 +10,7 @@ import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
-from ..read_tree import _tree_files, _tree_request
+from ..read_tree import _tree_directory, _tree_request
 from ..transient_retry import retry_on_transient_reset
 from ..types import (
     CopyResponse,
@@ -130,17 +130,17 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         exclude_hidden: bool | None = None,
         max_files: int | None = None,
         max_bytes: int | None = None,
-    ) -> dict[str, str]:
+    ) -> Directory:
         """Sync version of ``SandboxFileSystem.read_tree``, with the same parameters and errors."""
         url, params = _tree_request(
             self.format_path(path), patterns, exclude_dirs, exclude_hidden, max_files, max_bytes
         )
 
-        def read_tree_once() -> dict[str, str]:
+        def read_tree_once() -> Directory:
             with self.get_client() as client_instance:
                 response = client_instance.get(url, params=params)
                 self.handle_response_error(response)
-                return _tree_files(response.json())
+                return _tree_directory(response.json())
 
         return retry_on_transient_reset(read_tree_once)
 

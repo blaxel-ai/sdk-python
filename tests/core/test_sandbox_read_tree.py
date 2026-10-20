@@ -4,6 +4,8 @@ import httpx
 import pytest
 
 from blaxel.core.client.models import Metadata, SandboxSpec
+from blaxel.core.sandbox.client.models import Directory
+from blaxel.core.sandbox.client.types import UNSET
 from blaxel.core.sandbox.default.filesystem import SandboxFileSystem
 from blaxel.core.sandbox.sync.filesystem import SyncSandboxFileSystem
 from blaxel.core.sandbox.types import ResponseError, Sandbox, SandboxConfiguration
@@ -16,6 +18,19 @@ def tree(path, files, recursive=True):
     if recursive:
         body["recursive"] = True
     return body
+
+
+def file(path, **extra):
+    return {
+        "path": path,
+        "name": path.rsplit("/", 1)[-1],
+        "group": "root",
+        "owner": "root",
+        "permissions": "644",
+        "size": 1,
+        "lastModified": "2026-01-01T00:00:00Z",
+        **extra,
+    }
 
 
 def harness(mode, respond):
@@ -50,7 +65,7 @@ def test_reads_the_whole_tree_in_one_request(mode):
     call, requests = harness(
         mode, lambda request: httpx.Response(200, json=tree("/data dir#1", []))
     )
-    assert call("/data dir#1") == {}
+    assert call("/data dir#1").files == []
     assert len(requests) == 1
     assert requests[0].url.raw_path.decode().startswith("/filesystem/tree//data%20dir%231?")
     assert dict(requests[0].url.params) == {"recursive": "true", "content": "true"}
@@ -79,29 +94,23 @@ def test_passes_selection_and_limits_as_query_parameters(mode):
 
 
 @modes
-def test_returns_sorted_relative_paths_and_skips_entries_without_content(mode):
+def test_returns_the_api_response_as_a_directory(mode):
     files = [
-        {"path": "/root/z.json", "name": "z.json", "content": "z"},
-        {"path": "/root/nested/b.json", "name": "b.json", "content": ""},
-        {"path": "/root/dir-link", "name": "dir-link"},
-        {"path": "/root/a.json", "name": "a.json", "content": "a"},
+        file("/root/z.json", content="z"),
+        file("/root/nested/b.json", content=""),
+        file("/root/dir-link"),
     ]
-    call, _ = harness(mode, lambda request: httpx.Response(200, json=tree("/root", files)))
-    result = call("/root/")
-    assert list(result) == ["a.json", "nested/b.json", "z.json"]
-    assert result["nested/b.json"] == ""
-
-
-@modes
-def test_strips_the_prefix_when_the_root_is_slash(mode):
-    files = [{"path": "/a.json", "name": "a.json", "content": "a"}]
-    call, _ = harness(mode, lambda request: httpx.Response(200, json=tree("/", files)))
-    assert call("/") == {"a.json": "a"}
+    body = tree("/root", files)
+    call, _ = harness(mode, lambda request: httpx.Response(200, json=body))
+    result = call("/root")
+    assert isinstance(result, Directory)
+    assert result.to_dict() == body
+    assert [entry.content for entry in result.files] == ["z", "", UNSET]
 
 
 @modes
 def test_fails_on_an_older_sandbox_api_that_lists_one_level(mode):
-    files = [{"path": "/root/a.json", "name": "a.json"}]
+    files = [file("/root/a.json")]
     call, _ = harness(
         mode, lambda request: httpx.Response(200, json=tree("/root", files, recursive=False))
     )

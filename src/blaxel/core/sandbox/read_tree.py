@@ -1,7 +1,9 @@
-"""Shared by the async and sync ``read_tree``: the request and the response mapping."""
+"""Shared by the async and sync ``read_tree``: the request and the older-API check."""
 
 from typing import Any
 from urllib.parse import quote
+
+from .client.models import Directory
 
 
 def _tree_request(
@@ -26,7 +28,7 @@ def _tree_request(
     return f"/filesystem/tree/{quote(path)}", params
 
 
-def _tree_files(data: dict[str, Any]) -> dict[str, str]:
+def _tree_directory(data: dict[str, Any]) -> Directory:
     # An older sandbox API ignores the query and lists only direct children,
     # without ``recursive``. Fail instead of returning that as the whole tree.
     if data.get("recursive") is not True:
@@ -34,12 +36,6 @@ def _tree_files(data: dict[str, Any]) -> dict[str, str]:
             "read_tree needs a newer sandbox API: this sandbox does not support "
             "recursive tree reads; update its image"
         )
-    root = data.get("path") or "/"
-    prefix = root if root.endswith("/") else f"{root}/"
-    files = {}
-    for file in data.get("files") or []:
-        content = file.get("content")
-        path = file.get("path") or ""
-        if isinstance(content, str) and path.startswith(prefix):
-            files[path[len(prefix) :]] = content
-    return dict(sorted(files.items()))
+    directory = Directory.from_dict(data)
+    assert directory is not None
+    return directory
