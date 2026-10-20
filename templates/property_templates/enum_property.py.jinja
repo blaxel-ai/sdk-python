@@ -2,10 +2,20 @@
 {{ property.class_info.name }}({{ source }})
 {% endmacro %}
 
-{% from "property_templates/property_macros.py.jinja" import construct_template %}
-
 {% macro construct(property, source) %}
-{{ construct_template(construct_function, property, source) }}
+{% if property.required %}
+{{ property.python_name }} = {{ construct_function(property, source) }}
+{% else %}{# Optional enum: the control plane legitimately sends empty or newer values for defaulted enum fields (e.g. an empty ``generation``). Degrade an unparseable value to UNSET instead of letting ``Enum(value)`` raise ValueError and crash the whole from_dict. Required enums stay strict. #}
+_{{ property.python_name }} = {{ source }}
+{{ property.python_name }}: {{ property.get_type_string() }}
+if isinstance(_{{ property.python_name }}, Unset):
+    {{ property.python_name }} = UNSET
+else:
+    try:
+        {{ property.python_name }} = {{ construct_function(property, "_" + property.python_name) }}
+    except ValueError:
+        {{ property.python_name }} = UNSET
+{% endif %}
 {% endmacro %}
 
 {% macro check_type_for_construct(property, source) %}isinstance({{ source }}, {{ property.value_type.__name__ }}){% endmacro %}

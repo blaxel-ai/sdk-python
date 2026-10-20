@@ -126,7 +126,10 @@ class FunctionRuntime:
         if isinstance(_generation, Unset):
             generation = UNSET
         else:
-            generation = FunctionRuntimeGeneration(_generation)
+            try:
+                generation = FunctionRuntimeGeneration(_generation)
+            except ValueError:
+                generation = UNSET
 
         image = d.pop("image", UNSET)
 
@@ -148,7 +151,10 @@ class FunctionRuntime:
         if isinstance(_transport, Unset):
             transport = UNSET
         else:
-            transport = FunctionRuntimeTransport(_transport)
+            try:
+                transport = FunctionRuntimeTransport(_transport)
+            except ValueError:
+                transport = UNSET
 
         function_runtime = cls(
             envs=envs,
