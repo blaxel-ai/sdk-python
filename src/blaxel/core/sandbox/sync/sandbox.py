@@ -75,6 +75,7 @@ from ..default.sandbox import (
     _error_status,
     _hit_deadline,
     _is_retryable,
+    _is_switched_off,
     _left_off,
     _not_answering,
     _not_reset_in_time,
@@ -951,6 +952,8 @@ def _reset_on_control_plane(
                 return record
             if _resets_by_switching(status, response.content):
                 return None
+            if status == 409 and _is_switched_off(_entry_or_none(entry)):
+                return None
             failure = _reset_refusal(sandbox_name, response)
             if status not in GATEWAY_ERROR_STATUSES:
                 raise failure
@@ -1194,7 +1197,7 @@ SyncSandboxInstance.reset = _SyncResetDescriptor(
     The control plane replaces the instance in one call: the platform deletes
     the old instance and boots the new one, whatever ran in the old one. This
     then waits until the sandbox answers. Only a running (DEPLOYED) sandbox can
-    be reset that way.
+    be reset that way; one that is switched off is switched back on instead.
 
     On a control plane without that call, the sandbox is switched off and on
     again (``spec.enabled``): the reset waits for the platform to report the old

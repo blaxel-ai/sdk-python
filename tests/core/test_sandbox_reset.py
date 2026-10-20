@@ -210,6 +210,25 @@ async def test_reset_propagates_what_the_control_plane_refuses_without_switching
     aio.update.assert_not_called()
 
 
+async def test_reset_switches_a_stopped_sandbox_back_on_which_the_reset_call_refuses(aio):
+    aio.post.return_value = refused(
+        409, "This sandbox is stopped, start it to run a fresh copy of its image"
+    )
+    aio.get.side_effect = [
+        off(DEACTIVATE, TORN_DOWN),  # entry read
+        off(DEACTIVATE, TORN_DOWN),
+        record("DEPLOYED"),
+    ]
+    aio.update.side_effect = [record("DEPLOYING")]
+
+    instance = await SandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert aio.post.await_count == 1
+    assert aio.update.await_count == 1
+    assert body_of(aio.update, 0)["spec"]["enabled"] is True
+
+
 async def test_reset_propagates_the_error_of_a_sandbox_that_does_not_exist(aio):
     aio.post.return_value = refused(404, "Sandbox not found")
 
@@ -933,6 +952,25 @@ def test_sync_reset_propagates_what_the_control_plane_refuses(blocking):
 
     assert err.value.status_code == 409
     blocking.update.assert_not_called()
+
+
+def test_sync_reset_switches_a_stopped_sandbox_back_on_which_the_reset_call_refuses(blocking):
+    blocking.post.return_value = refused(
+        409, "This sandbox is stopped, start it to run a fresh copy of its image"
+    )
+    blocking.get.side_effect = [
+        off(DEACTIVATE, TORN_DOWN),  # entry read
+        off(DEACTIVATE, TORN_DOWN),
+        record("DEPLOYED"),
+    ]
+    blocking.update.side_effect = [record("DEPLOYING")]
+
+    instance = SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    assert instance.status == "DEPLOYED"
+    assert blocking.post.call_count == 1
+    assert blocking.update.call_count == 1
+    assert body_of(blocking.update, 0)["spec"]["enabled"] is True
 
 
 def test_sync_reset_gives_up_waiting_on_the_control_plane_at_max_wait(blocking):
