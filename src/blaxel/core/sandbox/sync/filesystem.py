@@ -5,6 +5,7 @@ import shlex
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
+from urllib.parse import quote
 
 import httpx
 
@@ -37,7 +38,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         path = self.format_path(path)
         body = FileRequest(is_directory=True, permissions=permissions)
         with self.get_client() as client_instance:
-            response = client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+            response = client_instance.put(
+                f"/filesystem/{quote(path, safe='/')}", json=body.to_dict()
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -49,7 +52,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return self._upload_with_multipart(path, content_bytes, "0644")
         body = FileRequest(content=content)
         with self.get_client() as client_instance:
-            response = client_instance.put(f"/filesystem/{path}", json=body.to_dict())
+            response = client_instance.put(
+                f"/filesystem/{quote(path, safe='/')}", json=body.to_dict()
+            )
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -62,7 +67,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             content = bytes(content)
         if len(content) > MULTIPART_THRESHOLD:
             return self._upload_with_multipart(path, content, "0644")
-        url = f"{self.url}/filesystem/{path}"
+        url = f"{self.url}/filesystem/{quote(path, safe='/')}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
         def put_once() -> SuccessResponse:
@@ -99,7 +104,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         path = destination_path or ""
         with self.get_client() as client_instance:
             response = client_instance.put(
-                f"/filesystem/tree/{path}",
+                f"/filesystem/tree/{quote(path, safe='/')}",
                 json={"files": files_dict},
                 headers={"Content-Type": "application/json"},
             )
@@ -111,7 +116,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         def read_once() -> str:
             with self.get_client() as client_instance:
-                response = client_instance.get(f"/filesystem/{path}")
+                response = client_instance.get(f"/filesystem/{quote(path, safe='/')}")
                 self.handle_response_error(response)
                 data = response.json()
                 if "content" in data:
@@ -122,7 +127,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
     def read_binary(self, path: str) -> bytes:
         path = self.format_path(path)
-        url = f"{self.url}/filesystem/{path}"
+        url = f"{self.url}/filesystem/{quote(path, safe='/')}"
         headers = {
             **settings.headers,
             **self.sandbox_config.headers,
@@ -147,7 +152,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         path = self.format_path(path)
         with self.get_client() as client_instance:
             params = {"recursive": "true"} if recursive else {}
-            response = client_instance.delete(f"/filesystem/{path}", params=params)
+            response = client_instance.delete(f"/filesystem/{quote(path, safe='/')}", params=params)
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
@@ -156,7 +161,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         def ls_once() -> Directory:
             with self.get_client() as client_instance:
-                response = client_instance.get(f"/filesystem/{path}")
+                response = client_instance.get(f"/filesystem/{quote(path, safe='/')}")
                 self.handle_response_error(response)
                 data = response.json()
                 if not ("files" in data or "subdirectories" in data):
@@ -215,7 +220,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             params = {}
             if options.get("ignore"):
                 params["ignore"] = ",".join(options["ignore"])
-            url = f"{self.url}/watch/filesystem/{path}"
+            url = f"{self.url}/watch/filesystem/{quote(path, safe='/')}"
             headers = {**settings.headers, **self.sandbox_config.headers}
             with httpx.Client() as client_instance:
                 with client_instance.stream("GET", url, params=params, headers=headers) as response:
@@ -276,7 +281,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
     def _initiate_multipart_upload(self, path: str, permissions: str = "0644") -> Dict[str, Any]:
         path = self.format_path(path)
-        url = f"{self.url}/filesystem-multipart/initiate/{path}"
+        url = f"{self.url}/filesystem-multipart/initiate/{quote(path, safe='/')}"
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"permissions": permissions}
         with self.get_client() as client_instance:
