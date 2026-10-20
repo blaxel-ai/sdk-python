@@ -1481,7 +1481,13 @@ async def _reset_sandbox_by_name(
             return await _wait_until_answering(
                 sandbox_name, SandboxInstance(record), deadline, seconds, interval
             )
-        return await _reset_by_switching(sandbox_name, await entry, deadline, seconds, interval)
+        # The switch starts from a read made once the control plane has answered:
+        # the one made alongside the call can be older than that answer, and a
+        # sandbox deleted, stopped or created again meanwhile is not written to.
+        started = await entry
+        current = await _read_for_reset(sandbox_name, deadline, seconds)
+        _check_same_sandbox(sandbox_name, started, current)
+        return await _reset_by_switching(sandbox_name, current, deadline, seconds, interval)
     finally:
         if not entry.done():
             entry.cancel()

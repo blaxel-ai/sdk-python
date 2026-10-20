@@ -886,7 +886,12 @@ def _reset_sandbox_by_name(
             return _wait_until_answering(
                 sandbox_name, SyncSandboxInstance(record), deadline, seconds, interval
             )
-        return _reset_by_switching(sandbox_name, entry.result(), deadline, seconds, interval)
+        # The switch starts from a read made once the control plane has answered
+        # (see the async version).
+        started = entry.result()
+        current = _read_for_reset(sandbox_name, deadline, seconds)
+        _check_same_sandbox(sandbox_name, started, current)
+        return _reset_by_switching(sandbox_name, current, deadline, seconds, interval)
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 

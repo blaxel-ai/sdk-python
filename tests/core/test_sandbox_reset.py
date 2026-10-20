@@ -217,6 +217,7 @@ async def test_reset_switches_a_stopped_sandbox_back_on_which_the_reset_call_ref
     aio.get.side_effect = [
         off(DEACTIVATE, TORN_DOWN),  # entry read
         off(DEACTIVATE, TORN_DOWN),
+        off(DEACTIVATE, TORN_DOWN),
         record("DEPLOYED"),
     ]
     aio.update.side_effect = [record("DEPLOYING")]
@@ -379,7 +380,12 @@ async def test_reset_posts_through_the_control_plane_client_cut_at_max_wait():
 
 
 async def test_reset_cuts_every_control_plane_call_at_max_wait_and_none_without_one(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), record("DEPLOYED")]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        record("DEPLOYED"),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
 
     await SandboxInstance.reset("my-sandbox", interval=0, max_wait=60_000)
@@ -391,7 +397,12 @@ async def test_reset_cuts_every_control_plane_call_at_max_wait_and_none_without_
 
     aio_switch.get.reset_mock(side_effect=True)
     aio_switch.update.reset_mock(side_effect=True)
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), record("DEPLOYED")]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        record("DEPLOYED"),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
 
     await SandboxInstance.reset("my-sandbox", interval=0, max_wait=-1)
@@ -400,7 +411,8 @@ async def test_reset_cuts_every_control_plane_call_at_max_wait_and_none_without_
         assert call.kwargs["client"] is async_module.client
 
 
-# Without the reset call.
+# Without the reset call. The record is read alongside the reset call, then again once
+# the control plane has answered: the switch starts from that second read.
 
 
 async def test_reset_switches_off_waits_for_the_platform_to_report_it_gone_and_switches_on(
@@ -409,6 +421,7 @@ async def test_reset_switches_off_waits_for_the_platform_to_report_it_gone_and_s
     get, update = aio_switch.get, aio_switch.update
     get.side_effect = [
         record("DEPLOYED"),  # entry read
+        record("DEPLOYED"),
         off(DEACTIVATE),
         off(DEACTIVATE, TEARING_DOWN),
         off(DEACTIVATE, TEARING_DOWN, TORN_DOWN),
@@ -433,7 +446,7 @@ async def test_reset_switches_off_waits_for_the_platform_to_report_it_gone_and_s
     # Read-only state is not sent back.
     assert "status" not in off_body
     assert "events" not in off_body
-    assert get.await_count == 6
+    assert get.await_count == 7
     # The guest is only asked whether it answers once the new instance runs.
     assert aio_switch.probe.await_count == 1
     for call in [*get.call_args_list, *update.call_args_list]:
@@ -443,6 +456,7 @@ async def test_reset_switches_off_waits_for_the_platform_to_report_it_gone_and_s
 async def test_reset_switches_off_and_on_when_the_control_plane_cannot_reset_it_in_one_call(aio):
     aio.post.return_value = not_in_one_call()
     aio.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(DEACTIVATE, TEARING_DOWN, TORN_DOWN),
         record("DEPLOYED"),
@@ -456,10 +470,36 @@ async def test_reset_switches_off_and_on_when_the_control_plane_cannot_reset_it_
     assert [body_of(aio.update, i)["spec"]["enabled"] for i in range(2)] == [False, True]
 
 
+async def test_reset_writes_nothing_to_a_sandbox_deleted_while_the_control_plane_answered(
+    aio_switch,
+):
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DELETING")]
+
+    with pytest.raises(SandboxAPIError, match="is DELETING and cannot be reset"):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    aio_switch.update.assert_not_called()
+
+
+async def test_reset_leaves_alone_a_sandbox_created_again_while_the_control_plane_answered(
+    aio_switch,
+):
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED", created_at="2026-10-19T12:05:00Z"),
+    ]
+
+    with pytest.raises(SandboxAPIError, match="was deleted and created again during its reset"):
+        await SandboxInstance.reset("my-sandbox", interval=0)
+
+    aio_switch.update.assert_not_called()
+
+
 async def test_reset_does_not_switch_it_back_on_before_the_platform_reports_it_gone(aio_switch):
     get, update = aio_switch.get, aio_switch.update
     reads_before_switch_on = []
     get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(DEACTIVATE, TEARING_DOWN),
         off(DEACTIVATE, TEARING_DOWN),
@@ -477,7 +517,7 @@ async def test_reset_does_not_switch_it_back_on_before_the_platform_reports_it_g
 
     await SandboxInstance.reset("my-sandbox", interval=0)
 
-    assert reads_before_switch_on == [4]
+    assert reads_before_switch_on == [5]
 
 
 @pytest.mark.parametrize(
@@ -488,7 +528,7 @@ async def test_reset_refuses_a_sandbox_that_cannot_be_reset_before_writing_anyth
 ):
     # A write to a deleted record would bring the sandbox back to life, and one to
     # a FAILED record has the control plane release and recreate it.
-    aio_switch.get.side_effect = [record(status)]
+    aio_switch.get.side_effect = [record(status), record(status)]
 
     with pytest.raises(SandboxAPIError, match=f"is {status} and cannot be reset"):
         await SandboxInstance.reset("my-sandbox", interval=0)
@@ -514,6 +554,7 @@ async def test_reset_completes_the_reset_of_a_sandbox_a_failed_reset_left_deacti
     aio_switch.get.side_effect = [
         off(DEACTIVATE, TORN_DOWN),
         off(DEACTIVATE, TORN_DOWN),
+        off(DEACTIVATE, TORN_DOWN),
         record("DEPLOYED"),
     ]
     aio_switch.update.side_effect = [record("DEPLOYING")]
@@ -526,7 +567,7 @@ async def test_reset_completes_the_reset_of_a_sandbox_a_failed_reset_left_deacti
 
 
 async def test_reset_leaves_the_sandbox_as_it_was_when_it_cannot_be_taken_down(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED")]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED")]
     aio_switch.update.side_effect = [Error(code=500, error="boom")]
 
     with pytest.raises(SandboxAPIError, match="could not be reset, it was left as it was: boom"):
@@ -538,7 +579,7 @@ async def test_reset_leaves_the_sandbox_as_it_was_when_it_cannot_be_taken_down(a
 async def test_reset_does_not_switch_it_back_on_when_the_control_plane_did_not_take_it_down(
     aio_switch,
 ):
-    aio_switch.get.side_effect = [record("DEPLOYED")]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED")]
     aio_switch.update.side_effect = [record("DEPLOYED")]
 
     with pytest.raises(SandboxAPIError, match="did not take it down"):
@@ -550,7 +591,7 @@ async def test_reset_does_not_switch_it_back_on_when_the_control_plane_did_not_t
 async def test_reset_does_not_switch_it_back_on_when_the_sandbox_is_deleted_during_the_teardown(
     aio_switch,
 ):
-    aio_switch.get.side_effect = [record("DEPLOYED"), not_found()]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), not_found()]
     aio_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(SandboxAPIError, match="was deleted during its reset"):
@@ -564,6 +605,7 @@ async def test_reset_does_not_switch_it_back_on_when_it_changes_during_the_teard
     aio_switch, status
 ):
     aio_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         record(status, status == "DEPLOYING", (TORN_DOWN,)),
     ]
@@ -580,6 +622,7 @@ async def test_reset_does_not_switch_it_back_on_when_it_changes_during_the_teard
 async def test_reset_leaves_a_sandbox_created_again_under_the_same_name_alone(aio_switch):
     aio_switch.get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         record("DEACTIVATED", False, (TORN_DOWN,), "2026-10-19T12:05:00Z"),
     ]
     aio_switch.update.side_effect = [off(DEACTIVATE)]
@@ -591,7 +634,11 @@ async def test_reset_leaves_a_sandbox_created_again_under_the_same_name_alone(ai
 
 
 async def test_reset_says_a_failed_teardown_cannot_be_finished_by_resetting_again(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(DEACTIVATE, TEARDOWN_FAILED)]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(DEACTIVATE, TEARDOWN_FAILED),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(SandboxAPIError) as err:
@@ -611,7 +658,9 @@ async def test_reset_says_a_failed_teardown_cannot_be_finished_by_resetting_agai
 async def test_reset_leaves_the_sandbox_deactivated_when_the_teardown_outlives_max_wait(
     aio_switch,
 ):
-    aio_switch.get.side_effect = [record("DEPLOYED")] + [off(DEACTIVATE, TEARING_DOWN)] * 100
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED")] + [
+        off(DEACTIVATE, TEARING_DOWN)
+    ] * 100
     aio_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(
@@ -629,6 +678,7 @@ async def test_reset_keeps_reading_the_record_through_edge_errors_and_dropped_co
 ):
     aio_switch.get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         SandboxAPIError("Bad Gateway", status_code=502),
         dropped(),
         off(TORN_DOWN),
@@ -643,7 +693,11 @@ async def test_reset_keeps_reading_the_record_through_edge_errors_and_dropped_co
 
 
 async def test_reset_cuts_a_read_that_times_out_at_max_wait(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), httpx.ReadTimeout("timed out")]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        httpx.ReadTimeout("timed out"),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(SandboxAPIError, match="could not be read again, it is left DEACTIVATED"):
@@ -653,7 +707,7 @@ async def test_reset_cuts_a_read_that_times_out_at_max_wait(aio_switch):
 async def test_reset_says_the_sandbox_is_left_deactivated_when_it_cannot_be_switched_on(
     aio_switch,
 ):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), off(TORN_DOWN)]
     aio_switch.update.side_effect = [off(DEACTIVATE), Error(code=500, error="boom")]
 
     with pytest.raises(
@@ -670,7 +724,13 @@ async def test_reset_writes_the_switch_on_again_after_a_dropped_connection(aio_s
     # and changed since (another label), which the second write is built from.
     reread = off(TORN_DOWN)
     reread.metadata.labels = MetadataLabels.from_dict({"team": "b"})
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), reread, record("DEPLOYED")]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        reread,
+        record("DEPLOYED"),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), dropped(), record("DEPLOYING")]
 
     with patch(f"{ASYNC}._retry_delay", return_value=0):
@@ -683,7 +743,7 @@ async def test_reset_writes_the_switch_on_again_after_a_dropped_connection(aio_s
 
 
 async def test_reset_stops_when_the_switch_off_answers_for_a_sandbox_created_again(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED")]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED")]
     aio_switch.update.side_effect = [
         record("DEACTIVATED", False, (DEACTIVATE,), "2026-10-19T12:05:00Z")
     ]
@@ -697,11 +757,12 @@ async def test_reset_stops_when_the_switch_off_answers_for_a_sandbox_created_aga
     )
     assert err.value.status_code is None
     assert aio_switch.update.await_count == 1
-    assert aio_switch.get.await_count == 1
+    assert aio_switch.get.await_count == 2
 
 
 async def test_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_again(aio_switch):
     aio_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         record("DEPLOYED", True, (), "2026-10-19T12:05:00Z"),
     ]
@@ -717,7 +778,12 @@ async def test_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_aga
 
 
 async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_deleted_meanwhile(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), not_found()]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        not_found(),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), dropped()]
 
     with (
@@ -732,6 +798,7 @@ async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_deleted_mean
 
 async def test_reset_does_not_send_the_switch_on_again_to_a_sandbox_created_again(aio_switch):
     aio_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(TORN_DOWN),
         record("DEACTIVATED", False, (TORN_DOWN,), "2026-10-19T12:05:00Z"),
@@ -751,6 +818,7 @@ async def test_reset_does_not_send_a_switch_on_that_landed_again(aio_switch):
     # The write was cut short but the record already reads switched on.
     aio_switch.get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         off(TORN_DOWN),
         record("DEPLOYING"),
         record("DEPLOYED"),
@@ -766,6 +834,7 @@ async def test_reset_does_not_send_a_switch_on_that_landed_again(aio_switch):
 
 async def test_reset_does_not_send_a_switch_off_that_landed_again(aio_switch):
     aio_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(DEACTIVATE),  # the re-read after the cut write: it landed
         off(DEACTIVATE, TORN_DOWN),
@@ -784,7 +853,7 @@ async def test_reset_does_not_send_a_switch_off_that_landed_again(aio_switch):
 async def test_reset_does_not_send_the_switch_off_again_to_a_sandbox_no_longer_running(
     aio_switch,
 ):
-    aio_switch.get.side_effect = [record("DEPLOYED"), record("DELETING")]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), record("DELETING")]
     aio_switch.update.side_effect = [dropped()]
 
     with (
@@ -799,7 +868,7 @@ async def test_reset_does_not_send_the_switch_off_again_to_a_sandbox_no_longer_r
 
 
 async def test_reset_stops_when_the_switch_on_answers_for_a_sandbox_created_again(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)]
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), off(TORN_DOWN)]
     aio_switch.update.side_effect = [
         off(DEACTIVATE),
         record("DEPLOYING", True, (), "2026-10-19T12:05:00Z"),
@@ -819,6 +888,7 @@ async def test_reset_stops_when_the_switch_on_answers_for_a_sandbox_created_agai
 async def test_reset_stops_waiting_for_the_redeploy_of_a_sandbox_created_again(aio_switch):
     aio_switch.get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         off(TORN_DOWN),
         record("DEPLOYING", True, (), "2026-10-19T12:05:00Z"),
     ]
@@ -831,7 +901,12 @@ async def test_reset_stops_waiting_for_the_redeploy_of_a_sandbox_created_again(a
 
 
 async def test_reset_raises_when_the_sandbox_fails_to_deploy_again(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), record("FAILED")]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        record("FAILED"),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
 
     with pytest.raises(SandboxAPIError, match="failed to deploy again"):
@@ -842,6 +917,7 @@ async def test_reset_tolerates_the_record_still_reading_off_right_after_the_swit
     aio_switch,
 ):
     aio_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(TORN_DOWN),
         off(TORN_DOWN),
@@ -860,6 +936,7 @@ async def test_reset_raises_when_the_sandbox_is_taken_down_again_once_it_is_rede
 ):
     aio_switch.get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         off(TORN_DOWN),
         record("DEPLOYING"),
         off(TORN_DOWN),
@@ -871,7 +948,9 @@ async def test_reset_raises_when_the_sandbox_is_taken_down_again_once_it_is_rede
 
 
 async def test_reset_gives_up_after_max_wait_while_it_redeploys(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)] + [record("DEPLOYING")] * 100
+    aio_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), off(TORN_DOWN)] + [
+        record("DEPLOYING")
+    ] * 100
     aio_switch.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
 
     with pytest.raises(SandboxAPIError, match="is still DEPLOYING after waiting 0s"):
@@ -879,7 +958,12 @@ async def test_reset_gives_up_after_max_wait_while_it_redeploys(aio_switch):
 
 
 async def test_reset_waits_until_the_sandbox_answers_not_only_until_it_is_deployed(aio_switch):
-    aio_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), record("DEPLOYED")]
+    aio_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        record("DEPLOYED"),
+    ]
     aio_switch.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
     aio_switch.probe.side_effect = [
         not_routable(),
@@ -960,6 +1044,7 @@ def test_sync_reset_switches_a_stopped_sandbox_back_on_which_the_reset_call_refu
     )
     blocking.get.side_effect = [
         off(DEACTIVATE, TORN_DOWN),  # entry read
+        off(DEACTIVATE, TORN_DOWN),
         off(DEACTIVATE, TORN_DOWN),
         record("DEPLOYED"),
     ]
@@ -1050,6 +1135,7 @@ def test_sync_reset_switches_off_waits_for_the_platform_and_switches_on(blocking
     get, update = blocking_switch.get, blocking_switch.update
     get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         off(DEACTIVATE, TEARING_DOWN),
         off(DEACTIVATE, TEARING_DOWN, TORN_DOWN),
         record("DEPLOYED"),
@@ -1060,7 +1146,7 @@ def test_sync_reset_switches_off_waits_for_the_platform_and_switches_on(blocking
 
     assert instance.status == "DEPLOYED"
     assert [body_of(update, i)["spec"]["enabled"] for i in range(2)] == [False, True]
-    assert get.call_count == 4
+    assert get.call_count == 5
     for call in [*get.call_args_list, *update.call_args_list]:
         assert isinstance(call.kwargs["client"], async_module._DeadlineClient)
 
@@ -1070,6 +1156,7 @@ def test_sync_reset_switches_off_and_on_when_the_control_plane_cannot_reset_it_i
 ):
     blocking.post.return_value = not_in_one_call()
     blocking.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(DEACTIVATE, TEARING_DOWN, TORN_DOWN),
         record("DEPLOYED"),
@@ -1083,11 +1170,36 @@ def test_sync_reset_switches_off_and_on_when_the_control_plane_cannot_reset_it_i
     assert [body_of(blocking.update, i)["spec"]["enabled"] for i in range(2)] == [False, True]
 
 
+def test_sync_reset_writes_nothing_to_a_sandbox_deleted_while_the_control_plane_answered(
+    blocking_switch,
+):
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DELETING")]
+
+    with pytest.raises(SandboxAPIError, match="is DELETING and cannot be reset"):
+        SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    blocking_switch.update.assert_not_called()
+
+
+def test_sync_reset_leaves_alone_a_sandbox_created_again_while_the_control_plane_answered(
+    blocking_switch,
+):
+    blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED", created_at="2026-10-19T12:05:00Z"),
+    ]
+
+    with pytest.raises(SandboxAPIError, match="was deleted and created again during its reset"):
+        SyncSandboxInstance.reset("my-sandbox", interval=0)
+
+    blocking_switch.update.assert_not_called()
+
+
 @pytest.mark.parametrize("status", ["TERMINATED", "DELETING", "ARCHIVED", "FAILED"])
 def test_sync_reset_refuses_a_sandbox_that_cannot_be_reset_before_writing_anything(
     blocking_switch, status
 ):
-    blocking_switch.get.side_effect = [record(status)]
+    blocking_switch.get.side_effect = [record(status), record(status)]
 
     with pytest.raises(SandboxAPIError, match=f"is {status} and cannot be reset"):
         SyncSandboxInstance.reset("my-sandbox", interval=0)
@@ -1098,7 +1210,7 @@ def test_sync_reset_refuses_a_sandbox_that_cannot_be_reset_before_writing_anythi
 def test_sync_reset_does_not_switch_it_back_on_when_the_sandbox_is_deleted_meanwhile(
     blocking_switch,
 ):
-    blocking_switch.get.side_effect = [record("DEPLOYED"), not_found()]
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), not_found()]
     blocking_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(SandboxAPIError, match="was deleted during its reset"):
@@ -1110,7 +1222,9 @@ def test_sync_reset_does_not_switch_it_back_on_when_the_sandbox_is_deleted_meanw
 def test_sync_reset_leaves_the_sandbox_deactivated_when_the_teardown_outlives_max_wait(
     blocking_switch,
 ):
-    blocking_switch.get.side_effect = [record("DEPLOYED")] + [off(DEACTIVATE, TEARING_DOWN)] * 100
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED")] + [
+        off(DEACTIVATE, TEARING_DOWN)
+    ] * 100
     blocking_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(
@@ -1126,7 +1240,7 @@ def test_sync_reset_leaves_the_sandbox_deactivated_when_the_teardown_outlives_ma
 def test_sync_reset_says_the_sandbox_is_left_deactivated_when_it_cannot_be_switched_on(
     blocking_switch,
 ):
-    blocking_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)]
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), off(TORN_DOWN)]
     blocking_switch.update.side_effect = [off(DEACTIVATE), Error(code=500, error="boom")]
 
     with pytest.raises(
@@ -1138,6 +1252,7 @@ def test_sync_reset_says_the_sandbox_is_left_deactivated_when_it_cannot_be_switc
 
 def test_sync_reset_writes_the_switch_on_again_after_a_dropped_connection(blocking_switch):
     blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(TORN_DOWN),
         off(TORN_DOWN),
@@ -1155,7 +1270,7 @@ def test_sync_reset_writes_the_switch_on_again_after_a_dropped_connection(blocki
 def test_sync_reset_stops_when_the_switch_off_answers_for_a_sandbox_created_again(
     blocking_switch,
 ):
-    blocking_switch.get.side_effect = [record("DEPLOYED")]
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED")]
     blocking_switch.update.side_effect = [
         record("DEACTIVATED", False, (DEACTIVATE,), "2026-10-19T12:05:00Z")
     ]
@@ -1169,7 +1284,12 @@ def test_sync_reset_stops_when_the_switch_off_answers_for_a_sandbox_created_agai
 
 
 def test_sync_reset_does_not_send_a_write_again_to_a_sandbox_deleted_meanwhile(blocking_switch):
-    blocking_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN), not_found()]
+    blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(TORN_DOWN),
+        not_found(),
+    ]
     blocking_switch.update.side_effect = [off(DEACTIVATE), dropped()]
 
     with (
@@ -1185,6 +1305,7 @@ def test_sync_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_agai
     blocking_switch,
 ):
     blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         record("DEPLOYED", True, (), "2026-10-19T12:05:00Z"),
     ]
@@ -1202,6 +1323,7 @@ def test_sync_reset_does_not_send_the_switch_off_again_to_a_sandbox_created_agai
 def test_sync_reset_does_not_send_a_switch_on_that_landed_again(blocking_switch):
     blocking_switch.get.side_effect = [
         record("DEPLOYED"),
+        record("DEPLOYED"),
         off(TORN_DOWN),
         record("DEPLOYING"),
         record("DEPLOYED"),
@@ -1218,7 +1340,7 @@ def test_sync_reset_does_not_send_a_switch_on_that_landed_again(blocking_switch)
 def test_sync_reset_stops_when_the_switch_on_answers_for_a_sandbox_created_again(
     blocking_switch,
 ):
-    blocking_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)]
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), off(TORN_DOWN)]
     blocking_switch.update.side_effect = [
         off(DEACTIVATE),
         record("DEPLOYING", True, (), "2026-10-19T12:05:00Z"),
@@ -1230,6 +1352,7 @@ def test_sync_reset_stops_when_the_switch_on_answers_for_a_sandbox_created_again
 
 def test_sync_reset_stops_waiting_for_the_redeploy_of_a_sandbox_created_again(blocking_switch):
     blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
         record("DEPLOYED"),
         off(TORN_DOWN),
         record("DEPLOYING", True, (), "2026-10-19T12:05:00Z"),
@@ -1243,7 +1366,11 @@ def test_sync_reset_stops_waiting_for_the_redeploy_of_a_sandbox_created_again(bl
 def test_sync_reset_says_a_failed_teardown_cannot_be_finished_by_resetting_again(
     blocking_switch,
 ):
-    blocking_switch.get.side_effect = [record("DEPLOYED"), off(DEACTIVATE, TEARDOWN_FAILED)]
+    blocking_switch.get.side_effect = [
+        record("DEPLOYED"),
+        record("DEPLOYED"),
+        off(DEACTIVATE, TEARDOWN_FAILED),
+    ]
     blocking_switch.update.side_effect = [off(DEACTIVATE)]
 
     with pytest.raises(
@@ -1253,7 +1380,7 @@ def test_sync_reset_says_a_failed_teardown_cannot_be_finished_by_resetting_again
 
 
 def test_sync_reset_raises_when_a_deployed_sandbox_does_not_answer_in_time(blocking_switch):
-    blocking_switch.get.side_effect = [record("DEPLOYED"), off(TORN_DOWN)] + [
+    blocking_switch.get.side_effect = [record("DEPLOYED"), record("DEPLOYED"), off(TORN_DOWN)] + [
         record("DEPLOYED")
     ] * 10
     blocking_switch.update.side_effect = [off(DEACTIVATE), record("DEPLOYING")]
