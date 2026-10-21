@@ -482,6 +482,69 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_network_timeout_is_filtered_and_chained(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-11W: an httpx timeout flows through the
+        generated API client but is a transient network failure the caller must
+        handle -- not an SDK defect -- so it must not be reported as one."""
+        exc = _raise_in_sdk(
+            "core/client/api/compute/create_sandbox.py",
+            "import httpx\nraise httpx.ReadTimeout('private-timeout')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_network_connect_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/compute/create_sandbox.py",
+            "import httpx\nraise httpx.ConnectError('connection refused')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_local_protocol_error_is_still_captured(self, installed_sentry_hooks):
+        """A LocalProtocolError signals a malformed request the SDK built, so it
+        stays reportable even though it is an httpx transport error."""
+        exc = _raise_in_sdk(
+            "core/client/client.py",
+            "import httpx\nraise httpx.LocalProtocolError('invalid header')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_exception_group_drops_network_leaf_but_keeps_sdk_bug(self, installed_sentry_hooks):
+        network_exc = _raise_in_sdk(
+            "core/client/api/compute/create_sandbox.py",
+            "import httpx\nraise httpx.ReadTimeout('private-timeout')",
+        )
+        sdk_exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [network_exc, sdk_exc])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert len(installed_sentry_hooks.captured) == 1
+        captured_group, mechanism = installed_sentry_hooks.captured[0]
+        assert mechanism == "excepthook"
+        assert _exception_group_leaves(captured_group) == [sdk_exc]
+        assert installed_sentry_hooks.main_hook_calls == [(type(group), group, group.__traceback__)]
+
     def test_reporting_failures_are_swallowed_and_all_hooks_still_chain(
         self, installed_sentry_hooks, monkeypatch
     ):
