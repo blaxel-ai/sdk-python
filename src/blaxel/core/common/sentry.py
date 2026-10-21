@@ -130,13 +130,23 @@ def _sdk_relative_filename(filename: str) -> str | None:
 
 
 def _is_from_sdk(error: BaseException) -> bool:
-    """Check whether an error has a frame inside this installed SDK package."""
+    """Return whether an exception was raised from within this SDK package.
+
+    Attribution uses the raise site -- the deepest frame in the traceback --
+    not merely the presence of an SDK frame somewhere on the stack. An SDK
+    frame appearing higher up only means the SDK was an intermediate caller.
+    When SDK code calls into third-party code (for example ``httpx``) that in
+    turn re-enters application code -- a user-supplied callback, a mocked
+    transport handler, a job entrypoint -- and that application code raises,
+    the failure originates in the caller, not the SDK, and must not be reported
+    as an SDK defect (nor leak the caller's exception into Blaxel telemetry).
+    """
+    raised_in_sdk = False
     tb = error.__traceback__
     while tb is not None:
-        if _sdk_relative_filename(tb.tb_frame.f_code.co_filename) is not None:
-            return True
+        raised_in_sdk = _sdk_relative_filename(tb.tb_frame.f_code.co_filename) is not None
         tb = tb.tb_next
-    return False
+    return raised_in_sdk
 
 
 def _contains_sdk_exception(error: BaseException) -> bool:
