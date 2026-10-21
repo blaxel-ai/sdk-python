@@ -139,6 +139,23 @@ def _is_from_sdk(error: BaseException) -> bool:
     return False
 
 
+def _was_raised_in_sdk(error: BaseException) -> bool:
+    """Check whether the frame that raised the error is inside the SDK package.
+
+    The SDK's model and tool integrations are thin wrappers that forward calls to
+    provider clients (Anthropic, OpenAI, ...). A failure from such a client
+    propagates *through* the wrapper's frame without the SDK raising it, so the
+    deepest traceback frame -- where the exception was actually raised -- is the
+    reliable signal of whether SDK logic produced the error.
+    """
+    tb = error.__traceback__
+    raised_in_sdk = False
+    while tb is not None:
+        raised_in_sdk = _sdk_relative_filename(tb.tb_frame.f_code.co_filename) is not None
+        tb = tb.tb_next
+    return raised_in_sdk
+
+
 def _contains_sdk_exception(error: BaseException) -> bool:
     """Check an ordinary exception or exception group for an SDK-owned frame."""
     if _is_from_sdk(error):
@@ -193,6 +210,20 @@ def _parse_stack_trace(exc: BaseException) -> list[dict[str, Any]]:
     return frames
 
 
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status code carried by an error, when it has one.
+
+    Provider and HTTP clients attach the server's response status either directly
+    on the exception (``status_code``) or on an attached ``response`` object.
+    """
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        status_code = getattr(getattr(error, "response", None), "status_code", None)
+    if type(status_code) is int and 100 <= status_code <= 599:
+        return status_code
+    return None
+
+
 def _safe_exception_value(error: BaseException) -> str:
     """Describe an SDK failure without including exception or response content."""
     if isinstance(error, _EXCEPTION_GROUP_TYPES):
@@ -200,10 +231,8 @@ def _safe_exception_value(error: BaseException) -> str:
         return f"Unhandled SDK exception group ({child_count} sub-exceptions)"
 
     details = []
-    status_code = getattr(error, "status_code", None)
-    if status_code is None:
-        status_code = getattr(getattr(error, "response", None), "status_code", None)
-    if type(status_code) is int and 100 <= status_code <= 599:
+    status_code = _http_status_code(error)
+    if status_code is not None:
         details.append(f"HTTP {status_code}")
 
     error_code = getattr(error, "error_code", None) or getattr(error, "code", None)
@@ -405,13 +434,32 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_pass_through_provider_error(exc_value: BaseException) -> bool:
+    """Check if the exception is a downstream provider/API response, not an SDK bug.
+
+    The SDK's model and tool integrations forward requests to provider clients
+    (Anthropic, OpenAI, ...). When a provider rejects a request -- an invalid or
+    unavailable model, bad parameters, authentication, rate limiting, or a
+    provider outage -- its client raises an HTTP status error that unwinds through
+    the SDK's thin wrapper frame. The status code proves the failure came from a
+    server response rather than SDK logic, and the raising frame lives outside the
+    SDK, so this is a user-configuration or downstream-service problem that should
+    not be reported as an SDK defect.
+    """
+    if _http_status_code(exc_value) is None:
+        return False
+    return not _was_raised_in_sdk(exc_value)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
         return False
-    return not _is_optional_dependency_error(exc_type, exc_value)
+    if _is_optional_dependency_error(exc_type, exc_value):
+        return False
+    return not _is_pass_through_provider_error(exc_value)
 
 
 def _filter_reportable_exception(exc_value: BaseException) -> BaseException | None:
