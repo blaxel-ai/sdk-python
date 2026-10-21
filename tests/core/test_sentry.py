@@ -777,3 +777,21 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+@pytest.mark.parametrize(
+    ("workspace", "user"),
+    [
+        ("acme-staging", {"id": "acme-staging"}),
+        ("", None),
+        ("/Users/customer/private project", None),
+    ],
+)
+def test_event_user_is_the_workspace(monkeypatch, workspace, user):
+    """The workspace name is the Sentry user, so issues count affected workspaces."""
+    monkeypatch.setattr(type(sentry.settings), "workspace", property(lambda _self: workspace))
+    exc = _raise_in_file(_sdk_filename("core/private_failure.py"), "raise RuntimeError('x')")
+
+    event = sentry._error_to_sentry_event(exc, "excepthook")
+
+    assert event.get("user") == user

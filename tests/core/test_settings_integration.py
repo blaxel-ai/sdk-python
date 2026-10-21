@@ -9,6 +9,8 @@ from blaxel.core.common.settings import settings
 
 SDK_USER_AGENT = re.compile(r"^blaxel/sdk/python/\S+ \([^)]+\) blaxel/\S+")
 
+pytestmark = pytest.mark.usefixtures("clear_coding_agent_env")
+
 
 @pytest.fixture(autouse=True)
 def _reset_integration():

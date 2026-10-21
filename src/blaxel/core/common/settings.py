@@ -8,6 +8,7 @@ from typing import Dict
 import yaml
 
 from ..authentication import BlaxelAuth, auth
+from .coding_agent import detect_coding_agent
 from .logger import init_logger
 
 BLAXEL_API_VERSION = "2026-09-22"
@@ -55,6 +56,16 @@ def _get_os_arch() -> str:
         return f"{os_name}/{arch}"
     except Exception:
         return "unknown/unknown"
+
+
+def _tracking_opted_out() -> bool:
+    """Whether DO_NOT_TRACK (``1`` or ``true``) opts out of the coding agent token.
+
+    The saved ``tracking`` setting is not read: it is an opt-in for error reports,
+    and ``bl login`` saves it as false until the user turns it on.
+    """
+    value = os.environ.get("DO_NOT_TRACK")
+    return value is not None and value.lower() in ("true", "1")
 
 
 class Settings:
@@ -159,13 +170,32 @@ class Settings:
         self._integration = value
 
     @property
+    def coding_agent(self) -> str:
+        """Id of the coding agent (Claude Code, Codex, Cursor, ...) running the SDK.
+
+        "other" for an agent without a known name, "" for none or when telemetry is
+        opted out. Sent as an ``agent/<id>`` User-Agent token.
+        """
+        agent = detect_coding_agent(os.environ.get)
+        if agent and not _tracking_opted_out():
+            return agent
+        return ""
+
+    @property
     def user_agent(self) -> str:
-        """User-Agent sent on every request: SDK token, then the integration token if set."""
+        """User-Agent sent on every request.
+
+        The SDK token, then the integration token if set, then the coding agent token
+        when a coding agent runs the SDK.
+        """
         os_arch = _get_os_arch()
         user_agent = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
         integration = self.integration
         if integration:
             user_agent = f"{user_agent} {integration}"
+        coding_agent = self.coding_agent
+        if coding_agent:
+            user_agent = f"{user_agent} agent/{coding_agent}"
         return user_agent
 
     @property

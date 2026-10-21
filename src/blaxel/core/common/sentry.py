@@ -3,6 +3,7 @@ import atexit
 import builtins
 import json
 import logging
+import re
 import sys
 import threading
 import time
@@ -44,6 +45,9 @@ _original_excepthook = None
 _original_threading_excepthook = None
 _original_unraisablehook = None
 _original_asyncio_call_exception_handler = None
+
+# A workspace name, reported as the Sentry user id.
+_SAFE_WORKSPACE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 
 # Exceptions that are part of normal control flow and should not be captured
 _IGNORED_EXCEPTIONS = (
@@ -270,7 +274,8 @@ def _exception_values(
 
 def _error_to_sentry_event(error: BaseException, mechanism_type: str = "generic") -> dict[str, Any]:
     """Convert an exception to a Sentry event payload."""
-    return {
+    workspace = settings.workspace
+    event: dict[str, Any] = {
         "event_id": _generate_event_id(),
         "timestamp": datetime.now(timezone.utc).timestamp(),
         "platform": "python",
@@ -278,12 +283,17 @@ def _error_to_sentry_event(error: BaseException, mechanism_type: str = "generic"
         "environment": settings.env,
         "release": f"sdk-python@{settings.version}",
         "tags": {
-            "blaxel.workspace": settings.workspace,
+            "blaxel.workspace": workspace,
             "blaxel.version": settings.version,
             "blaxel.commit": settings.commit,
         },
         "exception": {"values": _exception_values(error, mechanism_type)},
     }
+    # The workspace name is the only user identifier, so an issue shows how many
+    # workspaces it affects.
+    if isinstance(workspace, str) and _SAFE_WORKSPACE_NAME.fullmatch(workspace):
+        event["user"] = {"id": workspace}
+    return event
 
 
 def _send_to_sentry(event: dict[str, Any], timeout: float = 2.0) -> bool:
