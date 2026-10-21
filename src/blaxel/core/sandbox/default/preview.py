@@ -137,40 +137,71 @@ def _select_token(
 
 @dataclass
 class SandboxPreviewToken:
-    """Represents a preview token with its value and expiration."""
+    """Represents a preview token with its value and expiration.
+
+    Send ``value`` with each request to a private preview, in the
+    ``X-Blaxel-Preview-Token`` header or, for browser navigation, the
+    ``bl_preview_token`` query parameter.
+    """
 
     preview_token: PreviewToken
 
     @property
     def name(self) -> str:
+        """Token name, used by ``tokens.delete``."""
         name = getattr(getattr(self.preview_token, "metadata", None), "name", None)
         return name if isinstance(name, str) else ""
 
     @property
     def value(self) -> str:
+        """Secret token value to send with requests."""
         return self.preview_token.spec.token if self.preview_token.spec else ""
 
     @property
     def expires_at(self) -> datetime:
+        """Expiry as returned by the API, an ISO 8601 string despite the annotation."""
         return self.preview_token.spec.expires_at if self.preview_token.spec else datetime.now()
 
 
 class SandboxPreviewTokens:
-    """Manages preview tokens for a sandbox preview."""
+    """Manages preview tokens for a sandbox preview.
+
+    Reach it as ``preview.tokens``. Tokens grant access to a private preview;
+    a public preview needs none. Every call goes to the control plane. An
+    error status raises ``blaxel.core.client.errors.UnexpectedStatus``.
+
+    Example:
+        ```python
+        from datetime import datetime, timedelta, timezone
+
+        token = await preview.tokens.create(datetime.now(timezone.utc) + timedelta(hours=1))
+        headers = {"X-Blaxel-Preview-Token": token.value}
+        ```
+    """
 
     def __init__(self, preview: Preview):
         self.preview = preview
 
     @property
     def preview_name(self) -> str:
+        """Name of the preview these tokens belong to."""
         return self.preview.metadata.name if self.preview.metadata else ""
 
     @property
     def resource_name(self) -> str:
+        """Name of the sandbox that owns the preview."""
         return self.preview.metadata.resource_name if self.preview.metadata else ""
 
     async def create(self, expires_at: datetime) -> SandboxPreviewToken:
-        """Create a new preview token."""
+        """Create a new preview token.
+
+        Args:
+            expires_at: When the token stops working. Pass a UTC datetime; a
+                naive value is read as UTC.
+
+        Returns:
+            The new ``SandboxPreviewToken``.
+        """
         response: PreviewToken = await create_sandbox_preview_token(
             self.resource_name,
             self.preview_name,
@@ -193,6 +224,27 @@ class SandboxPreviewTokens:
 
         The requested expiry caps reuse. Concurrent calls can mint separate tokens;
         no existing credentials are deleted.
+
+        A token is reused when it is not expired, stays valid for at least
+        ``min_validity`` and expires no later than ``expires_at``; the one that
+        expires last wins.
+
+        Args:
+            expires_at: Expiry for a new token, and the latest expiry accepted
+                for reuse. Defaults to 24 hours from now.
+            min_validity: Minimum time a reused token must stay valid.
+
+        Returns:
+            A reused or new ``SandboxPreviewToken``.
+
+        Raises:
+            ValueError: For a public preview, or when ``expires_at`` is in the
+                past or sooner than ``min_validity``.
+
+        Example:
+            ```python
+            token = await preview.tokens.create_if_expired()
+            ```
         """
         now = datetime.now(timezone.utc)
         expiry, minimum = _token_bounds(expires_at, min_validity, now)
@@ -209,7 +261,7 @@ class SandboxPreviewTokens:
         return await self.create(expiry)
 
     async def list(self) -> List[SandboxPreviewToken]:
-        """List all preview tokens."""
+        """List all preview tokens, including expired ones."""
         response: List[PreviewToken] = await list_sandbox_preview_tokens(
             self.resource_name,
             self.preview_name,
@@ -218,7 +270,14 @@ class SandboxPreviewTokens:
         return [SandboxPreviewToken(token) for token in response]
 
     async def delete(self, token_name: str) -> dict:
-        """Delete a preview token."""
+        """Delete a preview token.
+
+        Args:
+            token_name: The token ``name``, not its value.
+
+        Returns:
+            The deleted ``PreviewToken`` record.
+        """
         response: PreviewToken = await delete_sandbox_preview_token(
             self.resource_name,
             self.preview_name,
@@ -229,7 +288,12 @@ class SandboxPreviewTokens:
 
 
 class SandboxPreview:
-    """Represents a sandbox preview with its metadata and tokens."""
+    """Represents a sandbox preview with its metadata and tokens.
+
+    A preview publishes one sandbox port at ``url``. A private preview
+    requires a token from ``tokens``; a public one is open to anyone with the
+    URL.
+    """
 
     def __init__(self, preview: Preview):
         self.preview = preview
@@ -237,30 +301,48 @@ class SandboxPreview:
 
     @property
     def name(self) -> str:
+        """Preview name."""
         return self.preview.metadata.name if self.preview.metadata else ""
 
     @property
     def url(self) -> str:
+        """Public URL that serves the sandbox port, or "" when not set."""
         url = getattr(getattr(self.preview, "spec", None), "url", None)
         return url if isinstance(url, str) else ""
 
     @property
     def metadata(self) -> dict | None:
+        """Preview metadata (``PreviewMetadata``) as returned by the API."""
         return self.preview.metadata
 
     @property
     def spec(self) -> PreviewSpec | None:
+        """Preview spec: ``port``, ``public``, ``url`` and header settings."""
         return self.preview.spec
 
 
 class SandboxPreviews:
-    """Manages sandbox previews."""
+    """Manages sandbox previews.
+
+    Reach it as ``sandbox.previews``. A preview publishes one sandbox port on
+    a public URL. Every call goes to the control plane. An error status
+    raises ``blaxel.core.client.errors.UnexpectedStatus`` (``ConflictError``
+    for 409).
+
+    Example:
+        ```python
+        preview = await sandbox.previews.create_if_not_exists({"port": 3000})
+        token = await preview.tokens.create_if_expired()
+        print(preview.url, token.value)
+        ```
+    """
 
     def __init__(self, sandbox: Sandbox):
         self.sandbox = sandbox
 
     @property
     def sandbox_name(self) -> str:
+        """Name of the sandbox these previews belong to."""
         return self.sandbox.metadata.name if self.sandbox.metadata else ""
 
     async def list(self) -> List[SandboxPreview]:
@@ -275,7 +357,25 @@ class SandboxPreviews:
         self,
         preview: Union[Preview, SandboxPreviewCreateConfiguration, Dict[str, Any]],
     ) -> SandboxPreview:
-        """Create a preview; shorthand defaults to a private preview-<port>."""
+        """Create a preview; shorthand defaults to a private preview-<port>.
+
+        Args:
+            preview: Shorthand ``{"port": 3000}`` (with optional ``name`` and
+                ``public``, default False), a ``SandboxPreviewCreateConfiguration``,
+                or a full ``Preview`` or dict with ``metadata`` and ``spec``.
+
+        Returns:
+            The new ``SandboxPreview``.
+
+        Raises:
+            ValueError: When the shorthand port, name or public flag is invalid.
+            blaxel.core.client.errors.ConflictError: When the name is in use.
+
+        Example:
+            ```python
+            preview = await sandbox.previews.create({"port": 8080, "public": True})
+            ```
+        """
         preview = _normalize_preview(preview)
 
         response: Preview = await create_sandbox_preview(
@@ -289,7 +389,18 @@ class SandboxPreviews:
         self,
         preview: Union[Preview, SandboxPreviewCreateConfiguration, Dict[str, Any]],
     ) -> SandboxPreview:
-        """Return existing previews as-is; the private default applies only on creation."""
+        """Return existing previews as-is; the private default applies only on creation.
+
+        Looks the preview up by name (``preview-<port>`` for the shorthand)
+        and creates it when it does not exist. An existing preview is not
+        updated, so its port and public flag may differ from the request.
+
+        Args:
+            preview: Same forms as :meth:`create`.
+
+        Returns:
+            The existing or new ``SandboxPreview``.
+        """
         if _is_shorthand(preview):
             normalized = _normalize_preview(preview)
             try:
@@ -319,7 +430,12 @@ class SandboxPreviews:
             raise e
 
     async def get(self, preview_name: str) -> SandboxPreview:
-        """Get a specific preview by name."""
+        """Get a specific preview by name.
+
+        Raises:
+            blaxel.core.client.errors.UnexpectedStatus: With status 404 when the
+                preview does not exist.
+        """
         response: Preview = await get_sandbox_preview(
             self.sandbox_name,
             preview_name,
@@ -328,7 +444,17 @@ class SandboxPreviews:
         return SandboxPreview(response)
 
     async def delete(self, preview_name: str) -> Preview:
-        """Delete a preview."""
+        """Delete a preview.
+
+        When the API reports the preview as ``DELETING``, waits up to 10
+        seconds for it to disappear.
+
+        Returns:
+            The deleted ``Preview`` record.
+
+        Raises:
+            Exception: When the preview is still being deleted after 10 seconds.
+        """
         response: Preview = await delete_sandbox_preview(
             self.sandbox_name,
             preview_name,

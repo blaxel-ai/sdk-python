@@ -103,6 +103,7 @@ class _SyncDeleteDescriptor:
         else:
             # Called on an instance: instance.delete()
             def instance_delete() -> Sandbox:
+                """Delete this sandbox; see ``SyncSandboxInstance.delete("name")`` for details."""
                 return self._delete_func(instance.metadata.name)
 
             return instance_delete
@@ -195,6 +196,44 @@ class _SyncSandboxCallDescriptor:
 
 
 class SyncSandboxInstance:
+    """A Blaxel sandbox and the blocking clients that work inside it.
+
+    Get an instance from :meth:`create`, :meth:`create_if_not_exists`,
+    :meth:`get`, :meth:`list` or :meth:`from_session` rather than calling the
+    constructor. The instance holds the sandbox record as it was when it was
+    read; it is not refreshed on its own, so call :meth:`get` again to read the
+    current status. For asyncio code, use ``SandboxInstance``, which has the
+    same methods as coroutines.
+
+    Attributes:
+        sandbox: The ``Sandbox`` record returned by the API.
+        config: The record plus the URL and headers used to reach the sandbox.
+        process: Runs commands and reads their output (``SyncSandboxProcess``).
+        fs: Reads, writes and watches files (``SyncSandboxFileSystem``).
+        previews: Exposes sandbox ports on public or private URLs
+            (``SyncSandboxPreviews``).
+        sessions: Creates short-lived URLs and tokens for clients that must not
+            hold an API key (``SyncSandboxSessions``).
+        schedules: Manages the sandbox's schedules (``SyncSandboxSchedules``).
+        network: Sends HTTP requests to ports inside the sandbox
+            (``SyncSandboxNetwork``).
+        codegen: Applies code edits and ranks files (``SyncSandboxCodegen``).
+        system: Reads health and upgrades the sandbox API (``SyncSandboxSystem``).
+        drives: Mounts and unmounts drives (``SyncSandboxDrive``).
+        snapshots: Creates and restores snapshots (``SyncSandboxSnapshots``).
+
+    Example:
+        ```python
+        from blaxel.core import SyncSandboxInstance
+
+        sandbox = SyncSandboxInstance.create_if_not_exists(
+            {"name": "my-sandbox", "image": "blaxel/base-image:latest", "region": "us-pdx-1"}
+        )
+        result = sandbox.process.exec({"command": "echo hello", "wait_for_completion": True})
+        print(result.status, result.exit_code, result.stdout)
+        ```
+    """
+
     archive: "_SyncSandboxCallDescriptor"
     unarchive: "_SyncSandboxCallDescriptor"
 
@@ -229,18 +268,29 @@ class SyncSandboxInstance:
 
     @property
     def metadata(self):
+        """The sandbox metadata: ``name``, ``display_name``, ``labels``, ``url`` and more."""
         return self.sandbox.metadata
 
     @property
     def status(self):
+        """The sandbox status when the record was read, such as ``DEPLOYED`` or ``FAILED``.
+
+        It is not refreshed on its own: call :meth:`get` to read the current status.
+        """
         return self.sandbox.status
 
     @property
     def events(self):
+        """The events the platform recorded for this sandbox."""
         return self.sandbox.events
 
     @property
     def spec(self):
+        """The sandbox spec as last read.
+
+        It holds ``runtime`` (image, memory, ports, envs, ttl), ``region``,
+        ``lifecycle``, ``network`` and ``volumes``.
+        """
         return self.sandbox.spec
 
     @property
@@ -256,20 +306,35 @@ class SyncSandboxInstance:
 
     @property
     def last_used_at(self):
+        """When the sandbox was last used, as reported by the API."""
         return self.sandbox.last_used_at
 
     @property
     def expires_in(self):
+        """Time left before a lifecycle or TTL rule deletes the sandbox, as reported by the API."""
         return self.sandbox.expires_in
 
     def fetch(self, port: int, path: str = "/", method: str = "GET", **kwargs) -> "httpx.Response":
         """Fetch a resource served on a sandbox port.
+
+        The request goes through the sandbox API (``/port/{port}``) with this
+        instance's credentials, so the port does not need a preview. HTTP error
+        statuses are returned in the response, not raised.
 
         Args:
             port: The port number inside the sandbox
             path: Optional path appended after the port (default: "/")
             method: HTTP method (default: "GET")
             **kwargs: Additional arguments forwarded to httpx (e.g. headers, content)
+
+        Returns:
+            The ``httpx.Response`` from the service listening on the port.
+
+        Example:
+            ```python
+            response = sandbox.fetch(3000, "/health")
+            print(response.status_code, response.text)
+            ```
         """
         return self.network.fetch(port, path, method, **kwargs)
 
@@ -376,6 +441,13 @@ class SyncSandboxInstance:
             lifecycle: Lifecycle the fork runs with, replacing the source's.
                 When omitted, a sandbox fork keeps the source's lifecycle and
                 its runtime ttl and expires. Only valid for a sandbox fork.
+
+        Returns:
+            The ``SandboxForkResponse`` describing the new resource. Call
+            ``SyncSandboxInstance.get(target_name)`` to work with a sandbox fork.
+
+        Raises:
+            SandboxAPIError: When the API rejects the fork.
         """
         body = SandboxForkRequest(target_name=target_name, target_type=target_type)
         if port is not None:
@@ -402,6 +474,14 @@ class SyncSandboxInstance:
         return _unwrap_response(response, "fork sandbox")
 
     def wait(self, max_wait: int = 60000, interval: int = 1000) -> "SyncSandboxInstance":
+        """Return this instance right away; kept for compatibility.
+
+        A sandbox returned by :meth:`create` is ready to use, so there is
+        nothing to wait for. Both arguments are ignored and a deprecation
+        warning is logged.
+
+        .. deprecated:: Remove the call.
+        """
         logger.warning(
             "⚠️  Warning: sandbox.wait() is deprecated. You don't need to wait for the sandbox to be deployed anymore."
         )
@@ -417,10 +497,32 @@ class SyncSandboxInstance:
         *,
         mount_drives: "list[SandboxDriveMountConfiguration | dict] | None" = None,
     ) -> "SyncSandboxInstance":
-        """Create a sandbox.
+        """Create a sandbox and return it once it is ready to use.
+
+        Missing settings get defaults: image ``blaxel/base-image:latest`` and
+        4096 MB of memory. Creating a name that is already taken fails with
+        HTTP 409; use :meth:`create_if_not_exists` to reuse the sandbox instead.
+
+        Lifetime: ``ttl`` deletes the sandbox that long after it is created, and
+        ``lifecycle`` holds expiration policies of type ``ttl-idle`` (after that
+        long without activity), ``ttl-max-age`` (after that long in total) or
+        ``date`` (at an ISO 8601 date), each with action ``"delete"``. Durations
+        are a number followed by ``s``, ``m``, ``h``, ``d`` or ``w``, such as
+        ``"30m"`` or ``"7d"``. ``ttl`` and ``ttl-max-age`` must be at least
+        ``5m`` and ``ttl-idle`` at least ``60s``; shorter values get HTTP 400.
+        Recipes: https://docs.blaxel.ai/Sandboxes/Lifecycle-recipe
+
+        A creation rejected by a transient authentication failure (403
+        ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
+        before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
+        times with a short backoff.
 
         Args:
-            sandbox: The sandbox to create. Its name must use lowercase letters,
+            sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
+                dict with the same keys (``name``, ``image``, ``memory`` in MB,
+                ``ports``, ``envs``, ``volumes``, ``ttl``, ``expires``,
+                ``region``, ``lifecycle``, ``network``, ``labels``, ...), or a
+                full ``Sandbox`` model. Its name must use lowercase letters,
                 digits and single hyphens, at most ``SANDBOX_NAME_MAX_LENGTH``
                 (49) characters, like ``my-sandbox-1``. The API rejects any other
                 name with a 400, and the SDK never renames it for you: to name a
@@ -428,7 +530,12 @@ class SyncSandboxInstance:
                 through ``sanitize_sandbox_name`` first (``is_valid_sandbox_name``
                 checks a name). Omit the name to let the platform assign one.
                 Without a region (here or in ``BL_REGION``) the platform picks
-                one.
+                one and a ``FutureWarning`` is shown once per process.
+            safe: When True, make one filesystem call after creation so the
+                sandbox API answers before this returns. Errors from that call
+                are ignored.
+            create_if_not_exist: Prefer :meth:`create_if_not_exists`, which sets
+                this flag.
             mount_drives: Drives to mount on the sandbox. Drives are looked up or created
                 while the sandbox is being created (a few at a time) and each is mounted
                 as soon as the sandbox and that drive are ready. New drives go in the region
@@ -446,10 +553,37 @@ class SyncSandboxInstance:
                 platform default deadline applies; an explicit value can only
                 shorten it.
 
-        A creation rejected by a transient authentication failure (403
-        ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
-        before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
-        times with a short backoff.
+        Returns:
+            The new ``SyncSandboxInstance``.
+
+        Raises:
+            ValueError: When ``timeout`` is out of range, or ``lifecycle`` has an
+                unknown policy type or action (checked before any request).
+            SandboxCreationTimeoutError: When the sandbox was not ready before
+                the deadline.
+            SandboxAPIError: When the API rejects the creation, for example
+                HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
+                a name already in use. ``status_code`` and ``code`` carry the
+                details.
+            blaxel.core.client.errors.UnexpectedStatus: For a status the API
+                does not document for this call.
+
+        Example:
+            ```python
+            sandbox = SyncSandboxInstance.create(
+                {
+                    "name": "my-sandbox",
+                    "image": "blaxel/base-image:latest",
+                    "memory": 4096,
+                    "region": "us-pdx-1",
+                    "lifecycle": {
+                        "expiration_policies": [
+                            {"type": "ttl-idle", "value": "30m", "action": "delete"}
+                        ]
+                    },
+                }
+            )
+            ```
         """
         mounts = _normalize_mount_drives(mount_drives, create_if_not_exist)
         timeout = _validate_creation_timeout(timeout)
@@ -651,6 +785,27 @@ class SyncSandboxInstance:
 
     @classmethod
     def get(cls, sandbox_name: str) -> "SyncSandboxInstance":
+        """Read an existing sandbox by name.
+
+        Use it to reconnect to a sandbox created earlier, or to refresh the
+        status of an instance you already hold.
+
+        Args:
+            sandbox_name: The sandbox name.
+
+        Returns:
+            A ``SyncSandboxInstance`` with the current record.
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist (``status_code``
+                404) or the API rejects the request.
+
+        Example:
+            ```python
+            sandbox = SyncSandboxInstance.get("my-sandbox")
+            print(sandbox.status)
+            ```
+        """
         response = get_sandbox(
             sandbox_name,
             client=client,
@@ -682,6 +837,9 @@ class SyncSandboxInstance:
         Returns:
             PaginatedList[SyncSandboxInstance]: A list-like page with `.data`, `.meta`,
             `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Raises:
+            SandboxAPIError: When the API rejects the request.
 
         Example:
             ```python
@@ -718,6 +876,32 @@ class SyncSandboxInstance:
     def update_metadata(
         cls, sandbox_name: str, metadata: SandboxUpdateMetadata
     ) -> "SyncSandboxInstance":
+        """Update sandbox metadata by merging new metadata with existing metadata.
+
+        The sandbox is read first, then written back with the changes. Given
+        labels are added to the existing ones (a label with the same key is
+        replaced); no label is removed. The sandbox keeps running.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            metadata: The metadata fields to update (labels and/or display_name)
+
+        Returns:
+            A new SyncSandboxInstance with updated metadata
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist or the API rejects
+                the update.
+
+        Example:
+            ```python
+            from blaxel.core.sandbox.types import SandboxUpdateMetadata
+
+            sandbox = SyncSandboxInstance.update_metadata(
+                "my-sandbox", SandboxUpdateMetadata(labels={"team": "data"})
+            )
+            ```
+        """
         sandbox_instance = cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
@@ -746,12 +930,28 @@ class SyncSandboxInstance:
     def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SyncSandboxInstance":
         """Update sandbox TTL without recreating it.
 
+        The TTL counts from the sandbox creation, not from this call: a sandbox
+        created two hours ago and given ``"1h"`` is deleted soon after. To
+        delete after a period without activity, use :meth:`update_lifecycle`
+        with a ``ttl-idle`` policy. Recipes:
+        https://docs.blaxel.ai/Sandboxes/Lifecycle-recipe
+
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h"; minimum 5m), or None/"" to clear
+            ttl: The new TTL value (e.g., "5m", "1h"; minimum 5m), or None/"" to clear.
+                Units are ``s``, ``m``, ``h``, ``d`` or ``w``.
 
         Returns:
             A new SyncSandboxInstance with updated TTL
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist, or with HTTP 400
+                when the value is malformed or shorter than 5m.
+
+        Example:
+            ```python
+            sandbox = SyncSandboxInstance.update_ttl("my-sandbox", "24h")
+            ```
         """
         # Get the existing sandbox
         sandbox_instance = cls.get(sandbox_name)
@@ -780,12 +980,33 @@ class SyncSandboxInstance:
     ) -> "SyncSandboxInstance":
         """Update sandbox lifecycle configuration without recreating it.
 
+        The given lifecycle replaces the current one as a whole, so include
+        every policy you want to keep. Each expiration policy has a ``type``
+        (``ttl-idle``, ``ttl-max-age`` or ``date``), a ``value`` and the action
+        ``"delete"``. Durations use ``s``, ``m``, ``h``, ``d`` or ``w``;
+        ``ttl-idle`` must be at least ``60s`` and ``ttl-max-age`` at least
+        ``5m``. Recipes: https://docs.blaxel.ai/Sandboxes/Lifecycle-recipe
+
         Args:
             sandbox_name: The name of the sandbox to update
             lifecycle: The new lifecycle configuration, or None to clear
 
         Returns:
             A new SyncSandboxInstance with updated lifecycle
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist, or with HTTP 400
+                when a value is malformed or below its minimum.
+
+        Example:
+            ```python
+            from blaxel.core.client.models import SandboxLifecycle
+
+            lifecycle = SandboxLifecycle.from_dict(
+                {"expiration_policies": [{"type": "ttl-idle", "value": "30m", "action": "delete"}]}
+            )
+            sandbox = SyncSandboxInstance.update_lifecycle("my-sandbox", lifecycle)
+            ```
         """
         # Get the existing sandbox
         sandbox_instance = cls.get(sandbox_name)
@@ -812,12 +1033,20 @@ class SyncSandboxInstance:
     ) -> "SyncSandboxInstance":
         """Update sandbox network configuration without recreating it.
 
+        The given network configuration replaces the current one. A
+        ``SandboxUpdateNetwork`` whose ``network`` is None sends the update
+        without a ``network`` field.
+
         Args:
             sandbox_name: The name of the sandbox to update
             network: The new network configuration
 
         Returns:
             A new SyncSandboxInstance with updated network configuration
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist or the API rejects
+                the configuration.
         """
         sandbox_instance = cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
@@ -858,6 +1087,38 @@ class SyncSandboxInstance:
         is, a FAILED/TERMINATED one is replaced, and a deletion or concurrent
         creation still in flight is waited for server-side. A 409 therefore only
         surfaces when the name really cannot be used, and is raised as is.
+
+        A live sandbox is reused as it is, including one in standby: the
+        requested image, memory, region, envs and other settings are not
+        applied to it. When the image, memory, region or envs you set differ
+        from the sandbox returned, a ``UserWarning`` names the differences;
+        delete and create again to change them. Without a name in ``sandbox`` this always
+        creates a new sandbox. Name rules, defaults and lifetime settings are
+        the same as for :meth:`create`; recipes:
+        https://docs.blaxel.ai/Sandboxes/Lifecycle-recipe
+
+        Args:
+            sandbox: The sandbox to create, in any form :meth:`create` accepts.
+                Give it a name so a second call finds the same sandbox.
+            timeout: Optional creation deadline in whole seconds, as in
+                :meth:`create`.
+
+        Returns:
+            The existing or new ``SyncSandboxInstance``.
+
+        Raises:
+            ValueError: When ``timeout`` or ``lifecycle`` is invalid.
+            SandboxCreationTimeoutError: When a new sandbox was not ready before
+                the deadline.
+            SandboxAPIError: When the API rejects the request, for example
+                HTTP 400 for an invalid name.
+
+        Example:
+            ```python
+            sandbox = SyncSandboxInstance.create_if_not_exists(
+                {"name": "agent-workspace", "region": "us-pdx-1"}
+            )
+            ```
         """
         create_kwargs: Dict[str, Any] = {} if timeout is None else {"timeout": timeout}
         if mount_drives is not None:
@@ -868,6 +1129,37 @@ class SyncSandboxInstance:
     def from_session(
         cls, session: Union[SessionWithToken, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
+        """Create a sandbox instance from a session with token.
+
+        Use it where the code must not hold a Blaxel API key, such as a browser
+        backend or a separate service: create the session with an API key
+        elsewhere (``sandbox.sessions.create()``) and pass it here. The
+        instance reaches the sandbox through the session URL with the session
+        token, so these calls work without an API key until the token
+        expires: ``fs.read``, ``fs.write`` (up to 5 MB), ``fs.ls``,
+        ``fs.mkdir``, ``fs.rm``, ``process.exec``, ``process.get`` and
+        ``process.kill``. Other helpers, such as ``fs.read_binary``,
+        ``fs.write_binary``, ``fs.watch`` and log streaming, still read Blaxel
+        credentials in this version and raise ``CredentialsError`` without
+        them. Its ``metadata.name`` is derived from the session name, not
+        read from the API: do not call control-plane methods
+        (``previews``, ``sessions``, ``update_*``, ``delete``) on it.
+
+        Args:
+            session: A ``SessionWithToken``, or a dict with ``name``, ``url``,
+                ``token`` and ``expires_at``.
+
+        Returns:
+            A ``SyncSandboxInstance`` bound to the session URL and token. No
+            request is made.
+
+        Example:
+            ```python
+            session = sandbox.sessions.create()
+            remote = SyncSandboxInstance.from_session(session)
+            remote.fs.write("/tmp/hello.txt", "hi")
+            ```
+        """
         if isinstance(session, dict):
             session = SessionWithToken.from_dict(session)
         sandbox_name = session.name.split("-")[0] if "-" in session.name else session.name
@@ -892,7 +1184,24 @@ def _unarchive_sandbox_by_name(sandbox_name: str):
 
 
 def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
-    """Delete a sandbox by name."""
+    """Delete a sandbox by name.
+
+    Exposed as ``SyncSandboxInstance.delete("name")`` and as
+    ``sandbox.delete()`` on an instance. The sandbox, its processes and its
+    filesystem are removed; persistent volumes and drives attached to it are
+    separate resources and are not deleted. The deletion finishes in the
+    background, and the name can be reused once it is done.
+
+    Args:
+        sandbox_name: The sandbox name.
+
+    Returns:
+        The ``Sandbox`` record as the API returned it for the deletion.
+
+    Raises:
+        SandboxAPIError: When the sandbox does not exist (``status_code`` 404)
+            or the API rejects the request.
+    """
     response = delete_sandbox(
         sandbox_name,
         client=client,

@@ -38,11 +38,41 @@ MAX_PARALLEL_UPLOADS = 3  # Number of parallel part uploads
 
 
 class SyncSandboxFileSystem(SyncSandboxAction):
+    """Read, write and watch files inside a sandbox (synchronous).
+
+    Reach it as ``sandbox.fs``; each call goes to the sandbox API. Absolute
+    paths are used as given and relative paths resolve from the sandbox
+    working directory. Writes create missing parent directories. An error
+    status from the sandbox API raises ``ResponseError``, with the HTTP status
+    in ``status``. File search (``find`` and ``grep``) is only on the async
+    ``SandboxFileSystem``.
+
+    Example:
+        ```python
+        sandbox.fs.write("/app/main.py", "print('hi')")
+        content = sandbox.fs.read("/app/main.py")
+        listing = sandbox.fs.ls("/app")
+        print([f.name for f in listing.files])
+        ```
+    """
+
     def __init__(self, sandbox_config: SandboxConfiguration, process=None):
         super().__init__(sandbox_config)
         self.process = process
 
     def mkdir(self, path: str, permissions: str = "0755") -> SuccessResponse:
+        """Create a directory and any missing parents.
+
+        Args:
+            path: Directory path in the sandbox.
+            permissions: Octal permission string for the new directory.
+
+        Returns:
+            ``SuccessResponse`` with the created path.
+
+        Raises:
+            ResponseError: When the sandbox API rejects the request.
+        """
         path = self.format_path(path)
         body = FileRequest(is_directory=True, permissions=permissions)
         with self.get_client() as client_instance:
@@ -51,6 +81,27 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return SuccessResponse.from_dict(response.json())
 
     def write(self, path: str, content: str) -> SuccessResponse:
+        """Write a text file, replacing any existing content.
+
+        Missing parent directories are created. Content larger than 5 MB once
+        encoded as UTF-8 is uploaded in 5 MB parts, 3 at a time, and the
+        upload is aborted if a part fails. Use :meth:`write_binary` for bytes.
+
+        Args:
+            path: File path in the sandbox.
+            content: Text to write.
+
+        Returns:
+            ``SuccessResponse`` with the written path.
+
+        Raises:
+            ResponseError: When the sandbox API rejects the request.
+
+        Example:
+            ```python
+            sandbox.fs.write("/app/config.json", '{"debug": true}')
+            ```
+        """
         path = self.format_path(path)
         content_size = len(content.encode("utf-8"))
         if content_size > MULTIPART_THRESHOLD:
@@ -63,6 +114,30 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return SuccessResponse.from_dict(response.json())
 
     def write_binary(self, path: str, content: Union[bytes, bytearray, str]) -> SuccessResponse:
+        """Write binary content to a file.
+
+        The file gets permissions ``0644``. Content larger than 5 MB is
+        uploaded in 5 MB parts, 3 at a time; smaller content is sent in one
+        request.
+
+        Args:
+            path: The path in the sandbox to write to.
+            content: Binary content as bytes, bytearray, or string path to a
+                local file. A ``str`` is always read as a local file path,
+                never as text.
+
+        Returns:
+            ``SuccessResponse`` with the written path.
+
+        Raises:
+            Exception: When the sandbox API rejects a single-request upload.
+            ResponseError: When the sandbox API rejects a multipart upload.
+
+        Example:
+            ```python
+            sandbox.fs.write_binary("/app/logo.png", "./logo.png")
+            ```
+        """
         path = self.format_path(path)
         if isinstance(content, str):
             local_path = Path(content)
@@ -100,6 +175,34 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         files: List[Union[SandboxFilesystemFile, Dict[str, Any]]],
         destination_path: str | None = None,
     ) -> Directory:
+        """Write several text files in one request.
+
+        Each file path is relative to ``destination_path``. Missing
+        directories are created and existing files are replaced.
+
+        Args:
+            files: ``SandboxFilesystemFile`` objects or dicts with ``path`` and
+                ``content``.
+            destination_path: Directory that receives the files. Defaults to
+                the sandbox working directory.
+
+        Returns:
+            The ``Directory`` listing of ``destination_path`` after the write.
+
+        Raises:
+            ResponseError: When the sandbox API rejects the request.
+
+        Example:
+            ```python
+            sandbox.fs.write_tree(
+                [
+                    {"path": "src/main.py", "content": "print('hi')"},
+                    {"path": "README.md", "content": "# App"},
+                ],
+                "/app",
+            )
+            ```
+        """
         files_dict = {}
         for file in files:
             if isinstance(file, dict):
@@ -116,6 +219,23 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return Directory.from_dict(response.json())
 
     def read(self, path: str) -> str:
+        """Read a text file.
+
+        Use :meth:`read_binary` for binary files and :meth:`ls` for
+        directories.
+
+        Args:
+            path: File path in the sandbox.
+
+        Returns:
+            The file content as text.
+
+        Raises:
+            ResponseError: When the file does not exist (``status`` 404) or the
+                sandbox API rejects the request.
+            Exception: When the path is not a regular text file, such as a
+                directory.
+        """
         path = self.format_path(path)
 
         def read_once() -> str:
@@ -153,6 +273,18 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         return retry_on_transient_reset(read_tree_once)
 
     def read_binary(self, path: str) -> bytes:
+        """Read binary content from a file.
+
+        Args:
+            path: The path in the sandbox to read from.
+
+        Returns:
+            The file content as bytes.
+
+        Raises:
+            ResponseError: When the file does not exist or the sandbox API
+                rejects the request.
+        """
         path = self.format_path(path)
         url = f"{self.url}/filesystem/{path}"
         headers = {
@@ -170,12 +302,39 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         return retry_on_transient_reset(read_once)
 
     def download(self, src: str, destination_path: str, mode: int = 0o644) -> None:
+        """Download a file from the sandbox to the local filesystem.
+
+        The whole file is read into memory, then written locally, replacing
+        any existing local file.
+
+        Args:
+            src: The path in the sandbox to download from.
+            destination_path: The local path to save to.
+            mode: Local file permissions (default: 0o644).
+
+        Raises:
+            ResponseError: When the file cannot be read from the sandbox.
+        """
         content = self.read_binary(src)
         local_path = Path(destination_path)
         local_path.write_bytes(content)
         local_path.chmod(mode)
 
     def rm(self, path: str, recursive: bool = False) -> SuccessResponse:
+        """Delete a file or directory.
+
+        Args:
+            path: Path in the sandbox.
+            recursive: Required to delete a directory that is not empty.
+
+        Returns:
+            ``SuccessResponse`` with the deleted path.
+
+        Raises:
+            ResponseError: When the path does not exist, a directory is not
+                empty and ``recursive`` is False, or the sandbox API rejects
+                the request.
+        """
         path = self.format_path(path)
         with self.get_client() as client_instance:
             params = {"recursive": "true"} if recursive else {}
@@ -184,6 +343,19 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             return SuccessResponse.from_dict(response.json())
 
     def ls(self, path: str) -> Directory:
+        """List the direct children of a directory.
+
+        Args:
+            path: Directory path in the sandbox.
+
+        Returns:
+            ``Directory`` with ``files`` and ``subdirectories``.
+
+        Raises:
+            ResponseError: When the directory does not exist or the sandbox
+                API rejects the request.
+            Exception: When the path is a file, not a directory.
+        """
         path = self.format_path(path)
 
         def ls_once() -> Directory:
@@ -207,6 +379,30 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         *,
         no_overwrite: bool = False,
     ) -> CopyResponse:
+        """Copy files or directories using the cp command.
+
+        Without ``no_overwrite``, runs ``cp -r`` as a sandbox process and waits
+        for it to finish.
+
+        Args:
+            source: Source path.
+            destination: Destination path.
+            max_wait: Maximum time to wait for the copy in milliseconds
+                (default: 180000).
+            no_overwrite: Copy in one sandbox API request that creates every entry
+                exclusively; an existing final target raises FileExistsError and is left
+                unchanged. Not a transaction: entries created before a failure remain.
+
+        Returns:
+            ``CopyResponse`` with the source and destination.
+
+        Raises:
+            FileExistsError: With ``no_overwrite``, when the final target exists.
+            Exception: When the copy fails, or when this filesystem has no
+                process access.
+            TimeoutError: When the copy takes longer than ``max_wait``. The
+                ``cp`` process is not stopped.
+        """
         if no_overwrite:
             body = _copy_body(source, destination)
             timeout = _copy_timeout(max_wait)
@@ -241,6 +437,25 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         options: Dict[str, Any] | None = None,
     ) -> WatchHandle:
         """Watch for file system changes.
+
+        Only the direct entries of ``path`` are watched. To also watch every
+        subdirectory, including ones created later, end the path with ``/**``
+        (for example ``"/app/**"``). The watch reports changes made after it
+        starts, with no initial snapshot. It runs in a daemon thread that
+        calls ``callback``; after ``close()`` the thread exits when the stream
+        next sends data.
+
+        Args:
+            path: Directory to watch, optionally ending with ``/**``.
+            callback: Function called with each ``WatchEvent``, from the watch
+                thread. Its ``op`` is ``CREATE``, ``WRITE``, ``REMOVE``,
+                ``RENAME`` or ``CHMOD``, ``path`` is the directory holding the
+                entry and ``name`` its base name.
+            options: Optional dict. ``ignore``: list of substrings; events whose
+                path contains one are skipped. ``with_content``: when True,
+                read the file and set ``content`` on ``CREATE`` and ``WRITE``
+                events. ``on_error``: function called with an exception raised
+                while handling an event.
 
         Returns a WatchHandle that can be used as a context manager:
 
@@ -367,6 +582,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         return WatchHandle(close)
 
     def format_path(self, path: str) -> str:
+        """Return ``path`` unchanged; kept for compatibility."""
         return path
 
     def _initiate_multipart_upload(self, path: str, permissions: str = "0644") -> Dict[str, Any]:
