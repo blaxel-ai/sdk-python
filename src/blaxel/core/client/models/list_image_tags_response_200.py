@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 if TYPE_CHECKING:
     from ..models.image_tag import ImageTag
     from ..models.pagination_meta import PaginationMeta
@@ -65,7 +67,7 @@ class ListImageTagsResponse200:
 
             data.append(data_item)
 
-        meta = PaginationMeta.from_dict(d.pop("meta"))
+        meta = PaginationMeta.from_dict(d.pop("meta", UNSET))
 
         list_image_tags_response_200 = cls(
             data=data,
