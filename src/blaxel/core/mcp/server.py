@@ -1,4 +1,5 @@
 import logging
+import sys
 import traceback
 import uuid
 from contextlib import asynccontextmanager
@@ -16,7 +17,38 @@ from websockets.asyncio.server import ServerConnection, serve
 
 from ..common.env import env
 
+if sys.version_info < (3, 11):
+    # Builtin from Python 3.11 onwards; provided by the ``exceptiongroup`` backport
+    # (an anyio dependency) on older versions.
+    from exceptiongroup import BaseExceptionGroup
+
 logger = logging.getLogger(__name__)
+
+
+def _single_task_group_error(exc_group: BaseExceptionGroup) -> BaseException | None:
+    """Reduce an anyio task-group exception group to a single meaningful error.
+
+    anyio raises a ``BaseExceptionGroup`` from a task group's ``__aexit__`` whenever a
+    child task or the body fails. Pure cancellation from normal shutdown is not a real
+    failure and is stripped out.
+
+    Returns the lone remaining exception when exactly one is left, the filtered group
+    when several genuine failures remain, or ``None`` when only cancellations occurred.
+    """
+    _, rest = exc_group.split(anyio.get_cancelled_exc_class())
+    if rest is None:
+        return None
+    leaves: list[BaseException] = []
+    stack: list[BaseException] = [rest]
+    while stack:
+        current = stack.pop()
+        if isinstance(current, BaseExceptionGroup):
+            stack.extend(current.exceptions)
+        else:
+            leaves.append(current)
+    if len(leaves) == 1:
+        return leaves[0]
+    return rest
 
 
 class BlaxelMcpServerTransport:
@@ -74,48 +106,67 @@ class BlaxelMcpServerTransport:
         async def message_sender():
             async with write_stream_reader:
                 async for session_message in write_stream_reader:
-                    # Extract client ID from message ID
-                    client_id = None
-                    msg_id = None
-                    message = session_message.message
-                    if hasattr(message, "id") and message.id is not None:
-                        parts = str(message.id).split(":", 1)
-                        if len(parts) == 2:
-                            client_id, msg_id = parts
-                            # Restore original message ID
-                            message.id = int(msg_id) if msg_id.isdigit() else msg_id
+                    # A single malformed outgoing message (e.g. one that fails to
+                    # serialize) must not crash the whole sender task: that would make
+                    # anyio raise an opaque ``BaseExceptionGroup`` ("unhandled errors in
+                    # a TaskGroup") and take the server down. Log and keep serving.
+                    try:
+                        # Extract client ID from message ID
+                        client_id = None
+                        msg_id = None
+                        message = session_message.message
+                        if hasattr(message, "id") and message.id is not None:
+                            parts = str(message.id).split(":", 1)
+                            if len(parts) == 2:
+                                client_id, msg_id = parts
+                                # Restore original message ID
+                                message.id = int(msg_id) if msg_id.isdigit() else msg_id
 
-                    data = message.model_dump_json(by_alias=True, exclude_none=True)
+                        data = message.model_dump_json(by_alias=True, exclude_none=True)
 
-                    if client_id and client_id in self.clients:
-                        # Send to specific client
-                        websocket = self.clients[client_id]
-                        try:
-                            await websocket.send(data)
-                        except Exception as e:
-                            logger.error(f"Failed to send message to client {client_id}: {e}")
-                            if client_id in self.clients:
-                                del self.clients[client_id]
-                    else:
-                        # Broadcast to all clients
-                        dead_clients = []
-                        for cid, websocket in self.clients.items():
+                        if client_id and client_id in self.clients:
+                            # Send to specific client
+                            websocket = self.clients[client_id]
                             try:
                                 await websocket.send(data)
-                            except Exception:
-                                dead_clients.append(cid)
+                            except Exception as e:
+                                logger.error(f"Failed to send message to client {client_id}: {e}")
+                                if client_id in self.clients:
+                                    del self.clients[client_id]
+                        else:
+                            # Broadcast to all clients
+                            dead_clients = []
+                            for cid, websocket in self.clients.items():
+                                try:
+                                    await websocket.send(data)
+                                except Exception:
+                                    dead_clients.append(cid)
 
-                        # Clean up dead clients
-                        for cid in dead_clients:
-                            if cid in self.clients:
-                                del self.clients[cid]
+                            # Clean up dead clients
+                            for cid in dead_clients:
+                                if cid in self.clients:
+                                    del self.clients[cid]
+                    except Exception:
+                        logger.error(
+                            f"Failed to dispatch outgoing message: {traceback.format_exc()}"
+                        )
 
-        async with anyio.create_task_group() as tg:
-            logger.info(f"Starting WebSocket Server on port {self.port}")
-            async with serve(handler, "0.0.0.0", self.port) as server:
-                self.server = server
-                tg.start_soon(message_sender)
-                yield read_stream, write_stream
+        try:
+            async with anyio.create_task_group() as tg:
+                logger.info(f"Starting WebSocket Server on port {self.port}")
+                async with serve(handler, "0.0.0.0", self.port) as server:
+                    self.server = server
+                    tg.start_soon(message_sender)
+                    yield read_stream, write_stream
+        except BaseExceptionGroup as exc_group:
+            # anyio wraps a failing child task or body error in a BaseExceptionGroup when
+            # the task group exits. Surface a single, catchable error instead of leaking
+            # the opaque group ("unhandled errors in a TaskGroup") out of run_ws_async to
+            # the process boundary; ignore groups that only contain cancellations from
+            # normal shutdown.
+            error = _single_task_group_error(exc_group)
+            if error is not None:
+                raise error from None
 
 
 class FastMCP(FastMCPBase):
