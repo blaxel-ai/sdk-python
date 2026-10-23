@@ -205,6 +205,11 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 # do something
             finally:
                 handle.close()
+
+        Options: ``with_content``, ``ignore``, ``on_error(exc)``,
+        ``on_keepalive()`` (called on each server keepalive, about every 30s, so a
+        silent dead stream can be detected) and ``on_close()`` (called when the
+        server ends the stream, not when ``close()`` is called).
         """
         path = self.format_path(path)
         closed = threading.Event()
@@ -217,7 +222,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 params["ignore"] = ",".join(options["ignore"])
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            with httpx.Client() as client_instance:
+            with httpx.Client(timeout=None) as client_instance:
                 with client_instance.stream("GET", url, params=params, headers=headers) as response:
                     if not response.is_success:
                         raise Exception(f"Failed to start watching: {response.status_code}")
@@ -233,6 +238,8 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                             if not line:
                                 continue
                             if line.startswith("[keepalive]"):
+                                if options.get("on_keepalive"):
+                                    options["on_keepalive"]()
                                 continue
                             try:
                                 file_event_data = json.loads(line)
@@ -262,6 +269,10 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                             except Exception as e:
                                 if options.get("on_error"):
                                     options["on_error"](e)
+            # The server ended the stream (e.g. the watched directory was removed).
+            if not closed.is_set() and options.get("on_close"):
+                closed.set()
+                options["on_close"]()
 
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
