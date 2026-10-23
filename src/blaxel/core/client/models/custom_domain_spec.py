@@ -144,7 +144,7 @@ class CustomDomainSpec:
 
         _domain_type = d.pop("domainType", d.pop("domain_type", UNSET))
         domain_type: Union[Unset, CustomDomainSpecDomainType]
-        if isinstance(_domain_type, Unset):
+        if isinstance(_domain_type, Unset) or _domain_type == "":
             domain_type = UNSET
         else:
             domain_type = CustomDomainSpecDomainType(_domain_type)
@@ -157,7 +157,7 @@ class CustomDomainSpec:
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, CustomDomainSpecStatus]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = CustomDomainSpecStatus(_status)
@@ -182,7 +182,7 @@ class CustomDomainSpec:
 
         _validation_method = d.pop("validationMethod", d.pop("validation_method", UNSET))
         validation_method: Union[Unset, CustomDomainSpecValidationMethod]
-        if isinstance(_validation_method, Unset):
+        if isinstance(_validation_method, Unset) or _validation_method == "":
             validation_method = UNSET
         else:
             validation_method = CustomDomainSpecValidationMethod(_validation_method)

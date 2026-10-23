@@ -107,7 +107,7 @@ class JobExecution:
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, JobExecutionStatus]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = JobExecutionStatus(_status)

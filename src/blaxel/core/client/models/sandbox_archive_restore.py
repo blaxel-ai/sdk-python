@@ -65,7 +65,7 @@ class SandboxArchiveRestore:
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, SandboxArchiveRestoreState]
-        if isinstance(_state, Unset):
+        if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:
             state = SandboxArchiveRestoreState(_state)

@@ -78,7 +78,7 @@ class ExportProgress:
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, ArchiveExportState]
-        if isinstance(_state, Unset):
+        if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:
             state = ArchiveExportState(_state)
