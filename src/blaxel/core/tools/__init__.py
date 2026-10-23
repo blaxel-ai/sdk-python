@@ -5,7 +5,7 @@ from contextlib import AsyncExitStack
 from logging import getLogger
 from typing import Any, cast
 
-from mcp import ClientSession
+from mcp import ClientSession, McpError
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import (
     CallToolRequest,
@@ -29,6 +29,27 @@ logger = getLogger(__name__)
 DEFAULT_TIMEOUT = 1
 if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
+
+# JSON-RPC message the streamable-HTTP transport surfaces when the server
+# answers a request with 404 because the session no longer exists server-side.
+SESSION_TERMINATED_MESSAGE = "Session terminated"
+
+
+def _is_session_terminated_error(error: BaseException) -> bool:
+    """Return True when an MCP error signals a terminated server-side session.
+
+    ``PersistentMcpClient`` caches its ``ClientSession`` and reuses it across
+    calls. The server can terminate that session independently of the client
+    (for example when the function is redeployed or scaled to zero). The
+    streamable-HTTP transport surfaces this as an ``McpError`` carrying the
+    message ``"Session terminated"`` after the server answers a request with
+    404. When we see it, the cached session is dead and must be rebuilt before
+    retrying.
+    """
+    return (
+        isinstance(error, McpError)
+        and getattr(error.error, "message", "") == SESSION_TERMINATED_MESSAGE
+    )
 
 
 class PersistentMcpClient:
@@ -105,48 +126,72 @@ class PersistentMcpClient:
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         try:
-            await self.initialize()
-            if self.timeout_enabled:
-                self._remove_timer()
-            logger.debug(
-                f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}"
-            )
-
-            # Pass meta as a separate field instead of merging into arguments
-            # This matches the TypeScript SDK pattern and MCP protocol specification
-            call_tool_result = await self.session.send_request(
-                ClientRequest(
-                    CallToolRequest(
-                        params=CallToolRequestParams(
-                            name=tool_name,
-                            arguments=arguments,
-                            meta=self.metas if self.metas else None,
-                        ),
-                    )
-                ),
-                CallToolResult,
-            )
-
-            logger.debug(f"Tool {tool_name} returned {call_tool_result}")
-            if self.timeout_enabled:
-                self._reset_timer()
-            else:
-                await self._close()
-            return call_tool_result
+            return await self._call_tool(tool_name, arguments)
         except Exception as e:
-            logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
+            if _is_session_terminated_error(e):
+                logger.debug(
+                    f"MCP session for {self.name} was terminated; "
+                    f"reconnecting and retrying call_tool {tool_name}"
+                )
+                await self._reset_session()
+                try:
+                    return await self._call_tool(tool_name, arguments)
+                except Exception as retry_error:
+                    e = retry_error
+            tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            logger.error(f"Error calling tool {tool_name}: {e}\n{tb}")
             return CallToolResult(
                 content=[
                     {
                         "type": "text",
-                        "text": f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}",
+                        "text": f"Error calling tool {tool_name}: {e}\n{tb}",
                     }
                 ],
                 isError=True,
             )
 
+    async def _call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
+        await self.initialize()
+        if self.timeout_enabled:
+            self._remove_timer()
+        logger.debug(f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}")
+
+        # Pass meta as a separate field instead of merging into arguments
+        # This matches the TypeScript SDK pattern and MCP protocol specification
+        call_tool_result = await self.session.send_request(
+            ClientRequest(
+                CallToolRequest(
+                    params=CallToolRequestParams(
+                        name=tool_name,
+                        arguments=arguments,
+                        meta=self.metas if self.metas else None,
+                    ),
+                )
+            ),
+            CallToolResult,
+        )
+
+        logger.debug(f"Tool {tool_name} returned {call_tool_result}")
+        if self.timeout_enabled:
+            self._reset_timer()
+        else:
+            await self._close()
+        return call_tool_result
+
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
+        try:
+            return await self._list_tools()
+        except McpError as e:
+            if not _is_session_terminated_error(e):
+                raise
+            logger.debug(
+                f"MCP session for {self.name} was terminated; reconnecting and retrying list_tools"
+            )
+            await self._reset_session()
+            return await self._list_tools()
+
+    async def _list_tools(self):
         await self.initialize()
         logger.debug(f"Initialized websocket for {self.name}")
         if self.timeout_enabled:
@@ -192,6 +237,17 @@ class PersistentMcpClient:
     def _remove_timer(self):
         if self.timer_task:
             self.timer_task.cancel()
+
+    async def _reset_session(self):
+        """Discard a dead/stale session so the next call rebuilds it.
+
+        Cancels any pending inactivity timer and tears down the current session
+        and transport. ``_close`` swaps in fresh exit stacks and clears
+        ``self.session``, so the following ``initialize`` establishes a brand new
+        connection instead of reusing the terminated one.
+        """
+        self._remove_timer()
+        await self._close()
 
     async def _close_after_timeout(self):
         await asyncio.sleep(self.timeout)
