@@ -432,6 +432,7 @@ class TestWatch(TestFilesystemOperations):
 
         keepalives = 0
         closed = False
+        errors: list[Exception] = []
 
         def on_keepalive():
             nonlocal keepalives
@@ -445,15 +446,16 @@ class TestWatch(TestFilesystemOperations):
         handle = self.sandbox.fs.watch(
             dir_path,
             lambda _: None,
-            {"on_keepalive": on_keepalive, "on_close": on_close},
+            {"on_keepalive": on_keepalive, "on_close": on_close, "on_error": errors.append},
         )
         try:
             assert await wait_until(lambda: keepalives > 0, timeout=40)
         finally:
             handle.close()
         await async_sleep(0.1)
-        # close() from the caller is not reported as a server-side close.
+        # close() from the caller is not reported as a server-side close or an error.
         assert not closed
+        assert not errors
 
 
 @pytest.mark.asyncio(loop_scope="class")

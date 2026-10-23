@@ -216,7 +216,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         if options is None:
             options = {}
 
-        def run():
+        def stream():
             params = {}
             if options.get("ignore"):
                 params["ignore"] = ",".join(options["ignore"])
@@ -273,6 +273,18 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             if not closed.is_set() and options.get("on_close"):
                 closed.set()
                 options["on_close"]()
+
+        def run():
+            try:
+                stream()
+            except Exception as e:
+                # A failure after close() is our own teardown, not a dead stream.
+                if closed.is_set():
+                    return
+                if options.get("on_error"):
+                    options["on_error"](e)
+                else:
+                    logger.error("fs.watch stream failed for %s: %s", path, e)
 
         thread = threading.Thread(target=run, daemon=True)
         thread.start()

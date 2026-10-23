@@ -483,8 +483,20 @@ class SandboxFileSystem(SandboxAction):
                 closed = True
                 options["on_close"]()
 
+        async def watch_and_report():
+            try:
+                await start_watching()
+            except Exception as e:
+                # A failure after close() is our own teardown, not a dead stream.
+                if closed:
+                    return
+                if options.get("on_error"):
+                    options["on_error"](e)
+                else:
+                    logger.error("fs.watch stream failed for %s: %s", path, e)
+
         # Start watching in the background
-        task = asyncio.create_task(start_watching())
+        task = asyncio.create_task(watch_and_report())
 
         def close():
             nonlocal closed
