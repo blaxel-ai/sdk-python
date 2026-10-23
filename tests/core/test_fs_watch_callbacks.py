@@ -95,3 +95,41 @@ def test_sync_watch_reports_stream_failure(monkeypatch, handler):
     SyncSandboxFileSystem(config()).watch("/d", lambda _: None, {"on_error": on_error})
     assert failed.wait(5)
     assert len(errors) == 1
+
+
+def test_sync_close_releases_an_idle_stream():
+    """close() must drop the connection while the server is still silent.
+
+    The sandbox API sends no headers until the first event or keepalive, so the
+    worker is blocked waiting for them when the caller closes.
+    """
+    import socket
+
+    server = socket.create_server(("127.0.0.1", 0))
+    port = server.getsockname()[1]
+    requested = threading.Event()
+    released = threading.Event()
+
+    def serve():
+        conn, _ = server.accept()
+        conn.recv(65536)
+        requested.set()
+        conn.settimeout(10)
+        try:
+            if conn.recv(1) == b"":  # client hung up
+                released.set()
+        except OSError:
+            released.set()
+        finally:
+            conn.close()
+
+    threading.Thread(target=serve, daemon=True).start()
+    errors: list[Exception] = []
+    handle = SyncSandboxFileSystem(
+        SandboxConfiguration(sandbox=None, force_url=f"http://127.0.0.1:{port}")  # type: ignore[arg-type]
+    ).watch("/d", lambda _: None, {"on_error": errors.append})
+    assert requested.wait(5)
+    handle.close()
+    assert released.wait(3)
+    assert not errors  # our own close() is not reported
+    server.close()

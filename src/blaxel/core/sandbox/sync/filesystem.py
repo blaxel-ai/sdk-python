@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import shlex
+import socket
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
@@ -213,6 +214,25 @@ class SyncSandboxFileSystem(SyncSandboxAction):
         """
         path = self.format_path(path)
         closed = threading.Event()
+        live: Dict[str, Any] = {}
+
+        def release():
+            # The worker may be blocked on an idle socket (the server holds headers
+            # until the first event or keepalive). shutdown() wakes that read on
+            # every OS; closing the socket from another thread does not.
+            stream = live.get("stream")
+            if stream is not None:
+                try:
+                    stream.get_extra_info("socket").shutdown(socket.SHUT_RDWR)
+                except Exception:
+                    pass
+
+        def trace(event_name: str, info: Dict[str, Any]) -> None:
+            if event_name in ("connection.connect_tcp.complete", "connection.start_tls.complete"):
+                live["stream"] = info["return_value"]
+                if closed.is_set():  # close() ran before the connection existed
+                    release()
+
         if options is None:
             options = {}
 
@@ -223,7 +243,9 @@ class SyncSandboxFileSystem(SyncSandboxAction):
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
             with httpx.Client(timeout=None) as client_instance:
-                with client_instance.stream("GET", url, params=params, headers=headers) as response:
+                with client_instance.stream(
+                    "GET", url, params=params, headers=headers, extensions={"trace": trace}
+                ) as response:
                     if not response.is_success:
                         raise Exception(f"Failed to start watching: {response.status_code}")
                     buffer = ""
@@ -291,6 +313,7 @@ class SyncSandboxFileSystem(SyncSandboxAction):
 
         def close():
             closed.set()
+            release()
 
         return WatchHandle(close)
 
