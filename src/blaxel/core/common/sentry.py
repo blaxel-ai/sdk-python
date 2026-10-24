@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from ..errors import BlaxelError
 from .settings import settings
 
 try:
@@ -410,6 +411,14 @@ def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    # A BlaxelError (ResponseError, UnexpectedStatus, the *APIError wrappers, ...)
+    # is a backend HTTP/API error response the SDK deliberately raises for the
+    # caller to handle, not a defect in SDK code. Reporting these as unhandled
+    # "SDK failures" turns routine, caller-actionable responses -- a 404 for a
+    # missing file or deleted sandbox, a 401, a 409 conflict -- into misattributed
+    # Sentry noise, so classify them as expected like the import errors below.
+    if isinstance(exc_value, BlaxelError):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
