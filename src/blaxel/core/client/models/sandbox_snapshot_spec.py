@@ -104,7 +104,10 @@ class SandboxSnapshotSpec:
         if isinstance(_generation, Unset):
             generation = UNSET
         else:
-            generation = SandboxSnapshotSpecGeneration(_generation)
+            try:
+                generation = SandboxSnapshotSpecGeneration(_generation)
+            except ValueError:
+                generation = UNSET
 
         image = d.pop("image", UNSET)
 
