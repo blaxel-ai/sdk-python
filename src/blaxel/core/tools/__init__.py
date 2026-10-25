@@ -1,9 +1,8 @@
 import asyncio
 import os
 import traceback
-from contextlib import AsyncExitStack
 from logging import getLogger
-from typing import Any, cast
+from typing import Any
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
@@ -31,6 +30,45 @@ if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
 
 
+def _flatten_exception_group(error: BaseException) -> BaseException:
+    """Collapse an (Base)ExceptionGroup to a single concrete exception when it wraps
+    exactly one non-cancellation leaf.
+
+    The MCP streamable-HTTP transport runs inside an anyio task group; a single
+    connection failure (e.g. a refused connection or an error status from the
+    gateway while a server cold-starts) surfaces as a task-group exception group.
+    Callers cannot catch that with ``except ConnectionError`` / ``except Exception``
+    and the SDK's telemetry reports it as an opaque ``ExceptionGroup: unhandled
+    errors in a TaskGroup``. Flattening restores the actionable underlying error.
+    """
+    nested = getattr(error, "exceptions", None)
+    if not isinstance(nested, tuple):
+        return error
+    leaves: list[BaseException] = []
+    for child in nested:
+        flattened = _flatten_exception_group(child)
+        if isinstance(flattened, asyncio.CancelledError):
+            continue
+        leaves.append(flattened)
+    if len(leaves) == 1:
+        return leaves[0]
+    return error
+
+
+def _as_connection_error(name: str, error: BaseException) -> Exception:
+    """Return a catchable exception describing an MCP connection failure.
+
+    Prefer the concrete transport error (e.g. ``httpx.HTTPStatusError``) unwrapped
+    from the anyio task group so callers keep useful context; fall back to wrapping
+    a bare cancellation or a multi-error group in a ``RuntimeError`` so callers
+    always receive an ``Exception`` instead of an un-catchable ``BaseException``.
+    """
+    concrete = _flatten_exception_group(error)
+    if isinstance(concrete, Exception):
+        return concrete
+    return RuntimeError(f"Failed to connect to MCP server '{name}': {concrete!r}")
+
+
 class PersistentMcpClient:
     def __init__(
         self,
@@ -47,9 +85,15 @@ class PersistentMcpClient:
             self.name = name.split("/")[1]
             self.type = "sandbox"
             self.pluralType = "sandboxes"
-        self.session_exit_stack = AsyncExitStack()
-        self.client_exit_stack = AsyncExitStack()
         self.session: ClientSession | None = None
+        # The transport + session lifecycle is owned entirely by `_owner_task`.
+        # anyio task groups (used by the streamable-HTTP transport and by
+        # ClientSession) must be entered and exited in the same task, so the whole
+        # connection lives in one task and coordinates with callers through events.
+        self._owner_task: asyncio.Task | None = None
+        self._ready: asyncio.Event | None = None
+        self._close_event: asyncio.Event | None = None
+        self._init_error: BaseException | None = None
         self.timer_task = None
         self.tools_cache = []
         if settings.bl_cloud:
@@ -164,26 +208,53 @@ class PersistentMcpClient:
     def get_tools(self):
         return self.tools_cache
 
-    async def _get_transport(self):
-        """Get the appropriate transport for the connection."""
-        url = await self._resolve_url()
+    async def _run_connection(self, url: str) -> None:
+        """Own the transport + session lifecycle entirely within a SINGLE task.
 
-        result = await self.client_exit_stack.enter_async_context(
-            streamablehttp_client(url + "/mcp", settings.headers)
-        )
-        return result[0], result[1]
+        The streamable-HTTP transport and ClientSession each run an anyio task
+        group, which anyio requires be entered and exited in the same task. Driving
+        the whole ``async with`` lifecycle here keeps that invariant: a connection
+        failure (refused, timeout, error status while a server cold-starts) is
+        surfaced by anyio as a normal exception inside this task's own scope and
+        captured in ``_init_error`` — instead of leaking an opaque
+        "ExceptionGroup: unhandled errors in a TaskGroup" to the caller and the
+        SDK's telemetry, or dangling as a half-open task group. The session is
+        published to callers once initialized and held open until ``_close_event``.
+        """
+        try:
+            async with streamablehttp_client(url + "/mcp", settings.headers) as transport:
+                read, write = transport[0], transport[1]
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    self.session = session
+                    self._ready.set()
+                    await self._close_event.wait()
+        except BaseException as error:  # noqa: BLE001 - reported to the caller via _init_error
+            self._init_error = error
+        finally:
+            self.session = None
+            if self._ready is not None:
+                self._ready.set()
 
     async def initialize(self):
-        if not self.session:
-            url = await self._resolve_url()
-            logger.debug(f"Initializing client for {url}")
-            read, write = await self._get_transport()
-
-            self.session = cast(
-                ClientSession,
-                await self.session_exit_stack.enter_async_context(ClientSession(read, write)),
-            )
-            await self.session.initialize()
+        if self.session:
+            return
+        url = await self._resolve_url()
+        logger.debug(f"Initializing client for {url}")
+        self._ready = asyncio.Event()
+        self._close_event = asyncio.Event()
+        self._init_error = None
+        self._owner_task = asyncio.create_task(self._run_connection(url))
+        await self._ready.wait()
+        if self.session is None:
+            # The owner task already tore the transport down inside its own scope;
+            # surface a concrete, catchable error rather than an opaque task group.
+            await self._await_owner_task()
+            error = self._init_error
+            self._init_error = None
+            if error is not None:
+                raise _as_connection_error(self.name, error) from None
+            raise RuntimeError(f"Failed to connect to MCP server '{self.name}'")
 
     def _reset_timer(self):
         self._remove_timer()
@@ -196,28 +267,29 @@ class PersistentMcpClient:
     async def _close_after_timeout(self):
         await asyncio.sleep(self.timeout)
         await self._close()
-        self.session = None
+
+    async def _await_owner_task(self) -> None:
+        """Wait for the connection owner task to finish and clear the reference.
+
+        Safe to call from any task (including the inactivity timer): it only awaits
+        the task, so it never exits the transport's cancel scope from a foreign task.
+        """
+        task = self._owner_task
+        self._owner_task = None
+        if task is None:
+            return
+        try:
+            await task
+        except BaseException:  # noqa: BLE001 - the outcome is already captured in _init_error
+            pass
 
     async def _close(self):
         logger.debug(f"Closing client for {self.name}")
-        if self.session:
-            self.session = None
-            # Swap exit stacks to fresh ones BEFORE closing the old ones.
-            # This prevents a race where initialize() runs during the await
-            # and pushes new contexts onto stacks that are being closed.
-            old_session_stack = self.session_exit_stack
-            old_client_stack = self.client_exit_stack
-            self.session_exit_stack = AsyncExitStack()
-            self.client_exit_stack = AsyncExitStack()
-            try:
-                await old_session_stack.aclose()
-            except Exception as e:
-                logger.debug(f"Error closing session exit stack: {e}")
-            try:
-                await old_client_stack.aclose()
-            except Exception as e:
-                logger.debug(f"Error closing client exit stack: {e}")
-            logger.debug("WebSocket connection closed due to inactivity.")
+        self.session = None
+        if self._close_event is not None:
+            self._close_event.set()
+        await self._await_owner_task()
+        logger.debug("MCP connection closed.")
 
 
 def convert_mcp_tool_to_blaxel_tool(
