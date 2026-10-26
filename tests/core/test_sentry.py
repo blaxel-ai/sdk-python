@@ -470,6 +470,26 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_provider_client_import_from_integration_is_filtered(
+        self, installed_sentry_hooks
+    ):
+        # Selecting an Anthropic model through the Pydantic AI integration lazily
+        # runs ``from anthropic import AsyncAnthropic`` inside
+        # ``blaxel/pydantic/model.py``. On a partial/slim install that third-party
+        # client is absent, so the import raises ``No module named 'anthropic'``.
+        # That is a missing optional dependency, not an SDK defect, and must not be
+        # reported even when it reaches the unhandled boundary.
+        exc = _raise_in_sdk(
+            "pydantic/model.py",
+            "raise ModuleNotFoundError(\"No module named 'anthropic'\", name='anthropic')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -727,6 +747,28 @@ class TestIsOptionalDependencyError:
             "raise ModuleNotFoundError(\"No module named 'agents'\", name='agents')",
         )
         assert _is_optional_dependency_error(type(exc), exc) is True
+
+    def test_missing_provider_client_while_loading_pydantic_integration_is_optional(self):
+        # ``blaxel/pydantic/model.py`` imports the raw provider clients directly
+        # (``anthropic``, ``cohere``, ``mistralai``) inside ``_create_model``. A
+        # partial install missing any of them raises from the integration frame and
+        # must be classified as optional-dependency noise, not an SDK bug.
+        for provider in ("anthropic", "cohere", "mistralai"):
+            exc = _raise_in_sdk(
+                "pydantic/model.py",
+                f"raise ModuleNotFoundError(\"No module named '{provider}'\", name='{provider}')",
+            )
+            assert _is_optional_dependency_error(type(exc), exc) is True, provider
+
+    def test_missing_provider_client_outside_integration_is_not_optional(self):
+        # The same provider miss raised from a non-integration SDK frame is still a
+        # genuine defect: the filter is scoped to integration frames and must not
+        # blanket-suppress every ``anthropic`` import failure.
+        exc = _raise_in_sdk(
+            "core/models/__init__.py",
+            "raise ModuleNotFoundError(\"No module named 'anthropic'\", name='anthropic')",
+        )
+        assert _is_optional_dependency_error(type(exc), exc) is False
 
     def test_similar_application_path_does_not_count_as_optional_integration(self):
         exc = _raise_in_file(
