@@ -5,6 +5,7 @@ import logging
 import shlex
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
+from urllib.parse import quote
 
 import httpx
 
@@ -38,7 +39,7 @@ class SandboxFileSystem(SandboxAction):
         body = FileRequest(is_directory=True, permissions=permissions)
 
         client = self.get_client()
-        response = await client.put(f"/filesystem/{path}", json=body.to_dict())
+        response = await client.put(f"/filesystem/{quote(path, safe='/')}", json=body.to_dict())
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
@@ -61,7 +62,7 @@ class SandboxFileSystem(SandboxAction):
         body = FileRequest(content=content)
 
         client = self.get_client()
-        response = await client.put(f"/filesystem/{path}", json=body.to_dict())
+        response = await client.put(f"/filesystem/{quote(path, safe='/')}", json=body.to_dict())
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
@@ -95,7 +96,7 @@ class SandboxFileSystem(SandboxAction):
         if len(content) > MULTIPART_THRESHOLD:
             return await self._upload_with_multipart(path, content, "0644")
 
-        url = f"{self.url}/filesystem/{path}"
+        url = f"{self.url}/filesystem/{quote(path, safe='/')}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
         async def put_once() -> SuccessResponse:
@@ -141,7 +142,7 @@ class SandboxFileSystem(SandboxAction):
 
         client = self.get_client()
         response = await client.put(
-            f"/filesystem/tree/{path}",
+            f"/filesystem/tree/{quote(path, safe='/')}",
             json={"files": files_dict},
             headers={"Content-Type": "application/json"},
         )
@@ -157,7 +158,7 @@ class SandboxFileSystem(SandboxAction):
 
         async def read_once() -> str:
             client = self.get_client()
-            response = await client.get(f"/filesystem/{path}")
+            response = await client.get(f"/filesystem/{quote(path, safe='/')}")
             try:
                 data = json.loads(await response.aread())
                 self.handle_response_error(response)
@@ -180,7 +181,7 @@ class SandboxFileSystem(SandboxAction):
         """
         path = self.format_path(path)
 
-        url = f"{self.url}/filesystem/{path}"
+        url = f"{self.url}/filesystem/{quote(path, safe='/')}"
         headers = {
             **settings.headers,
             **self.sandbox_config.headers,
@@ -217,7 +218,7 @@ class SandboxFileSystem(SandboxAction):
 
         client = self.get_client()
         params = {"recursive": "true"} if recursive else {}
-        response = await client.delete(f"/filesystem/{path}", params=params)
+        response = await client.delete(f"/filesystem/{quote(path, safe='/')}", params=params)
         try:
             data = json.loads(await response.aread())
             self.handle_response_error(response)
@@ -230,7 +231,7 @@ class SandboxFileSystem(SandboxAction):
 
         async def ls_once() -> Directory:
             client = self.get_client()
-            response = await client.get(f"/filesystem/{path}")
+            response = await client.get(f"/filesystem/{quote(path, safe='/')}")
             try:
                 data = json.loads(await response.aread())
                 self.handle_response_error(response)
@@ -280,7 +281,7 @@ class SandboxFileSystem(SandboxAction):
         if exclude_hidden is not None:
             params["excludeHidden"] = exclude_hidden
 
-        url = f"{self.url}/filesystem-find/{path}"
+        url = f"{self.url}/filesystem-find/{quote(path, safe='/')}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
         async def find_once():
@@ -336,7 +337,7 @@ class SandboxFileSystem(SandboxAction):
         if exclude_dirs is not None and len(exclude_dirs) > 0:
             params["excludeDirs"] = ",".join(exclude_dirs)
 
-        url = f"{self.url}/filesystem-content-search/{path}"
+        url = f"{self.url}/filesystem-content-search/{quote(path, safe='/')}"
         headers = {**settings.headers, **self.sandbox_config.headers}
 
         async def grep_once():
@@ -419,7 +420,7 @@ class SandboxFileSystem(SandboxAction):
             if options.get("ignore"):
                 params["ignore"] = ",".join(options["ignore"])
 
-            url = f"{self.url}/watch/filesystem/{path}"
+            url = f"{self.url}/watch/filesystem/{quote(path, safe='/')}"
             headers = {**settings.headers, **self.sandbox_config.headers}
             async with httpx.AsyncClient(timeout=None) as client_instance:
                 async with client_instance.stream(
@@ -518,7 +519,7 @@ class SandboxFileSystem(SandboxAction):
     ) -> Dict[str, Any]:
         """Initiate a multipart upload session."""
         path = self.format_path(path)
-        url = f"{self.url}/filesystem-multipart/initiate/{path}"
+        url = f"{self.url}/filesystem-multipart/initiate/{quote(path, safe='/')}"
         headers = {**settings.headers, **self.sandbox_config.headers}
         body = {"permissions": permissions}
 
