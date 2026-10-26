@@ -405,11 +405,45 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+# HTTP 404 Not Found is a resource-existence signal the SDK faithfully relays
+# from the server: the requested process, sandbox, file, or other resource does
+# not exist. The caller is expected to handle it (for example, catch
+# ``ResponseError`` and inspect the status). An unhandled 404 that surfaces
+# through an SDK frame is a usage/state condition, not an SDK code defect, so it
+# must not be reported as an "Unhandled SDK exception". (SDK-PYTHON-124)
+_HTTP_NOT_FOUND = 404
+
+
+def _http_status_code(error: BaseException) -> int | None:
+    """Return a valid HTTP status (100-599) carried by ``error``, else ``None``.
+
+    Resolves the status the same way ``_safe_exception_value`` does: an explicit
+    ``status_code`` or ``status`` attribute first (the generated client's
+    ``UnexpectedStatus`` uses the former, ``BlaxelError``/``ResponseError`` the
+    latter), then a ``response`` object. ``type(...) is int`` rejects booleans.
+    """
+    status = getattr(error, "status_code", None)
+    if status is None:
+        status = getattr(error, "status", None)
+    if status is None:
+        status = getattr(getattr(error, "response", None), "status_code", None)
+    if type(status) is int and 100 <= status <= 599:
+        return status
+    return None
+
+
+def _is_resource_not_found_error(error: BaseException) -> bool:
+    """True when the error reports an HTTP 404 Not Found returned by the server."""
+    return _http_status_code(error) == _HTTP_NOT_FOUND
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_resource_not_found_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
