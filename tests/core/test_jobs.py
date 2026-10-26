@@ -104,3 +104,107 @@ def test_bl_start_job_failure_exits_nonzero(monkeypatch):
         bl_start_job.start(boom)
     assert excinfo.value.code == 1
     assert isinstance(excinfo.value.__cause__, RuntimeError)
+
+
+def test_select_task_arguments_var_keyword_receives_all():
+    """A function declaring **kwargs receives every task argument unchanged."""
+    from blaxel.core.jobs import _select_task_arguments
+
+    def catch_all(**kwargs):
+        return kwargs
+
+    payload = {"name": "x", "age": 1, "a": "extra"}
+    assert _select_task_arguments(catch_all, payload) == payload
+
+
+def test_select_task_arguments_filters_to_declared_parameters():
+    """Only parameters the function declares are forwarded; extras are dropped."""
+    from blaxel.core.jobs import _select_task_arguments
+
+    def greet(name, age):
+        return (name, age)
+
+    selected = _select_task_arguments(greet, {"name": "x", "age": 1, "a": "extra"})
+    assert selected == {"name": "x", "age": 1}
+
+
+def test_select_task_arguments_keyword_only_parameters():
+    """Keyword-only parameters are forwarded, positional-only/unknown keys dropped."""
+    from blaxel.core.jobs import _select_task_arguments
+
+    def job(*, name, age=0):
+        return (name, age)
+
+    selected = _select_task_arguments(job, {"name": "x", "extra": 1})
+    assert selected == {"name": "x"}
+
+
+def test_select_task_arguments_no_parameters_drops_everything():
+    """A zero-argument function receives nothing, no matter the payload."""
+    from blaxel.core.jobs import _select_task_arguments
+
+    def job():
+        return None
+
+    assert _select_task_arguments(job, {"a": 1, "b": 2}) == {}
+
+
+def test_select_task_arguments_unintrospectable_callable_passes_through():
+    """Callables without an introspectable signature keep the historical behavior."""
+    from blaxel.core.jobs import _select_task_arguments
+
+    # ``max`` is a builtin whose signature inspect cannot resolve -> forward all.
+    payload = {"a": 1, "b": 2}
+    assert _select_task_arguments(max, payload) == payload
+
+
+def test_bl_start_job_ignores_unexpected_task_arguments(monkeypatch):
+    """A task argument the function does not declare must not crash the job.
+
+    Regression for SDK-PYTHON-12V (``TypeError: my_job() got an unexpected keyword
+    argument 'a'``). Before the fix this raised SystemExit(1) with a TypeError cause.
+    """
+    from blaxel.core.jobs import bl_start_job
+
+    monkeypatch.setattr("sys.argv", ["job", "--a", "1"])
+    monkeypatch.delenv("BL_EXECUTION_DATA_URL", raising=False)
+
+    calls = []
+
+    def my_job():
+        calls.append(True)
+
+    bl_start_job.start(my_job)
+    assert calls == [True]
+
+
+def test_bl_start_job_forwards_declared_arguments(monkeypatch):
+    """Declared parameters are forwarded; undeclared payload keys are ignored."""
+    from blaxel.core.jobs import bl_start_job
+
+    monkeypatch.setattr("sys.argv", ["job", "--name", "charlou", "--a", "1"])
+    monkeypatch.delenv("BL_EXECUTION_DATA_URL", raising=False)
+
+    received = {}
+
+    def greet(name):
+        received["name"] = name
+
+    bl_start_job.start(greet)
+    assert received == {"name": "charlou"}
+
+
+def test_bl_start_job_missing_required_argument_still_fails(monkeypatch):
+    """A genuinely missing required argument must still fail fast (not be masked)."""
+    from blaxel.core.jobs import bl_start_job
+
+    monkeypatch.setattr("sys.argv", ["job"])
+    monkeypatch.delenv("BL_EXECUTION_DATA_URL", raising=False)
+
+    def needs_name(name):
+        raise AssertionError("should not be called")
+
+    with pytest.raises(SystemExit) as excinfo:
+        bl_start_job.start(needs_name)
+    assert excinfo.value.code == 1
+    assert isinstance(excinfo.value.__cause__, TypeError)

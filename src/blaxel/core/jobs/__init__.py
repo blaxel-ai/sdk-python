@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import inspect
 import os
 import time
 from logging import getLogger
@@ -25,6 +26,47 @@ from ..client.pagination import (
     make_paginated_list,
     normalize_cursor,
 )
+
+
+def _select_task_arguments(func: Callable, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    """Return the subset of task arguments ``func`` accepts as keyword arguments.
+
+    A task payload is forwarded to the job function as keyword arguments. When the
+    function declares ``**kwargs`` it receives every argument unchanged. Otherwise
+    only the parameters it explicitly declares are forwarded, so extra keys in the
+    payload (a typo, a field another task needs, or a platform-injected field) do
+    not crash the whole job with
+    ``TypeError: <func>() got an unexpected keyword argument``. This mirrors the
+    TypeScript SDK, which hands the function a single arguments object and simply
+    ignores properties it does not read.
+    """
+    try:
+        signature = inspect.signature(func)
+    except (TypeError, ValueError):
+        # Builtins / C-level callables without an introspectable signature: keep
+        # the historical behavior and forward every argument.
+        return arguments
+
+    parameters = signature.parameters.values()
+    if any(parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters):
+        return arguments
+
+    accepted = {
+        name
+        for name, parameter in signature.parameters.items()
+        if parameter.kind
+        in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+    }
+    selected = {key: value for key, value in arguments.items() if key in accepted}
+
+    ignored = sorted(set(arguments) - set(selected))
+    if ignored:
+        logger.debug(
+            "Ignoring job task argument(s) not accepted by %s: %s",
+            getattr(func, "__name__", repr(func)),
+            ", ".join(ignored),
+        )
+    return selected
 
 
 class BlJobWrapper:
@@ -60,14 +102,17 @@ class BlJobWrapper:
         """
         Run a job defined in a function, it's run in the current process.
         Handles both async and sync functions.
-        Arguments are passed as keyword arguments to the function.
+        Arguments are passed as keyword arguments to the function. Task-payload
+        keys the function does not declare are ignored (unless it accepts
+        ``**kwargs``), so extra or platform-injected fields do not crash the job.
         """
         try:
             parsed_args = self.get_arguments()
+            call_args = _select_task_arguments(func, parsed_args)
             if asyncio.iscoroutinefunction(func):
-                asyncio.run(func(**parsed_args))
+                asyncio.run(func(**call_args))
             else:
-                func(**parsed_args)
+                func(**call_args)
         except Exception as error:
             logger.error(f"Job execution failed: {error}")
             raise SystemExit(1) from error
