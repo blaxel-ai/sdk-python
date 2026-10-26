@@ -22,6 +22,9 @@ import pytest
 import blaxel
 import blaxel.core.common.sentry as sentry
 from blaxel.core.client import Client, errors
+from blaxel.core.client.api.compute.list_sandboxes import (
+    _parse_response as _parse_list_sandboxes_response,
+)
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
@@ -777,3 +780,75 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestTransientHttpErrorClassification:
+    """Cover the HTTP-status classification used to suppress transient server noise."""
+
+    @pytest.mark.parametrize("status_code", [408, 429, 500, 502, 503, 504])
+    def test_transient_server_statuses_are_filtered(self, status_code):
+        exc = errors.from_response(status_code, b"<html>error</html>")
+        assert sentry._http_status_code(exc) == status_code
+        assert sentry._is_transient_http_error(exc) is True
+
+    @pytest.mark.parametrize("status_code", [400, 401, 403, 404, 409, 422])
+    def test_client_statuses_are_not_treated_as_transient(self, status_code):
+        exc = errors.from_response(status_code, b"<html>error</html>")
+        assert sentry._is_transient_http_error(exc) is False
+
+    def test_status_from_response_attribute_is_detected(self):
+        exc = httpx.HTTPStatusError(
+            "boom",
+            request=httpx.Request("GET", "https://api.blaxel.ai/sandboxes"),
+            response=httpx.Response(503),
+        )
+        assert sentry._http_status_code(exc) == 503
+        assert sentry._is_transient_http_error(exc) is True
+
+    def test_non_http_error_has_no_status(self):
+        exc = RuntimeError("boom")
+        assert sentry._http_status_code(exc) is None
+        assert sentry._is_transient_http_error(exc) is False
+
+
+class TestTransientHttpErrorCapture:
+    """An unhandled transient server response must not be reported as an SDK bug.
+
+    Regression for SDK-PYTHON-123: an unhandled 502 Bad Gateway raised by the
+    control-plane client reached the excepthook and was captured as an
+    "Unhandled SDK exception". The exception is still surfaced to the caller; it
+    is only kept out of the SDK's Sentry because a gateway failure is not an SDK
+    defect.
+    """
+
+    @staticmethod
+    def _raise_list_sandboxes_status(status_code, content=b"<html>Bad Gateway</html>"):
+        try:
+            _parse_list_sandboxes_response(
+                client=Client(base_url="https://api.blaxel.ai"),
+                response=httpx.Response(status_code, content=content),
+            )
+        except errors.UnexpectedStatus as exc:
+            return exc
+        raise AssertionError("expected UnexpectedStatus")
+
+    @pytest.mark.parametrize("status_code", [408, 429, 502, 503, 504])
+    def test_unhandled_transient_http_error_is_not_captured(
+        self, installed_sentry_hooks, status_code
+    ):
+        exc = self._raise_list_sandboxes_status(status_code)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_client_http_error_is_still_captured(self, installed_sentry_hooks):
+        exc = self._raise_list_sandboxes_status(404, content=b'{"error":"not found"}')
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
