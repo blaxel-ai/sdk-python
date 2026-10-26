@@ -55,6 +55,17 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# A JSONDecodeError means the SDK received a non-JSON body where JSON was
+# expected. Every SDK JSON parse decodes externally supplied data -- an HTTP
+# response body, an NDJSON stream chunk, or model output -- so an unparseable
+# payload reflects a malformed, empty, or truncated upstream response (a gateway
+# error page, a proxy timeout body, a severed stream), not a defect in SDK
+# logic. ``json.JSONDecodeError`` is a ``ValueError`` subclass, and
+# ``requests.exceptions.JSONDecodeError`` subclasses it in turn, so matching this
+# one type covers both the httpx and requests code paths without suppressing the
+# plain ``ValueError`` that a genuine SDK bug raises (e.g. an invalid enum value).
+_EXPECTED_RESPONSE_DECODE_EXCEPTIONS = (json.JSONDecodeError,)
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -410,6 +421,8 @@ def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if issubclass(exc_type, _EXPECTED_RESPONSE_DECODE_EXCEPTIONS):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 

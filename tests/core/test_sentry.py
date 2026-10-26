@@ -571,6 +571,78 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.thread_hook_calls == [args]
 
 
+class TestResponseDecodeNoise:
+    """SDK-PYTHON-12E: a non-JSON upstream body is not an SDK defect."""
+
+    def test_unhandled_json_decode_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/sandbox/default/process.py",
+            "import json\njson.loads('<<<not-json>>>')",
+        )
+        assert isinstance(exc, json.JSONDecodeError)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_requests_style_json_decode_subclass_is_filtered(self, installed_sentry_hooks):
+        """``requests.exceptions.JSONDecodeError`` subclasses ``json.JSONDecodeError``."""
+        exc = _raise_in_sdk(
+            "core/authentication/clientcredentials.py",
+            "import json\n"
+            "class RequestsStyleJSONDecodeError(json.JSONDecodeError):\n"
+            "    pass\n"
+            "raise RequestsStyleJSONDecodeError('Expecting value', 'doc', 0)",
+        )
+        assert isinstance(exc, json.JSONDecodeError)
+        assert type(exc).__name__ == "RequestsStyleJSONDecodeError"
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_plain_value_error_is_still_captured(self, installed_sentry_hooks):
+        """Anti-over-suppression: a bare ValueError (e.g. SDK-PYTHON-12C's invalid
+        enum) must stay reportable; only the JSONDecodeError subclass is noise."""
+        exc = _raise_in_sdk(
+            "core/client/models/model_runtime.py",
+            "raise ValueError(\"'' is not a valid ModelRuntimeGeneration\")",
+        )
+        assert not isinstance(exc, json.JSONDecodeError)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_exception_group_drops_json_decode_leaf_but_keeps_sdk_bug(self, installed_sentry_hooks):
+        json_leaf = _raise_in_sdk(
+            "core/sandbox/default/filesystem.py",
+            "import json\njson.loads('<<<not-json>>>')",
+        )
+        sdk_bug = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [json_leaf, sdk_bug])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert len(installed_sentry_hooks.captured) == 1
+        captured_group, mechanism = installed_sentry_hooks.captured[0]
+        assert mechanism == "excepthook"
+        assert _exception_group_leaves(captured_group) == [sdk_bug]
+        assert installed_sentry_hooks.main_hook_calls == [(type(group), group, group.__traceback__)]
+
+
 class TestSentryDelivery:
     def test_successful_delivery_is_not_duplicated_by_flush(self, monkeypatch):
         exc = _raise_in_sdk("core/delivery.py", "raise RuntimeError('delivery failure')")
