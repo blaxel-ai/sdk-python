@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import shlex
+import socket
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
@@ -205,20 +206,46 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 # do something
             finally:
                 handle.close()
+
+        Options: ``with_content``, ``ignore``, ``on_error(exc)``,
+        ``on_keepalive()`` (called on each server keepalive, about every 30s, so a
+        silent dead stream can be detected) and ``on_close()`` (called when the
+        server ends the stream, not when ``close()`` is called).
         """
         path = self.format_path(path)
         closed = threading.Event()
+        live: Dict[str, Any] = {}
+
+        def release():
+            # The worker may be blocked on an idle socket (the server holds headers
+            # until the first event or keepalive). shutdown() wakes that read on
+            # every OS; closing the socket from another thread does not.
+            stream = live.get("stream")
+            if stream is not None:
+                try:
+                    stream.get_extra_info("socket").shutdown(socket.SHUT_RDWR)
+                except Exception:
+                    pass
+
+        def trace(event_name: str, info: Dict[str, Any]) -> None:
+            if event_name in ("connection.connect_tcp.complete", "connection.start_tls.complete"):
+                live["stream"] = info["return_value"]
+                if closed.is_set():  # close() ran before the connection existed
+                    release()
+
         if options is None:
             options = {}
 
-        def run():
+        def stream():
             params = {}
             if options.get("ignore"):
                 params["ignore"] = ",".join(options["ignore"])
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            with httpx.Client() as client_instance:
-                with client_instance.stream("GET", url, params=params, headers=headers) as response:
+            with httpx.Client(timeout=None) as client_instance:
+                with client_instance.stream(
+                    "GET", url, params=params, headers=headers, extensions={"trace": trace}
+                ) as response:
                     if not response.is_success:
                         raise Exception(f"Failed to start watching: {response.status_code}")
                     buffer = ""
@@ -233,6 +260,8 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                             if not line:
                                 continue
                             if line.startswith("[keepalive]"):
+                                if options.get("on_keepalive"):
+                                    options["on_keepalive"]()
                                 continue
                             try:
                                 file_event_data = json.loads(line)
@@ -262,12 +291,29 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                             except Exception as e:
                                 if options.get("on_error"):
                                     options["on_error"](e)
+            # The server ended the stream (e.g. the watched directory was removed).
+            if not closed.is_set() and options.get("on_close"):
+                closed.set()
+                options["on_close"]()
+
+        def run():
+            try:
+                stream()
+            except Exception as e:
+                # A failure after close() is our own teardown, not a dead stream.
+                if closed.is_set():
+                    return
+                if options.get("on_error"):
+                    options["on_error"](e)
+                else:
+                    logger.error("fs.watch stream failed for %s: %s", path, e)
 
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
 
         def close():
             closed.set()
+            release()
 
         return WatchHandle(close)
 

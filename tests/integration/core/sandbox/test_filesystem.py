@@ -399,6 +399,64 @@ class TestWatch(TestFilesystemOperations):
         finally:
             handle.close()
 
+    @pytest.mark.xfail(
+        strict=False,
+        reason="needs sandbox-api from https://github.com/blaxel-ai/sandbox/pull/378 "
+        "(ends the stream when the watched dir is removed); prod keeps it open",
+    )
+    async def test_calls_on_close_when_watched_dir_is_removed(self):
+        import time
+
+        dir_path = f"/tmp/watch-close-{int(time.time() * 1000)}"
+        await self.sandbox.fs.mkdir(dir_path)
+
+        closed = False
+
+        def on_close():
+            nonlocal closed
+            closed = True
+
+        handle = self.sandbox.fs.watch(dir_path, lambda _: None, {"on_close": on_close})
+        try:
+            await async_sleep(0.5)
+            await self.sandbox.fs.rm(dir_path, recursive=True)
+            assert await wait_until(lambda: closed, timeout=5)
+        finally:
+            handle.close()
+
+    async def test_calls_on_keepalive_while_idle(self):
+        import time
+
+        dir_path = f"/tmp/watch-keepalive-{int(time.time() * 1000)}"
+        await self.sandbox.fs.mkdir(dir_path)
+
+        keepalives = 0
+        closed = False
+        errors: list[Exception] = []
+
+        def on_keepalive():
+            nonlocal keepalives
+            keepalives += 1
+
+        def on_close():
+            nonlocal closed
+            closed = True
+
+        # The server sends a keepalive every 30s.
+        handle = self.sandbox.fs.watch(
+            dir_path,
+            lambda _: None,
+            {"on_keepalive": on_keepalive, "on_close": on_close, "on_error": errors.append},
+        )
+        try:
+            assert await wait_until(lambda: keepalives > 0, timeout=40)
+        finally:
+            handle.close()
+        await async_sleep(0.1)
+        # close() from the caller is not reported as a server-side close or an error.
+        assert not closed
+        assert not errors
+
 
 @pytest.mark.asyncio(loop_scope="class")
 class TestMultipartUpload(TestFilesystemOperations):

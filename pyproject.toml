@@ -84,7 +84,10 @@ llamaindex = [
 pydantic = ["pydantic-ai>=1.0.8"]
 
 # Google ADK module
-googleadk = ["google-adk>=2.5.0", "litellm>=1.63.11", "orjson>=3.11.6,<4.0"]
+# litellm 1.106.0 imports mcp.types.CacheableResult (mcp 2.x only) on every
+# completion call that passes tools. Core caps mcp below 2.0.0 (see above), so
+# keep litellm below 1.106.0 until core moves to mcp 2.x; lift both together.
+googleadk = ["google-adk>=2.5.0", "litellm>=1.63.11,<1.106.0", "orjson>=3.11.6,<4.0"]
 
 # Development dependencies
 dev = ["ruff", "pyright", "pytest", "uv"]
