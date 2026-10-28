@@ -299,6 +299,17 @@ def is_blaxel_error(
     return err.code == code if isinstance(code, str | int) else err.code in code
 
 
+class ModelNotFoundError(BlaxelError):
+    """Raised when a requested model gateway endpoint cannot be resolved.
+
+    This signals a workspace configuration or usage problem -- the model was
+    never created, was removed, or came back without a usable runtime -- rather
+    than a defect in the SDK itself. Being a ``BlaxelError`` subclass, callers
+    can catch it specifically (or via ``is_blaxel_error``) instead of a bare
+    ``Exception``.
+    """
+
+
 class _APIError(BlaxelError):
     """Shared implementation for resource wrappers, retaining their old constructors."""
 
@@ -331,5 +342,6 @@ __all__ = [
     "BlaxelActionErrorBody",
     "BlaxelPlatformErrorBody",
     "BlaxelSandboxApiErrorBody",
+    "ModelNotFoundError",
     "is_blaxel_error",
 ]
