@@ -76,7 +76,10 @@ class ModelRuntime:
         if isinstance(_generation, Unset):
             generation = UNSET
         else:
-            generation = ModelRuntimeGeneration(_generation)
+            try:
+                generation = ModelRuntimeGeneration(_generation)
+            except ValueError:
+                generation = UNSET
 
         model = d.pop("model", UNSET)
 
@@ -87,7 +90,10 @@ class ModelRuntime:
         if isinstance(_type_, Unset):
             type_ = UNSET
         else:
-            type_ = ModelRuntimeType(_type_)
+            try:
+                type_ = ModelRuntimeType(_type_)
+            except ValueError:
+                type_ = UNSET
 
         model_runtime = cls(
             endpoint_name=endpoint_name,
