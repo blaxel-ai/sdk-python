@@ -35,6 +35,9 @@ class SandboxRuntime:
         memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
             in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 4096.
         ports (Union[Unset, list['Port']]): Set of ports for a resource
+        standby_grace_period_seconds (Union[Unset, int]): Seconds the sandbox gets after a SIGUSR2 to prepare before it
+            goes to standby (scale to zero). The workload can say it is ready earlier by writing +1 to $BLAXEL_SCALE_FILE
+            when it starts preparing and -1 when it is done. Defaults to 0: no signal, immediate standby. Example: 10.
         termination_grace_period_seconds (Union[Unset, int]): Duration in seconds the pod needs to terminate gracefully.
             Defaults to 0 for immediate termination. Example: 30.
         ttl (Union[Unset, str]): Max-age from creation: the sandbox is deleted this long after it is created, regardless
@@ -48,6 +51,7 @@ class SandboxRuntime:
     image: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
     ports: Union[Unset, list["Port"]] = UNSET
+    standby_grace_period_seconds: Union[Unset, int] = UNSET
     termination_grace_period_seconds: Union[Unset, int] = UNSET
     ttl: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -90,6 +94,8 @@ class SandboxRuntime:
                     componentsschemas_ports_item = componentsschemas_ports_item_data.to_dict()
                 ports.append(componentsschemas_ports_item)
 
+        standby_grace_period_seconds = self.standby_grace_period_seconds
+
         termination_grace_period_seconds = self.termination_grace_period_seconds
 
         ttl = self.ttl
@@ -109,6 +115,8 @@ class SandboxRuntime:
             field_dict["memory"] = memory
         if ports is not UNSET:
             field_dict["ports"] = ports
+        if standby_grace_period_seconds is not UNSET:
+            field_dict["standbyGracePeriodSeconds"] = standby_grace_period_seconds
         if termination_grace_period_seconds is not UNSET:
             field_dict["terminationGracePeriodSeconds"] = termination_grace_period_seconds
         if ttl is not UNSET:
@@ -152,6 +160,10 @@ class SandboxRuntime:
 
             ports.append(componentsschemas_ports_item)
 
+        standby_grace_period_seconds = d.pop(
+            "standbyGracePeriodSeconds", d.pop("standby_grace_period_seconds", UNSET)
+        )
+
         termination_grace_period_seconds = d.pop(
             "terminationGracePeriodSeconds", d.pop("termination_grace_period_seconds", UNSET)
         )
@@ -165,6 +177,7 @@ class SandboxRuntime:
             image=image,
             memory=memory,
             ports=ports,
+            standby_grace_period_seconds=standby_grace_period_seconds,
             termination_grace_period_seconds=termination_grace_period_seconds,
             ttl=ttl,
         )

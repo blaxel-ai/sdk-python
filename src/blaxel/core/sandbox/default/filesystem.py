@@ -401,6 +401,11 @@ class SandboxFileSystem(SandboxAction):
                 # do something
             finally:
                 handle.close()
+
+        Options: ``with_content``, ``ignore``, ``on_error(exc)``,
+        ``on_keepalive()`` (called on each server keepalive, about every 30s, so a
+        silent dead stream can be detected) and ``on_close()`` (called when the
+        server ends the stream, not when ``close()`` is called).
         """
         path = self.format_path(path)
         closed = False
@@ -416,7 +421,7 @@ class SandboxFileSystem(SandboxAction):
 
             url = f"{self.url}/watch/filesystem/{path}"
             headers = {**settings.headers, **self.sandbox_config.headers}
-            async with httpx.AsyncClient() as client_instance:
+            async with httpx.AsyncClient(timeout=None) as client_instance:
                 async with client_instance.stream(
                     "GET", url, params=params, headers=headers
                 ) as response:
@@ -436,8 +441,9 @@ class SandboxFileSystem(SandboxAction):
                             if not line:
                                 continue
 
-                            # Skip keepalive messages
                             if line.startswith("[keepalive]"):
+                                if options.get("on_keepalive"):
+                                    options["on_keepalive"]()
                                 continue
 
                             try:
@@ -472,8 +478,25 @@ class SandboxFileSystem(SandboxAction):
                                 if options.get("on_error"):
                                     options["on_error"](e)
 
+            # The server ended the stream (e.g. the watched directory was removed).
+            if not closed and options.get("on_close"):
+                closed = True
+                options["on_close"]()
+
+        async def watch_and_report():
+            try:
+                await start_watching()
+            except Exception as e:
+                # A failure after close() is our own teardown, not a dead stream.
+                if closed:
+                    return
+                if options.get("on_error"):
+                    options["on_error"](e)
+                else:
+                    logger.error("fs.watch stream failed for %s: %s", path, e)
+
         # Start watching in the background
-        task = asyncio.create_task(start_watching())
+        task = asyncio.create_task(watch_and_report())
 
         def close():
             nonlocal closed
