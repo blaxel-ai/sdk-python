@@ -60,7 +60,7 @@ class CreateWorkspaceServiceAccountBody:
 
         _role = d.pop("role", UNSET)
         role: Union[Unset, CreateWorkspaceServiceAccountBodyRole]
-        if isinstance(_role, Unset):
+        if isinstance(_role, Unset) or _role == "":
             role = UNSET
         else:
             role = CreateWorkspaceServiceAccountBodyRole(_role)

@@ -185,14 +185,14 @@ class Sandbox:
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, SandboxState]
-        if isinstance(_state, Unset):
+        if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:
             state = SandboxState(_state)
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, Status]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = Status(_status)

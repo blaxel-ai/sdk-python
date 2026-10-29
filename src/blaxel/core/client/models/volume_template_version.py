@@ -90,7 +90,7 @@ class VolumeTemplateVersion:
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, VolumeTemplateVersionStatus]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = VolumeTemplateVersionStatus(_status)

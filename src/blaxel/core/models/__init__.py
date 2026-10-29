@@ -1,7 +1,7 @@
 from ..cache import find_from_cache
 from ..client import client
 from ..client.api.models import get_model
-from ..client.models import Model
+from ..client.models import Error, Model
 from ..common import settings
 
 
@@ -40,10 +40,17 @@ class BLModel:
         if cache_data:
             return Model.from_dict(cache_data)
 
-        try:
-            return await get_model.asyncio(client=client, model_name=self.model_name)
-        except Exception:
+        response = await get_model.asyncio_detailed(client=client, model_name=self.model_name)
+        if isinstance(response.parsed, Model):
+            return response.parsed
+        if response.status_code == 404:
             return None
+        detail = ""
+        if isinstance(response.parsed, Error):
+            detail = f": {response.parsed.message or response.parsed.error}"
+        raise Exception(
+            f"Could not load model {self.model_name} (HTTP {int(response.status_code)}){detail}"
+        )
 
 
 def bl_model(model_name, **kwargs):
