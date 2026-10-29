@@ -15,9 +15,10 @@ RESPONSE = Sandbox(
 )
 
 
-async def _runtime_sent(kind: str, config: dict) -> dict:
+async def _runtime_sent(kind: str, config: dict, flat: bool = True) -> dict:
     """Run create against a stubbed control plane; return spec.runtime of the body sent."""
-    config = {"name": "sbx", "image": "ghcr.io/org/img:tag", "region": "us-was-1", **config}
+    if flat:
+        config = {"name": "sbx", "image": "ghcr.io/org/img:tag", "region": "us-was-1", **config}
     if kind == "async":
         with patch(
             "blaxel.core.sandbox.default.sandbox.create_sandbox",
@@ -56,3 +57,16 @@ async def test_string_is_sent_as_is(kind):
 async def test_absent_when_not_set(kind):
     runtime = await _runtime_sent(kind, {})
     assert "dockerConfig" not in runtime
+
+
+@kinds
+async def test_full_sandbox_dict_keeps_its_runtime(kind):
+    raw = json.dumps(AUTHS)
+    full = {
+        "metadata": {"name": "private-box"},
+        "spec": {"runtime": {"image": "ghcr.io/org/private:v1", "dockerConfig": raw}},
+        "docker_config": raw,
+    }
+    runtime = await _runtime_sent(kind, full, flat=False)
+    assert runtime["image"] == "ghcr.io/org/private:v1"
+    assert runtime["dockerConfig"] == raw

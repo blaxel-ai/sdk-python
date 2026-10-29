@@ -617,8 +617,6 @@ class SandboxInstance:
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "standby_grace_period_seconds"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
-                    or "docker_config"
-                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
