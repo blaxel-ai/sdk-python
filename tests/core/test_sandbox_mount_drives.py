@@ -16,7 +16,14 @@ from blaxel.core import (
     SyncDriveInstance,
     SyncSandboxInstance,
 )
-from blaxel.core.client.models import Drive, DriveSpec, Metadata, Sandbox, SandboxSpec
+from blaxel.core.client.models import (
+    Drive,
+    DriveSpec,
+    Metadata,
+    Sandbox,
+    SandboxRuntime,
+    SandboxSpec,
+)
 from blaxel.core.sandbox.client.models import DriveMountInfo
 from blaxel.core.sandbox.default.drive import SandboxDrive
 from blaxel.core.sandbox.default.filesystem import SandboxFileSystem
@@ -133,6 +140,19 @@ async def test_new_drive_in_another_region_is_rejected_and_the_sandbox_kept(h):
 async def test_create_if_not_exists_forwards_mount_drives(h):
     mount = SandboxDriveMountConfiguration("/mnt/data", drive_name="data")
     await call(h.cls.create_if_not_exists, dict(CONFIG), mount_drives=[mount])
+    h.mount.assert_called_once_with("data", "/mnt/data", "/", False)
+
+
+async def test_create_if_not_exists_warns_on_drift_and_still_mounts_drives(h):
+    h.create_sandbox.return_value = Sandbox(
+        metadata=Metadata(name="sandbox"),
+        spec=SandboxSpec(region=REGION, runtime=SandboxRuntime(image="sandbox/app:v1")),
+    )
+    config = {**CONFIG, "image": "sandbox/app:v2"}
+    with pytest.warns(
+        UserWarning, match=r"image \(requested sandbox/app:v2, existing sandbox/app:v1\)"
+    ):
+        await call(h.cls.create_if_not_exists, config, mount_drives=[EXISTING])
     h.mount.assert_called_once_with("data", "/mnt/data", "/", False)
 
 
