@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 if TYPE_CHECKING:
     from ..models.file import File
     from ..models.subdirectory import Subdirectory
@@ -19,12 +21,16 @@ class Directory:
         name (str):
         path (str):
         subdirectories (list['Subdirectory']): @name Subdirectories
+        recursive (Union[Unset, bool]): Recursive is true when files and subdirectories hold every level below
+            path (tree read with recursive=true). Older APIs ignore that parameter
+            and omit this field, so clients can tell a one-level listing apart.
     """
 
     files: list["File"]
     name: str
     path: str
     subdirectories: list["Subdirectory"]
+    recursive: Unset | bool = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,6 +54,8 @@ class Directory:
                 subdirectories_item = subdirectories_item_data.to_dict()
             subdirectories.append(subdirectories_item)
 
+        recursive = self.recursive
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -58,6 +66,8 @@ class Directory:
                 "subdirectories": subdirectories,
             }
         )
+        if recursive is not UNSET:
+            field_dict["recursive"] = recursive
 
         return field_dict
 
@@ -87,11 +97,14 @@ class Directory:
 
             subdirectories.append(subdirectories_item)
 
+        recursive = d.pop("recursive", UNSET)
+
         directory = cls(
             files=files,
             name=name,
             path=path,
             subdirectories=subdirectories,
+            recursive=recursive,
         )
 
         directory.additional_properties = d

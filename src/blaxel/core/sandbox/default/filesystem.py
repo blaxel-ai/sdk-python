@@ -10,6 +10,7 @@ import httpx
 
 from ...common.settings import settings
 from ..client.models import Directory, FileRequest, SuccessResponse
+from ..read_tree import _tree_directory, _tree_request
 from ..transient_retry import retry_on_transient_reset_async
 from ..types import (
     AsyncWatchHandle,
@@ -168,6 +169,43 @@ class SandboxFileSystem(SandboxAction):
                 await response.aclose()
 
         return await retry_on_transient_reset_async(read_once)
+
+    async def read_tree(
+        self,
+        path: str,
+        *,
+        patterns: list[str] | None = None,
+        exclude_dirs: list[str] | None = None,
+        exclude_hidden: bool | None = None,
+        max_files: int | None = None,
+        max_bytes: int | None = None,
+    ) -> Directory:
+        """Read the whole tree under ``path`` in one request and return the API's ``Directory``.
+
+        ``files`` holds every file below ``path``, with full paths, and each regular
+        file (or symlink to one) carries its ``content`` as UTF-8 text.
+        ``patterns`` are globs on file names, ``exclude_dirs`` skips directories by
+        name and ``exclude_hidden`` skips dot-entries; nothing is excluded by default.
+        If more than ``max_files`` (default 10000) files match or they hold more than
+        ``max_bytes`` (default 32 MiB), the request fails with a 422 and nothing
+        partial is returned. Raises ``RuntimeError`` on an older sandbox API without
+        recursive tree reads.
+        """
+        url, params = _tree_request(
+            self.format_path(path), patterns, exclude_dirs, exclude_hidden, max_files, max_bytes
+        )
+
+        async def read_tree_once() -> Directory:
+            client = self.get_client()
+            response = await client.get(url, params=params)
+            try:
+                await response.aread()
+                self.handle_response_error(response)
+                return _tree_directory(response.json())
+            finally:
+                await response.aclose()
+
+        return await retry_on_transient_reset_async(read_tree_once)
 
     async def read_binary(self, path: str) -> bytes:
         """Read binary content from a file.
