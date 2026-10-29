@@ -534,6 +534,9 @@ class SyncSandboxInstance:
                 ea = SandboxRuntimeExtraArgs()
                 ea.additional_properties = extra_args
                 sandbox.spec.runtime.extra_args = ea
+            if config.docker_config and sandbox.spec.runtime:
+                # Not in the generated model: sent as an additional property.
+                sandbox.spec.runtime["dockerConfig"] = config.docker_config
         else:
             if isinstance(sandbox, dict):
                 sandbox = Sandbox.from_dict(sandbox)
