@@ -73,7 +73,7 @@ class ModelRuntime:
 
         _generation = d.pop("generation", UNSET)
         generation: Union[Unset, ModelRuntimeGeneration]
-        if isinstance(_generation, Unset):
+        if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:
             generation = ModelRuntimeGeneration(_generation)
@@ -84,7 +84,7 @@ class ModelRuntime:
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
         type_: Union[Unset, ModelRuntimeType]
-        if isinstance(_type_, Unset):
+        if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:
             type_ = ModelRuntimeType(_type_)

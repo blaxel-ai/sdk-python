@@ -78,7 +78,7 @@ class VolumeAttachment:
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
         type_: Union[Unset, VolumeAttachmentType]
-        if isinstance(_type_, Unset):
+        if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:
             type_ = VolumeAttachmentType(_type_)

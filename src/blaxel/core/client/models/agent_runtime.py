@@ -98,7 +98,7 @@ class AgentRuntime:
 
         _generation = d.pop("generation", UNSET)
         generation: Union[Unset, AgentRuntimeGeneration]
-        if isinstance(_generation, Unset):
+        if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:
             generation = AgentRuntimeGeneration(_generation)

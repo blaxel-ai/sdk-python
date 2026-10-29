@@ -101,7 +101,7 @@ class SandboxSnapshotSpec:
         d = src_dict.copy()
         _generation = d.pop("generation", UNSET)
         generation: Union[Unset, SandboxSnapshotSpecGeneration]
-        if isinstance(_generation, Unset):
+        if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:
             generation = SandboxSnapshotSpecGeneration(_generation)

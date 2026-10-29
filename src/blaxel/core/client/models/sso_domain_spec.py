@@ -113,7 +113,7 @@ class SSODomainSpec:
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, SSODomainSpecStatus]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = SSODomainSpecStatus(_status)

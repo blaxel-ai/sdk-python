@@ -58,7 +58,7 @@ class UpdateWorkspaceServiceAccountBody:
 
         _role = d.pop("role", UNSET)
         role: Union[Unset, UpdateWorkspaceServiceAccountBodyRole]
-        if isinstance(_role, Unset):
+        if isinstance(_role, Unset) or _role == "":
             role = UNSET
         else:
             role = UpdateWorkspaceServiceAccountBodyRole(_role)

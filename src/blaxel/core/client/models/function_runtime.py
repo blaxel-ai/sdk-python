@@ -123,7 +123,7 @@ class FunctionRuntime:
 
         _generation = d.pop("generation", UNSET)
         generation: Union[Unset, FunctionRuntimeGeneration]
-        if isinstance(_generation, Unset):
+        if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:
             generation = FunctionRuntimeGeneration(_generation)
@@ -145,7 +145,7 @@ class FunctionRuntime:
 
         _transport = d.pop("transport", UNSET)
         transport: Union[Unset, FunctionRuntimeTransport]
-        if isinstance(_transport, Unset):
+        if isinstance(_transport, Unset) or _transport == "":
             transport = UNSET
         else:
             transport = FunctionRuntimeTransport(_transport)

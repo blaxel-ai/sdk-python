@@ -60,7 +60,7 @@ class SandboxSnapshotSource:
 
         _kind = d.pop("kind", UNSET)
         kind: Union[Unset, SandboxSnapshotSourceKind]
-        if isinstance(_kind, Unset):
+        if isinstance(_kind, Unset) or _kind == "":
             kind = UNSET
         else:
             kind = SandboxSnapshotSourceKind(_kind)

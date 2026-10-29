@@ -58,7 +58,7 @@ class Port:
 
         _protocol = d.pop("protocol", UNSET)
         protocol: Union[Unset, PortProtocol]
-        if isinstance(_protocol, Unset):
+        if isinstance(_protocol, Unset) or _protocol == "":
             protocol = UNSET
         else:
             protocol = PortProtocol(_protocol)

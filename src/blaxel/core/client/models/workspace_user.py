@@ -112,7 +112,7 @@ class WorkspaceUser:
 
         _source = d.pop("source", UNSET)
         source: Union[Unset, WorkspaceUserSource]
-        if isinstance(_source, Unset):
+        if isinstance(_source, Unset) or _source == "":
             source = UNSET
         else:
             source = WorkspaceUserSource(_source)
