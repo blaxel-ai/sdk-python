@@ -2,14 +2,19 @@
 
 from types import SimpleNamespace
 
+import httpx
 import pytest
 
+from blaxel.core.client.api.volumes.get_volume import _parse_response
 from blaxel.core.client.models.get_workspace_features_response_200 import (
     GetWorkspaceFeaturesResponse200,
 )
+from blaxel.core.volume import volume as volume_module
+from blaxel.core.volume.volume import VolumeAPIError, VolumeInstance
 from tests.helpers import resource_labels
 from tests.integration.core.conftest import (
     _TEST_RESOURCE_LABELS,
+    _is_already_deleted,
     _is_test_resource,
 )
 from tests.integration.core.sandbox import test_volumes
@@ -37,6 +42,27 @@ def test_cleanup_requires_all_exact_test_labels():
 
     assert _is_test_resource(exact_match) is True
     assert _is_test_resource(partial_match) is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("status", "body", "expected"),
+    [
+        (404, {"code": 404, "error": "Volume not found"}, True),
+        (404, {"error": "Volume not found"}, True),
+        (500, {"code": 500, "error": "Internal error"}, False),
+    ],
+)
+async def test_cleanup_skips_a_volume_its_test_already_deleted(monkeypatch, status, body, expected):
+    async def get_volume(*, volume_name, client):
+        return _parse_response(client=client, response=httpx.Response(status, json=body))
+
+    monkeypatch.setattr(volume_module, "get_volume", get_volume)
+
+    with pytest.raises(VolumeAPIError) as caught:
+        await VolumeInstance.get("volume-delete-test")
+
+    assert _is_already_deleted(caught.value) is expected
 
 
 @pytest.mark.asyncio
