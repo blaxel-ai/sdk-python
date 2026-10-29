@@ -100,7 +100,7 @@ class VPC:
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, Status]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = Status(_status)

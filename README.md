@@ -332,6 +332,36 @@ a retry conflicts with them. Source symlinks are copied as symlinks; special fil
 while the sandbox may still be copying. It needs a sandbox image whose API has the copy
 endpoint and raises `RuntimeError` on older ones, never falling back to an overwriting copy.
 
+`read_tree` reads every file under a directory, with its content, in one request and returns the
+sandbox API's `Directory`. `SyncSandboxInstance` has the same method, without `await`.
+
+```python
+import asyncio
+
+from blaxel.core import SandboxInstance
+
+
+async def main():
+    sandbox = await SandboxInstance.get("my-sandbox")
+    tree = await sandbox.fs.read_tree(
+        "/app/schemas", patterns=["*.json"], exclude_dirs=["node_modules"], max_files=20
+    )
+    for file in tree.files:
+        print(file.path, file.content)  # /app/schemas/nested/About.json {...}
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+`files` lists every matching file below the path, with full paths, and `subdirectories` every
+directory. `patterns` are globs on file names, `exclude_dirs` skips directories by name and
+`exclude_hidden` skips dot-entries; nothing is excluded by default. If more than `max_files`
+(default 10000) files match or they hold more than `max_bytes` (default 32 MiB), the request fails
+with a 422 `ResponseError` and nothing partial is returned. Only regular files (and symlinks to
+them) carry `content`, as UTF-8 text. It needs a sandbox image whose API supports recursive tree
+reads and raises `RuntimeError` on older ones.
+
 #### Volumes
 
 Persist data by attaching and using volumes:

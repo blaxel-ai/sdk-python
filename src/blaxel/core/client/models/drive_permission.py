@@ -72,7 +72,7 @@ class DrivePermission:
 
         _mode = d.pop("mode", UNSET)
         mode: Union[Unset, DrivePermissionMode]
-        if isinstance(_mode, Unset):
+        if isinstance(_mode, Unset) or _mode == "":
             mode = UNSET
         else:
             mode = DrivePermissionMode(_mode)
