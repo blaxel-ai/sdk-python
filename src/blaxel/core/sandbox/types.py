@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 
@@ -212,7 +213,11 @@ class SandboxCreateConfiguration:
         extra_args: Dict[str, str] | None = None,
         termination_grace_period_seconds: int | None = None,
         standby_grace_period_seconds: int | None = None,
+        docker_config: Union[str, Dict[str, Any]] | None = None,
     ):
+        """``docker_config``: registry credentials in Docker config.json format
+        (``{"auths": {"ghcr.io": {"auth": "<base64 user:pass>"}}}``) used to pull a
+        private registry image. A dict is serialized to JSON."""
         self.name = name
         self.image = image
         self.memory = memory
@@ -229,6 +234,9 @@ class SandboxCreateConfiguration:
         self.extra_args = extra_args
         self.termination_grace_period_seconds = termination_grace_period_seconds
         self.standby_grace_period_seconds = standby_grace_period_seconds
+        self.docker_config = (
+            json.dumps(docker_config) if isinstance(docker_config, dict) else docker_config
+        )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SandboxCreateConfiguration":
@@ -261,6 +269,7 @@ class SandboxCreateConfiguration:
             extra_args=data.get("extra_args"),
             termination_grace_period_seconds=data.get("termination_grace_period_seconds"),
             standby_grace_period_seconds=data.get("standby_grace_period_seconds"),
+            docker_config=data.get("docker_config"),
         )
 
     def _normalize_ports(self) -> List[Port] | None:

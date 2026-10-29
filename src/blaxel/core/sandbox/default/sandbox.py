@@ -617,6 +617,8 @@ class SandboxInstance:
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                     or "standby_grace_period_seconds"
                     in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
+                    or "docker_config"
+                    in (sandbox if isinstance(sandbox, dict) else sandbox.__dict__)
                 )
             )
         ):
@@ -713,6 +715,9 @@ class SandboxInstance:
                 ea = SandboxRuntimeExtraArgs()
                 ea.additional_properties = extra_args
                 sandbox.spec.runtime.extra_args = ea
+            if config.docker_config and sandbox.spec.runtime:
+                # Not in the generated model: sent as an additional property.
+                sandbox.spec.runtime["dockerConfig"] = config.docker_config
         else:
             # Handle existing Sandbox object or dict conversion
             if isinstance(sandbox, dict):
