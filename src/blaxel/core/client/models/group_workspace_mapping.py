@@ -49,7 +49,7 @@ class GroupWorkspaceMapping:
 
         _role = d.pop("role", UNSET)
         role: Union[Unset, GroupWorkspaceMappingRole]
-        if isinstance(_role, Unset):
+        if isinstance(_role, Unset) or _role == "":
             role = UNSET
         else:
             role = GroupWorkspaceMappingRole(_role)

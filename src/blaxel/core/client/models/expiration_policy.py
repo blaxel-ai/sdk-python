@@ -58,14 +58,14 @@ class ExpirationPolicy:
         d = src_dict.copy()
         _action = d.pop("action", UNSET)
         action: Union[Unset, ExpirationPolicyAction]
-        if isinstance(_action, Unset):
+        if isinstance(_action, Unset) or _action == "":
             action = UNSET
         else:
             action = ExpirationPolicyAction(_action)
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
         type_: Union[Unset, ExpirationPolicyType]
-        if isinstance(_type_, Unset):
+        if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:
             type_ = ExpirationPolicyType(_type_)

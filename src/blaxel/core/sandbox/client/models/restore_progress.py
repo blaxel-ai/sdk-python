@@ -97,7 +97,7 @@ class RestoreProgress:
 
         _state = d.pop("state", UNSET)
         state: Union[Unset, ArchiveRestoreState]
-        if isinstance(_state, Unset):
+        if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:
             state = ArchiveRestoreState(_state)

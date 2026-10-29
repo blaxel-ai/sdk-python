@@ -117,7 +117,7 @@ class SandboxScheduleExecution:
 
         _status = d.pop("status", UNSET)
         status: Union[Unset, SandboxScheduleExecutionStatus]
-        if isinstance(_status, Unset):
+        if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
             status = SandboxScheduleExecutionStatus(_status)

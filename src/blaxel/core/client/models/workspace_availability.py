@@ -57,7 +57,7 @@ class WorkspaceAvailability:
 
         _reason = d.pop("reason", UNSET)
         reason: Union[Unset, WorkspaceAvailabilityReason]
-        if isinstance(_reason, Unset):
+        if isinstance(_reason, Unset) or _reason == "":
             reason = UNSET
         else:
             reason = WorkspaceAvailabilityReason(_reason)
