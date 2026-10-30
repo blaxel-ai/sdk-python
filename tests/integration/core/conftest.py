@@ -34,6 +34,13 @@ def _api_error(response) -> str | None:
     return f"{response.code}: {response.error}"
 
 
+def _is_already_deleted(error: Exception) -> bool:
+    """A 404 on a volume means there is nothing left to clean up."""
+    from blaxel.core.volume import VolumeAPIError
+
+    return isinstance(error, VolumeAPIError) and error.status == 404
+
+
 def pytest_sessionfinish(session, exitstatus):
     """Clean up all test sandboxes after the test session ends.
 
@@ -134,7 +141,9 @@ def pytest_sessionfinish(session, exitstatus):
             try:
                 volume = await VolumeInstance.get(name)
             except Exception as error:
-                cleanup_errors.append(f"inspecting volume {name}: {error}")
+                # Search can still list a volume that its own test already deleted.
+                if not _is_already_deleted(error):
+                    cleanup_errors.append(f"inspecting volume {name}: {error}")
                 continue
             if _is_test_resource(volume):
                 volumes.append(volume)
