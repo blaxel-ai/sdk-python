@@ -382,6 +382,32 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+#### Proxy secrets
+
+Workspace secrets are write-only values the egress proxy substitutes for `{{SECRET:name}}` references in a sandbox's routing. Each secret only resolves toward its `destinations` (a host, optionally followed by a path glob); the value is never returned by the API:
+
+```python
+import asyncio
+from blaxel.core import SecretInstance
+
+async def main():
+    # Create the secret, or store a new version if it already exists
+    secret = await SecretInstance.set(
+        "stripe-key", "sk_live_...", destinations=["api.stripe.com", "api.example.com/v1/*"]
+    )
+    print(secret.name, secret.destinations)
+
+    # List secrets (names, destinations and timestamps only)
+    for listed in await SecretInstance.list():
+        print(listed.name, listed.destinations, listed.updated_at)
+
+    # Delete the secret and all of its versions
+    await SecretInstance.delete("stripe-key")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
 ### Error handling
 
 The SDK's typed API exceptions share a `BlaxelError` base, in both async and sync clients. `ResponseError`, `SandboxAPIError`, `SandboxCreationTimeoutError`, `DriveAPIError`, `VolumeAPIError`, `SnapshotAPIError`, `ApplicationAPIError`, and generated-client `UnexpectedStatus` / `APIStatusError` subclasses keep their existing messages, fields, and `except` behavior.

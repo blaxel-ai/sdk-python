@@ -6,10 +6,10 @@ import pytest
 import pytest_asyncio
 
 from blaxel.core import SecretInstance
-from blaxel.core.client.client import client
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 from tests.helpers.echo import echo_host
+from tests.helpers.secrets import destinations_supported
 
 from .helpers import (
     PROXY_HELPER_SCRIPT,
@@ -19,11 +19,9 @@ from .helpers import (
     write_echo_url,
 )
 
-# Workspace secrets are behind the "workspace-secrets" feature flag (403 when off,
-# 404 on environments that predate controlplane#5736): skip unless the workspace has them.
 pytestmark = pytest.mark.skipif(
-    client.get_httpx_client().get("/secrets").status_code in (403, 404),
-    reason="workspace secrets not enabled for this workspace/environment",
+    not destinations_supported(),
+    reason="destination-scoped workspace secrets not available in this workspace/environment",
 )
 
 
@@ -65,10 +63,10 @@ class TestWorkspaceSecretsResolvedByProxy:
         cls.ws_secret = unique_name("ws-token")
         cls.shared_name = unique_name("ws-shared")
         cls.missing_name = unique_name("ws-missing")
-        await SecretInstance.set(cls.ws_secret, "ws-value-1")
-        await SecretInstance.set(cls.shared_name, "workspace-level")
-
         echo_hostname = await echo_host()
+        await SecretInstance.set(cls.ws_secret, "ws-value-1", [echo_hostname])
+        await SecretInstance.set(cls.shared_name, "workspace-level", [echo_hostname])
+
         cls.sandbox_name = unique_name("proxy-ws-sec")
         cls.sandbox = await SandboxInstance.create(
             {
@@ -109,8 +107,7 @@ class TestWorkspaceSecretsResolvedByProxy:
             pass
 
     async def test_resolves_workspace_secret_the_rule_does_not_declare(self):
-        headers = await headers_seen_by_upstream(self.sandbox)
-        assert headers["x-ws-token"] == "Bearer ws-value-1"
+        await wait_for_header(self.sandbox, "x-ws-token", "Bearer ws-value-1")
 
     async def test_resolves_workspace_secret_in_post_body(self):
         result = await self.sandbox.process.exec(
@@ -139,7 +136,7 @@ class TestWorkspaceSecretsResolvedByProxy:
         assert "x-missing" not in headers
 
     async def test_serves_latest_value_after_rotation(self):
-        await SecretInstance.set(self.ws_secret, "ws-value-2")
+        await SecretInstance.set(self.ws_secret, "ws-value-2", [await echo_host()])
         await wait_for_header(self.sandbox, "x-ws-token", "Bearer ws-value-2")
 
     async def test_stops_injecting_header_once_workspace_secret_is_deleted(self):
