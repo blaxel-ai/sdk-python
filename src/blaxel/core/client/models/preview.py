@@ -84,9 +84,9 @@ class Preview:
         if not src_dict:
             return None
         d = src_dict.copy()
-        metadata = PreviewMetadata.from_dict(d.pop("metadata"))
+        metadata = PreviewMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = PreviewSpec.from_dict(d.pop("spec"))
+        spec = PreviewSpec.from_dict(d.pop("spec", UNSET))
 
         events = []
         _events = d.pop("events", UNSET)
