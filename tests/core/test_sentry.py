@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.errors import BlaxelError
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -777,3 +778,80 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestRateLimitFiltering:
+    """A server-issued HTTP 429 is backpressure, not an unhandled SDK defect."""
+
+    def _raise_from_sdk(self, code: str, namespace: dict) -> BaseException:
+        return _raise_in_file(
+            _sdk_filename("core/client/api/jobs/create_job_execution.py"),
+            code,
+            namespace,
+        )
+
+    def test_is_rate_limited_error_detects_status(self):
+        assert sentry._is_rate_limited_error(errors.from_response(429, b"")) is True
+        assert sentry._is_rate_limited_error(errors.from_response(500, b"")) is False
+        assert sentry._is_rate_limited_error(errors.from_response(404, b"")) is False
+        assert sentry._is_rate_limited_error(RuntimeError("boom")) is False
+
+    def test_is_rate_limited_error_detects_stable_codes(self):
+        assert (
+            sentry._is_rate_limited_error(BlaxelError("rate limited", code="RATE_LIMIT_EXCEEDED"))
+            is True
+        )
+        assert (
+            sentry._is_rate_limited_error(
+                BlaxelError("rate limited", code="WORKSPACE_RATE_LIMIT_EXCEEDED")
+            )
+            is True
+        )
+        assert sentry._is_rate_limited_error(BlaxelError("nope", code="VALIDATION_FAILED")) is False
+
+    def test_boolean_status_is_not_treated_as_rate_limit(self):
+        error = RuntimeError("boom")
+        setattr(error, "status_code", True)
+        assert sentry._is_rate_limited_error(error) is False
+
+    def test_rate_limit_error_is_not_captured(self):
+        exc = self._raise_from_sdk(
+            'raise from_response(429, b\'{"error":"slow down"}\')',
+            {"from_response": errors.from_response},
+        )
+        assert isinstance(exc, errors.RateLimitError)
+        assert sentry._safe_exception_value(exc) == "Unhandled SDK exception (HTTP 429)"
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_rate_limit_by_error_code_is_not_captured(self):
+        exc = self._raise_from_sdk(
+            "raise BlaxelError('rate limited', code='WORKSPACE_RATE_LIMIT_EXCEEDED')",
+            {"BlaxelError": BlaxelError},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_other_server_statuses_are_still_captured(self):
+        server_error = self._raise_from_sdk(
+            'raise from_response(500, b\'{"error":"boom"}\')',
+            {"from_response": errors.from_response},
+        )
+        assert isinstance(server_error, errors.UnexpectedStatus)
+        assert not isinstance(server_error, errors.RateLimitError)
+        assert sentry._should_capture_unhandled_exception(type(server_error), server_error) is True
+
+    def test_real_sdk_bug_is_still_captured(self):
+        bug = self._raise_from_sdk("raise RuntimeError('real sdk bug')", {})
+        assert sentry._should_capture_unhandled_exception(type(bug), bug) is True
+
+    def test_rate_limit_is_dropped_end_to_end(self, installed_sentry_hooks):
+        exc = self._raise_from_sdk(
+            'raise from_response(429, b\'{"error":"slow down"}\')',
+            {"from_response": errors.from_response},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        # The original hook must still run so the process behaves normally.
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]

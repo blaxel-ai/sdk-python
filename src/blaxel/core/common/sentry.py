@@ -405,11 +405,64 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+_HTTP_TOO_MANY_REQUESTS = 429
+
+# Stable rate-limit codes returned by the control plane and edge gateway. A
+# rate-limited response is the server asking the caller to slow down, not an SDK
+# defect, so it must not be reported as an unhandled SDK exception.
+_RATE_LIMIT_ERROR_CODES = frozenset(
+    {
+        "RATE_LIMIT_EXCEEDED",
+        "WORKSPACE_RATE_LIMIT_EXCEEDED",
+    }
+)
+
+
+def _http_status_code(error: BaseException) -> int | None:
+    """Read an HTTP status from the error itself or its retained response."""
+    for candidate in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        # ``type(...) is int`` rejects ``bool`` (a subclass of ``int``).
+        if type(candidate) is int and 100 <= candidate <= 599:
+            return candidate
+    return None
+
+
+def _error_code(error: BaseException) -> str | None:
+    """Read a stable string error code from the error, when present."""
+    for candidate in (
+        getattr(error, "code", None),
+        getattr(error, "error_code", None),
+    ):
+        if isinstance(candidate, str) and candidate:
+            return candidate
+    return None
+
+
+def _is_rate_limited_error(error: BaseException) -> bool:
+    """Check whether an error is a server-issued rate-limit response.
+
+    The SDK surfaces an HTTP 429 as a typed ``RateLimitError`` (generated client)
+    or carries a ``RATE_LIMIT_EXCEEDED`` / ``WORKSPACE_RATE_LIMIT_EXCEEDED`` code
+    on a resource-wrapper error. Either way it is expected backpressure, not an
+    SDK bug, so it should not reach Sentry as an unhandled SDK exception.
+    """
+    if _http_status_code(error) == _HTTP_TOO_MANY_REQUESTS:
+        return True
+    code = _error_code(error)
+    return code is not None and code in _RATE_LIMIT_ERROR_CODES
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_rate_limited_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
