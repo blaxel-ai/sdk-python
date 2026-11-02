@@ -129,7 +129,7 @@ def test_successful_delivery_is_deduplicated_and_preserves_state(telemetry, monk
 
 
 def test_flush_budget_is_imperceptible():
-    """A capture against us.i.posthog.com takes ~250-350ms end to end, so a one
+    """A capture through events.blaxel.ai takes ~250-350ms end to end, so a one
     second ceiling covers the happy path without letting a stalled send register
     as a hang. Because a version is only persisted after a successful delivery,
     an unreachable endpoint makes every later run pay this budget again."""
