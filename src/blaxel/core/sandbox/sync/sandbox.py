@@ -798,7 +798,9 @@ class SyncSandboxInstance:
 
         Raises:
             SandboxAPIError: When the sandbox does not exist (``status_code``
-                404) or the API rejects the request.
+                404) or the API rejects the request. A deleted sandbox is
+                still returned, with status ``TERMINATED``, until its
+                ``terminated_retention`` (5 minutes by default) has passed.
 
         Example:
             ```python
@@ -1190,7 +1192,11 @@ def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
     ``sandbox.delete()`` on an instance. The sandbox, its processes and its
     filesystem are removed; persistent volumes and drives attached to it are
     separate resources and are not deleted. The deletion finishes in the
-    background, and the name can be reused once it is done.
+    background, and the name can be reused once it is done. The record stays
+    readable for the lifecycle's ``terminated_retention`` (5 minutes by
+    default): ``get`` returns it with status ``TERMINATED`` instead of raising
+    a 404, and ``list`` no longer includes it. To confirm a deletion, check
+    for ``TERMINATED`` or for the name to leave ``list``.
 
     Args:
         sandbox_name: The sandbox name.

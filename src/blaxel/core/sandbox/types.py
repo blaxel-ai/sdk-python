@@ -216,7 +216,12 @@ class SandboxUpdateNetwork:
 
 
 class SandboxCreateConfiguration:
-    """Simplified configuration for creating sandboxes with default values."""
+    """Simplified configuration for creating sandboxes with default values.
+
+    Pass it, or a dict with the same keys, to ``SandboxInstance.create``, whose
+    docstring lists the fields (``memory`` is in MB) and the name and
+    ``lifecycle`` rules.
+    """
 
     def __init__(
         self,

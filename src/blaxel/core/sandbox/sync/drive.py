@@ -20,7 +20,20 @@ from .action import SyncSandboxAction
 
 
 class SyncSandboxDrive(SyncSandboxAction):
-    """Synchronous drive operations for mounting/unmounting drives to sandbox."""
+    """Synchronous drive operations for mounting/unmounting drives to sandbox.
+
+    Reached as ``sandbox.drives``. The drive itself is a separate resource:
+    create it first with ``DriveInstance.create``. Mounting, unmounting and
+    listing go to the sandbox, and a failure raises a plain ``Exception``
+    whose message carries the sandbox API's error.
+
+    Example:
+        ```python
+        sandbox.drives.mount("shared-data", "/mnt/data")
+        print(sandbox.drives.list())
+        sandbox.drives.unmount("/mnt/data")
+        ```
+    """
 
     def __init__(self, sandbox_config: SandboxConfiguration):
         super().__init__(sandbox_config)
@@ -43,6 +56,10 @@ class SyncSandboxDrive(SyncSandboxAction):
 
         Returns:
             DriveMountResponse with success status and mount information
+
+        Raises:
+            Exception: "Mount drive failed: <error>" when the sandbox API
+                rejects the mount.
         """
         if not mount_path.startswith("/"):
             mount_path = f"/{mount_path}"
@@ -76,6 +93,10 @@ class SyncSandboxDrive(SyncSandboxAction):
 
         Returns:
             DriveUnmountResponse with success status
+
+        Raises:
+            Exception: "Unmount drive failed: <error>" when the sandbox API
+                rejects the request.
         """
         # Strip leading slash for the path parameter since the URL template
         # already includes the slash: /drives/mount/{mountPath}
@@ -99,7 +120,12 @@ class SyncSandboxDrive(SyncSandboxAction):
         List all currently mounted drives in the sandbox.
 
         Returns:
-            List of DriveMountInfo for each mounted drive
+            List of DriveMountInfo for each mounted drive, empty when none is
+            mounted.
+
+        Raises:
+            Exception: "List drives failed: <error>" when the sandbox API
+                rejects the request.
         """
 
         def list_once() -> List[DriveMountInfo]:

@@ -728,11 +728,14 @@ async def _delete_volume_by_name(volume_name: str) -> Volume:
         volume_name: The volume name.
 
     Returns:
-        The deleted ``Volume`` record.
+        The deleted ``Volume`` record. Its status is ``DELETING`` until the
+        deletion finishes; after that, ``get`` raises a 404.
 
     Raises:
         VolumeAPIError: When the volume does not exist (``status_code`` 404)
             or the API rejects the request.
+        blaxel.core.client.errors.UnexpectedStatus: HTTP 400 when the volume
+            is attached to a sandbox.
     """
     response = await delete_volume(volume_name=volume_name, client=client)
     if isinstance(response, Error):
@@ -756,11 +759,14 @@ def _delete_volume_by_name_sync(volume_name: str) -> Volume:
         volume_name: The volume name.
 
     Returns:
-        The deleted ``Volume`` record.
+        The deleted ``Volume`` record. Its status is ``DELETING`` until the
+        deletion finishes; after that, ``get`` raises a 404.
 
     Raises:
         VolumeAPIError: When the volume does not exist (``status_code`` 404)
             or the API rejects the request.
+        blaxel.core.client.errors.UnexpectedStatus: HTTP 400 when the volume
+            is attached to a sandbox.
     """
     response = delete_volume_sync(volume_name=volume_name, client=client)
     if isinstance(response, Error):
