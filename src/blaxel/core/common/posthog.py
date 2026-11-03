@@ -17,12 +17,11 @@ logger = logging.getLogger(__name__)
 # PostHog API key injected at build time via sed in CI
 _POSTHOG_KEY = ""
 
-# PostHog API endpoint
-_POSTHOG_HOST = "https://us.i.posthog.com"
+_POSTHOG_HOST = "https://events.blaxel.ai"
 
 # How long telemetry may delay interpreter shutdown.
 #
-# A capture against us.i.posthog.com takes ~250-350ms end to end (DNS + TLS
+# A capture through events.blaxel.ai takes ~250-350ms end to end (DNS + TLS
 # handshake + POST), so one second covers the happy path with headroom. The
 # ceiling matters because a version is only recorded after a successful
 # delivery: when the endpoint is unreachable every later run tries again, and
