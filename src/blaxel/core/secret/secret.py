@@ -1,8 +1,10 @@
 """Workspace secrets.
 
-Secrets are write-only: once set, only ``name``, ``created_at`` and ``updated_at``
-can be read back. Every ``set`` stores a new immutable version and the latest one is
-what the proxy resolves for ``{{SECRET:name}}`` references in a sandbox's routing.
+Secrets are write-only: once set, only ``name``, ``destinations``, ``created_at`` and
+``updated_at`` can be read back. Every ``set`` stores a new immutable version and the
+latest one is what the proxy resolves for ``{{SECRET:name}}`` references in a sandbox's
+routing, only toward the secret's ``destinations`` (a host, optionally followed by a path
+glob, e.g. ``api.stripe.com`` or ``api.example.com/v1/*``).
 """
 
 from ..client.api.secrets.delete_secret import asyncio as delete_secret
@@ -38,6 +40,10 @@ class SecretInstance:
         return self.secret.name
 
     @property
+    def destinations(self) -> list[str]:
+        return self.secret.destinations
+
+    @property
     def created_at(self) -> str | None:
         return None if self.secret.created_at is UNSET else self.secret.created_at
 
@@ -46,9 +52,11 @@ class SecretInstance:
         return None if self.secret.updated_at is UNSET else self.secret.updated_at
 
     @classmethod
-    async def set(cls, name: str, value: str) -> "SecretInstance":
-        """Create the secret, or store a new version if it already exists."""
-        response = await upsert_secret(client=client, body=Secret(name=name, value=value))
+    async def set(cls, name: str, value: str, destinations: list[str]) -> "SecretInstance":
+        """Create the secret, or store a new version (value and destinations) if it already exists."""
+        response = await upsert_secret(
+            client=client, body=Secret(name=name, value=value, destinations=destinations)
+        )
         return cls(_checked(response, "set"))
 
     @classmethod
@@ -58,7 +66,7 @@ class SecretInstance:
 
     @classmethod
     async def delete(cls, name: str) -> Secret:
-        """Delete the secret and all of its versions."""
+        """Delete the secret and all of its versions. Deleting an unknown secret is a no-op."""
         response = await delete_secret(secret_name=name, client=client)
         return _checked(response, "delete")
 
@@ -67,8 +75,10 @@ class SyncSecretInstance(SecretInstance):
     """Synchronous version of :class:`SecretInstance`."""
 
     @classmethod
-    def set(cls, name: str, value: str) -> "SyncSecretInstance":
-        response = upsert_secret_sync(client=client, body=Secret(name=name, value=value))
+    def set(cls, name: str, value: str, destinations: list[str]) -> "SyncSecretInstance":
+        response = upsert_secret_sync(
+            client=client, body=Secret(name=name, value=value, destinations=destinations)
+        )
         return cls(_checked(response, "set"))
 
     @classmethod

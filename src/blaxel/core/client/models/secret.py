@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -11,15 +11,20 @@ T = TypeVar("T", bound="Secret")
 @_attrs_define
 class Secret:
     """Workspace secret, referenced from proxy routing as {{SECRET:name}}. Values are write-only and can never be read
-    back. Every upsert stores a new immutable version and the latest one is resolved at runtime.
+    back. Every upsert stores a new immutable version and the latest one is resolved at runtime, only for requests to
+    its destinations.
 
         Attributes:
+            destinations (list[str]): Destinations the secret resolves for, same syntax as routing destinations: a host,
+                optionally followed by a path glob. The secret is never substituted toward any other destination. Example:
+                ["api.stripe.com", "api.example.com/v1/*"].
             name (str): Case-sensitive secret name
             created_at (Union[Unset, str]): The date and time when the secret was first created
             updated_at (Union[Unset, str]): The date and time of the latest version
             value (Union[Unset, str]): Secret value. Write-only, never returned by the API
     """
 
+    destinations: list[str]
     name: str
     created_at: Union[Unset, str] = UNSET
     updated_at: Union[Unset, str] = UNSET
@@ -27,6 +32,8 @@ class Secret:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        destinations = self.destinations
+
         name = self.name
 
         created_at = self.created_at
@@ -39,6 +46,7 @@ class Secret:
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
+                "destinations": destinations,
                 "name": name,
             }
         )
@@ -56,6 +64,8 @@ class Secret:
         if not src_dict:
             return None
         d = src_dict.copy()
+        destinations = cast(list[str], d.pop("destinations"))
+
         name = d.pop("name")
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
@@ -65,6 +75,7 @@ class Secret:
         value = d.pop("value", UNSET)
 
         secret = cls(
+            destinations=destinations,
             name=name,
             created_at=created_at,
             updated_at=updated_at,
