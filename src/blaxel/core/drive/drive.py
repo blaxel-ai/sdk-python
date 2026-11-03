@@ -257,9 +257,10 @@ class DriveInstance:
             blaxel.core.client.errors.UnexpectedStatus: When the API rejects
                 the drive: ``ConflictError`` (HTTP 409) for a name in use,
                 HTTP 400 for invalid permissions or region, HTTP 403 when
-                drives are not enabled for the workspace or the key lacks
-                permission. The 403 has no message body, so the two causes
-                look the same; check ``status_code``.
+                drives are not enabled for the workspace. The exception
+                message shows only the status; the response body in
+                ``e.content`` names the cause, such as "Drives feature is not
+                enabled for this workspace".
 
         Example:
             ```python
@@ -546,9 +547,10 @@ class SyncDriveInstance:
             blaxel.core.client.errors.UnexpectedStatus: When the API rejects
                 the drive: ``ConflictError`` (HTTP 409) for a name in use,
                 HTTP 400 for invalid permissions or region, HTTP 403 when
-                drives are not enabled for the workspace or the key lacks
-                permission. The 403 has no message body, so the two causes
-                look the same; check ``status_code``.
+                drives are not enabled for the workspace. The exception
+                message shows only the status; the response body in
+                ``e.content`` names the cause, such as "Drives feature is not
+                enabled for this workspace".
 
         Example:
             ```python
