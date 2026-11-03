@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,15 +19,14 @@ T = TypeVar("T", bound="TreeRequest")
 class TreeRequest:
     """
     Attributes:
-        files (Union[Unset, TreeRequestFiles]):  Example: {'"dir/file2.txt"': '"content2"}', '{"file1.txt"':
-            '"content1"'}.
+        files (TreeRequestFiles | Unset):  Example: {'"dir/file2.txt"': '"content2"}', '{"file1.txt"': '"content1"'}.
     """
 
-    files: Union[Unset, "TreeRequestFiles"] = UNSET
+    files: TreeRequestFiles | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        files: Union[Unset, dict[str, Any]] = UNSET
+        files: dict[str, Any] | Unset = UNSET
         if self.files and not isinstance(self.files, Unset) and not isinstance(self.files, dict):
             files = self.files.to_dict()
         elif self.files and isinstance(self.files, dict):
@@ -39,14 +41,14 @@ class TreeRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.tree_request_files import TreeRequestFiles
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.tree_request_files import TreeRequestFiles  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _files = d.pop("files", UNSET)
-        files: Union[Unset, TreeRequestFiles]
+        files: TreeRequestFiles | Unset
         if isinstance(_files, Unset):
             files = UNSET
         else:

@@ -1,15 +1,16 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="GetDriveJWKSResponse200KeysItem")
+T = TypeVar("T", bound="GetDriveJwksResponse200KeysItem")
 
 
 @_attrs_define
-class GetDriveJWKSResponse200KeysItem:
-    """ """
-
+class GetDriveJwksResponse200KeysItem:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -19,10 +20,10 @@ class GetDriveJWKSResponse200KeysItem:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         get_drive_jwks_response_200_keys_item = cls()
 
         get_drive_jwks_response_200_keys_item.additional_properties = d

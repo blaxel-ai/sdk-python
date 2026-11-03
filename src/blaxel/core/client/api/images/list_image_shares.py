@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,10 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/images/{resource_type}/{image_name}/share",
+        "url": "/images/{resource_type}/{image_name}/share".format(
+            resource_type=quote(str(resource_type), safe=""),
+            image_name=quote(str(image_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -23,7 +27,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, list["ImageShareTarget"]] | None:
+) -> Any | list[ImageShareTarget] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -33,10 +37,12 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -47,7 +53,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, list["ImageShareTarget"]]]:
+) -> Response[Any | list[ImageShareTarget]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -61,7 +67,7 @@ def sync_detailed(
     image_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, list["ImageShareTarget"]]]:
+) -> Response[Any | list[ImageShareTarget]]:
     """List image shares
 
      Returns the list of workspaces that a container image is currently shared with.
@@ -75,7 +81,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, list['ImageShareTarget']]]
+        Response[Any | list[ImageShareTarget]]
     """
 
     kwargs = _get_kwargs(
@@ -95,7 +101,7 @@ def sync(
     image_name: str,
     *,
     client: Client,
-) -> Union[Any, list["ImageShareTarget"]] | None:
+) -> Any | list[ImageShareTarget] | None:
     """List image shares
 
      Returns the list of workspaces that a container image is currently shared with.
@@ -109,7 +115,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, list['ImageShareTarget']]
+        Any | list[ImageShareTarget]
     """
 
     return sync_detailed(
@@ -124,7 +130,7 @@ async def asyncio_detailed(
     image_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, list["ImageShareTarget"]]]:
+) -> Response[Any | list[ImageShareTarget]]:
     """List image shares
 
      Returns the list of workspaces that a container image is currently shared with.
@@ -138,7 +144,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, list['ImageShareTarget']]]
+        Response[Any | list[ImageShareTarget]]
     """
 
     kwargs = _get_kwargs(
@@ -156,7 +162,7 @@ async def asyncio(
     image_name: str,
     *,
     client: Client,
-) -> Union[Any, list["ImageShareTarget"]] | None:
+) -> Any | list[ImageShareTarget] | None:
     """List image shares
 
      Returns the list of workspaces that a container image is currently shared with.
@@ -170,7 +176,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, list['ImageShareTarget']]
+        Any | list[ImageShareTarget]
     """
 
     return (

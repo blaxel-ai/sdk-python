@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,13 +18,13 @@ class Port:
 
     Attributes:
         target (int): The target port of the port Example: 8080.
-        name (Union[Unset, str]): The name of the port Example: http.
-        protocol (Union[Unset, PortProtocol]): The protocol of the port Example: HTTP.
+        name (str | Unset): The name of the port Example: http.
+        protocol (PortProtocol | Unset): The protocol of the port Example: HTTP.
     """
 
     target: int
-    name: Union[Unset, str] = UNSET
-    protocol: Union[Unset, PortProtocol] = UNSET
+    name: str | Unset = UNSET
+    protocol: PortProtocol | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -29,7 +32,7 @@ class Port:
 
         name = self.name
 
-        protocol: Union[Unset, str] = UNSET
+        protocol: str | Unset = UNSET
         if not isinstance(self.protocol, Unset):
             protocol = self.protocol.value
 
@@ -48,16 +51,16 @@ class Port:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         target = d.pop("target")
 
         name = d.pop("name", UNSET)
 
         _protocol = d.pop("protocol", UNSET)
-        protocol: Union[Unset, PortProtocol]
+        protocol: PortProtocol | Unset
         if isinstance(_protocol, Unset) or _protocol == "":
             protocol = UNSET
         else:

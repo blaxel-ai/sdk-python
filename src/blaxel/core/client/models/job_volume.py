@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,14 +23,14 @@ class JobVolume:
             name (str): Identifier for the volume, used to reference it internally Example: scratch.
             size_mb (int): Storage capacity in megabytes Example: 102400.
             type_ (JobVolumeType): Type of volume. Currently only "ephemeral" is supported. Example: ephemeral.
-            read_only (Union[Unset, bool]): If true, the volume is mounted read-only
+            read_only (bool | Unset): If true, the volume is mounted read-only Example: False.
     """
 
     mount_path: str
     name: str
     size_mb: int
     type_: JobVolumeType
-    read_only: Union[Unset, bool] = UNSET
+    read_only: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -57,10 +60,10 @@ class JobVolume:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         mount_path = d.pop("mountPath") if "mountPath" in d else d.pop("mount_path")
 
         name = d.pop("name")

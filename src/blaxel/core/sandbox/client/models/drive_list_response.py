@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,14 +19,14 @@ T = TypeVar("T", bound="DriveListResponse")
 class DriveListResponse:
     """
     Attributes:
-        mounts (Union[Unset, list['DriveMountInfo']]):
+        mounts (list[DriveMountInfo] | Unset):
     """
 
-    mounts: Union[Unset, list["DriveMountInfo"]] = UNSET
+    mounts: list[DriveMountInfo] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        mounts: Union[Unset, list[dict[str, Any]]] = UNSET
+        mounts: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.mounts, Unset):
             mounts = []
             for mounts_item_data in self.mounts:
@@ -42,12 +45,12 @@ class DriveListResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.drive_mount_info import DriveMountInfo
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.drive_mount_info import DriveMountInfo  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         mounts = []
         _mounts = d.pop("mounts", UNSET)
         for mounts_item_data in _mounts or []:

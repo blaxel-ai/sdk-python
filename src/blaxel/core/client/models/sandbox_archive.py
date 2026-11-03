@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,38 +22,37 @@ class SandboxArchive:
     freshly started processes.
 
         Attributes:
-            created_at (Union[Unset, str]): When the archive was created (read-only)
-            generation (Union[Unset, str]): Infrastructure generation the archive was taken from (read-only) Example: mk3.0.
-            key (Union[Unset, str]): Storage key of the archive (read-only) Example: my-workspace/my-sandbox.tar.
-            restore (Union[Unset, SandboxArchiveRestore]): Progress of the restore of a sandbox archive. A restore writes
-                the archived filesystem over the image the sandbox booted from, which takes as long as the archive is big; the
+            created_at (str | Unset): When the archive was created (read-only)
+            generation (str | Unset): Infrastructure generation the archive was taken from (read-only) Example: mk3.0.
+            key (str | Unset): Storage key of the archive (read-only) Example: my-workspace/my-sandbox.tar.
+            restore (SandboxArchiveRestore | Unset): Progress of the restore of a sandbox archive. A restore writes the
+                archived filesystem over the image the sandbox booted from, which takes as long as the archive is big; the
                 sandbox answers and its terminal is reachable throughout, but nothing may write to its filesystem until the
                 restore is done.
-            restore_started_at (Union[Unset, str]): When the restore of the archive started, while the sandbox is being
-                unarchived (read-only)
-            size (Union[Unset, int]): Size of the archive in bytes (read-only)
-            started_at (Union[Unset, str]): When the archive was started, while the filesystem of the sandbox is still being
+            restore_started_at (str | Unset): When the restore of the archive started, while the sandbox is being unarchived
+                (read-only)
+            size (int | Unset): Size of the archive in bytes (read-only)
+            started_at (str | Unset): When the archive was started, while the filesystem of the sandbox is still being
                 uploaded (read-only)
     """
 
-    created_at: Union[Unset, str] = UNSET
-    generation: Union[Unset, str] = UNSET
-    key: Union[Unset, str] = UNSET
-    restore: Union[Unset, "SandboxArchiveRestore"] = UNSET
-    restore_started_at: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
-    started_at: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    generation: str | Unset = UNSET
+    key: str | Unset = UNSET
+    restore: SandboxArchiveRestore | Unset = UNSET
+    restore_started_at: str | Unset = UNSET
+    size: int | Unset = UNSET
+    started_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         generation = self.generation
 
         key = self.key
 
-        restore: Union[Unset, dict[str, Any]] = UNSET
+        restore: dict[str, Any] | Unset = UNSET
         if (
             self.restore
             and not isinstance(self.restore, Unset)
@@ -87,12 +89,12 @@ class SandboxArchive:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.sandbox_archive_restore import SandboxArchiveRestore
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.sandbox_archive_restore import SandboxArchiveRestore  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         generation = d.pop("generation", UNSET)
@@ -100,7 +102,7 @@ class SandboxArchive:
         key = d.pop("key", UNSET)
 
         _restore = d.pop("restore", UNSET)
-        restore: Union[Unset, SandboxArchiveRestore]
+        restore: SandboxArchiveRestore | Unset
         if isinstance(_restore, Unset):
             restore = UNSET
         else:

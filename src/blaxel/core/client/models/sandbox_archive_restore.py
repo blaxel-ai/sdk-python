@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,17 +19,17 @@ class SandboxArchiveRestore:
     throughout, but nothing may write to its filesystem until the restore is done.
 
         Attributes:
-            files (Union[Unset, int]): Number of files restored so far (read-only)
-            restored_bytes (Union[Unset, int]): Bytes of the archive restored so far (read-only)
-            state (Union[Unset, SandboxArchiveRestoreState]): Phase of the restore (read-only) Example: extracting.
-            total_bytes (Union[Unset, int]): Total size of the archive being restored in bytes, absent when the store did
-                not announce it (read-only)
+            files (int | Unset): Number of files restored so far (read-only)
+            restored_bytes (int | Unset): Bytes of the archive restored so far (read-only)
+            state (SandboxArchiveRestoreState | Unset): Phase of the restore (read-only) Example: extracting.
+            total_bytes (int | Unset): Total size of the archive being restored in bytes, absent when the store did not
+                announce it (read-only)
     """
 
-    files: Union[Unset, int] = UNSET
-    restored_bytes: Union[Unset, int] = UNSET
-    state: Union[Unset, SandboxArchiveRestoreState] = UNSET
-    total_bytes: Union[Unset, int] = UNSET
+    files: int | Unset = UNSET
+    restored_bytes: int | Unset = UNSET
+    state: SandboxArchiveRestoreState | Unset = UNSET
+    total_bytes: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -34,7 +37,7 @@ class SandboxArchiveRestore:
 
         restored_bytes = self.restored_bytes
 
-        state: Union[Unset, str] = UNSET
+        state: str | Unset = UNSET
         if not isinstance(self.state, Unset):
             state = self.state.value
 
@@ -55,16 +58,16 @@ class SandboxArchiveRestore:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         files = d.pop("files", UNSET)
 
         restored_bytes = d.pop("restoredBytes", d.pop("restored_bytes", UNSET))
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, SandboxArchiveRestoreState]
+        state: SandboxArchiveRestoreState | Unset
         if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:

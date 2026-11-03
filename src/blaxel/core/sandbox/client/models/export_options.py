@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,44 +20,41 @@ T = TypeVar("T", bound="ExportOptions")
 class ExportOptions:
     """
     Attributes:
-        async_ (Union[Unset, bool]): Async starts the export and answers immediately, leaving it to run: an
+        async_ (bool | Unset): Async starts the export and answers immediately, leaving it to run: an
             archive of a large filesystem takes longer than a request may be held
-            open. Its progress is reported by /archive/status.
-        dry_run (Union[Unset, bool]): DryRun reports what would be archived, and its exact size, without
-            stopping anything and without uploading.
-        excludes (Union[Unset, list[str]]): Excludes are added to the paths excluded by default.
-        headers (Union[Unset, ExportOptionsHeaders]): Headers are sent with the upload request as given. A presigned URL
-            only
+            open. Its progress is reported by /archive/status. Example: False.
+        dry_run (bool | Unset): DryRun reports what would be archived, and its exact size, without
+            stopping anything and without uploading. Example: False.
+        excludes (list[str] | Unset): Excludes are added to the paths excluded by default.
+        headers (ExportOptionsHeaders | Unset): Headers are sent with the upload request as given. A presigned URL only
             accepts the headers it was signed for, so these have to match what the
             caller signed: sending one that was not signed, or signing one that is not
             sent, is rejected as a signature mismatch. Typical use is a storage class,
             x-amz-storage-class: GLACIER_IR.
-        image_device (Union[Unset, str]): ImageDevice is the device holding the pristine image. It is found on its
+        image_device (str | Unset): ImageDevice is the device holding the pristine image. It is found on its
             own, wherever the sandbox booted from attached it, and naming one here
             only overrides that. Example: /dev/vda.
-        image_mount_point (Union[Unset, str]): ImageMountPoint is a directory where the pristine image is already
-            mounted.
+        image_mount_point (str | Unset): ImageMountPoint is a directory where the pristine image is already mounted.
             When set the image device is neither mounted nor unmounted. Example: /mnt/lower.
-        multipart (Union[Unset, MultipartUpload]):
-        save_processes (Union[Unset, bool]): SaveProcesses stores the process list in the archive so restore can
+        multipart (MultipartUpload | Unset):
+        save_processes (bool | Unset): SaveProcesses stores the process list in the archive so restore can
             relaunch the workload. Defaults to true; set it to false to archive
             storage only. Example: True.
-        stop_timeout_seconds (Union[Unset, int]): StopTimeoutSeconds bounds the graceful stop of each process. Example:
-            30.
-        url (Union[Unset, str]): URL is a presigned S3 PUT URL the archive is streamed to. Empty is only
+        stop_timeout_seconds (int | Unset): StopTimeoutSeconds bounds the graceful stop of each process. Example: 30.
+        url (str | Unset): URL is a presigned S3 PUT URL the archive is streamed to. Empty is only
             valid with DryRun, or with Multipart. Example: https://bucket.s3.amazonaws.com/key?....
     """
 
-    async_: Union[Unset, bool] = UNSET
-    dry_run: Union[Unset, bool] = UNSET
-    excludes: Union[Unset, list[str]] = UNSET
-    headers: Union[Unset, "ExportOptionsHeaders"] = UNSET
-    image_device: Union[Unset, str] = UNSET
-    image_mount_point: Union[Unset, str] = UNSET
-    multipart: Union[Unset, "MultipartUpload"] = UNSET
-    save_processes: Union[Unset, bool] = UNSET
-    stop_timeout_seconds: Union[Unset, int] = UNSET
-    url: Union[Unset, str] = UNSET
+    async_: bool | Unset = UNSET
+    dry_run: bool | Unset = UNSET
+    excludes: list[str] | Unset = UNSET
+    headers: ExportOptionsHeaders | Unset = UNSET
+    image_device: str | Unset = UNSET
+    image_mount_point: str | Unset = UNSET
+    multipart: MultipartUpload | Unset = UNSET
+    save_processes: bool | Unset = UNSET
+    stop_timeout_seconds: int | Unset = UNSET
+    url: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,11 +62,11 @@ class ExportOptions:
 
         dry_run = self.dry_run
 
-        excludes: Union[Unset, list[str]] = UNSET
+        excludes: list[str] | Unset = UNSET
         if not isinstance(self.excludes, Unset):
             excludes = self.excludes
 
-        headers: Union[Unset, dict[str, Any]] = UNSET
+        headers: dict[str, Any] | Unset = UNSET
         if (
             self.headers
             and not isinstance(self.headers, Unset)
@@ -80,7 +80,7 @@ class ExportOptions:
 
         image_mount_point = self.image_mount_point
 
-        multipart: Union[Unset, dict[str, Any]] = UNSET
+        multipart: dict[str, Any] | Unset = UNSET
         if (
             self.multipart
             and not isinstance(self.multipart, Unset)
@@ -123,13 +123,13 @@ class ExportOptions:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.export_options_headers import ExportOptionsHeaders
-        from ..models.multipart_upload import MultipartUpload
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.export_options_headers import ExportOptionsHeaders  # noqa: PLC0415
+        from ..models.multipart_upload import MultipartUpload  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         async_ = d.pop("async", d.pop("async_", UNSET))
 
         dry_run = d.pop("dryRun", d.pop("dry_run", UNSET))
@@ -137,7 +137,7 @@ class ExportOptions:
         excludes = cast(list[str], d.pop("excludes", UNSET))
 
         _headers = d.pop("headers", UNSET)
-        headers: Union[Unset, ExportOptionsHeaders]
+        headers: ExportOptionsHeaders | Unset
         if isinstance(_headers, Unset):
             headers = UNSET
         else:
@@ -148,7 +148,7 @@ class ExportOptions:
         image_mount_point = d.pop("imageMountPoint", d.pop("image_mount_point", UNSET))
 
         _multipart = d.pop("multipart", UNSET)
-        multipart: Union[Unset, MultipartUpload]
+        multipart: MultipartUpload | Unset
         if isinstance(_multipart, Unset):
             multipart = UNSET
         else:

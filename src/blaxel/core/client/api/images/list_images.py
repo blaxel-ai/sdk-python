@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -11,10 +11,10 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, str] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: str | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -42,6 +42,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> ListImagesRe
         response_200 = ListImagesResponse200.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -62,10 +63,10 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Lis
 def sync_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, str] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: str | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> Response[ListImagesResponse200]:
     """List container images
 
@@ -73,10 +74,10 @@ def sync_detailed(
     array including all tags.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, str]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (str | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -103,10 +104,10 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, str] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: str | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> ListImagesResponse200 | None:
     """List container images
 
@@ -114,10 +115,10 @@ def sync(
     array including all tags.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, str]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (str | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -139,10 +140,10 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, str] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: str | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> Response[ListImagesResponse200]:
     """List container images
 
@@ -150,10 +151,10 @@ async def asyncio_detailed(
     array including all tags.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, str]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (str | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -178,10 +179,10 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, str] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: str | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> ListImagesResponse200 | None:
     """List container images
 
@@ -189,10 +190,10 @@ async def asyncio(
     array including all tags.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, str]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (str | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

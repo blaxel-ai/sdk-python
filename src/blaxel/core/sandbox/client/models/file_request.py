@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,14 +15,14 @@ T = TypeVar("T", bound="FileRequest")
 class FileRequest:
     """
     Attributes:
-        content (Union[Unset, str]):  Example: file contents here.
-        is_directory (Union[Unset, bool]):
-        permissions (Union[Unset, str]):  Example: 0644.
+        content (str | Unset):  Example: file contents here.
+        is_directory (bool | Unset):  Example: False.
+        permissions (str | Unset):  Example: 0644.
     """
 
-    content: Union[Unset, str] = UNSET
-    is_directory: Union[Unset, bool] = UNSET
-    permissions: Union[Unset, str] = UNSET
+    content: str | Unset = UNSET
+    is_directory: bool | Unset = UNSET
+    permissions: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,10 +45,10 @@ class FileRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         content = d.pop("content", UNSET)
 
         is_directory = d.pop("isDirectory", d.pop("is_directory", UNSET))

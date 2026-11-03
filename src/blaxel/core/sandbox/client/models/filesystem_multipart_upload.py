@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,24 +19,24 @@ T = TypeVar("T", bound="FilesystemMultipartUpload")
 class FilesystemMultipartUpload:
     """
     Attributes:
-        initiated_at (Union[Unset, str]):
-        parts (Union[Unset, FilesystemMultipartUploadParts]):
-        path (Union[Unset, str]):  Example: /tmp/largefile.dat.
-        permissions (Union[Unset, int]):  Example: 420.
-        upload_id (Union[Unset, str]):  Example: 550e8400-e29b-41d4-a716-446655440000.
+        initiated_at (str | Unset):
+        parts (FilesystemMultipartUploadParts | Unset):
+        path (str | Unset):  Example: /tmp/largefile.dat.
+        permissions (int | Unset):  Example: 420.
+        upload_id (str | Unset):  Example: 550e8400-e29b-41d4-a716-446655440000.
     """
 
-    initiated_at: Union[Unset, str] = UNSET
-    parts: Union[Unset, "FilesystemMultipartUploadParts"] = UNSET
-    path: Union[Unset, str] = UNSET
-    permissions: Union[Unset, int] = UNSET
-    upload_id: Union[Unset, str] = UNSET
+    initiated_at: str | Unset = UNSET
+    parts: FilesystemMultipartUploadParts | Unset = UNSET
+    path: str | Unset = UNSET
+    permissions: int | Unset = UNSET
+    upload_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         initiated_at = self.initiated_at
 
-        parts: Union[Unset, dict[str, Any]] = UNSET
+        parts: dict[str, Any] | Unset = UNSET
         if self.parts and not isinstance(self.parts, Unset) and not isinstance(self.parts, dict):
             parts = self.parts.to_dict()
         elif self.parts and isinstance(self.parts, dict):
@@ -62,16 +65,18 @@ class FilesystemMultipartUpload:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.filesystem_multipart_upload_parts import FilesystemMultipartUploadParts
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.filesystem_multipart_upload_parts import (
+            FilesystemMultipartUploadParts,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         initiated_at = d.pop("initiatedAt", d.pop("initiated_at", UNSET))
 
         _parts = d.pop("parts", UNSET)
-        parts: Union[Unset, FilesystemMultipartUploadParts]
+        parts: FilesystemMultipartUploadParts | Unset
         if isinstance(_parts, Unset):
             parts = UNSET
         else:

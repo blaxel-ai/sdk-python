@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,10 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/sandboxes/{sandbox_name}/schedules/{schedule_id}",
+        "url": "/sandboxes/{sandbox_name}/schedules/{schedule_id}".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+            schedule_id=quote(str(schedule_id), safe=""),
+        ),
     }
 
     return _kwargs
@@ -26,6 +30,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> SandboxSched
         response_200 = SandboxScheduleEntry.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

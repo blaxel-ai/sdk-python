@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -22,15 +23,16 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/network/process/{pid}/monitor",
+        "url": "/network/process/{pid}/monitor".format(
+            pid=quote(str(pid), safe=""),
+        ),
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -39,26 +41,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200] | None:
+) -> ErrorResponse | PostNetworkProcessPidMonitorResponse200 | None:
     if response.status_code == 200:
         response_200 = PostNetworkProcessPidMonitorResponse200.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -69,7 +75,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]:
+) -> Response[ErrorResponse | PostNetworkProcessPidMonitorResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -83,7 +89,7 @@ def sync_detailed(
     *,
     client: Client,
     body: PortMonitorRequest,
-) -> Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]:
+) -> Response[ErrorResponse | PostNetworkProcessPidMonitorResponse200]:
     """Start monitoring ports for a process
 
      Start monitoring for new ports opened by a process
@@ -97,7 +103,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]
+        Response[ErrorResponse | PostNetworkProcessPidMonitorResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -117,7 +123,7 @@ def sync(
     *,
     client: Client,
     body: PortMonitorRequest,
-) -> Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200] | None:
+) -> ErrorResponse | PostNetworkProcessPidMonitorResponse200 | None:
     """Start monitoring ports for a process
 
      Start monitoring for new ports opened by a process
@@ -131,7 +137,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]
+        ErrorResponse | PostNetworkProcessPidMonitorResponse200
     """
 
     return sync_detailed(
@@ -146,7 +152,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: PortMonitorRequest,
-) -> Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]:
+) -> Response[ErrorResponse | PostNetworkProcessPidMonitorResponse200]:
     """Start monitoring ports for a process
 
      Start monitoring for new ports opened by a process
@@ -160,7 +166,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]]
+        Response[ErrorResponse | PostNetworkProcessPidMonitorResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -178,7 +184,7 @@ async def asyncio(
     *,
     client: Client,
     body: PortMonitorRequest,
-) -> Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200] | None:
+) -> ErrorResponse | PostNetworkProcessPidMonitorResponse200 | None:
     """Start monitoring ports for a process
 
      Start monitoring for new ports opened by a process
@@ -192,7 +198,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, PostNetworkProcessPidMonitorResponse200]
+        ErrorResponse | PostNetworkProcessPidMonitorResponse200
     """
 
     return (

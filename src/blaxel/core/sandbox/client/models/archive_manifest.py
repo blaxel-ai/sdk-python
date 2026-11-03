@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,30 +18,29 @@ class ArchiveManifest:
         created_at (str):
         root (str): Root is the directory the paths are relative to. Example: /.
         version (int):  Example: 1.
-        added (Union[Unset, int]): Added and Modified count the archive's payload members. Example: 11.
-        api_version (Union[Unset, str]): APIVersion is the sandbox-api build that produced the archive. Example: v0.1.0.
-        deleted (Union[Unset, list[str]]): Deleted are paths the image has and the sandbox deleted. Tar cannot carry
+        added (int | Unset): Added and Modified count the archive's payload members. Example: 11.
+        api_version (str | Unset): APIVersion is the sandbox-api build that produced the archive. Example: v0.1.0.
+        deleted (list[str] | Unset): Deleted are paths the image has and the sandbox deleted. Tar cannot carry
             a deletion, so import applies these from the manifest.
-        excludes (Union[Unset, list[str]]): Excludes are the paths left out of the comparison.
-        image_device (Union[Unset, str]): ImageDevice is the device the pristine image was read from, for the record:
+        excludes (list[str] | Unset): Excludes are the paths left out of the comparison.
+        image_device (str | Unset): ImageDevice is the device the pristine image was read from, for the record:
             it says where the sandbox that exported the archive found its image. Example: /dev/vda.
-        modified (Union[Unset, int]):  Example: 3.
-        payload_bytes (Union[Unset, int]): PayloadBytes is the total content size of the payload members. Example:
-            3073449.
-        processes (Union[Unset, bool]): Processes tells whether ProcessesName is present. Example: True.
+        modified (int | Unset):  Example: 3.
+        payload_bytes (int | Unset): PayloadBytes is the total content size of the payload members. Example: 3073449.
+        processes (bool | Unset): Processes tells whether ProcessesName is present. Example: True.
     """
 
     created_at: str
     root: str
     version: int
-    added: Union[Unset, int] = UNSET
-    api_version: Union[Unset, str] = UNSET
-    deleted: Union[Unset, list[str]] = UNSET
-    excludes: Union[Unset, list[str]] = UNSET
-    image_device: Union[Unset, str] = UNSET
-    modified: Union[Unset, int] = UNSET
-    payload_bytes: Union[Unset, int] = UNSET
-    processes: Union[Unset, bool] = UNSET
+    added: int | Unset = UNSET
+    api_version: str | Unset = UNSET
+    deleted: list[str] | Unset = UNSET
+    excludes: list[str] | Unset = UNSET
+    image_device: str | Unset = UNSET
+    modified: int | Unset = UNSET
+    payload_bytes: int | Unset = UNSET
+    processes: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -52,11 +54,11 @@ class ArchiveManifest:
 
         api_version = self.api_version
 
-        deleted: Union[Unset, list[str]] = UNSET
+        deleted: list[str] | Unset = UNSET
         if not isinstance(self.deleted, Unset):
             deleted = self.deleted
 
-        excludes: Union[Unset, list[str]] = UNSET
+        excludes: list[str] | Unset = UNSET
         if not isinstance(self.excludes, Unset):
             excludes = self.excludes
 
@@ -97,10 +99,10 @@ class ArchiveManifest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt") if "createdAt" in d else d.pop("created_at")
 
         root = d.pop("root")

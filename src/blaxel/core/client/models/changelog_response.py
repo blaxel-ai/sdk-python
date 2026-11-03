@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,15 +20,14 @@ class ChangelogResponse:
     """Latest changelog entries shown in the controlplane UI.
 
     Attributes:
-        entries (Union[Unset, list['ChangelogEntry']]): Latest changelog entries, newest first.
+        entries (list[ChangelogEntry] | Unset): Latest changelog entries, newest first.
     """
 
-    entries: Union[Unset, list["ChangelogEntry"]] = UNSET
+    entries: list[ChangelogEntry] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        entries: Union[Unset, list[dict[str, Any]]] = UNSET
+        entries: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.entries, Unset):
             entries = []
             for entries_item_data in self.entries:
@@ -44,12 +46,12 @@ class ChangelogResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.changelog_entry import ChangelogEntry
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.changelog_entry import ChangelogEntry  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         entries = []
         _entries = d.pop("entries", UNSET)
         for entries_item_data in _entries or []:

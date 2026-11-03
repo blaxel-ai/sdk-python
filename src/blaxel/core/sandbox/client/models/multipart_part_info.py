@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,12 +15,12 @@ T = TypeVar("T", bound="MultipartPartInfo")
 class MultipartPartInfo:
     """
     Attributes:
-        etag (Union[Unset, str]):  Example: 5d41402abc4b2a76b9719d911017c592.
-        part_number (Union[Unset, int]):  Example: 1.
+        etag (str | Unset):  Example: 5d41402abc4b2a76b9719d911017c592.
+        part_number (int | Unset):  Example: 1.
     """
 
-    etag: Union[Unset, str] = UNSET
-    part_number: Union[Unset, int] = UNSET
+    etag: str | Unset = UNSET
+    part_number: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,10 +39,10 @@ class MultipartPartInfo:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         etag = d.pop("etag", UNSET)
 
         part_number = d.pop("partNumber", d.pop("part_number", UNSET))

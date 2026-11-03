@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -16,7 +17,11 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/vpcs/{vpc_name}/egressgateways/{gateway_name}/ips/{ip_name}",
+        "url": "/vpcs/{vpc_name}/egressgateways/{gateway_name}/ips/{ip_name}".format(
+            vpc_name=quote(str(vpc_name), safe=""),
+            gateway_name=quote(str(gateway_name), safe=""),
+            ip_name=quote(str(ip_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -27,6 +32,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> EgressIP | N
         response_200 = EgressIP.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

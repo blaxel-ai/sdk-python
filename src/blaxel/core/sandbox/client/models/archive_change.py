@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,13 +18,12 @@ class ArchiveChange:
     Attributes:
         kind (ArchiveChangeKind):
         path (str): Path is relative to the root, without a leading slash. Example: usr/bin/curl.
-        size (Union[Unset, int]): Size is the file content size in bytes, 0 for anything but a regular file. Example:
-            256216.
+        size (int | Unset): Size is the file content size in bytes, 0 for anything but a regular file. Example: 256216.
     """
 
     kind: ArchiveChangeKind
     path: str
-    size: Union[Unset, int] = UNSET
+    size: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -45,10 +47,10 @@ class ArchiveChange:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         kind = ArchiveChangeKind(d.pop("kind"))
 
         path = d.pop("path")

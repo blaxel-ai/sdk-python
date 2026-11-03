@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -14,11 +17,11 @@ T = TypeVar("T", bound="FindResponse")
 class FindResponse:
     """
     Attributes:
-        matches (list['FindMatch']):
+        matches (list[FindMatch]):
         total (int):  Example: 5.
     """
 
-    matches: list["FindMatch"]
+    matches: list[FindMatch]
     total: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -45,12 +48,12 @@ class FindResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.find_match import FindMatch
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.find_match import FindMatch  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         matches = []
         _matches = d.pop("matches")
         for matches_item_data in _matches:

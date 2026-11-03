@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -20,12 +23,11 @@ class PreviewToken:
         spec (PreviewTokenSpec): Spec for a Preview Token
     """
 
-    metadata: "PreviewTokenMetadata"
-    spec: "PreviewTokenSpec"
+    metadata: PreviewTokenMetadata
+    spec: PreviewTokenSpec
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -48,13 +50,13 @@ class PreviewToken:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.preview_token_metadata import PreviewTokenMetadata
-        from ..models.preview_token_spec import PreviewTokenSpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.preview_token_metadata import PreviewTokenMetadata  # noqa: PLC0415
+        from ..models.preview_token_spec import PreviewTokenSpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = PreviewTokenMetadata.from_dict(d.pop("metadata"))
 
         spec = PreviewTokenSpec.from_dict(d.pop("spec"))

@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -16,7 +17,11 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/sandboxes/{sandbox_name}/previews/{preview_name}/tokens/{token_name}",
+        "url": "/sandboxes/{sandbox_name}/previews/{preview_name}/tokens/{token_name}".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+            preview_name=quote(str(preview_name), safe=""),
+            token_name=quote(str(token_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -29,6 +34,7 @@ def _parse_response(
         response_200 = DeleteSandboxPreviewTokenResponse200.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

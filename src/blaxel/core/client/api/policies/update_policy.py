@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -18,15 +19,16 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "put",
-        "url": f"/policies/{policy_name}",
+        "url": "/policies/{policy_name}".format(
+            policy_name=quote(str(policy_name), safe=""),
+        ),
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -38,6 +40,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Policy | Non
         response_200 = Policy.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

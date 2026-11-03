@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -13,7 +13,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     *,
     body: CheckWorkspaceAvailabilityBody,
-    with_reason: Union[Unset, bool] = UNSET,
+    with_reason: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -30,11 +30,10 @@ def _get_kwargs(
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -43,23 +42,24 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union["WorkspaceAvailability", bool] | None:
+) -> bool | WorkspaceAvailability | None:
     if response.status_code == 200:
 
-        def _parse_response_200(data: object) -> Union["WorkspaceAvailability", bool]:
+        def _parse_response_200(data: object) -> bool | WorkspaceAvailability:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
                 response_200_type_1 = WorkspaceAvailability.from_dict(data)
 
                 return response_200_type_1
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union["WorkspaceAvailability", bool], data)
+            return cast(bool | WorkspaceAvailability, data)
 
         response_200 = _parse_response_200(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -70,7 +70,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union["WorkspaceAvailability", bool]]:
+) -> Response[bool | WorkspaceAvailability]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -83,14 +83,14 @@ def sync_detailed(
     *,
     client: Client,
     body: CheckWorkspaceAvailabilityBody,
-    with_reason: Union[Unset, bool] = UNSET,
-) -> Response[Union["WorkspaceAvailability", bool]]:
+    with_reason: bool | Unset = UNSET,
+) -> Response[bool | WorkspaceAvailability]:
     """Check workspace availability
 
      Check if a workspace is available.
 
     Args:
-        with_reason (Union[Unset, bool]):
+        with_reason (bool | Unset):
         body (CheckWorkspaceAvailabilityBody):
 
     Raises:
@@ -98,7 +98,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union['WorkspaceAvailability', bool]]
+        Response[bool | WorkspaceAvailability]
     """
 
     kwargs = _get_kwargs(
@@ -117,14 +117,14 @@ def sync(
     *,
     client: Client,
     body: CheckWorkspaceAvailabilityBody,
-    with_reason: Union[Unset, bool] = UNSET,
-) -> Union["WorkspaceAvailability", bool] | None:
+    with_reason: bool | Unset = UNSET,
+) -> bool | WorkspaceAvailability | None:
     """Check workspace availability
 
      Check if a workspace is available.
 
     Args:
-        with_reason (Union[Unset, bool]):
+        with_reason (bool | Unset):
         body (CheckWorkspaceAvailabilityBody):
 
     Raises:
@@ -132,7 +132,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union['WorkspaceAvailability', bool]
+        bool | WorkspaceAvailability
     """
 
     return sync_detailed(
@@ -146,14 +146,14 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: CheckWorkspaceAvailabilityBody,
-    with_reason: Union[Unset, bool] = UNSET,
-) -> Response[Union["WorkspaceAvailability", bool]]:
+    with_reason: bool | Unset = UNSET,
+) -> Response[bool | WorkspaceAvailability]:
     """Check workspace availability
 
      Check if a workspace is available.
 
     Args:
-        with_reason (Union[Unset, bool]):
+        with_reason (bool | Unset):
         body (CheckWorkspaceAvailabilityBody):
 
     Raises:
@@ -161,7 +161,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union['WorkspaceAvailability', bool]]
+        Response[bool | WorkspaceAvailability]
     """
 
     kwargs = _get_kwargs(
@@ -178,14 +178,14 @@ async def asyncio(
     *,
     client: Client,
     body: CheckWorkspaceAvailabilityBody,
-    with_reason: Union[Unset, bool] = UNSET,
-) -> Union["WorkspaceAvailability", bool] | None:
+    with_reason: bool | Unset = UNSET,
+) -> bool | WorkspaceAvailability | None:
     """Check workspace availability
 
      Check if a workspace is available.
 
     Args:
-        with_reason (Union[Unset, bool]):
+        with_reason (bool | Unset):
         body (CheckWorkspaceAvailabilityBody):
 
     Raises:
@@ -193,7 +193,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union['WorkspaceAvailability', bool]
+        bool | WorkspaceAvailability
     """
 
     return (

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -22,32 +22,32 @@ def _get_kwargs(
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Any, PendingInvitation] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | PendingInvitation | None:
     if response.status_code == 200:
         response_200 = PendingInvitation.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -58,7 +58,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, PendingInvitation]]:
+) -> Response[Any | PendingInvitation]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -71,7 +71,7 @@ def sync_detailed(
     *,
     client: Client,
     body: InviteWorkspaceUserBody,
-) -> Response[Union[Any, PendingInvitation]]:
+) -> Response[Any | PendingInvitation]:
     """Invite user to workspace
 
      Invites a new team member to the workspace by email. The invitee will receive an email to accept the
@@ -85,7 +85,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PendingInvitation]]
+        Response[Any | PendingInvitation]
     """
 
     kwargs = _get_kwargs(
@@ -103,7 +103,7 @@ def sync(
     *,
     client: Client,
     body: InviteWorkspaceUserBody,
-) -> Union[Any, PendingInvitation] | None:
+) -> Any | PendingInvitation | None:
     """Invite user to workspace
 
      Invites a new team member to the workspace by email. The invitee will receive an email to accept the
@@ -117,7 +117,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PendingInvitation]
+        Any | PendingInvitation
     """
 
     return sync_detailed(
@@ -130,7 +130,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: InviteWorkspaceUserBody,
-) -> Response[Union[Any, PendingInvitation]]:
+) -> Response[Any | PendingInvitation]:
     """Invite user to workspace
 
      Invites a new team member to the workspace by email. The invitee will receive an email to accept the
@@ -144,7 +144,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PendingInvitation]]
+        Response[Any | PendingInvitation]
     """
 
     kwargs = _get_kwargs(
@@ -160,7 +160,7 @@ async def asyncio(
     *,
     client: Client,
     body: InviteWorkspaceUserBody,
-) -> Union[Any, PendingInvitation] | None:
+) -> Any | PendingInvitation | None:
     """Invite user to workspace
 
      Invites a new team member to the workspace by email. The invitee will receive an email to accept the
@@ -174,7 +174,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PendingInvitation]
+        Any | PendingInvitation
     """
 
     return (

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -12,8 +12,8 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     *,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -32,11 +32,10 @@ def _get_kwargs(
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -48,6 +47,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> VolumeTempla
         response_200 = VolumeTemplate.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -69,8 +69,8 @@ def sync_detailed(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> Response[VolumeTemplate]:
     """Create volume template
 
@@ -78,8 +78,8 @@ def sync_detailed(
     Optionally returns a presigned URL for uploading the template archive.
 
     Args:
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:
@@ -107,8 +107,8 @@ def sync(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> VolumeTemplate | None:
     """Create volume template
 
@@ -116,8 +116,8 @@ def sync(
     Optionally returns a presigned URL for uploading the template archive.
 
     Args:
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:
@@ -140,8 +140,8 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> Response[VolumeTemplate]:
     """Create volume template
 
@@ -149,8 +149,8 @@ async def asyncio_detailed(
     Optionally returns a presigned URL for uploading the template archive.
 
     Args:
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:
@@ -176,8 +176,8 @@ async def asyncio(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> VolumeTemplate | None:
     """Create volume template
 
@@ -185,8 +185,8 @@ async def asyncio(
     Optionally returns a presigned URL for uploading the template archive.
 
     Args:
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:

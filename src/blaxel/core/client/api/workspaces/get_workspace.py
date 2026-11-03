@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,7 +14,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     workspace_name: str,
     *,
-    count_resources: Union[Unset, bool] = False,
+    count_resources: bool | Unset = False,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -23,38 +24,45 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/workspaces/{workspace_name}",
+        "url": "/workspaces/{workspace_name}".format(
+            workspace_name=quote(str(workspace_name), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Workspace] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | Workspace | None:
     if response.status_code == 200:
         response_200 = Workspace.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -63,9 +71,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Error, Workspace]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | Workspace]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -78,8 +84,8 @@ def sync_detailed(
     workspace_name: str,
     *,
     client: Client,
-    count_resources: Union[Unset, bool] = False,
-) -> Response[Union[Error, Workspace]]:
+    count_resources: bool | Unset = False,
+) -> Response[Error | Workspace]:
     """Get workspace details
 
      Returns detailed information about a workspace including its display name, account ID, status, and
@@ -87,14 +93,14 @@ def sync_detailed(
 
     Args:
         workspace_name (str):
-        count_resources (Union[Unset, bool]):  Default: False.
+        count_resources (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Workspace]]
+        Response[Error | Workspace]
     """
 
     kwargs = _get_kwargs(
@@ -113,8 +119,8 @@ def sync(
     workspace_name: str,
     *,
     client: Client,
-    count_resources: Union[Unset, bool] = False,
-) -> Union[Error, Workspace] | None:
+    count_resources: bool | Unset = False,
+) -> Error | Workspace | None:
     """Get workspace details
 
      Returns detailed information about a workspace including its display name, account ID, status, and
@@ -122,14 +128,14 @@ def sync(
 
     Args:
         workspace_name (str):
-        count_resources (Union[Unset, bool]):  Default: False.
+        count_resources (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Workspace]
+        Error | Workspace
     """
 
     return sync_detailed(
@@ -143,8 +149,8 @@ async def asyncio_detailed(
     workspace_name: str,
     *,
     client: Client,
-    count_resources: Union[Unset, bool] = False,
-) -> Response[Union[Error, Workspace]]:
+    count_resources: bool | Unset = False,
+) -> Response[Error | Workspace]:
     """Get workspace details
 
      Returns detailed information about a workspace including its display name, account ID, status, and
@@ -152,14 +158,14 @@ async def asyncio_detailed(
 
     Args:
         workspace_name (str):
-        count_resources (Union[Unset, bool]):  Default: False.
+        count_resources (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Workspace]]
+        Response[Error | Workspace]
     """
 
     kwargs = _get_kwargs(
@@ -176,8 +182,8 @@ async def asyncio(
     workspace_name: str,
     *,
     client: Client,
-    count_resources: Union[Unset, bool] = False,
-) -> Union[Error, Workspace] | None:
+    count_resources: bool | Unset = False,
+) -> Error | Workspace | None:
     """Get workspace details
 
      Returns detailed information about a workspace including its display name, account ID, status, and
@@ -185,14 +191,14 @@ async def asyncio(
 
     Args:
         workspace_name (str):
-        count_resources (Union[Unset, bool]):  Default: False.
+        count_resources (bool | Unset):  Default: False.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Workspace]
+        Error | Workspace
     """
 
     return (

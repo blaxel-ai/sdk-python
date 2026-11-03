@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -13,12 +13,12 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    type_: ListSchedulesType | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -26,7 +26,7 @@ def _get_kwargs(
 
     params["cursor"] = cursor
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -36,7 +36,7 @@ def _get_kwargs(
 
     params["sandbox"] = sandbox
 
-    json_type_: Union[Unset, str] = UNSET
+    json_type_: str | Unset = UNSET
     if not isinstance(type_, Unset):
         json_type_ = type_.value
 
@@ -58,6 +58,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> SandboxSched
         response_200 = SandboxScheduleEntryList.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -80,24 +81,24 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    type_: ListSchedulesType | Unset = UNSET,
 ) -> Response[SandboxScheduleEntryList]:
     """List Workspace Schedules
 
      Returns schedule definitions across the workspace, newest first by default.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSchedulesSort]):
-        q (Union[Unset, str]):
-        sandbox (Union[Unset, str]):
-        type_ (Union[Unset, ListSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSchedulesSort | Unset):
+        q (str | Unset):
+        sandbox (str | Unset):
+        type_ (ListSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -126,24 +127,24 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    type_: ListSchedulesType | Unset = UNSET,
 ) -> SandboxScheduleEntryList | None:
     """List Workspace Schedules
 
      Returns schedule definitions across the workspace, newest first by default.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSchedulesSort]):
-        q (Union[Unset, str]):
-        sandbox (Union[Unset, str]):
-        type_ (Union[Unset, ListSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSchedulesSort | Unset):
+        q (str | Unset):
+        sandbox (str | Unset):
+        type_ (ListSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -167,24 +168,24 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    type_: ListSchedulesType | Unset = UNSET,
 ) -> Response[SandboxScheduleEntryList]:
     """List Workspace Schedules
 
      Returns schedule definitions across the workspace, newest first by default.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSchedulesSort]):
-        q (Union[Unset, str]):
-        sandbox (Union[Unset, str]):
-        type_ (Union[Unset, ListSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSchedulesSort | Unset):
+        q (str | Unset):
+        sandbox (str | Unset):
+        type_ (ListSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -211,24 +212,24 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    type_: ListSchedulesType | Unset = UNSET,
 ) -> SandboxScheduleEntryList | None:
     """List Workspace Schedules
 
      Returns schedule definitions across the workspace, newest first by default.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSchedulesSort]):
-        q (Union[Unset, str]):
-        sandbox (Union[Unset, str]):
-        type_ (Union[Unset, ListSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSchedulesSort | Unset):
+        q (str | Unset):
+        sandbox (str | Unset):
+        type_ (ListSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -8,12 +8,12 @@ from ...client import Client
 from ...models.error_response import ErrorResponse
 from ...models.success_response import SuccessResponse
 from ...models.upgrade_request import UpgradeRequest
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
-    body: UpgradeRequest,
+    body: UpgradeRequest | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -22,12 +22,11 @@ def _get_kwargs(
         "url": "/upgrade",
     }
 
-    if type(body) is dict:
-        _body = body
-    else:
-        _body = body.to_dict()
+    if body and not isinstance(body, Unset) and not isinstance(body, dict):
+        _kwargs["json"] = body.to_dict()
+    elif body and isinstance(body, dict):
+        _kwargs["json"] = body
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -36,16 +35,18 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, SuccessResponse] | None:
+) -> ErrorResponse | SuccessResponse | None:
     if response.status_code == 200:
         response_200 = SuccessResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -56,7 +57,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+) -> Response[ErrorResponse | SuccessResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -68,27 +69,27 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    body: UpgradeRequest,
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
-    r"""Upgrade the sandbox-api
+    body: UpgradeRequest | Unset = UNSET,
+) -> Response[ErrorResponse | SuccessResponse]:
+    """Upgrade the sandbox-api
 
      Triggers an upgrade of the sandbox-api process. Returns 200 immediately before upgrading.
     The upgrade will: download the specified binary from GitHub releases, validate it, and restart.
     All running processes will be preserved across the upgrade.
-    Available versions: \"latest\" (default, most recent release), \"develop\", \"main\", or specific
-    tag like \"v1.0.0\"
+    Available versions: "latest" (default, most recent release), "develop", "main", or specific tag like
+    "v1.0.0"
     You can also specify a custom baseUrl for forks (defaults to https://github.com/blaxel-
     ai/sandbox/releases)
 
     Args:
-        body (UpgradeRequest):
+        body (UpgradeRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -105,27 +106,27 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    body: UpgradeRequest,
-) -> Union[ErrorResponse, SuccessResponse] | None:
-    r"""Upgrade the sandbox-api
+    body: UpgradeRequest | Unset = UNSET,
+) -> ErrorResponse | SuccessResponse | None:
+    """Upgrade the sandbox-api
 
      Triggers an upgrade of the sandbox-api process. Returns 200 immediately before upgrading.
     The upgrade will: download the specified binary from GitHub releases, validate it, and restart.
     All running processes will be preserved across the upgrade.
-    Available versions: \"latest\" (default, most recent release), \"develop\", \"main\", or specific
-    tag like \"v1.0.0\"
+    Available versions: "latest" (default, most recent release), "develop", "main", or specific tag like
+    "v1.0.0"
     You can also specify a custom baseUrl for forks (defaults to https://github.com/blaxel-
     ai/sandbox/releases)
 
     Args:
-        body (UpgradeRequest):
+        body (UpgradeRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return sync_detailed(
@@ -137,27 +138,27 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    body: UpgradeRequest,
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
-    r"""Upgrade the sandbox-api
+    body: UpgradeRequest | Unset = UNSET,
+) -> Response[ErrorResponse | SuccessResponse]:
+    """Upgrade the sandbox-api
 
      Triggers an upgrade of the sandbox-api process. Returns 200 immediately before upgrading.
     The upgrade will: download the specified binary from GitHub releases, validate it, and restart.
     All running processes will be preserved across the upgrade.
-    Available versions: \"latest\" (default, most recent release), \"develop\", \"main\", or specific
-    tag like \"v1.0.0\"
+    Available versions: "latest" (default, most recent release), "develop", "main", or specific tag like
+    "v1.0.0"
     You can also specify a custom baseUrl for forks (defaults to https://github.com/blaxel-
     ai/sandbox/releases)
 
     Args:
-        body (UpgradeRequest):
+        body (UpgradeRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -172,27 +173,27 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    body: UpgradeRequest,
-) -> Union[ErrorResponse, SuccessResponse] | None:
-    r"""Upgrade the sandbox-api
+    body: UpgradeRequest | Unset = UNSET,
+) -> ErrorResponse | SuccessResponse | None:
+    """Upgrade the sandbox-api
 
      Triggers an upgrade of the sandbox-api process. Returns 200 immediately before upgrading.
     The upgrade will: download the specified binary from GitHub releases, validate it, and restart.
     All running processes will be preserved across the upgrade.
-    Available versions: \"latest\" (default, most recent release), \"develop\", \"main\", or specific
-    tag like \"v1.0.0\"
+    Available versions: "latest" (default, most recent release), "develop", "main", or specific tag like
+    "v1.0.0"
     You can also specify a custom baseUrl for forks (defaults to https://github.com/blaxel-
     ai/sandbox/releases)
 
     Args:
-        body (UpgradeRequest):
+        body (UpgradeRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,34 +23,33 @@ class SandboxSpec:
     """Configuration for a sandbox including its image, memory, ports, region, and lifecycle policies
 
     Attributes:
-        enabled (Union[Unset, bool]): When false, the sandbox is disabled and will not accept connections Default: True.
+        enabled (bool | Unset): When false, the sandbox is disabled and will not accept connections Default: True.
             Example: True.
-        lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
-            on idle time, max age, or specific dates
-        network (Union[Unset, SandboxNetwork]): Network configuration for a sandbox including subnet, firewall rulesets,
+        lifecycle (SandboxLifecycle | Unset): Lifecycle configuration controlling automatic sandbox deletion based on
+            idle time, max age, or specific dates
+        network (SandboxNetwork | Unset): Network configuration for a sandbox including subnet, firewall rulesets,
             domain filtering, egress IP binding, and proxy settings
-        region (Union[Unset, str]): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not
-            specified, defaults to the region closest to the user. Example: us-pdx-1.
-        runtime (Union[Unset, SandboxRuntime]): Runtime configuration defining how the sandbox VM is provisioned and its
+        region (str | Unset): Region where the sandbox should be created (e.g. us-pdx-1, eu-lon-1). If not specified,
+            defaults to the region closest to the user. Example: us-pdx-1.
+        runtime (SandboxRuntime | Unset): Runtime configuration defining how the sandbox VM is provisioned and its
             resource limits
-        volumes (Union[Unset, list['VolumeAttachment']]):
-        vpc (Union[Unset, str]): VPC name for the sandbox. Defaults to "default" when absent. Example: default.
+        volumes (list[VolumeAttachment] | Unset):
+        vpc (str | Unset): VPC name for the sandbox. Defaults to "default" when absent. Example: default.
     """
 
-    enabled: Union[Unset, bool] = True
-    lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
-    network: Union[Unset, "SandboxNetwork"] = UNSET
-    region: Union[Unset, str] = UNSET
-    runtime: Union[Unset, "SandboxRuntime"] = UNSET
-    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
-    vpc: Union[Unset, str] = UNSET
+    enabled: bool | Unset = True
+    lifecycle: SandboxLifecycle | Unset = UNSET
+    network: SandboxNetwork | Unset = UNSET
+    region: str | Unset = UNSET
+    runtime: SandboxRuntime | Unset = UNSET
+    volumes: list[VolumeAttachment] | Unset = UNSET
+    vpc: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        lifecycle: Union[Unset, dict[str, Any]] = UNSET
+        lifecycle: dict[str, Any] | Unset = UNSET
         if (
             self.lifecycle
             and not isinstance(self.lifecycle, Unset)
@@ -57,7 +59,7 @@ class SandboxSpec:
         elif self.lifecycle and isinstance(self.lifecycle, dict):
             lifecycle = self.lifecycle
 
-        network: Union[Unset, dict[str, Any]] = UNSET
+        network: dict[str, Any] | Unset = UNSET
         if (
             self.network
             and not isinstance(self.network, Unset)
@@ -69,7 +71,7 @@ class SandboxSpec:
 
         region = self.region
 
-        runtime: Union[Unset, dict[str, Any]] = UNSET
+        runtime: dict[str, Any] | Unset = UNSET
         if (
             self.runtime
             and not isinstance(self.runtime, Unset)
@@ -79,7 +81,7 @@ class SandboxSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        volumes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.volumes, Unset):
             volumes = []
             for componentsschemas_volume_attachments_item_data in self.volumes:
@@ -116,26 +118,26 @@ class SandboxSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.sandbox_lifecycle import SandboxLifecycle
-        from ..models.sandbox_network import SandboxNetwork
-        from ..models.sandbox_runtime import SandboxRuntime
-        from ..models.volume_attachment import VolumeAttachment
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.sandbox_lifecycle import SandboxLifecycle  # noqa: PLC0415
+        from ..models.sandbox_network import SandboxNetwork  # noqa: PLC0415
+        from ..models.sandbox_runtime import SandboxRuntime  # noqa: PLC0415
+        from ..models.volume_attachment import VolumeAttachment  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         _lifecycle = d.pop("lifecycle", UNSET)
-        lifecycle: Union[Unset, SandboxLifecycle]
+        lifecycle: SandboxLifecycle | Unset
         if isinstance(_lifecycle, Unset):
             lifecycle = UNSET
         else:
             lifecycle = SandboxLifecycle.from_dict(_lifecycle)
 
         _network = d.pop("network", UNSET)
-        network: Union[Unset, SandboxNetwork]
+        network: SandboxNetwork | Unset
         if isinstance(_network, Unset):
             network = UNSET
         else:
@@ -144,7 +146,7 @@ class SandboxSpec:
         region = d.pop("region", UNSET)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, SandboxRuntime]
+        runtime: SandboxRuntime | Unset
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,19 +20,18 @@ class DriveSpec:
     """Immutable drive configuration set at creation time
 
     Attributes:
-        permissions (Union[Unset, list['DrivePermission']]): Permissions controlling which workloads can access this
-            drive. Empty means all workloads in the workspace can access the drive. Maximum 3 permissions.
-        region (Union[Unset, str]): Deployment region for the drive (e.g., us-pdx-1, eu-lon-1). Must match the region of
+        permissions (list[DrivePermission] | Unset): Permissions controlling which workloads can access this drive.
+            Empty means all workloads in the workspace can access the drive. Maximum 3 permissions.
+        region (str | Unset): Deployment region for the drive (e.g., us-pdx-1, eu-lon-1). Must match the region of
             resources it attaches to. Example: us-pdx-1.
     """
 
-    permissions: Union[Unset, list["DrivePermission"]] = UNSET
-    region: Union[Unset, str] = UNSET
+    permissions: list[DrivePermission] | Unset = UNSET
+    region: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        permissions: Union[Unset, list[dict[str, Any]]] = UNSET
+        permissions: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.permissions, Unset):
             permissions = []
             for permissions_item_data in self.permissions:
@@ -52,12 +54,12 @@ class DriveSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.drive_permission import DrivePermission
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.drive_permission import DrivePermission  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         permissions = []
         _permissions = d.pop("permissions", UNSET)
         for permissions_item_data in _permissions or []:

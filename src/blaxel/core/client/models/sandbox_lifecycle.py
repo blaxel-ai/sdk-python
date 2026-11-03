@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,19 +20,18 @@ class SandboxLifecycle:
     """Lifecycle configuration controlling automatic sandbox deletion based on idle time, max age, or specific dates
 
     Attributes:
-        expiration_policies (Union[Unset, list['ExpirationPolicy']]): List of expiration policies. Multiple policies can
-            be combined; whichever condition is met first triggers the action.
-        terminated_retention (Union[Unset, str]): Duration to keep the sandbox record after termination for log access
-            (e.g., '1h', '24h', '7d'). Defaults to 5m. Subject to maximum quota limits. Example: 24h.
+        expiration_policies (list[ExpirationPolicy] | Unset): List of expiration policies. Multiple policies can be
+            combined; whichever condition is met first triggers the action.
+        terminated_retention (str | Unset): Duration to keep the sandbox record after termination for log access (e.g.,
+            '1h', '24h', '7d'). Defaults to 5m. Subject to maximum quota limits. Example: 24h.
     """
 
-    expiration_policies: Union[Unset, list["ExpirationPolicy"]] = UNSET
-    terminated_retention: Union[Unset, str] = UNSET
+    expiration_policies: list[ExpirationPolicy] | Unset = UNSET
+    terminated_retention: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        expiration_policies: Union[Unset, list[dict[str, Any]]] = UNSET
+        expiration_policies: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.expiration_policies, Unset):
             expiration_policies = []
             for expiration_policies_item_data in self.expiration_policies:
@@ -52,12 +54,12 @@ class SandboxLifecycle:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.expiration_policy import ExpirationPolicy
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.expiration_policy import ExpirationPolicy  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         expiration_policies = []
         _expiration_policies = d.pop("expirationPolicies", d.pop("expiration_policies", UNSET))
         for expiration_policies_item_data in _expiration_policies or []:

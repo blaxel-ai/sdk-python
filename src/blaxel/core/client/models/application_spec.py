@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -21,48 +24,46 @@ class ApplicationSpec:
     """Configuration for an application including revision management, URL routing, and deployment region
 
     Attributes:
-        enabled (Union[Unset, bool]): When false, the application is disabled and will not serve requests Default: True.
+        enabled (bool | Unset): When false, the application is disabled and will not serve requests Default: True.
             Example: True.
-        envs (Union[Unset, list['Env']]): Environment variables for the application
-        extensions (Union[Unset, ApplicationExtensions]): Map of experimental, opt-in application extensions keyed by
-            fully-qualified extension name (e.g. "ai.blaxel.experimental/bind-to-sandbox").
-        image (Union[Unset, str]): Container image for the application. The backend generates a revision from the spec-
-            level compute (image, memory, envs, port) on every create/update — clients set the compute here, exactly like
-            agents and functions, and never craft revisions by hand. Example: my-registry/my-app:latest.
-        memory (Union[Unset, int]): Memory allocation in megabytes for the application (default 2048). Determines CPU
+        envs (list[Env] | Unset): Environment variables for the application
+        extensions (ApplicationExtensions | Unset): Map of experimental, opt-in application extensions keyed by fully-
+            qualified extension name (e.g. "ai.blaxel.experimental/bind-to-sandbox").
+        image (str | Unset): Container image for the application. The backend generates a revision from the spec-level
+            compute (image, memory, envs, port) on every create/update — clients set the compute here, exactly like agents
+            and functions, and never craft revisions by hand. Example: my-registry/my-app:latest.
+        memory (int | Unset): Memory allocation in megabytes for the application (default 2048). Determines CPU
             allocation (CPU = memory / 2048). Example: 2048.
-        port (Union[Unset, int]): Port the application listens on (default 8080) Example: 8080.
-        proxy (Union[Unset, bool]): When true, the application proxies to an existing sandbox (the active revision image
-            is the sandbox name) instead of building and deploying its own compute. Proxy applications have no deployment
+        port (int | Unset): Port the application listens on (default 8080) Example: 8080.
+        proxy (bool | Unset): When true, the application proxies to an existing sandbox (the active revision image is
+            the sandbox name) instead of building and deploying its own compute. Proxy applications have no deployment
             pipeline and are always reported as deployed. Deprecated — prefer the ai.blaxel.experimental/bind-to-sandbox
-            extension. Default: False.
-        region (Union[Unset, str]): Region where the application is deployed (e.g. us-pdx-1, eu-lon-1) Example: us-
-            pdx-1.
-        revision (Union[Unset, AppRevisionConfiguration]): Routing configuration controlling which revision is active
-            and canary traffic splitting
-        revisions (Union[Unset, list['AppRevision']]):
-        urls (Union[Unset, list['AppUrl']]): URL configuration for the application. Each entry defines a custom URL
-            through which the application is accessible. The domain must be a verified custom domain in the workspace.
+            extension. Default: False. Example: False.
+        region (str | Unset): Region where the application is deployed (e.g. us-pdx-1, eu-lon-1) Example: us-pdx-1.
+        revision (AppRevisionConfiguration | Unset): Routing configuration controlling which revision is active and
+            canary traffic splitting
+        revisions (list[AppRevision] | Unset):
+        urls (list[AppUrl] | Unset): URL configuration for the application. Each entry defines a custom URL through
+            which the application is accessible. The domain must be a verified custom domain in the workspace.
     """
 
-    enabled: Union[Unset, bool] = True
-    envs: Union[Unset, list["Env"]] = UNSET
-    extensions: Union[Unset, "ApplicationExtensions"] = UNSET
-    image: Union[Unset, str] = UNSET
-    memory: Union[Unset, int] = UNSET
-    port: Union[Unset, int] = UNSET
-    proxy: Union[Unset, bool] = False
-    region: Union[Unset, str] = UNSET
-    revision: Union[Unset, "AppRevisionConfiguration"] = UNSET
-    revisions: Union[Unset, list["AppRevision"]] = UNSET
-    urls: Union[Unset, list["AppUrl"]] = UNSET
+    enabled: bool | Unset = True
+    envs: list[Env] | Unset = UNSET
+    extensions: ApplicationExtensions | Unset = UNSET
+    image: str | Unset = UNSET
+    memory: int | Unset = UNSET
+    port: int | Unset = UNSET
+    proxy: bool | Unset = False
+    region: str | Unset = UNSET
+    revision: AppRevisionConfiguration | Unset = UNSET
+    revisions: list[AppRevision] | Unset = UNSET
+    urls: list[AppUrl] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        envs: Union[Unset, list[dict[str, Any]]] = UNSET
+        envs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
             for envs_item_data in self.envs:
@@ -72,7 +73,7 @@ class ApplicationSpec:
                     envs_item = envs_item_data.to_dict()
                 envs.append(envs_item)
 
-        extensions: Union[Unset, dict[str, Any]] = UNSET
+        extensions: dict[str, Any] | Unset = UNSET
         if (
             self.extensions
             and not isinstance(self.extensions, Unset)
@@ -92,7 +93,7 @@ class ApplicationSpec:
 
         region = self.region
 
-        revision: Union[Unset, dict[str, Any]] = UNSET
+        revision: dict[str, Any] | Unset = UNSET
         if (
             self.revision
             and not isinstance(self.revision, Unset)
@@ -102,7 +103,7 @@ class ApplicationSpec:
         elif self.revision and isinstance(self.revision, dict):
             revision = self.revision
 
-        revisions: Union[Unset, list[dict[str, Any]]] = UNSET
+        revisions: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.revisions, Unset):
             revisions = []
             for componentsschemas_app_revisions_item_data in self.revisions:
@@ -114,7 +115,7 @@ class ApplicationSpec:
                     )
                 revisions.append(componentsschemas_app_revisions_item)
 
-        urls: Union[Unset, list[dict[str, Any]]] = UNSET
+        urls: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.urls, Unset):
             urls = []
             for componentsschemas_app_urls_item_data in self.urls:
@@ -153,16 +154,16 @@ class ApplicationSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.app_revision import AppRevision
-        from ..models.app_revision_configuration import AppRevisionConfiguration
-        from ..models.app_url import AppUrl
-        from ..models.application_extensions import ApplicationExtensions
-        from ..models.env import Env
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.app_revision import AppRevision  # noqa: PLC0415
+        from ..models.app_revision_configuration import AppRevisionConfiguration  # noqa: PLC0415
+        from ..models.app_url import AppUrl  # noqa: PLC0415
+        from ..models.application_extensions import ApplicationExtensions  # noqa: PLC0415
+        from ..models.env import Env  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         envs = []
@@ -173,7 +174,7 @@ class ApplicationSpec:
             envs.append(envs_item)
 
         _extensions = d.pop("extensions", UNSET)
-        extensions: Union[Unset, ApplicationExtensions]
+        extensions: ApplicationExtensions | Unset
         if isinstance(_extensions, Unset):
             extensions = UNSET
         else:
@@ -190,7 +191,7 @@ class ApplicationSpec:
         region = d.pop("region", UNSET)
 
         _revision = d.pop("revision", UNSET)
-        revision: Union[Unset, AppRevisionConfiguration]
+        revision: AppRevisionConfiguration | Unset
         if isinstance(_revision, Unset):
             revision = UNSET
         else:

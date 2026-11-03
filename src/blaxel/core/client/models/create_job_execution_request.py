@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,36 +21,34 @@ class CreateJobExecutionRequest:
     """Request to create a job execution
 
     Attributes:
-        allow_queue (Union[Unset, bool]): When false, capacity is checked synchronously and the request is rejected
+        allow_queue (bool | Unset): When false, capacity is checked synchronously and the request is rejected
             immediately with a 429 error if the execution cannot start right now, instead of being queued and retried in the
             background. No execution is created on rejection. Defaults to true (queue and retry).
-        env (Union[Unset, CreateJobExecutionRequestEnv]): Environment variable overrides (optional, will merge with
-            job's environment variables) Example: {"MY_VAR": "custom_value", "BATCH_SIZE": "100"}.
-        execution_id (Union[Unset, str]): Execution ID (optional, will be generated if not provided)
-        id (Union[Unset, str]): Unique message ID
-        job_id (Union[Unset, str]): Job ID Example: data-processing-job.
-        memory (Union[Unset, int]): Memory override in megabytes (optional, must be lower than or equal to job's
-            configured memory) Example: 2048.
-        tasks (Union[Unset, list['CreateJobExecutionRequestTasksItem']]): Array of task parameters for parallel
-            execution
-        workspace_id (Union[Unset, str]): Workspace ID
+        env (CreateJobExecutionRequestEnv | Unset): Environment variable overrides (optional, will merge with job's
+            environment variables) Example: {"MY_VAR": "custom_value", "BATCH_SIZE": "100"}.
+        execution_id (str | Unset): Execution ID (optional, will be generated if not provided)
+        id (str | Unset): Unique message ID
+        job_id (str | Unset): Job ID Example: data-processing-job.
+        memory (int | Unset): Memory override in megabytes (optional, must be lower than or equal to job's configured
+            memory) Example: 2048.
+        tasks (list[CreateJobExecutionRequestTasksItem] | Unset): Array of task parameters for parallel execution
+        workspace_id (str | Unset): Workspace ID
     """
 
-    allow_queue: Union[Unset, bool] = UNSET
-    env: Union[Unset, "CreateJobExecutionRequestEnv"] = UNSET
-    execution_id: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    job_id: Union[Unset, str] = UNSET
-    memory: Union[Unset, int] = UNSET
-    tasks: Union[Unset, list["CreateJobExecutionRequestTasksItem"]] = UNSET
-    workspace_id: Union[Unset, str] = UNSET
+    allow_queue: bool | Unset = UNSET
+    env: CreateJobExecutionRequestEnv | Unset = UNSET
+    execution_id: str | Unset = UNSET
+    id: str | Unset = UNSET
+    job_id: str | Unset = UNSET
+    memory: int | Unset = UNSET
+    tasks: list[CreateJobExecutionRequestTasksItem] | Unset = UNSET
+    workspace_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         allow_queue = self.allow_queue
 
-        env: Union[Unset, dict[str, Any]] = UNSET
+        env: dict[str, Any] | Unset = UNSET
         if self.env and not isinstance(self.env, Unset) and not isinstance(self.env, dict):
             env = self.env.to_dict()
         elif self.env and isinstance(self.env, dict):
@@ -61,7 +62,7 @@ class CreateJobExecutionRequest:
 
         memory = self.memory
 
-        tasks: Union[Unset, list[dict[str, Any]]] = UNSET
+        tasks: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.tasks, Unset):
             tasks = []
             for tasks_item_data in self.tasks:
@@ -96,19 +97,21 @@ class CreateJobExecutionRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.create_job_execution_request_env import CreateJobExecutionRequestEnv
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.create_job_execution_request_env import (
+            CreateJobExecutionRequestEnv,  # noqa: PLC0415
+        )
         from ..models.create_job_execution_request_tasks_item import (
             CreateJobExecutionRequestTasksItem,
-        )
+        )  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         allow_queue = d.pop("allowQueue", d.pop("allow_queue", UNSET))
 
         _env = d.pop("env", UNSET)
-        env: Union[Unset, CreateJobExecutionRequestEnv]
+        env: CreateJobExecutionRequestEnv | Unset
         if isinstance(_env, Unset):
             env = UNSET
         else:

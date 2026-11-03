@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,29 +22,28 @@ class IntegrationEndpoint:
     """Integration endpoint
 
     Attributes:
-        body (Union[Unset, str]): Integration endpoint body
-        ignore_models (Union[Unset, list['IntegrationEndpointIgnoreModelsItem']]): Integration endpoint ignore models
-        method (Union[Unset, str]): Integration endpoint method
-        models (Union[Unset, list['IntegrationEndpointModelsItem']]): Integration endpoint models
-        stream_key (Union[Unset, str]): Integration endpoint stream key
-        stream_token (Union[Unset, IntegrationEndpointToken]): Integration endpoint token
-        token (Union[Unset, IntegrationEndpointToken]): Integration endpoint token
+        body (str | Unset): Integration endpoint body
+        ignore_models (list[IntegrationEndpointIgnoreModelsItem] | Unset): Integration endpoint ignore models
+        method (str | Unset): Integration endpoint method
+        models (list[IntegrationEndpointModelsItem] | Unset): Integration endpoint models
+        stream_key (str | Unset): Integration endpoint stream key
+        stream_token (IntegrationEndpointToken | Unset): Integration endpoint token
+        token (IntegrationEndpointToken | Unset): Integration endpoint token
     """
 
-    body: Union[Unset, str] = UNSET
-    ignore_models: Union[Unset, list["IntegrationEndpointIgnoreModelsItem"]] = UNSET
-    method: Union[Unset, str] = UNSET
-    models: Union[Unset, list["IntegrationEndpointModelsItem"]] = UNSET
-    stream_key: Union[Unset, str] = UNSET
-    stream_token: Union[Unset, "IntegrationEndpointToken"] = UNSET
-    token: Union[Unset, "IntegrationEndpointToken"] = UNSET
+    body: str | Unset = UNSET
+    ignore_models: list[IntegrationEndpointIgnoreModelsItem] | Unset = UNSET
+    method: str | Unset = UNSET
+    models: list[IntegrationEndpointModelsItem] | Unset = UNSET
+    stream_key: str | Unset = UNSET
+    stream_token: IntegrationEndpointToken | Unset = UNSET
+    token: IntegrationEndpointToken | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         body = self.body
 
-        ignore_models: Union[Unset, list[dict[str, Any]]] = UNSET
+        ignore_models: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.ignore_models, Unset):
             ignore_models = []
             for ignore_models_item_data in self.ignore_models:
@@ -53,7 +55,7 @@ class IntegrationEndpoint:
 
         method = self.method
 
-        models: Union[Unset, list[dict[str, Any]]] = UNSET
+        models: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.models, Unset):
             models = []
             for models_item_data in self.models:
@@ -65,7 +67,7 @@ class IntegrationEndpoint:
 
         stream_key = self.stream_key
 
-        stream_token: Union[Unset, dict[str, Any]] = UNSET
+        stream_token: dict[str, Any] | Unset = UNSET
         if (
             self.stream_token
             and not isinstance(self.stream_token, Unset)
@@ -75,7 +77,7 @@ class IntegrationEndpoint:
         elif self.stream_token and isinstance(self.stream_token, dict):
             stream_token = self.stream_token
 
-        token: Union[Unset, dict[str, Any]] = UNSET
+        token: dict[str, Any] | Unset = UNSET
         if self.token and not isinstance(self.token, Unset) and not isinstance(self.token, dict):
             token = self.token.to_dict()
         elif self.token and isinstance(self.token, dict):
@@ -102,16 +104,18 @@ class IntegrationEndpoint:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         from ..models.integration_endpoint_ignore_models_item import (
             IntegrationEndpointIgnoreModelsItem,
+        )  # noqa: PLC0415
+        from ..models.integration_endpoint_models_item import (
+            IntegrationEndpointModelsItem,  # noqa: PLC0415
         )
-        from ..models.integration_endpoint_models_item import IntegrationEndpointModelsItem
-        from ..models.integration_endpoint_token import IntegrationEndpointToken
+        from ..models.integration_endpoint_token import IntegrationEndpointToken  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         body = d.pop("body", UNSET)
 
         ignore_models = []
@@ -135,14 +139,14 @@ class IntegrationEndpoint:
         stream_key = d.pop("streamKey", d.pop("stream_key", UNSET))
 
         _stream_token = d.pop("streamToken", d.pop("stream_token", UNSET))
-        stream_token: Union[Unset, IntegrationEndpointToken]
+        stream_token: IntegrationEndpointToken | Unset
         if isinstance(_stream_token, Unset):
             stream_token = UNSET
         else:
             stream_token = IntegrationEndpointToken.from_dict(_stream_token)
 
         _token = d.pop("token", UNSET)
-        token: Union[Unset, IntegrationEndpointToken]
+        token: IntegrationEndpointToken | Unset
         if isinstance(_token, Unset):
             token = UNSET
         else:

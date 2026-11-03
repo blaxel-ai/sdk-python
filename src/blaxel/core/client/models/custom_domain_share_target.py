@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,13 +18,12 @@ class CustomDomainShareTarget:
     Attributes:
         status (str): Share status; always "active" for same-account custom domain shares.
         workspace (str): The workspace the domain is shared with, or "account" for an account-wide share.
-        workspace_display_name (Union[Unset, str]): Display name of the target workspace (empty for an account-wide
-            share).
+        workspace_display_name (str | Unset): Display name of the target workspace (empty for an account-wide share).
     """
 
     status: str
     workspace: str
-    workspace_display_name: Union[Unset, str] = UNSET
+    workspace_display_name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -45,10 +47,10 @@ class CustomDomainShareTarget:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         status = d.pop("status")
 
         workspace = d.pop("workspace")

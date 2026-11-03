@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/drives/mount/{mount_path}",
+        "url": "/drives/mount/{mount_path}".format(
+            mount_path=quote(str(mount_path), safe=""),
+        ),
     }
 
     return _kwargs
@@ -23,21 +26,24 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[DriveUnmountResponse, ErrorResponse] | None:
+) -> DriveUnmountResponse | ErrorResponse | None:
     if response.status_code == 200:
         response_200 = DriveUnmountResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -48,7 +54,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[DriveUnmountResponse, ErrorResponse]]:
+) -> Response[DriveUnmountResponse | ErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -61,7 +67,7 @@ def sync_detailed(
     mount_path: str,
     *,
     client: Client,
-) -> Response[Union[DriveUnmountResponse, ErrorResponse]]:
+) -> Response[DriveUnmountResponse | ErrorResponse]:
     """Detach a drive from a local path
 
      Unmounts a previously mounted drive from the specified local path
@@ -74,7 +80,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DriveUnmountResponse, ErrorResponse]]
+        Response[DriveUnmountResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -92,7 +98,7 @@ def sync(
     mount_path: str,
     *,
     client: Client,
-) -> Union[DriveUnmountResponse, ErrorResponse] | None:
+) -> DriveUnmountResponse | ErrorResponse | None:
     """Detach a drive from a local path
 
      Unmounts a previously mounted drive from the specified local path
@@ -105,7 +111,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DriveUnmountResponse, ErrorResponse]
+        DriveUnmountResponse | ErrorResponse
     """
 
     return sync_detailed(
@@ -118,7 +124,7 @@ async def asyncio_detailed(
     mount_path: str,
     *,
     client: Client,
-) -> Response[Union[DriveUnmountResponse, ErrorResponse]]:
+) -> Response[DriveUnmountResponse | ErrorResponse]:
     """Detach a drive from a local path
 
      Unmounts a previously mounted drive from the specified local path
@@ -131,7 +137,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DriveUnmountResponse, ErrorResponse]]
+        Response[DriveUnmountResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -147,7 +153,7 @@ async def asyncio(
     mount_path: str,
     *,
     client: Client,
-) -> Union[DriveUnmountResponse, ErrorResponse] | None:
+) -> DriveUnmountResponse | ErrorResponse | None:
     """Detach a drive from a local path
 
      Unmounts a previously mounted drive from the specified local path
@@ -160,7 +166,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DriveUnmountResponse, ErrorResponse]
+        DriveUnmountResponse | ErrorResponse
     """
 
     return (

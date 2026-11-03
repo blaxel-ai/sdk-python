@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 import httpx
 from attrs import define as _attrs_define
@@ -15,16 +18,15 @@ class Error:
 
     Attributes:
         error (str): Error type or code identifying the kind of error Example: Resource already exists.
-        code (Union[Unset, int]): HTTP status code of the error Example: 409.
-        message (Union[Unset, str]): Human-readable error message describing what went wrong Example: Invalid request
-            body.
+        code (int | Unset): HTTP status code of the error Example: 409.
+        message (str | Unset): Human-readable error message describing what went wrong Example: Invalid request body.
     """
 
     # Retain HTTP metadata without changing the serialized API body or constructor.
     _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
     error: str
-    code: Union[Unset, int] = UNSET
-    message: Union[Unset, str] = UNSET
+    code: int | Unset = UNSET
+    message: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -49,10 +51,10 @@ class Error:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         error = d.pop("error")
 
         code = d.pop("code", UNSET)

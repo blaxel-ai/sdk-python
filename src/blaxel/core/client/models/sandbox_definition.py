@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,51 +23,50 @@ class SandboxDefinition:
     configurations
 
         Attributes:
-            categories (Union[Unset, list['SandboxDefinitionCategoriesItem']]): Categories of the definition
-            coming_soon (Union[Unset, bool]): If the definition is coming soon
-            creation_options (Union[Unset, SandboxCreationOptions]): Optional Hub template settings applied by the console
-                without additional sandbox creation lookups.
-            description (Union[Unset, str]): Description of the definition Example: Python environment with data science
-                libraries pre-installed.
-            display_name (Union[Unset, str]): Display name of the definition Example: Python Data Science.
-            enterprise (Union[Unset, bool]): If the definition is enterprise
-            hidden (Union[Unset, bool]): If the definition is hidden
-            icon (Union[Unset, str]): Icon of the definition
-            icon_dark (Union[Unset, str]): Nonempty dark-mode icon URL in responses. Blank inputs use the resolved light-
-                mode icon.
-            icon_light (Union[Unset, str]): Nonempty light-mode icon URL in responses. Blank inputs use icon, iconDark, then
-                the default Hub icon.
-            image (Union[Unset, str]): Image of the Sandbox definition Example: blaxel/python-data-science:latest.
-            long_description (Union[Unset, str]): Long description of the definition
-            memory (Union[Unset, int]): Memory of the Sandbox definition in MB Example: 2048.
-            name (Union[Unset, str]): Name of the artifact Example: python-data-science.
-            ports (Union[Unset, list['Port']]): Set of ports for a resource
-            tags (Union[Unset, str]): Tags of the definition
-            url (Union[Unset, str]): URL of the definition
+            categories (list[SandboxDefinitionCategoriesItem] | Unset): Categories of the definition
+            coming_soon (bool | Unset): If the definition is coming soon Example: False.
+            creation_options (SandboxCreationOptions | Unset): Optional Hub template settings applied by the console without
+                additional sandbox creation lookups.
+            description (str | Unset): Description of the definition Example: Python environment with data science libraries
+                pre-installed.
+            display_name (str | Unset): Display name of the definition Example: Python Data Science.
+            enterprise (bool | Unset): If the definition is enterprise Example: False.
+            hidden (bool | Unset): If the definition is hidden Example: False.
+            icon (str | Unset): Icon of the definition
+            icon_dark (str | Unset): Nonempty dark-mode icon URL in responses. Blank inputs use the resolved light-mode
+                icon.
+            icon_light (str | Unset): Nonempty light-mode icon URL in responses. Blank inputs use icon, iconDark, then the
+                default Hub icon.
+            image (str | Unset): Image of the Sandbox definition Example: blaxel/python-data-science:latest.
+            long_description (str | Unset): Long description of the definition
+            memory (int | Unset): Memory of the Sandbox definition in MB Example: 2048.
+            name (str | Unset): Name of the artifact Example: python-data-science.
+            ports (list[Port] | Unset): Set of ports for a resource
+            tags (str | Unset): Tags of the definition
+            url (str | Unset): URL of the definition
     """
 
-    categories: Union[Unset, list["SandboxDefinitionCategoriesItem"]] = UNSET
-    coming_soon: Union[Unset, bool] = UNSET
-    creation_options: Union[Unset, "SandboxCreationOptions"] = UNSET
-    description: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    enterprise: Union[Unset, bool] = UNSET
-    hidden: Union[Unset, bool] = UNSET
-    icon: Union[Unset, str] = UNSET
-    icon_dark: Union[Unset, str] = UNSET
-    icon_light: Union[Unset, str] = UNSET
-    image: Union[Unset, str] = UNSET
-    long_description: Union[Unset, str] = UNSET
-    memory: Union[Unset, int] = UNSET
-    name: Union[Unset, str] = UNSET
-    ports: Union[Unset, list["Port"]] = UNSET
-    tags: Union[Unset, str] = UNSET
-    url: Union[Unset, str] = UNSET
+    categories: list[SandboxDefinitionCategoriesItem] | Unset = UNSET
+    coming_soon: bool | Unset = UNSET
+    creation_options: SandboxCreationOptions | Unset = UNSET
+    description: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    enterprise: bool | Unset = UNSET
+    hidden: bool | Unset = UNSET
+    icon: str | Unset = UNSET
+    icon_dark: str | Unset = UNSET
+    icon_light: str | Unset = UNSET
+    image: str | Unset = UNSET
+    long_description: str | Unset = UNSET
+    memory: int | Unset = UNSET
+    name: str | Unset = UNSET
+    ports: list[Port] | Unset = UNSET
+    tags: str | Unset = UNSET
+    url: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        categories: Union[Unset, list[dict[str, Any]]] = UNSET
+        categories: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.categories, Unset):
             categories = []
             for categories_item_data in self.categories:
@@ -76,7 +78,7 @@ class SandboxDefinition:
 
         coming_soon = self.coming_soon
 
-        creation_options: Union[Unset, dict[str, Any]] = UNSET
+        creation_options: dict[str, Any] | Unset = UNSET
         if (
             self.creation_options
             and not isinstance(self.creation_options, Unset)
@@ -108,7 +110,7 @@ class SandboxDefinition:
 
         name = self.name
 
-        ports: Union[Unset, list[dict[str, Any]]] = UNSET
+        ports: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.ports, Unset):
             ports = []
             for componentsschemas_ports_item_data in self.ports:
@@ -163,14 +165,16 @@ class SandboxDefinition:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.port import Port
-        from ..models.sandbox_creation_options import SandboxCreationOptions
-        from ..models.sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.port import Port  # noqa: PLC0415
+        from ..models.sandbox_creation_options import SandboxCreationOptions  # noqa: PLC0415
+        from ..models.sandbox_definition_categories_item import (
+            SandboxDefinitionCategoriesItem,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         categories = []
         _categories = d.pop("categories", UNSET)
         for categories_item_data in _categories or []:
@@ -181,7 +185,7 @@ class SandboxDefinition:
         coming_soon = d.pop("coming_soon", UNSET)
 
         _creation_options = d.pop("creationOptions", d.pop("creation_options", UNSET))
-        creation_options: Union[Unset, SandboxCreationOptions]
+        creation_options: SandboxCreationOptions | Unset
         if isinstance(_creation_options, Unset):
             creation_options = UNSET
         else:

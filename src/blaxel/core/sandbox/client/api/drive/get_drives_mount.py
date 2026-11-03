@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -21,16 +21,18 @@ def _get_kwargs() -> dict[str, Any]:
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[DriveListResponse, ErrorResponse] | None:
+) -> DriveListResponse | ErrorResponse | None:
     if response.status_code == 200:
         response_200 = DriveListResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -41,7 +43,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[DriveListResponse, ErrorResponse]]:
+) -> Response[DriveListResponse | ErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -53,7 +55,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Union[DriveListResponse, ErrorResponse]]:
+) -> Response[DriveListResponse | ErrorResponse]:
     """List currently mounted drives
 
      Returns a list of all currently mounted drives managed by blfs
@@ -63,7 +65,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DriveListResponse, ErrorResponse]]
+        Response[DriveListResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs()
@@ -78,7 +80,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Union[DriveListResponse, ErrorResponse] | None:
+) -> DriveListResponse | ErrorResponse | None:
     """List currently mounted drives
 
      Returns a list of all currently mounted drives managed by blfs
@@ -88,7 +90,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DriveListResponse, ErrorResponse]
+        DriveListResponse | ErrorResponse
     """
 
     return sync_detailed(
@@ -99,7 +101,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[Union[DriveListResponse, ErrorResponse]]:
+) -> Response[DriveListResponse | ErrorResponse]:
     """List currently mounted drives
 
      Returns a list of all currently mounted drives managed by blfs
@@ -109,7 +111,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DriveListResponse, ErrorResponse]]
+        Response[DriveListResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs()
@@ -122,7 +124,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Union[DriveListResponse, ErrorResponse] | None:
+) -> DriveListResponse | ErrorResponse | None:
     """List currently mounted drives
 
      Returns a list of all currently mounted drives managed by blfs
@@ -132,7 +134,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DriveListResponse, ErrorResponse]
+        DriveListResponse | ErrorResponse
     """
 
     return (

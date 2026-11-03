@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,12 +16,12 @@ class OwnerFields:
     """Owner fields for Persistence
 
     Attributes:
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
     """
 
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,10 +40,10 @@ class OwnerFields:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_by = d.pop("createdBy", d.pop("created_by", UNSET))
 
         updated_by = d.pop("updatedBy", d.pop("updated_by", UNSET))

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -16,7 +17,10 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/sandboxes/{sandbox_name}/snapshots/{snapshot_id}/restore",
+        "url": "/sandboxes/{sandbox_name}/snapshots/{snapshot_id}/restore".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+            snapshot_id=quote(str(snapshot_id), safe=""),
+        ),
     }
 
     return _kwargs
@@ -24,21 +28,24 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, SandboxRestoreResponse] | None:
+) -> Error | SandboxRestoreResponse | None:
     if response.status_code == 200:
         response_200 = SandboxRestoreResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -49,7 +56,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, SandboxRestoreResponse]]:
+) -> Response[Error | SandboxRestoreResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,7 +70,7 @@ def sync_detailed(
     snapshot_id: str,
     *,
     client: Client,
-) -> Response[Union[Error, SandboxRestoreResponse]]:
+) -> Response[Error | SandboxRestoreResponse]:
     """Restore sandbox from snapshot
 
      Restores a sandbox to one of its own snapshots. The running sandbox is torn down and rebuilt from
@@ -79,7 +86,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxRestoreResponse]]
+        Response[Error | SandboxRestoreResponse]
     """
 
     kwargs = _get_kwargs(
@@ -99,7 +106,7 @@ def sync(
     snapshot_id: str,
     *,
     client: Client,
-) -> Union[Error, SandboxRestoreResponse] | None:
+) -> Error | SandboxRestoreResponse | None:
     """Restore sandbox from snapshot
 
      Restores a sandbox to one of its own snapshots. The running sandbox is torn down and rebuilt from
@@ -115,7 +122,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxRestoreResponse]
+        Error | SandboxRestoreResponse
     """
 
     return sync_detailed(
@@ -130,7 +137,7 @@ async def asyncio_detailed(
     snapshot_id: str,
     *,
     client: Client,
-) -> Response[Union[Error, SandboxRestoreResponse]]:
+) -> Response[Error | SandboxRestoreResponse]:
     """Restore sandbox from snapshot
 
      Restores a sandbox to one of its own snapshots. The running sandbox is torn down and rebuilt from
@@ -146,7 +153,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxRestoreResponse]]
+        Response[Error | SandboxRestoreResponse]
     """
 
     kwargs = _get_kwargs(
@@ -164,7 +171,7 @@ async def asyncio(
     snapshot_id: str,
     *,
     client: Client,
-) -> Union[Error, SandboxRestoreResponse] | None:
+) -> Error | SandboxRestoreResponse | None:
     """Restore sandbox from snapshot
 
      Restores a sandbox to one of its own snapshots. The running sandbox is torn down and rebuilt from
@@ -180,7 +187,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxRestoreResponse]
+        Error | SandboxRestoreResponse
     """
 
     return (

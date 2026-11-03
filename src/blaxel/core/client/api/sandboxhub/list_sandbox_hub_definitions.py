@@ -18,9 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> list["SandboxDefinition"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[SandboxDefinition] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -30,6 +28,7 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -40,7 +39,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[list["SandboxDefinition"]]:
+) -> Response[list[SandboxDefinition]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -52,7 +51,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["SandboxDefinition"]]:
+) -> Response[list[SandboxDefinition]]:
     """List Sandbox Hub templates
 
      Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
@@ -63,7 +62,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['SandboxDefinition']]
+        Response[list[SandboxDefinition]]
     """
 
     kwargs = _get_kwargs()
@@ -78,7 +77,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["SandboxDefinition"] | None:
+) -> list[SandboxDefinition] | None:
     """List Sandbox Hub templates
 
      Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
@@ -89,7 +88,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['SandboxDefinition']
+        list[SandboxDefinition]
     """
 
     return sync_detailed(
@@ -100,7 +99,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["SandboxDefinition"]]:
+) -> Response[list[SandboxDefinition]]:
     """List Sandbox Hub templates
 
      Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
@@ -111,7 +110,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['SandboxDefinition']]
+        Response[list[SandboxDefinition]]
     """
 
     kwargs = _get_kwargs()
@@ -124,7 +123,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["SandboxDefinition"] | None:
+) -> list[SandboxDefinition] | None:
     """List Sandbox Hub templates
 
      Returns all pre-built sandbox templates available in the Blaxel Hub. These include popular
@@ -135,7 +134,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['SandboxDefinition']
+        list[SandboxDefinition]
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,46 +22,45 @@ class SandboxRuntime:
     """Runtime configuration defining how the sandbox VM is provisioned and its resource limits
 
     Attributes:
-        envs (Union[Unset, list['Env']]): Environment variables injected into the sandbox. Supports Kubernetes EnvVar
-            format with valueFrom references.
-        expires (Union[Unset, str]): Absolute expiration timestamp in ISO 8601 format when the sandbox will be deleted
+        envs (list[Env] | Unset): Environment variables injected into the sandbox. Supports Kubernetes EnvVar format
+            with valueFrom references.
+        expires (str | Unset): Absolute expiration timestamp in ISO 8601 format when the sandbox will be deleted
             Example: 2025-12-31T23:59:59Z.
-        extra_args (Union[Unset, SandboxRuntimeExtraArgs]): Extra arguments for kernel selection. Supported keys:
-            'iptables', 'nfs' (mk3.0), 'tun', 'android' and 'landlock' (mk3.1). The android variant includes tun and
-            iptables and cannot be combined with nfs. The landlock variant enables the Landlock LSM, includes tun and
-            iptables, and cannot be combined with android or nfs. Android and landlock requests are rejected if routing
-            selects mk3.0. 'kernelExtensions' (mk3.1, android only for now) switches on the selected kernel's loadable
-            modules and kernel tracing (eBPF, kprobes, perf); without it they are disabled, even for root. Values: 'enabled'
-            or 'disabled'. Determines which kernel variant the workload runs on. Immutable after creation.
-        image (Union[Unset, str]): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest)
-            or a custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
-        memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
-            in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 4096.
-        ports (Union[Unset, list['Port']]): Set of ports for a resource
-        standby_grace_period_seconds (Union[Unset, int]): Seconds the sandbox gets after a SIGUSR2 to prepare before it
-            goes to standby (scale to zero). The workload can say it is ready earlier by writing +1 to $BLAXEL_SCALE_FILE
-            when it starts preparing and -1 when it is done. Defaults to 0: no signal, immediate standby. Example: 10.
-        termination_grace_period_seconds (Union[Unset, int]): Duration in seconds the pod needs to terminate gracefully.
+        extra_args (SandboxRuntimeExtraArgs | Unset): Extra arguments for kernel selection. Supported keys: 'iptables',
+            'nfs' (mk3.0), 'tun', 'android' and 'landlock' (mk3.1). The android variant includes tun and iptables and cannot
+            be combined with nfs. The landlock variant enables the Landlock LSM, includes tun and iptables, and cannot be
+            combined with android or nfs. Android and landlock requests are rejected if routing selects mk3.0.
+            'kernelExtensions' (mk3.1, android only for now) switches on the selected kernel's loadable modules and kernel
+            tracing (eBPF, kprobes, perf); without it they are disabled, even for root. Values: 'enabled' or 'disabled'.
+            Determines which kernel variant the workload runs on. Immutable after creation.
+        image (str | Unset): Sandbox image to use. Can be a public Blaxel image (e.g., blaxel/base-image:latest) or a
+            custom template image built with 'bl deploy'. Example: blaxel/base-image:latest.
+        memory (int | Unset): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory in MB /
+            2048, e.g., 4096MB = 2 CPUs). Example: 4096.
+        ports (list[Port] | Unset): Set of ports for a resource
+        standby_grace_period_seconds (int | Unset): Seconds the sandbox gets after a SIGUSR2 to prepare before it goes
+            to standby (scale to zero). The workload can say it is ready earlier by writing +1 to $BLAXEL_SCALE_FILE when it
+            starts preparing and -1 when it is done. Defaults to 0: no signal, immediate standby. Example: 10.
+        termination_grace_period_seconds (int | Unset): Duration in seconds the pod needs to terminate gracefully.
             Defaults to 0 for immediate termination. Example: 30.
-        ttl (Union[Unset, str]): Max-age from creation: the sandbox is deleted this long after it is created, regardless
-            of activity (not an idle timeout). Units s, m, h, d, w (e.g., '30m', '24h', '7d', '2w'), minimum '5m'. For idle-
+        ttl (str | Unset): Max-age from creation: the sandbox is deleted this long after it is created, regardless of
+            activity (not an idle timeout). Units s, m, h, d, w (e.g., '30m', '24h', '7d', '2w'), minimum '5m'. For idle-
             based cleanup, use a lifecycle expiration policy of type ttl-idle. Example: 24h.
     """
 
-    envs: Union[Unset, list["Env"]] = UNSET
-    expires: Union[Unset, str] = UNSET
-    extra_args: Union[Unset, "SandboxRuntimeExtraArgs"] = UNSET
-    image: Union[Unset, str] = UNSET
-    memory: Union[Unset, int] = UNSET
-    ports: Union[Unset, list["Port"]] = UNSET
-    standby_grace_period_seconds: Union[Unset, int] = UNSET
-    termination_grace_period_seconds: Union[Unset, int] = UNSET
-    ttl: Union[Unset, str] = UNSET
+    envs: list[Env] | Unset = UNSET
+    expires: str | Unset = UNSET
+    extra_args: SandboxRuntimeExtraArgs | Unset = UNSET
+    image: str | Unset = UNSET
+    memory: int | Unset = UNSET
+    ports: list[Port] | Unset = UNSET
+    standby_grace_period_seconds: int | Unset = UNSET
+    termination_grace_period_seconds: int | Unset = UNSET
+    ttl: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        envs: Union[Unset, list[dict[str, Any]]] = UNSET
+        envs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
             for envs_item_data in self.envs:
@@ -70,7 +72,7 @@ class SandboxRuntime:
 
         expires = self.expires
 
-        extra_args: Union[Unset, dict[str, Any]] = UNSET
+        extra_args: dict[str, Any] | Unset = UNSET
         if (
             self.extra_args
             and not isinstance(self.extra_args, Unset)
@@ -84,7 +86,7 @@ class SandboxRuntime:
 
         memory = self.memory
 
-        ports: Union[Unset, list[dict[str, Any]]] = UNSET
+        ports: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.ports, Unset):
             ports = []
             for componentsschemas_ports_item_data in self.ports:
@@ -125,14 +127,14 @@ class SandboxRuntime:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.env import Env
-        from ..models.port import Port
-        from ..models.sandbox_runtime_extra_args import SandboxRuntimeExtraArgs
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.env import Env  # noqa: PLC0415
+        from ..models.port import Port  # noqa: PLC0415
+        from ..models.sandbox_runtime_extra_args import SandboxRuntimeExtraArgs  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         envs = []
         _envs = d.pop("envs", UNSET)
         for envs_item_data in _envs or []:
@@ -143,7 +145,7 @@ class SandboxRuntime:
         expires = d.pop("expires", UNSET)
 
         _extra_args = d.pop("extraArgs", d.pop("extra_args", UNSET))
-        extra_args: Union[Unset, SandboxRuntimeExtraArgs]
+        extra_args: SandboxRuntimeExtraArgs | Unset
         if isinstance(_extra_args, Unset):
             extra_args = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -21,37 +24,35 @@ class AgentSpec:
     """Configuration for an AI agent including runtime settings, repository source, and deployment triggers
 
     Attributes:
-        enabled (Union[Unset, bool]): When false, the agent is disabled and will not serve inference requests Default:
-            True. Example: True.
-        policies (Union[Unset, list[str]]):
-        public (Union[Unset, bool]): When true, the agent is publicly accessible without authentication. Only available
-            for mk3 generation. Default: False.
-        region (Union[Unset, str]): Region where the agent should be deployed (e.g. us-pdx-1, eu-lon-1). Required when
-            volumes are attached. Example: us-pdx-1.
-        repository (Union[Unset, Repository]): Repository
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, AgentRuntime]): Runtime configuration defining how the AI agent is deployed and scaled
-            globally
-        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
-        volumes (Union[Unset, list['VolumeAttachment']]):
+        enabled (bool | Unset): When false, the agent is disabled and will not serve inference requests Default: True.
+            Example: True.
+        policies (list[str] | Unset):
+        public (bool | Unset): When true, the agent is publicly accessible without authentication. Only available for
+            mk3 generation. Default: False. Example: False.
+        region (str | Unset): Region where the agent should be deployed (e.g. us-pdx-1, eu-lon-1). Required when volumes
+            are attached. Example: us-pdx-1.
+        repository (Repository | Unset): Repository
+        revision (RevisionConfiguration | Unset): Revision configuration
+        runtime (AgentRuntime | Unset): Runtime configuration defining how the AI agent is deployed and scaled globally
+        triggers (list[Trigger] | Unset): Triggers to use your agent
+        volumes (list[VolumeAttachment] | Unset):
     """
 
-    enabled: Union[Unset, bool] = True
-    policies: Union[Unset, list[str]] = UNSET
-    public: Union[Unset, bool] = False
-    region: Union[Unset, str] = UNSET
-    repository: Union[Unset, "Repository"] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "AgentRuntime"] = UNSET
-    triggers: Union[Unset, list["Trigger"]] = UNSET
-    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
+    enabled: bool | Unset = True
+    policies: list[str] | Unset = UNSET
+    public: bool | Unset = False
+    region: str | Unset = UNSET
+    repository: Repository | Unset = UNSET
+    revision: RevisionConfiguration | Unset = UNSET
+    runtime: AgentRuntime | Unset = UNSET
+    triggers: list[Trigger] | Unset = UNSET
+    volumes: list[VolumeAttachment] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        policies: Union[Unset, list[str]] = UNSET
+        policies: list[str] | Unset = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
 
@@ -59,7 +60,7 @@ class AgentSpec:
 
         region = self.region
 
-        repository: Union[Unset, dict[str, Any]] = UNSET
+        repository: dict[str, Any] | Unset = UNSET
         if (
             self.repository
             and not isinstance(self.repository, Unset)
@@ -69,7 +70,7 @@ class AgentSpec:
         elif self.repository and isinstance(self.repository, dict):
             repository = self.repository
 
-        revision: Union[Unset, dict[str, Any]] = UNSET
+        revision: dict[str, Any] | Unset = UNSET
         if (
             self.revision
             and not isinstance(self.revision, Unset)
@@ -79,7 +80,7 @@ class AgentSpec:
         elif self.revision and isinstance(self.revision, dict):
             revision = self.revision
 
-        runtime: Union[Unset, dict[str, Any]] = UNSET
+        runtime: dict[str, Any] | Unset = UNSET
         if (
             self.runtime
             and not isinstance(self.runtime, Unset)
@@ -89,7 +90,7 @@ class AgentSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        triggers: Union[Unset, list[dict[str, Any]]] = UNSET
+        triggers: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
             for componentsschemas_triggers_item_data in self.triggers:
@@ -99,7 +100,7 @@ class AgentSpec:
                     componentsschemas_triggers_item = componentsschemas_triggers_item_data.to_dict()
                 triggers.append(componentsschemas_triggers_item)
 
-        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        volumes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.volumes, Unset):
             volumes = []
             for componentsschemas_volume_attachments_item_data in self.volumes:
@@ -138,16 +139,16 @@ class AgentSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.agent_runtime import AgentRuntime
-        from ..models.repository import Repository
-        from ..models.revision_configuration import RevisionConfiguration
-        from ..models.trigger import Trigger
-        from ..models.volume_attachment import VolumeAttachment
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.agent_runtime import AgentRuntime  # noqa: PLC0415
+        from ..models.repository import Repository  # noqa: PLC0415
+        from ..models.revision_configuration import RevisionConfiguration  # noqa: PLC0415
+        from ..models.trigger import Trigger  # noqa: PLC0415
+        from ..models.volume_attachment import VolumeAttachment  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         policies = cast(list[str], d.pop("policies", UNSET))
@@ -157,21 +158,21 @@ class AgentSpec:
         region = d.pop("region", UNSET)
 
         _repository = d.pop("repository", UNSET)
-        repository: Union[Unset, Repository]
+        repository: Repository | Unset
         if isinstance(_repository, Unset):
             repository = UNSET
         else:
             repository = Repository.from_dict(_repository)
 
         _revision = d.pop("revision", UNSET)
-        revision: Union[Unset, RevisionConfiguration]
+        revision: RevisionConfiguration | Unset
         if isinstance(_revision, Unset):
             revision = UNSET
         else:
             revision = RevisionConfiguration.from_dict(_revision)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, AgentRuntime]
+        runtime: AgentRuntime | Unset
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:

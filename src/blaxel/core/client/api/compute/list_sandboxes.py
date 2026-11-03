@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -14,14 +14,14 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    show_terminated: Union[Unset, bool] = False,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSandboxesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
+    show_terminated: bool | Unset = False,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSandboxesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSandboxesAnchor | Unset = UNSET,
+    status: str | Unset = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -31,7 +31,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -39,7 +39,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_anchor: Union[Unset, str] = UNSET
+    json_anchor: str | Unset = UNSET
     if not isinstance(anchor, Unset):
         json_anchor = anchor.value
 
@@ -60,28 +60,30 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Error, SandboxList] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | SandboxList | None:
     if response.status_code == 200:
         response_200 = SandboxList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -90,9 +92,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Error, SandboxList]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | SandboxList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -104,15 +104,15 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    show_terminated: Union[Unset, bool] = False,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSandboxesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, SandboxList]]:
+    show_terminated: bool | Unset = False,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSandboxesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSandboxesAnchor | Unset = UNSET,
+    status: str | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+) -> Response[Error | SandboxList]:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -122,21 +122,21 @@ def sync_detailed(
     of all sandboxes.
 
     Args:
-        show_terminated (Union[Unset, bool]):  Default: False.
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSandboxesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSandboxesAnchor]):
-        status (Union[Unset, str]):
-        external_id (Union[Unset, str]):
+        show_terminated (bool | Unset):  Default: False.
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSandboxesSort | Unset):
+        q (str | Unset):
+        anchor (ListSandboxesAnchor | Unset):
+        status (str | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxList]]
+        Response[Error | SandboxList]
     """
 
     kwargs = _get_kwargs(
@@ -160,15 +160,15 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    show_terminated: Union[Unset, bool] = False,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSandboxesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-) -> Union[Error, SandboxList] | None:
+    show_terminated: bool | Unset = False,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSandboxesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSandboxesAnchor | Unset = UNSET,
+    status: str | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+) -> Error | SandboxList | None:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -178,21 +178,21 @@ def sync(
     of all sandboxes.
 
     Args:
-        show_terminated (Union[Unset, bool]):  Default: False.
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSandboxesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSandboxesAnchor]):
-        status (Union[Unset, str]):
-        external_id (Union[Unset, str]):
+        show_terminated (bool | Unset):  Default: False.
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSandboxesSort | Unset):
+        q (str | Unset):
+        anchor (ListSandboxesAnchor | Unset):
+        status (str | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxList]
+        Error | SandboxList
     """
 
     return sync_detailed(
@@ -211,15 +211,15 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    show_terminated: Union[Unset, bool] = False,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSandboxesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, SandboxList]]:
+    show_terminated: bool | Unset = False,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSandboxesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSandboxesAnchor | Unset = UNSET,
+    status: str | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+) -> Response[Error | SandboxList]:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -229,21 +229,21 @@ async def asyncio_detailed(
     of all sandboxes.
 
     Args:
-        show_terminated (Union[Unset, bool]):  Default: False.
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSandboxesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSandboxesAnchor]):
-        status (Union[Unset, str]):
-        external_id (Union[Unset, str]):
+        show_terminated (bool | Unset):  Default: False.
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSandboxesSort | Unset):
+        q (str | Unset):
+        anchor (ListSandboxesAnchor | Unset):
+        status (str | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxList]]
+        Response[Error | SandboxList]
     """
 
     kwargs = _get_kwargs(
@@ -265,15 +265,15 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    show_terminated: Union[Unset, bool] = False,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSandboxesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-) -> Union[Error, SandboxList] | None:
+    show_terminated: bool | Unset = False,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSandboxesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSandboxesAnchor | Unset = UNSET,
+    status: str | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+) -> Error | SandboxList | None:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -283,21 +283,21 @@ async def asyncio(
     of all sandboxes.
 
     Args:
-        show_terminated (Union[Unset, bool]):  Default: False.
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSandboxesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSandboxesAnchor]):
-        status (Union[Unset, str]):
-        external_id (Union[Unset, str]):
+        show_terminated (bool | Unset):  Default: False.
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSandboxesSort | Unset):
+        q (str | Unset):
+        anchor (ListSandboxesAnchor | Unset):
+        status (str | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxList]
+        Error | SandboxList
     """
 
     return (

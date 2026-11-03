@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,24 +16,24 @@ class RevisionMetadata:
     """Revision metadata
 
     Attributes:
-        active (Union[Unset, bool]): Is the revision active
-        canary (Union[Unset, bool]): Is the revision canary
-        created_at (Union[Unset, str]): Revision created at
-        created_by (Union[Unset, str]): Revision created by
-        id (Union[Unset, str]): Revision ID
-        previous_active (Union[Unset, bool]): Is the revision previous active
-        status (Union[Unset, str]): Status of the revision
-        traffic_percent (Union[Unset, int]): Percent of traffic to the revision
+        active (bool | Unset): Is the revision active
+        canary (bool | Unset): Is the revision canary
+        created_at (str | Unset): Revision created at
+        created_by (str | Unset): Revision created by
+        id (str | Unset): Revision ID
+        previous_active (bool | Unset): Is the revision previous active
+        status (str | Unset): Status of the revision
+        traffic_percent (int | Unset): Percent of traffic to the revision
     """
 
-    active: Union[Unset, bool] = UNSET
-    canary: Union[Unset, bool] = UNSET
-    created_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    previous_active: Union[Unset, bool] = UNSET
-    status: Union[Unset, str] = UNSET
-    traffic_percent: Union[Unset, int] = UNSET
+    active: bool | Unset = UNSET
+    canary: bool | Unset = UNSET
+    created_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    id: str | Unset = UNSET
+    previous_active: bool | Unset = UNSET
+    status: str | Unset = UNSET
+    traffic_percent: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -73,10 +76,10 @@ class RevisionMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         active = d.pop("active", UNSET)
 
         canary = d.pop("canary", UNSET)

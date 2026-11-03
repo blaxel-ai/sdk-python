@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -24,10 +27,10 @@ class JobExecutionSpecEnvOverride:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         job_execution_spec_env_override = cls()
 
         job_execution_spec_env_override.additional_properties = d

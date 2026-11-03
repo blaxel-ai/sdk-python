@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -24,20 +27,19 @@ class Application:
                 and ownership information
             spec (ApplicationSpec): Configuration for an application including revision management, URL routing, and
                 deployment region
-            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
-            node_generation (Union[Unset, str]): Infrastructure generation this application is deployed on (mk3.0 or mk3.1).
-            status (Union[Unset, str]): Application status computed from events
+            events (list[CoreEvent] | Unset): Events happening on a resource deployed on Blaxel
+            node_generation (str | Unset): Infrastructure generation this application is deployed on (mk3.0 or mk3.1).
+            status (str | Unset): Application status computed from events
     """
 
-    metadata: "Metadata"
-    spec: "ApplicationSpec"
-    events: Union[Unset, list["CoreEvent"]] = UNSET
-    node_generation: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    metadata: Metadata
+    spec: ApplicationSpec
+    events: list[CoreEvent] | Unset = UNSET
+    node_generation: str | Unset = UNSET
+    status: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -48,7 +50,7 @@ class Application:
         else:
             spec = self.spec.to_dict()
 
-        events: Union[Unset, list[dict[str, Any]]] = UNSET
+        events: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.events, Unset):
             events = []
             for componentsschemas_core_events_item_data in self.events:
@@ -82,14 +84,14 @@ class Application:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.application_spec import ApplicationSpec
-        from ..models.core_event import CoreEvent
-        from ..models.metadata import Metadata
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.application_spec import ApplicationSpec  # noqa: PLC0415
+        from ..models.core_event import CoreEvent  # noqa: PLC0415
+        from ..models.metadata import Metadata  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = ApplicationSpec.from_dict(d.pop("spec"))

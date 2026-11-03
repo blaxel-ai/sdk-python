@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -15,17 +18,16 @@ T = TypeVar("T", bound="ListImageTagsResponse200")
 class ListImageTagsResponse200:
     """
     Attributes:
-        data (list['ImageTag']):
+        data (list[ImageTag]):
         meta (PaginationMeta): Pagination metadata returned alongside a page of listing results. Always present on
             listing endpoints starting with API version 2026-04-28.
     """
 
-    data: list["ImageTag"]
-    meta: "PaginationMeta"
+    data: list[ImageTag]
+    meta: PaginationMeta
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         data = []
         for data_item_data in self.data:
             if type(data_item_data) is dict:
@@ -51,13 +53,13 @@ class ListImageTagsResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.image_tag import ImageTag
-        from ..models.pagination_meta import PaginationMeta
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.image_tag import ImageTag  # noqa: PLC0415
+        from ..models.pagination_meta import PaginationMeta  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         data = []
         _data = d.pop("data")
         for data_item_data in _data:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -21,42 +24,41 @@ class SandboxForkRequest:
         Attributes:
             target_name (str): Name of the target application to create or update Example: my-app.
             target_type (str): Target resource type to fork into Example: application.
-            custom_domain (Union[Unset, str]): Custom domain for the application
-            envs (Union[Unset, list['Env']]): Environment variables the fork runs with, on top of the ones the source has. A
+            custom_domain (str | Unset): Custom domain for the application
+            envs (list[Env] | Unset): Environment variables the fork runs with, on top of the ones the source has. A
                 variable the source already carries takes this value in the fork, one it does not is added, and every other
                 variable of the source is kept.
-            lifecycle (Union[Unset, SandboxLifecycle]): Lifecycle configuration controlling automatic sandbox deletion based
-                on idle time, max age, or specific dates
-            port (Union[Unset, int]): Port to expose from the sandbox Example: 8080.
-            prefix (Union[Unset, str]): URL prefix for the application
-            snapshot_id (Union[Unset, str]): Snapshot ID to fork from. When set, the fork is created from that existing
-                snapshot (and an application revision references it). When omitted, a fork to a sandbox copies the source
-                sandbox's live state directly and no snapshot is persisted; a fork to an application still takes a snapshot,
-                since its revision references one.
-            traffic (Union[Unset, int]): Traffic percentage for canary deployment (0-100). When set on an existing target,
-                creates a new revision with this traffic percentage. Example: 10.
+            lifecycle (SandboxLifecycle | Unset): Lifecycle configuration controlling automatic sandbox deletion based on
+                idle time, max age, or specific dates
+            port (int | Unset): Port to expose from the sandbox Example: 8080.
+            prefix (str | Unset): URL prefix for the application
+            snapshot_id (str | Unset): Snapshot ID to fork from. When set, the fork is created from that existing snapshot
+                (and an application revision references it). When omitted, a fork to a sandbox copies the source sandbox's live
+                state directly and no snapshot is persisted; a fork to an application still takes a snapshot, since its revision
+                references one.
+            traffic (int | Unset): Traffic percentage for canary deployment (0-100). When set on an existing target, creates
+                a new revision with this traffic percentage. Example: 10.
     """
 
     target_name: str
     target_type: str
-    custom_domain: Union[Unset, str] = UNSET
-    envs: Union[Unset, list["Env"]] = UNSET
-    lifecycle: Union[Unset, "SandboxLifecycle"] = UNSET
-    port: Union[Unset, int] = UNSET
-    prefix: Union[Unset, str] = UNSET
-    snapshot_id: Union[Unset, str] = UNSET
-    traffic: Union[Unset, int] = UNSET
+    custom_domain: str | Unset = UNSET
+    envs: list[Env] | Unset = UNSET
+    lifecycle: SandboxLifecycle | Unset = UNSET
+    port: int | Unset = UNSET
+    prefix: str | Unset = UNSET
+    snapshot_id: str | Unset = UNSET
+    traffic: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         target_name = self.target_name
 
         target_type = self.target_type
 
         custom_domain = self.custom_domain
 
-        envs: Union[Unset, list[dict[str, Any]]] = UNSET
+        envs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
             for envs_item_data in self.envs:
@@ -66,7 +68,7 @@ class SandboxForkRequest:
                     envs_item = envs_item_data.to_dict()
                 envs.append(envs_item)
 
-        lifecycle: Union[Unset, dict[str, Any]] = UNSET
+        lifecycle: dict[str, Any] | Unset = UNSET
         if (
             self.lifecycle
             and not isinstance(self.lifecycle, Unset)
@@ -110,13 +112,13 @@ class SandboxForkRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.env import Env
-        from ..models.sandbox_lifecycle import SandboxLifecycle
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.env import Env  # noqa: PLC0415
+        from ..models.sandbox_lifecycle import SandboxLifecycle  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         target_name = d.pop("targetName") if "targetName" in d else d.pop("target_name")
 
         target_type = d.pop("targetType") if "targetType" in d else d.pop("target_type")
@@ -131,7 +133,7 @@ class SandboxForkRequest:
             envs.append(envs_item)
 
         _lifecycle = d.pop("lifecycle", UNSET)
-        lifecycle: Union[Unset, SandboxLifecycle]
+        lifecycle: SandboxLifecycle | Unset
         if isinstance(_lifecycle, Unset):
             lifecycle = UNSET
         else:

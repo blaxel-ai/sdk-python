@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,18 +25,17 @@ class EgressIP:
     Attributes:
         metadata (EgressIPMetadata): Metadata for an egress IP address including gateway association and name
         spec (EgressIPSpec): Specification for an egress IP including IP family and the provisioned address
-        events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
-        status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
+        events (list[CoreEvent] | Unset): Events happening on a resource deployed on Blaxel
+        status (Status | Unset): Deployment status of a resource deployed on Blaxel
     """
 
-    metadata: "EgressIPMetadata"
-    spec: "EgressIPSpec"
-    events: Union[Unset, list["CoreEvent"]] = UNSET
-    status: Union[Unset, Status] = UNSET
+    metadata: EgressIPMetadata
+    spec: EgressIPSpec
+    events: list[CoreEvent] | Unset = UNSET
+    status: Status | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -44,7 +46,7 @@ class EgressIP:
         else:
             spec = self.spec.to_dict()
 
-        events: Union[Unset, list[dict[str, Any]]] = UNSET
+        events: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.events, Unset):
             events = []
             for componentsschemas_core_events_item_data in self.events:
@@ -56,7 +58,7 @@ class EgressIP:
                     )
                 events.append(componentsschemas_core_events_item)
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -76,14 +78,14 @@ class EgressIP:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_event import CoreEvent
-        from ..models.egress_ip_metadata import EgressIPMetadata
-        from ..models.egress_ip_spec import EgressIPSpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.core_event import CoreEvent  # noqa: PLC0415
+        from ..models.egress_ip_metadata import EgressIPMetadata  # noqa: PLC0415
+        from ..models.egress_ip_spec import EgressIPSpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = EgressIPMetadata.from_dict(d.pop("metadata"))
 
         spec = EgressIPSpec.from_dict(d.pop("spec"))
@@ -98,7 +100,7 @@ class EgressIP:
             events.append(componentsschemas_core_events_item)
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, Status]
+        status: Status | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

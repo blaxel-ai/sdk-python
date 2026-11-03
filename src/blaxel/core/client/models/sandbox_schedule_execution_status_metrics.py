@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,12 +16,12 @@ class SandboxScheduleExecutionStatusMetrics:
     """Schedule execution counts grouped by submission acceptance status.
 
     Attributes:
-        failed (Union[Unset, int]): Number of process submissions that were not accepted.
-        succeeded (Union[Unset, int]): Number of process submissions accepted by the sandbox.
+        failed (int | Unset): Number of process submissions that were not accepted.
+        succeeded (int | Unset): Number of process submissions accepted by the sandbox.
     """
 
-    failed: Union[Unset, int] = UNSET
-    succeeded: Union[Unset, int] = UNSET
+    failed: int | Unset = UNSET
+    succeeded: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,10 +40,10 @@ class SandboxScheduleExecutionStatusMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         failed = d.pop("failed", UNSET)
 
         succeeded = d.pop("succeeded", UNSET)

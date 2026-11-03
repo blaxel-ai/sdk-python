@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,14 +15,14 @@ T = TypeVar("T", bound="HandlerReloadResponse")
 class HandlerReloadResponse:
     """
     Attributes:
-        applied (Union[Unset, int]):
-        generation (Union[Unset, int]):
-        removed (Union[Unset, int]):
+        applied (int | Unset):
+        generation (int | Unset):
+        removed (int | Unset):
     """
 
-    applied: Union[Unset, int] = UNSET
-    generation: Union[Unset, int] = UNSET
-    removed: Union[Unset, int] = UNSET
+    applied: int | Unset = UNSET
+    generation: int | Unset = UNSET
+    removed: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,10 +45,10 @@ class HandlerReloadResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         applied = d.pop("applied", UNSET)
 
         generation = d.pop("generation", UNSET)

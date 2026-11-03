@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,21 +23,20 @@ class JobExecutionTask:
     """Job execution task
 
     Attributes:
-        conditions (Union[Unset, list['JobExecutionTaskCondition']]): Task conditions
-        metadata (Union[Unset, JobExecutionTaskMetadata]): Job execution task metadata
-        spec (Union[Unset, JobExecutionTaskSpec]): Job execution task specification
-        status (Union[Unset, JobExecutionTaskStatus]): Job execution task status
+        conditions (list[JobExecutionTaskCondition] | Unset): Task conditions
+        metadata (JobExecutionTaskMetadata | Unset): Job execution task metadata
+        spec (JobExecutionTaskSpec | Unset): Job execution task specification
+        status (JobExecutionTaskStatus | Unset): Job execution task status
     """
 
-    conditions: Union[Unset, list["JobExecutionTaskCondition"]] = UNSET
-    metadata: Union[Unset, "JobExecutionTaskMetadata"] = UNSET
-    spec: Union[Unset, "JobExecutionTaskSpec"] = UNSET
-    status: Union[Unset, JobExecutionTaskStatus] = UNSET
+    conditions: list[JobExecutionTaskCondition] | Unset = UNSET
+    metadata: JobExecutionTaskMetadata | Unset = UNSET
+    spec: JobExecutionTaskSpec | Unset = UNSET
+    status: JobExecutionTaskStatus | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        conditions: Union[Unset, list[dict[str, Any]]] = UNSET
+        conditions: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.conditions, Unset):
             conditions = []
             for conditions_item_data in self.conditions:
@@ -44,7 +46,7 @@ class JobExecutionTask:
                     conditions_item = conditions_item_data.to_dict()
                 conditions.append(conditions_item)
 
-        metadata: Union[Unset, dict[str, Any]] = UNSET
+        metadata: dict[str, Any] | Unset = UNSET
         if (
             self.metadata
             and not isinstance(self.metadata, Unset)
@@ -54,13 +56,13 @@ class JobExecutionTask:
         elif self.metadata and isinstance(self.metadata, dict):
             metadata = self.metadata
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
+        spec: dict[str, Any] | Unset = UNSET
         if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
             spec = self.spec.to_dict()
         elif self.spec and isinstance(self.spec, dict):
             spec = self.spec
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -79,14 +81,14 @@ class JobExecutionTask:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.job_execution_task_condition import JobExecutionTaskCondition
-        from ..models.job_execution_task_metadata import JobExecutionTaskMetadata
-        from ..models.job_execution_task_spec import JobExecutionTaskSpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.job_execution_task_condition import JobExecutionTaskCondition  # noqa: PLC0415
+        from ..models.job_execution_task_metadata import JobExecutionTaskMetadata  # noqa: PLC0415
+        from ..models.job_execution_task_spec import JobExecutionTaskSpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         conditions = []
         _conditions = d.pop("conditions", UNSET)
         for conditions_item_data in _conditions or []:
@@ -95,21 +97,21 @@ class JobExecutionTask:
             conditions.append(conditions_item)
 
         _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, JobExecutionTaskMetadata]
+        metadata: JobExecutionTaskMetadata | Unset
         if isinstance(_metadata, Unset):
             metadata = UNSET
         else:
             metadata = JobExecutionTaskMetadata.from_dict(_metadata)
 
         _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, JobExecutionTaskSpec]
+        spec: JobExecutionTaskSpec | Unset
         if isinstance(_spec, Unset):
             spec = UNSET
         else:
             spec = JobExecutionTaskSpec.from_dict(_spec)
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, JobExecutionTaskStatus]
+        status: JobExecutionTaskStatus | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,25 +25,24 @@ class PolicyUsages:
     attachments without fetching the agents/models/functions listings full.
 
         Attributes:
-            agents (Union[Unset, list['PolicyUsagesAgentsItem']]): Names of agents whose spec.policies contains this policy.
-            functions (Union[Unset, list['PolicyUsagesFunctionsItem']]): Names of functions whose spec.policies contains
-                this policy.
-            jobs (Union[Unset, list['PolicyUsagesJobsItem']]): Names of jobs whose spec.policies contains this policy.
-            models (Union[Unset, list['PolicyUsagesModelsItem']]): Names of models whose spec.policies contains this policy.
-            sandboxes (Union[Unset, list['PolicyUsagesSandboxesItem']]): Names of sandboxes whose spec.policies contains
-                this policy.
+            agents (list[PolicyUsagesAgentsItem] | Unset): Names of agents whose spec.policies contains this policy.
+            functions (list[PolicyUsagesFunctionsItem] | Unset): Names of functions whose spec.policies contains this
+                policy.
+            jobs (list[PolicyUsagesJobsItem] | Unset): Names of jobs whose spec.policies contains this policy.
+            models (list[PolicyUsagesModelsItem] | Unset): Names of models whose spec.policies contains this policy.
+            sandboxes (list[PolicyUsagesSandboxesItem] | Unset): Names of sandboxes whose spec.policies contains this
+                policy.
     """
 
-    agents: Union[Unset, list["PolicyUsagesAgentsItem"]] = UNSET
-    functions: Union[Unset, list["PolicyUsagesFunctionsItem"]] = UNSET
-    jobs: Union[Unset, list["PolicyUsagesJobsItem"]] = UNSET
-    models: Union[Unset, list["PolicyUsagesModelsItem"]] = UNSET
-    sandboxes: Union[Unset, list["PolicyUsagesSandboxesItem"]] = UNSET
+    agents: list[PolicyUsagesAgentsItem] | Unset = UNSET
+    functions: list[PolicyUsagesFunctionsItem] | Unset = UNSET
+    jobs: list[PolicyUsagesJobsItem] | Unset = UNSET
+    models: list[PolicyUsagesModelsItem] | Unset = UNSET
+    sandboxes: list[PolicyUsagesSandboxesItem] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        agents: Union[Unset, list[dict[str, Any]]] = UNSET
+        agents: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.agents, Unset):
             agents = []
             for agents_item_data in self.agents:
@@ -50,7 +52,7 @@ class PolicyUsages:
                     agents_item = agents_item_data.to_dict()
                 agents.append(agents_item)
 
-        functions: Union[Unset, list[dict[str, Any]]] = UNSET
+        functions: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.functions, Unset):
             functions = []
             for functions_item_data in self.functions:
@@ -60,7 +62,7 @@ class PolicyUsages:
                     functions_item = functions_item_data.to_dict()
                 functions.append(functions_item)
 
-        jobs: Union[Unset, list[dict[str, Any]]] = UNSET
+        jobs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.jobs, Unset):
             jobs = []
             for jobs_item_data in self.jobs:
@@ -70,7 +72,7 @@ class PolicyUsages:
                     jobs_item = jobs_item_data.to_dict()
                 jobs.append(jobs_item)
 
-        models: Union[Unset, list[dict[str, Any]]] = UNSET
+        models: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.models, Unset):
             models = []
             for models_item_data in self.models:
@@ -80,7 +82,7 @@ class PolicyUsages:
                     models_item = models_item_data.to_dict()
                 models.append(models_item)
 
-        sandboxes: Union[Unset, list[dict[str, Any]]] = UNSET
+        sandboxes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.sandboxes, Unset):
             sandboxes = []
             for sandboxes_item_data in self.sandboxes:
@@ -107,16 +109,16 @@ class PolicyUsages:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.policy_usages_agents_item import PolicyUsagesAgentsItem
-        from ..models.policy_usages_functions_item import PolicyUsagesFunctionsItem
-        from ..models.policy_usages_jobs_item import PolicyUsagesJobsItem
-        from ..models.policy_usages_models_item import PolicyUsagesModelsItem
-        from ..models.policy_usages_sandboxes_item import PolicyUsagesSandboxesItem
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.policy_usages_agents_item import PolicyUsagesAgentsItem  # noqa: PLC0415
+        from ..models.policy_usages_functions_item import PolicyUsagesFunctionsItem  # noqa: PLC0415
+        from ..models.policy_usages_jobs_item import PolicyUsagesJobsItem  # noqa: PLC0415
+        from ..models.policy_usages_models_item import PolicyUsagesModelsItem  # noqa: PLC0415
+        from ..models.policy_usages_sandboxes_item import PolicyUsagesSandboxesItem  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         agents = []
         _agents = d.pop("agents", UNSET)
         for agents_item_data in _agents or []:

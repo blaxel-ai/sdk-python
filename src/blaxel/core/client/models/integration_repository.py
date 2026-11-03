@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,18 +16,18 @@ class IntegrationRepository:
     """Integration repository
 
     Attributes:
-        id (Union[Unset, str]): Repository ID
-        is_bl (Union[Unset, bool]): Whether the repository has Blaxel imports
-        name (Union[Unset, str]): Repository name
-        organization (Union[Unset, str]): Repository owner
-        url (Union[Unset, str]): Repository URL
+        id (str | Unset): Repository ID
+        is_bl (bool | Unset): Whether the repository has Blaxel imports
+        name (str | Unset): Repository name
+        organization (str | Unset): Repository owner
+        url (str | Unset): Repository URL
     """
 
-    id: Union[Unset, str] = UNSET
-    is_bl: Union[Unset, bool] = UNSET
-    name: Union[Unset, str] = UNSET
-    organization: Union[Unset, str] = UNSET
-    url: Union[Unset, str] = UNSET
+    id: str | Unset = UNSET
+    is_bl: bool | Unset = UNSET
+    name: str | Unset = UNSET
+    organization: str | Unset = UNSET
+    url: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,10 +58,10 @@ class IntegrationRepository:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         id = d.pop("id", UNSET)
 
         is_bl = d.pop("isBl", d.pop("is_bl", UNSET))

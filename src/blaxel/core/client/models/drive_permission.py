@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,26 +22,25 @@ class DrivePermission:
     Permissions are evaluated with OR logic — the first matching permission grants access.
 
         Attributes:
-            labels (Union[Unset, DrivePermissionLabels]): Labels that the workload must have. All labels must match (AND
-                logic). Empty labels match all workloads.
-            mode (Union[Unset, DrivePermissionMode]): Access mode granted by this permission
-            path (Union[Unset, str]): Subfolder path to restrict access to. Defaults to / (full drive). Example: /data.
+            labels (DrivePermissionLabels | Unset): Labels that the workload must have. All labels must match (AND logic).
+                Empty labels match all workloads.
+            mode (DrivePermissionMode | Unset): Access mode granted by this permission
+            path (str | Unset): Subfolder path to restrict access to. Defaults to / (full drive). Example: /data.
     """
 
-    labels: Union[Unset, "DrivePermissionLabels"] = UNSET
-    mode: Union[Unset, DrivePermissionMode] = UNSET
-    path: Union[Unset, str] = UNSET
+    labels: DrivePermissionLabels | Unset = UNSET
+    mode: DrivePermissionMode | Unset = UNSET
+    path: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        labels: Union[Unset, dict[str, Any]] = UNSET
+        labels: dict[str, Any] | Unset = UNSET
         if self.labels and not isinstance(self.labels, Unset) and not isinstance(self.labels, dict):
             labels = self.labels.to_dict()
         elif self.labels and isinstance(self.labels, dict):
             labels = self.labels
 
-        mode: Union[Unset, str] = UNSET
+        mode: str | Unset = UNSET
         if not isinstance(self.mode, Unset):
             mode = self.mode.value
 
@@ -57,21 +59,21 @@ class DrivePermission:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.drive_permission_labels import DrivePermissionLabels
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.drive_permission_labels import DrivePermissionLabels  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _labels = d.pop("labels", UNSET)
-        labels: Union[Unset, DrivePermissionLabels]
+        labels: DrivePermissionLabels | Unset
         if isinstance(_labels, Unset):
             labels = UNSET
         else:
             labels = DrivePermissionLabels.from_dict(_labels)
 
         _mode = d.pop("mode", UNSET)
-        mode: Union[Unset, DrivePermissionMode]
+        mode: DrivePermissionMode | Unset
         if isinstance(_mode, Unset) or _mode == "":
             mode = UNSET
         else:

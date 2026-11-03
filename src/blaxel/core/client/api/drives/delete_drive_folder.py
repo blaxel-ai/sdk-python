@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -21,7 +22,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/drives/{drive_name}/folders",
+        "url": "/drives/{drive_name}/folders".format(
+            drive_name=quote(str(drive_name), safe=""),
+        ),
         "params": params,
     }
 
@@ -31,20 +34,28 @@ def _get_kwargs(
 def _parse_response(*, client: Client, response: httpx.Response) -> Any | None:
     if response.status_code == 204:
         return None
+
     if response.status_code == 400:
         return None
+
     if response.status_code == 401:
         return None
+
     if response.status_code == 403:
         return None
+
     if response.status_code == 404:
         return None
+
     if response.status_code == 409:
         return None
+
     if response.status_code == 502:
         return None
+
     if response.status_code == 504:
         return None
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

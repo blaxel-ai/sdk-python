@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,26 +18,26 @@ class EgressIPMetadata:
     Attributes:
         name (str): Unique identifier for the egress IP within the gateway. Must be lowercase alphanumeric with hyphens,
             max 49 characters. Immutable after creation. Example: my-egress-ip.
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Human-readable name for display in the UI. Can contain spaces and special
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        display_name (str | Unset): Human-readable name for display in the UI. Can contain spaces and special
             characters, max 63 characters. Example: My Egress IP.
-        gateway_name (Union[Unset, str]): Name of the egress gateway this IP is allocated from
-        vpc_name (Union[Unset, str]): Name of the VPC this egress IP belongs to
-        workspace (Union[Unset, str]): Name of the workspace this resource belongs to (read-only, set automatically)
+        gateway_name (str | Unset): Name of the egress gateway this IP is allocated from
+        vpc_name (str | Unset): Name of the VPC this egress IP belongs to
+        workspace (str | Unset): Name of the workspace this resource belongs to (read-only, set automatically)
     """
 
     name: str
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    gateway_name: Union[Unset, str] = UNSET
-    vpc_name: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    gateway_name: str | Unset = UNSET
+    vpc_name: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -83,10 +86,10 @@ class EgressIPMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,9 +15,9 @@ def _get_kwargs(
     path: str,
     *,
     query: str,
-    score_threshold: Union[Unset, float] = UNSET,
-    token_limit: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
+    score_threshold: float | Unset = UNSET,
+    token_limit: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -32,7 +33,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/codegen/reranking/{path}",
+        "url": "/codegen/reranking/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
         "params": params,
     }
 
@@ -41,26 +44,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, RerankingResponse] | None:
+) -> ErrorResponse | RerankingResponse | None:
     if response.status_code == 200:
         response_200 = RerankingResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 503:
         response_503 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_503, response)
         return response_503
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -71,7 +78,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, RerankingResponse]]:
+) -> Response[ErrorResponse | RerankingResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -85,10 +92,10 @@ def sync_detailed(
     *,
     client: Client,
     query: str,
-    score_threshold: Union[Unset, float] = UNSET,
-    token_limit: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-) -> Response[Union[ErrorResponse, RerankingResponse]]:
+    score_threshold: float | Unset = UNSET,
+    token_limit: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+) -> Response[ErrorResponse | RerankingResponse]:
     """Code reranking/semantic search
 
      Uses Relace's code reranking model to find the most relevant files for a given query. This is useful
@@ -108,16 +115,16 @@ def sync_detailed(
     Args:
         path (str):
         query (str):
-        score_threshold (Union[Unset, float]):
-        token_limit (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
+        score_threshold (float | Unset):
+        token_limit (int | Unset):
+        file_pattern (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, RerankingResponse]]
+        Response[ErrorResponse | RerankingResponse]
     """
 
     kwargs = _get_kwargs(
@@ -140,10 +147,10 @@ def sync(
     *,
     client: Client,
     query: str,
-    score_threshold: Union[Unset, float] = UNSET,
-    token_limit: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-) -> Union[ErrorResponse, RerankingResponse] | None:
+    score_threshold: float | Unset = UNSET,
+    token_limit: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+) -> ErrorResponse | RerankingResponse | None:
     """Code reranking/semantic search
 
      Uses Relace's code reranking model to find the most relevant files for a given query. This is useful
@@ -163,16 +170,16 @@ def sync(
     Args:
         path (str):
         query (str):
-        score_threshold (Union[Unset, float]):
-        token_limit (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
+        score_threshold (float | Unset):
+        token_limit (int | Unset):
+        file_pattern (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, RerankingResponse]
+        ErrorResponse | RerankingResponse
     """
 
     return sync_detailed(
@@ -190,10 +197,10 @@ async def asyncio_detailed(
     *,
     client: Client,
     query: str,
-    score_threshold: Union[Unset, float] = UNSET,
-    token_limit: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-) -> Response[Union[ErrorResponse, RerankingResponse]]:
+    score_threshold: float | Unset = UNSET,
+    token_limit: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+) -> Response[ErrorResponse | RerankingResponse]:
     """Code reranking/semantic search
 
      Uses Relace's code reranking model to find the most relevant files for a given query. This is useful
@@ -213,16 +220,16 @@ async def asyncio_detailed(
     Args:
         path (str):
         query (str):
-        score_threshold (Union[Unset, float]):
-        token_limit (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
+        score_threshold (float | Unset):
+        token_limit (int | Unset):
+        file_pattern (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, RerankingResponse]]
+        Response[ErrorResponse | RerankingResponse]
     """
 
     kwargs = _get_kwargs(
@@ -243,10 +250,10 @@ async def asyncio(
     *,
     client: Client,
     query: str,
-    score_threshold: Union[Unset, float] = UNSET,
-    token_limit: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-) -> Union[ErrorResponse, RerankingResponse] | None:
+    score_threshold: float | Unset = UNSET,
+    token_limit: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+) -> ErrorResponse | RerankingResponse | None:
     """Code reranking/semantic search
 
      Uses Relace's code reranking model to find the most relevant files for a given query. This is useful
@@ -266,16 +273,16 @@ async def asyncio(
     Args:
         path (str):
         query (str):
-        score_threshold (Union[Unset, float]):
-        token_limit (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
+        score_threshold (float | Unset):
+        token_limit (int | Unset):
+        file_pattern (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, RerankingResponse]
+        ErrorResponse | RerankingResponse
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,12 +16,12 @@ class WorkspaceSandboxSettings:
     """Workspace-wide sandbox configuration that applies to all sandbox deployments in the workspace.
 
     Attributes:
-        disable_process_logging (Union[Unset, bool]): When true, sandbox deployments in this workspace set
+        disable_process_logging (bool | Unset): When true, sandbox deployments in this workspace set
             SANDBOX_DISABLE_PROCESS_LOGGING=true to disable per-process stdout/stderr logging. Requires sandbox-api
             v0.2.28+.
     """
 
-    disable_process_logging: Union[Unset, bool] = UNSET
+    disable_process_logging: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -33,10 +36,10 @@ class WorkspaceSandboxSettings:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         disable_process_logging = d.pop(
             "disableProcessLogging", d.pop("disable_process_logging", UNSET)
         )

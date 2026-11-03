@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -8,27 +9,28 @@ from ...client import Client
 from ...models.error_response import ErrorResponse
 from ...models.multipart_initiate_request import MultipartInitiateRequest
 from ...models.multipart_initiate_response import MultipartInitiateResponse
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     path: str,
     *,
-    body: MultipartInitiateRequest,
+    body: MultipartInitiateRequest | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/filesystem-multipart/initiate/{path}",
+        "url": "/filesystem-multipart/initiate/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
     }
 
-    if type(body) is dict:
-        _body = body
-    else:
-        _body = body.to_dict()
+    if body and not isinstance(body, Unset) and not isinstance(body, dict):
+        _kwargs["json"] = body.to_dict()
+    elif body and isinstance(body, dict):
+        _kwargs["json"] = body
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -37,21 +39,24 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, MultipartInitiateResponse] | None:
+) -> ErrorResponse | MultipartInitiateResponse | None:
     if response.status_code == 200:
         response_200 = MultipartInitiateResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -62,7 +67,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, MultipartInitiateResponse]]:
+) -> Response[ErrorResponse | MultipartInitiateResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -75,22 +80,22 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
-    body: MultipartInitiateRequest,
-) -> Response[Union[ErrorResponse, MultipartInitiateResponse]]:
+    body: MultipartInitiateRequest | Unset = UNSET,
+) -> Response[ErrorResponse | MultipartInitiateResponse]:
     """Initiate multipart upload
 
      Initiate a multipart upload session for a file
 
     Args:
         path (str):
-        body (MultipartInitiateRequest):
+        body (MultipartInitiateRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, MultipartInitiateResponse]]
+        Response[ErrorResponse | MultipartInitiateResponse]
     """
 
     kwargs = _get_kwargs(
@@ -109,22 +114,22 @@ def sync(
     path: str,
     *,
     client: Client,
-    body: MultipartInitiateRequest,
-) -> Union[ErrorResponse, MultipartInitiateResponse] | None:
+    body: MultipartInitiateRequest | Unset = UNSET,
+) -> ErrorResponse | MultipartInitiateResponse | None:
     """Initiate multipart upload
 
      Initiate a multipart upload session for a file
 
     Args:
         path (str):
-        body (MultipartInitiateRequest):
+        body (MultipartInitiateRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, MultipartInitiateResponse]
+        ErrorResponse | MultipartInitiateResponse
     """
 
     return sync_detailed(
@@ -138,22 +143,22 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
-    body: MultipartInitiateRequest,
-) -> Response[Union[ErrorResponse, MultipartInitiateResponse]]:
+    body: MultipartInitiateRequest | Unset = UNSET,
+) -> Response[ErrorResponse | MultipartInitiateResponse]:
     """Initiate multipart upload
 
      Initiate a multipart upload session for a file
 
     Args:
         path (str):
-        body (MultipartInitiateRequest):
+        body (MultipartInitiateRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, MultipartInitiateResponse]]
+        Response[ErrorResponse | MultipartInitiateResponse]
     """
 
     kwargs = _get_kwargs(
@@ -170,22 +175,22 @@ async def asyncio(
     path: str,
     *,
     client: Client,
-    body: MultipartInitiateRequest,
-) -> Union[ErrorResponse, MultipartInitiateResponse] | None:
+    body: MultipartInitiateRequest | Unset = UNSET,
+) -> ErrorResponse | MultipartInitiateResponse | None:
     """Initiate multipart upload
 
      Initiate a multipart upload session for a file
 
     Args:
         path (str):
-        body (MultipartInitiateRequest):
+        body (MultipartInitiateRequest | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, MultipartInitiateResponse]
+        ErrorResponse | MultipartInitiateResponse
     """
 
     return (

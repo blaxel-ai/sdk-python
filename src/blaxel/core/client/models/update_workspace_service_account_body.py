@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,15 +18,15 @@ T = TypeVar("T", bound="UpdateWorkspaceServiceAccountBody")
 class UpdateWorkspaceServiceAccountBody:
     """
     Attributes:
-        description (Union[Unset, str]): Service account description
-        name (Union[Unset, str]): Service account name
-        role (Union[Unset, UpdateWorkspaceServiceAccountBodyRole]): Role of the service account in the workspace.
-            Defaults to admin on creation; unchanged on update when omitted.
+        description (str | Unset): Service account description
+        name (str | Unset): Service account name
+        role (UpdateWorkspaceServiceAccountBodyRole | Unset): Role of the service account in the workspace. Defaults to
+            admin on creation; unchanged on update when omitted.
     """
 
-    description: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    role: Union[Unset, UpdateWorkspaceServiceAccountBodyRole] = UNSET
+    description: str | Unset = UNSET
+    name: str | Unset = UNSET
+    role: UpdateWorkspaceServiceAccountBodyRole | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,7 +34,7 @@ class UpdateWorkspaceServiceAccountBody:
 
         name = self.name
 
-        role: Union[Unset, str] = UNSET
+        role: str | Unset = UNSET
         if not isinstance(self.role, Unset):
             role = self.role.value
 
@@ -48,16 +51,16 @@ class UpdateWorkspaceServiceAccountBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         description = d.pop("description", UNSET)
 
         name = d.pop("name", UNSET)
 
         _role = d.pop("role", UNSET)
-        role: Union[Unset, UpdateWorkspaceServiceAccountBodyRole]
+        role: UpdateWorkspaceServiceAccountBodyRole | Unset
         if isinstance(_role, Unset) or _role == "":
             role = UNSET
         else:

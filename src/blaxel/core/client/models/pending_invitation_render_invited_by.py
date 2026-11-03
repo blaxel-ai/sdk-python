@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,16 +16,16 @@ class PendingInvitationRenderInvitedBy:
     """Invited by
 
     Attributes:
-        email (Union[Unset, str]): User email
-        family_name (Union[Unset, str]): User family name
-        given_name (Union[Unset, str]): User given name
-        sub (Union[Unset, str]): User sub
+        email (str | Unset): User email
+        family_name (str | Unset): User family name
+        given_name (str | Unset): User given name
+        sub (str | Unset): User sub
     """
 
-    email: Union[Unset, str] = UNSET
-    family_name: Union[Unset, str] = UNSET
-    given_name: Union[Unset, str] = UNSET
-    sub: Union[Unset, str] = UNSET
+    email: str | Unset = UNSET
+    family_name: str | Unset = UNSET
+    given_name: str | Unset = UNSET
+    sub: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -49,10 +52,10 @@ class PendingInvitationRenderInvitedBy:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         email = d.pop("email", UNSET)
 
         family_name = d.pop("family_name", UNSET)

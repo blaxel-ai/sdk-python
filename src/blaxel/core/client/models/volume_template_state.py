@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,16 +17,16 @@ class VolumeTemplateState:
     """Volume template state
 
     Attributes:
-        last_version_uploaded_at (Union[Unset, str]): Timestamp of last version upload
-        latest_version (Union[Unset, str]): Current/latest S3 version ID
-        status (Union[Unset, VolumeTemplateStateStatus]): Status of the volume template (created, ready, error)
-        version_count (Union[Unset, int]): Total number of versions for this template
+        last_version_uploaded_at (str | Unset): Timestamp of last version upload
+        latest_version (str | Unset): Current/latest S3 version ID
+        status (VolumeTemplateStateStatus | Unset): Status of the volume template (created, ready, error)
+        version_count (int | Unset): Total number of versions for this template
     """
 
-    last_version_uploaded_at: Union[Unset, str] = UNSET
-    latest_version: Union[Unset, str] = UNSET
-    status: Union[Unset, VolumeTemplateStateStatus] = UNSET
-    version_count: Union[Unset, int] = UNSET
+    last_version_uploaded_at: str | Unset = UNSET
+    latest_version: str | Unset = UNSET
+    status: VolumeTemplateStateStatus | Unset = UNSET
+    version_count: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,7 +34,7 @@ class VolumeTemplateState:
 
         latest_version = self.latest_version
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -52,10 +55,10 @@ class VolumeTemplateState:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         last_version_uploaded_at = d.pop(
             "lastVersionUploadedAt", d.pop("last_version_uploaded_at", UNSET)
         )
@@ -63,7 +66,7 @@ class VolumeTemplateState:
         latest_version = d.pop("latestVersion", d.pop("latest_version", UNSET))
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, VolumeTemplateStateStatus]
+        status: VolumeTemplateStateStatus | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

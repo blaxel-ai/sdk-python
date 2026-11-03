@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -14,13 +14,13 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListFunctionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListFunctionsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -28,7 +28,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -36,7 +36,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_anchor: Union[Unset, str] = UNSET
+    json_anchor: str | Unset = UNSET
     if not isinstance(anchor, Unset):
         json_anchor = anchor.value
 
@@ -57,28 +57,30 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Error, FunctionList] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | FunctionList | None:
     if response.status_code == 200:
         response_200 = FunctionList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -87,9 +89,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Error, FunctionList]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | FunctionList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -101,14 +101,14 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, FunctionList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListFunctionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListFunctionsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Response[Error | FunctionList]:
     """List all MCP servers
 
      Returns MCP server functions deployed in the workspace. Each function includes its deployment
@@ -117,20 +117,20 @@ def sync_detailed(
     and `limit` query parameters; older versions keep returning a bare array with all functions.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListFunctionsSort | Unset):
+        q (str | Unset):
+        anchor (ListFunctionsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, FunctionList]]
+        Response[Error | FunctionList]
     """
 
     kwargs = _get_kwargs(
@@ -153,14 +153,14 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[Error, FunctionList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListFunctionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListFunctionsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Error | FunctionList | None:
     """List all MCP servers
 
      Returns MCP server functions deployed in the workspace. Each function includes its deployment
@@ -169,20 +169,20 @@ def sync(
     and `limit` query parameters; older versions keep returning a bare array with all functions.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListFunctionsSort | Unset):
+        q (str | Unset):
+        anchor (ListFunctionsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, FunctionList]
+        Error | FunctionList
     """
 
     return sync_detailed(
@@ -200,14 +200,14 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, FunctionList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListFunctionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListFunctionsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Response[Error | FunctionList]:
     """List all MCP servers
 
      Returns MCP server functions deployed in the workspace. Each function includes its deployment
@@ -216,20 +216,20 @@ async def asyncio_detailed(
     and `limit` query parameters; older versions keep returning a bare array with all functions.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListFunctionsSort | Unset):
+        q (str | Unset):
+        anchor (ListFunctionsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, FunctionList]]
+        Response[Error | FunctionList]
     """
 
     kwargs = _get_kwargs(
@@ -250,14 +250,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListFunctionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListFunctionsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[Error, FunctionList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListFunctionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListFunctionsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Error | FunctionList | None:
     """List all MCP servers
 
      Returns MCP server functions deployed in the workspace. Each function includes its deployment
@@ -266,20 +266,20 @@ async def asyncio(
     and `limit` query parameters; older versions keep returning a bare array with all functions.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListFunctionsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListFunctionsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListFunctionsSort | Unset):
+        q (str | Unset):
+        anchor (ListFunctionsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, FunctionList]
+        Error | FunctionList
     """
 
     return (

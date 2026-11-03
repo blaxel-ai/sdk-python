@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,12 +16,12 @@ class Repository:
     """Repository
 
     Attributes:
-        type_ (Union[Unset, str]): Repository type Example: github.
-        url (Union[Unset, str]): Repository URL Example: https://github.com/my-org/my-agent.
+        type_ (str | Unset): Repository type Example: github.
+        url (str | Unset): Repository URL Example: https://github.com/my-org/my-agent.
     """
 
-    type_: Union[Unset, str] = UNSET
-    url: Union[Unset, str] = UNSET
+    type_: str | Unset = UNSET
+    url: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,10 +40,10 @@ class Repository:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         type_ = d.pop("type", d.pop("type_", UNSET))
 
         url = d.pop("url", UNSET)

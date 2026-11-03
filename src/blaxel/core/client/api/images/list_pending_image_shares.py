@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -12,11 +12,11 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    direction: Union[Unset, ListPendingImageSharesDirection] = UNSET,
+    direction: ListPendingImageSharesDirection | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
-    json_direction: Union[Unset, str] = UNSET
+    json_direction: str | Unset = UNSET
     if not isinstance(direction, Unset):
         json_direction = direction.value
 
@@ -35,7 +35,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> list["PendingImageShareRender"] | None:
+) -> list[PendingImageShareRender] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -45,6 +45,7 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -55,7 +56,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[list["PendingImageShareRender"]]:
+) -> Response[list[PendingImageShareRender]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,22 +68,22 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    direction: Union[Unset, ListPendingImageSharesDirection] = UNSET,
-) -> Response[list["PendingImageShareRender"]]:
+    direction: ListPendingImageSharesDirection | Unset = UNSET,
+) -> Response[list[PendingImageShareRender]]:
     """List pending image shares
 
      Lists pending cross-account image shares targeting the caller's workspace (incoming) or originating
     from it (outgoing). Expired shares are cleaned up opportunistically.
 
     Args:
-        direction (Union[Unset, ListPendingImageSharesDirection]):
+        direction (ListPendingImageSharesDirection | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['PendingImageShareRender']]
+        Response[list[PendingImageShareRender]]
     """
 
     kwargs = _get_kwargs(
@@ -99,22 +100,22 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    direction: Union[Unset, ListPendingImageSharesDirection] = UNSET,
-) -> list["PendingImageShareRender"] | None:
+    direction: ListPendingImageSharesDirection | Unset = UNSET,
+) -> list[PendingImageShareRender] | None:
     """List pending image shares
 
      Lists pending cross-account image shares targeting the caller's workspace (incoming) or originating
     from it (outgoing). Expired shares are cleaned up opportunistically.
 
     Args:
-        direction (Union[Unset, ListPendingImageSharesDirection]):
+        direction (ListPendingImageSharesDirection | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['PendingImageShareRender']
+        list[PendingImageShareRender]
     """
 
     return sync_detailed(
@@ -126,22 +127,22 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    direction: Union[Unset, ListPendingImageSharesDirection] = UNSET,
-) -> Response[list["PendingImageShareRender"]]:
+    direction: ListPendingImageSharesDirection | Unset = UNSET,
+) -> Response[list[PendingImageShareRender]]:
     """List pending image shares
 
      Lists pending cross-account image shares targeting the caller's workspace (incoming) or originating
     from it (outgoing). Expired shares are cleaned up opportunistically.
 
     Args:
-        direction (Union[Unset, ListPendingImageSharesDirection]):
+        direction (ListPendingImageSharesDirection | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['PendingImageShareRender']]
+        Response[list[PendingImageShareRender]]
     """
 
     kwargs = _get_kwargs(
@@ -156,22 +157,22 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    direction: Union[Unset, ListPendingImageSharesDirection] = UNSET,
-) -> list["PendingImageShareRender"] | None:
+    direction: ListPendingImageSharesDirection | Unset = UNSET,
+) -> list[PendingImageShareRender] | None:
     """List pending image shares
 
      Lists pending cross-account image shares targeting the caller's workspace (incoming) or originating
     from it (outgoing). Expired shares are cleaned up opportunistically.
 
     Args:
-        direction (Union[Unset, ListPendingImageSharesDirection]):
+        direction (ListPendingImageSharesDirection | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['PendingImageShareRender']
+        list[PendingImageShareRender]
     """
 
     return (

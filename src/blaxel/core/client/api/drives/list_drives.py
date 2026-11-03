@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -13,13 +13,13 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListDrivesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListDrivesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -27,7 +27,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -35,7 +35,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_anchor: Union[Unset, str] = UNSET
+    json_anchor: str | Unset = UNSET
     if not isinstance(anchor, Unset):
         json_anchor = anchor.value
 
@@ -56,15 +56,17 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, DriveList] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | DriveList | None:
     if response.status_code == 200:
         response_200 = DriveList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = cast(Any, None)
         errors.retain_response(response_401, response)
         return response_401
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -73,7 +75,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, D
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, DriveList]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | DriveList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -85,14 +87,14 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 def sync_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, DriveList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListDrivesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListDrivesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Response[Any | DriveList]:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -101,20 +103,20 @@ def sync_detailed(
     versions keep returning a bare array with all drives.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListDrivesAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListDrivesSort | Unset):
+        q (str | Unset):
+        anchor (ListDrivesAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DriveList]]
+        Response[Any | DriveList]
     """
 
     kwargs = _get_kwargs(
@@ -137,14 +139,14 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[Any, DriveList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListDrivesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListDrivesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Any | DriveList | None:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -153,20 +155,20 @@ def sync(
     versions keep returning a bare array with all drives.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListDrivesAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListDrivesSort | Unset):
+        q (str | Unset):
+        anchor (ListDrivesAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DriveList]
+        Any | DriveList
     """
 
     return sync_detailed(
@@ -184,14 +186,14 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, DriveList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListDrivesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListDrivesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Response[Any | DriveList]:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -200,20 +202,20 @@ async def asyncio_detailed(
     versions keep returning a bare array with all drives.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListDrivesAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListDrivesSort | Unset):
+        q (str | Unset):
+        anchor (ListDrivesAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DriveList]]
+        Response[Any | DriveList]
     """
 
     kwargs = _get_kwargs(
@@ -234,14 +236,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[Any, DriveList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListDrivesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListDrivesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Any | DriveList | None:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -250,20 +252,20 @@ async def asyncio(
     versions keep returning a bare array with all drives.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListDrivesAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListDrivesSort | Unset):
+        q (str | Unset):
+        anchor (ListDrivesAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DriveList]
+        Any | DriveList
     """
 
     return (

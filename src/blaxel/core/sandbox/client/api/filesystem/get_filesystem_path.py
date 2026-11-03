@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from io import BytesIO
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,7 @@ from ...types import UNSET, File, Response, Unset
 def _get_kwargs(
     path: str,
     *,
-    download: Union[Unset, bool] = UNSET,
+    download: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -25,7 +26,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/filesystem/{path}",
+        "url": "/filesystem/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
         "params": params,
     }
 
@@ -34,17 +37,17 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
+) -> Directory | File | FileWithContent | ErrorResponse | None:
     if response.status_code == 200:
 
-        def _parse_response_200(data: object) -> Union["Directory", "FileWithContent", File]:
+        def _parse_response_200(data: object) -> Directory | File | FileWithContent:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
                 response_200_type_0 = Directory.from_dict(data)
 
                 return response_200_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             try:
                 if not isinstance(data, dict):
@@ -52,7 +55,7 @@ def _parse_response(
                 response_200_type_1 = FileWithContent.from_dict(data)
 
                 return response_200_type_1
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             if not isinstance(data, bytes):
                 raise TypeError()
@@ -63,21 +66,25 @@ def _parse_response(
         response_200 = _parse_response_200(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -88,7 +95,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
+) -> Response[Directory | File | FileWithContent | ErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -101,8 +108,8 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
-    download: Union[Unset, bool] = UNSET,
-) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
+    download: bool | Unset = UNSET,
+) -> Response[Directory | File | FileWithContent | ErrorResponse]:
     """Get file or directory information
 
      Get content of a file or listing of a directory. Use Accept header to control response format for
@@ -110,14 +117,14 @@ def sync_detailed(
 
     Args:
         path (str):
-        download (Union[Unset, bool]):
+        download (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]]
+        Response[Directory | File | FileWithContent | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -136,8 +143,8 @@ def sync(
     path: str,
     *,
     client: Client,
-    download: Union[Unset, bool] = UNSET,
-) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
+    download: bool | Unset = UNSET,
+) -> Directory | File | FileWithContent | ErrorResponse | None:
     """Get file or directory information
 
      Get content of a file or listing of a directory. Use Accept header to control response format for
@@ -145,14 +152,14 @@ def sync(
 
     Args:
         path (str):
-        download (Union[Unset, bool]):
+        download (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]
+        Directory | File | FileWithContent | ErrorResponse
     """
 
     return sync_detailed(
@@ -166,8 +173,8 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
-    download: Union[Unset, bool] = UNSET,
-) -> Response[Union[ErrorResponse, Union["Directory", "FileWithContent", File]]]:
+    download: bool | Unset = UNSET,
+) -> Response[Directory | File | FileWithContent | ErrorResponse]:
     """Get file or directory information
 
      Get content of a file or listing of a directory. Use Accept header to control response format for
@@ -175,14 +182,14 @@ async def asyncio_detailed(
 
     Args:
         path (str):
-        download (Union[Unset, bool]):
+        download (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]]
+        Response[Directory | File | FileWithContent | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -199,8 +206,8 @@ async def asyncio(
     path: str,
     *,
     client: Client,
-    download: Union[Unset, bool] = UNSET,
-) -> Union[ErrorResponse, Union["Directory", "FileWithContent", File]] | None:
+    download: bool | Unset = UNSET,
+) -> Directory | File | FileWithContent | ErrorResponse | None:
     """Get file or directory information
 
      Get content of a file or listing of a directory. Use Accept header to control response format for
@@ -208,14 +215,14 @@ async def asyncio(
 
     Args:
         path (str):
-        download (Union[Unset, bool]):
+        download (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, Union['Directory', 'FileWithContent', File]]
+        Directory | File | FileWithContent | ErrorResponse
     """
 
     return (

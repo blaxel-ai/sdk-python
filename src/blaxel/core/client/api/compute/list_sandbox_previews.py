@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,13 +15,15 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/sandboxes/{sandbox_name}/previews",
+        "url": "/sandboxes/{sandbox_name}/previews".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["Preview"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[Preview] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -30,6 +33,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Previe
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -38,7 +42,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Previe
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["Preview"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list[Preview]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -51,7 +55,7 @@ def sync_detailed(
     sandbox_name: str,
     *,
     client: Client,
-) -> Response[list["Preview"]]:
+) -> Response[list[Preview]]:
     """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
@@ -64,7 +68,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['Preview']]
+        Response[list[Preview]]
     """
 
     kwargs = _get_kwargs(
@@ -82,7 +86,7 @@ def sync(
     sandbox_name: str,
     *,
     client: Client,
-) -> list["Preview"] | None:
+) -> list[Preview] | None:
     """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
@@ -95,7 +99,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['Preview']
+        list[Preview]
     """
 
     return sync_detailed(
@@ -108,7 +112,7 @@ async def asyncio_detailed(
     sandbox_name: str,
     *,
     client: Client,
-) -> Response[list["Preview"]]:
+) -> Response[list[Preview]]:
     """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
@@ -121,7 +125,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['Preview']]
+        Response[list[Preview]]
     """
 
     kwargs = _get_kwargs(
@@ -137,7 +141,7 @@ async def asyncio(
     sandbox_name: str,
     *,
     client: Client,
-) -> list["Preview"] | None:
+) -> list[Preview] | None:
     """List Sandbox Previews
 
      Returns a list of Sandbox Previews in the workspace.
@@ -150,7 +154,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['Preview']
+        list[Preview]
     """
 
     return (

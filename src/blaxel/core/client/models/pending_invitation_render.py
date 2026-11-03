@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,34 +23,33 @@ class PendingInvitationRender:
     """Pending invitation in workspace
 
     Attributes:
-        account (Union[Unset, PendingInvitationRenderAccount]): Account info in pending invitation render (for
-            account_admin type)
-        email (Union[Unset, str]): User email
-        expires_at (Union[Unset, str]): The date and time when the invitation expires
-        invitation_id (Union[Unset, str]): Opaque invitation identifier
-        invited_at (Union[Unset, str]): Invitation date
-        invited_by (Union[Unset, PendingInvitationRenderInvitedBy]): Invited by
-        role (Union[Unset, str]): ACL role
-        type_ (Union[Unset, str]): Invitation type: "workspace" or "account_admin"
-        workspace (Union[Unset, PendingInvitationRenderWorkspace]): Workspace
-        workspace_details (Union[Unset, PendingInvitationWorkspaceDetails]): Workspace details
+        account (PendingInvitationRenderAccount | Unset): Account info in pending invitation render (for account_admin
+            type)
+        email (str | Unset): User email
+        expires_at (str | Unset): The date and time when the invitation expires
+        invitation_id (str | Unset): Opaque invitation identifier
+        invited_at (str | Unset): Invitation date
+        invited_by (PendingInvitationRenderInvitedBy | Unset): Invited by
+        role (str | Unset): ACL role
+        type_ (str | Unset): Invitation type: "workspace" or "account_admin"
+        workspace (PendingInvitationRenderWorkspace | Unset): Workspace
+        workspace_details (PendingInvitationWorkspaceDetails | Unset): Workspace details
     """
 
-    account: Union[Unset, "PendingInvitationRenderAccount"] = UNSET
-    email: Union[Unset, str] = UNSET
-    expires_at: Union[Unset, str] = UNSET
-    invitation_id: Union[Unset, str] = UNSET
-    invited_at: Union[Unset, str] = UNSET
-    invited_by: Union[Unset, "PendingInvitationRenderInvitedBy"] = UNSET
-    role: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
-    workspace: Union[Unset, "PendingInvitationRenderWorkspace"] = UNSET
-    workspace_details: Union[Unset, "PendingInvitationWorkspaceDetails"] = UNSET
+    account: PendingInvitationRenderAccount | Unset = UNSET
+    email: str | Unset = UNSET
+    expires_at: str | Unset = UNSET
+    invitation_id: str | Unset = UNSET
+    invited_at: str | Unset = UNSET
+    invited_by: PendingInvitationRenderInvitedBy | Unset = UNSET
+    role: str | Unset = UNSET
+    type_: str | Unset = UNSET
+    workspace: PendingInvitationRenderWorkspace | Unset = UNSET
+    workspace_details: PendingInvitationWorkspaceDetails | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        account: Union[Unset, dict[str, Any]] = UNSET
+        account: dict[str, Any] | Unset = UNSET
         if (
             self.account
             and not isinstance(self.account, Unset)
@@ -65,7 +67,7 @@ class PendingInvitationRender:
 
         invited_at = self.invited_at
 
-        invited_by: Union[Unset, dict[str, Any]] = UNSET
+        invited_by: dict[str, Any] | Unset = UNSET
         if (
             self.invited_by
             and not isinstance(self.invited_by, Unset)
@@ -79,7 +81,7 @@ class PendingInvitationRender:
 
         type_ = self.type_
 
-        workspace: Union[Unset, dict[str, Any]] = UNSET
+        workspace: dict[str, Any] | Unset = UNSET
         if (
             self.workspace
             and not isinstance(self.workspace, Unset)
@@ -89,7 +91,7 @@ class PendingInvitationRender:
         elif self.workspace and isinstance(self.workspace, dict):
             workspace = self.workspace
 
-        workspace_details: Union[Unset, dict[str, Any]] = UNSET
+        workspace_details: dict[str, Any] | Unset = UNSET
         if (
             self.workspace_details
             and not isinstance(self.workspace_details, Unset)
@@ -126,17 +128,25 @@ class PendingInvitationRender:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.pending_invitation_render_account import PendingInvitationRenderAccount
-        from ..models.pending_invitation_render_invited_by import PendingInvitationRenderInvitedBy
-        from ..models.pending_invitation_render_workspace import PendingInvitationRenderWorkspace
-        from ..models.pending_invitation_workspace_details import PendingInvitationWorkspaceDetails
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.pending_invitation_render_account import (
+            PendingInvitationRenderAccount,  # noqa: PLC0415
+        )
+        from ..models.pending_invitation_render_invited_by import (
+            PendingInvitationRenderInvitedBy,  # noqa: PLC0415
+        )
+        from ..models.pending_invitation_render_workspace import (
+            PendingInvitationRenderWorkspace,  # noqa: PLC0415
+        )
+        from ..models.pending_invitation_workspace_details import (
+            PendingInvitationWorkspaceDetails,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _account = d.pop("account", UNSET)
-        account: Union[Unset, PendingInvitationRenderAccount]
+        account: PendingInvitationRenderAccount | Unset
         if isinstance(_account, Unset):
             account = UNSET
         else:
@@ -151,7 +161,7 @@ class PendingInvitationRender:
         invited_at = d.pop("invitedAt", d.pop("invited_at", UNSET))
 
         _invited_by = d.pop("invitedBy", d.pop("invited_by", UNSET))
-        invited_by: Union[Unset, PendingInvitationRenderInvitedBy]
+        invited_by: PendingInvitationRenderInvitedBy | Unset
         if isinstance(_invited_by, Unset):
             invited_by = UNSET
         else:
@@ -162,14 +172,14 @@ class PendingInvitationRender:
         type_ = d.pop("type", d.pop("type_", UNSET))
 
         _workspace = d.pop("workspace", UNSET)
-        workspace: Union[Unset, PendingInvitationRenderWorkspace]
+        workspace: PendingInvitationRenderWorkspace | Unset
         if isinstance(_workspace, Unset):
             workspace = UNSET
         else:
             workspace = PendingInvitationRenderWorkspace.from_dict(_workspace)
 
         _workspace_details = d.pop("workspaceDetails", d.pop("workspace_details", UNSET))
-        workspace_details: Union[Unset, PendingInvitationWorkspaceDetails]
+        workspace_details: PendingInvitationWorkspaceDetails | Unset
         if isinstance(_workspace_details, Unset):
             workspace_details = UNSET
         else:

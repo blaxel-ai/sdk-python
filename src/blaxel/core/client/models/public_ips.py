@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -12,12 +15,9 @@ T = TypeVar("T", bound="PublicIps")
 
 @_attrs_define
 class PublicIps:
-    """ """
-
-    additional_properties: dict[str, "PublicIp"] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, PublicIp] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         field_dict: dict[str, Any] = {}
         for prop_name, prop in self.additional_properties.items():
             if type(prop) is dict:
@@ -28,12 +28,12 @@ class PublicIps:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.public_ip import PublicIp
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.public_ip import PublicIp  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         public_ips = cls()
 
         additional_properties = {}
@@ -49,10 +49,10 @@ class PublicIps:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> "PublicIp":
+    def __getitem__(self, key: str) -> PublicIp:
         return self.additional_properties[key]
 
-    def __setitem__(self, key: str, value: "PublicIp") -> None:
+    def __setitem__(self, key: str, value: PublicIp) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:

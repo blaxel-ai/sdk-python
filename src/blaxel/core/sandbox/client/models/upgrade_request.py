@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,14 +15,14 @@ T = TypeVar("T", bound="UpgradeRequest")
 class UpgradeRequest:
     """
     Attributes:
-        base_url (Union[Unset, str]): Base URL for releases (useful for forks) Example: https://github.com/blaxel-
+        base_url (str | Unset): Base URL for releases (useful for forks) Example: https://github.com/blaxel-
             ai/sandbox/releases.
-        version (Union[Unset, str]): Version to upgrade to: "latest" (default), "develop", "main", or specific tag like
+        version (str | Unset): Version to upgrade to: "latest" (default), "develop", "main", or specific tag like
             "v1.0.0" Example: latest.
     """
 
-    base_url: Union[Unset, str] = UNSET
-    version: Union[Unset, str] = UNSET
+    base_url: str | Unset = UNSET
+    version: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -38,10 +41,10 @@ class UpgradeRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         base_url = d.pop("baseUrl", d.pop("base_url", UNSET))
 
         version = d.pop("version", UNSET)

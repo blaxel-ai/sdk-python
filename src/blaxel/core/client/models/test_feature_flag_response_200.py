@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import datetime
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..types import UNSET, Unset
 
@@ -18,31 +20,30 @@ T = TypeVar("T", bound="TestFeatureFlagResponse200")
 class TestFeatureFlagResponse200:
     """
     Attributes:
-        enabled (Union[Unset, bool]):
-        evaluated_at (Union[Unset, datetime.datetime]):
-        feature_key (Union[Unset, str]):
-        payload (Union[Unset, TestFeatureFlagResponse200Payload]):
-        variant (Union[Unset, str]):
+        enabled (bool | Unset):
+        evaluated_at (datetime.datetime | Unset):
+        feature_key (str | Unset):
+        payload (TestFeatureFlagResponse200Payload | Unset):
+        variant (str | Unset):
     """
 
-    enabled: Union[Unset, bool] = UNSET
-    evaluated_at: Union[Unset, datetime.datetime] = UNSET
-    feature_key: Union[Unset, str] = UNSET
-    payload: Union[Unset, "TestFeatureFlagResponse200Payload"] = UNSET
-    variant: Union[Unset, str] = UNSET
+    enabled: bool | Unset = UNSET
+    evaluated_at: datetime.datetime | Unset = UNSET
+    feature_key: str | Unset = UNSET
+    payload: TestFeatureFlagResponse200Payload | Unset = UNSET
+    variant: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        evaluated_at: Union[Unset, str] = UNSET
+        evaluated_at: str | Unset = UNSET
         if not isinstance(self.evaluated_at, Unset):
             evaluated_at = self.evaluated_at.isoformat()
 
         feature_key = self.feature_key
 
-        payload: Union[Unset, dict[str, Any]] = UNSET
+        payload: dict[str, Any] | Unset = UNSET
         if (
             self.payload
             and not isinstance(self.payload, Unset)
@@ -71,27 +72,27 @@ class TestFeatureFlagResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         from ..models.test_feature_flag_response_200_payload import (
             TestFeatureFlagResponse200Payload,
-        )
+        )  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         _evaluated_at = d.pop("evaluatedAt", d.pop("evaluated_at", UNSET))
-        evaluated_at: Union[Unset, datetime.datetime]
+        evaluated_at: datetime.datetime | Unset
         if isinstance(_evaluated_at, Unset):
             evaluated_at = UNSET
         else:
-            evaluated_at = isoparse(_evaluated_at)
+            evaluated_at = datetime.datetime.fromisoformat(_evaluated_at)
 
         feature_key = d.pop("featureKey", d.pop("feature_key", UNSET))
 
         _payload = d.pop("payload", UNSET)
-        payload: Union[Unset, TestFeatureFlagResponse200Payload]
+        payload: TestFeatureFlagResponse200Payload | Unset
         if isinstance(_payload, Unset):
             payload = UNSET
         else:

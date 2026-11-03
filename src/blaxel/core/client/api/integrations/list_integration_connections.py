@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -12,7 +12,7 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    external_id: Union[Unset, str] = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -31,7 +31,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, list["IntegrationConnection"]] | None:
+) -> Error | list[IntegrationConnection] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -41,21 +41,25 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -66,7 +70,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, list["IntegrationConnection"]]]:
+) -> Response[Error | list[IntegrationConnection]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -78,22 +82,22 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    external_id: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, list["IntegrationConnection"]]]:
+    external_id: str | Unset = UNSET,
+) -> Response[Error | list[IntegrationConnection]]:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
 
     Args:
-        external_id (Union[Unset, str]):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['IntegrationConnection']]]
+        Response[Error | list[IntegrationConnection]]
     """
 
     kwargs = _get_kwargs(
@@ -110,22 +114,22 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    external_id: Union[Unset, str] = UNSET,
-) -> Union[Error, list["IntegrationConnection"]] | None:
+    external_id: str | Unset = UNSET,
+) -> Error | list[IntegrationConnection] | None:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
 
     Args:
-        external_id (Union[Unset, str]):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['IntegrationConnection']]
+        Error | list[IntegrationConnection]
     """
 
     return sync_detailed(
@@ -137,22 +141,22 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    external_id: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, list["IntegrationConnection"]]]:
+    external_id: str | Unset = UNSET,
+) -> Response[Error | list[IntegrationConnection]]:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
 
     Args:
-        external_id (Union[Unset, str]):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['IntegrationConnection']]]
+        Response[Error | list[IntegrationConnection]]
     """
 
     kwargs = _get_kwargs(
@@ -167,22 +171,22 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    external_id: Union[Unset, str] = UNSET,
-) -> Union[Error, list["IntegrationConnection"]] | None:
+    external_id: str | Unset = UNSET,
+) -> Error | list[IntegrationConnection] | None:
     """List integration connections
 
      Returns all configured integration connections in the workspace. Each connection stores credentials
     and settings for an external service (LLM provider, API, database).
 
     Args:
-        external_id (Union[Unset, str]):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['IntegrationConnection']]
+        Error | list[IntegrationConnection]
     """
 
     return (

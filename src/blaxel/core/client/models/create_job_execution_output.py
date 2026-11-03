@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,33 +21,31 @@ class CreateJobExecutionOutput:
     executed.
 
         Attributes:
-            execution_id (Union[Unset, str]): Unique identifier for the created execution. Use this ID to track execution
-                status, retrieve logs, or cancel the execution. Example: exec-abc123.
-            id (Union[Unset, str]): Unique identifier for this request, used for idempotency and tracking. Auto-generated if
-                not provided in the request. Example: 550e8400-e29b-41d4-a716-446655440000.
-            job_id (Union[Unset, str]): Name of the job that this execution belongs to Example: data-processing-job.
-            tasks (Union[Unset, list['CreateJobExecutionOutputTasksItem']]): Array of task configurations that will be
-                executed in parallel according to the job's concurrency settings. Each task can have custom parameters.
-            workspace_id (Union[Unset, str]): Name of the workspace where the job execution was created Example: my-
-                workspace.
+            execution_id (str | Unset): Unique identifier for the created execution. Use this ID to track execution status,
+                retrieve logs, or cancel the execution. Example: exec-abc123.
+            id (str | Unset): Unique identifier for this request, used for idempotency and tracking. Auto-generated if not
+                provided in the request. Example: 550e8400-e29b-41d4-a716-446655440000.
+            job_id (str | Unset): Name of the job that this execution belongs to Example: data-processing-job.
+            tasks (list[CreateJobExecutionOutputTasksItem] | Unset): Array of task configurations that will be executed in
+                parallel according to the job's concurrency settings. Each task can have custom parameters.
+            workspace_id (str | Unset): Name of the workspace where the job execution was created Example: my-workspace.
     """
 
-    execution_id: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    job_id: Union[Unset, str] = UNSET
-    tasks: Union[Unset, list["CreateJobExecutionOutputTasksItem"]] = UNSET
-    workspace_id: Union[Unset, str] = UNSET
+    execution_id: str | Unset = UNSET
+    id: str | Unset = UNSET
+    job_id: str | Unset = UNSET
+    tasks: list[CreateJobExecutionOutputTasksItem] | Unset = UNSET
+    workspace_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         execution_id = self.execution_id
 
         id = self.id
 
         job_id = self.job_id
 
-        tasks: Union[Unset, list[dict[str, Any]]] = UNSET
+        tasks: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.tasks, Unset):
             tasks = []
             for tasks_item_data in self.tasks:
@@ -73,14 +74,14 @@ class CreateJobExecutionOutput:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         from ..models.create_job_execution_output_tasks_item import (
             CreateJobExecutionOutputTasksItem,
-        )
+        )  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         execution_id = d.pop("executionId", d.pop("execution_id", UNSET))
 
         id = d.pop("id", UNSET)

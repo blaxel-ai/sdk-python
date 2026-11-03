@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,11 +14,11 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     path: str,
     *,
-    type_: Union[Unset, str] = UNSET,
-    patterns: Union[Unset, str] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    exclude_hidden: Union[Unset, bool] = UNSET,
+    type_: str | Unset = UNSET,
+    patterns: str | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    exclude_hidden: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -35,7 +36,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/filesystem-find/{path}",
+        "url": "/filesystem-find/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
         "params": params,
     }
 
@@ -44,26 +47,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, FindResponse] | None:
+) -> ErrorResponse | FindResponse | None:
     if response.status_code == 200:
         response_200 = FindResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -74,7 +81,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, FindResponse]]:
+) -> Response[ErrorResponse | FindResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -87,30 +94,30 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
-    type_: Union[Unset, str] = UNSET,
-    patterns: Union[Unset, str] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    exclude_hidden: Union[Unset, bool] = UNSET,
-) -> Response[Union[ErrorResponse, FindResponse]]:
+    type_: str | Unset = UNSET,
+    patterns: str | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    exclude_hidden: bool | Unset = UNSET,
+) -> Response[ErrorResponse | FindResponse]:
     """Find files and directories
 
      Finds files and directories using the find command.
 
     Args:
         path (str):
-        type_ (Union[Unset, str]):
-        patterns (Union[Unset, str]):
-        max_results (Union[Unset, int]):
-        exclude_dirs (Union[Unset, str]):
-        exclude_hidden (Union[Unset, bool]):
+        type_ (str | Unset):
+        patterns (str | Unset):
+        max_results (int | Unset):
+        exclude_dirs (str | Unset):
+        exclude_hidden (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, FindResponse]]
+        Response[ErrorResponse | FindResponse]
     """
 
     kwargs = _get_kwargs(
@@ -133,30 +140,30 @@ def sync(
     path: str,
     *,
     client: Client,
-    type_: Union[Unset, str] = UNSET,
-    patterns: Union[Unset, str] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    exclude_hidden: Union[Unset, bool] = UNSET,
-) -> Union[ErrorResponse, FindResponse] | None:
+    type_: str | Unset = UNSET,
+    patterns: str | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    exclude_hidden: bool | Unset = UNSET,
+) -> ErrorResponse | FindResponse | None:
     """Find files and directories
 
      Finds files and directories using the find command.
 
     Args:
         path (str):
-        type_ (Union[Unset, str]):
-        patterns (Union[Unset, str]):
-        max_results (Union[Unset, int]):
-        exclude_dirs (Union[Unset, str]):
-        exclude_hidden (Union[Unset, bool]):
+        type_ (str | Unset):
+        patterns (str | Unset):
+        max_results (int | Unset):
+        exclude_dirs (str | Unset):
+        exclude_hidden (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, FindResponse]
+        ErrorResponse | FindResponse
     """
 
     return sync_detailed(
@@ -174,30 +181,30 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
-    type_: Union[Unset, str] = UNSET,
-    patterns: Union[Unset, str] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    exclude_hidden: Union[Unset, bool] = UNSET,
-) -> Response[Union[ErrorResponse, FindResponse]]:
+    type_: str | Unset = UNSET,
+    patterns: str | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    exclude_hidden: bool | Unset = UNSET,
+) -> Response[ErrorResponse | FindResponse]:
     """Find files and directories
 
      Finds files and directories using the find command.
 
     Args:
         path (str):
-        type_ (Union[Unset, str]):
-        patterns (Union[Unset, str]):
-        max_results (Union[Unset, int]):
-        exclude_dirs (Union[Unset, str]):
-        exclude_hidden (Union[Unset, bool]):
+        type_ (str | Unset):
+        patterns (str | Unset):
+        max_results (int | Unset):
+        exclude_dirs (str | Unset):
+        exclude_hidden (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, FindResponse]]
+        Response[ErrorResponse | FindResponse]
     """
 
     kwargs = _get_kwargs(
@@ -218,30 +225,30 @@ async def asyncio(
     path: str,
     *,
     client: Client,
-    type_: Union[Unset, str] = UNSET,
-    patterns: Union[Unset, str] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    exclude_hidden: Union[Unset, bool] = UNSET,
-) -> Union[ErrorResponse, FindResponse] | None:
+    type_: str | Unset = UNSET,
+    patterns: str | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    exclude_hidden: bool | Unset = UNSET,
+) -> ErrorResponse | FindResponse | None:
     """Find files and directories
 
      Finds files and directories using the find command.
 
     Args:
         path (str):
-        type_ (Union[Unset, str]):
-        patterns (Union[Unset, str]):
-        max_results (Union[Unset, int]):
-        exclude_dirs (Union[Unset, str]):
-        exclude_hidden (Union[Unset, bool]):
+        type_ (str | Unset):
+        patterns (str | Unset):
+        max_results (int | Unset):
+        exclude_dirs (str | Unset):
+        exclude_hidden (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, FindResponse]
+        ErrorResponse | FindResponse
     """
 
     return (

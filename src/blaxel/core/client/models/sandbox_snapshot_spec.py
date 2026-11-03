@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,26 +23,25 @@ class SandboxSnapshotSpec:
     is gone.
 
         Attributes:
-            generation (Union[Unset, SandboxSnapshotSpecGeneration]): Infrastructure generation the snapshot was captured
-                on. A snapshot only restores on the generation it came from.
-            image (Union[Unset, str]): Image the source object ran
-            memory (Union[Unset, int]): Memory in MB the source object ran with
-            ports (Union[Unset, list['Port']]): Set of ports for a resource
-            region (Union[Unset, str]): Region holding the snapshot. Restores and forks land in it.
-            volumes (Union[Unset, list['VolumeAttachment']]):
+            generation (SandboxSnapshotSpecGeneration | Unset): Infrastructure generation the snapshot was captured on. A
+                snapshot only restores on the generation it came from.
+            image (str | Unset): Image the source object ran
+            memory (int | Unset): Memory in MB the source object ran with
+            ports (list[Port] | Unset): Set of ports for a resource
+            region (str | Unset): Region holding the snapshot. Restores and forks land in it.
+            volumes (list[VolumeAttachment] | Unset):
     """
 
-    generation: Union[Unset, SandboxSnapshotSpecGeneration] = UNSET
-    image: Union[Unset, str] = UNSET
-    memory: Union[Unset, int] = UNSET
-    ports: Union[Unset, list["Port"]] = UNSET
-    region: Union[Unset, str] = UNSET
-    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
+    generation: SandboxSnapshotSpecGeneration | Unset = UNSET
+    image: str | Unset = UNSET
+    memory: int | Unset = UNSET
+    ports: list[Port] | Unset = UNSET
+    region: str | Unset = UNSET
+    volumes: list[VolumeAttachment] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        generation: Union[Unset, str] = UNSET
+        generation: str | Unset = UNSET
         if not isinstance(self.generation, Unset):
             generation = self.generation.value
 
@@ -47,7 +49,7 @@ class SandboxSnapshotSpec:
 
         memory = self.memory
 
-        ports: Union[Unset, list[dict[str, Any]]] = UNSET
+        ports: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.ports, Unset):
             ports = []
             for componentsschemas_ports_item_data in self.ports:
@@ -59,7 +61,7 @@ class SandboxSnapshotSpec:
 
         region = self.region
 
-        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        volumes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.volumes, Unset):
             volumes = []
             for componentsschemas_volume_attachments_item_data in self.volumes:
@@ -92,15 +94,15 @@ class SandboxSnapshotSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.port import Port
-        from ..models.volume_attachment import VolumeAttachment
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.port import Port  # noqa: PLC0415
+        from ..models.volume_attachment import VolumeAttachment  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _generation = d.pop("generation", UNSET)
-        generation: Union[Unset, SandboxSnapshotSpecGeneration]
+        generation: SandboxSnapshotSpecGeneration | Unset
         if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:

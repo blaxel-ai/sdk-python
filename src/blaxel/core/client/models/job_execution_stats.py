@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,20 +16,20 @@ class JobExecutionStats:
     """Job execution statistics
 
     Attributes:
-        cancelled (Union[Unset, int]): Number of cancelled tasks
-        failure (Union[Unset, int]): Number of failed tasks Example: 1.
-        retried (Union[Unset, int]): Number of retried tasks Example: 2.
-        running (Union[Unset, int]): Number of running tasks Example: 1.
-        success (Union[Unset, int]): Number of successful tasks Example: 8.
-        total (Union[Unset, int]): Total number of tasks Example: 10.
+        cancelled (int | Unset): Number of cancelled tasks Example: 0.
+        failure (int | Unset): Number of failed tasks Example: 1.
+        retried (int | Unset): Number of retried tasks Example: 2.
+        running (int | Unset): Number of running tasks Example: 1.
+        success (int | Unset): Number of successful tasks Example: 8.
+        total (int | Unset): Total number of tasks Example: 10.
     """
 
-    cancelled: Union[Unset, int] = UNSET
-    failure: Union[Unset, int] = UNSET
-    retried: Union[Unset, int] = UNSET
-    running: Union[Unset, int] = UNSET
-    success: Union[Unset, int] = UNSET
-    total: Union[Unset, int] = UNSET
+    cancelled: int | Unset = UNSET
+    failure: int | Unset = UNSET
+    retried: int | Unset = UNSET
+    running: int | Unset = UNSET
+    success: int | Unset = UNSET
+    total: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class JobExecutionStats:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         cancelled = d.pop("cancelled", UNSET)
 
         failure = d.pop("failure", UNSET)

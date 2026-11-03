@@ -2,6 +2,10 @@ from enum import Enum
 
 
 class ProcessUpgradeState(str, Enum):
+    UPGRADE_STATE_COMPLETED = "completed"
+    UPGRADE_STATE_FAILED = "failed"
+    UPGRADE_STATE_IDLE = "idle"
+    UPGRADE_STATE_RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     IDLE = "idle"

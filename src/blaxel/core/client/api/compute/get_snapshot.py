@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,24 +16,26 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/snapshots/{snapshot_name}",
+        "url": "/snapshots/{snapshot_name}".format(
+            snapshot_name=quote(str(snapshot_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Error, SandboxSnapshot] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | SandboxSnapshot | None:
     if response.status_code == 200:
         response_200 = SandboxSnapshot.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -43,7 +46,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, SandboxSnapshot]]:
+) -> Response[Error | SandboxSnapshot]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,7 +59,7 @@ def sync_detailed(
     snapshot_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, SandboxSnapshot]]:
+) -> Response[Error | SandboxSnapshot]:
     """Get snapshot
 
      Returns a snapshot of the workspace by ID.
@@ -69,7 +72,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxSnapshot]]
+        Response[Error | SandboxSnapshot]
     """
 
     kwargs = _get_kwargs(
@@ -87,7 +90,7 @@ def sync(
     snapshot_name: str,
     *,
     client: Client,
-) -> Union[Error, SandboxSnapshot] | None:
+) -> Error | SandboxSnapshot | None:
     """Get snapshot
 
      Returns a snapshot of the workspace by ID.
@@ -100,7 +103,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxSnapshot]
+        Error | SandboxSnapshot
     """
 
     return sync_detailed(
@@ -113,7 +116,7 @@ async def asyncio_detailed(
     snapshot_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, SandboxSnapshot]]:
+) -> Response[Error | SandboxSnapshot]:
     """Get snapshot
 
      Returns a snapshot of the workspace by ID.
@@ -126,7 +129,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxSnapshot]]
+        Response[Error | SandboxSnapshot]
     """
 
     kwargs = _get_kwargs(
@@ -142,7 +145,7 @@ async def asyncio(
     snapshot_name: str,
     *,
     client: Client,
-) -> Union[Error, SandboxSnapshot] | None:
+) -> Error | SandboxSnapshot | None:
     """Get snapshot
 
      Returns a snapshot of the workspace by ID.
@@ -155,7 +158,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxSnapshot]
+        Error | SandboxSnapshot
     """
 
     return (

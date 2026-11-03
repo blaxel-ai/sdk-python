@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -21,35 +24,34 @@ class JobSpec:
     """Configuration for a batch job including execution parameters, parallelism settings, and deployment region
 
     Attributes:
-        enabled (Union[Unset, bool]): When false, the job is disabled and new executions cannot be triggered Default:
-            True. Example: True.
-        github_runner (Union[Unset, GithubRunnerConfig]): Configuration for running GitHub Actions workflow jobs on
-            Blaxel infrastructure. When repositories are configured, the job acts as a self-hosted GitHub Actions runner.
-            Workflow jobs use runs-on with the Blaxel job name to target a specific runner.
-        policies (Union[Unset, list[str]]):
-        region (Union[Unset, str]): Region where the job should be created (e.g. us-was-1, eu-lon-1) Example: us-was-1.
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, JobRuntime]): Runtime configuration defining how batch job tasks are executed with
-            parallelism and retry settings
-        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
-        volumes (Union[Unset, list['JobVolume']]):
+        enabled (bool | Unset): When false, the job is disabled and new executions cannot be triggered Default: True.
+            Example: True.
+        github_runner (GithubRunnerConfig | Unset): Configuration for running GitHub Actions workflow jobs on Blaxel
+            infrastructure. When repositories are configured, the job acts as a self-hosted GitHub Actions runner. Workflow
+            jobs use runs-on with the Blaxel job name to target a specific runner.
+        policies (list[str] | Unset):
+        region (str | Unset): Region where the job should be created (e.g. us-was-1, eu-lon-1) Example: us-was-1.
+        revision (RevisionConfiguration | Unset): Revision configuration
+        runtime (JobRuntime | Unset): Runtime configuration defining how batch job tasks are executed with parallelism
+            and retry settings
+        triggers (list[Trigger] | Unset): Triggers to use your agent
+        volumes (list[JobVolume] | Unset):
     """
 
-    enabled: Union[Unset, bool] = True
-    github_runner: Union[Unset, "GithubRunnerConfig"] = UNSET
-    policies: Union[Unset, list[str]] = UNSET
-    region: Union[Unset, str] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "JobRuntime"] = UNSET
-    triggers: Union[Unset, list["Trigger"]] = UNSET
-    volumes: Union[Unset, list["JobVolume"]] = UNSET
+    enabled: bool | Unset = True
+    github_runner: GithubRunnerConfig | Unset = UNSET
+    policies: list[str] | Unset = UNSET
+    region: str | Unset = UNSET
+    revision: RevisionConfiguration | Unset = UNSET
+    runtime: JobRuntime | Unset = UNSET
+    triggers: list[Trigger] | Unset = UNSET
+    volumes: list[JobVolume] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        github_runner: Union[Unset, dict[str, Any]] = UNSET
+        github_runner: dict[str, Any] | Unset = UNSET
         if (
             self.github_runner
             and not isinstance(self.github_runner, Unset)
@@ -59,13 +61,13 @@ class JobSpec:
         elif self.github_runner and isinstance(self.github_runner, dict):
             github_runner = self.github_runner
 
-        policies: Union[Unset, list[str]] = UNSET
+        policies: list[str] | Unset = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
 
         region = self.region
 
-        revision: Union[Unset, dict[str, Any]] = UNSET
+        revision: dict[str, Any] | Unset = UNSET
         if (
             self.revision
             and not isinstance(self.revision, Unset)
@@ -75,7 +77,7 @@ class JobSpec:
         elif self.revision and isinstance(self.revision, dict):
             revision = self.revision
 
-        runtime: Union[Unset, dict[str, Any]] = UNSET
+        runtime: dict[str, Any] | Unset = UNSET
         if (
             self.runtime
             and not isinstance(self.runtime, Unset)
@@ -85,7 +87,7 @@ class JobSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        triggers: Union[Unset, list[dict[str, Any]]] = UNSET
+        triggers: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
             for componentsschemas_triggers_item_data in self.triggers:
@@ -95,7 +97,7 @@ class JobSpec:
                     componentsschemas_triggers_item = componentsschemas_triggers_item_data.to_dict()
                 triggers.append(componentsschemas_triggers_item)
 
-        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        volumes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.volumes, Unset):
             volumes = []
             for componentsschemas_job_volumes_item_data in self.volumes:
@@ -130,20 +132,20 @@ class JobSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.github_runner_config import GithubRunnerConfig
-        from ..models.job_runtime import JobRuntime
-        from ..models.job_volume import JobVolume
-        from ..models.revision_configuration import RevisionConfiguration
-        from ..models.trigger import Trigger
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.github_runner_config import GithubRunnerConfig  # noqa: PLC0415
+        from ..models.job_runtime import JobRuntime  # noqa: PLC0415
+        from ..models.job_volume import JobVolume  # noqa: PLC0415
+        from ..models.revision_configuration import RevisionConfiguration  # noqa: PLC0415
+        from ..models.trigger import Trigger  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         _github_runner = d.pop("githubRunner", d.pop("github_runner", UNSET))
-        github_runner: Union[Unset, GithubRunnerConfig]
+        github_runner: GithubRunnerConfig | Unset
         if isinstance(_github_runner, Unset):
             github_runner = UNSET
         else:
@@ -154,14 +156,14 @@ class JobSpec:
         region = d.pop("region", UNSET)
 
         _revision = d.pop("revision", UNSET)
-        revision: Union[Unset, RevisionConfiguration]
+        revision: RevisionConfiguration | Unset
         if isinstance(_revision, Unset):
             revision = UNSET
         else:
             revision = RevisionConfiguration.from_dict(_revision)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, JobRuntime]
+        runtime: JobRuntime | Unset
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:

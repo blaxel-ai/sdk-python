@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,37 +23,36 @@ class ProxyTarget:
     ["*"] for a global rule that applies to all proxied traffic.
 
         Attributes:
-            body (Union[Unset, ProxyTargetBody]): Body fields to inject into matching requests. Values may contain
-                {{SECRET:name}} references resolved from this rule's secrets. Example: {"api_key": "{{SECRET:stripe-key}}"}.
-            destinations (Union[Unset, list[str]]): Destination domains this rule applies to. Use ["*"] for a global rule
-                that matches all destinations. Example: ["api.stripe.com"].
-            headers (Union[Unset, ProxyTargetHeaders]): Headers to inject into matching requests. Values may contain
+            body (ProxyTargetBody | Unset): Body fields to inject into matching requests. Values may contain {{SECRET:name}}
+                references resolved from this rule's secrets. Example: {"api_key": "{{SECRET:stripe-key}}"}.
+            destinations (list[str] | Unset): Destination domains this rule applies to. Use ["*"] for a global rule that
+                matches all destinations. Example: ["api.stripe.com"].
+            headers (ProxyTargetHeaders | Unset): Headers to inject into matching requests. Values may contain
                 {{SECRET:name}} references resolved from this rule's secrets. Example: {"Authorization": "Bearer
                 {{SECRET:stripe-key}}"}.
-            secrets (Union[Unset, ProxyTargetSecrets]): Named secret values for this routing rule, referenced in
-                headers/body via {{SECRET:name}}. Stored encrypted at rest. Write-only: never returned in API responses.
-                Example: {"stripe-key": "sk-live-abc123..."}.
+            secrets (ProxyTargetSecrets | Unset): Named secret values for this routing rule, referenced in headers/body via
+                {{SECRET:name}}. Stored encrypted at rest. Write-only: never returned in API responses. Example: {"stripe-key":
+                "sk-live-abc123..."}.
     """
 
-    body: Union[Unset, "ProxyTargetBody"] = UNSET
-    destinations: Union[Unset, list[str]] = UNSET
-    headers: Union[Unset, "ProxyTargetHeaders"] = UNSET
-    secrets: Union[Unset, "ProxyTargetSecrets"] = UNSET
+    body: ProxyTargetBody | Unset = UNSET
+    destinations: list[str] | Unset = UNSET
+    headers: ProxyTargetHeaders | Unset = UNSET
+    secrets: ProxyTargetSecrets | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        body: Union[Unset, dict[str, Any]] = UNSET
+        body: dict[str, Any] | Unset = UNSET
         if self.body and not isinstance(self.body, Unset) and not isinstance(self.body, dict):
             body = self.body.to_dict()
         elif self.body and isinstance(self.body, dict):
             body = self.body
 
-        destinations: Union[Unset, list[str]] = UNSET
+        destinations: list[str] | Unset = UNSET
         if not isinstance(self.destinations, Unset):
             destinations = self.destinations
 
-        headers: Union[Unset, dict[str, Any]] = UNSET
+        headers: dict[str, Any] | Unset = UNSET
         if (
             self.headers
             and not isinstance(self.headers, Unset)
@@ -60,7 +62,7 @@ class ProxyTarget:
         elif self.headers and isinstance(self.headers, dict):
             headers = self.headers
 
-        secrets: Union[Unset, dict[str, Any]] = UNSET
+        secrets: dict[str, Any] | Unset = UNSET
         if (
             self.secrets
             and not isinstance(self.secrets, Unset)
@@ -85,16 +87,16 @@ class ProxyTarget:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.proxy_target_body import ProxyTargetBody
-        from ..models.proxy_target_headers import ProxyTargetHeaders
-        from ..models.proxy_target_secrets import ProxyTargetSecrets
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.proxy_target_body import ProxyTargetBody  # noqa: PLC0415
+        from ..models.proxy_target_headers import ProxyTargetHeaders  # noqa: PLC0415
+        from ..models.proxy_target_secrets import ProxyTargetSecrets  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _body = d.pop("body", UNSET)
-        body: Union[Unset, ProxyTargetBody]
+        body: ProxyTargetBody | Unset
         if isinstance(_body, Unset):
             body = UNSET
         else:
@@ -103,14 +105,14 @@ class ProxyTarget:
         destinations = cast(list[str], d.pop("destinations", UNSET))
 
         _headers = d.pop("headers", UNSET)
-        headers: Union[Unset, ProxyTargetHeaders]
+        headers: ProxyTargetHeaders | Unset
         if isinstance(_headers, Unset):
             headers = UNSET
         else:
             headers = ProxyTargetHeaders.from_dict(_headers)
 
         _secrets = d.pop("secrets", UNSET)
-        secrets: Union[Unset, ProxyTargetSecrets]
+        secrets: ProxyTargetSecrets | Unset
         if isinstance(_secrets, Unset):
             secrets = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,31 +22,30 @@ class QuiesceStatus:
     """
     Attributes:
         state (ArchiveQuiesceState):
-        export (Union[Unset, ExportProgress]):
-        read_only_root (Union[Unset, bool]): ReadOnlyRoot reports whether the root mount was remounted read-only, which
+        export (ExportProgress | Unset):
+        read_only_root (bool | Unset): ReadOnlyRoot reports whether the root mount was remounted read-only, which
             is what actually stops writes; false means the freeze relies only on the
             API refusing calls, and the reason says why. Example: True.
-        reason (Union[Unset, str]): Reason is a human readable explanation of why the sandbox is frozen. Example:
-            archive export.
-        restore (Union[Unset, RestoreProgress]):
-        since (Union[Unset, str]): Since is when the sandbox left StateActive.
-        stopped_processes (Union[Unset, list[str]]): StoppedProcesses are the process identifiers stopped while
-            quiescing.
+        reason (str | Unset): Reason is a human readable explanation of why the sandbox is frozen. Example: archive
+            export.
+        restore (RestoreProgress | Unset):
+        since (str | Unset): Since is when the sandbox left StateActive.
+        stopped_processes (list[str] | Unset): StoppedProcesses are the process identifiers stopped while quiescing.
     """
 
     state: ArchiveQuiesceState
-    export: Union[Unset, "ExportProgress"] = UNSET
-    read_only_root: Union[Unset, bool] = UNSET
-    reason: Union[Unset, str] = UNSET
-    restore: Union[Unset, "RestoreProgress"] = UNSET
-    since: Union[Unset, str] = UNSET
-    stopped_processes: Union[Unset, list[str]] = UNSET
+    export: ExportProgress | Unset = UNSET
+    read_only_root: bool | Unset = UNSET
+    reason: str | Unset = UNSET
+    restore: RestoreProgress | Unset = UNSET
+    since: str | Unset = UNSET
+    stopped_processes: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         state = self.state.value
 
-        export: Union[Unset, dict[str, Any]] = UNSET
+        export: dict[str, Any] | Unset = UNSET
         if self.export and not isinstance(self.export, Unset) and not isinstance(self.export, dict):
             export = self.export.to_dict()
         elif self.export and isinstance(self.export, dict):
@@ -53,7 +55,7 @@ class QuiesceStatus:
 
         reason = self.reason
 
-        restore: Union[Unset, dict[str, Any]] = UNSET
+        restore: dict[str, Any] | Unset = UNSET
         if (
             self.restore
             and not isinstance(self.restore, Unset)
@@ -65,7 +67,7 @@ class QuiesceStatus:
 
         since = self.since
 
-        stopped_processes: Union[Unset, list[str]] = UNSET
+        stopped_processes: list[str] | Unset = UNSET
         if not isinstance(self.stopped_processes, Unset):
             stopped_processes = self.stopped_processes
 
@@ -92,17 +94,17 @@ class QuiesceStatus:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.export_progress import ExportProgress
-        from ..models.restore_progress import RestoreProgress
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.export_progress import ExportProgress  # noqa: PLC0415
+        from ..models.restore_progress import RestoreProgress  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         state = ArchiveQuiesceState(d.pop("state"))
 
         _export = d.pop("export", UNSET)
-        export: Union[Unset, ExportProgress]
+        export: ExportProgress | Unset
         if isinstance(_export, Unset):
             export = UNSET
         else:
@@ -113,7 +115,7 @@ class QuiesceStatus:
         reason = d.pop("reason", UNSET)
 
         _restore = d.pop("restore", UNSET)
-        restore: Union[Unset, RestoreProgress]
+        restore: RestoreProgress | Unset
         if isinstance(_restore, Unset):
             restore = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,22 +21,21 @@ class Trigger:
     """Trigger configuration
 
     Attributes:
-        configuration (Union[Unset, TriggerConfiguration]): Trigger configuration
-        enabled (Union[Unset, bool]): Enable or disable the trigger (default: true) Example: True.
-        id (Union[Unset, str]): Identifier of the trigger. Optional — the server auto-generates a unique id when one is
-            not provided, and disambiguates duplicates within a resource. Example: trigger-1.
-        type_ (Union[Unset, TriggerType]): The type of trigger, can be http or http-async Example: http.
+        configuration (TriggerConfiguration | Unset): Trigger configuration
+        enabled (bool | Unset): Enable or disable the trigger (default: true) Example: True.
+        id (str | Unset): Identifier of the trigger. Optional — the server auto-generates a unique id when one is not
+            provided, and disambiguates duplicates within a resource. Example: trigger-1.
+        type_ (TriggerType | Unset): The type of trigger, can be http or http-async Example: http.
     """
 
-    configuration: Union[Unset, "TriggerConfiguration"] = UNSET
-    enabled: Union[Unset, bool] = UNSET
-    id: Union[Unset, str] = UNSET
-    type_: Union[Unset, TriggerType] = UNSET
+    configuration: TriggerConfiguration | Unset = UNSET
+    enabled: bool | Unset = UNSET
+    id: str | Unset = UNSET
+    type_: TriggerType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        configuration: Union[Unset, dict[str, Any]] = UNSET
+        configuration: dict[str, Any] | Unset = UNSET
         if (
             self.configuration
             and not isinstance(self.configuration, Unset)
@@ -47,7 +49,7 @@ class Trigger:
 
         id = self.id
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -66,14 +68,14 @@ class Trigger:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.trigger_configuration import TriggerConfiguration
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.trigger_configuration import TriggerConfiguration  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _configuration = d.pop("configuration", UNSET)
-        configuration: Union[Unset, TriggerConfiguration]
+        configuration: TriggerConfiguration | Unset
         if isinstance(_configuration, Unset):
             configuration = UNSET
         else:
@@ -84,7 +86,7 @@ class Trigger:
         id = d.pop("id", UNSET)
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, TriggerType]
+        type_: TriggerType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

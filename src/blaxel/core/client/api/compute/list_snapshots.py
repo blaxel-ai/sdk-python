@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -14,11 +14,11 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSnapshotsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSnapshotsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSnapshotsAnchor | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -26,7 +26,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -34,7 +34,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_anchor: Union[Unset, str] = UNSET
+    json_anchor: str | Unset = UNSET
     if not isinstance(anchor, Unset):
         json_anchor = anchor.value
 
@@ -53,16 +53,18 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, SandboxSnapshotList] | None:
+) -> Error | SandboxSnapshotList | None:
     if response.status_code == 200:
         response_200 = SandboxSnapshotList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -73,7 +75,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, SandboxSnapshotList]]:
+) -> Response[Error | SandboxSnapshotList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -85,12 +87,12 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSnapshotsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
-) -> Response[Union[Error, SandboxSnapshotList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSnapshotsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSnapshotsAnchor | Unset = UNSET,
+) -> Response[Error | SandboxSnapshotList]:
     """List snapshots
 
      Returns the snapshots of the workspace, newest first by default, including the ones whose source
@@ -99,18 +101,18 @@ def sync_detailed(
     keep returning a bare array.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSnapshotsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSnapshotsAnchor]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSnapshotsSort | Unset):
+        q (str | Unset):
+        anchor (ListSnapshotsAnchor | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxSnapshotList]]
+        Response[Error | SandboxSnapshotList]
     """
 
     kwargs = _get_kwargs(
@@ -131,12 +133,12 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSnapshotsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
-) -> Union[Error, SandboxSnapshotList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSnapshotsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSnapshotsAnchor | Unset = UNSET,
+) -> Error | SandboxSnapshotList | None:
     """List snapshots
 
      Returns the snapshots of the workspace, newest first by default, including the ones whose source
@@ -145,18 +147,18 @@ def sync(
     keep returning a bare array.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSnapshotsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSnapshotsAnchor]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSnapshotsSort | Unset):
+        q (str | Unset):
+        anchor (ListSnapshotsAnchor | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxSnapshotList]
+        Error | SandboxSnapshotList
     """
 
     return sync_detailed(
@@ -172,12 +174,12 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSnapshotsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
-) -> Response[Union[Error, SandboxSnapshotList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSnapshotsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSnapshotsAnchor | Unset = UNSET,
+) -> Response[Error | SandboxSnapshotList]:
     """List snapshots
 
      Returns the snapshots of the workspace, newest first by default, including the ones whose source
@@ -186,18 +188,18 @@ async def asyncio_detailed(
     keep returning a bare array.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSnapshotsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSnapshotsAnchor]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSnapshotsSort | Unset):
+        q (str | Unset):
+        anchor (ListSnapshotsAnchor | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxSnapshotList]]
+        Response[Error | SandboxSnapshotList]
     """
 
     kwargs = _get_kwargs(
@@ -216,12 +218,12 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListSnapshotsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListSnapshotsAnchor] = UNSET,
-) -> Union[Error, SandboxSnapshotList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListSnapshotsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListSnapshotsAnchor | Unset = UNSET,
+) -> Error | SandboxSnapshotList | None:
     """List snapshots
 
      Returns the snapshots of the workspace, newest first by default, including the ones whose source
@@ -230,18 +232,18 @@ async def asyncio(
     keep returning a bare array.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListSnapshotsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListSnapshotsAnchor]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListSnapshotsSort | Unset):
+        q (str | Unset):
+        anchor (ListSnapshotsAnchor | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxSnapshotList]
+        Error | SandboxSnapshotList
     """
 
     return (

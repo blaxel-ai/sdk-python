@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,19 +21,18 @@ class SandboxCreationOptions:
     """Optional Hub template settings applied by the console without additional sandbox creation lookups.
 
     Attributes:
-        extra_args (Union[Unset, SandboxCreationOptionsExtraArgs]): Kernel selection arguments copied into
-            runtime.extraArgs. At most 8 entries.
-        volumes (Union[Unset, list['VolumeAttachment']]): Volume attachments included in the creation request. At most 5
+        extra_args (SandboxCreationOptionsExtraArgs | Unset): Kernel selection arguments copied into runtime.extraArgs.
+            At most 8 entries.
+        volumes (list[VolumeAttachment] | Unset): Volume attachments included in the creation request. At most 5
             attachments per template.
     """
 
-    extra_args: Union[Unset, "SandboxCreationOptionsExtraArgs"] = UNSET
-    volumes: Union[Unset, list["VolumeAttachment"]] = UNSET
+    extra_args: SandboxCreationOptionsExtraArgs | Unset = UNSET
+    volumes: list[VolumeAttachment] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        extra_args: Union[Unset, dict[str, Any]] = UNSET
+        extra_args: dict[str, Any] | Unset = UNSET
         if (
             self.extra_args
             and not isinstance(self.extra_args, Unset)
@@ -40,7 +42,7 @@ class SandboxCreationOptions:
         elif self.extra_args and isinstance(self.extra_args, dict):
             extra_args = self.extra_args
 
-        volumes: Union[Unset, list[dict[str, Any]]] = UNSET
+        volumes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.volumes, Unset):
             volumes = []
             for volumes_item_data in self.volumes:
@@ -61,15 +63,17 @@ class SandboxCreationOptions:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.sandbox_creation_options_extra_args import SandboxCreationOptionsExtraArgs
-        from ..models.volume_attachment import VolumeAttachment
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.sandbox_creation_options_extra_args import (
+            SandboxCreationOptionsExtraArgs,  # noqa: PLC0415
+        )
+        from ..models.volume_attachment import VolumeAttachment  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _extra_args = d.pop("extraArgs", d.pop("extra_args", UNSET))
-        extra_args: Union[Unset, SandboxCreationOptionsExtraArgs]
+        extra_args: SandboxCreationOptionsExtraArgs | Unset
         if isinstance(_extra_args, Unset):
             extra_args = UNSET
         else:

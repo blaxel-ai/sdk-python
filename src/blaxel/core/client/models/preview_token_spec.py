@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,14 +16,14 @@ class PreviewTokenSpec:
     """Spec for a Preview Token
 
     Attributes:
-        expired (Union[Unset, bool]): Whether the token is expired
-        expires_at (Union[Unset, str]): Expiration time of the token
-        token (Union[Unset, str]): Token
+        expired (bool | Unset): Whether the token is expired
+        expires_at (str | Unset): Expiration time of the token
+        token (str | Unset): Token
     """
 
-    expired: Union[Unset, bool] = UNSET
-    expires_at: Union[Unset, str] = UNSET
-    token: Union[Unset, str] = UNSET
+    expired: bool | Unset = UNSET
+    expires_at: str | Unset = UNSET
+    token: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,10 +46,10 @@ class PreviewTokenSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         expired = d.pop("expired", UNSET)
 
         expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))

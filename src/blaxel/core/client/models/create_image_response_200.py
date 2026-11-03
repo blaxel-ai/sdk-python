@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,16 +15,16 @@ T = TypeVar("T", bound="CreateImageResponse200")
 class CreateImageResponse200:
     """
     Attributes:
-        image (Union[Unset, str]): The registered image reference (only present when image was provided in request)
-        message (Union[Unset, str]): Status message
-        name (Union[Unset, str]): Name of the image
-        resource_type (Union[Unset, str]): Resource type
+        image (str | Unset): The registered image reference (only present when image was provided in request)
+        message (str | Unset): Status message
+        name (str | Unset): Name of the image
+        resource_type (str | Unset): Resource type
     """
 
-    image: Union[Unset, str] = UNSET
-    message: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    resource_type: Union[Unset, str] = UNSET
+    image: str | Unset = UNSET
+    message: str | Unset = UNSET
+    name: str | Unset = UNSET
+    resource_type: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,10 +51,10 @@ class CreateImageResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         image = d.pop("image", UNSET)
 
         message = d.pop("message", UNSET)

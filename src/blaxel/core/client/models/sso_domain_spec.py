@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,39 +17,39 @@ class SSODomainSpec:
     """SSO domain specification
 
     Attributes:
-        allowed_auth_methods (Union[Unset, list[str]]): List of allowed login methods for this domain. When set, users
-            with this email domain can only use the specified methods. Possible values are google, saml, email. Empty list
-            means no restriction.
-        auto_join_workspaces (Union[Unset, list[str]]): List of workspace names where users with this domain auto-join
-            on login
-        last_used_auth_method (Union[Unset, str]): The authentication method last used by a user with this domain
-            (google, saml, email)
-        last_used_auth_method_at (Union[Unset, str]): Timestamp of when the last authentication method was used
-        last_verified_at (Union[Unset, str]): Last verification attempt timestamp
-        status (Union[Unset, SSODomainSpecStatus]): Current verification status of the domain (pending, verified,
-            failed) Example: verified.
-        txt_record_name (Union[Unset, str]): DNS TXT record name that must be created for verification
-        txt_record_value (Union[Unset, str]): DNS TXT record value that must be set for verification
-        verification_error (Union[Unset, str]): Error message if verification failed
+        allowed_auth_methods (list[str] | Unset): List of allowed login methods for this domain. When set, users with
+            this email domain can only use the specified methods. Possible values are google, saml, email. Empty list means
+            no restriction.
+        auto_join_workspaces (list[str] | Unset): List of workspace names where users with this domain auto-join on
+            login
+        last_used_auth_method (str | Unset): The authentication method last used by a user with this domain (google,
+            saml, email)
+        last_used_auth_method_at (str | Unset): Timestamp of when the last authentication method was used
+        last_verified_at (str | Unset): Last verification attempt timestamp
+        status (SSODomainSpecStatus | Unset): Current verification status of the domain (pending, verified, failed)
+            Example: verified.
+        txt_record_name (str | Unset): DNS TXT record name that must be created for verification
+        txt_record_value (str | Unset): DNS TXT record value that must be set for verification
+        verification_error (str | Unset): Error message if verification failed
     """
 
-    allowed_auth_methods: Union[Unset, list[str]] = UNSET
-    auto_join_workspaces: Union[Unset, list[str]] = UNSET
-    last_used_auth_method: Union[Unset, str] = UNSET
-    last_used_auth_method_at: Union[Unset, str] = UNSET
-    last_verified_at: Union[Unset, str] = UNSET
-    status: Union[Unset, SSODomainSpecStatus] = UNSET
-    txt_record_name: Union[Unset, str] = UNSET
-    txt_record_value: Union[Unset, str] = UNSET
-    verification_error: Union[Unset, str] = UNSET
+    allowed_auth_methods: list[str] | Unset = UNSET
+    auto_join_workspaces: list[str] | Unset = UNSET
+    last_used_auth_method: str | Unset = UNSET
+    last_used_auth_method_at: str | Unset = UNSET
+    last_verified_at: str | Unset = UNSET
+    status: SSODomainSpecStatus | Unset = UNSET
+    txt_record_name: str | Unset = UNSET
+    txt_record_value: str | Unset = UNSET
+    verification_error: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        allowed_auth_methods: Union[Unset, list[str]] = UNSET
+        allowed_auth_methods: list[str] | Unset = UNSET
         if not isinstance(self.allowed_auth_methods, Unset):
             allowed_auth_methods = self.allowed_auth_methods
 
-        auto_join_workspaces: Union[Unset, list[str]] = UNSET
+        auto_join_workspaces: list[str] | Unset = UNSET
         if not isinstance(self.auto_join_workspaces, Unset):
             auto_join_workspaces = self.auto_join_workspaces
 
@@ -56,7 +59,7 @@ class SSODomainSpec:
 
         last_verified_at = self.last_verified_at
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -91,10 +94,10 @@ class SSODomainSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         allowed_auth_methods = cast(
             list[str], d.pop("allowedAuthMethods", d.pop("allowed_auth_methods", UNSET))
         )
@@ -112,7 +115,7 @@ class SSODomainSpec:
         last_verified_at = d.pop("lastVerifiedAt", d.pop("last_verified_at", UNSET))
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, SSODomainSpecStatus]
+        status: SSODomainSpecStatus | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,21 +20,21 @@ class UpgradeStatus:
         step (str): Current/last step (none, starting, download, validate, replace, completed, skipped) Example:
             download.
         version (str): Version being upgraded to Example: latest.
-        binary_path (Union[Unset, str]): Path to downloaded binary Example: /tmp/sandbox-api-new.
-        bytes_downloaded (Union[Unset, int]): Bytes downloaded Example: 25034936.
-        download_url (Union[Unset, str]): URL used for download Example: https://github.com/....
-        error (Union[Unset, str]): Error message if failed Example: Failed to download binary.
-        last_attempt (Union[Unset, str]): When the upgrade was attempted
+        binary_path (str | Unset): Path to downloaded binary Example: /tmp/sandbox-api-new.
+        bytes_downloaded (int | Unset): Bytes downloaded Example: 25034936.
+        download_url (str | Unset): URL used for download Example: https://github.com/....
+        error (str | Unset): Error message if failed Example: Failed to download binary.
+        last_attempt (str | Unset): When the upgrade was attempted
     """
 
     status: ProcessUpgradeState
     step: str
     version: str
-    binary_path: Union[Unset, str] = UNSET
-    bytes_downloaded: Union[Unset, int] = UNSET
-    download_url: Union[Unset, str] = UNSET
-    error: Union[Unset, str] = UNSET
-    last_attempt: Union[Unset, str] = UNSET
+    binary_path: str | Unset = UNSET
+    bytes_downloaded: int | Unset = UNSET
+    download_url: str | Unset = UNSET
+    error: str | Unset = UNSET
+    last_attempt: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -74,10 +77,10 @@ class UpgradeStatus:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         status = ProcessUpgradeState(d.pop("status"))
 
         step = d.pop("step")

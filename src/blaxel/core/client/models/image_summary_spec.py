@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,12 +15,12 @@ T = TypeVar("T", bound="ImageSummarySpec")
 class ImageSummarySpec:
     """
     Attributes:
-        size (Union[Unset, int]):
-        tag_count (Union[Unset, int]):
+        size (int | Unset):
+        tag_count (int | Unset):
     """
 
-    size: Union[Unset, int] = UNSET
-    tag_count: Union[Unset, int] = UNSET
+    size: int | Unset = UNSET
+    tag_count: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,10 +39,10 @@ class ImageSummarySpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         size = d.pop("size", UNSET)
 
         tag_count = d.pop("tagCount", d.pop("tag_count", UNSET))

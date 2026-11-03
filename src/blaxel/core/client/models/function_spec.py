@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,39 +22,38 @@ class FunctionSpec:
     """Configuration for an MCP server function including runtime settings, transport protocol, and connected integrations
 
     Attributes:
-        enabled (Union[Unset, bool]): When false, the function is disabled and will not serve requests Default: True.
-            Example: True.
-        integration_connections (Union[Unset, list[str]]):
-        policies (Union[Unset, list[str]]):
-        public (Union[Unset, bool]): When true, the function is publicly accessible without authentication. Only
-            available for mk3 generation. Default: False.
-        region (Union[Unset, str]): Region where the function should be deployed (e.g. us-pdx-1, eu-lon-1). If not
-            specified, the function is deployed based on policy locations. Example: us-pdx-1.
-        revision (Union[Unset, RevisionConfiguration]): Revision configuration
-        runtime (Union[Unset, FunctionRuntime]): Runtime configuration defining how the MCP server function is deployed
-            and scaled
-        triggers (Union[Unset, list['Trigger']]): Triggers to use your agent
+        enabled (bool | Unset): When false, the function is disabled and will not serve requests Default: True. Example:
+            True.
+        integration_connections (list[str] | Unset):
+        policies (list[str] | Unset):
+        public (bool | Unset): When true, the function is publicly accessible without authentication. Only available for
+            mk3 generation. Default: False. Example: False.
+        region (str | Unset): Region where the function should be deployed (e.g. us-pdx-1, eu-lon-1). If not specified,
+            the function is deployed based on policy locations. Example: us-pdx-1.
+        revision (RevisionConfiguration | Unset): Revision configuration
+        runtime (FunctionRuntime | Unset): Runtime configuration defining how the MCP server function is deployed and
+            scaled
+        triggers (list[Trigger] | Unset): Triggers to use your agent
     """
 
-    enabled: Union[Unset, bool] = True
-    integration_connections: Union[Unset, list[str]] = UNSET
-    policies: Union[Unset, list[str]] = UNSET
-    public: Union[Unset, bool] = False
-    region: Union[Unset, str] = UNSET
-    revision: Union[Unset, "RevisionConfiguration"] = UNSET
-    runtime: Union[Unset, "FunctionRuntime"] = UNSET
-    triggers: Union[Unset, list["Trigger"]] = UNSET
+    enabled: bool | Unset = True
+    integration_connections: list[str] | Unset = UNSET
+    policies: list[str] | Unset = UNSET
+    public: bool | Unset = False
+    region: str | Unset = UNSET
+    revision: RevisionConfiguration | Unset = UNSET
+    runtime: FunctionRuntime | Unset = UNSET
+    triggers: list[Trigger] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        integration_connections: Union[Unset, list[str]] = UNSET
+        integration_connections: list[str] | Unset = UNSET
         if not isinstance(self.integration_connections, Unset):
             integration_connections = self.integration_connections
 
-        policies: Union[Unset, list[str]] = UNSET
+        policies: list[str] | Unset = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
 
@@ -59,7 +61,7 @@ class FunctionSpec:
 
         region = self.region
 
-        revision: Union[Unset, dict[str, Any]] = UNSET
+        revision: dict[str, Any] | Unset = UNSET
         if (
             self.revision
             and not isinstance(self.revision, Unset)
@@ -69,7 +71,7 @@ class FunctionSpec:
         elif self.revision and isinstance(self.revision, dict):
             revision = self.revision
 
-        runtime: Union[Unset, dict[str, Any]] = UNSET
+        runtime: dict[str, Any] | Unset = UNSET
         if (
             self.runtime
             and not isinstance(self.runtime, Unset)
@@ -79,7 +81,7 @@ class FunctionSpec:
         elif self.runtime and isinstance(self.runtime, dict):
             runtime = self.runtime
 
-        triggers: Union[Unset, list[dict[str, Any]]] = UNSET
+        triggers: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.triggers, Unset):
             triggers = []
             for componentsschemas_triggers_item_data in self.triggers:
@@ -112,14 +114,14 @@ class FunctionSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.function_runtime import FunctionRuntime
-        from ..models.revision_configuration import RevisionConfiguration
-        from ..models.trigger import Trigger
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.function_runtime import FunctionRuntime  # noqa: PLC0415
+        from ..models.revision_configuration import RevisionConfiguration  # noqa: PLC0415
+        from ..models.trigger import Trigger  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         integration_connections = cast(
@@ -133,14 +135,14 @@ class FunctionSpec:
         region = d.pop("region", UNSET)
 
         _revision = d.pop("revision", UNSET)
-        revision: Union[Unset, RevisionConfiguration]
+        revision: RevisionConfiguration | Unset
         if isinstance(_revision, Unset):
             revision = UNSET
         else:
             revision = RevisionConfiguration.from_dict(_revision)
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, FunctionRuntime]
+        runtime: FunctionRuntime | Unset
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:

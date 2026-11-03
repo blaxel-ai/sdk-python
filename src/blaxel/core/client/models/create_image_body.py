@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,29 +17,28 @@ class CreateImageBody:
     Attributes:
         name (str): Name of the image to build
         resource_type (str): Resource type (agent, function, sandbox, job)
-        docker_config (Union[Unset, str]): Docker configuration JSON containing credentials for the source registry.
-        generation (Union[Unset, str]): Runtime generation (e.g., mk3). Defaults to mk3 if not specified.
-        image (Union[Unset, str]): A pre-built Docker image reference (e.g., docker.io/myorg/myimage:latest). References
-            with a registry hostname start an asynchronous import that downloads and converts the image for the resource
-            runtime.
-        memory_mb (Union[Unset, int]): Memory for the registry import worker in MiB. Only supported when image is a
-            registry reference. When omitted, the platform default is used. Example: 16384.
-        tag (Union[Unset, str]): Tag for the imported image. Only supported when image is a registry reference. When
-            omitted, a tag is derived from the build inputs. Tags are immutable, so a tag that already exists is rejected.
-            latest, pending and failed are reserved. Example: v1.2.0.
-        volume_mb (Union[Unset, int]): Temporary scratch disk for the registry import worker in MiB. Only supported when
-            image is a registry reference. When omitted, the platform default is used. Set to 0 to use memory-backed
-            scratch. Positive values are not supported for HIPAA workspaces. Example: 32768.
+        docker_config (str | Unset): Docker configuration JSON containing credentials for the source registry.
+        generation (str | Unset): Runtime generation (e.g., mk3). Defaults to mk3 if not specified.
+        image (str | Unset): A pre-built Docker image reference (e.g., docker.io/myorg/myimage:latest). References with
+            a registry hostname start an asynchronous import that downloads and converts the image for the resource runtime.
+        memory_mb (int | Unset): Memory for the registry import worker in MiB. Only supported when image is a registry
+            reference. When omitted, the platform default is used. Example: 16384.
+        tag (str | Unset): Tag for the imported image. Only supported when image is a registry reference. When omitted,
+            a tag is derived from the build inputs. Tags are immutable, so a tag that already exists is rejected. latest,
+            pending and failed are reserved. Example: v1.2.0.
+        volume_mb (int | Unset): Temporary scratch disk for the registry import worker in MiB. Only supported when image
+            is a registry reference. When omitted, the platform default is used. Set to 0 to use memory-backed scratch.
+            Positive values are not supported for HIPAA workspaces. Example: 32768.
     """
 
     name: str
     resource_type: str
-    docker_config: Union[Unset, str] = UNSET
-    generation: Union[Unset, str] = UNSET
-    image: Union[Unset, str] = UNSET
-    memory_mb: Union[Unset, int] = UNSET
-    tag: Union[Unset, str] = UNSET
-    volume_mb: Union[Unset, int] = UNSET
+    docker_config: str | Unset = UNSET
+    generation: str | Unset = UNSET
+    image: str | Unset = UNSET
+    memory_mb: int | Unset = UNSET
+    tag: str | Unset = UNSET
+    volume_mb: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -80,10 +82,10 @@ class CreateImageBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         resource_type = d.pop("resourceType") if "resourceType" in d else d.pop("resource_type")

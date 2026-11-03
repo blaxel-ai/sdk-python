@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,22 +16,22 @@ class SSODomainMetadata:
     """SSO domain metadata
 
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        account_id (Union[Unset, str]): Account ID
-        display_name (Union[Unset, str]): Display name for the SSO domain Example: Acme Corp.
-        name (Union[Unset, str]): Domain name (e.g., "acme.com") Example: acme.com.
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        account_id (str | Unset): Account ID
+        display_name (str | Unset): Display name for the SSO domain Example: Acme Corp.
+        name (str | Unset): Domain name (e.g., "acme.com") Example: acme.com.
     """
 
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    account_id: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    account_id: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -67,10 +70,10 @@ class SSODomainMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))

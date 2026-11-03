@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -19,12 +22,11 @@ class ImageSummary:
         spec (ImageSummarySpec):
     """
 
-    metadata: "ImageMetadata"
-    spec: "ImageSummarySpec"
+    metadata: ImageMetadata
+    spec: ImageSummarySpec
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -47,13 +49,13 @@ class ImageSummary:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.image_metadata import ImageMetadata
-        from ..models.image_summary_spec import ImageSummarySpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.image_metadata import ImageMetadata  # noqa: PLC0415
+        from ..models.image_summary_spec import ImageSummarySpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = ImageMetadata.from_dict(d.pop("metadata"))
 
         spec = ImageSummarySpec.from_dict(d.pop("spec"))

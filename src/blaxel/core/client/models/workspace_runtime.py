@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,21 +20,20 @@ class WorkspaceRuntime:
     """Runtime configuration for the workspace infrastructure
 
     Attributes:
-        generation (Union[Unset, str]): Infrastructure generation version for the workspace (affects available features
-            and deployment behavior) Example: mk3.
-        sandbox (Union[Unset, WorkspaceSandboxSettings]): Workspace-wide sandbox configuration that applies to all
-            sandbox deployments in the workspace.
+        generation (str | Unset): Infrastructure generation version for the workspace (affects available features and
+            deployment behavior) Example: mk3.
+        sandbox (WorkspaceSandboxSettings | Unset): Workspace-wide sandbox configuration that applies to all sandbox
+            deployments in the workspace.
     """
 
-    generation: Union[Unset, str] = UNSET
-    sandbox: Union[Unset, "WorkspaceSandboxSettings"] = UNSET
+    generation: str | Unset = UNSET
+    sandbox: WorkspaceSandboxSettings | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         generation = self.generation
 
-        sandbox: Union[Unset, dict[str, Any]] = UNSET
+        sandbox: dict[str, Any] | Unset = UNSET
         if (
             self.sandbox
             and not isinstance(self.sandbox, Unset)
@@ -52,16 +54,16 @@ class WorkspaceRuntime:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.workspace_sandbox_settings import WorkspaceSandboxSettings
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.workspace_sandbox_settings import WorkspaceSandboxSettings  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         generation = d.pop("generation", UNSET)
 
         _sandbox = d.pop("sandbox", UNSET)
-        sandbox: Union[Unset, WorkspaceSandboxSettings]
+        sandbox: WorkspaceSandboxSettings | Unset
         if isinstance(_sandbox, Unset):
             sandbox = UNSET
         else:

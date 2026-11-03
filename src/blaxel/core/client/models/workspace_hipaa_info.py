@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,21 +22,20 @@ class WorkspaceHipaaInfo:
     workspace settings; absent when the account does not have the addon.
 
         Attributes:
-            account_enabled (Union[Unset, bool]): True when the parent account has the HIPAA compliance addon active. Set
-                server-side from operator tooling and Stripe billing events; cannot be changed from workspace settings.
-            unsafe (Union[Unset, WorkspaceHipaaUnsafe]): Per-workspace HIPAA opt-out record. Toggled from workspace
-                settings; the backend stamps `updatedBy` and `updatedAt`.
+            account_enabled (bool | Unset): True when the parent account has the HIPAA compliance addon active. Set server-
+                side from operator tooling and Stripe billing events; cannot be changed from workspace settings.
+            unsafe (WorkspaceHipaaUnsafe | Unset): Per-workspace HIPAA opt-out record. Toggled from workspace settings; the
+                backend stamps `updatedBy` and `updatedAt`.
     """
 
-    account_enabled: Union[Unset, bool] = UNSET
-    unsafe: Union[Unset, "WorkspaceHipaaUnsafe"] = UNSET
+    account_enabled: bool | Unset = UNSET
+    unsafe: WorkspaceHipaaUnsafe | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         account_enabled = self.account_enabled
 
-        unsafe: Union[Unset, dict[str, Any]] = UNSET
+        unsafe: dict[str, Any] | Unset = UNSET
         if self.unsafe and not isinstance(self.unsafe, Unset) and not isinstance(self.unsafe, dict):
             unsafe = self.unsafe.to_dict()
         elif self.unsafe and isinstance(self.unsafe, dict):
@@ -50,16 +52,16 @@ class WorkspaceHipaaInfo:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.workspace_hipaa_unsafe import WorkspaceHipaaUnsafe
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.workspace_hipaa_unsafe import WorkspaceHipaaUnsafe  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         account_enabled = d.pop("accountEnabled", d.pop("account_enabled", UNSET))
 
         _unsafe = d.pop("unsafe", UNSET)
-        unsafe: Union[Unset, WorkspaceHipaaUnsafe]
+        unsafe: WorkspaceHipaaUnsafe | Unset
         if isinstance(_unsafe, Unset):
             unsafe = UNSET
         else:

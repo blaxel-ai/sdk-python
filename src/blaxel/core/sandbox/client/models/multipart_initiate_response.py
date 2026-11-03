@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,12 +15,12 @@ T = TypeVar("T", bound="MultipartInitiateResponse")
 class MultipartInitiateResponse:
     """
     Attributes:
-        path (Union[Unset, str]):  Example: /tmp/largefile.dat.
-        upload_id (Union[Unset, str]):  Example: 550e8400-e29b-41d4-a716-446655440000.
+        path (str | Unset):  Example: /tmp/largefile.dat.
+        upload_id (str | Unset):  Example: 550e8400-e29b-41d4-a716-446655440000.
     """
 
-    path: Union[Unset, str] = UNSET
-    upload_id: Union[Unset, str] = UNSET
+    path: str | Unset = UNSET
+    upload_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,10 +39,10 @@ class MultipartInitiateResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         path = d.pop("path", UNSET)
 
         upload_id = d.pop("uploadId", d.pop("upload_id", UNSET))

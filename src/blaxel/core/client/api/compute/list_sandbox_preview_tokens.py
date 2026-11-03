@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,13 +16,16 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/sandboxes/{sandbox_name}/previews/{preview_name}/tokens",
+        "url": "/sandboxes/{sandbox_name}/previews/{preview_name}/tokens".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+            preview_name=quote(str(preview_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["PreviewToken"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[PreviewToken] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -31,6 +35,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Previe
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -39,7 +44,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Previe
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["PreviewToken"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list[PreviewToken]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -53,7 +58,7 @@ def sync_detailed(
     preview_name: str,
     *,
     client: Client,
-) -> Response[list["PreviewToken"]]:
+) -> Response[list[PreviewToken]]:
     """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
@@ -67,7 +72,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['PreviewToken']]
+        Response[list[PreviewToken]]
     """
 
     kwargs = _get_kwargs(
@@ -87,7 +92,7 @@ def sync(
     preview_name: str,
     *,
     client: Client,
-) -> list["PreviewToken"] | None:
+) -> list[PreviewToken] | None:
     """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
@@ -101,7 +106,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['PreviewToken']
+        list[PreviewToken]
     """
 
     return sync_detailed(
@@ -116,7 +121,7 @@ async def asyncio_detailed(
     preview_name: str,
     *,
     client: Client,
-) -> Response[list["PreviewToken"]]:
+) -> Response[list[PreviewToken]]:
     """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
@@ -130,7 +135,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['PreviewToken']]
+        Response[list[PreviewToken]]
     """
 
     kwargs = _get_kwargs(
@@ -148,7 +153,7 @@ async def asyncio(
     preview_name: str,
     *,
     client: Client,
-) -> list["PreviewToken"] | None:
+) -> list[PreviewToken] | None:
     """Get tokens for Sandbox Preview
 
      Gets tokens for a Sandbox Preview.
@@ -162,7 +167,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['PreviewToken']
+        list[PreviewToken]
     """
 
     return (

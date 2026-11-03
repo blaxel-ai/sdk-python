@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,39 +20,38 @@ T = TypeVar("T", bound="ImageMetadata")
 class ImageMetadata:
     """
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the image was created.
-        display_name (Union[Unset, str]): The display name of the image (registry/workspace/repository).
-        events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
-        last_deployed_at (Union[Unset, str]): The date and time when the image was last deployed (most recent across all
+        created_at (str | Unset): The date and time when the image was created.
+        display_name (str | Unset): The display name of the image (registry/workspace/repository).
+        events (list[CoreEvent] | Unset): Events happening on a resource deployed on Blaxel
+        last_deployed_at (str | Unset): The date and time when the image was last deployed (most recent across all
             tags).
-        name (Union[Unset, str]): The name of the image (repository name).
-        resource_type (Union[Unset, str]): The resource type of the image.
-        source_workspace (Union[Unset, str]): If this image is shared from another workspace, this field contains the
-            name of the source workspace. Empty for non-shared images.
-        status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
-        updated_at (Union[Unset, str]): The date and time when the image was last updated.
-        workspace (Union[Unset, str]): The workspace of the image.
+        name (str | Unset): The name of the image (repository name).
+        resource_type (str | Unset): The resource type of the image.
+        source_workspace (str | Unset): If this image is shared from another workspace, this field contains the name of
+            the source workspace. Empty for non-shared images.
+        status (Status | Unset): Deployment status of a resource deployed on Blaxel
+        updated_at (str | Unset): The date and time when the image was last updated.
+        workspace (str | Unset): The workspace of the image.
     """
 
-    created_at: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    events: Union[Unset, list["CoreEvent"]] = UNSET
-    last_deployed_at: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    resource_type: Union[Unset, str] = UNSET
-    source_workspace: Union[Unset, str] = UNSET
-    status: Union[Unset, Status] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    events: list[CoreEvent] | Unset = UNSET
+    last_deployed_at: str | Unset = UNSET
+    name: str | Unset = UNSET
+    resource_type: str | Unset = UNSET
+    source_workspace: str | Unset = UNSET
+    status: Status | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         display_name = self.display_name
 
-        events: Union[Unset, list[dict[str, Any]]] = UNSET
+        events: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.events, Unset):
             events = []
             for componentsschemas_core_events_item_data in self.events:
@@ -69,7 +71,7 @@ class ImageMetadata:
 
         source_workspace = self.source_workspace
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -104,12 +106,12 @@ class ImageMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_event import CoreEvent
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.core_event import CoreEvent  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         display_name = d.pop("displayName", d.pop("display_name", UNSET))
@@ -132,7 +134,7 @@ class ImageMetadata:
         source_workspace = d.pop("sourceWorkspace", d.pop("source_workspace", UNSET))
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, Status]
+        status: Status | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

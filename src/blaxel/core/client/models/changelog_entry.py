@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,14 +16,14 @@ class ChangelogEntry:
     """Changelog entry shown in the controlplane UI.
 
     Attributes:
-        content (Union[Unset, str]): Markdown body for the changelog entry.
-        date (Union[Unset, str]): Release date for the changelog entry in YYYY-MM-DD format. Example: 2026-07-07.
-        title (Union[Unset, str]): Changelog entry title. Example: New sandbox scheduling controls.
+        content (str | Unset): Markdown body for the changelog entry.
+        date (str | Unset): Release date for the changelog entry in YYYY-MM-DD format. Example: 2026-07-07.
+        title (str | Unset): Changelog entry title. Example: New sandbox scheduling controls.
     """
 
-    content: Union[Unset, str] = UNSET
-    date: Union[Unset, str] = UNSET
-    title: Union[Unset, str] = UNSET
+    content: str | Unset = UNSET
+    date: str | Unset = UNSET
+    title: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,10 +46,10 @@ class ChangelogEntry:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         content = d.pop("content", UNSET)
 
         date = d.pop("date", UNSET)

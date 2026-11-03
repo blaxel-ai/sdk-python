@@ -18,7 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["ProcessResponse"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[ProcessResponse] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -28,6 +28,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Proces
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -36,9 +37,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Proces
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[list["ProcessResponse"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list[ProcessResponse]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -50,7 +49,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["ProcessResponse"]]:
+) -> Response[list[ProcessResponse]]:
     """List all processes
 
      Get a list of all running and completed processes
@@ -60,7 +59,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['ProcessResponse']]
+        Response[list[ProcessResponse]]
     """
 
     kwargs = _get_kwargs()
@@ -75,7 +74,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["ProcessResponse"] | None:
+) -> list[ProcessResponse] | None:
     """List all processes
 
      Get a list of all running and completed processes
@@ -85,7 +84,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['ProcessResponse']
+        list[ProcessResponse]
     """
 
     return sync_detailed(
@@ -96,7 +95,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["ProcessResponse"]]:
+) -> Response[list[ProcessResponse]]:
     """List all processes
 
      Get a list of all running and completed processes
@@ -106,7 +105,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['ProcessResponse']]
+        Response[list[ProcessResponse]]
     """
 
     kwargs = _get_kwargs()
@@ -119,7 +118,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["ProcessResponse"] | None:
+) -> list[ProcessResponse] | None:
     """List all processes
 
      Get a list of all running and completed processes
@@ -129,7 +128,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['ProcessResponse']
+        list[ProcessResponse]
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -23,48 +26,44 @@ class CustomDomainSpec:
     """Custom domain specification
 
     Attributes:
-        cname_records (Union[Unset, str]): CNAME target for the domain
-        domain_type (Union[Unset, CustomDomainSpecDomainType]): Type of custom domain (previews or applications)
-            Example: applications.
-        fallback_preview_id (Union[Unset, str]): Preview ID to route to when a preview lookup fails on this custom
-            domain Example: my-fallback-preview.
-        last_verified_at (Union[Unset, str]): Last verification attempt timestamp
-        region (Union[Unset, str]): Region that the custom domain is associated with Example: us-pdx-1.
-        status (Union[Unset, CustomDomainSpecStatus]): Current status of the domain (pending, verified, failed) Example:
+        cname_records (str | Unset): CNAME target for the domain
+        domain_type (CustomDomainSpecDomainType | Unset): Type of custom domain (previews or applications) Example:
+            applications.
+        fallback_preview_id (str | Unset): Preview ID to route to when a preview lookup fails on this custom domain
+            Example: my-fallback-preview.
+        last_verified_at (str | Unset): Last verification attempt timestamp
+        region (str | Unset): Region that the custom domain is associated with Example: us-pdx-1.
+        status (CustomDomainSpecStatus | Unset): Current status of the domain (pending, verified, failed) Example:
             verified.
-        subject_alternative_names (Union[Unset, list['CustomDomainSpecSubjectAlternativeNamesItem']]): Subject
-            Alternative Names (SANs) for the ACM certificate. Only applicable for application domains.
-        txt_records (Union[Unset, CustomDomainSpecTxtRecords]): Map of TXT record names to values for domain
-            verification
-        validation_method (Union[Unset, CustomDomainSpecValidationMethod]): How the TLS certificate is validated. "dns"
+        subject_alternative_names (list[CustomDomainSpecSubjectAlternativeNamesItem] | Unset): Subject Alternative Names
+            (SANs) for the ACM certificate. Only applicable for application domains.
+        txt_records (CustomDomainSpecTxtRecords | Unset): Map of TXT record names to values for domain verification
+        validation_method (CustomDomainSpecValidationMethod | Unset): How the TLS certificate is validated. "dns"
             (default) requires the certificate validation CNAME records to be published; "http" validates over HTTP once the
             domain points to Blaxel and requires no validation record. HTTP validation is not available for wildcard domains
             (previews or "*." names) and cannot be changed after creation. Default: CustomDomainSpecValidationMethod.DNS.
             Example: dns.
-        verification_error (Union[Unset, str]): Error message if verification failed
+        verification_error (str | Unset): Error message if verification failed
     """
 
-    cname_records: Union[Unset, str] = UNSET
-    domain_type: Union[Unset, CustomDomainSpecDomainType] = UNSET
-    fallback_preview_id: Union[Unset, str] = UNSET
-    last_verified_at: Union[Unset, str] = UNSET
-    region: Union[Unset, str] = UNSET
-    status: Union[Unset, CustomDomainSpecStatus] = UNSET
-    subject_alternative_names: Union[Unset, list["CustomDomainSpecSubjectAlternativeNamesItem"]] = (
-        UNSET
-    )
-    txt_records: Union[Unset, "CustomDomainSpecTxtRecords"] = UNSET
-    validation_method: Union[Unset, CustomDomainSpecValidationMethod] = (
+    cname_records: str | Unset = UNSET
+    domain_type: CustomDomainSpecDomainType | Unset = UNSET
+    fallback_preview_id: str | Unset = UNSET
+    last_verified_at: str | Unset = UNSET
+    region: str | Unset = UNSET
+    status: CustomDomainSpecStatus | Unset = UNSET
+    subject_alternative_names: list[CustomDomainSpecSubjectAlternativeNamesItem] | Unset = UNSET
+    txt_records: CustomDomainSpecTxtRecords | Unset = UNSET
+    validation_method: CustomDomainSpecValidationMethod | Unset = (
         CustomDomainSpecValidationMethod.DNS
     )
-    verification_error: Union[Unset, str] = UNSET
+    verification_error: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         cname_records = self.cname_records
 
-        domain_type: Union[Unset, str] = UNSET
+        domain_type: str | Unset = UNSET
         if not isinstance(self.domain_type, Unset):
             domain_type = self.domain_type.value
 
@@ -74,11 +73,11 @@ class CustomDomainSpec:
 
         region = self.region
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
-        subject_alternative_names: Union[Unset, list[dict[str, Any]]] = UNSET
+        subject_alternative_names: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.subject_alternative_names, Unset):
             subject_alternative_names = []
             for subject_alternative_names_item_data in self.subject_alternative_names:
@@ -88,7 +87,7 @@ class CustomDomainSpec:
                     subject_alternative_names_item = subject_alternative_names_item_data.to_dict()
                 subject_alternative_names.append(subject_alternative_names_item)
 
-        txt_records: Union[Unset, dict[str, Any]] = UNSET
+        txt_records: dict[str, Any] | Unset = UNSET
         if (
             self.txt_records
             and not isinstance(self.txt_records, Unset)
@@ -98,7 +97,7 @@ class CustomDomainSpec:
         elif self.txt_records and isinstance(self.txt_records, dict):
             txt_records = self.txt_records
 
-        validation_method: Union[Unset, str] = UNSET
+        validation_method: str | Unset = UNSET
         if not isinstance(self.validation_method, Unset):
             validation_method = self.validation_method.value
 
@@ -131,19 +130,21 @@ class CustomDomainSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         from ..models.custom_domain_spec_subject_alternative_names_item import (
             CustomDomainSpecSubjectAlternativeNamesItem,
+        )  # noqa: PLC0415
+        from ..models.custom_domain_spec_txt_records import (
+            CustomDomainSpecTxtRecords,  # noqa: PLC0415
         )
-        from ..models.custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         cname_records = d.pop("cnameRecords", d.pop("cname_records", UNSET))
 
         _domain_type = d.pop("domainType", d.pop("domain_type", UNSET))
-        domain_type: Union[Unset, CustomDomainSpecDomainType]
+        domain_type: CustomDomainSpecDomainType | Unset
         if isinstance(_domain_type, Unset) or _domain_type == "":
             domain_type = UNSET
         else:
@@ -156,7 +157,7 @@ class CustomDomainSpec:
         region = d.pop("region", UNSET)
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, CustomDomainSpecStatus]
+        status: CustomDomainSpecStatus | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:
@@ -174,14 +175,14 @@ class CustomDomainSpec:
             subject_alternative_names.append(subject_alternative_names_item)
 
         _txt_records = d.pop("txtRecords", d.pop("txt_records", UNSET))
-        txt_records: Union[Unset, CustomDomainSpecTxtRecords]
+        txt_records: CustomDomainSpecTxtRecords | Unset
         if isinstance(_txt_records, Unset):
             txt_records = UNSET
         else:
             txt_records = CustomDomainSpecTxtRecords.from_dict(_txt_records)
 
         _validation_method = d.pop("validationMethod", d.pop("validation_method", UNSET))
-        validation_method: Union[Unset, CustomDomainSpecValidationMethod]
+        validation_method: CustomDomainSpecValidationMethod | Unset
         if isinstance(_validation_method, Unset) or _validation_method == "":
             validation_method = UNSET
         else:

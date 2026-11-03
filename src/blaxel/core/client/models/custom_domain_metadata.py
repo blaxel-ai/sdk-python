@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,32 +20,31 @@ class CustomDomainMetadata:
     """Custom domain metadata
 
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Display name for the custom domain Example: Preview Domain.
-        labels (Union[Unset, MetadataLabels]): Key-value pairs for organizing and filtering resources. Labels can be
-            used to categorize resources by environment, project, team, or any custom taxonomy.
-        name (Union[Unset, str]): Domain name (e.g., "example.com") Example: preview.example.com.
-        shared_from_workspace (Union[Unset, str]): If this custom domain is shared from another workspace of the same
-            account, this field contains the name of the source (owning) workspace. Empty for owned domains.
-        workspace (Union[Unset, str]): Workspace name
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        display_name (str | Unset): Display name for the custom domain Example: Preview Domain.
+        labels (MetadataLabels | Unset): Key-value pairs for organizing and filtering resources. Labels can be used to
+            categorize resources by environment, project, team, or any custom taxonomy.
+        name (str | Unset): Domain name (e.g., "example.com") Example: preview.example.com.
+        shared_from_workspace (str | Unset): If this custom domain is shared from another workspace of the same account,
+            this field contains the name of the source (owning) workspace. Empty for owned domains.
+        workspace (str | Unset): Workspace name
     """
 
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    labels: Union[Unset, "MetadataLabels"] = UNSET
-    name: Union[Unset, str] = UNSET
-    shared_from_workspace: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    labels: MetadataLabels | Unset = UNSET
+    name: str | Unset = UNSET
+    shared_from_workspace: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         updated_at = self.updated_at
@@ -53,7 +55,7 @@ class CustomDomainMetadata:
 
         display_name = self.display_name
 
-        labels: Union[Unset, dict[str, Any]] = UNSET
+        labels: dict[str, Any] | Unset = UNSET
         if self.labels and not isinstance(self.labels, Unset) and not isinstance(self.labels, dict):
             labels = self.labels.to_dict()
         elif self.labels and isinstance(self.labels, dict):
@@ -90,12 +92,12 @@ class CustomDomainMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.metadata_labels import MetadataLabels
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.metadata_labels import MetadataLabels  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))
@@ -107,7 +109,7 @@ class CustomDomainMetadata:
         display_name = d.pop("displayName", d.pop("display_name", UNSET))
 
         _labels = d.pop("labels", UNSET)
-        labels: Union[Unset, MetadataLabels]
+        labels: MetadataLabels | Unset
         if isinstance(_labels, Unset):
             labels = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -23,18 +26,17 @@ class VolumeTemplate:
         metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
             and ownership information
         spec (VolumeTemplateSpec): Volume template specification
-        state (Union[Unset, VolumeTemplateState]): Volume template state
-        versions (Union[Unset, list['VolumeTemplateVersion']]): List of versions for this template
+        state (VolumeTemplateState | Unset): Volume template state
+        versions (list[VolumeTemplateVersion] | Unset): List of versions for this template
     """
 
-    metadata: "Metadata"
-    spec: "VolumeTemplateSpec"
-    state: Union[Unset, "VolumeTemplateState"] = UNSET
-    versions: Union[Unset, list["VolumeTemplateVersion"]] = UNSET
+    metadata: Metadata
+    spec: VolumeTemplateSpec
+    state: VolumeTemplateState | Unset = UNSET
+    versions: list[VolumeTemplateVersion] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -45,13 +47,13 @@ class VolumeTemplate:
         else:
             spec = self.spec.to_dict()
 
-        state: Union[Unset, dict[str, Any]] = UNSET
+        state: dict[str, Any] | Unset = UNSET
         if self.state and not isinstance(self.state, Unset) and not isinstance(self.state, dict):
             state = self.state.to_dict()
         elif self.state and isinstance(self.state, dict):
             state = self.state
 
-        versions: Union[Unset, list[dict[str, Any]]] = UNSET
+        versions: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.versions, Unset):
             versions = []
             for versions_item_data in self.versions:
@@ -77,21 +79,21 @@ class VolumeTemplate:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.metadata import Metadata
-        from ..models.volume_template_spec import VolumeTemplateSpec
-        from ..models.volume_template_state import VolumeTemplateState
-        from ..models.volume_template_version import VolumeTemplateVersion
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.metadata import Metadata  # noqa: PLC0415
+        from ..models.volume_template_spec import VolumeTemplateSpec  # noqa: PLC0415
+        from ..models.volume_template_state import VolumeTemplateState  # noqa: PLC0415
+        from ..models.volume_template_version import VolumeTemplateVersion  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = VolumeTemplateSpec.from_dict(d.pop("spec"))
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, VolumeTemplateState]
+        state: VolumeTemplateState | Unset
         if isinstance(_state, Unset):
             state = UNSET
         else:

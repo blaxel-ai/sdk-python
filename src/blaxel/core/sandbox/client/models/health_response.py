@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -23,7 +26,7 @@ class HealthResponse:
         os (str):  Example: linux.
         started_at (str): API start time in RFC 3339 Example: 2026-01-29 18:45:49+00:00.
         status (str):  Example: ok.
-        upgrade_count (int):
+        upgrade_count (int):  Example: 0.
         uptime (str):  Example: 1h30m.
         uptime_seconds (float):  Example: 5400.5.
         version (str):  Example: v0.1.0.
@@ -33,7 +36,7 @@ class HealthResponse:
     build_time: str
     git_commit: str
     go_version: str
-    last_upgrade: "UpgradeStatus"
+    last_upgrade: UpgradeStatus
     os: str
     started_at: str
     status: str
@@ -93,12 +96,12 @@ class HealthResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.upgrade_status import UpgradeStatus
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.upgrade_status import UpgradeStatus  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         arch = d.pop("arch")
 
         build_time = d.pop("buildTime") if "buildTime" in d else d.pop("build_time")

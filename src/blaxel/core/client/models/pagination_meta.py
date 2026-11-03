@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,22 +17,22 @@ class PaginationMeta:
     API version 2026-04-28.
 
         Attributes:
-            has_more (Union[Unset, bool]): True when more pages are available beyond the current one.
-            next_cursor (Union[Unset, str]): Opaque cursor to pass back as the `cursor` query param for the next page. Empty
-                when there are no more pages.
-            total (Union[Unset, int]): Total number of items in the workspace, ignoring the current page's filters. Lets the
-                UI render "page X of Y" without walking the cursor chain. Computed from the hash-only metadata.workspace GSI
-                count, so search (`q`) does not narrow it.
-            total_is_partial (Union[Unset, bool]): True when `total` is a lower bound rather than a complete count. Counting
-                a very large workspace is bounded so the listing stays fast, and this flag says the real number is higher.
-                Clients must not derive a page count from `total` when this is set — keep paging with `nextCursor` until
-                `hasMore` is false.
+            has_more (bool | Unset): True when more pages are available beyond the current one.
+            next_cursor (str | Unset): Opaque cursor to pass back as the `cursor` query param for the next page. Empty when
+                there are no more pages.
+            total (int | Unset): Total number of items in the workspace, ignoring the current page's filters. Lets the UI
+                render "page X of Y" without walking the cursor chain. Computed from the hash-only metadata.workspace GSI count,
+                so search (`q`) does not narrow it.
+            total_is_partial (bool | Unset): True when `total` is a lower bound rather than a complete count. Counting a
+                very large workspace is bounded so the listing stays fast, and this flag says the real number is higher. Clients
+                must not derive a page count from `total` when this is set — keep paging with `nextCursor` until `hasMore` is
+                false.
     """
 
-    has_more: Union[Unset, bool] = UNSET
-    next_cursor: Union[Unset, str] = UNSET
-    total: Union[Unset, int] = UNSET
-    total_is_partial: Union[Unset, bool] = UNSET
+    has_more: bool | Unset = UNSET
+    next_cursor: str | Unset = UNSET
+    total: int | Unset = UNSET
+    total_is_partial: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,10 +59,10 @@ class PaginationMeta:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         has_more = d.pop("hasMore", d.pop("has_more", UNSET))
 
         next_cursor = d.pop("nextCursor", d.pop("next_cursor", UNSET))

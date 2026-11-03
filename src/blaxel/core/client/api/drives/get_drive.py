@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -14,25 +15,30 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/drives/{drive_name}",
+        "url": "/drives/{drive_name}".format(
+            drive_name=quote(str(drive_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Drive] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | Drive | None:
     if response.status_code == 200:
         response_200 = Drive.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = cast(Any, None)
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -41,7 +47,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, D
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Drive]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | Drive]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -54,7 +60,7 @@ def sync_detailed(
     drive_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, Drive]]:
+) -> Response[Any | Drive]:
     """Get a drive
 
      Retrieves details of a specific drive including its status and events.
@@ -67,7 +73,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Drive]]
+        Response[Any | Drive]
     """
 
     kwargs = _get_kwargs(
@@ -85,7 +91,7 @@ def sync(
     drive_name: str,
     *,
     client: Client,
-) -> Union[Any, Drive] | None:
+) -> Any | Drive | None:
     """Get a drive
 
      Retrieves details of a specific drive including its status and events.
@@ -98,7 +104,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Drive]
+        Any | Drive
     """
 
     return sync_detailed(
@@ -111,7 +117,7 @@ async def asyncio_detailed(
     drive_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, Drive]]:
+) -> Response[Any | Drive]:
     """Get a drive
 
      Retrieves details of a specific drive including its status and events.
@@ -124,7 +130,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Drive]]
+        Response[Any | Drive]
     """
 
     kwargs = _get_kwargs(
@@ -140,7 +146,7 @@ async def asyncio(
     drive_name: str,
     *,
     client: Client,
-) -> Union[Any, Drive] | None:
+) -> Any | Drive | None:
     """Get a drive
 
      Retrieves details of a specific drive including its status and events.
@@ -153,7 +159,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Drive]
+        Any | Drive
     """
 
     return (

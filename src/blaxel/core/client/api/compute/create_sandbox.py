@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -13,7 +13,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     *,
     body: Sandbox,
-    create_if_not_exist: Union[Unset, bool] = False,
+    create_if_not_exist: bool | Unset = False,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -30,49 +30,52 @@ def _get_kwargs(
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Sandbox, SandboxError] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Sandbox | SandboxError | None:
     if response.status_code == 200:
         response_200 = Sandbox.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = SandboxError.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 401:
         response_401 = SandboxError.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = SandboxError.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 409:
         response_409 = SandboxError.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 500:
         response_500 = SandboxError.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -83,7 +86,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Sandbox, SandboxError]]:
+) -> Response[Sandbox | SandboxError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -96,15 +99,15 @@ def sync_detailed(
     *,
     client: Client,
     body: Sandbox,
-    create_if_not_exist: Union[Unset, bool] = False,
-) -> Response[Union[Sandbox, SandboxError]]:
+    create_if_not_exist: bool | Unset = False,
+) -> Response[Sandbox | SandboxError]:
     """Create sandbox
 
      Creates a new sandbox VM for secure AI code execution. Sandboxes automatically scale to zero when
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
-        create_if_not_exist (Union[Unset, bool]):  Default: False.
+        create_if_not_exist (bool | Unset):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -114,7 +117,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Sandbox, SandboxError]]
+        Response[Sandbox | SandboxError]
     """
 
     kwargs = _get_kwargs(
@@ -133,15 +136,15 @@ def sync(
     *,
     client: Client,
     body: Sandbox,
-    create_if_not_exist: Union[Unset, bool] = False,
-) -> Union[Sandbox, SandboxError] | None:
+    create_if_not_exist: bool | Unset = False,
+) -> Sandbox | SandboxError | None:
     """Create sandbox
 
      Creates a new sandbox VM for secure AI code execution. Sandboxes automatically scale to zero when
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
-        create_if_not_exist (Union[Unset, bool]):  Default: False.
+        create_if_not_exist (bool | Unset):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -151,7 +154,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Sandbox, SandboxError]
+        Sandbox | SandboxError
     """
 
     return sync_detailed(
@@ -165,15 +168,15 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Sandbox,
-    create_if_not_exist: Union[Unset, bool] = False,
-) -> Response[Union[Sandbox, SandboxError]]:
+    create_if_not_exist: bool | Unset = False,
+) -> Response[Sandbox | SandboxError]:
     """Create sandbox
 
      Creates a new sandbox VM for secure AI code execution. Sandboxes automatically scale to zero when
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
-        create_if_not_exist (Union[Unset, bool]):  Default: False.
+        create_if_not_exist (bool | Unset):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -183,7 +186,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Sandbox, SandboxError]]
+        Response[Sandbox | SandboxError]
     """
 
     kwargs = _get_kwargs(
@@ -200,15 +203,15 @@ async def asyncio(
     *,
     client: Client,
     body: Sandbox,
-    create_if_not_exist: Union[Unset, bool] = False,
-) -> Union[Sandbox, SandboxError] | None:
+    create_if_not_exist: bool | Unset = False,
+) -> Sandbox | SandboxError | None:
     """Create sandbox
 
      Creates a new sandbox VM for secure AI code execution. Sandboxes automatically scale to zero when
     idle and resume instantly, preserving memory state including running processes and filesystem.
 
     Args:
-        create_if_not_exist (Union[Unset, bool]):  Default: False.
+        create_if_not_exist (bool | Unset):  Default: False.
         body (Sandbox): Lightweight virtual machine for secure AI code execution. Sandboxes resume
             from standby in under 25ms and automatically scale to zero after inactivity, preserving
             memory state including running processes and filesystem.
@@ -218,7 +221,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Sandbox, SandboxError]
+        Sandbox | SandboxError
     """
 
     return (

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,7 +14,7 @@ def _get_kwargs(
     resource_type: str,
     image_name: str,
     *,
-    source_workspace: Union[Unset, str] = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -23,7 +24,10 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/images/{resource_type}/{image_name}",
+        "url": "/images/{resource_type}/{image_name}".format(
+            resource_type=quote(str(resource_type), safe=""),
+            image_name=quote(str(image_name), safe=""),
+        ),
         "params": params,
     }
 
@@ -35,6 +39,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> ImageSummary
         response_200 = ImageSummary.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -57,7 +62,7 @@ def sync_detailed(
     image_name: str,
     *,
     client: Client,
-    source_workspace: Union[Unset, str] = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> Response[ImageSummary]:
     """Get container image
 
@@ -67,7 +72,7 @@ def sync_detailed(
     Args:
         resource_type (str):
         image_name (str):
-        source_workspace (Union[Unset, str]):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -95,7 +100,7 @@ def sync(
     image_name: str,
     *,
     client: Client,
-    source_workspace: Union[Unset, str] = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> ImageSummary | None:
     """Get container image
 
@@ -105,7 +110,7 @@ def sync(
     Args:
         resource_type (str):
         image_name (str):
-        source_workspace (Union[Unset, str]):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -128,7 +133,7 @@ async def asyncio_detailed(
     image_name: str,
     *,
     client: Client,
-    source_workspace: Union[Unset, str] = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> Response[ImageSummary]:
     """Get container image
 
@@ -138,7 +143,7 @@ async def asyncio_detailed(
     Args:
         resource_type (str):
         image_name (str):
-        source_workspace (Union[Unset, str]):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -164,7 +169,7 @@ async def asyncio(
     image_name: str,
     *,
     client: Client,
-    source_workspace: Union[Unset, str] = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> ImageSummary | None:
     """Get container image
 
@@ -174,7 +179,7 @@ async def asyncio(
     Args:
         resource_type (str):
         image_name (str):
-        source_workspace (Union[Unset, str]):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,13 +15,15 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/models/{model_name}/revisions",
+        "url": "/models/{model_name}/revisions".format(
+            model_name=quote(str(model_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["RevisionMetadata"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[RevisionMetadata] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -30,6 +33,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Revisi
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -40,7 +44,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Revisi
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[list["RevisionMetadata"]]:
+) -> Response[list[RevisionMetadata]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -53,7 +57,7 @@ def sync_detailed(
     model_name: str,
     *,
     client: Client,
-) -> Response[list["RevisionMetadata"]]:
+) -> Response[list[RevisionMetadata]]:
     """List model revisions
 
      Returns revisions for a model by name.
@@ -66,7 +70,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['RevisionMetadata']]
+        Response[list[RevisionMetadata]]
     """
 
     kwargs = _get_kwargs(
@@ -84,7 +88,7 @@ def sync(
     model_name: str,
     *,
     client: Client,
-) -> list["RevisionMetadata"] | None:
+) -> list[RevisionMetadata] | None:
     """List model revisions
 
      Returns revisions for a model by name.
@@ -97,7 +101,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['RevisionMetadata']
+        list[RevisionMetadata]
     """
 
     return sync_detailed(
@@ -110,7 +114,7 @@ async def asyncio_detailed(
     model_name: str,
     *,
     client: Client,
-) -> Response[list["RevisionMetadata"]]:
+) -> Response[list[RevisionMetadata]]:
     """List model revisions
 
      Returns revisions for a model by name.
@@ -123,7 +127,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['RevisionMetadata']]
+        Response[list[RevisionMetadata]]
     """
 
     kwargs = _get_kwargs(
@@ -139,7 +143,7 @@ async def asyncio(
     model_name: str,
     *,
     client: Client,
-) -> list["RevisionMetadata"] | None:
+) -> list[RevisionMetadata] | None:
     """List model revisions
 
      Returns revisions for a model by name.
@@ -152,7 +156,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['RevisionMetadata']
+        list[RevisionMetadata]
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,31 +22,30 @@ class Form:
     """Form of the artifact
 
     Attributes:
-        config (Union[Unset, FormConfig]): Config of the artifact
-        oauth (Union[Unset, OAuth]): OAuth of the artifact
-        secrets (Union[Unset, FormSecrets]): Secrets of the artifact
+        config (FormConfig | Unset): Config of the artifact
+        oauth (OAuth | Unset): OAuth of the artifact
+        secrets (FormSecrets | Unset): Secrets of the artifact
     """
 
-    config: Union[Unset, "FormConfig"] = UNSET
-    oauth: Union[Unset, "OAuth"] = UNSET
-    secrets: Union[Unset, "FormSecrets"] = UNSET
+    config: FormConfig | Unset = UNSET
+    oauth: OAuth | Unset = UNSET
+    secrets: FormSecrets | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        config: Union[Unset, dict[str, Any]] = UNSET
+        config: dict[str, Any] | Unset = UNSET
         if self.config and not isinstance(self.config, Unset) and not isinstance(self.config, dict):
             config = self.config.to_dict()
         elif self.config and isinstance(self.config, dict):
             config = self.config
 
-        oauth: Union[Unset, dict[str, Any]] = UNSET
+        oauth: dict[str, Any] | Unset = UNSET
         if self.oauth and not isinstance(self.oauth, Unset) and not isinstance(self.oauth, dict):
             oauth = self.oauth.to_dict()
         elif self.oauth and isinstance(self.oauth, dict):
             oauth = self.oauth
 
-        secrets: Union[Unset, dict[str, Any]] = UNSET
+        secrets: dict[str, Any] | Unset = UNSET
         if (
             self.secrets
             and not isinstance(self.secrets, Unset)
@@ -66,30 +68,30 @@ class Form:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.form_config import FormConfig
-        from ..models.form_secrets import FormSecrets
-        from ..models.o_auth import OAuth
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.form_config import FormConfig  # noqa: PLC0415
+        from ..models.form_secrets import FormSecrets  # noqa: PLC0415
+        from ..models.o_auth import OAuth  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _config = d.pop("config", UNSET)
-        config: Union[Unset, FormConfig]
+        config: FormConfig | Unset
         if isinstance(_config, Unset):
             config = UNSET
         else:
             config = FormConfig.from_dict(_config)
 
         _oauth = d.pop("oauth", UNSET)
-        oauth: Union[Unset, OAuth]
+        oauth: OAuth | Unset
         if isinstance(_oauth, Unset):
             oauth = UNSET
         else:
             oauth = OAuth.from_dict(_oauth)
 
         _secrets = d.pop("secrets", UNSET)
-        secrets: Union[Unset, FormSecrets]
+        secrets: FormSecrets | Unset
         if isinstance(_secrets, Unset):
             secrets = UNSET
         else:

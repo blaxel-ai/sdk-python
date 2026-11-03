@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,34 +16,34 @@ class PendingImageShare:
     """Pending cross-account image share awaiting approval from the destination workspace
 
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        expires_at (Union[Unset, str]): The date and time when the pending share expires
-        id (Union[Unset, str]): Unique identifier for the pending image share
-        image_name (Union[Unset, str]): Image name (repository)
-        resource_type (Union[Unset, str]): Resource type (agent, function, sandbox, job)
-        shared_by (Union[Unset, str]): User sub who initiated the share
-        source_account_id (Union[Unset, str]): Source account ID
-        source_workspace (Union[Unset, str]): Source workspace name
-        target_account_id (Union[Unset, str]): Target account ID
-        target_workspace (Union[Unset, str]): Target workspace name
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        expires_at (str | Unset): The date and time when the pending share expires
+        id (str | Unset): Unique identifier for the pending image share
+        image_name (str | Unset): Image name (repository)
+        resource_type (str | Unset): Resource type (agent, function, sandbox, job)
+        shared_by (str | Unset): User sub who initiated the share
+        source_account_id (str | Unset): Source account ID
+        source_workspace (str | Unset): Source workspace name
+        target_account_id (str | Unset): Target account ID
+        target_workspace (str | Unset): Target workspace name
     """
 
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    expires_at: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    image_name: Union[Unset, str] = UNSET
-    resource_type: Union[Unset, str] = UNSET
-    shared_by: Union[Unset, str] = UNSET
-    source_account_id: Union[Unset, str] = UNSET
-    source_workspace: Union[Unset, str] = UNSET
-    target_account_id: Union[Unset, str] = UNSET
-    target_workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    expires_at: str | Unset = UNSET
+    id: str | Unset = UNSET
+    image_name: str | Unset = UNSET
+    resource_type: str | Unset = UNSET
+    shared_by: str | Unset = UNSET
+    source_account_id: str | Unset = UNSET
+    source_workspace: str | Unset = UNSET
+    target_account_id: str | Unset = UNSET
+    target_workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -103,10 +106,10 @@ class PendingImageShare:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))

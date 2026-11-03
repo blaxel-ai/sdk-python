@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,37 +20,36 @@ class Template:
     """Blaxel template
 
     Attributes:
-        default_branch (Union[Unset, str]): Default branch of the template Example: main.
-        description (Union[Unset, str]): Description of the template Example: A starter template for building LangChain
+        default_branch (str | Unset): Default branch of the template Example: main.
+        description (str | Unset): Description of the template Example: A starter template for building LangChain
             agents.
-        download_count (Union[Unset, int]): Number of downloads/clones of the repository Example: 1200.
-        forks_count (Union[Unset, int]): Number of forks the repository has Example: 45.
-        icon (Union[Unset, str]): URL to the template's icon
-        icon_dark (Union[Unset, str]): URL to the template's icon in dark mode
-        name (Union[Unset, str]): Name of the template Example: langchain-agent.
-        sha (Union[Unset, str]): SHA of the variable
-        star_count (Union[Unset, int]): Number of stars the repository has Example: 150.
-        topics (Union[Unset, list[str]]): Topic of the template
-        url (Union[Unset, str]): URL of the template Example: https://github.com/blaxel-ai/template-langchain-agent.
-        variables (Union[Unset, list['TemplateVariable']]): Variables of the template
+        download_count (int | Unset): Number of downloads/clones of the repository Example: 1200.
+        forks_count (int | Unset): Number of forks the repository has Example: 45.
+        icon (str | Unset): URL to the template's icon
+        icon_dark (str | Unset): URL to the template's icon in dark mode
+        name (str | Unset): Name of the template Example: langchain-agent.
+        sha (str | Unset): SHA of the variable
+        star_count (int | Unset): Number of stars the repository has Example: 150.
+        topics (list[str] | Unset): Topic of the template
+        url (str | Unset): URL of the template Example: https://github.com/blaxel-ai/template-langchain-agent.
+        variables (list[TemplateVariable] | Unset): Variables of the template
     """
 
-    default_branch: Union[Unset, str] = UNSET
-    description: Union[Unset, str] = UNSET
-    download_count: Union[Unset, int] = UNSET
-    forks_count: Union[Unset, int] = UNSET
-    icon: Union[Unset, str] = UNSET
-    icon_dark: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    sha: Union[Unset, str] = UNSET
-    star_count: Union[Unset, int] = UNSET
-    topics: Union[Unset, list[str]] = UNSET
-    url: Union[Unset, str] = UNSET
-    variables: Union[Unset, list["TemplateVariable"]] = UNSET
+    default_branch: str | Unset = UNSET
+    description: str | Unset = UNSET
+    download_count: int | Unset = UNSET
+    forks_count: int | Unset = UNSET
+    icon: str | Unset = UNSET
+    icon_dark: str | Unset = UNSET
+    name: str | Unset = UNSET
+    sha: str | Unset = UNSET
+    star_count: int | Unset = UNSET
+    topics: list[str] | Unset = UNSET
+    url: str | Unset = UNSET
+    variables: list[TemplateVariable] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         default_branch = self.default_branch
 
         description = self.description
@@ -66,13 +68,13 @@ class Template:
 
         star_count = self.star_count
 
-        topics: Union[Unset, list[str]] = UNSET
+        topics: list[str] | Unset = UNSET
         if not isinstance(self.topics, Unset):
             topics = self.topics
 
         url = self.url
 
-        variables: Union[Unset, list[dict[str, Any]]] = UNSET
+        variables: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.variables, Unset):
             variables = []
             for variables_item_data in self.variables:
@@ -113,12 +115,12 @@ class Template:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.template_variable import TemplateVariable
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.template_variable import TemplateVariable  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         default_branch = d.pop("defaultBranch", d.pop("default_branch", UNSET))
 
         description = d.pop("description", UNSET)

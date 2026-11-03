@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -19,7 +22,7 @@ class File:
         path (str):
         permissions (str):
         size (int):
-        content (Union[Unset, str]): Content is set only by a tree read with content=true, for regular files.
+        content (str | Unset): Content is set only by a tree read with content=true, for regular files.
     """
 
     group: str
@@ -29,7 +32,7 @@ class File:
     path: str
     permissions: str
     size: int
-    content: Unset | str = UNSET
+    content: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -68,10 +71,10 @@ class File:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         group = d.pop("group")
 
         last_modified = d.pop("lastModified") if "lastModified" in d else d.pop("last_modified")

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -21,15 +22,17 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/images/{resource_type}/{image_name}/share",
+        "url": "/images/{resource_type}/{image_name}/share".format(
+            resource_type=quote(str(resource_type), safe=""),
+            image_name=quote(str(image_name), safe=""),
+        ),
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -38,27 +41,32 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, Image, PendingImageShare] | None:
+) -> Any | Image | PendingImageShare | None:
     if response.status_code == 200:
         response_200 = Image.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 202:
         response_202 = PendingImageShare.from_dict(response.json())
 
         return response_202
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 409:
         response_409 = cast(Any, None)
         errors.retain_response(response_409, response)
         return response_409
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -69,7 +77,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, Image, PendingImageShare]]:
+) -> Response[Any | Image | PendingImageShare]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -84,7 +92,7 @@ def sync_detailed(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Response[Union[Any, Image, PendingImageShare]]:
+) -> Response[Any | Image | PendingImageShare]:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
@@ -102,7 +110,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image, PendingImageShare]]
+        Response[Any | Image | PendingImageShare]
     """
 
     kwargs = _get_kwargs(
@@ -124,7 +132,7 @@ def sync(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Union[Any, Image, PendingImageShare] | None:
+) -> Any | Image | PendingImageShare | None:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
@@ -142,7 +150,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image, PendingImageShare]
+        Any | Image | PendingImageShare
     """
 
     return sync_detailed(
@@ -159,7 +167,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Response[Union[Any, Image, PendingImageShare]]:
+) -> Response[Any | Image | PendingImageShare]:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
@@ -177,7 +185,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image, PendingImageShare]]
+        Response[Any | Image | PendingImageShare]
     """
 
     kwargs = _get_kwargs(
@@ -197,7 +205,7 @@ async def asyncio(
     *,
     client: Client,
     body: ShareImageBody,
-) -> Union[Any, Image, PendingImageShare] | None:
+) -> Any | Image | PendingImageShare | None:
     """Share a container image
 
      Shares a container image with another workspace by copying the metadata record. The underlying
@@ -215,7 +223,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image, PendingImageShare]
+        Any | Image | PendingImageShare
     """
 
     return (

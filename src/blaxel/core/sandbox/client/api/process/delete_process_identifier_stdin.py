@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/process/{identifier}/stdin",
+        "url": "/process/{identifier}/stdin".format(
+            identifier=quote(str(identifier), safe=""),
+        ),
     }
 
     return _kwargs
@@ -23,21 +26,24 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, SuccessResponse] | None:
+) -> ErrorResponse | SuccessResponse | None:
     if response.status_code == 200:
         response_200 = SuccessResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 409:
         response_409 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -48,7 +54,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+) -> Response[ErrorResponse | SuccessResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -61,7 +67,7 @@ def sync_detailed(
     identifier: str,
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+) -> Response[ErrorResponse | SuccessResponse]:
     """Close a process's stdin
 
      Send EOF to the process by closing its stdin pipe. Idempotent. For stdio protocols such as MCP this
@@ -75,7 +81,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -93,7 +99,7 @@ def sync(
     identifier: str,
     *,
     client: Client,
-) -> Union[ErrorResponse, SuccessResponse] | None:
+) -> ErrorResponse | SuccessResponse | None:
     """Close a process's stdin
 
      Send EOF to the process by closing its stdin pipe. Idempotent. For stdio protocols such as MCP this
@@ -107,7 +113,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return sync_detailed(
@@ -120,7 +126,7 @@ async def asyncio_detailed(
     identifier: str,
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+) -> Response[ErrorResponse | SuccessResponse]:
     """Close a process's stdin
 
      Send EOF to the process by closing its stdin pipe. Idempotent. For stdio protocols such as MCP this
@@ -134,7 +140,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -150,7 +156,7 @@ async def asyncio(
     identifier: str,
     *,
     client: Client,
-) -> Union[ErrorResponse, SuccessResponse] | None:
+) -> ErrorResponse | SuccessResponse | None:
     """Close a process's stdin
 
      Send EOF to the process by closing its stdin pipe. Idempotent. For stdio protocols such as MCP this
@@ -164,7 +170,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return (

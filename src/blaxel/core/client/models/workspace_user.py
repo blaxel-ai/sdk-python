@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,30 +17,30 @@ class WorkspaceUser:
     """Workspace user
 
     Attributes:
-        accepted (Union[Unset, bool]): Whether the user has accepted the workspace invitation
-        email (Union[Unset, str]): Workspace user email
-        email_verified (Union[Unset, bool]): Whether the user's email has been verified
-        expired (Union[Unset, bool]): Whether the invitation has expired
-        family_name (Union[Unset, str]): Workspace user family name
-        given_name (Union[Unset, str]): Workspace user given name
-        mfa_enabled (Union[Unset, bool]): Whether the user has at least one verified MFA factor. Omitted when the caller
-            is not entitled to see it (only workspace admins and owners see other members' MFA status) and for pending
+        accepted (bool | Unset): Whether the user has accepted the workspace invitation
+        email (str | Unset): Workspace user email
+        email_verified (bool | Unset): Whether the user's email has been verified
+        expired (bool | Unset): Whether the invitation has expired
+        family_name (str | Unset): Workspace user family name
+        given_name (str | Unset): Workspace user given name
+        mfa_enabled (bool | Unset): Whether the user has at least one verified MFA factor. Omitted when the caller is
+            not entitled to see it (only workspace admins and owners see other members' MFA status) and for pending
             invitations, which have no account yet.
-        role (Union[Unset, str]): Workspace user role
-        source (Union[Unset, WorkspaceUserSource]): Source of the user provisioning
-        sub (Union[Unset, str]): Workspace user identifier
+        role (str | Unset): Workspace user role
+        source (WorkspaceUserSource | Unset): Source of the user provisioning
+        sub (str | Unset): Workspace user identifier
     """
 
-    accepted: Union[Unset, bool] = UNSET
-    email: Union[Unset, str] = UNSET
-    email_verified: Union[Unset, bool] = UNSET
-    expired: Union[Unset, bool] = UNSET
-    family_name: Union[Unset, str] = UNSET
-    given_name: Union[Unset, str] = UNSET
-    mfa_enabled: Union[Unset, bool] = UNSET
-    role: Union[Unset, str] = UNSET
-    source: Union[Unset, WorkspaceUserSource] = UNSET
-    sub: Union[Unset, str] = UNSET
+    accepted: bool | Unset = UNSET
+    email: str | Unset = UNSET
+    email_verified: bool | Unset = UNSET
+    expired: bool | Unset = UNSET
+    family_name: str | Unset = UNSET
+    given_name: str | Unset = UNSET
+    mfa_enabled: bool | Unset = UNSET
+    role: str | Unset = UNSET
+    source: WorkspaceUserSource | Unset = UNSET
+    sub: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -57,7 +60,7 @@ class WorkspaceUser:
 
         role = self.role
 
-        source: Union[Unset, str] = UNSET
+        source: str | Unset = UNSET
         if not isinstance(self.source, Unset):
             source = self.source.value
 
@@ -90,10 +93,10 @@ class WorkspaceUser:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         accepted = d.pop("accepted", UNSET)
 
         email = d.pop("email", UNSET)
@@ -111,7 +114,7 @@ class WorkspaceUser:
         role = d.pop("role", UNSET)
 
         _source = d.pop("source", UNSET)
-        source: Union[Unset, WorkspaceUserSource]
+        source: WorkspaceUserSource | Unset
         if isinstance(_source, Unset) or _source == "":
             source = UNSET
         else:

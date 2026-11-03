@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -19,36 +20,38 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "put",
-        "url": f"/users/{sub_or_email}",
+        "url": "/users/{sub_or_email}".format(
+            sub_or_email=quote(str(sub_or_email), safe=""),
+        ),
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Any, WorkspaceUser] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | WorkspaceUser | None:
     if response.status_code == 200:
         response_200 = WorkspaceUser.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -57,9 +60,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Any, WorkspaceUser]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | WorkspaceUser]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -73,7 +74,7 @@ def sync_detailed(
     *,
     client: Client,
     body: UpdateWorkspaceUserRoleBody,
-) -> Response[Union[Any, WorkspaceUser]]:
+) -> Response[Any | WorkspaceUser]:
     """Update user role in workspace
 
      Updates the role of a user in the workspace.
@@ -87,7 +88,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WorkspaceUser]]
+        Response[Any | WorkspaceUser]
     """
 
     kwargs = _get_kwargs(
@@ -107,7 +108,7 @@ def sync(
     *,
     client: Client,
     body: UpdateWorkspaceUserRoleBody,
-) -> Union[Any, WorkspaceUser] | None:
+) -> Any | WorkspaceUser | None:
     """Update user role in workspace
 
      Updates the role of a user in the workspace.
@@ -121,7 +122,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WorkspaceUser]
+        Any | WorkspaceUser
     """
 
     return sync_detailed(
@@ -136,7 +137,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: UpdateWorkspaceUserRoleBody,
-) -> Response[Union[Any, WorkspaceUser]]:
+) -> Response[Any | WorkspaceUser]:
     """Update user role in workspace
 
      Updates the role of a user in the workspace.
@@ -150,7 +151,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WorkspaceUser]]
+        Response[Any | WorkspaceUser]
     """
 
     kwargs = _get_kwargs(
@@ -168,7 +169,7 @@ async def asyncio(
     *,
     client: Client,
     body: UpdateWorkspaceUserRoleBody,
-) -> Union[Any, WorkspaceUser] | None:
+) -> Any | WorkspaceUser | None:
     """Update user role in workspace
 
      Updates the role of a user in the workspace.
@@ -182,7 +183,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WorkspaceUser]
+        Any | WorkspaceUser
     """
 
     return (

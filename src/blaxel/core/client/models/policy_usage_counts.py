@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,18 +17,18 @@ class PolicyUsageCounts:
     client-side fan-out across the agents/models/functions/sandboxes/jobs listings.
 
         Attributes:
-            agents (Union[Unset, int]):
-            functions (Union[Unset, int]):
-            jobs (Union[Unset, int]):
-            models (Union[Unset, int]):
-            sandboxes (Union[Unset, int]):
+            agents (int | Unset):
+            functions (int | Unset):
+            jobs (int | Unset):
+            models (int | Unset):
+            sandboxes (int | Unset):
     """
 
-    agents: Union[Unset, int] = UNSET
-    functions: Union[Unset, int] = UNSET
-    jobs: Union[Unset, int] = UNSET
-    models: Union[Unset, int] = UNSET
-    sandboxes: Union[Unset, int] = UNSET
+    agents: int | Unset = UNSET
+    functions: int | Unset = UNSET
+    jobs: int | Unset = UNSET
+    models: int | Unset = UNSET
+    sandboxes: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,10 +59,10 @@ class PolicyUsageCounts:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         agents = d.pop("agents", UNSET)
 
         functions = d.pop("functions", UNSET)

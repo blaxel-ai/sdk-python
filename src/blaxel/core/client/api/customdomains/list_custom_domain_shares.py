@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -14,7 +15,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/customdomains/{domain_name}/share",
+        "url": "/customdomains/{domain_name}/share".format(
+            domain_name=quote(str(domain_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -22,7 +25,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, list["CustomDomainShareTarget"]] | None:
+) -> Any | list[CustomDomainShareTarget] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -32,10 +35,12 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -46,7 +51,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, list["CustomDomainShareTarget"]]]:
+) -> Response[Any | list[CustomDomainShareTarget]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -59,7 +64,7 @@ def sync_detailed(
     domain_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, list["CustomDomainShareTarget"]]]:
+) -> Response[Any | list[CustomDomainShareTarget]]:
     """List custom domain shares
 
      Returns the list of workspaces (and/or the account) that a custom domain is currently shared with.
@@ -72,7 +77,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, list['CustomDomainShareTarget']]]
+        Response[Any | list[CustomDomainShareTarget]]
     """
 
     kwargs = _get_kwargs(
@@ -90,7 +95,7 @@ def sync(
     domain_name: str,
     *,
     client: Client,
-) -> Union[Any, list["CustomDomainShareTarget"]] | None:
+) -> Any | list[CustomDomainShareTarget] | None:
     """List custom domain shares
 
      Returns the list of workspaces (and/or the account) that a custom domain is currently shared with.
@@ -103,7 +108,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, list['CustomDomainShareTarget']]
+        Any | list[CustomDomainShareTarget]
     """
 
     return sync_detailed(
@@ -116,7 +121,7 @@ async def asyncio_detailed(
     domain_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, list["CustomDomainShareTarget"]]]:
+) -> Response[Any | list[CustomDomainShareTarget]]:
     """List custom domain shares
 
      Returns the list of workspaces (and/or the account) that a custom domain is currently shared with.
@@ -129,7 +134,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, list['CustomDomainShareTarget']]]
+        Response[Any | list[CustomDomainShareTarget]]
     """
 
     kwargs = _get_kwargs(
@@ -145,7 +150,7 @@ async def asyncio(
     domain_name: str,
     *,
     client: Client,
-) -> Union[Any, list["CustomDomainShareTarget"]] | None:
+) -> Any | list[CustomDomainShareTarget] | None:
     """List custom domain shares
 
      Returns the list of workspaces (and/or the account) that a custom domain is currently shared with.
@@ -158,7 +163,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, list['CustomDomainShareTarget']]
+        Any | list[CustomDomainShareTarget]
     """
 
     return (

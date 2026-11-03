@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,16 +18,16 @@ class SandboxForkResponse:
     type.
 
         Attributes:
-            name (Union[Unset, str]): Name of the created or updated resource
-            snapshot_id (Union[Unset, str]): The snapshot ID the fork was created from. Set only when the fork went through
-                a snapshot, meaning an explicit snapshotId was supplied or the fork target is an application. Empty when the
-                fork copied the source sandbox's live state directly.
-            type_ (Union[Unset, SandboxForkResponseType]): Type of resource that was created (sandbox or application)
+            name (str | Unset): Name of the created or updated resource
+            snapshot_id (str | Unset): The snapshot ID the fork was created from. Set only when the fork went through a
+                snapshot, meaning an explicit snapshotId was supplied or the fork target is an application. Empty when the fork
+                copied the source sandbox's live state directly.
+            type_ (SandboxForkResponseType | Unset): Type of resource that was created (sandbox or application)
     """
 
-    name: Union[Unset, str] = UNSET
-    snapshot_id: Union[Unset, str] = UNSET
-    type_: Union[Unset, SandboxForkResponseType] = UNSET
+    name: str | Unset = UNSET
+    snapshot_id: str | Unset = UNSET
+    type_: SandboxForkResponseType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -32,7 +35,7 @@ class SandboxForkResponse:
 
         snapshot_id = self.snapshot_id
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -49,16 +52,16 @@ class SandboxForkResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name", UNSET)
 
         snapshot_id = d.pop("snapshotId", d.pop("snapshot_id", UNSET))
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, SandboxForkResponseType]
+        type_: SandboxForkResponseType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

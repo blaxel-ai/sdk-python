@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,18 +25,17 @@ class Policy:
         metadata (Metadata): Common metadata fields shared by all Blaxel resources including name, labels, timestamps,
             and ownership information
         spec (PolicySpec): Policy specification
-        usage (Union[Unset, PolicyUsageCounts]): Per-resource counts of how many resources reference a policy. Computed
-            by the policies listing endpoint to avoid client-side fan-out across the agents/models/functions/sandboxes/jobs
+        usage (PolicyUsageCounts | Unset): Per-resource counts of how many resources reference a policy. Computed by the
+            policies listing endpoint to avoid client-side fan-out across the agents/models/functions/sandboxes/jobs
             listings.
     """
 
-    metadata: "Metadata"
-    spec: "PolicySpec"
-    usage: Union[Unset, "PolicyUsageCounts"] = UNSET
+    metadata: Metadata
+    spec: PolicySpec
+    usage: PolicyUsageCounts | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -44,7 +46,7 @@ class Policy:
         else:
             spec = self.spec.to_dict()
 
-        usage: Union[Unset, dict[str, Any]] = UNSET
+        usage: dict[str, Any] | Unset = UNSET
         if self.usage and not isinstance(self.usage, Unset) and not isinstance(self.usage, dict):
             usage = self.usage.to_dict()
         elif self.usage and isinstance(self.usage, dict):
@@ -64,20 +66,20 @@ class Policy:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.metadata import Metadata
-        from ..models.policy_spec import PolicySpec
-        from ..models.policy_usage_counts import PolicyUsageCounts
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.metadata import Metadata  # noqa: PLC0415
+        from ..models.policy_spec import PolicySpec  # noqa: PLC0415
+        from ..models.policy_usage_counts import PolicyUsageCounts  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = PolicySpec.from_dict(d.pop("spec"))
 
         _usage = d.pop("usage", UNSET)
-        usage: Union[Unset, PolicyUsageCounts]
+        usage: PolicyUsageCounts | Unset
         if isinstance(_usage, Unset):
             usage = UNSET
         else:

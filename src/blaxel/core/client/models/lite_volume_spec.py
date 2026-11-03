@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,12 +16,12 @@ class LiteVolumeSpec:
     """Compact spec for a Volume, returned in listing responses.
 
     Attributes:
-        region (Union[Unset, str]): Region the volume is provisioned in.
-        size (Union[Unset, int]): Volume size in gigabytes.
+        region (str | Unset): Region the volume is provisioned in.
+        size (int | Unset): Volume size in gigabytes.
     """
 
-    region: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
+    region: str | Unset = UNSET
+    size: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,10 +40,10 @@ class LiteVolumeSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         region = d.pop("region", UNSET)
 
         size = d.pop("size", UNSET)

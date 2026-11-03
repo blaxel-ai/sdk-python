@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -13,11 +14,11 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     job_id: str,
     *,
-    limit: Union[Unset, int] = 20,
-    offset: Union[Unset, int] = 0,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    limit: int | Unset = 20,
+    offset: int | Unset = 0,
+    cursor: str | Unset = UNSET,
+    sort: ListJobExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -27,7 +28,7 @@ def _get_kwargs(
 
     params["cursor"] = cursor
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -39,28 +40,31 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/jobs/{job_id}/executions",
+        "url": "/jobs/{job_id}/executions".format(
+            job_id=quote(str(job_id), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Any, JobExecutionList] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | JobExecutionList | None:
     if response.status_code == 200:
         response_200 = JobExecutionList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 500:
         response_500 = cast(Any, None)
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -71,7 +75,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, JobExecutionList]]:
+) -> Response[Any | JobExecutionList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -84,12 +88,12 @@ def sync_detailed(
     job_id: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    offset: Union[Unset, int] = 0,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionList]]:
+    limit: int | Unset = 20,
+    offset: int | Unset = 0,
+    cursor: str | Unset = UNSET,
+    sort: ListJobExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Response[Any | JobExecutionList]:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -98,18 +102,18 @@ def sync_detailed(
 
     Args:
         job_id (str):
-        limit (Union[Unset, int]):  Default: 20.
-        offset (Union[Unset, int]):  Default: 0.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListJobExecutionsSort]):
-        q (Union[Unset, str]):
+        limit (int | Unset):  Default: 20.
+        offset (int | Unset):  Default: 0.
+        cursor (str | Unset):
+        sort (ListJobExecutionsSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionList]]
+        Response[Any | JobExecutionList]
     """
 
     kwargs = _get_kwargs(
@@ -132,12 +136,12 @@ def sync(
     job_id: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    offset: Union[Unset, int] = 0,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionList] | None:
+    limit: int | Unset = 20,
+    offset: int | Unset = 0,
+    cursor: str | Unset = UNSET,
+    sort: ListJobExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Any | JobExecutionList | None:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -146,18 +150,18 @@ def sync(
 
     Args:
         job_id (str):
-        limit (Union[Unset, int]):  Default: 20.
-        offset (Union[Unset, int]):  Default: 0.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListJobExecutionsSort]):
-        q (Union[Unset, str]):
+        limit (int | Unset):  Default: 20.
+        offset (int | Unset):  Default: 0.
+        cursor (str | Unset):
+        sort (ListJobExecutionsSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionList]
+        Any | JobExecutionList
     """
 
     return sync_detailed(
@@ -175,12 +179,12 @@ async def asyncio_detailed(
     job_id: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    offset: Union[Unset, int] = 0,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionList]]:
+    limit: int | Unset = 20,
+    offset: int | Unset = 0,
+    cursor: str | Unset = UNSET,
+    sort: ListJobExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Response[Any | JobExecutionList]:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -189,18 +193,18 @@ async def asyncio_detailed(
 
     Args:
         job_id (str):
-        limit (Union[Unset, int]):  Default: 20.
-        offset (Union[Unset, int]):  Default: 0.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListJobExecutionsSort]):
-        q (Union[Unset, str]):
+        limit (int | Unset):  Default: 20.
+        offset (int | Unset):  Default: 0.
+        cursor (str | Unset):
+        sort (ListJobExecutionsSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionList]]
+        Response[Any | JobExecutionList]
     """
 
     kwargs = _get_kwargs(
@@ -221,12 +225,12 @@ async def asyncio(
     job_id: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    offset: Union[Unset, int] = 0,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListJobExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionList] | None:
+    limit: int | Unset = 20,
+    offset: int | Unset = 0,
+    cursor: str | Unset = UNSET,
+    sort: ListJobExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Any | JobExecutionList | None:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -235,18 +239,18 @@ async def asyncio(
 
     Args:
         job_id (str):
-        limit (Union[Unset, int]):  Default: 20.
-        offset (Union[Unset, int]):  Default: 0.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListJobExecutionsSort]):
-        q (Union[Unset, str]):
+        limit (int | Unset):  Default: 20.
+        offset (int | Unset):  Default: 0.
+        cursor (str | Unset):
+        sort (ListJobExecutionsSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionList]
+        Any | JobExecutionList
     """
 
     return (

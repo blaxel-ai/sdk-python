@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,37 +16,37 @@ class PendingImageShareRender:
     """Rendered pending image share with source/target workspace metadata
 
     Attributes:
-        created_at (Union[Unset, str]): Creation date
-        expires_at (Union[Unset, str]): Expiration date
-        has_conflict (Union[Unset, bool]): Whether the target workspace already has an image with the same name
-            (potential conflict)
-        id (Union[Unset, str]): Unique identifier for the pending image share
-        image_name (Union[Unset, str]): Image name (repository)
-        resource_type (Union[Unset, str]): Resource type (agent, function, sandbox, job)
-        shared_by (Union[Unset, str]): User sub who initiated the share
-        shared_by_email (Union[Unset, str]): Email of the user who initiated the share
-        source_account_id (Union[Unset, str]): Source account ID
-        source_workspace (Union[Unset, str]): Source workspace name
-        source_workspace_display_name (Union[Unset, str]): Source workspace display name
-        target_account_id (Union[Unset, str]): Target account ID
-        target_workspace (Union[Unset, str]): Target workspace name
-        target_workspace_display_name (Union[Unset, str]): Target workspace display name
+        created_at (str | Unset): Creation date
+        expires_at (str | Unset): Expiration date
+        has_conflict (bool | Unset): Whether the target workspace already has an image with the same name (potential
+            conflict)
+        id (str | Unset): Unique identifier for the pending image share
+        image_name (str | Unset): Image name (repository)
+        resource_type (str | Unset): Resource type (agent, function, sandbox, job)
+        shared_by (str | Unset): User sub who initiated the share
+        shared_by_email (str | Unset): Email of the user who initiated the share
+        source_account_id (str | Unset): Source account ID
+        source_workspace (str | Unset): Source workspace name
+        source_workspace_display_name (str | Unset): Source workspace display name
+        target_account_id (str | Unset): Target account ID
+        target_workspace (str | Unset): Target workspace name
+        target_workspace_display_name (str | Unset): Target workspace display name
     """
 
-    created_at: Union[Unset, str] = UNSET
-    expires_at: Union[Unset, str] = UNSET
-    has_conflict: Union[Unset, bool] = UNSET
-    id: Union[Unset, str] = UNSET
-    image_name: Union[Unset, str] = UNSET
-    resource_type: Union[Unset, str] = UNSET
-    shared_by: Union[Unset, str] = UNSET
-    shared_by_email: Union[Unset, str] = UNSET
-    source_account_id: Union[Unset, str] = UNSET
-    source_workspace: Union[Unset, str] = UNSET
-    source_workspace_display_name: Union[Unset, str] = UNSET
-    target_account_id: Union[Unset, str] = UNSET
-    target_workspace: Union[Unset, str] = UNSET
-    target_workspace_display_name: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    expires_at: str | Unset = UNSET
+    has_conflict: bool | Unset = UNSET
+    id: str | Unset = UNSET
+    image_name: str | Unset = UNSET
+    resource_type: str | Unset = UNSET
+    shared_by: str | Unset = UNSET
+    shared_by_email: str | Unset = UNSET
+    source_account_id: str | Unset = UNSET
+    source_workspace: str | Unset = UNSET
+    source_workspace_display_name: str | Unset = UNSET
+    target_account_id: str | Unset = UNSET
+    target_workspace: str | Unset = UNSET
+    target_workspace_display_name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -110,10 +113,10 @@ class PendingImageShareRender:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         expires_at = d.pop("expiresAt", d.pop("expires_at", UNSET))

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,37 +22,36 @@ class Metadata:
     Attributes:
         name (str): Unique identifier for the resource within the workspace. Must be lowercase alphanumeric with
             hyphens, max 49 characters. Immutable after creation. Example: my-resource.
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Human-readable name for display in the UI. Can contain spaces and special
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        display_name (str | Unset): Human-readable name for display in the UI. Can contain spaces and special
             characters, max 63 characters. Example: My Resource.
-        external_id (Union[Unset, str]): Caller-owned identifier for external lookups. Max 64 chars, alphanumeric +
-            dash. Example: my-session-123.
-        labels (Union[Unset, MetadataLabels]): Key-value pairs for organizing and filtering resources. Labels can be
-            used to categorize resources by environment, project, team, or any custom taxonomy.
-        plan (Union[Unset, str]): Billing plan tier applied to this resource (inherited from workspace account)
-        url (Union[Unset, str]): Auto-generated endpoint URL for accessing this resource (for agents, functions, models,
+        external_id (str | Unset): Caller-owned identifier for external lookups. Max 64 chars, alphanumeric + dash.
+            Example: my-session-123.
+        labels (MetadataLabels | Unset): Key-value pairs for organizing and filtering resources. Labels can be used to
+            categorize resources by environment, project, team, or any custom taxonomy.
+        plan (str | Unset): Billing plan tier applied to this resource (inherited from workspace account)
+        url (str | Unset): Auto-generated endpoint URL for accessing this resource (for agents, functions, models,
             sandboxes)
-        workspace (Union[Unset, str]): Name of the workspace this resource belongs to (read-only, set automatically)
+        workspace (str | Unset): Name of the workspace this resource belongs to (read-only, set automatically)
     """
 
     name: str
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    external_id: Union[Unset, str] = UNSET
-    labels: Union[Unset, "MetadataLabels"] = UNSET
-    plan: Union[Unset, str] = UNSET
-    url: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    external_id: str | Unset = UNSET
+    labels: MetadataLabels | Unset = UNSET
+    plan: str | Unset = UNSET
+    url: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         name = self.name
 
         created_at = self.created_at
@@ -64,7 +66,7 @@ class Metadata:
 
         external_id = self.external_id
 
-        labels: Union[Unset, dict[str, Any]] = UNSET
+        labels: dict[str, Any] | Unset = UNSET
         if self.labels and not isinstance(self.labels, Unset) and not isinstance(self.labels, dict):
             labels = self.labels.to_dict()
         elif self.labels and isinstance(self.labels, dict):
@@ -107,12 +109,12 @@ class Metadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.metadata_labels import MetadataLabels
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.metadata_labels import MetadataLabels  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
@@ -128,7 +130,7 @@ class Metadata:
         external_id = d.pop("externalId", d.pop("external_id", UNSET))
 
         _labels = d.pop("labels", UNSET)
-        labels: Union[Unset, MetadataLabels]
+        labels: MetadataLabels | Unset
         if isinstance(_labels, Unset):
             labels = UNSET
         else:

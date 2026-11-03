@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,35 +21,34 @@ class PreviewSpec:
     """Preview of a Resource
 
     Attributes:
-        custom_domain (Union[Unset, str]): Custom domain bound to this preview
-        expires (Union[Unset, str]): The expiration date for the preview in ISO 8601 format - 2024-12-31T23:59:59Z
-        port (Union[Unset, int]): Port of the preview
-        prefix_url (Union[Unset, str]): Prefix URL
-        public (Union[Unset, bool]): Whether the preview is public
-        region (Union[Unset, str]): Region where the preview is deployed, this is readonly
-        request_headers (Union[Unset, PreviewSpecRequestHeaders]): Those headers will be set in all requests to your
-            preview. This is especially useful to set the Authorization header.
-        response_headers (Union[Unset, PreviewSpecResponseHeaders]): Those headers will be set in all responses of your
+        custom_domain (str | Unset): Custom domain bound to this preview
+        expires (str | Unset): The expiration date for the preview in ISO 8601 format - 2024-12-31T23:59:59Z
+        port (int | Unset): Port of the preview
+        prefix_url (str | Unset): Prefix URL
+        public (bool | Unset): Whether the preview is public
+        region (str | Unset): Region where the preview is deployed, this is readonly
+        request_headers (PreviewSpecRequestHeaders | Unset): Those headers will be set in all requests to your preview.
+            This is especially useful to set the Authorization header.
+        response_headers (PreviewSpecResponseHeaders | Unset): Those headers will be set in all responses of your
             preview. This is especially useful to set the CORS headers.
-        ttl (Union[Unset, str]): Time to live for the preview (e.g., "1h", "24h", "7d"). After this duration, the
-            preview will be automatically deleted.
-        url (Union[Unset, str]): URL of the preview
+        ttl (str | Unset): Time to live for the preview (e.g., "1h", "24h", "7d"). After this duration, the preview will
+            be automatically deleted.
+        url (str | Unset): URL of the preview
     """
 
-    custom_domain: Union[Unset, str] = UNSET
-    expires: Union[Unset, str] = UNSET
-    port: Union[Unset, int] = UNSET
-    prefix_url: Union[Unset, str] = UNSET
-    public: Union[Unset, bool] = UNSET
-    region: Union[Unset, str] = UNSET
-    request_headers: Union[Unset, "PreviewSpecRequestHeaders"] = UNSET
-    response_headers: Union[Unset, "PreviewSpecResponseHeaders"] = UNSET
-    ttl: Union[Unset, str] = UNSET
-    url: Union[Unset, str] = UNSET
+    custom_domain: str | Unset = UNSET
+    expires: str | Unset = UNSET
+    port: int | Unset = UNSET
+    prefix_url: str | Unset = UNSET
+    public: bool | Unset = UNSET
+    region: str | Unset = UNSET
+    request_headers: PreviewSpecRequestHeaders | Unset = UNSET
+    response_headers: PreviewSpecResponseHeaders | Unset = UNSET
+    ttl: str | Unset = UNSET
+    url: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         custom_domain = self.custom_domain
 
         expires = self.expires
@@ -59,7 +61,7 @@ class PreviewSpec:
 
         region = self.region
 
-        request_headers: Union[Unset, dict[str, Any]] = UNSET
+        request_headers: dict[str, Any] | Unset = UNSET
         if (
             self.request_headers
             and not isinstance(self.request_headers, Unset)
@@ -69,7 +71,7 @@ class PreviewSpec:
         elif self.request_headers and isinstance(self.request_headers, dict):
             request_headers = self.request_headers
 
-        response_headers: Union[Unset, dict[str, Any]] = UNSET
+        response_headers: dict[str, Any] | Unset = UNSET
         if (
             self.response_headers
             and not isinstance(self.response_headers, Unset)
@@ -110,13 +112,15 @@ class PreviewSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.preview_spec_request_headers import PreviewSpecRequestHeaders
-        from ..models.preview_spec_response_headers import PreviewSpecResponseHeaders
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.preview_spec_request_headers import PreviewSpecRequestHeaders  # noqa: PLC0415
+        from ..models.preview_spec_response_headers import (
+            PreviewSpecResponseHeaders,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         custom_domain = d.pop("customDomain", d.pop("custom_domain", UNSET))
 
         expires = d.pop("expires", UNSET)
@@ -130,14 +134,14 @@ class PreviewSpec:
         region = d.pop("region", UNSET)
 
         _request_headers = d.pop("requestHeaders", d.pop("request_headers", UNSET))
-        request_headers: Union[Unset, PreviewSpecRequestHeaders]
+        request_headers: PreviewSpecRequestHeaders | Unset
         if isinstance(_request_headers, Unset):
             request_headers = UNSET
         else:
             request_headers = PreviewSpecRequestHeaders.from_dict(_request_headers)
 
         _response_headers = d.pop("responseHeaders", d.pop("response_headers", UNSET))
-        response_headers: Union[Unset, PreviewSpecResponseHeaders]
+        response_headers: PreviewSpecResponseHeaders | Unset
         if isinstance(_response_headers, Unset):
             response_headers = UNSET
         else:

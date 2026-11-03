@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,29 +21,27 @@ class JobExecutionSpec:
     """Job execution specification
 
     Attributes:
-        env_override (Union[Unset, JobExecutionSpecEnvOverride]): Environment variable overrides (if provided for this
+        env_override (JobExecutionSpecEnvOverride | Unset): Environment variable overrides (if provided for this
             execution, values are masked with ***) Example: {"MY_VAR": "***", "BATCH_SIZE": "***"}.
-        memory_override (Union[Unset, int]): Memory override in megabytes (if provided for this execution) Example:
-            2048.
-        parallelism (Union[Unset, int]): Number of parallel tasks Example: 5.
-        task_count (Union[Unset, int]): Number of tasks of this execution Example: 12.
-        tasks (Union[Unset, list['JobExecutionTask']]): List of execution tasks
-        tasks_ref (Union[Unset, str]): Where this execution's task list is stored (server-managed)
-        timeout (Union[Unset, int]): Job timeout in seconds (captured at execution creation time) Example: 3600.
+        memory_override (int | Unset): Memory override in megabytes (if provided for this execution) Example: 2048.
+        parallelism (int | Unset): Number of parallel tasks Example: 5.
+        task_count (int | Unset): Number of tasks of this execution Example: 12.
+        tasks (list[JobExecutionTask] | Unset): List of execution tasks
+        tasks_ref (str | Unset): Where this execution's task list is stored (server-managed)
+        timeout (int | Unset): Job timeout in seconds (captured at execution creation time) Example: 3600.
     """
 
-    env_override: Union[Unset, "JobExecutionSpecEnvOverride"] = UNSET
-    memory_override: Union[Unset, int] = UNSET
-    parallelism: Union[Unset, int] = UNSET
-    task_count: Union[Unset, int] = UNSET
-    tasks: Union[Unset, list["JobExecutionTask"]] = UNSET
-    tasks_ref: Union[Unset, str] = UNSET
-    timeout: Union[Unset, int] = UNSET
+    env_override: JobExecutionSpecEnvOverride | Unset = UNSET
+    memory_override: int | Unset = UNSET
+    parallelism: int | Unset = UNSET
+    task_count: int | Unset = UNSET
+    tasks: list[JobExecutionTask] | Unset = UNSET
+    tasks_ref: str | Unset = UNSET
+    timeout: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        env_override: Union[Unset, dict[str, Any]] = UNSET
+        env_override: dict[str, Any] | Unset = UNSET
         if (
             self.env_override
             and not isinstance(self.env_override, Unset)
@@ -56,7 +57,7 @@ class JobExecutionSpec:
 
         task_count = self.task_count
 
-        tasks: Union[Unset, list[dict[str, Any]]] = UNSET
+        tasks: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.tasks, Unset):
             tasks = []
             for tasks_item_data in self.tasks:
@@ -91,15 +92,17 @@ class JobExecutionSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.job_execution_spec_env_override import JobExecutionSpecEnvOverride
-        from ..models.job_execution_task import JobExecutionTask
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.job_execution_spec_env_override import (
+            JobExecutionSpecEnvOverride,  # noqa: PLC0415
+        )
+        from ..models.job_execution_task import JobExecutionTask  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _env_override = d.pop("envOverride", d.pop("env_override", UNSET))
-        env_override: Union[Unset, JobExecutionSpecEnvOverride]
+        env_override: JobExecutionSpecEnvOverride | Unset
         if isinstance(_env_override, Unset):
             env_override = UNSET
         else:

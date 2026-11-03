@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,23 +21,21 @@ class ExportResult:
     """
     Attributes:
         manifest (ArchiveManifest):
-        changes (Union[Unset, list['ArchiveChange']]): Changes lists every path in the archive. Only filled for a dry
-            run,
+        changes (list[ArchiveChange] | Unset): Changes lists every path in the archive. Only filled for a dry run,
             where it is the point of the call.
-        duration (Union[Unset, str]):  Example: 4.2s.
-        size (Union[Unset, int]): Size is the exact number of bytes uploaded, known before the upload
+        duration (str | Unset):  Example: 4.2s.
+        size (int | Unset): Size is the exact number of bytes uploaded, known before the upload
             starts since the archive is not compressed. Example: 3074211.
-        stopped_processes (Union[Unset, list[str]]): StoppedProcesses are the processes stopped to freeze the
-            filesystem.
-        uploaded (Union[Unset, bool]): Uploaded is false for a dry run. Example: True.
+        stopped_processes (list[str] | Unset): StoppedProcesses are the processes stopped to freeze the filesystem.
+        uploaded (bool | Unset): Uploaded is false for a dry run. Example: True.
     """
 
-    manifest: "ArchiveManifest"
-    changes: Union[Unset, list["ArchiveChange"]] = UNSET
-    duration: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
-    stopped_processes: Union[Unset, list[str]] = UNSET
-    uploaded: Union[Unset, bool] = UNSET
+    manifest: ArchiveManifest
+    changes: list[ArchiveChange] | Unset = UNSET
+    duration: str | Unset = UNSET
+    size: int | Unset = UNSET
+    stopped_processes: list[str] | Unset = UNSET
+    uploaded: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,7 +44,7 @@ class ExportResult:
         else:
             manifest = self.manifest.to_dict()
 
-        changes: Union[Unset, list[dict[str, Any]]] = UNSET
+        changes: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.changes, Unset):
             changes = []
             for changes_item_data in self.changes:
@@ -57,7 +58,7 @@ class ExportResult:
 
         size = self.size
 
-        stopped_processes: Union[Unset, list[str]] = UNSET
+        stopped_processes: list[str] | Unset = UNSET
         if not isinstance(self.stopped_processes, Unset):
             stopped_processes = self.stopped_processes
 
@@ -84,13 +85,13 @@ class ExportResult:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.archive_change import ArchiveChange
-        from ..models.archive_manifest import ArchiveManifest
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.archive_change import ArchiveChange  # noqa: PLC0415
+        from ..models.archive_manifest import ArchiveManifest  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         manifest = ArchiveManifest.from_dict(d.pop("manifest"))
 
         changes = []

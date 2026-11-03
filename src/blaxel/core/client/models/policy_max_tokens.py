@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,20 +16,20 @@ class PolicyMaxTokens:
     """PolicyMaxTokens is a local type that wraps a slice of PolicyMaxTokens
 
     Attributes:
-        granularity (Union[Unset, str]): Granularity Example: minute.
-        input_ (Union[Unset, int]): Input Example: 10000.
-        output (Union[Unset, int]): Output Example: 5000.
-        ratio_input_over_output (Union[Unset, int]): RatioInputOverOutput Example: 2.
-        step (Union[Unset, int]): Step Example: 1.
-        total (Union[Unset, int]): Total Example: 15000.
+        granularity (str | Unset): Granularity Example: minute.
+        input_ (int | Unset): Input Example: 10000.
+        output (int | Unset): Output Example: 5000.
+        ratio_input_over_output (int | Unset): RatioInputOverOutput Example: 2.
+        step (int | Unset): Step Example: 1.
+        total (int | Unset): Total Example: 15000.
     """
 
-    granularity: Union[Unset, str] = UNSET
-    input_: Union[Unset, int] = UNSET
-    output: Union[Unset, int] = UNSET
-    ratio_input_over_output: Union[Unset, int] = UNSET
-    step: Union[Unset, int] = UNSET
-    total: Union[Unset, int] = UNSET
+    granularity: str | Unset = UNSET
+    input_: int | Unset = UNSET
+    output: int | Unset = UNSET
+    ratio_input_over_output: int | Unset = UNSET
+    step: int | Unset = UNSET
+    total: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class PolicyMaxTokens:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         granularity = d.pop("granularity", UNSET)
 
         input_ = d.pop("input", d.pop("input_", UNSET))

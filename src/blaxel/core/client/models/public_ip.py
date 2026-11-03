@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,24 +15,24 @@ T = TypeVar("T", bound="PublicIp")
 class PublicIp:
     """
     Attributes:
-        description (Union[Unset, str]): Description of the region/location
-        ipv_4_cidrs (Union[Unset, list[str]]): List of public ipv4 addresses
-        ipv_6_cidrs (Union[Unset, list[str]]): List of public ipv6 addresses
+        description (str | Unset): Description of the region/location
+        ipv_4_cidrs (list[str] | Unset): List of public ipv4 addresses
+        ipv_6_cidrs (list[str] | Unset): List of public ipv6 addresses
     """
 
-    description: Union[Unset, str] = UNSET
-    ipv_4_cidrs: Union[Unset, list[str]] = UNSET
-    ipv_6_cidrs: Union[Unset, list[str]] = UNSET
+    description: str | Unset = UNSET
+    ipv_4_cidrs: list[str] | Unset = UNSET
+    ipv_6_cidrs: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         description = self.description
 
-        ipv_4_cidrs: Union[Unset, list[str]] = UNSET
+        ipv_4_cidrs: list[str] | Unset = UNSET
         if not isinstance(self.ipv_4_cidrs, Unset):
             ipv_4_cidrs = self.ipv_4_cidrs
 
-        ipv_6_cidrs: Union[Unset, list[str]] = UNSET
+        ipv_6_cidrs: list[str] | Unset = UNSET
         if not isinstance(self.ipv_6_cidrs, Unset):
             ipv_6_cidrs = self.ipv_6_cidrs
 
@@ -46,10 +49,10 @@ class PublicIp:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         description = d.pop("description", UNSET)
 
         ipv_4_cidrs = cast(list[str], d.pop("ipv4Cidrs", d.pop("ipv_4_cidrs", UNSET)))

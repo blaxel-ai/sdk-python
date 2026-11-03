@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,19 +16,19 @@ class SandboxInfrastructureError:
     """Infrastructure failure the compute plane reported for a sandbox
 
     Attributes:
-        code (Union[Unset, str]): Stable code of the failure pattern Example: VM_NETWORK_FAILURE.
-        fatal (Union[Unset, bool]): Whether the failure was terminal, putting the sandbox in FAILED, as opposed to being
+        code (str | Unset): Stable code of the failure pattern Example: VM_NETWORK_FAILURE.
+        fatal (bool | Unset): Whether the failure was terminal, putting the sandbox in FAILED, as opposed to being
             cleared by a restart
-        instance (Union[Unset, str]): Instance the failure was reported for
-        message (Union[Unset, str]): Reason reported with the failure
-        time (Union[Unset, str]): Time at which the failure was recorded
+        instance (str | Unset): Instance the failure was reported for
+        message (str | Unset): Reason reported with the failure
+        time (str | Unset): Time at which the failure was recorded
     """
 
-    code: Union[Unset, str] = UNSET
-    fatal: Union[Unset, bool] = UNSET
-    instance: Union[Unset, str] = UNSET
-    message: Union[Unset, str] = UNSET
-    time: Union[Unset, str] = UNSET
+    code: str | Unset = UNSET
+    fatal: bool | Unset = UNSET
+    instance: str | Unset = UNSET
+    message: str | Unset = UNSET
+    time: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,10 +59,10 @@ class SandboxInfrastructureError:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         code = d.pop("code", UNSET)
 
         fatal = d.pop("fatal", UNSET)

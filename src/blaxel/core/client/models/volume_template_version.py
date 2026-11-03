@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,24 +17,24 @@ class VolumeTemplateVersion:
     """Volume template version tracking individual versions of template content
 
     Attributes:
-        bucket (Union[Unset, str]): S3 bucket name where this version is stored
-        content_size (Union[Unset, int]): Size of the template content in bytes
-        name (Union[Unset, str]): Name of the template version
-        region (Union[Unset, str]): AWS region where this version is stored
-        status (Union[Unset, VolumeTemplateVersionStatus]): Status of the version (CREATED, READY, FAILED)
-        template_name (Union[Unset, str]): Template name this version belongs to
-        version_id (Union[Unset, str]): S3 version ID for this template version
-        workspace (Union[Unset, str]): Workspace name
+        bucket (str | Unset): S3 bucket name where this version is stored
+        content_size (int | Unset): Size of the template content in bytes
+        name (str | Unset): Name of the template version
+        region (str | Unset): AWS region where this version is stored
+        status (VolumeTemplateVersionStatus | Unset): Status of the version (CREATED, READY, FAILED)
+        template_name (str | Unset): Template name this version belongs to
+        version_id (str | Unset): S3 version ID for this template version
+        workspace (str | Unset): Workspace name
     """
 
-    bucket: Union[Unset, str] = UNSET
-    content_size: Union[Unset, int] = UNSET
-    name: Union[Unset, str] = UNSET
-    region: Union[Unset, str] = UNSET
-    status: Union[Unset, VolumeTemplateVersionStatus] = UNSET
-    template_name: Union[Unset, str] = UNSET
-    version_id: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    bucket: str | Unset = UNSET
+    content_size: int | Unset = UNSET
+    name: str | Unset = UNSET
+    region: str | Unset = UNSET
+    status: VolumeTemplateVersionStatus | Unset = UNSET
+    template_name: str | Unset = UNSET
+    version_id: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,7 +46,7 @@ class VolumeTemplateVersion:
 
         region = self.region
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -76,10 +79,10 @@ class VolumeTemplateVersion:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         bucket = d.pop("bucket", UNSET)
 
         content_size = d.pop("contentSize", d.pop("content_size", UNSET))
@@ -89,7 +92,7 @@ class VolumeTemplateVersion:
         region = d.pop("region", UNSET)
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, VolumeTemplateVersionStatus]
+        status: VolumeTemplateVersionStatus | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

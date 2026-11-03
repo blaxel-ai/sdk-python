@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,7 +15,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/secrets/{secret_name}",
+        "url": "/secrets/{secret_name}".format(
+            secret_name=quote(str(secret_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -25,6 +28,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Secret | Non
         response_200 = Secret.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

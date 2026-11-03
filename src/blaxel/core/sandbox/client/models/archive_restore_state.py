@@ -2,6 +2,11 @@ from enum import Enum
 
 
 class ArchiveRestoreState(str, Enum):
+    RESTORE_DOWNLOADING = "downloading"
+    RESTORE_EXTRACTING = "extracting"
+    RESTORE_FAILED = "failed"
+    RESTORE_RELAUNCHING = "relaunching"
+    RESTORE_SUCCEEDED = "succeeded"
     DOWNLOADING = "downloading"
     EXTRACTING = "extracting"
     FAILED = "failed"

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,12 +15,12 @@ def _get_kwargs(
     resource_type: str,
     image_name: str,
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListImageTagsSort] = ListImageTagsSort.NAMEASC,
-    q: Union[Unset, str] = UNSET,
-    name: Union[Unset, str] = UNSET,
-    source_workspace: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListImageTagsSort | Unset = ListImageTagsSort.NAMEASC,
+    q: str | Unset = UNSET,
+    name: str | Unset = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -27,7 +28,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -43,7 +44,10 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/images/{resource_type}/{image_name}/tags",
+        "url": "/images/{resource_type}/{image_name}/tags".format(
+            resource_type=quote(str(resource_type), safe=""),
+            image_name=quote(str(image_name), safe=""),
+        ),
         "params": params,
     }
 
@@ -55,6 +59,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> ListImageTag
         response_200 = ListImageTagsResponse200.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -79,12 +84,12 @@ def sync_detailed(
     image_name: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListImageTagsSort] = ListImageTagsSort.NAMEASC,
-    q: Union[Unset, str] = UNSET,
-    name: Union[Unset, str] = UNSET,
-    source_workspace: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListImageTagsSort | Unset = ListImageTagsSort.NAMEASC,
+    q: str | Unset = UNSET,
+    name: str | Unset = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> Response[ListImageTagsResponse200]:
     """List image tags
 
@@ -94,12 +99,12 @@ def sync_detailed(
     Args:
         resource_type (str):
         image_name (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListImageTagsSort]):  Default: ListImageTagsSort.NAMEASC.
-        q (Union[Unset, str]):
-        name (Union[Unset, str]):
-        source_workspace (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListImageTagsSort | Unset):  Default: ListImageTagsSort.NAMEASC.
+        q (str | Unset):
+        name (str | Unset):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -132,12 +137,12 @@ def sync(
     image_name: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListImageTagsSort] = ListImageTagsSort.NAMEASC,
-    q: Union[Unset, str] = UNSET,
-    name: Union[Unset, str] = UNSET,
-    source_workspace: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListImageTagsSort | Unset = ListImageTagsSort.NAMEASC,
+    q: str | Unset = UNSET,
+    name: str | Unset = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> ListImageTagsResponse200 | None:
     """List image tags
 
@@ -147,12 +152,12 @@ def sync(
     Args:
         resource_type (str):
         image_name (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListImageTagsSort]):  Default: ListImageTagsSort.NAMEASC.
-        q (Union[Unset, str]):
-        name (Union[Unset, str]):
-        source_workspace (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListImageTagsSort | Unset):  Default: ListImageTagsSort.NAMEASC.
+        q (str | Unset):
+        name (str | Unset):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -180,12 +185,12 @@ async def asyncio_detailed(
     image_name: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListImageTagsSort] = ListImageTagsSort.NAMEASC,
-    q: Union[Unset, str] = UNSET,
-    name: Union[Unset, str] = UNSET,
-    source_workspace: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListImageTagsSort | Unset = ListImageTagsSort.NAMEASC,
+    q: str | Unset = UNSET,
+    name: str | Unset = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> Response[ListImageTagsResponse200]:
     """List image tags
 
@@ -195,12 +200,12 @@ async def asyncio_detailed(
     Args:
         resource_type (str):
         image_name (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListImageTagsSort]):  Default: ListImageTagsSort.NAMEASC.
-        q (Union[Unset, str]):
-        name (Union[Unset, str]):
-        source_workspace (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListImageTagsSort | Unset):  Default: ListImageTagsSort.NAMEASC.
+        q (str | Unset):
+        name (str | Unset):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -231,12 +236,12 @@ async def asyncio(
     image_name: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListImageTagsSort] = ListImageTagsSort.NAMEASC,
-    q: Union[Unset, str] = UNSET,
-    name: Union[Unset, str] = UNSET,
-    source_workspace: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListImageTagsSort | Unset = ListImageTagsSort.NAMEASC,
+    q: str | Unset = UNSET,
+    name: str | Unset = UNSET,
+    source_workspace: str | Unset = UNSET,
 ) -> ListImageTagsResponse200 | None:
     """List image tags
 
@@ -246,12 +251,12 @@ async def asyncio(
     Args:
         resource_type (str):
         image_name (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListImageTagsSort]):  Default: ListImageTagsSort.NAMEASC.
-        q (Union[Unset, str]):
-        name (Union[Unset, str]):
-        source_workspace (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListImageTagsSort | Unset):  Default: ListImageTagsSort.NAMEASC.
+        q (str | Unset):
+        name (str | Unset):
+        source_workspace (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

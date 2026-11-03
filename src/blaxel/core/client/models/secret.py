@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,15 +18,15 @@ class Secret:
 
         Attributes:
             name (str): Case-sensitive secret name
-            created_at (Union[Unset, str]): The date and time when the secret was first created
-            updated_at (Union[Unset, str]): The date and time of the latest version
-            value (Union[Unset, str]): Secret value. Write-only, never returned by the API
+            created_at (str | Unset): The date and time when the secret was first created
+            updated_at (str | Unset): The date and time of the latest version
+            value (str | Unset): Secret value. Write-only, never returned by the API
     """
 
     name: str
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    value: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    value: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -52,10 +55,10 @@ class Secret:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,16 +15,16 @@ T = TypeVar("T", bound="ImageTag")
 class ImageTag:
     """
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the tag was created.
-        name (Union[Unset, str]): The name of the tag.
-        size (Union[Unset, int]): The size of the image in bytes.
-        updated_at (Union[Unset, str]): The date and time when the tag was last updated.
+        created_at (str | Unset): The date and time when the tag was created.
+        name (str | Unset): The name of the tag.
+        size (int | Unset): The size of the image in bytes.
+        updated_at (str | Unset): The date and time when the tag was last updated.
     """
 
-    created_at: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
-    updated_at: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    name: str | Unset = UNSET
+    size: int | Unset = UNSET
+    updated_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,10 +51,10 @@ class ImageTag:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         name = d.pop("name", UNSET)

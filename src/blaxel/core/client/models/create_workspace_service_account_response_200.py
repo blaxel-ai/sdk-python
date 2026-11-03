@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,22 +15,22 @@ T = TypeVar("T", bound="CreateWorkspaceServiceAccountResponse200")
 class CreateWorkspaceServiceAccountResponse200:
     """
     Attributes:
-        client_id (Union[Unset, str]): Service account client ID
-        client_secret (Union[Unset, str]): Service account client secret (only returned on creation)
-        created_at (Union[Unset, str]): Creation timestamp
-        description (Union[Unset, str]): Service account description
-        name (Union[Unset, str]): Service account name
-        role (Union[Unset, str]): Role of the service account in the workspace
-        updated_at (Union[Unset, str]): Last update timestamp
+        client_id (str | Unset): Service account client ID
+        client_secret (str | Unset): Service account client secret (only returned on creation)
+        created_at (str | Unset): Creation timestamp
+        description (str | Unset): Service account description
+        name (str | Unset): Service account name
+        role (str | Unset): Role of the service account in the workspace
+        updated_at (str | Unset): Last update timestamp
     """
 
-    client_id: Union[Unset, str] = UNSET
-    client_secret: Union[Unset, str] = UNSET
-    created_at: Union[Unset, str] = UNSET
-    description: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    role: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
+    client_id: str | Unset = UNSET
+    client_secret: str | Unset = UNSET
+    created_at: str | Unset = UNSET
+    description: str | Unset = UNSET
+    name: str | Unset = UNSET
+    role: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -66,10 +69,10 @@ class CreateWorkspaceServiceAccountResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         client_id = d.pop("client_id", UNSET)
 
         client_secret = d.pop("client_secret", UNSET)

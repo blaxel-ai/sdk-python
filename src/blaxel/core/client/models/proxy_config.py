@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,41 +21,40 @@ class ProxyConfig:
     destination header/body injection
 
         Attributes:
-            allowed_domains (Union[Unset, list[str]]): List of allowed external domains (allowlist). When set, only these
-                domains are reachable. Supports wildcards (e.g. *.s3.amazonaws.com). Example: ["api.stripe.com",
-                "api.openai.com", "*.s3.amazonaws.com"].
-            bypass (Union[Unset, list[str]]): Domains that bypass the proxy entirely via the NO_PROXY directive. Traffic to
-                these destinations goes direct, not through the CONNECT tunnel. Supports wildcards. Note that localhost, private
+            allowed_domains (list[str] | Unset): List of allowed external domains (allowlist). When set, only these domains
+                are reachable. Supports wildcards (e.g. *.s3.amazonaws.com). Example: ["api.stripe.com", "api.openai.com",
+                "*.s3.amazonaws.com"].
+            bypass (list[str] | Unset): Domains that bypass the proxy entirely via the NO_PROXY directive. Traffic to these
+                destinations goes direct, not through the CONNECT tunnel. Supports wildcards. Note that localhost, private
                 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), 169.254.169.254, .local and .internal are always bypassed by
                 default. Example: ["*.s3.amazonaws.com"].
-            forbidden_domains (Union[Unset, list[str]]): List of forbidden external domains (denylist). When set, all
-                domains except these are reachable. Supports wildcards (e.g. *.malware.com). If both allowedDomains and
-                forbiddenDomains are set, allowedDomains takes precedence. Example: ["*.malware.com", "evil.example.org"].
-            routing (Union[Unset, list['ProxyTarget']]): Per-destination routing rules with header/body injection and
-                secrets. Use destinations ["*"] for global rules that apply to all destinations.
+            forbidden_domains (list[str] | Unset): List of forbidden external domains (denylist). When set, all domains
+                except these are reachable. Supports wildcards (e.g. *.malware.com). If both allowedDomains and forbiddenDomains
+                are set, allowedDomains takes precedence. Example: ["*.malware.com", "evil.example.org"].
+            routing (list[ProxyTarget] | Unset): Per-destination routing rules with header/body injection and secrets. Use
+                destinations ["*"] for global rules that apply to all destinations.
     """
 
-    allowed_domains: Union[Unset, list[str]] = UNSET
-    bypass: Union[Unset, list[str]] = UNSET
-    forbidden_domains: Union[Unset, list[str]] = UNSET
-    routing: Union[Unset, list["ProxyTarget"]] = UNSET
+    allowed_domains: list[str] | Unset = UNSET
+    bypass: list[str] | Unset = UNSET
+    forbidden_domains: list[str] | Unset = UNSET
+    routing: list[ProxyTarget] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        allowed_domains: Union[Unset, list[str]] = UNSET
+        allowed_domains: list[str] | Unset = UNSET
         if not isinstance(self.allowed_domains, Unset):
             allowed_domains = self.allowed_domains
 
-        bypass: Union[Unset, list[str]] = UNSET
+        bypass: list[str] | Unset = UNSET
         if not isinstance(self.bypass, Unset):
             bypass = self.bypass
 
-        forbidden_domains: Union[Unset, list[str]] = UNSET
+        forbidden_domains: list[str] | Unset = UNSET
         if not isinstance(self.forbidden_domains, Unset):
             forbidden_domains = self.forbidden_domains
 
-        routing: Union[Unset, list[dict[str, Any]]] = UNSET
+        routing: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.routing, Unset):
             routing = []
             for routing_item_data in self.routing:
@@ -77,12 +79,12 @@ class ProxyConfig:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.proxy_target import ProxyTarget
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.proxy_target import ProxyTarget  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         allowed_domains = cast(list[str], d.pop("allowedDomains", d.pop("allowed_domains", UNSET)))
 
         bypass = cast(list[str], d.pop("bypass", UNSET))
