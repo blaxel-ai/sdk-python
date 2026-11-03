@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,23 +18,24 @@ class VolumeAttachment:
     set type to "ephemeral" for disk-backed scratch space created with the sandbox and destroyed when it stops.
 
         Attributes:
-            mount_path (Union[Unset, str]): Absolute filesystem path where the volume will be mounted inside the sandbox
-                Example: /mnt/data.
-            name (Union[Unset, str]): For persistent volumes, the name of the volume resource to attach (must exist in the
-                same workspace and region). For ephemeral volumes, an identifier used to reference the volume internally.
-                Example: my-volume.
-            read_only (Union[Unset, bool]): If true, the volume is mounted read-only and cannot be modified by the sandbox
-            size_mb (Union[Unset, int]): Storage capacity in megabytes. Required for ephemeral volumes, ignored for
-                persistent volumes. Example: 102400.
-            type_ (Union[Unset, VolumeAttachmentType]): Type of volume. Defaults to "persistent" (an existing volume
-                resource). Use "ephemeral" for temporary disk-backed storage created with the sandbox. Example: persistent.
+            mount_path (str | Unset): Absolute filesystem path where the volume will be mounted inside the sandbox Example:
+                /mnt/data.
+            name (str | Unset): For persistent volumes, the name of the volume resource to attach (must exist in the same
+                workspace and region). For ephemeral volumes, an identifier used to reference the volume internally. Example:
+                my-volume.
+            read_only (bool | Unset): If true, the volume is mounted read-only and cannot be modified by the sandbox
+                Example: False.
+            size_mb (int | Unset): Storage capacity in megabytes. Required for ephemeral volumes, ignored for persistent
+                volumes. Example: 102400.
+            type_ (VolumeAttachmentType | Unset): Type of volume. Defaults to "persistent" (an existing volume resource).
+                Use "ephemeral" for temporary disk-backed storage created with the sandbox. Example: persistent.
     """
 
-    mount_path: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    read_only: Union[Unset, bool] = UNSET
-    size_mb: Union[Unset, int] = UNSET
-    type_: Union[Unset, VolumeAttachmentType] = UNSET
+    mount_path: str | Unset = UNSET
+    name: str | Unset = UNSET
+    read_only: bool | Unset = UNSET
+    size_mb: int | Unset = UNSET
+    type_: VolumeAttachmentType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,7 +47,7 @@ class VolumeAttachment:
 
         size_mb = self.size_mb
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -64,10 +68,10 @@ class VolumeAttachment:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
         name = d.pop("name", UNSET)
@@ -77,7 +81,7 @@ class VolumeAttachment:
         size_mb = d.pop("sizeMb", d.pop("size_mb", UNSET))
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, VolumeAttachmentType]
+        type_: VolumeAttachmentType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

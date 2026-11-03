@@ -1,6 +1,6 @@
 import datetime
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -14,15 +14,15 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListScheduleExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    status: Union[Unset, ListScheduleExecutionsStatus] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    schedule: Union[Unset, str] = UNSET,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListScheduleExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    status: ListScheduleExecutionsStatus | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    schedule: str | Unset = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -30,7 +30,7 @@ def _get_kwargs(
 
     params["cursor"] = cursor
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -38,7 +38,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_status: Union[Unset, str] = UNSET
+    json_status: str | Unset = UNSET
     if not isinstance(status, Unset):
         json_status = status.value
 
@@ -48,12 +48,12 @@ def _get_kwargs(
 
     params["schedule"] = schedule
 
-    json_since: Union[Unset, str] = UNSET
+    json_since: str | Unset = UNSET
     if not isinstance(since, Unset):
         json_since = since.isoformat()
     params["since"] = json_since
 
-    json_until: Union[Unset, str] = UNSET
+    json_until: str | Unset = UNSET
     if not isinstance(until, Unset):
         json_until = until.isoformat()
     params["until"] = json_until
@@ -76,6 +76,7 @@ def _parse_response(
         response_200 = SandboxScheduleExecutionList.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -98,15 +99,15 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListScheduleExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    status: Union[Unset, ListScheduleExecutionsStatus] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    schedule: Union[Unset, str] = UNSET,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListScheduleExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    status: ListScheduleExecutionsStatus | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    schedule: str | Unset = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> Response[SandboxScheduleExecutionList]:
     """List Workspace Schedule Executions
 
@@ -115,15 +116,15 @@ def sync_detailed(
     bounds on creation time.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListScheduleExecutionsSort]):
-        q (Union[Unset, str]):
-        status (Union[Unset, ListScheduleExecutionsStatus]):
-        sandbox (Union[Unset, str]):
-        schedule (Union[Unset, str]):
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListScheduleExecutionsSort | Unset):
+        q (str | Unset):
+        status (ListScheduleExecutionsStatus | Unset):
+        sandbox (str | Unset):
+        schedule (str | Unset):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -155,15 +156,15 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListScheduleExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    status: Union[Unset, ListScheduleExecutionsStatus] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    schedule: Union[Unset, str] = UNSET,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListScheduleExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    status: ListScheduleExecutionsStatus | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    schedule: str | Unset = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> SandboxScheduleExecutionList | None:
     """List Workspace Schedule Executions
 
@@ -172,15 +173,15 @@ def sync(
     bounds on creation time.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListScheduleExecutionsSort]):
-        q (Union[Unset, str]):
-        status (Union[Unset, ListScheduleExecutionsStatus]):
-        sandbox (Union[Unset, str]):
-        schedule (Union[Unset, str]):
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListScheduleExecutionsSort | Unset):
+        q (str | Unset):
+        status (ListScheduleExecutionsStatus | Unset):
+        sandbox (str | Unset):
+        schedule (str | Unset):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -207,15 +208,15 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListScheduleExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    status: Union[Unset, ListScheduleExecutionsStatus] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    schedule: Union[Unset, str] = UNSET,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListScheduleExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    status: ListScheduleExecutionsStatus | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    schedule: str | Unset = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> Response[SandboxScheduleExecutionList]:
     """List Workspace Schedule Executions
 
@@ -224,15 +225,15 @@ async def asyncio_detailed(
     bounds on creation time.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListScheduleExecutionsSort]):
-        q (Union[Unset, str]):
-        status (Union[Unset, ListScheduleExecutionsStatus]):
-        sandbox (Union[Unset, str]):
-        schedule (Union[Unset, str]):
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListScheduleExecutionsSort | Unset):
+        q (str | Unset):
+        status (ListScheduleExecutionsStatus | Unset):
+        sandbox (str | Unset):
+        schedule (str | Unset):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -262,15 +263,15 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListScheduleExecutionsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    status: Union[Unset, ListScheduleExecutionsStatus] = UNSET,
-    sandbox: Union[Unset, str] = UNSET,
-    schedule: Union[Unset, str] = UNSET,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListScheduleExecutionsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    status: ListScheduleExecutionsStatus | Unset = UNSET,
+    sandbox: str | Unset = UNSET,
+    schedule: str | Unset = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> SandboxScheduleExecutionList | None:
     """List Workspace Schedule Executions
 
@@ -279,15 +280,15 @@ async def asyncio(
     bounds on creation time.
 
     Args:
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListScheduleExecutionsSort]):
-        q (Union[Unset, str]):
-        status (Union[Unset, ListScheduleExecutionsStatus]):
-        sandbox (Union[Unset, str]):
-        schedule (Union[Unset, str]):
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListScheduleExecutionsSort | Unset):
+        q (str | Unset):
+        status (ListScheduleExecutionsStatus | Unset):
+        sandbox (str | Unset):
+        schedule (str | Unset):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

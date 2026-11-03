@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,17 +17,17 @@ class PreviewTokenMetadata:
 
     Attributes:
         name (str): Token name
-        preview_name (Union[Unset, str]): Preview name
-        resource_name (Union[Unset, str]): Resource name
-        resource_type (Union[Unset, str]): Resource type
-        workspace (Union[Unset, str]): Workspace name
+        preview_name (str | Unset): Preview name
+        resource_name (str | Unset): Resource name
+        resource_type (str | Unset): Resource type
+        workspace (str | Unset): Workspace name
     """
 
     name: str
-    preview_name: Union[Unset, str] = UNSET
-    resource_name: Union[Unset, str] = UNSET
-    resource_type: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    preview_name: str | Unset = UNSET
+    resource_name: str | Unset = UNSET
+    resource_type: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -57,10 +60,10 @@ class PreviewTokenMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         preview_name = d.pop("previewName", d.pop("preview_name", UNSET))

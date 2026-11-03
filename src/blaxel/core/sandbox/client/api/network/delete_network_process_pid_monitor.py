@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -17,7 +18,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/network/process/{pid}/monitor",
+        "url": "/network/process/{pid}/monitor".format(
+            pid=quote(str(pid), safe=""),
+        ),
     }
 
     return _kwargs
@@ -25,26 +28,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse] | None:
+) -> DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse | None:
     if response.status_code == 200:
         response_200 = DeleteNetworkProcessPidMonitorResponse200.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -55,7 +62,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]]:
+) -> Response[DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -68,7 +75,7 @@ def sync_detailed(
     pid: int,
     *,
     client: Client,
-) -> Response[Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]]:
+) -> Response[DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse]:
     """Stop monitoring ports for a process
 
      Stop monitoring for new ports opened by a process
@@ -81,7 +88,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]]
+        Response[DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -99,7 +106,7 @@ def sync(
     pid: int,
     *,
     client: Client,
-) -> Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse] | None:
+) -> DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse | None:
     """Stop monitoring ports for a process
 
      Stop monitoring for new ports opened by a process
@@ -112,7 +119,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]
+        DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse
     """
 
     return sync_detailed(
@@ -125,7 +132,7 @@ async def asyncio_detailed(
     pid: int,
     *,
     client: Client,
-) -> Response[Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]]:
+) -> Response[DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse]:
     """Stop monitoring ports for a process
 
      Stop monitoring for new ports opened by a process
@@ -138,7 +145,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]]
+        Response[DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -154,7 +161,7 @@ async def asyncio(
     pid: int,
     *,
     client: Client,
-) -> Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse] | None:
+) -> DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse | None:
     """Stop monitoring ports for a process
 
      Stop monitoring for new ports opened by a process
@@ -167,7 +174,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DeleteNetworkProcessPidMonitorResponse200, ErrorResponse]
+        DeleteNetworkProcessPidMonitorResponse200 | ErrorResponse
     """
 
     return (

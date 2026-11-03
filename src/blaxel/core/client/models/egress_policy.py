@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,19 +16,18 @@ class EgressPolicy:
     """Egress policy routing specific destinations through dedicated or shared gateways (not yet supported)
 
     Attributes:
-        destinations (Union[Unset, list[str]]): Destination domains or IPs this policy applies to Example:
-            ["api.stripe.com"].
-        mode (Union[Unset, str]): Egress mode for these destinations (dedicated or shared) Example: dedicated.
-        name (Union[Unset, str]): Name of this egress policy Example: payment-apis.
+        destinations (list[str] | Unset): Destination domains or IPs this policy applies to Example: ["api.stripe.com"].
+        mode (str | Unset): Egress mode for these destinations (dedicated or shared) Example: dedicated.
+        name (str | Unset): Name of this egress policy Example: payment-apis.
     """
 
-    destinations: Union[Unset, list[str]] = UNSET
-    mode: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
+    destinations: list[str] | Unset = UNSET
+    mode: str | Unset = UNSET
+    name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        destinations: Union[Unset, list[str]] = UNSET
+        destinations: list[str] | Unset = UNSET
         if not isinstance(self.destinations, Unset):
             destinations = self.destinations
 
@@ -46,10 +48,10 @@ class EgressPolicy:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         destinations = cast(list[str], d.pop("destinations", UNSET))
 
         mode = d.pop("mode", UNSET)

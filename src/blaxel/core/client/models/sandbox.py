@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -28,34 +31,33 @@ class Sandbox:
                 and ownership information
             spec (SandboxSpec): Configuration for a sandbox including its image, memory, ports, region, and lifecycle
                 policies
-            archive (Union[Unset, SandboxArchive]): State of the filesystem archive of a sandbox. An archive holds the
-                writable filesystem changes and the process configurations of the sandbox, not its memory, so restoring it
-                produces a sandbox with the same disk state and freshly started processes.
-            errors (Union[Unset, list['SandboxInfrastructureError']]): Infrastructure failures recorded on the sandbox,
-                oldest first (read-only, managed by the system)
-            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
-            expires_in (Union[Unset, int]): Time in seconds until the sandbox is automatically deleted based on TTL and
-                lifecycle policies. Only present for sandboxes with lifecycle configured.
-            last_used_at (Union[Unset, str]): Last time the sandbox was used (read-only, managed by the system)
-            node_generation (Union[Unset, str]): Infrastructure generation this sandbox is deployed on (mk3.0 or mk3.1).
-            state (Union[Unset, SandboxState]): Current state of the sandbox (read-only, managed by the system)
-            status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
+            archive (SandboxArchive | Unset): State of the filesystem archive of a sandbox. An archive holds the writable
+                filesystem changes and the process configurations of the sandbox, not its memory, so restoring it produces a
+                sandbox with the same disk state and freshly started processes.
+            errors (list[SandboxInfrastructureError] | Unset): Infrastructure failures recorded on the sandbox, oldest first
+                (read-only, managed by the system)
+            events (list[CoreEvent] | Unset): Events happening on a resource deployed on Blaxel
+            expires_in (int | Unset): Time in seconds until the sandbox is automatically deleted based on TTL and lifecycle
+                policies. Only present for sandboxes with lifecycle configured.
+            last_used_at (str | Unset): Last time the sandbox was used (read-only, managed by the system)
+            node_generation (str | Unset): Infrastructure generation this sandbox is deployed on (mk3.0 or mk3.1).
+            state (SandboxState | Unset): Current state of the sandbox (read-only, managed by the system)
+            status (Status | Unset): Deployment status of a resource deployed on Blaxel
     """
 
-    metadata: "Metadata"
-    spec: "SandboxSpec"
-    archive: Union[Unset, "SandboxArchive"] = UNSET
-    errors: Union[Unset, list["SandboxInfrastructureError"]] = UNSET
-    events: Union[Unset, list["CoreEvent"]] = UNSET
-    expires_in: Union[Unset, int] = UNSET
-    last_used_at: Union[Unset, str] = UNSET
-    node_generation: Union[Unset, str] = UNSET
-    state: Union[Unset, SandboxState] = UNSET
-    status: Union[Unset, Status] = UNSET
+    metadata: Metadata
+    spec: SandboxSpec
+    archive: SandboxArchive | Unset = UNSET
+    errors: list[SandboxInfrastructureError] | Unset = UNSET
+    events: list[CoreEvent] | Unset = UNSET
+    expires_in: int | Unset = UNSET
+    last_used_at: str | Unset = UNSET
+    node_generation: str | Unset = UNSET
+    state: SandboxState | Unset = UNSET
+    status: Status | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -66,7 +68,7 @@ class Sandbox:
         else:
             spec = self.spec.to_dict()
 
-        archive: Union[Unset, dict[str, Any]] = UNSET
+        archive: dict[str, Any] | Unset = UNSET
         if (
             self.archive
             and not isinstance(self.archive, Unset)
@@ -76,7 +78,7 @@ class Sandbox:
         elif self.archive and isinstance(self.archive, dict):
             archive = self.archive
 
-        errors: Union[Unset, list[dict[str, Any]]] = UNSET
+        errors: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.errors, Unset):
             errors = []
             for errors_item_data in self.errors:
@@ -86,7 +88,7 @@ class Sandbox:
                     errors_item = errors_item_data.to_dict()
                 errors.append(errors_item)
 
-        events: Union[Unset, list[dict[str, Any]]] = UNSET
+        events: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.events, Unset):
             events = []
             for componentsschemas_core_events_item_data in self.events:
@@ -104,11 +106,11 @@ class Sandbox:
 
         node_generation = self.node_generation
 
-        state: Union[Unset, str] = UNSET
+        state: str | Unset = UNSET
         if not isinstance(self.state, Unset):
             state = self.state.value
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -140,22 +142,24 @@ class Sandbox:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_event import CoreEvent
-        from ..models.metadata import Metadata
-        from ..models.sandbox_archive import SandboxArchive
-        from ..models.sandbox_infrastructure_error import SandboxInfrastructureError
-        from ..models.sandbox_spec import SandboxSpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.core_event import CoreEvent  # noqa: PLC0415
+        from ..models.metadata import Metadata  # noqa: PLC0415
+        from ..models.sandbox_archive import SandboxArchive  # noqa: PLC0415
+        from ..models.sandbox_infrastructure_error import (
+            SandboxInfrastructureError,  # noqa: PLC0415
+        )
+        from ..models.sandbox_spec import SandboxSpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = SandboxSpec.from_dict(d.pop("spec"))
 
         _archive = d.pop("archive", UNSET)
-        archive: Union[Unset, SandboxArchive]
+        archive: SandboxArchive | Unset
         if isinstance(_archive, Unset):
             archive = UNSET
         else:
@@ -184,14 +188,14 @@ class Sandbox:
         node_generation = d.pop("nodeGeneration", d.pop("node_generation", UNSET))
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, SandboxState]
+        state: SandboxState | Unset
         if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:
             state = SandboxState(_state)
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, Status]
+        status: Status | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

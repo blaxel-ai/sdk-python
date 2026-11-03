@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -19,9 +19,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[Error, list["Workspace"]] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | list[Workspace] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -31,16 +29,19 @@ def _parse_response(
             response_200.append(response_200_item)
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -51,7 +52,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, list["Workspace"]]]:
+) -> Response[Error | list[Workspace]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,7 +64,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Union[Error, list["Workspace"]]]:
+) -> Response[Error | list[Workspace]]:
     """List accessible workspaces
 
      Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
@@ -74,7 +75,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['Workspace']]]
+        Response[Error | list[Workspace]]
     """
 
     kwargs = _get_kwargs()
@@ -89,7 +90,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Union[Error, list["Workspace"]] | None:
+) -> Error | list[Workspace] | None:
     """List accessible workspaces
 
      Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
@@ -100,7 +101,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['Workspace']]
+        Error | list[Workspace]
     """
 
     return sync_detailed(
@@ -111,7 +112,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[Union[Error, list["Workspace"]]]:
+) -> Response[Error | list[Workspace]]:
     """List accessible workspaces
 
      Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
@@ -122,7 +123,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['Workspace']]]
+        Response[Error | list[Workspace]]
     """
 
     kwargs = _get_kwargs()
@@ -135,7 +136,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Union[Error, list["Workspace"]] | None:
+) -> Error | list[Workspace] | None:
     """List accessible workspaces
 
      Returns all workspaces the authenticated user has access to. Each workspace is a separate tenant
@@ -146,7 +147,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['Workspace']]
+        Error | list[Workspace]
     """
 
     return (

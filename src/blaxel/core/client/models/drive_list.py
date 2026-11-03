@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,18 +23,17 @@ class DriveList:
     array.
 
         Attributes:
-            data (Union[Unset, list['Drive']]): Page of drives.
-            meta (Union[Unset, PaginationMeta]): Pagination metadata returned alongside a page of listing results. Always
-                present on listing endpoints starting with API version 2026-04-28.
+            data (list[Drive] | Unset): Page of drives.
+            meta (PaginationMeta | Unset): Pagination metadata returned alongside a page of listing results. Always present
+                on listing endpoints starting with API version 2026-04-28.
     """
 
-    data: Union[Unset, list["Drive"]] = UNSET
-    meta: Union[Unset, "PaginationMeta"] = UNSET
+    data: list[Drive] | Unset = UNSET
+    meta: PaginationMeta | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        data: Union[Unset, list[dict[str, Any]]] = UNSET
+        data: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.data, Unset):
             data = []
             for data_item_data in self.data:
@@ -41,7 +43,7 @@ class DriveList:
                     data_item = data_item_data.to_dict()
                 data.append(data_item)
 
-        meta: Union[Unset, dict[str, Any]] = UNSET
+        meta: dict[str, Any] | Unset = UNSET
         if self.meta and not isinstance(self.meta, Unset) and not isinstance(self.meta, dict):
             meta = self.meta.to_dict()
         elif self.meta and isinstance(self.meta, dict):
@@ -58,9 +60,9 @@ class DriveList:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any] | list[Any]) -> T | None:
-        from ..models.drive import Drive
-        from ..models.pagination_meta import PaginationMeta
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any] | list[Any]) -> T | None:
+        from ..models.drive import Drive  # noqa: PLC0415
+        from ..models.pagination_meta import PaginationMeta  # noqa: PLC0415
 
         _data, _meta, additional_properties = split_list_response(src_dict)
         if not _data and not additional_properties and isinstance(_meta, Unset):
@@ -74,7 +76,7 @@ class DriveList:
             data.append(data_item)
 
         _meta = d.pop("meta", UNSET)
-        meta: Union[Unset, PaginationMeta]
+        meta: PaginationMeta | Unset
         if isinstance(_meta, Unset):
             meta = UNSET
         else:

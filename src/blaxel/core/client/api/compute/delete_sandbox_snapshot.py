@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -15,26 +16,32 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/sandboxes/{sandbox_name}/snapshots/{snapshot_id}",
+        "url": "/sandboxes/{sandbox_name}/snapshots/{snapshot_id}".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+            snapshot_id=quote(str(snapshot_id), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Error] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | Error | None:
     if response.status_code == 204:
         response_204 = cast(Any, None)
         return response_204
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -43,7 +50,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, E
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Error]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -57,7 +64,7 @@ def sync_detailed(
     snapshot_id: str,
     *,
     client: Client,
-) -> Response[Union[Any, Error]]:
+) -> Response[Any | Error]:
     """Delete sandbox snapshot
 
      Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
@@ -72,7 +79,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Error]]
+        Response[Any | Error]
     """
 
     kwargs = _get_kwargs(
@@ -92,7 +99,7 @@ def sync(
     snapshot_id: str,
     *,
     client: Client,
-) -> Union[Any, Error] | None:
+) -> Any | Error | None:
     """Delete sandbox snapshot
 
      Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
@@ -107,7 +114,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Error]
+        Any | Error
     """
 
     return sync_detailed(
@@ -122,7 +129,7 @@ async def asyncio_detailed(
     snapshot_id: str,
     *,
     client: Client,
-) -> Response[Union[Any, Error]]:
+) -> Response[Any | Error]:
     """Delete sandbox snapshot
 
      Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
@@ -137,7 +144,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Error]]
+        Response[Any | Error]
     """
 
     kwargs = _get_kwargs(
@@ -155,7 +162,7 @@ async def asyncio(
     snapshot_id: str,
     *,
     client: Client,
-) -> Union[Any, Error] | None:
+) -> Any | Error | None:
     """Delete sandbox snapshot
 
      Deletes a snapshot of a sandbox, addressed by its name among that sandbox's snapshots (or by its
@@ -170,7 +177,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Error]
+        Any | Error
     """
 
     return (

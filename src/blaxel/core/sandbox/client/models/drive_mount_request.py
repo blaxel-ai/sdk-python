@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,18 +17,18 @@ class DriveMountRequest:
     Attributes:
         drive_name (str):
         mount_path (str):
-        drive_path (Union[Unset, str]): Optional, defaults to "/"
-        gid_map (Union[Unset, str]): Optional, local GID to map (filer GID is always 0)
-        read_only (Union[Unset, bool]): Optional, defaults to false
-        uid_map (Union[Unset, str]): Optional, local UID to map (filer UID is always 0)
+        drive_path (str | Unset): Optional, defaults to "/"
+        gid_map (str | Unset): Optional, local GID to map (filer GID is always 0)
+        read_only (bool | Unset): Optional, defaults to false
+        uid_map (str | Unset): Optional, local UID to map (filer UID is always 0)
     """
 
     drive_name: str
     mount_path: str
-    drive_path: Union[Unset, str] = UNSET
-    gid_map: Union[Unset, str] = UNSET
-    read_only: Union[Unset, bool] = UNSET
-    uid_map: Union[Unset, str] = UNSET
+    drive_path: str | Unset = UNSET
+    gid_map: str | Unset = UNSET
+    read_only: bool | Unset = UNSET
+    uid_map: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class DriveMountRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         drive_name = d.pop("driveName") if "driveName" in d else d.pop("drive_name")
 
         mount_path = d.pop("mountPath") if "mountPath" in d else d.pop("mount_path")

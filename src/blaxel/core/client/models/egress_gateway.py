@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -23,18 +26,17 @@ class EgressGateway:
         Attributes:
             metadata (EgressGatewayMetadata): Metadata for an egress gateway resource including workspace, VPC, and name
             spec (EgressGatewaySpec): Specification for an egress gateway including region and capacity configuration
-            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
-            status (Union[Unset, Status]): Deployment status of a resource deployed on Blaxel
+            events (list[CoreEvent] | Unset): Events happening on a resource deployed on Blaxel
+            status (Status | Unset): Deployment status of a resource deployed on Blaxel
     """
 
-    metadata: "EgressGatewayMetadata"
-    spec: "EgressGatewaySpec"
-    events: Union[Unset, list["CoreEvent"]] = UNSET
-    status: Union[Unset, Status] = UNSET
+    metadata: EgressGatewayMetadata
+    spec: EgressGatewaySpec
+    events: list[CoreEvent] | Unset = UNSET
+    status: Status | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -45,7 +47,7 @@ class EgressGateway:
         else:
             spec = self.spec.to_dict()
 
-        events: Union[Unset, list[dict[str, Any]]] = UNSET
+        events: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.events, Unset):
             events = []
             for componentsschemas_core_events_item_data in self.events:
@@ -57,7 +59,7 @@ class EgressGateway:
                     )
                 events.append(componentsschemas_core_events_item)
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -77,14 +79,14 @@ class EgressGateway:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_event import CoreEvent
-        from ..models.egress_gateway_metadata import EgressGatewayMetadata
-        from ..models.egress_gateway_spec import EgressGatewaySpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.core_event import CoreEvent  # noqa: PLC0415
+        from ..models.egress_gateway_metadata import EgressGatewayMetadata  # noqa: PLC0415
+        from ..models.egress_gateway_spec import EgressGatewaySpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = EgressGatewayMetadata.from_dict(d.pop("metadata"))
 
         spec = EgressGatewaySpec.from_dict(d.pop("spec"))
@@ -99,7 +101,7 @@ class EgressGateway:
             events.append(componentsschemas_core_events_item)
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, Status]
+        status: Status | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

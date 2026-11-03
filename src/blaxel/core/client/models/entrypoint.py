@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,21 +22,20 @@ class Entrypoint:
     """Entrypoint of the artifact
 
     Attributes:
-        args (Union[Unset, list['EntrypointArgsItem']]): Args of the entrypoint
-        command (Union[Unset, str]): Command of the entrypoint
-        env (Union[Unset, EntrypointEnv]): Env of the entrypoint
-        super_gateway_args (Union[Unset, list['EntrypointSuperGatewayArgsItem']]): Super Gateway args of the entrypoint
+        args (list[EntrypointArgsItem] | Unset): Args of the entrypoint
+        command (str | Unset): Command of the entrypoint
+        env (EntrypointEnv | Unset): Env of the entrypoint
+        super_gateway_args (list[EntrypointSuperGatewayArgsItem] | Unset): Super Gateway args of the entrypoint
     """
 
-    args: Union[Unset, list["EntrypointArgsItem"]] = UNSET
-    command: Union[Unset, str] = UNSET
-    env: Union[Unset, "EntrypointEnv"] = UNSET
-    super_gateway_args: Union[Unset, list["EntrypointSuperGatewayArgsItem"]] = UNSET
+    args: list[EntrypointArgsItem] | Unset = UNSET
+    command: str | Unset = UNSET
+    env: EntrypointEnv | Unset = UNSET
+    super_gateway_args: list[EntrypointSuperGatewayArgsItem] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        args: Union[Unset, list[dict[str, Any]]] = UNSET
+        args: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.args, Unset):
             args = []
             for args_item_data in self.args:
@@ -45,13 +47,13 @@ class Entrypoint:
 
         command = self.command
 
-        env: Union[Unset, dict[str, Any]] = UNSET
+        env: dict[str, Any] | Unset = UNSET
         if self.env and not isinstance(self.env, Unset) and not isinstance(self.env, dict):
             env = self.env.to_dict()
         elif self.env and isinstance(self.env, dict):
             env = self.env
 
-        super_gateway_args: Union[Unset, list[dict[str, Any]]] = UNSET
+        super_gateway_args: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.super_gateway_args, Unset):
             super_gateway_args = []
             for super_gateway_args_item_data in self.super_gateway_args:
@@ -76,14 +78,16 @@ class Entrypoint:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.entrypoint_args_item import EntrypointArgsItem
-        from ..models.entrypoint_env import EntrypointEnv
-        from ..models.entrypoint_super_gateway_args_item import EntrypointSuperGatewayArgsItem
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.entrypoint_args_item import EntrypointArgsItem  # noqa: PLC0415
+        from ..models.entrypoint_env import EntrypointEnv  # noqa: PLC0415
+        from ..models.entrypoint_super_gateway_args_item import (
+            EntrypointSuperGatewayArgsItem,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         args = []
         _args = d.pop("args", UNSET)
         for args_item_data in _args or []:
@@ -94,7 +98,7 @@ class Entrypoint:
         command = d.pop("command", UNSET)
 
         _env = d.pop("env", UNSET)
-        env: Union[Unset, EntrypointEnv]
+        env: EntrypointEnv | Unset
         if isinstance(_env, Unset):
             env = UNSET
         else:

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -9,36 +10,32 @@ from ...models.error_response import ErrorResponse
 from ...models.file_request import FileRequest
 from ...models.put_filesystem_path_files_body import PutFilesystemPathFilesBody
 from ...models.success_response import SuccessResponse
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     path: str,
     *,
-    body: Union[
-        FileRequest,
-        PutFilesystemPathFilesBody,
-    ],
+    body: FileRequest | PutFilesystemPathFilesBody | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "put",
-        "url": f"/filesystem/{path}",
+        "url": "/filesystem/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
     }
 
     if isinstance(body, FileRequest | dict):
         if type(body) is dict:
-            _json_body = body
+            _kwargs["json"] = body
         else:
-            _json_body = body.to_dict()
+            _kwargs["json"] = body.to_dict()
 
-        _kwargs["json"] = _json_body
         headers["Content-Type"] = "application/json"
     if isinstance(body, PutFilesystemPathFilesBody):
-        _files_body = body.to_multipart()
-
-        _kwargs["files"] = _files_body
+        _kwargs["files"] = body.to_multipart()
 
     _kwargs["headers"] = headers
     return _kwargs
@@ -46,26 +43,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, SuccessResponse] | None:
+) -> ErrorResponse | SuccessResponse | None:
     if response.status_code == 200:
         response_200 = SuccessResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -76,7 +77,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+) -> Response[ErrorResponse | SuccessResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -89,11 +90,8 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
-    body: Union[
-        FileRequest,
-        PutFilesystemPathFilesBody,
-    ],
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+    body: FileRequest | PutFilesystemPathFilesBody | Unset = UNSET,
+) -> Response[ErrorResponse | SuccessResponse]:
     """Create or update a file or directory
 
      Create or update a file or directory.
@@ -116,7 +114,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -135,11 +133,8 @@ def sync(
     path: str,
     *,
     client: Client,
-    body: Union[
-        FileRequest,
-        PutFilesystemPathFilesBody,
-    ],
-) -> Union[ErrorResponse, SuccessResponse] | None:
+    body: FileRequest | PutFilesystemPathFilesBody | Unset = UNSET,
+) -> ErrorResponse | SuccessResponse | None:
     """Create or update a file or directory
 
      Create or update a file or directory.
@@ -162,7 +157,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return sync_detailed(
@@ -176,11 +171,8 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
-    body: Union[
-        FileRequest,
-        PutFilesystemPathFilesBody,
-    ],
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+    body: FileRequest | PutFilesystemPathFilesBody | Unset = UNSET,
+) -> Response[ErrorResponse | SuccessResponse]:
     """Create or update a file or directory
 
      Create or update a file or directory.
@@ -203,7 +195,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -220,11 +212,8 @@ async def asyncio(
     path: str,
     *,
     client: Client,
-    body: Union[
-        FileRequest,
-        PutFilesystemPathFilesBody,
-    ],
-) -> Union[ErrorResponse, SuccessResponse] | None:
+    body: FileRequest | PutFilesystemPathFilesBody | Unset = UNSET,
+) -> ErrorResponse | SuccessResponse | None:
     """Create or update a file or directory
 
      Create or update a file or directory.
@@ -247,7 +236,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return (

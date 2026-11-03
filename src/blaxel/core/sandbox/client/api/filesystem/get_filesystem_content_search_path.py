@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,11 +15,11 @@ def _get_kwargs(
     path: str,
     *,
     query: str,
-    case_sensitive: Union[Unset, bool] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    context_lines: Union[Unset, int] = UNSET,
+    case_sensitive: bool | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    context_lines: int | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -38,7 +39,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/filesystem-content-search/{path}",
+        "url": "/filesystem-content-search/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
         "params": params,
     }
 
@@ -47,26 +50,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ContentSearchResponse, ErrorResponse] | None:
+) -> ContentSearchResponse | ErrorResponse | None:
     if response.status_code == 200:
         response_200 = ContentSearchResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 422:
         response_422 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_422, response)
         return response_422
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -77,7 +84,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ContentSearchResponse, ErrorResponse]]:
+) -> Response[ContentSearchResponse | ErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -91,12 +98,12 @@ def sync_detailed(
     *,
     client: Client,
     query: str,
-    case_sensitive: Union[Unset, bool] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    context_lines: Union[Unset, int] = UNSET,
-) -> Response[Union[ContentSearchResponse, ErrorResponse]]:
+    case_sensitive: bool | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    context_lines: int | Unset = UNSET,
+) -> Response[ContentSearchResponse | ErrorResponse]:
     """Search for text content in files
 
      Searches for text content inside files. Returns each matching line, with the lines around it when
@@ -105,18 +112,18 @@ def sync_detailed(
     Args:
         path (str):
         query (str):
-        case_sensitive (Union[Unset, bool]):
-        max_results (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
-        exclude_dirs (Union[Unset, str]):
-        context_lines (Union[Unset, int]):
+        case_sensitive (bool | Unset):
+        max_results (int | Unset):
+        file_pattern (str | Unset):
+        exclude_dirs (str | Unset):
+        context_lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ContentSearchResponse, ErrorResponse]]
+        Response[ContentSearchResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -141,12 +148,12 @@ def sync(
     *,
     client: Client,
     query: str,
-    case_sensitive: Union[Unset, bool] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    context_lines: Union[Unset, int] = UNSET,
-) -> Union[ContentSearchResponse, ErrorResponse] | None:
+    case_sensitive: bool | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    context_lines: int | Unset = UNSET,
+) -> ContentSearchResponse | ErrorResponse | None:
     """Search for text content in files
 
      Searches for text content inside files. Returns each matching line, with the lines around it when
@@ -155,18 +162,18 @@ def sync(
     Args:
         path (str):
         query (str):
-        case_sensitive (Union[Unset, bool]):
-        max_results (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
-        exclude_dirs (Union[Unset, str]):
-        context_lines (Union[Unset, int]):
+        case_sensitive (bool | Unset):
+        max_results (int | Unset):
+        file_pattern (str | Unset):
+        exclude_dirs (str | Unset):
+        context_lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ContentSearchResponse, ErrorResponse]
+        ContentSearchResponse | ErrorResponse
     """
 
     return sync_detailed(
@@ -186,12 +193,12 @@ async def asyncio_detailed(
     *,
     client: Client,
     query: str,
-    case_sensitive: Union[Unset, bool] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    context_lines: Union[Unset, int] = UNSET,
-) -> Response[Union[ContentSearchResponse, ErrorResponse]]:
+    case_sensitive: bool | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    context_lines: int | Unset = UNSET,
+) -> Response[ContentSearchResponse | ErrorResponse]:
     """Search for text content in files
 
      Searches for text content inside files. Returns each matching line, with the lines around it when
@@ -200,18 +207,18 @@ async def asyncio_detailed(
     Args:
         path (str):
         query (str):
-        case_sensitive (Union[Unset, bool]):
-        max_results (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
-        exclude_dirs (Union[Unset, str]):
-        context_lines (Union[Unset, int]):
+        case_sensitive (bool | Unset):
+        max_results (int | Unset):
+        file_pattern (str | Unset):
+        exclude_dirs (str | Unset):
+        context_lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ContentSearchResponse, ErrorResponse]]
+        Response[ContentSearchResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -234,12 +241,12 @@ async def asyncio(
     *,
     client: Client,
     query: str,
-    case_sensitive: Union[Unset, bool] = UNSET,
-    max_results: Union[Unset, int] = UNSET,
-    file_pattern: Union[Unset, str] = UNSET,
-    exclude_dirs: Union[Unset, str] = UNSET,
-    context_lines: Union[Unset, int] = UNSET,
-) -> Union[ContentSearchResponse, ErrorResponse] | None:
+    case_sensitive: bool | Unset = UNSET,
+    max_results: int | Unset = UNSET,
+    file_pattern: str | Unset = UNSET,
+    exclude_dirs: str | Unset = UNSET,
+    context_lines: int | Unset = UNSET,
+) -> ContentSearchResponse | ErrorResponse | None:
     """Search for text content in files
 
      Searches for text content inside files. Returns each matching line, with the lines around it when
@@ -248,18 +255,18 @@ async def asyncio(
     Args:
         path (str):
         query (str):
-        case_sensitive (Union[Unset, bool]):
-        max_results (Union[Unset, int]):
-        file_pattern (Union[Unset, str]):
-        exclude_dirs (Union[Unset, str]):
-        context_lines (Union[Unset, int]):
+        case_sensitive (bool | Unset):
+        max_results (int | Unset):
+        file_pattern (str | Unset):
+        exclude_dirs (str | Unset):
+        context_lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ContentSearchResponse, ErrorResponse]
+        ContentSearchResponse | ErrorResponse
     """
 
     return (

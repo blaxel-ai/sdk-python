@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -21,21 +21,24 @@ def _get_kwargs() -> dict[str, Any]:
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, QuiesceStatus] | None:
+) -> ErrorResponse | QuiesceStatus | None:
     if response.status_code == 200:
         response_200 = QuiesceStatus.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 409:
         response_409 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -46,7 +49,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, QuiesceStatus]]:
+) -> Response[ErrorResponse | QuiesceStatus]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,7 +61,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, QuiesceStatus]]:
+) -> Response[ErrorResponse | QuiesceStatus]:
     """Lift the archive freeze
 
      Makes the API serve every route again after an export. The processes stopped for the export are not
@@ -69,7 +72,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, QuiesceStatus]]
+        Response[ErrorResponse | QuiesceStatus]
     """
 
     kwargs = _get_kwargs()
@@ -84,7 +87,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Union[ErrorResponse, QuiesceStatus] | None:
+) -> ErrorResponse | QuiesceStatus | None:
     """Lift the archive freeze
 
      Makes the API serve every route again after an export. The processes stopped for the export are not
@@ -95,7 +98,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, QuiesceStatus]
+        ErrorResponse | QuiesceStatus
     """
 
     return sync_detailed(
@@ -106,7 +109,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, QuiesceStatus]]:
+) -> Response[ErrorResponse | QuiesceStatus]:
     """Lift the archive freeze
 
      Makes the API serve every route again after an export. The processes stopped for the export are not
@@ -117,7 +120,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, QuiesceStatus]]
+        Response[ErrorResponse | QuiesceStatus]
     """
 
     kwargs = _get_kwargs()
@@ -130,7 +133,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Union[ErrorResponse, QuiesceStatus] | None:
+) -> ErrorResponse | QuiesceStatus | None:
     """Lift the archive freeze
 
      Makes the API serve every route again after an export. The processes stopped for the export are not
@@ -141,7 +144,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, QuiesceStatus]
+        ErrorResponse | QuiesceStatus
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,17 +16,17 @@ class VolumeSpec:
     """Immutable volume configuration set at creation time (size and region cannot be changed after creation)
 
     Attributes:
-        region (Union[Unset, str]): Deployment region for the volume (e.g., us-pdx-1, eu-lon-1). Must match the region
-            of sandboxes it attaches to. Example: us-pdx-1.
-        size (Union[Unset, int]): Storage capacity in megabytes. Can be increased after creation but not decreased.
-            Example: 1024.
-        template (Union[Unset, str]): Volume template to initialize from, with optional revision (e.g., "mytemplate:1"
-            or "mytemplate:latest") Example: mytemplate:latest.
+        region (str | Unset): Deployment region for the volume (e.g., us-pdx-1, eu-lon-1). Must match the region of
+            sandboxes it attaches to. Example: us-pdx-1.
+        size (int | Unset): Storage capacity in megabytes. Can be increased after creation but not decreased. Example:
+            1024.
+        template (str | Unset): Volume template to initialize from, with optional revision (e.g., "mytemplate:1" or
+            "mytemplate:latest") Example: mytemplate:latest.
     """
 
-    region: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
-    template: Union[Unset, str] = UNSET
+    region: str | Unset = UNSET
+    size: int | Unset = UNSET
+    template: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -46,10 +49,10 @@ class VolumeSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         region = d.pop("region", UNSET)
 
         size = d.pop("size", UNSET)

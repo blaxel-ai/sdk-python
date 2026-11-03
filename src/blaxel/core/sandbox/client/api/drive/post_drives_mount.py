@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -23,11 +23,10 @@ def _get_kwargs(
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -36,31 +35,36 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[DriveMountResponse, ErrorResponse] | None:
+) -> DriveMountResponse | ErrorResponse | None:
     if response.status_code == 200:
         response_200 = DriveMountResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 403:
         response_403 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 409:
         response_409 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -71,7 +75,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[DriveMountResponse, ErrorResponse]]:
+) -> Response[DriveMountResponse | ErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -84,7 +88,7 @@ def sync_detailed(
     *,
     client: Client,
     body: DriveMountRequest,
-) -> Response[Union[DriveMountResponse, ErrorResponse]]:
+) -> Response[DriveMountResponse | ErrorResponse]:
     """Attach a drive to a local path
 
      Mounts an agent drive using the blfs binary to a local path, optionally mounting a subpath within
@@ -101,7 +105,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DriveMountResponse, ErrorResponse]]
+        Response[DriveMountResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -119,7 +123,7 @@ def sync(
     *,
     client: Client,
     body: DriveMountRequest,
-) -> Union[DriveMountResponse, ErrorResponse] | None:
+) -> DriveMountResponse | ErrorResponse | None:
     """Attach a drive to a local path
 
      Mounts an agent drive using the blfs binary to a local path, optionally mounting a subpath within
@@ -136,7 +140,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DriveMountResponse, ErrorResponse]
+        DriveMountResponse | ErrorResponse
     """
 
     return sync_detailed(
@@ -149,7 +153,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: DriveMountRequest,
-) -> Response[Union[DriveMountResponse, ErrorResponse]]:
+) -> Response[DriveMountResponse | ErrorResponse]:
     """Attach a drive to a local path
 
      Mounts an agent drive using the blfs binary to a local path, optionally mounting a subpath within
@@ -166,7 +170,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[DriveMountResponse, ErrorResponse]]
+        Response[DriveMountResponse | ErrorResponse]
     """
 
     kwargs = _get_kwargs(
@@ -182,7 +186,7 @@ async def asyncio(
     *,
     client: Client,
     body: DriveMountRequest,
-) -> Union[DriveMountResponse, ErrorResponse] | None:
+) -> DriveMountResponse | ErrorResponse | None:
     """Attach a drive to a local path
 
      Mounts an agent drive using the blfs binary to a local path, optionally mounting a subpath within
@@ -199,7 +203,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[DriveMountResponse, ErrorResponse]
+        DriveMountResponse | ErrorResponse
     """
 
     return (

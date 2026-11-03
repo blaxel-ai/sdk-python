@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -19,12 +20,12 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/process/{identifier}/stdin",
+        "url": "/process/{identifier}/stdin".format(
+            identifier=quote(str(identifier), safe=""),
+        ),
     }
 
-    _body = body
-
-    _kwargs["content"] = _body
+    _kwargs["content"] = body
     headers["Content-Type"] = "application/octet-stream"
 
     _kwargs["headers"] = headers
@@ -33,36 +34,42 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, SuccessResponse] | None:
+) -> ErrorResponse | SuccessResponse | None:
     if response.status_code == 200:
         response_200 = SuccessResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 409:
         response_409 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 413:
         response_413 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_413, response)
         return response_413
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if response.status_code == 503:
         response_503 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_503, response)
         return response_503
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -73,7 +80,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
+) -> Response[ErrorResponse | SuccessResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -87,13 +94,13 @@ def sync_detailed(
     *,
     client: Client,
     body: str,
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
-    r"""Write to a process's stdin
+) -> Response[ErrorResponse | SuccessResponse]:
+    """Write to a process's stdin
 
-     Write the raw request body to the stdin of a process started with \"stdin\": true. Bytes are
-    forwarded verbatim, so include the trailing newline your protocol expects. Sequential requests keep
-    their order; each body is written atomically with respect to other writers. The pipe does not
-    survive a sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
+     Write the raw request body to the stdin of a process started with "stdin": true. Bytes are forwarded
+    verbatim, so include the trailing newline your protocol expects. Sequential requests keep their
+    order; each body is written atomically with respect to other writers. The pipe does not survive a
+    sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
 
     Args:
         identifier (str):
@@ -104,7 +111,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -124,13 +131,13 @@ def sync(
     *,
     client: Client,
     body: str,
-) -> Union[ErrorResponse, SuccessResponse] | None:
-    r"""Write to a process's stdin
+) -> ErrorResponse | SuccessResponse | None:
+    """Write to a process's stdin
 
-     Write the raw request body to the stdin of a process started with \"stdin\": true. Bytes are
-    forwarded verbatim, so include the trailing newline your protocol expects. Sequential requests keep
-    their order; each body is written atomically with respect to other writers. The pipe does not
-    survive a sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
+     Write the raw request body to the stdin of a process started with "stdin": true. Bytes are forwarded
+    verbatim, so include the trailing newline your protocol expects. Sequential requests keep their
+    order; each body is written atomically with respect to other writers. The pipe does not survive a
+    sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
 
     Args:
         identifier (str):
@@ -141,7 +148,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return sync_detailed(
@@ -156,13 +163,13 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: str,
-) -> Response[Union[ErrorResponse, SuccessResponse]]:
-    r"""Write to a process's stdin
+) -> Response[ErrorResponse | SuccessResponse]:
+    """Write to a process's stdin
 
-     Write the raw request body to the stdin of a process started with \"stdin\": true. Bytes are
-    forwarded verbatim, so include the trailing newline your protocol expects. Sequential requests keep
-    their order; each body is written atomically with respect to other writers. The pipe does not
-    survive a sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
+     Write the raw request body to the stdin of a process started with "stdin": true. Bytes are forwarded
+    verbatim, so include the trailing newline your protocol expects. Sequential requests keep their
+    order; each body is written atomically with respect to other writers. The pipe does not survive a
+    sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
 
     Args:
         identifier (str):
@@ -173,7 +180,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, SuccessResponse]]
+        Response[ErrorResponse | SuccessResponse]
     """
 
     kwargs = _get_kwargs(
@@ -191,13 +198,13 @@ async def asyncio(
     *,
     client: Client,
     body: str,
-) -> Union[ErrorResponse, SuccessResponse] | None:
-    r"""Write to a process's stdin
+) -> ErrorResponse | SuccessResponse | None:
+    """Write to a process's stdin
 
-     Write the raw request body to the stdin of a process started with \"stdin\": true. Bytes are
-    forwarded verbatim, so include the trailing newline your protocol expects. Sequential requests keep
-    their order; each body is written atomically with respect to other writers. The pipe does not
-    survive a sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
+     Write the raw request body to the stdin of a process started with "stdin": true. Bytes are forwarded
+    verbatim, so include the trailing newline your protocol expects. Sequential requests keep their
+    order; each body is written atomically with respect to other writers. The pipe does not survive a
+    sandbox-api restart: once it is gone this returns 409 and the process must be restarted.
 
     Args:
         identifier (str):
@@ -208,7 +215,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, SuccessResponse]
+        ErrorResponse | SuccessResponse
     """
 
     return (

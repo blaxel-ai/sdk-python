@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -6,25 +9,24 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.get_drive_jwks_response_200_keys_item import GetDriveJWKSResponse200KeysItem
+    from ..models.get_drive_jwks_response_200_keys_item import GetDriveJwksResponse200KeysItem
 
 
-T = TypeVar("T", bound="GetDriveJWKSResponse200")
+T = TypeVar("T", bound="GetDriveJwksResponse200")
 
 
 @_attrs_define
-class GetDriveJWKSResponse200:
+class GetDriveJwksResponse200:
     """
     Attributes:
-        keys (Union[Unset, list['GetDriveJWKSResponse200KeysItem']]):
+        keys (list[GetDriveJwksResponse200KeysItem] | Unset):
     """
 
-    keys: Union[Unset, list["GetDriveJWKSResponse200KeysItem"]] = UNSET
+    keys: list[GetDriveJwksResponse200KeysItem] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        keys: Union[Unset, list[dict[str, Any]]] = UNSET
+        keys: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.keys, Unset):
             keys = []
             for keys_item_data in self.keys:
@@ -43,16 +45,18 @@ class GetDriveJWKSResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.get_drive_jwks_response_200_keys_item import GetDriveJWKSResponse200KeysItem
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.get_drive_jwks_response_200_keys_item import (
+            GetDriveJwksResponse200KeysItem,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         keys = []
         _keys = d.pop("keys", UNSET)
         for keys_item_data in _keys or []:
-            keys_item = GetDriveJWKSResponse200KeysItem.from_dict(keys_item_data)
+            keys_item = GetDriveJwksResponse200KeysItem.from_dict(keys_item_data)
 
             keys.append(keys_item)
 

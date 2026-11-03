@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,28 +22,27 @@ class SandboxScheduleMetrics:
     """Workspace sandbox scheduling metrics for a UTC minute window. since is inclusive and until is exclusive.
 
     Attributes:
-        executions (Union[Unset, int]): Number of schedule execution submissions in the selected window.
-        executions_by_status (Union[Unset, SandboxScheduleExecutionStatusMetrics]): Schedule execution counts grouped by
+        executions (int | Unset): Number of schedule execution submissions in the selected window.
+        executions_by_status (SandboxScheduleExecutionStatusMetrics | Unset): Schedule execution counts grouped by
             submission acceptance status.
-        sandboxes (Union[Unset, int]): Number of active sandboxes in the workspace.
-        schedules (Union[Unset, int]): Number of schedules in the workspace.
-        since (Union[Unset, str]): Inclusive beginning of the metrics window, normalized to a UTC minute.
-        until (Union[Unset, str]): Exclusive end of the metrics window, normalized to a UTC minute.
+        sandboxes (int | Unset): Number of active sandboxes in the workspace.
+        schedules (int | Unset): Number of schedules in the workspace.
+        since (str | Unset): Inclusive beginning of the metrics window, normalized to a UTC minute.
+        until (str | Unset): Exclusive end of the metrics window, normalized to a UTC minute.
     """
 
-    executions: Union[Unset, int] = UNSET
-    executions_by_status: Union[Unset, "SandboxScheduleExecutionStatusMetrics"] = UNSET
-    sandboxes: Union[Unset, int] = UNSET
-    schedules: Union[Unset, int] = UNSET
-    since: Union[Unset, str] = UNSET
-    until: Union[Unset, str] = UNSET
+    executions: int | Unset = UNSET
+    executions_by_status: SandboxScheduleExecutionStatusMetrics | Unset = UNSET
+    sandboxes: int | Unset = UNSET
+    schedules: int | Unset = UNSET
+    since: str | Unset = UNSET
+    until: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         executions = self.executions
 
-        executions_by_status: Union[Unset, dict[str, Any]] = UNSET
+        executions_by_status: dict[str, Any] | Unset = UNSET
         if (
             self.executions_by_status
             and not isinstance(self.executions_by_status, Unset)
@@ -77,18 +79,18 @@ class SandboxScheduleMetrics:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         from ..models.sandbox_schedule_execution_status_metrics import (
             SandboxScheduleExecutionStatusMetrics,
-        )
+        )  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         executions = d.pop("executions", UNSET)
 
         _executions_by_status = d.pop("executionsByStatus", d.pop("executions_by_status", UNSET))
-        executions_by_status: Union[Unset, SandboxScheduleExecutionStatusMetrics]
+        executions_by_status: SandboxScheduleExecutionStatusMetrics | Unset
         if isinstance(_executions_by_status, Unset):
             executions_by_status = UNSET
         else:

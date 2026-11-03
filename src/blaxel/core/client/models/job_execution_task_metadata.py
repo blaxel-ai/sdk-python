@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,20 +16,20 @@ class JobExecutionTaskMetadata:
     """Job execution task metadata
 
     Attributes:
-        completed_at (Union[Unset, str]): Completion timestamp
-        created_at (Union[Unset, str]): Creation timestamp
-        name (Union[Unset, str]): Task name Example: task-0.
-        scheduled_at (Union[Unset, str]): Scheduled timestamp
-        started_at (Union[Unset, str]): Start timestamp
-        updated_at (Union[Unset, str]): Last update timestamp
+        completed_at (str | Unset): Completion timestamp
+        created_at (str | Unset): Creation timestamp
+        name (str | Unset): Task name Example: task-0.
+        scheduled_at (str | Unset): Scheduled timestamp
+        started_at (str | Unset): Start timestamp
+        updated_at (str | Unset): Last update timestamp
     """
 
-    completed_at: Union[Unset, str] = UNSET
-    created_at: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    scheduled_at: Union[Unset, str] = UNSET
-    started_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
+    completed_at: str | Unset = UNSET
+    created_at: str | Unset = UNSET
+    name: str | Unset = UNSET
+    scheduled_at: str | Unset = UNSET
+    started_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class JobExecutionTaskMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         completed_at = d.pop("completedAt", d.pop("completed_at", UNSET))
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))

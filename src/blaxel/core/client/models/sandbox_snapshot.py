@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -26,11 +29,11 @@ class SandboxSnapshot:
                 Defaults to the identifier. Example: my-snapshot.
             status (str): Status of the snapshot (pending, ready, failed) Example: ready.
             workspace (str): Workspace owning the snapshot
-            created_by (Union[Unset, str]): Who created the snapshot
-            sandbox_name (Union[Unset, str]): Name of the source sandbox. Kept for compatibility, read source.name instead.
-            source (Union[Unset, SandboxSnapshotSource]): The object a snapshot was captured from.
-            spec (Union[Unset, SandboxSnapshotSpec]): The configuration a snapshot carries, so a sandbox or an application
-                can be created from it once its source object is gone.
+            created_by (str | Unset): Who created the snapshot
+            sandbox_name (str | Unset): Name of the source sandbox. Kept for compatibility, read source.name instead.
+            source (SandboxSnapshotSource | Unset): The object a snapshot was captured from.
+            spec (SandboxSnapshotSpec | Unset): The configuration a snapshot carries, so a sandbox or an application can be
+                created from it once its source object is gone.
     """
 
     created_at: str
@@ -38,14 +41,13 @@ class SandboxSnapshot:
     name: str
     status: str
     workspace: str
-    created_by: Union[Unset, str] = UNSET
-    sandbox_name: Union[Unset, str] = UNSET
-    source: Union[Unset, "SandboxSnapshotSource"] = UNSET
-    spec: Union[Unset, "SandboxSnapshotSpec"] = UNSET
+    created_by: str | Unset = UNSET
+    sandbox_name: str | Unset = UNSET
+    source: SandboxSnapshotSource | Unset = UNSET
+    spec: SandboxSnapshotSpec | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         created_at = self.created_at
 
         id = self.id
@@ -60,13 +62,13 @@ class SandboxSnapshot:
 
         sandbox_name = self.sandbox_name
 
-        source: Union[Unset, dict[str, Any]] = UNSET
+        source: dict[str, Any] | Unset = UNSET
         if self.source and not isinstance(self.source, Unset) and not isinstance(self.source, dict):
             source = self.source.to_dict()
         elif self.source and isinstance(self.source, dict):
             source = self.source
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
+        spec: dict[str, Any] | Unset = UNSET
         if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
             spec = self.spec.to_dict()
         elif self.spec and isinstance(self.spec, dict):
@@ -95,13 +97,13 @@ class SandboxSnapshot:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.sandbox_snapshot_source import SandboxSnapshotSource
-        from ..models.sandbox_snapshot_spec import SandboxSnapshotSpec
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.sandbox_snapshot_source import SandboxSnapshotSource  # noqa: PLC0415
+        from ..models.sandbox_snapshot_spec import SandboxSnapshotSpec  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt") if "createdAt" in d else d.pop("created_at")
 
         id = d.pop("id")
@@ -117,14 +119,14 @@ class SandboxSnapshot:
         sandbox_name = d.pop("sandboxName", d.pop("sandbox_name", UNSET))
 
         _source = d.pop("source", UNSET)
-        source: Union[Unset, SandboxSnapshotSource]
+        source: SandboxSnapshotSource | Unset
         if isinstance(_source, Unset):
             source = UNSET
         else:
             source = SandboxSnapshotSource.from_dict(_source)
 
         _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, SandboxSnapshotSpec]
+        spec: SandboxSnapshotSpec | Unset
         if isinstance(_spec, Unset):
             spec = UNSET
         else:

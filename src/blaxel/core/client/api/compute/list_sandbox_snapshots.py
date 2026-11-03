@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/sandboxes/{sandbox_name}/snapshots",
+        "url": "/sandboxes/{sandbox_name}/snapshots".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -23,7 +26,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, list["SandboxSnapshot"]] | None:
+) -> Error | list[SandboxSnapshot] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -35,11 +38,13 @@ def _parse_response(
             response_200.append(componentsschemas_sandbox_snapshots_item)
 
         return response_200
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -50,7 +55,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, list["SandboxSnapshot"]]]:
+) -> Response[Error | list[SandboxSnapshot]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,7 +68,7 @@ def sync_detailed(
     sandbox_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, list["SandboxSnapshot"]]]:
+) -> Response[Error | list[SandboxSnapshot]]:
     """List sandbox snapshots
 
      Returns a list of snapshots for the specified sandbox.
@@ -76,7 +81,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['SandboxSnapshot']]]
+        Response[Error | list[SandboxSnapshot]]
     """
 
     kwargs = _get_kwargs(
@@ -94,7 +99,7 @@ def sync(
     sandbox_name: str,
     *,
     client: Client,
-) -> Union[Error, list["SandboxSnapshot"]] | None:
+) -> Error | list[SandboxSnapshot] | None:
     """List sandbox snapshots
 
      Returns a list of snapshots for the specified sandbox.
@@ -107,7 +112,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['SandboxSnapshot']]
+        Error | list[SandboxSnapshot]
     """
 
     return sync_detailed(
@@ -120,7 +125,7 @@ async def asyncio_detailed(
     sandbox_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, list["SandboxSnapshot"]]]:
+) -> Response[Error | list[SandboxSnapshot]]:
     """List sandbox snapshots
 
      Returns a list of snapshots for the specified sandbox.
@@ -133,7 +138,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, list['SandboxSnapshot']]]
+        Response[Error | list[SandboxSnapshot]]
     """
 
     kwargs = _get_kwargs(
@@ -149,7 +154,7 @@ async def asyncio(
     sandbox_name: str,
     *,
     client: Client,
-) -> Union[Error, list["SandboxSnapshot"]] | None:
+) -> Error | list[SandboxSnapshot] | None:
     """List sandbox snapshots
 
      Returns a list of snapshots for the specified sandbox.
@@ -162,7 +167,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, list['SandboxSnapshot']]
+        Error | list[SandboxSnapshot]
     """
 
     return (

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,43 +23,42 @@ class SandboxNetwork:
     proxy settings
 
         Attributes:
-            allowed_domains (Union[Unset, list[str]]): Deprecated: use proxy.allowedDomains instead. List of allowed
-                external domains (allowlist). Kept for backward compatibility. Example: ["api.stripe.com", "api.openai.com",
+            allowed_domains (list[str] | Unset): Deprecated: use proxy.allowedDomains instead. List of allowed external
+                domains (allowlist). Kept for backward compatibility. Example: ["api.stripe.com", "api.openai.com",
                 "*.s3.amazonaws.com"].
-            egress (Union[Unset, EgressConfig]): Egress configuration for routing sandbox outbound traffic through a
-                dedicated IP gateway
-            firewall (Union[Unset, FirewallConfig]): Firewall configuration specifying which network lockdown rulesets to
-                apply. Valid rulesets are "default" (no-op), "proxy" (restrict egress to proxy), and "dedicated-ip" (restrict
-                egress to dedicated IP gateway).
-            forbidden_domains (Union[Unset, list[str]]): Deprecated: use proxy.forbiddenDomains instead. List of forbidden
+            egress (EgressConfig | Unset): Egress configuration for routing sandbox outbound traffic through a dedicated IP
+                gateway
+            firewall (FirewallConfig | Unset): Firewall configuration specifying which network lockdown rulesets to apply.
+                Valid rulesets are "default" (no-op), "proxy" (restrict egress to proxy), and "dedicated-ip" (restrict egress to
+                dedicated IP gateway).
+            forbidden_domains (list[str] | Unset): Deprecated: use proxy.forbiddenDomains instead. List of forbidden
                 external domains (denylist). Kept for backward compatibility. Example: ["*.malware.com", "evil.example.org"].
-            proxy (Union[Unset, ProxyConfig]): Proxy configuration for routing sandbox HTTP traffic through the platform
-                proxy with MITM inspection and per-destination header/body injection
-            subnet (Union[Unset, str]): Subnet name for the sandbox. Takes priority over any subnet derived from egress
-                config. Defaults to "default" when absent. Example: default.
+            proxy (ProxyConfig | Unset): Proxy configuration for routing sandbox HTTP traffic through the platform proxy
+                with MITM inspection and per-destination header/body injection
+            subnet (str | Unset): Subnet name for the sandbox. Takes priority over any subnet derived from egress config.
+                Defaults to "default" when absent. Example: default.
     """
 
-    allowed_domains: Union[Unset, list[str]] = UNSET
-    egress: Union[Unset, "EgressConfig"] = UNSET
-    firewall: Union[Unset, "FirewallConfig"] = UNSET
-    forbidden_domains: Union[Unset, list[str]] = UNSET
-    proxy: Union[Unset, "ProxyConfig"] = UNSET
-    subnet: Union[Unset, str] = UNSET
+    allowed_domains: list[str] | Unset = UNSET
+    egress: EgressConfig | Unset = UNSET
+    firewall: FirewallConfig | Unset = UNSET
+    forbidden_domains: list[str] | Unset = UNSET
+    proxy: ProxyConfig | Unset = UNSET
+    subnet: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        allowed_domains: Union[Unset, list[str]] = UNSET
+        allowed_domains: list[str] | Unset = UNSET
         if not isinstance(self.allowed_domains, Unset):
             allowed_domains = self.allowed_domains
 
-        egress: Union[Unset, dict[str, Any]] = UNSET
+        egress: dict[str, Any] | Unset = UNSET
         if self.egress and not isinstance(self.egress, Unset) and not isinstance(self.egress, dict):
             egress = self.egress.to_dict()
         elif self.egress and isinstance(self.egress, dict):
             egress = self.egress
 
-        firewall: Union[Unset, dict[str, Any]] = UNSET
+        firewall: dict[str, Any] | Unset = UNSET
         if (
             self.firewall
             and not isinstance(self.firewall, Unset)
@@ -66,11 +68,11 @@ class SandboxNetwork:
         elif self.firewall and isinstance(self.firewall, dict):
             firewall = self.firewall
 
-        forbidden_domains: Union[Unset, list[str]] = UNSET
+        forbidden_domains: list[str] | Unset = UNSET
         if not isinstance(self.forbidden_domains, Unset):
             forbidden_domains = self.forbidden_domains
 
-        proxy: Union[Unset, dict[str, Any]] = UNSET
+        proxy: dict[str, Any] | Unset = UNSET
         if self.proxy and not isinstance(self.proxy, Unset) and not isinstance(self.proxy, dict):
             proxy = self.proxy.to_dict()
         elif self.proxy and isinstance(self.proxy, dict):
@@ -97,25 +99,25 @@ class SandboxNetwork:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.egress_config import EgressConfig
-        from ..models.firewall_config import FirewallConfig
-        from ..models.proxy_config import ProxyConfig
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.egress_config import EgressConfig  # noqa: PLC0415
+        from ..models.firewall_config import FirewallConfig  # noqa: PLC0415
+        from ..models.proxy_config import ProxyConfig  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         allowed_domains = cast(list[str], d.pop("allowedDomains", d.pop("allowed_domains", UNSET)))
 
         _egress = d.pop("egress", UNSET)
-        egress: Union[Unset, EgressConfig]
+        egress: EgressConfig | Unset
         if isinstance(_egress, Unset):
             egress = UNSET
         else:
             egress = EgressConfig.from_dict(_egress)
 
         _firewall = d.pop("firewall", UNSET)
-        firewall: Union[Unset, FirewallConfig]
+        firewall: FirewallConfig | Unset
         if isinstance(_firewall, Unset):
             firewall = UNSET
         else:
@@ -126,7 +128,7 @@ class SandboxNetwork:
         )
 
         _proxy = d.pop("proxy", UNSET)
-        proxy: Union[Unset, ProxyConfig]
+        proxy: ProxyConfig | Unset
         if isinstance(_proxy, Unset):
             proxy = UNSET
         else:

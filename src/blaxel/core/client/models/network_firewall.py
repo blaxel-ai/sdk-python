@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,15 +16,15 @@ class NetworkFirewall:
     """Firewall configuration restricting which external domains the sandbox can access
 
     Attributes:
-        allowed_domains (Union[Unset, list[str]]): List of allowed external domains. Supports wildcards (e.g.
+        allowed_domains (list[str] | Unset): List of allowed external domains. Supports wildcards (e.g.
             *.s3.amazonaws.com). Example: ["api.stripe.com", "api.openai.com", "*.s3.amazonaws.com"].
     """
 
-    allowed_domains: Union[Unset, list[str]] = UNSET
+    allowed_domains: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        allowed_domains: Union[Unset, list[str]] = UNSET
+        allowed_domains: list[str] | Unset = UNSET
         if not isinstance(self.allowed_domains, Unset):
             allowed_domains = self.allowed_domains
 
@@ -34,10 +37,10 @@ class NetworkFirewall:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         allowed_domains = cast(list[str], d.pop("allowedDomains", d.pop("allowed_domains", UNSET)))
 
         network_firewall = cls(

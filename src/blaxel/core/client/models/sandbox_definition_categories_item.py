@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -8,8 +11,6 @@ T = TypeVar("T", bound="SandboxDefinitionCategoriesItem")
 
 @_attrs_define
 class SandboxDefinitionCategoriesItem:
-    """ """
-
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -19,10 +20,10 @@ class SandboxDefinitionCategoriesItem:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         sandbox_definition_categories_item = cls()
 
         sandbox_definition_categories_item.additional_properties = d

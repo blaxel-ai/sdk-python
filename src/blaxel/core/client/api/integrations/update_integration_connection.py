@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -19,15 +20,16 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "put",
-        "url": f"/integrations/connections/{connection_name}",
+        "url": "/integrations/connections/{connection_name}".format(
+            connection_name=quote(str(connection_name), safe=""),
+        ),
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -36,36 +38,42 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, IntegrationConnection] | None:
+) -> Error | IntegrationConnection | None:
     if response.status_code == 200:
         response_200 = IntegrationConnection.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = Error.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -76,7 +84,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, IntegrationConnection]]:
+) -> Response[Error | IntegrationConnection]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -90,7 +98,7 @@ def sync_detailed(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> Response[Union[Error, IntegrationConnection]]:
+) -> Response[Error | IntegrationConnection]:
     """Update integration connection
 
      Updates an integration connection's configuration or credentials. Changes take effect immediately
@@ -106,7 +114,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, IntegrationConnection]]
+        Response[Error | IntegrationConnection]
     """
 
     kwargs = _get_kwargs(
@@ -126,7 +134,7 @@ def sync(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> Union[Error, IntegrationConnection] | None:
+) -> Error | IntegrationConnection | None:
     """Update integration connection
 
      Updates an integration connection's configuration or credentials. Changes take effect immediately
@@ -142,7 +150,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, IntegrationConnection]
+        Error | IntegrationConnection
     """
 
     return sync_detailed(
@@ -157,7 +165,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> Response[Union[Error, IntegrationConnection]]:
+) -> Response[Error | IntegrationConnection]:
     """Update integration connection
 
      Updates an integration connection's configuration or credentials. Changes take effect immediately
@@ -173,7 +181,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, IntegrationConnection]]
+        Response[Error | IntegrationConnection]
     """
 
     kwargs = _get_kwargs(
@@ -191,7 +199,7 @@ async def asyncio(
     *,
     client: Client,
     body: IntegrationConnection,
-) -> Union[Error, IntegrationConnection] | None:
+) -> Error | IntegrationConnection | None:
     """Update integration connection
 
      Updates an integration connection's configuration or credentials. Changes take effect immediately
@@ -207,7 +215,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, IntegrationConnection]
+        Error | IntegrationConnection
     """
 
     return (

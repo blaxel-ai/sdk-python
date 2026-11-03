@@ -1,5 +1,6 @@
 {% set class_name = model.class_info.name %}
 {% set module_name = model.class_info.module_name %}
+{# Blaxel: paginated list responses (data + meta) accept both the legacy bare list and the paginated shape #}
 {% set paginated_list = namespace(value=false) %}
 {% set has_data = namespace(value=false) %}
 {% set has_meta = namespace(value=false) %}
@@ -16,15 +17,20 @@
 {% set paginated_list.value = true %}
 {% endif %}
 {% endif %}
-from typing import Any, TypeVar, Optional, BinaryIO, TextIO, TYPE_CHECKING
+{% set is_error_model = class_name in ["Error", "SandboxError", "ErrorResponse"] %}
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-{% if class_name in ["Error", "SandboxError", "ErrorResponse"] %}
+{% if is_error_model %}
 import httpx
 {% endif %}
 {% if model.is_multipart_body %}
 import json
+from .. import types
 {% endif %}
 
 {% if paginated_list.value %}
@@ -36,7 +42,7 @@ from ..types import UNSET, Unset
 {{ relative }}
 {% endfor %}
 
-{% for lazy_import in model.lazy_imports %}
+{% for lazy_import in model.lazy_imports | sort %}
 {% if loop.first %}
 if TYPE_CHECKING:
 {% endif %}
@@ -45,18 +51,18 @@ if TYPE_CHECKING:
 
 
 {% if model.additional_properties %}
-{% set additional_property_type = 'Any' if model.additional_properties == True else model.additional_properties.get_type_string(quoted=not model.additional_properties.is_base_type) %}
+{% set additional_property_type = 'Any' if model.additional_properties == True else model.additional_properties.get_type_string() | as_unembedded_code %}
 {% endif %}
 
-{% from "helpers.jinja" import safe_docstring %}
+{% from "helpers.jinja" import docstring %}
 
 T = TypeVar("T", bound="{{ class_name }}")
 
 {% macro class_docstring_content(model) %}
-    {% if model.title %}{{ model.title | wordwrap(116) }}
+    {% if model.title %}{{ model.title | safe_for_docstring | wordwrap(116) }}
 
     {% endif -%}
-    {%- if model.description %}{{ model.description | wordwrap(116) }}
+    {%- if model.description %}{{ model.description | safe_for_docstring | wordwrap(116) }}
 
     {% endif %}
     {% if not model.title and not model.description %}
@@ -65,75 +71,99 @@ T = TypeVar("T", bound="{{ class_name }}")
     {% endif %}
     {% if model.example %}
     Example:
-        {{ model.example | string | wordwrap(112) | indent(12) }}
+        {{ model.example | safe_for_docstring | wordwrap(112) | indent(12) }}
 
     {% endif %}
-    {% if model.required_properties or model.optional_properties %}
+    {% if (not config.docstrings_on_attributes) and (model.required_properties or model.optional_properties) %}
     Attributes:
     {% for property in model.required_properties + model.optional_properties %}
         {{ property.to_docstring() | wordwrap(112) | indent(12) }}
     {% endfor %}{% endif %}
 {% endmacro %}
 
+{% macro declare_property(property) %}
+{%- if config.docstrings_on_attributes and property.description -%}
+{{ property.to_string() | as_unembedded_code }}
+{{ docstring(property.description | safe_for_docstring) | wordwrap(112) }}
+{%- else -%}
+{{ property.to_string() | as_unembedded_code }}
+{%- endif -%}
+{% endmacro %}
+
 @_attrs_define
 class {{ class_name }}:
-    {{ safe_docstring(class_docstring_content(model)) | indent(4) }}
+    {{ docstring(class_docstring_content(model)) | indent(4) }}
 
-    {% if class_name in ["Error", "SandboxError", "ErrorResponse"] %}
+    {% if is_error_model %}
     # Retain HTTP metadata without changing the serialized API body or constructor.
     _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
     {% endif %}
     {% for property in model.required_properties + model.optional_properties %}
     {% if property.default is none and property.required %}
     {% if paginated_list.value and property.python_name == "meta" %}
-    meta: "{{ property.get_type_string() }} | Unset"
+    meta: {{ property.get_type_string() | as_unembedded_code }} | Unset
     {% else %}
-    {{ property.to_string() }}
+    {{ declare_property(property) | indent(4) }}
     {% endif %}
     {% endif %}
     {% endfor %}
     {% for property in model.required_properties + model.optional_properties %}
     {% if property.default is not none or not property.required %}
-    {{ property.to_string() }}
+    {{ declare_property(property) | indent(4) }}
     {% endif %}
     {% endfor %}
     {% if model.additional_properties %}
     additional_properties: dict[str, {{ additional_property_type }}] = _attrs_field(init=False, factory=dict)
     {% endif %}
 
-{% macro _to_dict(multipart=False) %}
-{% for property in model.required_properties + model.optional_properties %}
+{% macro _transform_property(property, content) %}
 {% import "property_templates/" + property.template as prop_template %}
-{% if multipart %}
-{{ prop_template.transform_multipart(property, "self." + property.python_name, property.python_name) }}
-{% elif paginated_list.value and property.python_name == "meta" and property.required %}
-meta = self.meta.to_dict() if not isinstance(self.meta, Unset) else UNSET
-{% elif prop_template.transform %}
-{{ prop_template.transform(property=property, source="self." + property.python_name, destination=property.python_name) }}
+{%- if prop_template.transform -%}
+{{ prop_template.transform(property=property, source=content, destination=property.python_name) }}
+{%- else -%}
+{{ property.python_name }} = {{ content }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro multipart(property, source, destination) %}
+{% import "property_templates/" + property.template as prop_template %}
+{% if not property.required %}
+if not isinstance({{source}}, Unset):
+    {{ prop_template.multipart(property, source, destination) | indent(4) }}
 {% else %}
-{{ property.python_name }} = self.{{ property.python_name }}
+{{ prop_template.multipart(property, source, destination) }}
 {% endif %}
+{% endmacro %}
 
-{% endfor %}
-
+{% macro _prepare_field_dict() %}
 field_dict: dict[str, Any] = {}
 {% if model.additional_properties %}
 {% import "property_templates/" + model.additional_properties.template as prop_template %}
-{% if multipart %}
-for prop_name, prop in self.additional_properties.items():
-    {{ prop_template.transform_multipart(model.additional_properties, "prop", "field_dict[prop_name]") | indent(4) }}
-{% elif prop_template.transform %}
+{% if prop_template.transform %}
 for prop_name, prop in self.additional_properties.items():
     {{ prop_template.transform(model.additional_properties, "prop", "field_dict[prop_name]", declare_type=false) | indent(4) }}
 {% else %}
 field_dict.update(self.additional_properties)
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
+{% macro _to_dict() %}
+{% for property in model.required_properties + model.optional_properties -%}
+{% if paginated_list.value and property.python_name == "meta" and property.required %}
+meta = self.meta.to_dict() if not isinstance(self.meta, Unset) else UNSET
+{% else %}
+{{ _transform_property(property, "self." + property.python_name) }}
 {% endif %}
-{% endif %}
+
+{% endfor %}
+
+{{ _prepare_field_dict() }}
 {% if model.required_properties | length > 0 or model.optional_properties | length > 0 %}
 field_dict.update({
     {% for property in model.required_properties + model.optional_properties %}
     {% if property.required and not (paginated_list.value and property.python_name == "meta") %}
-    "{{ property.name }}": {{ property.python_name }},
+    "{{ property.name | in_double_quote_literal }}": {{ property.python_name }},
     {% endif %}
     {% endfor %}
 })
@@ -145,7 +175,7 @@ if meta is not UNSET:
 {% for property in model.optional_properties %}
 {% if not property.required %}
 if {{ property.python_name }} is not UNSET:
-    field_dict["{{ property.name }}"] = {{ property.python_name }}
+    field_dict["{{ property.name | in_double_quote_literal }}"] = {{ property.python_name }}
 {% endif %}
 {% endfor %}
 
@@ -153,20 +183,37 @@ return field_dict
 {% endmacro %}
 
     def to_dict(self) -> dict[str, Any]:
-    {% for lazy_import in model.lazy_imports %}
-        {{ lazy_import }}
+    {% for lazy_import in model.lazy_imports | sort %}
+        {{ lazy_import }} # noqa: PLC0415
     {% endfor %}
         {{ _to_dict() | indent(8) }}
 
 {% if model.is_multipart_body %}
-    def to_multipart(self) -> dict[str, Any]:
-        {{ _to_dict(multipart=True) | indent(8) }}
+    def to_multipart(self) -> types.RequestFiles:
+    {% for lazy_import in model.lazy_imports | sort %}
+        {{ lazy_import }} # noqa: PLC0415
+    {% endfor %}
+        files: types.RequestFiles = []
+
+        {% for property in model.required_properties + model.optional_properties %}
+        {% set destination = "\"" + (property.name | in_double_quote_literal) + "\"" %}
+        {{ multipart(property, "self." + property.python_name, destination) | indent(8) }}
+
+        {% endfor %}
+
+        {% if model.additional_properties %}
+        for prop_name, prop in self.additional_properties.items():
+            {{ multipart(model.additional_properties, "prop", "prop_name") | indent(4) }}
+        {% endif %}
+
+        return files
+
 {% endif %}
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]{% if paginated_list.value %} | list[Any]{% endif %}) -> T | None:
-    {% for lazy_import in model.lazy_imports %}
-        {{ lazy_import }}
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]{% if paginated_list.value %} | list[Any]{% endif %}) -> T | None:
+    {% for lazy_import in model.lazy_imports | sort %}
+        {{ lazy_import }} # noqa: PLC0415
     {% endfor %}
 {% if (model.required_properties or model.optional_properties or model.additional_properties) %}
 {% if paginated_list.value %}
@@ -177,20 +224,22 @@ return field_dict
 {% else %}
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
 {% endif %}
 {% for property in model.required_properties + model.optional_properties %}
+    {% set wire_name = property.name | in_double_quote_literal %}
+    {# Blaxel: also accept the snake_case python name as input key #}
     {% if property.required %}
         {% if property.name != property.python_name %}
-            {% set property_source = 'd.pop("' + property.name + '") if "' + property.name + '" in d else d.pop("' + property.python_name + '")' %}
+            {% set property_source = 'd.pop("' + wire_name + '") if "' + wire_name + '" in d else d.pop("' + property.python_name + '")' %}
         {% else %}
-            {% set property_source = 'd.pop("' + property.name + '")' %}
+            {% set property_source = 'd.pop("' + wire_name + '")' %}
         {% endif %}
     {% else %}
         {% if property.name != property.python_name %}
-            {% set property_source = 'd.pop("' + property.name + '", d.pop("' + property.python_name + '", UNSET))' %}
+            {% set property_source = 'd.pop("' + wire_name + '", d.pop("' + property.python_name + '", UNSET))' %}
         {% else %}
-            {% set property_source = 'd.pop("' + property.name + '", UNSET)' %}
+            {% set property_source = 'd.pop("' + wire_name + '", UNSET)' %}
         {% endif %}
     {% endif %}
     {% import "property_templates/" + property.template as prop_template %}
@@ -215,8 +264,8 @@ return field_dict
         {% import "property_templates/" + model.additional_properties.template as prop_template %}
 
 {% if model.additional_properties.lazy_imports %}
-    {% for lazy_import in model.additional_properties.lazy_imports %}
-        {{ lazy_import }}
+    {% for lazy_import in model.additional_properties.lazy_imports | sort %}
+        {{ lazy_import }} # noqa: PLC0415
     {% endfor %}
 {% endif %}
     {% else %}

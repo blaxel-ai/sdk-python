@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,7 +14,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     feature_key: str,
     *,
-    account: Union[Unset, str] = UNSET,
+    account: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -23,7 +24,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/features/{feature_key}",
+        "url": "/features/{feature_key}".format(
+            feature_key=quote(str(feature_key), safe=""),
+        ),
         "params": params,
     }
 
@@ -32,26 +35,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, TestFeatureFlagResponse200] | None:
+) -> Error | TestFeatureFlagResponse200 | None:
     if response.status_code == 200:
         response_200 = TestFeatureFlagResponse200.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -62,7 +69,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, TestFeatureFlagResponse200]]:
+) -> Response[Error | TestFeatureFlagResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -75,8 +82,8 @@ def sync_detailed(
     feature_key: str,
     *,
     client: Client,
-    account: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, TestFeatureFlagResponse200]]:
+    account: str | Unset = UNSET,
+) -> Response[Error | TestFeatureFlagResponse200]:
     """Retrieve feature flag evaluation for workspace
 
      Evaluates a specific feature flag for the workspace with full details including variant and payload.
@@ -84,14 +91,14 @@ def sync_detailed(
 
     Args:
         feature_key (str):
-        account (Union[Unset, str]):
+        account (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, TestFeatureFlagResponse200]]
+        Response[Error | TestFeatureFlagResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -110,8 +117,8 @@ def sync(
     feature_key: str,
     *,
     client: Client,
-    account: Union[Unset, str] = UNSET,
-) -> Union[Error, TestFeatureFlagResponse200] | None:
+    account: str | Unset = UNSET,
+) -> Error | TestFeatureFlagResponse200 | None:
     """Retrieve feature flag evaluation for workspace
 
      Evaluates a specific feature flag for the workspace with full details including variant and payload.
@@ -119,14 +126,14 @@ def sync(
 
     Args:
         feature_key (str):
-        account (Union[Unset, str]):
+        account (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, TestFeatureFlagResponse200]
+        Error | TestFeatureFlagResponse200
     """
 
     return sync_detailed(
@@ -140,8 +147,8 @@ async def asyncio_detailed(
     feature_key: str,
     *,
     client: Client,
-    account: Union[Unset, str] = UNSET,
-) -> Response[Union[Error, TestFeatureFlagResponse200]]:
+    account: str | Unset = UNSET,
+) -> Response[Error | TestFeatureFlagResponse200]:
     """Retrieve feature flag evaluation for workspace
 
      Evaluates a specific feature flag for the workspace with full details including variant and payload.
@@ -149,14 +156,14 @@ async def asyncio_detailed(
 
     Args:
         feature_key (str):
-        account (Union[Unset, str]):
+        account (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, TestFeatureFlagResponse200]]
+        Response[Error | TestFeatureFlagResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -173,8 +180,8 @@ async def asyncio(
     feature_key: str,
     *,
     client: Client,
-    account: Union[Unset, str] = UNSET,
-) -> Union[Error, TestFeatureFlagResponse200] | None:
+    account: str | Unset = UNSET,
+) -> Error | TestFeatureFlagResponse200 | None:
     """Retrieve feature flag evaluation for workspace
 
      Evaluates a specific feature flag for the workspace with full details including variant and payload.
@@ -182,14 +189,14 @@ async def asyncio(
 
     Args:
         feature_key (str):
-        account (Union[Unset, str]):
+        account (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, TestFeatureFlagResponse200]
+        Error | TestFeatureFlagResponse200
     """
 
     return (

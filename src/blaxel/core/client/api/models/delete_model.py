@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,37 +16,44 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/models/{model_name}",
+        "url": "/models/{model_name}".format(
+            model_name=quote(str(model_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Model] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | Model | None:
     if response.status_code == 200:
         response_200 = Model.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -54,7 +62,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Model]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | Model]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,7 +75,7 @@ def sync_detailed(
     model_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, Model]]:
+) -> Response[Error | Model]:
     """Delete model endpoint
 
      Permanently deletes a model gateway endpoint. Any agents or applications using this endpoint will
@@ -81,7 +89,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Model]]
+        Response[Error | Model]
     """
 
     kwargs = _get_kwargs(
@@ -99,7 +107,7 @@ def sync(
     model_name: str,
     *,
     client: Client,
-) -> Union[Error, Model] | None:
+) -> Error | Model | None:
     """Delete model endpoint
 
      Permanently deletes a model gateway endpoint. Any agents or applications using this endpoint will
@@ -113,7 +121,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Model]
+        Error | Model
     """
 
     return sync_detailed(
@@ -126,7 +134,7 @@ async def asyncio_detailed(
     model_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, Model]]:
+) -> Response[Error | Model]:
     """Delete model endpoint
 
      Permanently deletes a model gateway endpoint. Any agents or applications using this endpoint will
@@ -140,7 +148,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Model]]
+        Response[Error | Model]
     """
 
     kwargs = _get_kwargs(
@@ -156,7 +164,7 @@ async def asyncio(
     model_name: str,
     *,
     client: Client,
-) -> Union[Error, Model] | None:
+) -> Error | Model | None:
     """Delete model endpoint
 
      Permanently deletes a model gateway endpoint. Any agents or applications using this endpoint will
@@ -170,7 +178,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Model]
+        Error | Model
     """
 
     return (

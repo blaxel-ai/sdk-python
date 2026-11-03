@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,12 +15,12 @@ T = TypeVar("T", bound="CleanupImagesResponse200")
 class CleanupImagesResponse200:
     """
     Attributes:
-        deleted (Union[Unset, int]): Number of images deleted
-        message (Union[Unset, str]): Result message
+        deleted (int | Unset): Number of images deleted
+        message (str | Unset): Result message
     """
 
-    deleted: Union[Unset, int] = UNSET
-    message: Union[Unset, str] = UNSET
+    deleted: int | Unset = UNSET
+    message: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,10 +39,10 @@ class CleanupImagesResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         deleted = d.pop("deleted", UNSET)
 
         message = d.pop("message", UNSET)

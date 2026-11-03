@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -17,7 +18,10 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/volume_templates/{volume_template_name}/versions/{version_name}",
+        "url": "/volume_templates/{volume_template_name}/versions/{version_name}".format(
+            volume_template_name=quote(str(volume_template_name), safe=""),
+            version_name=quote(str(version_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -25,19 +29,22 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
+) -> Any | DeleteVolumeTemplateVersionResponse200 | None:
     if response.status_code == 200:
         response_200 = DeleteVolumeTemplateVersionResponse200.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -48,7 +55,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
+) -> Response[Any | DeleteVolumeTemplateVersionResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,7 +69,7 @@ def sync_detailed(
     version_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
+) -> Response[Any | DeleteVolumeTemplateVersionResponse200]:
     """Delete volume template version
 
      Deletes a specific version of a volume template.
@@ -76,7 +83,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]
+        Response[Any | DeleteVolumeTemplateVersionResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -96,7 +103,7 @@ def sync(
     version_name: str,
     *,
     client: Client,
-) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
+) -> Any | DeleteVolumeTemplateVersionResponse200 | None:
     """Delete volume template version
 
      Deletes a specific version of a volume template.
@@ -110,7 +117,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DeleteVolumeTemplateVersionResponse200]
+        Any | DeleteVolumeTemplateVersionResponse200
     """
 
     return sync_detailed(
@@ -125,7 +132,7 @@ async def asyncio_detailed(
     version_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]:
+) -> Response[Any | DeleteVolumeTemplateVersionResponse200]:
     """Delete volume template version
 
      Deletes a specific version of a volume template.
@@ -139,7 +146,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DeleteVolumeTemplateVersionResponse200]]
+        Response[Any | DeleteVolumeTemplateVersionResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -157,7 +164,7 @@ async def asyncio(
     version_name: str,
     *,
     client: Client,
-) -> Union[Any, DeleteVolumeTemplateVersionResponse200] | None:
+) -> Any | DeleteVolumeTemplateVersionResponse200 | None:
     """Delete volume template version
 
      Deletes a specific version of a volume template.
@@ -171,7 +178,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DeleteVolumeTemplateVersionResponse200]
+        Any | DeleteVolumeTemplateVersionResponse200
     """
 
     return (

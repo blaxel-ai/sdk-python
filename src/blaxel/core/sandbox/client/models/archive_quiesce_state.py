@@ -2,6 +2,10 @@ from enum import Enum
 
 
 class ArchiveQuiesceState(str, Enum):
+    STATE_ACTIVE = "active"
+    STATE_QUIESCED = "quiesced"
+    STATE_QUIESCING = "quiescing"
+    STATE_RESTORING = "restoring"
     ACTIVE = "active"
     QUIESCED = "quiesced"
     QUIESCING = "quiescing"

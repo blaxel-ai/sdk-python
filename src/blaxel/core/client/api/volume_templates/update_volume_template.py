@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,8 +14,8 @@ def _get_kwargs(
     volume_template_name: str,
     *,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -28,16 +29,17 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "put",
-        "url": f"/volume_templates/{volume_template_name}",
+        "url": "/volume_templates/{volume_template_name}".format(
+            volume_template_name=quote(str(volume_template_name), safe=""),
+        ),
         "params": params,
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -49,6 +51,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> VolumeTempla
         response_200 = VolumeTemplate.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -71,8 +74,8 @@ def sync_detailed(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> Response[VolumeTemplate]:
     """Create or update volume template
 
@@ -80,8 +83,8 @@ def sync_detailed(
 
     Args:
         volume_template_name (str):
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:
@@ -111,8 +114,8 @@ def sync(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> VolumeTemplate | None:
     """Create or update volume template
 
@@ -120,8 +123,8 @@ def sync(
 
     Args:
         volume_template_name (str):
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:
@@ -146,8 +149,8 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> Response[VolumeTemplate]:
     """Create or update volume template
 
@@ -155,8 +158,8 @@ async def asyncio_detailed(
 
     Args:
         volume_template_name (str):
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:
@@ -184,8 +187,8 @@ async def asyncio(
     *,
     client: Client,
     body: VolumeTemplate,
-    upload: Union[Unset, bool] = UNSET,
-    version: Union[Unset, str] = UNSET,
+    upload: bool | Unset = UNSET,
+    version: str | Unset = UNSET,
 ) -> VolumeTemplate | None:
     """Create or update volume template
 
@@ -193,8 +196,8 @@ async def asyncio(
 
     Args:
         volume_template_name (str):
-        upload (Union[Unset, bool]):
-        version (Union[Unset, str]):
+        upload (bool | Unset):
+        version (str | Unset):
         body (VolumeTemplate): Volume template for creating pre-configured volumes
 
     Raises:

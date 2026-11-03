@@ -2,6 +2,9 @@ from enum import Enum
 
 
 class ArchiveExportState(str, Enum):
+    EXPORT_FAILED = "failed"
+    EXPORT_RUNNING = "running"
+    EXPORT_SUCCEEDED = "succeeded"
     FAILED = "failed"
     RUNNING = "running"
     SUCCEEDED = "succeeded"

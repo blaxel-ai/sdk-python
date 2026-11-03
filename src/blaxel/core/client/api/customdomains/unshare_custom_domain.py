@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -15,21 +16,26 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/customdomains/{domain_name}/share/{target_workspace}",
+        "url": "/customdomains/{domain_name}/share/{target_workspace}".format(
+            domain_name=quote(str(domain_name), safe=""),
+            target_workspace=quote(str(target_workspace), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, CustomDomain] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | CustomDomain | None:
     if response.status_code == 200:
         response_200 = CustomDomain.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -38,9 +44,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, C
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Any, CustomDomain]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | CustomDomain]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -54,11 +58,11 @@ def sync_detailed(
     target_workspace: str,
     *,
     client: Client,
-) -> Response[Union[Any, CustomDomain]]:
-    r"""Unshare a custom domain
+) -> Response[Any | CustomDomain]:
+    """Unshare a custom domain
 
      Revokes sharing of a custom domain with a target workspace (or the account when targetWorkspace is
-    \"account\"). Removes the shared copy / clears the account-global marker; the owner's domain is not
+    "account"). Removes the shared copy / clears the account-global marker; the owner's domain is not
     affected.
 
     Args:
@@ -70,7 +74,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, CustomDomain]]
+        Response[Any | CustomDomain]
     """
 
     kwargs = _get_kwargs(
@@ -90,11 +94,11 @@ def sync(
     target_workspace: str,
     *,
     client: Client,
-) -> Union[Any, CustomDomain] | None:
-    r"""Unshare a custom domain
+) -> Any | CustomDomain | None:
+    """Unshare a custom domain
 
      Revokes sharing of a custom domain with a target workspace (or the account when targetWorkspace is
-    \"account\"). Removes the shared copy / clears the account-global marker; the owner's domain is not
+    "account"). Removes the shared copy / clears the account-global marker; the owner's domain is not
     affected.
 
     Args:
@@ -106,7 +110,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, CustomDomain]
+        Any | CustomDomain
     """
 
     return sync_detailed(
@@ -121,11 +125,11 @@ async def asyncio_detailed(
     target_workspace: str,
     *,
     client: Client,
-) -> Response[Union[Any, CustomDomain]]:
-    r"""Unshare a custom domain
+) -> Response[Any | CustomDomain]:
+    """Unshare a custom domain
 
      Revokes sharing of a custom domain with a target workspace (or the account when targetWorkspace is
-    \"account\"). Removes the shared copy / clears the account-global marker; the owner's domain is not
+    "account"). Removes the shared copy / clears the account-global marker; the owner's domain is not
     affected.
 
     Args:
@@ -137,7 +141,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, CustomDomain]]
+        Response[Any | CustomDomain]
     """
 
     kwargs = _get_kwargs(
@@ -155,11 +159,11 @@ async def asyncio(
     target_workspace: str,
     *,
     client: Client,
-) -> Union[Any, CustomDomain] | None:
-    r"""Unshare a custom domain
+) -> Any | CustomDomain | None:
+    """Unshare a custom domain
 
      Revokes sharing of a custom domain with a target workspace (or the account when targetWorkspace is
-    \"account\"). Removes the shared copy / clears the account-global marker; the owner's domain is not
+    "account"). Removes the shared copy / clears the account-global marker; the owner's domain is not
     affected.
 
     Args:
@@ -171,7 +175,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, CustomDomain]
+        Any | CustomDomain
     """
 
     return (

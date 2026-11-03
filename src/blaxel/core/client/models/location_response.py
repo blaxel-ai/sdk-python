@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,29 +20,28 @@ class LocationResponse:
     """Location availability for policies
 
     Attributes:
-        continent (Union[Unset, str]): Continent of the location Example: NA.
-        country (Union[Unset, str]): Country of the location Example: US.
-        flavors (Union[Unset, list['Flavor']]): Hardware flavors available in the location
-        location (Union[Unset, str]): Name of the location Example: Portland.
-        region (Union[Unset, str]): Region of the location Example: us-pdx-1.
-        status (Union[Unset, str]): Status of the location Example: healthy.
+        continent (str | Unset): Continent of the location Example: NA.
+        country (str | Unset): Country of the location Example: US.
+        flavors (list[Flavor] | Unset): Hardware flavors available in the location
+        location (str | Unset): Name of the location Example: Portland.
+        region (str | Unset): Region of the location Example: us-pdx-1.
+        status (str | Unset): Status of the location Example: healthy.
     """
 
-    continent: Union[Unset, str] = UNSET
-    country: Union[Unset, str] = UNSET
-    flavors: Union[Unset, list["Flavor"]] = UNSET
-    location: Union[Unset, str] = UNSET
-    region: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
+    continent: str | Unset = UNSET
+    country: str | Unset = UNSET
+    flavors: list[Flavor] | Unset = UNSET
+    location: str | Unset = UNSET
+    region: str | Unset = UNSET
+    status: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         continent = self.continent
 
         country = self.country
 
-        flavors: Union[Unset, list[dict[str, Any]]] = UNSET
+        flavors: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.flavors, Unset):
             flavors = []
             for flavors_item_data in self.flavors:
@@ -74,12 +76,12 @@ class LocationResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.flavor import Flavor
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.flavor import Flavor  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         continent = d.pop("continent", UNSET)
 
         country = d.pop("country", UNSET)

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -21,21 +21,24 @@ def _get_kwargs() -> dict[str, Any]:
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, HandlerReloadResponse] | None:
+) -> ErrorResponse | HandlerReloadResponse | None:
     if response.status_code == 200:
         response_200 = HandlerReloadResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -46,7 +49,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, HandlerReloadResponse]]:
+) -> Response[ErrorResponse | HandlerReloadResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -58,7 +61,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, HandlerReloadResponse]]:
+) -> Response[ErrorResponse | HandlerReloadResponse]:
     """Reload environment from guest metadata
 
      Re-reads /bl/metadata and applies its environment to the sandbox-api process, so this process and
@@ -70,7 +73,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, HandlerReloadResponse]]
+        Response[ErrorResponse | HandlerReloadResponse]
     """
 
     kwargs = _get_kwargs()
@@ -85,7 +88,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Union[ErrorResponse, HandlerReloadResponse] | None:
+) -> ErrorResponse | HandlerReloadResponse | None:
     """Reload environment from guest metadata
 
      Re-reads /bl/metadata and applies its environment to the sandbox-api process, so this process and
@@ -97,7 +100,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, HandlerReloadResponse]
+        ErrorResponse | HandlerReloadResponse
     """
 
     return sync_detailed(
@@ -108,7 +111,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, HandlerReloadResponse]]:
+) -> Response[ErrorResponse | HandlerReloadResponse]:
     """Reload environment from guest metadata
 
      Re-reads /bl/metadata and applies its environment to the sandbox-api process, so this process and
@@ -120,7 +123,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, HandlerReloadResponse]]
+        Response[ErrorResponse | HandlerReloadResponse]
     """
 
     kwargs = _get_kwargs()
@@ -133,7 +136,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Union[ErrorResponse, HandlerReloadResponse] | None:
+) -> ErrorResponse | HandlerReloadResponse | None:
     """Reload environment from guest metadata
 
      Re-reads /bl/metadata and applies its environment to the sandbox-api process, so this process and
@@ -145,7 +148,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, HandlerReloadResponse]
+        ErrorResponse | HandlerReloadResponse
     """
 
     return (

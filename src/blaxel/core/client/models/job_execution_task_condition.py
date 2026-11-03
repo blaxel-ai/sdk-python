@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,20 +16,20 @@ class JobExecutionTaskCondition:
     """Job execution task condition
 
     Attributes:
-        execution_reason (Union[Unset, str]): Execution reason
-        message (Union[Unset, str]): Condition message
-        reason (Union[Unset, str]): Condition reason
-        severity (Union[Unset, str]): Condition severity
-        state (Union[Unset, str]): Condition state
-        type_ (Union[Unset, str]): Condition type
+        execution_reason (str | Unset): Execution reason
+        message (str | Unset): Condition message
+        reason (str | Unset): Condition reason
+        severity (str | Unset): Condition severity
+        state (str | Unset): Condition state
+        type_ (str | Unset): Condition type
     """
 
-    execution_reason: Union[Unset, str] = UNSET
-    message: Union[Unset, str] = UNSET
-    reason: Union[Unset, str] = UNSET
-    severity: Union[Unset, str] = UNSET
-    state: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    execution_reason: str | Unset = UNSET
+    message: str | Unset = UNSET
+    reason: str | Unset = UNSET
+    severity: str | Unset = UNSET
+    state: str | Unset = UNSET
+    type_: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class JobExecutionTaskCondition:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         execution_reason = d.pop("executionReason", d.pop("execution_reason", UNSET))
 
         message = d.pop("message", UNSET)

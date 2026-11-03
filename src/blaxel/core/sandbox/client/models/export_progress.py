@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,21 +16,20 @@ T = TypeVar("T", bound="ExportProgress")
 class ExportProgress:
     """
     Attributes:
-        error (Union[Unset, str]): Error is why the export failed, without the presigned URL it used.
-        finished_at (Union[Unset, str]):
-        size (Union[Unset, int]): Size is the archive's exact size, known once the filesystem is scanned. Example:
-            3074211.
-        started_at (Union[Unset, str]):
-        state (Union[Unset, ArchiveExportState]):
-        uploaded (Union[Unset, bool]): Uploaded reports whether the storage holds the archive.
+        error (str | Unset): Error is why the export failed, without the presigned URL it used.
+        finished_at (str | Unset):
+        size (int | Unset): Size is the archive's exact size, known once the filesystem is scanned. Example: 3074211.
+        started_at (str | Unset):
+        state (ArchiveExportState | Unset):
+        uploaded (bool | Unset): Uploaded reports whether the storage holds the archive. Example: False.
     """
 
-    error: Union[Unset, str] = UNSET
-    finished_at: Union[Unset, str] = UNSET
-    size: Union[Unset, int] = UNSET
-    started_at: Union[Unset, str] = UNSET
-    state: Union[Unset, ArchiveExportState] = UNSET
-    uploaded: Union[Unset, bool] = UNSET
+    error: str | Unset = UNSET
+    finished_at: str | Unset = UNSET
+    size: int | Unset = UNSET
+    started_at: str | Unset = UNSET
+    state: ArchiveExportState | Unset = UNSET
+    uploaded: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -39,7 +41,7 @@ class ExportProgress:
 
         started_at = self.started_at
 
-        state: Union[Unset, str] = UNSET
+        state: str | Unset = UNSET
         if not isinstance(self.state, Unset):
             state = self.state.value
 
@@ -64,10 +66,10 @@ class ExportProgress:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         error = d.pop("error", UNSET)
 
         finished_at = d.pop("finishedAt", d.pop("finished_at", UNSET))
@@ -77,7 +79,7 @@ class ExportProgress:
         started_at = d.pop("startedAt", d.pop("started_at", UNSET))
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, ArchiveExportState]
+        state: ArchiveExportState | Unset
         if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:

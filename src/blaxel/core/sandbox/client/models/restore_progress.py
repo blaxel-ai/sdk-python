@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,26 +16,25 @@ T = TypeVar("T", bound="RestoreProgress")
 class RestoreProgress:
     """
     Attributes:
-        deleted (Union[Unset, int]):  Example: 3.
-        downloaded (Union[Unset, int]): Downloaded is how much of the archive has been read so far. Example: 1048576.
-        error (Union[Unset, str]): Error is why the restore failed, without the presigned URL it used.
-        finished_at (Union[Unset, str]):
-        restored (Union[Unset, int]): Restored and Deleted count what the archive changed on the filesystem. Example:
-            1204.
-        size (Union[Unset, int]): Size is the archive's size as the storage announced it, and zero when it
+        deleted (int | Unset):  Example: 3.
+        downloaded (int | Unset): Downloaded is how much of the archive has been read so far. Example: 1048576.
+        error (str | Unset): Error is why the restore failed, without the presigned URL it used.
+        finished_at (str | Unset):
+        restored (int | Unset): Restored and Deleted count what the archive changed on the filesystem. Example: 1204.
+        size (int | Unset): Size is the archive's size as the storage announced it, and zero when it
             announced none - a client showing a percentage has to allow for that. Example: 3074211.
-        started_at (Union[Unset, str]):
-        state (Union[Unset, ArchiveRestoreState]):
+        started_at (str | Unset):
+        state (ArchiveRestoreState | Unset):
     """
 
-    deleted: Union[Unset, int] = UNSET
-    downloaded: Union[Unset, int] = UNSET
-    error: Union[Unset, str] = UNSET
-    finished_at: Union[Unset, str] = UNSET
-    restored: Union[Unset, int] = UNSET
-    size: Union[Unset, int] = UNSET
-    started_at: Union[Unset, str] = UNSET
-    state: Union[Unset, ArchiveRestoreState] = UNSET
+    deleted: int | Unset = UNSET
+    downloaded: int | Unset = UNSET
+    error: str | Unset = UNSET
+    finished_at: str | Unset = UNSET
+    restored: int | Unset = UNSET
+    size: int | Unset = UNSET
+    started_at: str | Unset = UNSET
+    state: ArchiveRestoreState | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -50,7 +52,7 @@ class RestoreProgress:
 
         started_at = self.started_at
 
-        state: Union[Unset, str] = UNSET
+        state: str | Unset = UNSET
         if not isinstance(self.state, Unset):
             state = self.state.value
 
@@ -77,10 +79,10 @@ class RestoreProgress:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         deleted = d.pop("deleted", UNSET)
 
         downloaded = d.pop("downloaded", UNSET)
@@ -96,7 +98,7 @@ class RestoreProgress:
         started_at = d.pop("startedAt", d.pop("started_at", UNSET))
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, ArchiveRestoreState]
+        state: ArchiveRestoreState | Unset
         if isinstance(_state, Unset) or _state == "":
             state = UNSET
         else:

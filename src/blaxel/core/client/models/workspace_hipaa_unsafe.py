@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,15 +16,15 @@ class WorkspaceHipaaUnsafe:
     """Per-workspace HIPAA opt-out record. Toggled from workspace settings; the backend stamps `updatedBy` and `updatedAt`.
 
     Attributes:
-        enabled (Union[Unset, bool]): True marks this workspace as HIPAA-unsafe (NOT compliant), overriding the account-
-            level addon. False marks the workspace as HIPAA compliant.
-        updated_at (Union[Unset, str]): RFC3339 timestamp when the opt-out was last toggled. Stamped server-side.
-        updated_by (Union[Unset, str]): User id (sub) of the actor that last toggled this opt-out. Stamped server-side.
+        enabled (bool | Unset): True marks this workspace as HIPAA-unsafe (NOT compliant), overriding the account-level
+            addon. False marks the workspace as HIPAA compliant.
+        updated_at (str | Unset): RFC3339 timestamp when the opt-out was last toggled. Stamped server-side.
+        updated_by (str | Unset): User id (sub) of the actor that last toggled this opt-out. Stamped server-side.
     """
 
-    enabled: Union[Unset, bool] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
+    enabled: bool | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -44,10 +47,10 @@ class WorkspaceHipaaUnsafe:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))

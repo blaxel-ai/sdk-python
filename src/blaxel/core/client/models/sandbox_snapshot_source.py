@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,15 +18,15 @@ class SandboxSnapshotSource:
 
     Attributes:
         name (str): Name of the object the snapshot was captured from
-        deleted (Union[Unset, bool]): Whether the source object has since been deleted. The snapshot stays usable, the
-            link is only kept for context.
-        kind (Union[Unset, SandboxSnapshotSourceKind]): Kind of the object the snapshot was captured from. Defaults to
+        deleted (bool | Unset): Whether the source object has since been deleted. The snapshot stays usable, the link is
+            only kept for context.
+        kind (SandboxSnapshotSourceKind | Unset): Kind of the object the snapshot was captured from. Defaults to
             sandbox, the only kind that can be captured today. Default: SandboxSnapshotSourceKind.SANDBOX. Example: sandbox.
     """
 
     name: str
-    deleted: Union[Unset, bool] = UNSET
-    kind: Union[Unset, SandboxSnapshotSourceKind] = SandboxSnapshotSourceKind.SANDBOX
+    deleted: bool | Unset = UNSET
+    kind: SandboxSnapshotSourceKind | Unset = SandboxSnapshotSourceKind.SANDBOX
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,7 +34,7 @@ class SandboxSnapshotSource:
 
         deleted = self.deleted
 
-        kind: Union[Unset, str] = UNSET
+        kind: str | Unset = UNSET
         if not isinstance(self.kind, Unset):
             kind = self.kind.value
 
@@ -50,16 +53,16 @@ class SandboxSnapshotSource:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         deleted = d.pop("deleted", UNSET)
 
         _kind = d.pop("kind", UNSET)
-        kind: Union[Unset, SandboxSnapshotSourceKind]
+        kind: SandboxSnapshotSourceKind | Unset
         if isinstance(_kind, Unset) or _kind == "":
             kind = UNSET
         else:

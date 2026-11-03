@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,26 +16,26 @@ class PendingInvitation:
     """Pending invitation in workspace
 
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        email (Union[Unset, str]): User email
-        expires_at (Union[Unset, str]): The date and time when the invitation expires
-        invited_by (Union[Unset, str]): User sub
-        role (Union[Unset, str]): ACL role
-        workspace (Union[Unset, str]): Workspace name
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        email (str | Unset): User email
+        expires_at (str | Unset): The date and time when the invitation expires
+        invited_by (str | Unset): User sub
+        role (str | Unset): ACL role
+        workspace (str | Unset): Workspace name
     """
 
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    email: Union[Unset, str] = UNSET
-    expires_at: Union[Unset, str] = UNSET
-    invited_by: Union[Unset, str] = UNSET
-    role: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    email: str | Unset = UNSET
+    expires_at: str | Unset = UNSET
+    invited_by: str | Unset = UNSET
+    role: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -79,10 +82,10 @@ class PendingInvitation:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))

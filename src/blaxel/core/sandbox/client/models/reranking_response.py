@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,18 +19,18 @@ T = TypeVar("T", bound="RerankingResponse")
 class RerankingResponse:
     """
     Attributes:
-        files (Union[Unset, list['RankedFile']]):
-        message (Union[Unset, str]):  Example: Found 5 relevant files.
-        success (Union[Unset, bool]):  Example: True.
+        files (list[RankedFile] | Unset):
+        message (str | Unset):  Example: Found 5 relevant files.
+        success (bool | Unset):  Example: True.
     """
 
-    files: Union[Unset, list["RankedFile"]] = UNSET
-    message: Union[Unset, str] = UNSET
-    success: Union[Unset, bool] = UNSET
+    files: list[RankedFile] | Unset = UNSET
+    message: str | Unset = UNSET
+    success: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        files: Union[Unset, list[dict[str, Any]]] = UNSET
+        files: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.files, Unset):
             files = []
             for files_item_data in self.files:
@@ -54,12 +57,12 @@ class RerankingResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.ranked_file import RankedFile
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.ranked_file import RankedFile  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         files = []
         _files = d.pop("files", UNSET)
         for files_item_data in _files or []:

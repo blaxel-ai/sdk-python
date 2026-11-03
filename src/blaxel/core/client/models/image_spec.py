@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,19 +19,18 @@ T = TypeVar("T", bound="ImageSpec")
 class ImageSpec:
     """
     Attributes:
-        size (Union[Unset, int]): The size of the image in bytes.
-        tags (Union[Unset, list['ImageTag']]): List of tags available for this image.
+        size (int | Unset): The size of the image in bytes.
+        tags (list[ImageTag] | Unset): List of tags available for this image.
     """
 
-    size: Union[Unset, int] = UNSET
-    tags: Union[Unset, list["ImageTag"]] = UNSET
+    size: int | Unset = UNSET
+    tags: list[ImageTag] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         size = self.size
 
-        tags: Union[Unset, list[dict[str, Any]]] = UNSET
+        tags: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.tags, Unset):
             tags = []
             for tags_item_data in self.tags:
@@ -49,12 +51,12 @@ class ImageSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.image_tag import ImageTag
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.image_tag import ImageTag  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         size = d.pop("size", UNSET)
 
         tags = []

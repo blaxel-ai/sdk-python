@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -23,12 +26,11 @@ class IntegrationConnection:
                 encrypted credentials
     """
 
-    metadata: "Metadata"
-    spec: "IntegrationConnectionSpec"
+    metadata: Metadata
+    spec: IntegrationConnectionSpec
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -51,13 +53,13 @@ class IntegrationConnection:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.integration_connection_spec import IntegrationConnectionSpec
-        from ..models.metadata import Metadata
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.integration_connection_spec import IntegrationConnectionSpec  # noqa: PLC0415
+        from ..models.metadata import Metadata  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = IntegrationConnectionSpec.from_dict(d.pop("spec"))

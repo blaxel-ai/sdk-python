@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,24 +15,24 @@ T = TypeVar("T", bound="ApplyEditResponse")
 class ApplyEditResponse:
     """
     Attributes:
-        message (Union[Unset, str]):  Example: Code edit applied successfully.
-        original_content (Union[Unset, str]):  Example: function hello() {
+        message (str | Unset):  Example: Code edit applied successfully.
+        original_content (str | Unset):  Example: function hello() {
               console.log('Hello');
             }.
-        path (Union[Unset, str]):  Example: src/main.js.
-        provider (Union[Unset, str]):  Example: Relace.
-        success (Union[Unset, bool]):  Example: True.
-        updated_content (Union[Unset, str]):  Example: function hello(world) {
+        path (str | Unset):  Example: src/main.js.
+        provider (str | Unset):  Example: Relace.
+        success (bool | Unset):  Example: True.
+        updated_content (str | Unset):  Example: function hello(world) {
               console.log('Hello', world);
             }.
     """
 
-    message: Union[Unset, str] = UNSET
-    original_content: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
-    provider: Union[Unset, str] = UNSET
-    success: Union[Unset, bool] = UNSET
-    updated_content: Union[Unset, str] = UNSET
+    message: str | Unset = UNSET
+    original_content: str | Unset = UNSET
+    path: str | Unset = UNSET
+    provider: str | Unset = UNSET
+    success: bool | Unset = UNSET
+    updated_content: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -64,10 +67,10 @@ class ApplyEditResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         message = d.pop("message", UNSET)
 
         original_content = d.pop("originalContent", d.pop("original_content", UNSET))

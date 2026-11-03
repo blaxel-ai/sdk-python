@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,42 +16,50 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/volumes/{volume_name}",
+        "url": "/volumes/{volume_name}".format(
+            volume_name=quote(str(volume_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Volume] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | Volume | None:
     if response.status_code == 200:
         response_200 = Volume.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 409:
         response_409 = Error.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -59,7 +68,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Volume]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | Volume]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -72,7 +81,7 @@ def sync_detailed(
     volume_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, Volume]]:
+) -> Response[Error | Volume]:
     """Delete persistent volume
 
      Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
@@ -86,7 +95,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Volume]]
+        Response[Error | Volume]
     """
 
     kwargs = _get_kwargs(
@@ -104,7 +113,7 @@ def sync(
     volume_name: str,
     *,
     client: Client,
-) -> Union[Error, Volume] | None:
+) -> Error | Volume | None:
     """Delete persistent volume
 
      Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
@@ -118,7 +127,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Volume]
+        Error | Volume
     """
 
     return sync_detailed(
@@ -131,7 +140,7 @@ async def asyncio_detailed(
     volume_name: str,
     *,
     client: Client,
-) -> Response[Union[Error, Volume]]:
+) -> Response[Error | Volume]:
     """Delete persistent volume
 
      Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
@@ -145,7 +154,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Volume]]
+        Response[Error | Volume]
     """
 
     kwargs = _get_kwargs(
@@ -161,7 +170,7 @@ async def asyncio(
     volume_name: str,
     *,
     client: Client,
-) -> Union[Error, Volume] | None:
+) -> Error | Volume | None:
     """Delete persistent volume
 
      Permanently deletes a volume and all its data. The volume must not be attached to any sandbox. This
@@ -175,7 +184,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Volume]
+        Error | Volume
     """
 
     return (

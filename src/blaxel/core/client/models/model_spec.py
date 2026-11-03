@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,29 +21,28 @@ class ModelSpec:
     """Configuration for a model gateway endpoint including provider type, credentials, and access policies
 
     Attributes:
-        enabled (Union[Unset, bool]): When false, the model endpoint is disabled and will not accept inference requests
+        enabled (bool | Unset): When false, the model endpoint is disabled and will not accept inference requests
             Default: True. Example: True.
-        flavors (Union[Unset, list['Flavor']]): Types of hardware available for deployments
-        integration_connections (Union[Unset, list[str]]):
-        policies (Union[Unset, list[str]]):
-        runtime (Union[Unset, ModelRuntime]): Configuration identifying which external LLM provider and model this
-            gateway endpoint proxies to
-        sandbox (Union[Unset, bool]): When true, uses sandbox/test credentials from the integration connection
+        flavors (list[Flavor] | Unset): Types of hardware available for deployments
+        integration_connections (list[str] | Unset):
+        policies (list[str] | Unset):
+        runtime (ModelRuntime | Unset): Configuration identifying which external LLM provider and model this gateway
+            endpoint proxies to
+        sandbox (bool | Unset): When true, uses sandbox/test credentials from the integration connection Example: False.
     """
 
-    enabled: Union[Unset, bool] = True
-    flavors: Union[Unset, list["Flavor"]] = UNSET
-    integration_connections: Union[Unset, list[str]] = UNSET
-    policies: Union[Unset, list[str]] = UNSET
-    runtime: Union[Unset, "ModelRuntime"] = UNSET
-    sandbox: Union[Unset, bool] = UNSET
+    enabled: bool | Unset = True
+    flavors: list[Flavor] | Unset = UNSET
+    integration_connections: list[str] | Unset = UNSET
+    policies: list[str] | Unset = UNSET
+    runtime: ModelRuntime | Unset = UNSET
+    sandbox: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         enabled = self.enabled
 
-        flavors: Union[Unset, list[dict[str, Any]]] = UNSET
+        flavors: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.flavors, Unset):
             flavors = []
             for componentsschemas_flavors_item_data in self.flavors:
@@ -50,15 +52,15 @@ class ModelSpec:
                     componentsschemas_flavors_item = componentsschemas_flavors_item_data.to_dict()
                 flavors.append(componentsschemas_flavors_item)
 
-        integration_connections: Union[Unset, list[str]] = UNSET
+        integration_connections: list[str] | Unset = UNSET
         if not isinstance(self.integration_connections, Unset):
             integration_connections = self.integration_connections
 
-        policies: Union[Unset, list[str]] = UNSET
+        policies: list[str] | Unset = UNSET
         if not isinstance(self.policies, Unset):
             policies = self.policies
 
-        runtime: Union[Unset, dict[str, Any]] = UNSET
+        runtime: dict[str, Any] | Unset = UNSET
         if (
             self.runtime
             and not isinstance(self.runtime, Unset)
@@ -89,13 +91,13 @@ class ModelSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.flavor import Flavor
-        from ..models.model_runtime import ModelRuntime
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.flavor import Flavor  # noqa: PLC0415
+        from ..models.model_runtime import ModelRuntime  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         enabled = d.pop("enabled", UNSET)
 
         flavors = []
@@ -112,7 +114,7 @@ class ModelSpec:
         policies = cast(list[str], d.pop("policies", UNSET))
 
         _runtime = d.pop("runtime", UNSET)
-        runtime: Union[Unset, ModelRuntime]
+        runtime: ModelRuntime | Unset
         if isinstance(_runtime, Unset):
             runtime = UNSET
         else:

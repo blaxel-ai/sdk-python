@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,16 +17,16 @@ class FirewallConfig:
     "proxy" (restrict egress to proxy), and "dedicated-ip" (restrict egress to dedicated IP gateway).
 
         Attributes:
-            rulesets (Union[Unset, list[str]]): List of firewall rulesets to apply. Valid values: "default" (no-op), "proxy"
+            rulesets (list[str] | Unset): List of firewall rulesets to apply. Valid values: "default" (no-op), "proxy"
                 (restrict egress to proxy), "dedicated-ip" (restrict egress to dedicated IP gateway). Example: ["proxy",
                 "dedicated-ip"].
     """
 
-    rulesets: Union[Unset, list[str]] = UNSET
+    rulesets: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        rulesets: Union[Unset, list[str]] = UNSET
+        rulesets: list[str] | Unset = UNSET
         if not isinstance(self.rulesets, Unset):
             rulesets = self.rulesets
 
@@ -36,10 +39,10 @@ class FirewallConfig:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         rulesets = cast(list[str], d.pop("rulesets", UNSET))
 
         firewall_config = cls(

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,17 +22,16 @@ class PendingInvitationWorkspaceDetails:
     """Workspace details
 
     Attributes:
-        emails (Union[Unset, list['PendingInvitationWorkspaceDetailsEmailsItem']]): List of user emails in the workspace
-        user_number (Union[Unset, float]): Number of users in the workspace
+        emails (list[PendingInvitationWorkspaceDetailsEmailsItem] | Unset): List of user emails in the workspace
+        user_number (float | Unset): Number of users in the workspace
     """
 
-    emails: Union[Unset, list["PendingInvitationWorkspaceDetailsEmailsItem"]] = UNSET
-    user_number: Union[Unset, float] = UNSET
+    emails: list[PendingInvitationWorkspaceDetailsEmailsItem] | Unset = UNSET
+    user_number: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        emails: Union[Unset, list[dict[str, Any]]] = UNSET
+        emails: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.emails, Unset):
             emails = []
             for emails_item_data in self.emails:
@@ -52,14 +54,14 @@ class PendingInvitationWorkspaceDetails:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         from ..models.pending_invitation_workspace_details_emails_item import (
             PendingInvitationWorkspaceDetailsEmailsItem,
-        )
+        )  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         emails = []
         _emails = d.pop("emails", UNSET)
         for emails_item_data in _emails or []:

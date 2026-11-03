@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,28 +16,28 @@ class JobExecutionMetadata:
     """Job execution metadata
 
     Attributes:
-        cluster (Union[Unset, str]): Cluster ID
-        completed_at (Union[Unset, str]): Completion timestamp
-        created_at (Union[Unset, str]): Creation timestamp
-        deleted_at (Union[Unset, str]): Deletion timestamp
-        expired_at (Union[Unset, str]): Expiration timestamp
-        id (Union[Unset, str]): Execution ID Example: exec-abc123.
-        job (Union[Unset, str]): Job name Example: data-processing-job.
-        started_at (Union[Unset, str]): Start timestamp
-        updated_at (Union[Unset, str]): Last update timestamp
-        workspace (Union[Unset, str]): Workspace ID Example: my-workspace.
+        cluster (str | Unset): Cluster ID
+        completed_at (str | Unset): Completion timestamp
+        created_at (str | Unset): Creation timestamp
+        deleted_at (str | Unset): Deletion timestamp
+        expired_at (str | Unset): Expiration timestamp
+        id (str | Unset): Execution ID Example: exec-abc123.
+        job (str | Unset): Job name Example: data-processing-job.
+        started_at (str | Unset): Start timestamp
+        updated_at (str | Unset): Last update timestamp
+        workspace (str | Unset): Workspace ID Example: my-workspace.
     """
 
-    cluster: Union[Unset, str] = UNSET
-    completed_at: Union[Unset, str] = UNSET
-    created_at: Union[Unset, str] = UNSET
-    deleted_at: Union[Unset, str] = UNSET
-    expired_at: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    job: Union[Unset, str] = UNSET
-    started_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    cluster: str | Unset = UNSET
+    completed_at: str | Unset = UNSET
+    created_at: str | Unset = UNSET
+    deleted_at: str | Unset = UNSET
+    expired_at: str | Unset = UNSET
+    id: str | Unset = UNSET
+    job: str | Unset = UNSET
+    started_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -85,10 +88,10 @@ class JobExecutionMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         cluster = d.pop("cluster", UNSET)
 
         completed_at = d.pop("completedAt", d.pop("completed_at", UNSET))

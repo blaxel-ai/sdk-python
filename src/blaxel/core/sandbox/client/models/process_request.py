@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,39 +20,39 @@ class ProcessRequest:
     """
     Attributes:
         command (str):  Example: ls -la.
-        env (Union[Unset, ProcessRequestEnv]):  Example: {'{"PORT"': ' "3000"}'}.
-        keep_alive (Union[Unset, bool]): Disable scale-to-zero while process runs. Default timeout is 600s (10 minutes).
-            Set timeout to 0 for infinite.
-        max_restarts (Union[Unset, int]): Maximum number of restarts on failure. Set to a negative value (e.g. -1) for
+        env (ProcessRequestEnv | Unset):  Example: {'{"PORT"': ' "3000"}'}.
+        keep_alive (bool | Unset): Disable scale-to-zero while process runs. Default timeout is 600s (10 minutes). Set
+            timeout to 0 for infinite. Example: False.
+        max_restarts (int | Unset): Maximum number of restarts on failure. Set to a negative value (e.g. -1) for
             unlimited restarts. Example: 3.
-        name (Union[Unset, str]):  Example: my-process.
-        restart_on_failure (Union[Unset, bool]):  Example: True.
-        stdin (Union[Unset, bool]): Open a writable stdin pipe, fed via POST /process/{identifier}/stdin and closed via
-            DELETE. The pipe does not survive a sandbox-api restart: the process then sees EOF.
-        timeout (Union[Unset, int]): Timeout in seconds. When keepAlive is true, defaults to 600s (10 minutes). Set to 0
-            for infinite (no auto-kill). Example: 30.
-        wait_for_completion (Union[Unset, bool]):
-        wait_for_ports (Union[Unset, list[int]]):  Example: [3000, 8080].
-        working_dir (Union[Unset, str]):  Example: /home/user.
+        name (str | Unset):  Example: my-process.
+        restart_on_failure (bool | Unset):  Example: True.
+        stdin (bool | Unset): Open a writable stdin pipe, fed via POST /process/{identifier}/stdin and closed via
+            DELETE. The pipe does not survive a sandbox-api restart: the process then sees EOF. Example: False.
+        timeout (int | Unset): Timeout in seconds. When keepAlive is true, defaults to 600s (10 minutes). Set to 0 for
+            infinite (no auto-kill). Example: 30.
+        wait_for_completion (bool | Unset):  Example: False.
+        wait_for_ports (list[int] | Unset):  Example: [3000, 8080].
+        working_dir (str | Unset):  Example: /home/user.
     """
 
     command: str
-    env: Union[Unset, "ProcessRequestEnv"] = UNSET
-    keep_alive: Union[Unset, bool] = UNSET
-    max_restarts: Union[Unset, int] = UNSET
-    name: Union[Unset, str] = UNSET
-    restart_on_failure: Union[Unset, bool] = UNSET
-    stdin: Union[Unset, bool] = UNSET
-    timeout: Union[Unset, int] = UNSET
-    wait_for_completion: Union[Unset, bool] = UNSET
-    wait_for_ports: Union[Unset, list[int]] = UNSET
-    working_dir: Union[Unset, str] = UNSET
+    env: ProcessRequestEnv | Unset = UNSET
+    keep_alive: bool | Unset = UNSET
+    max_restarts: int | Unset = UNSET
+    name: str | Unset = UNSET
+    restart_on_failure: bool | Unset = UNSET
+    stdin: bool | Unset = UNSET
+    timeout: int | Unset = UNSET
+    wait_for_completion: bool | Unset = UNSET
+    wait_for_ports: list[int] | Unset = UNSET
+    working_dir: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         command = self.command
 
-        env: Union[Unset, dict[str, Any]] = UNSET
+        env: dict[str, Any] | Unset = UNSET
         if self.env and not isinstance(self.env, Unset) and not isinstance(self.env, dict):
             env = self.env.to_dict()
         elif self.env and isinstance(self.env, dict):
@@ -69,7 +72,7 @@ class ProcessRequest:
 
         wait_for_completion = self.wait_for_completion
 
-        wait_for_ports: Union[Unset, list[int]] = UNSET
+        wait_for_ports: list[int] | Unset = UNSET
         if not isinstance(self.wait_for_ports, Unset):
             wait_for_ports = self.wait_for_ports
 
@@ -106,16 +109,16 @@ class ProcessRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.process_request_env import ProcessRequestEnv
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.process_request_env import ProcessRequestEnv  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         command = d.pop("command")
 
         _env = d.pop("env", UNSET)
-        env: Union[Unset, ProcessRequestEnv]
+        env: ProcessRequestEnv | Unset
         if isinstance(_env, Unset):
             env = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,10 +15,10 @@ T = TypeVar("T", bound="DeleteSandboxPreviewTokenResponse200")
 class DeleteSandboxPreviewTokenResponse200:
     """
     Attributes:
-        message (Union[Unset, str]): Success message
+        message (str | Unset): Success message
     """
 
-    message: Union[Unset, str] = UNSET
+    message: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -30,10 +33,10 @@ class DeleteSandboxPreviewTokenResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         message = d.pop("message", UNSET)
 
         delete_sandbox_preview_token_response_200 = cls(

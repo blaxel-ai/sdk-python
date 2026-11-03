@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,14 +19,14 @@ T = TypeVar("T", bound="MultipartListUploadsResponse")
 class MultipartListUploadsResponse:
     """
     Attributes:
-        uploads (Union[Unset, list['FilesystemMultipartUpload']]):
+        uploads (list[FilesystemMultipartUpload] | Unset):
     """
 
-    uploads: Union[Unset, list["FilesystemMultipartUpload"]] = UNSET
+    uploads: list[FilesystemMultipartUpload] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        uploads: Union[Unset, list[dict[str, Any]]] = UNSET
+        uploads: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.uploads, Unset):
             uploads = []
             for uploads_item_data in self.uploads:
@@ -42,12 +45,12 @@ class MultipartListUploadsResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.filesystem_multipart_upload import FilesystemMultipartUpload
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.filesystem_multipart_upload import FilesystemMultipartUpload  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         uploads = []
         _uploads = d.pop("uploads", UNSET)
         for uploads_item_data in _uploads or []:

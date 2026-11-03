@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,7 +19,7 @@ class ProcessResponse:
         command (str):  Example: ls -la.
         completed_at (str): Completion time, same format as startedAt. Empty string while the process runs Example: Wed,
             01 Jan 2023 12:01:00 GMT.
-        exit_code (int):
+        exit_code (int):  Example: 0.
         logs (str):  Example: logs output.
         name (str):  Example: my-process.
         pid (str):  Example: 1234.
@@ -26,11 +29,11 @@ class ProcessResponse:
         stderr (str):  Example: stderr output.
         stdout (str):  Example: stdout output.
         working_dir (str):  Example: /home/user.
-        keep_alive (Union[Unset, bool]): Whether scale-to-zero is disabled for this process
-        max_restarts (Union[Unset, int]):  Example: 3.
-        restart_count (Union[Unset, int]):  Example: 2.
-        restart_on_failure (Union[Unset, bool]):  Example: True.
-        stdin (Union[Unset, bool]): Whether the process was started with a writable stdin pipe
+        keep_alive (bool | Unset): Whether scale-to-zero is disabled for this process Example: False.
+        max_restarts (int | Unset):  Example: 3.
+        restart_count (int | Unset):  Example: 2.
+        restart_on_failure (bool | Unset):  Example: True.
+        stdin (bool | Unset): Whether the process was started with a writable stdin pipe Example: False.
     """
 
     command: str
@@ -44,11 +47,11 @@ class ProcessResponse:
     stderr: str
     stdout: str
     working_dir: str
-    keep_alive: Union[Unset, bool] = UNSET
-    max_restarts: Union[Unset, int] = UNSET
-    restart_count: Union[Unset, int] = UNSET
-    restart_on_failure: Union[Unset, bool] = UNSET
-    stdin: Union[Unset, bool] = UNSET
+    keep_alive: bool | Unset = UNSET
+    max_restarts: int | Unset = UNSET
+    restart_count: int | Unset = UNSET
+    restart_on_failure: bool | Unset = UNSET
+    stdin: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -115,10 +118,10 @@ class ProcessResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         command = d.pop("command")
 
         completed_at = d.pop("completedAt") if "completedAt" in d else d.pop("completed_at")

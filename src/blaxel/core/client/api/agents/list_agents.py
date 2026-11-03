@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -14,13 +14,13 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListAgentsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListAgentsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListAgentsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListAgentsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -28,7 +28,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -36,7 +36,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_anchor: Union[Unset, str] = UNSET
+    json_anchor: str | Unset = UNSET
     if not isinstance(anchor, Unset):
         json_anchor = anchor.value
 
@@ -57,26 +57,30 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[AgentList, Error] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> AgentList | Error | None:
     if response.status_code == 200:
         response_200 = AgentList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -85,9 +89,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[AgentL
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[AgentList, Error]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[AgentList | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -99,14 +101,14 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListAgentsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListAgentsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[AgentList, Error]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListAgentsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListAgentsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Response[AgentList | Error]:
     """List all agents
 
      Returns AI agents deployed in the workspace. Each agent includes its deployment status, runtime
@@ -115,20 +117,20 @@ def sync_detailed(
     parameters; older versions keep returning a bare array with all agents.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListAgentsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListAgentsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListAgentsSort | Unset):
+        q (str | Unset):
+        anchor (ListAgentsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[AgentList, Error]]
+        Response[AgentList | Error]
     """
 
     kwargs = _get_kwargs(
@@ -151,14 +153,14 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListAgentsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListAgentsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[AgentList, Error] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListAgentsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListAgentsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> AgentList | Error | None:
     """List all agents
 
      Returns AI agents deployed in the workspace. Each agent includes its deployment status, runtime
@@ -167,20 +169,20 @@ def sync(
     parameters; older versions keep returning a bare array with all agents.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListAgentsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListAgentsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListAgentsSort | Unset):
+        q (str | Unset):
+        anchor (ListAgentsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[AgentList, Error]
+        AgentList | Error
     """
 
     return sync_detailed(
@@ -198,14 +200,14 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListAgentsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListAgentsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Response[Union[AgentList, Error]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListAgentsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListAgentsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> Response[AgentList | Error]:
     """List all agents
 
      Returns AI agents deployed in the workspace. Each agent includes its deployment status, runtime
@@ -214,20 +216,20 @@ async def asyncio_detailed(
     parameters; older versions keep returning a bare array with all agents.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListAgentsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListAgentsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListAgentsSort | Unset):
+        q (str | Unset):
+        anchor (ListAgentsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[AgentList, Error]]
+        Response[AgentList | Error]
     """
 
     kwargs = _get_kwargs(
@@ -248,14 +250,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListAgentsSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListAgentsAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-) -> Union[AgentList, Error] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListAgentsSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListAgentsAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+) -> AgentList | Error | None:
     """List all agents
 
      Returns AI agents deployed in the workspace. Each agent includes its deployment status, runtime
@@ -264,20 +266,20 @@ async def asyncio(
     parameters; older versions keep returning a bare array with all agents.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListAgentsSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListAgentsAnchor]):
-        external_id (Union[Unset, str]):
-        status (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListAgentsSort | Unset):
+        q (str | Unset):
+        anchor (ListAgentsAnchor | Unset):
+        external_id (str | Unset):
+        status (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[AgentList, Error]
+        AgentList | Error
     """
 
     return (

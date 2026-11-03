@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -22,47 +22,52 @@ def _get_kwargs(
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Agent, Error] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Agent | Error | None:
     if response.status_code == 200:
         response_200 = Agent.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = Error.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 409:
         response_409 = Error.from_dict(response.json())
 
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -71,7 +76,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Agent,
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Agent, Error]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Agent | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -84,7 +89,7 @@ def sync_detailed(
     *,
     client: Client,
     body: Agent,
-) -> Response[Union[Agent, Error]]:
+) -> Response[Agent | Error]:
     """Create agent
 
      Creates a new AI agent deployment from your code. The agent will be built and deployed as a
@@ -101,7 +106,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Agent, Error]]
+        Response[Agent | Error]
     """
 
     kwargs = _get_kwargs(
@@ -119,7 +124,7 @@ def sync(
     *,
     client: Client,
     body: Agent,
-) -> Union[Agent, Error] | None:
+) -> Agent | Error | None:
     """Create agent
 
      Creates a new AI agent deployment from your code. The agent will be built and deployed as a
@@ -136,7 +141,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Agent, Error]
+        Agent | Error
     """
 
     return sync_detailed(
@@ -149,7 +154,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Agent,
-) -> Response[Union[Agent, Error]]:
+) -> Response[Agent | Error]:
     """Create agent
 
      Creates a new AI agent deployment from your code. The agent will be built and deployed as a
@@ -166,7 +171,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Agent, Error]]
+        Response[Agent | Error]
     """
 
     kwargs = _get_kwargs(
@@ -182,7 +187,7 @@ async def asyncio(
     *,
     client: Client,
     body: Agent,
-) -> Union[Agent, Error] | None:
+) -> Agent | Error | None:
     """Create agent
 
      Creates a new AI agent deployment from your code. The agent will be built and deployed as a
@@ -199,7 +204,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Agent, Error]
+        Agent | Error
     """
 
     return (

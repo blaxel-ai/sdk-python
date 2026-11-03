@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,25 +17,25 @@ class PreviewMetadata:
 
     Attributes:
         name (str): Preview name
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        display_name (Union[Unset, str]): Model display name
-        resource_name (Union[Unset, str]): Resource name
-        resource_type (Union[Unset, str]): Resource type
-        workspace (Union[Unset, str]): Workspace name
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        display_name (str | Unset): Model display name
+        resource_name (str | Unset): Resource name
+        resource_type (str | Unset): Resource type
+        workspace (str | Unset): Workspace name
     """
 
     name: str
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    resource_name: Union[Unset, str] = UNSET
-    resource_type: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    resource_name: str | Unset = UNSET
+    resource_type: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -81,10 +84,10 @@ class PreviewMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))

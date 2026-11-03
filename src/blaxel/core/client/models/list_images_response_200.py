@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -18,17 +21,16 @@ T = TypeVar("T", bound="ListImagesResponse200")
 class ListImagesResponse200:
     """
     Attributes:
-        data (list['ImageSummary']):
+        data (list[ImageSummary]):
         meta (PaginationMeta): Pagination metadata returned alongside a page of listing results. Always present on
             listing endpoints starting with API version 2026-04-28.
     """
 
-    data: list["ImageSummary"]
-    meta: "PaginationMeta | Unset"
+    data: list[ImageSummary]
+    meta: PaginationMeta | Unset
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         data = []
         for data_item_data in self.data:
             if type(data_item_data) is dict:
@@ -52,9 +54,9 @@ class ListImagesResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any] | list[Any]) -> T | None:
-        from ..models.image_summary import ImageSummary
-        from ..models.pagination_meta import PaginationMeta
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any] | list[Any]) -> T | None:
+        from ..models.image_summary import ImageSummary  # noqa: PLC0415
+        from ..models.pagination_meta import PaginationMeta  # noqa: PLC0415
 
         _data, _meta, additional_properties = split_list_response(src_dict)
         if not _data and not additional_properties and isinstance(_meta, Unset):

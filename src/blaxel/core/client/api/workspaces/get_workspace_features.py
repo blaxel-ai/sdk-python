@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -21,26 +21,30 @@ def _get_kwargs() -> dict[str, Any]:
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, GetWorkspaceFeaturesResponse200] | None:
+) -> Error | GetWorkspaceFeaturesResponse200 | None:
     if response.status_code == 200:
         response_200 = GetWorkspaceFeaturesResponse200.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -51,7 +55,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, GetWorkspaceFeaturesResponse200]]:
+) -> Response[Error | GetWorkspaceFeaturesResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,7 +67,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Union[Error, GetWorkspaceFeaturesResponse200]]:
+) -> Response[Error | GetWorkspaceFeaturesResponse200]:
     """Get enabled features for workspace
 
      Returns only the feature flags that are currently enabled for the specified workspace. Disabled
@@ -74,7 +78,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, GetWorkspaceFeaturesResponse200]]
+        Response[Error | GetWorkspaceFeaturesResponse200]
     """
 
     kwargs = _get_kwargs()
@@ -89,7 +93,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Union[Error, GetWorkspaceFeaturesResponse200] | None:
+) -> Error | GetWorkspaceFeaturesResponse200 | None:
     """Get enabled features for workspace
 
      Returns only the feature flags that are currently enabled for the specified workspace. Disabled
@@ -100,7 +104,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, GetWorkspaceFeaturesResponse200]
+        Error | GetWorkspaceFeaturesResponse200
     """
 
     return sync_detailed(
@@ -111,7 +115,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[Union[Error, GetWorkspaceFeaturesResponse200]]:
+) -> Response[Error | GetWorkspaceFeaturesResponse200]:
     """Get enabled features for workspace
 
      Returns only the feature flags that are currently enabled for the specified workspace. Disabled
@@ -122,7 +126,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, GetWorkspaceFeaturesResponse200]]
+        Response[Error | GetWorkspaceFeaturesResponse200]
     """
 
     kwargs = _get_kwargs()
@@ -135,7 +139,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Union[Error, GetWorkspaceFeaturesResponse200] | None:
+) -> Error | GetWorkspaceFeaturesResponse200 | None:
     """Get enabled features for workspace
 
      Returns only the feature flags that are currently enabled for the specified workspace. Disabled
@@ -146,7 +150,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, GetWorkspaceFeaturesResponse200]
+        Error | GetWorkspaceFeaturesResponse200
     """
 
     return (

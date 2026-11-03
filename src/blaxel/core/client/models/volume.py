@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -25,22 +28,21 @@ class Volume:
                 and ownership information
             spec (VolumeSpec): Immutable volume configuration set at creation time (size and region cannot be changed after
                 creation)
-            events (Union[Unset, list['CoreEvent']]): Events happening on a resource deployed on Blaxel
-            state (Union[Unset, VolumeState]): Current runtime state of the volume including attachment status
-            status (Union[Unset, str]): Volume status computed from events
-            terminated_at (Union[Unset, str]): Timestamp when the volume was marked for termination
+            events (list[CoreEvent] | Unset): Events happening on a resource deployed on Blaxel
+            state (VolumeState | Unset): Current runtime state of the volume including attachment status
+            status (str | Unset): Volume status computed from events
+            terminated_at (str | Unset): Timestamp when the volume was marked for termination
     """
 
-    metadata: "Metadata"
-    spec: "VolumeSpec"
-    events: Union[Unset, list["CoreEvent"]] = UNSET
-    state: Union[Unset, "VolumeState"] = UNSET
-    status: Union[Unset, str] = UNSET
-    terminated_at: Union[Unset, str] = UNSET
+    metadata: Metadata
+    spec: VolumeSpec
+    events: list[CoreEvent] | Unset = UNSET
+    state: VolumeState | Unset = UNSET
+    status: str | Unset = UNSET
+    terminated_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         if type(self.metadata) is dict:
             metadata = self.metadata
         else:
@@ -51,7 +53,7 @@ class Volume:
         else:
             spec = self.spec.to_dict()
 
-        events: Union[Unset, list[dict[str, Any]]] = UNSET
+        events: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.events, Unset):
             events = []
             for componentsschemas_core_events_item_data in self.events:
@@ -63,7 +65,7 @@ class Volume:
                     )
                 events.append(componentsschemas_core_events_item)
 
-        state: Union[Unset, dict[str, Any]] = UNSET
+        state: dict[str, Any] | Unset = UNSET
         if self.state and not isinstance(self.state, Unset) and not isinstance(self.state, dict):
             state = self.state.to_dict()
         elif self.state and isinstance(self.state, dict):
@@ -93,15 +95,15 @@ class Volume:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.core_event import CoreEvent
-        from ..models.metadata import Metadata
-        from ..models.volume_spec import VolumeSpec
-        from ..models.volume_state import VolumeState
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.core_event import CoreEvent  # noqa: PLC0415
+        from ..models.metadata import Metadata  # noqa: PLC0415
+        from ..models.volume_spec import VolumeSpec  # noqa: PLC0415
+        from ..models.volume_state import VolumeState  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         metadata = Metadata.from_dict(d.pop("metadata"))
 
         spec = VolumeSpec.from_dict(d.pop("spec"))
@@ -116,7 +118,7 @@ class Volume:
             events.append(componentsschemas_core_events_item)
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, VolumeState]
+        state: VolumeState | Unset
         if isinstance(_state, Unset):
             state = UNSET
         else:

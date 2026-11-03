@@ -87,8 +87,8 @@ from .function_runtime import FunctionRuntime
 from .function_runtime_generation import FunctionRuntimeGeneration
 from .function_runtime_transport import FunctionRuntimeTransport
 from .function_spec import FunctionSpec
-from .get_drive_jwks_response_200 import GetDriveJWKSResponse200
-from .get_drive_jwks_response_200_keys_item import GetDriveJWKSResponse200KeysItem
+from .get_drive_jwks_response_200 import GetDriveJwksResponse200
+from .get_drive_jwks_response_200_keys_item import GetDriveJwksResponse200KeysItem
 from .get_workspace_features_response_200 import GetWorkspaceFeaturesResponse200
 from .get_workspace_features_response_200_features import GetWorkspaceFeaturesResponse200Features
 from .get_workspace_service_accounts_response_200_item import (
@@ -414,8 +414,8 @@ __all__ = (
     "FunctionRuntimeGeneration",
     "FunctionRuntimeTransport",
     "FunctionSpec",
-    "GetDriveJWKSResponse200",
-    "GetDriveJWKSResponse200KeysItem",
+    "GetDriveJwksResponse200",
+    "GetDriveJwksResponse200KeysItem",
     "GetWorkspaceFeaturesResponse200",
     "GetWorkspaceFeaturesResponse200Features",
     "GetWorkspaceServiceAccountsResponse200Item",

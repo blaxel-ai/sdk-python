@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,30 +16,29 @@ class ApiKey:
     """Long-lived API key for accessing Blaxel
 
     Attributes:
-        created_at (Union[Unset, str]): The date and time when the resource was created
-        updated_at (Union[Unset, str]): The date and time when the resource was updated
-        created_by (Union[Unset, str]): The user or service account who created the resource
-        updated_by (Union[Unset, str]): The user or service account who updated the resource
-        api_key (Union[Unset, str]): Api key
-        expires_in (Union[Unset, str]): Duration until expiration. Supports formats like '30d' (30 days), '24h' (24
-            hours), '1w' (1 week). Must be positive and at most 10 years. If not set, the API key never expires. Example:
-            30d.
-        id (Union[Unset, str]): Api key id, to retrieve it from the API Example: ak_abc123def456.
-        name (Union[Unset, str]): Name for the API key Example: CI/CD Pipeline Key.
-        sub (Union[Unset, str]): User subject identifier
-        sub_type (Union[Unset, str]): Subject type (user or service_account) Example: user.
+        created_at (str | Unset): The date and time when the resource was created
+        updated_at (str | Unset): The date and time when the resource was updated
+        created_by (str | Unset): The user or service account who created the resource
+        updated_by (str | Unset): The user or service account who updated the resource
+        api_key (str | Unset): Api key
+        expires_in (str | Unset): Duration until expiration. Supports formats like '30d' (30 days), '24h' (24 hours),
+            '1w' (1 week). Must be positive and at most 10 years. If not set, the API key never expires. Example: 30d.
+        id (str | Unset): Api key id, to retrieve it from the API Example: ak_abc123def456.
+        name (str | Unset): Name for the API key Example: CI/CD Pipeline Key.
+        sub (str | Unset): User subject identifier
+        sub_type (str | Unset): Subject type (user or service_account) Example: user.
     """
 
-    created_at: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    updated_by: Union[Unset, str] = UNSET
-    api_key: Union[Unset, str] = UNSET
-    expires_in: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    sub: Union[Unset, str] = UNSET
-    sub_type: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    updated_by: str | Unset = UNSET
+    api_key: str | Unset = UNSET
+    expires_in: str | Unset = UNSET
+    id: str | Unset = UNSET
+    name: str | Unset = UNSET
+    sub: str | Unset = UNSET
+    sub_type: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -87,10 +89,10 @@ class ApiKey:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         updated_at = d.pop("updatedAt", d.pop("updated_at", UNSET))

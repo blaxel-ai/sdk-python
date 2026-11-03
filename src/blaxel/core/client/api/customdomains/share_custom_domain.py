@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -19,38 +20,43 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/customdomains/{domain_name}/share",
+        "url": "/customdomains/{domain_name}/share".format(
+            domain_name=quote(str(domain_name), safe=""),
+        ),
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, CustomDomain] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | CustomDomain | None:
     if response.status_code == 200:
         response_200 = CustomDomain.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 409:
         response_409 = cast(Any, None)
         errors.retain_response(response_409, response)
         return response_409
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -59,9 +65,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, C
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Any, CustomDomain]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | CustomDomain]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -75,12 +79,12 @@ def sync_detailed(
     *,
     client: Client,
     body: ShareCustomDomainBody,
-) -> Response[Union[Any, CustomDomain]]:
-    r"""Share a custom domain
+) -> Response[Any | CustomDomain]:
+    """Share a custom domain
 
      Shares a verified custom domain with another workspace of the same account by copying the domain
     record; the ACM certificate and CloudFront tenant stay with the owner and are reused (not re-
-    provisioned). Use targetWorkspace \"account\" to make the domain usable by every workspace of the
+    provisioned). Use targetWorkspace "account" to make the domain usable by every workspace of the
     account. Cross-account sharing is not supported.
 
     Args:
@@ -92,7 +96,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, CustomDomain]]
+        Response[Any | CustomDomain]
     """
 
     kwargs = _get_kwargs(
@@ -112,12 +116,12 @@ def sync(
     *,
     client: Client,
     body: ShareCustomDomainBody,
-) -> Union[Any, CustomDomain] | None:
-    r"""Share a custom domain
+) -> Any | CustomDomain | None:
+    """Share a custom domain
 
      Shares a verified custom domain with another workspace of the same account by copying the domain
     record; the ACM certificate and CloudFront tenant stay with the owner and are reused (not re-
-    provisioned). Use targetWorkspace \"account\" to make the domain usable by every workspace of the
+    provisioned). Use targetWorkspace "account" to make the domain usable by every workspace of the
     account. Cross-account sharing is not supported.
 
     Args:
@@ -129,7 +133,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, CustomDomain]
+        Any | CustomDomain
     """
 
     return sync_detailed(
@@ -144,12 +148,12 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: ShareCustomDomainBody,
-) -> Response[Union[Any, CustomDomain]]:
-    r"""Share a custom domain
+) -> Response[Any | CustomDomain]:
+    """Share a custom domain
 
      Shares a verified custom domain with another workspace of the same account by copying the domain
     record; the ACM certificate and CloudFront tenant stay with the owner and are reused (not re-
-    provisioned). Use targetWorkspace \"account\" to make the domain usable by every workspace of the
+    provisioned). Use targetWorkspace "account" to make the domain usable by every workspace of the
     account. Cross-account sharing is not supported.
 
     Args:
@@ -161,7 +165,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, CustomDomain]]
+        Response[Any | CustomDomain]
     """
 
     kwargs = _get_kwargs(
@@ -179,12 +183,12 @@ async def asyncio(
     *,
     client: Client,
     body: ShareCustomDomainBody,
-) -> Union[Any, CustomDomain] | None:
-    r"""Share a custom domain
+) -> Any | CustomDomain | None:
+    """Share a custom domain
 
      Shares a verified custom domain with another workspace of the same account by copying the domain
     record; the ACM certificate and CloudFront tenant stay with the owner and are reused (not re-
-    provisioned). Use targetWorkspace \"account\" to make the domain usable by every workspace of the
+    provisioned). Use targetWorkspace "account" to make the domain usable by every workspace of the
     account. Cross-account sharing is not supported.
 
     Args:
@@ -196,7 +200,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, CustomDomain]
+        Any | CustomDomain
     """
 
     return (

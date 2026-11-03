@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,27 +25,26 @@ class Integration:
     """Integration
 
     Attributes:
-        additional_infos (Union[Unset, IntegrationAdditionalInfos]): Integration additional infos
-        endpoints (Union[Unset, IntegrationEndpoints]): Integration endpoints
-        headers (Union[Unset, IntegrationHeaders]): Integration headers
-        name (Union[Unset, str]): Integration name
-        organizations (Union[Unset, list['IntegrationOrganization']]): Integration organizations
-        params (Union[Unset, IntegrationQueryParams]): Integration query params
-        repositories (Union[Unset, list['IntegrationRepository']]): Integration repositories
+        additional_infos (IntegrationAdditionalInfos | Unset): Integration additional infos
+        endpoints (IntegrationEndpoints | Unset): Integration endpoints
+        headers (IntegrationHeaders | Unset): Integration headers
+        name (str | Unset): Integration name
+        organizations (list[IntegrationOrganization] | Unset): Integration organizations
+        params (IntegrationQueryParams | Unset): Integration query params
+        repositories (list[IntegrationRepository] | Unset): Integration repositories
     """
 
-    additional_infos: Union[Unset, "IntegrationAdditionalInfos"] = UNSET
-    endpoints: Union[Unset, "IntegrationEndpoints"] = UNSET
-    headers: Union[Unset, "IntegrationHeaders"] = UNSET
-    name: Union[Unset, str] = UNSET
-    organizations: Union[Unset, list["IntegrationOrganization"]] = UNSET
-    params: Union[Unset, "IntegrationQueryParams"] = UNSET
-    repositories: Union[Unset, list["IntegrationRepository"]] = UNSET
+    additional_infos: IntegrationAdditionalInfos | Unset = UNSET
+    endpoints: IntegrationEndpoints | Unset = UNSET
+    headers: IntegrationHeaders | Unset = UNSET
+    name: str | Unset = UNSET
+    organizations: list[IntegrationOrganization] | Unset = UNSET
+    params: IntegrationQueryParams | Unset = UNSET
+    repositories: list[IntegrationRepository] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        additional_infos: Union[Unset, dict[str, Any]] = UNSET
+        additional_infos: dict[str, Any] | Unset = UNSET
         if (
             self.additional_infos
             and not isinstance(self.additional_infos, Unset)
@@ -52,7 +54,7 @@ class Integration:
         elif self.additional_infos and isinstance(self.additional_infos, dict):
             additional_infos = self.additional_infos
 
-        endpoints: Union[Unset, dict[str, Any]] = UNSET
+        endpoints: dict[str, Any] | Unset = UNSET
         if (
             self.endpoints
             and not isinstance(self.endpoints, Unset)
@@ -62,7 +64,7 @@ class Integration:
         elif self.endpoints and isinstance(self.endpoints, dict):
             endpoints = self.endpoints
 
-        headers: Union[Unset, dict[str, Any]] = UNSET
+        headers: dict[str, Any] | Unset = UNSET
         if (
             self.headers
             and not isinstance(self.headers, Unset)
@@ -74,7 +76,7 @@ class Integration:
 
         name = self.name
 
-        organizations: Union[Unset, list[dict[str, Any]]] = UNSET
+        organizations: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.organizations, Unset):
             organizations = []
             for organizations_item_data in self.organizations:
@@ -84,13 +86,13 @@ class Integration:
                     organizations_item = organizations_item_data.to_dict()
                 organizations.append(organizations_item)
 
-        params: Union[Unset, dict[str, Any]] = UNSET
+        params: dict[str, Any] | Unset = UNSET
         if self.params and not isinstance(self.params, Unset) and not isinstance(self.params, dict):
             params = self.params.to_dict()
         elif self.params and isinstance(self.params, dict):
             params = self.params
 
-        repositories: Union[Unset, list[dict[str, Any]]] = UNSET
+        repositories: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.repositories, Unset):
             repositories = []
             for repositories_item_data in self.repositories:
@@ -121,33 +123,35 @@ class Integration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.integration_additional_infos import IntegrationAdditionalInfos
-        from ..models.integration_endpoints import IntegrationEndpoints
-        from ..models.integration_headers import IntegrationHeaders
-        from ..models.integration_organization import IntegrationOrganization
-        from ..models.integration_query_params import IntegrationQueryParams
-        from ..models.integration_repository import IntegrationRepository
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.integration_additional_infos import (
+            IntegrationAdditionalInfos,  # noqa: PLC0415
+        )
+        from ..models.integration_endpoints import IntegrationEndpoints  # noqa: PLC0415
+        from ..models.integration_headers import IntegrationHeaders  # noqa: PLC0415
+        from ..models.integration_organization import IntegrationOrganization  # noqa: PLC0415
+        from ..models.integration_query_params import IntegrationQueryParams  # noqa: PLC0415
+        from ..models.integration_repository import IntegrationRepository  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _additional_infos = d.pop("additionalInfos", d.pop("additional_infos", UNSET))
-        additional_infos: Union[Unset, IntegrationAdditionalInfos]
+        additional_infos: IntegrationAdditionalInfos | Unset
         if isinstance(_additional_infos, Unset):
             additional_infos = UNSET
         else:
             additional_infos = IntegrationAdditionalInfos.from_dict(_additional_infos)
 
         _endpoints = d.pop("endpoints", UNSET)
-        endpoints: Union[Unset, IntegrationEndpoints]
+        endpoints: IntegrationEndpoints | Unset
         if isinstance(_endpoints, Unset):
             endpoints = UNSET
         else:
             endpoints = IntegrationEndpoints.from_dict(_endpoints)
 
         _headers = d.pop("headers", UNSET)
-        headers: Union[Unset, IntegrationHeaders]
+        headers: IntegrationHeaders | Unset
         if isinstance(_headers, Unset):
             headers = UNSET
         else:
@@ -163,7 +167,7 @@ class Integration:
             organizations.append(organizations_item)
 
         _params = d.pop("params", UNSET)
-        params: Union[Unset, IntegrationQueryParams]
+        params: IntegrationQueryParams | Unset
         if isinstance(_params, Unset):
             params = UNSET
         else:

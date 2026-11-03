@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,14 +19,14 @@ class CreateWorkspaceServiceAccountBody:
     """
     Attributes:
         name (str): Service account name
-        description (Union[Unset, str]): Service account description
-        role (Union[Unset, CreateWorkspaceServiceAccountBodyRole]): Role of the service account in the workspace.
-            Defaults to admin on creation; unchanged on update when omitted.
+        description (str | Unset): Service account description
+        role (CreateWorkspaceServiceAccountBodyRole | Unset): Role of the service account in the workspace. Defaults to
+            admin on creation; unchanged on update when omitted.
     """
 
     name: str
-    description: Union[Unset, str] = UNSET
-    role: Union[Unset, CreateWorkspaceServiceAccountBodyRole] = UNSET
+    description: str | Unset = UNSET
+    role: CreateWorkspaceServiceAccountBodyRole | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,7 +34,7 @@ class CreateWorkspaceServiceAccountBody:
 
         description = self.description
 
-        role: Union[Unset, str] = UNSET
+        role: str | Unset = UNSET
         if not isinstance(self.role, Unset):
             role = self.role.value
 
@@ -50,16 +53,16 @@ class CreateWorkspaceServiceAccountBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name")
 
         description = d.pop("description", UNSET)
 
         _role = d.pop("role", UNSET)
-        role: Union[Unset, CreateWorkspaceServiceAccountBodyRole]
+        role: CreateWorkspaceServiceAccountBodyRole | Unset
         if isinstance(_role, Unset) or _role == "":
             role = UNSET
         else:

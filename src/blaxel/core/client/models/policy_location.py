@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,18 +17,18 @@ class PolicyLocation:
     """Policy location
 
     Attributes:
-        name (Union[Unset, str]): Policy location name Example: EU.
-        type_ (Union[Unset, PolicyLocationType]): Policy location type Example: continent.
+        name (str | Unset): Policy location name Example: EU.
+        type_ (PolicyLocationType | Unset): Policy location type Example: continent.
     """
 
-    name: Union[Unset, str] = UNSET
-    type_: Union[Unset, PolicyLocationType] = UNSET
+    name: str | Unset = UNSET
+    type_: PolicyLocationType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -40,14 +43,14 @@ class PolicyLocation:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name", UNSET)
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, PolicyLocationType]
+        type_: PolicyLocationType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

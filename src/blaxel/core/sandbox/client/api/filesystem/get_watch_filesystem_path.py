@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -12,7 +13,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     path: str,
     *,
-    ignore: Union[Unset, str] = UNSET,
+    ignore: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -22,29 +23,32 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/watch/filesystem/{path}",
+        "url": "/watch/filesystem/{path}".format(
+            path=quote(str(path), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, str] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> ErrorResponse | str | None:
     if response.status_code == 200:
         response_200 = response.text
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.text)
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.text)
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -53,9 +57,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, str]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[ErrorResponse | str]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -68,17 +70,17 @@ def sync_detailed(
     path: str,
     *,
     client: Client,
-    ignore: Union[Unset, str] = UNSET,
-) -> Response[Union[ErrorResponse, str]]:
-    r"""Stream file modification events in a directory
+    ignore: str | Unset = UNSET,
+) -> Response[ErrorResponse | str]:
+    """Stream file modification events in a directory
 
      Streams change events for a directory until the client disconnects.
 
     The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
-    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
-    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
-    name of the changed entry, `path` the directory containing it, and `error` is always null. A
-    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    `{"op":"WRITE","name":"main.go","path":"/app/src","error":null}`. `op` is the fsnotify operation
+    (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base name of
+    the changed entry, `path` the directory containing it, and `error` is always null. A `[keepalive]`
+    line (not JSON) is sent every 30 seconds.
     Only the directory's direct entries are watched. To also watch every subdirectory, including ones
     created later, end the path with `/**`. The stream reports subsequent changes without an initial
     snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
@@ -86,14 +88,14 @@ def sync_detailed(
 
     Args:
         path (str):
-        ignore (Union[Unset, str]):
+        ignore (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, str]]
+        Response[ErrorResponse | str]
     """
 
     kwargs = _get_kwargs(
@@ -112,17 +114,17 @@ def sync(
     path: str,
     *,
     client: Client,
-    ignore: Union[Unset, str] = UNSET,
-) -> Union[ErrorResponse, str] | None:
-    r"""Stream file modification events in a directory
+    ignore: str | Unset = UNSET,
+) -> ErrorResponse | str | None:
+    """Stream file modification events in a directory
 
      Streams change events for a directory until the client disconnects.
 
     The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
-    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
-    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
-    name of the changed entry, `path` the directory containing it, and `error` is always null. A
-    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    `{"op":"WRITE","name":"main.go","path":"/app/src","error":null}`. `op` is the fsnotify operation
+    (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base name of
+    the changed entry, `path` the directory containing it, and `error` is always null. A `[keepalive]`
+    line (not JSON) is sent every 30 seconds.
     Only the directory's direct entries are watched. To also watch every subdirectory, including ones
     created later, end the path with `/**`. The stream reports subsequent changes without an initial
     snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
@@ -130,14 +132,14 @@ def sync(
 
     Args:
         path (str):
-        ignore (Union[Unset, str]):
+        ignore (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, str]
+        ErrorResponse | str
     """
 
     return sync_detailed(
@@ -151,17 +153,17 @@ async def asyncio_detailed(
     path: str,
     *,
     client: Client,
-    ignore: Union[Unset, str] = UNSET,
-) -> Response[Union[ErrorResponse, str]]:
-    r"""Stream file modification events in a directory
+    ignore: str | Unset = UNSET,
+) -> Response[ErrorResponse | str]:
+    """Stream file modification events in a directory
 
      Streams change events for a directory until the client disconnects.
 
     The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
-    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
-    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
-    name of the changed entry, `path` the directory containing it, and `error` is always null. A
-    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    `{"op":"WRITE","name":"main.go","path":"/app/src","error":null}`. `op` is the fsnotify operation
+    (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base name of
+    the changed entry, `path` the directory containing it, and `error` is always null. A `[keepalive]`
+    line (not JSON) is sent every 30 seconds.
     Only the directory's direct entries are watched. To also watch every subdirectory, including ones
     created later, end the path with `/**`. The stream reports subsequent changes without an initial
     snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
@@ -169,14 +171,14 @@ async def asyncio_detailed(
 
     Args:
         path (str):
-        ignore (Union[Unset, str]):
+        ignore (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, str]]
+        Response[ErrorResponse | str]
     """
 
     kwargs = _get_kwargs(
@@ -193,17 +195,17 @@ async def asyncio(
     path: str,
     *,
     client: Client,
-    ignore: Union[Unset, str] = UNSET,
-) -> Union[ErrorResponse, str] | None:
-    r"""Stream file modification events in a directory
+    ignore: str | Unset = UNSET,
+) -> ErrorResponse | str | None:
+    """Stream file modification events in a directory
 
      Streams change events for a directory until the client disconnects.
 
     The body is JSON lines (sent with `Content-Type: text/plain`): one event object per line, e.g.
-    `{\"op\":\"WRITE\",\"name\":\"main.go\",\"path\":\"/app/src\",\"error\":null}`. `op` is the fsnotify
-    operation (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base
-    name of the changed entry, `path` the directory containing it, and `error` is always null. A
-    `[keepalive]` line (not JSON) is sent every 30 seconds.
+    `{"op":"WRITE","name":"main.go","path":"/app/src","error":null}`. `op` is the fsnotify operation
+    (CREATE, WRITE, REMOVE, RENAME or CHMOD, several can be joined with `|`), `name` the base name of
+    the changed entry, `path` the directory containing it, and `error` is always null. A `[keepalive]`
+    line (not JSON) is sent every 30 seconds.
     Only the directory's direct entries are watched. To also watch every subdirectory, including ones
     created later, end the path with `/**`. The stream reports subsequent changes without an initial
     snapshot. When a new directory is detected, synthetic CREATE events are emitted for entries already
@@ -211,14 +213,14 @@ async def asyncio(
 
     Args:
         path (str):
-        ignore (Union[Unset, str]):
+        ignore (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, str]
+        ErrorResponse | str
     """
 
     return (

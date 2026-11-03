@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,23 +22,22 @@ class LiteVolume:
     """LiteVolume is the listing-shape projection of a Volume. Drops events to keep page payloads small.
 
     Attributes:
-        metadata (Union[Unset, LiteVolumeMetadata]): Compact metadata for a Volume, returned in listing responses.
-        spec (Union[Unset, LiteVolumeSpec]): Compact spec for a Volume, returned in listing responses.
-        state (Union[Unset, VolumeState]): Current runtime state of the volume including attachment status
-        status (Union[Unset, str]): Computed status of the volume.
-        terminated_at (Union[Unset, str]): Termination timestamp for soft-deleted volumes.
+        metadata (LiteVolumeMetadata | Unset): Compact metadata for a Volume, returned in listing responses.
+        spec (LiteVolumeSpec | Unset): Compact spec for a Volume, returned in listing responses.
+        state (VolumeState | Unset): Current runtime state of the volume including attachment status
+        status (str | Unset): Computed status of the volume.
+        terminated_at (str | Unset): Termination timestamp for soft-deleted volumes.
     """
 
-    metadata: Union[Unset, "LiteVolumeMetadata"] = UNSET
-    spec: Union[Unset, "LiteVolumeSpec"] = UNSET
-    state: Union[Unset, "VolumeState"] = UNSET
-    status: Union[Unset, str] = UNSET
-    terminated_at: Union[Unset, str] = UNSET
+    metadata: LiteVolumeMetadata | Unset = UNSET
+    spec: LiteVolumeSpec | Unset = UNSET
+    state: VolumeState | Unset = UNSET
+    status: str | Unset = UNSET
+    terminated_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        metadata: Union[Unset, dict[str, Any]] = UNSET
+        metadata: dict[str, Any] | Unset = UNSET
         if (
             self.metadata
             and not isinstance(self.metadata, Unset)
@@ -45,13 +47,13 @@ class LiteVolume:
         elif self.metadata and isinstance(self.metadata, dict):
             metadata = self.metadata
 
-        spec: Union[Unset, dict[str, Any]] = UNSET
+        spec: dict[str, Any] | Unset = UNSET
         if self.spec and not isinstance(self.spec, Unset) and not isinstance(self.spec, dict):
             spec = self.spec.to_dict()
         elif self.spec and isinstance(self.spec, dict):
             spec = self.spec
 
-        state: Union[Unset, dict[str, Any]] = UNSET
+        state: dict[str, Any] | Unset = UNSET
         if self.state and not isinstance(self.state, Unset) and not isinstance(self.state, dict):
             state = self.state.to_dict()
         elif self.state and isinstance(self.state, dict):
@@ -78,30 +80,30 @@ class LiteVolume:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.lite_volume_metadata import LiteVolumeMetadata
-        from ..models.lite_volume_spec import LiteVolumeSpec
-        from ..models.volume_state import VolumeState
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.lite_volume_metadata import LiteVolumeMetadata  # noqa: PLC0415
+        from ..models.lite_volume_spec import LiteVolumeSpec  # noqa: PLC0415
+        from ..models.volume_state import VolumeState  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _metadata = d.pop("metadata", UNSET)
-        metadata: Union[Unset, LiteVolumeMetadata]
+        metadata: LiteVolumeMetadata | Unset
         if isinstance(_metadata, Unset):
             metadata = UNSET
         else:
             metadata = LiteVolumeMetadata.from_dict(_metadata)
 
         _spec = d.pop("spec", UNSET)
-        spec: Union[Unset, LiteVolumeSpec]
+        spec: LiteVolumeSpec | Unset
         if isinstance(_spec, Unset):
             spec = UNSET
         else:
             spec = LiteVolumeSpec.from_dict(_spec)
 
         _state = d.pop("state", UNSET)
-        state: Union[Unset, VolumeState]
+        state: VolumeState | Unset
         if isinstance(_state, Unset):
             state = UNSET
         else:

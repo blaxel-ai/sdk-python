@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,24 +23,23 @@ class Configuration:
     """Configuration
 
     Attributes:
-        continents (Union[Unset, list['Continent']]): Continents
-        countries (Union[Unset, list['Country']]): Countries
-        detected_region (Union[Unset, str]): Auto-detected closest region based on viewer geolocation (from CloudFront
+        continents (list[Continent] | Unset): Continents
+        countries (list[Country] | Unset): Countries
+        detected_region (str | Unset): Auto-detected closest region based on viewer geolocation (from CloudFront
             headers). Empty when geo headers are not available.
-        private_locations (Union[Unset, list['PrivateLocation']]): Private locations managed with blaxel operator
-        regions (Union[Unset, list['Region']]): Regions
+        private_locations (list[PrivateLocation] | Unset): Private locations managed with blaxel operator
+        regions (list[Region] | Unset): Regions
     """
 
-    continents: Union[Unset, list["Continent"]] = UNSET
-    countries: Union[Unset, list["Country"]] = UNSET
-    detected_region: Union[Unset, str] = UNSET
-    private_locations: Union[Unset, list["PrivateLocation"]] = UNSET
-    regions: Union[Unset, list["Region"]] = UNSET
+    continents: list[Continent] | Unset = UNSET
+    countries: list[Country] | Unset = UNSET
+    detected_region: str | Unset = UNSET
+    private_locations: list[PrivateLocation] | Unset = UNSET
+    regions: list[Region] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        continents: Union[Unset, list[dict[str, Any]]] = UNSET
+        continents: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.continents, Unset):
             continents = []
             for continents_item_data in self.continents:
@@ -47,7 +49,7 @@ class Configuration:
                     continents_item = continents_item_data.to_dict()
                 continents.append(continents_item)
 
-        countries: Union[Unset, list[dict[str, Any]]] = UNSET
+        countries: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.countries, Unset):
             countries = []
             for countries_item_data in self.countries:
@@ -59,7 +61,7 @@ class Configuration:
 
         detected_region = self.detected_region
 
-        private_locations: Union[Unset, list[dict[str, Any]]] = UNSET
+        private_locations: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.private_locations, Unset):
             private_locations = []
             for private_locations_item_data in self.private_locations:
@@ -69,7 +71,7 @@ class Configuration:
                     private_locations_item = private_locations_item_data.to_dict()
                 private_locations.append(private_locations_item)
 
-        regions: Union[Unset, list[dict[str, Any]]] = UNSET
+        regions: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.regions, Unset):
             regions = []
             for regions_item_data in self.regions:
@@ -96,15 +98,15 @@ class Configuration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.continent import Continent
-        from ..models.country import Country
-        from ..models.private_location import PrivateLocation
-        from ..models.region import Region
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.continent import Continent  # noqa: PLC0415
+        from ..models.country import Country  # noqa: PLC0415
+        from ..models.private_location import PrivateLocation  # noqa: PLC0415
+        from ..models.region import Region  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         continents = []
         _continents = d.pop("continents", UNSET)
         for continents_item_data in _continents or []:

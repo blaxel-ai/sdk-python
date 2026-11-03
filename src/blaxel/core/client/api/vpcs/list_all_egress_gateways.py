@@ -18,7 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["EgressGateway"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[EgressGateway] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -28,6 +28,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Egress
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -36,7 +37,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Egress
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["EgressGateway"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list[EgressGateway]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -48,7 +49,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[lis
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["EgressGateway"]]:
+) -> Response[list[EgressGateway]]:
     """List all egress gateways across all VPCs in the workspace
 
     Raises:
@@ -56,7 +57,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['EgressGateway']]
+        Response[list[EgressGateway]]
     """
 
     kwargs = _get_kwargs()
@@ -71,7 +72,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["EgressGateway"] | None:
+) -> list[EgressGateway] | None:
     """List all egress gateways across all VPCs in the workspace
 
     Raises:
@@ -79,7 +80,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['EgressGateway']
+        list[EgressGateway]
     """
 
     return sync_detailed(
@@ -90,7 +91,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["EgressGateway"]]:
+) -> Response[list[EgressGateway]]:
     """List all egress gateways across all VPCs in the workspace
 
     Raises:
@@ -98,7 +99,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['EgressGateway']]
+        Response[list[EgressGateway]]
     """
 
     kwargs = _get_kwargs()
@@ -111,7 +112,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["EgressGateway"] | None:
+) -> list[EgressGateway] | None:
     """List all egress gateways across all VPCs in the workspace
 
     Raises:
@@ -119,7 +120,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['EgressGateway']
+        list[EgressGateway]
     """
 
     return (

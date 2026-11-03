@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,40 +20,39 @@ class Region:
     """Region
 
     Attributes:
-        agent_drive_public_url (Union[Unset, RegionAgentDrivePublicUrl]): S3-compatible endpoint URL for drive storage
-            in this region. Use {s3Endpoint}/{bucketName} to access drive contents.
-        allowed (Union[Unset, str]): Region display name
-        continent (Union[Unset, str]): Region display name
-        country (Union[Unset, str]): Region display name
-        drives_available (Union[Unset, bool]): Drives availability status - indicates if an S3 endpoint is configured
-            for the region
-        egress_available (Union[Unset, bool]): Egress availability status - indicates if network plane URL is configured
-            for the region
-        info_generation (Union[Unset, str]): Region display name
-        location (Union[Unset, str]): Region display name
-        mk_31_available (Union[Unset, bool]): Whether this region supports mk3.1 (blaxel nodes). Required for
-            Application and Job deployments.
-        name (Union[Unset, str]): Region name
-        proxy_available (Union[Unset, bool]): Proxy availability status - indicates if the proxy plane is configured for
+        agent_drive_public_url (RegionAgentDrivePublicUrl | Unset): S3-compatible endpoint URL for drive storage in this
+            region. Use {s3Endpoint}/{bucketName} to access drive contents.
+        allowed (str | Unset): Region display name
+        continent (str | Unset): Region display name
+        country (str | Unset): Region display name
+        drives_available (bool | Unset): Drives availability status - indicates if an S3 endpoint is configured for the
+            region
+        egress_available (bool | Unset): Egress availability status - indicates if network plane URL is configured for
             the region
+        info_generation (str | Unset): Region display name
+        location (str | Unset): Region display name
+        mk_31_available (bool | Unset): Whether this region supports mk3.1 (blaxel nodes). Required for Application and
+            Job deployments.
+        name (str | Unset): Region name
+        proxy_available (bool | Unset): Proxy availability status - indicates if the proxy plane is configured for the
+            region
     """
 
-    agent_drive_public_url: Union[Unset, "RegionAgentDrivePublicUrl"] = UNSET
-    allowed: Union[Unset, str] = UNSET
-    continent: Union[Unset, str] = UNSET
-    country: Union[Unset, str] = UNSET
-    drives_available: Union[Unset, bool] = UNSET
-    egress_available: Union[Unset, bool] = UNSET
-    info_generation: Union[Unset, str] = UNSET
-    location: Union[Unset, str] = UNSET
-    mk_31_available: Union[Unset, bool] = UNSET
-    name: Union[Unset, str] = UNSET
-    proxy_available: Union[Unset, bool] = UNSET
+    agent_drive_public_url: RegionAgentDrivePublicUrl | Unset = UNSET
+    allowed: str | Unset = UNSET
+    continent: str | Unset = UNSET
+    country: str | Unset = UNSET
+    drives_available: bool | Unset = UNSET
+    egress_available: bool | Unset = UNSET
+    info_generation: str | Unset = UNSET
+    location: str | Unset = UNSET
+    mk_31_available: bool | Unset = UNSET
+    name: str | Unset = UNSET
+    proxy_available: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        agent_drive_public_url: Union[Unset, dict[str, Any]] = UNSET
+        agent_drive_public_url: dict[str, Any] | Unset = UNSET
         if (
             self.agent_drive_public_url
             and not isinstance(self.agent_drive_public_url, Unset)
@@ -109,16 +111,18 @@ class Region:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.region_agent_drive_public_url import RegionAgentDrivePublicUrl
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.region_agent_drive_public_url import (
+            RegionAgentDrivePublicUrl,  # noqa: PLC0415
+        )
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _agent_drive_public_url = d.pop(
             "agentDrivePublicUrl", d.pop("agent_drive_public_url", UNSET)
         )
-        agent_drive_public_url: Union[Unset, RegionAgentDrivePublicUrl]
+        agent_drive_public_url: RegionAgentDrivePublicUrl | Unset
         if isinstance(_agent_drive_public_url, Unset):
             agent_drive_public_url = UNSET
         else:

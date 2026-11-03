@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,18 +16,18 @@ class TemplateVariable:
     """Blaxel template variable
 
     Attributes:
-        description (Union[Unset, str]): Description of the variable Example: OpenAI API key for the agent.
-        integration (Union[Unset, str]): Integration of the variable Example: openai.
-        name (Union[Unset, str]): Name of the variable Example: OPENAI_API_KEY.
-        path (Union[Unset, str]): Path of the variable Example: .env.
-        secret (Union[Unset, bool]): Whether the variable is secret Example: True.
+        description (str | Unset): Description of the variable Example: OpenAI API key for the agent.
+        integration (str | Unset): Integration of the variable Example: openai.
+        name (str | Unset): Name of the variable Example: OPENAI_API_KEY.
+        path (str | Unset): Path of the variable Example: .env.
+        secret (bool | Unset): Whether the variable is secret Example: True.
     """
 
-    description: Union[Unset, str] = UNSET
-    integration: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
-    secret: Union[Unset, bool] = UNSET
+    description: str | Unset = UNSET
+    integration: str | Unset = UNSET
+    name: str | Unset = UNSET
+    path: str | Unset = UNSET
+    secret: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,10 +58,10 @@ class TemplateVariable:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         description = d.pop("description", UNSET)
 
         integration = d.pop("integration", UNSET)

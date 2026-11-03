@@ -1,6 +1,6 @@
 import datetime
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -12,17 +12,17 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
-    json_since: Union[Unset, str] = UNSET
+    json_since: str | Unset = UNSET
     if not isinstance(since, Unset):
         json_since = since.isoformat()
     params["since"] = json_since
 
-    json_until: Union[Unset, str] = UNSET
+    json_until: str | Unset = UNSET
     if not isinstance(until, Unset):
         json_until = until.isoformat()
     params["until"] = json_until
@@ -43,6 +43,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> SandboxSched
         response_200 = SandboxScheduleMetrics.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -65,8 +66,8 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> Response[SandboxScheduleMetrics]:
     """Get Sandbox Scheduling Metrics
 
@@ -76,8 +77,8 @@ def sync_detailed(
     metrics collection is enabled and can lag recent firings briefly.
 
     Args:
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -102,8 +103,8 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> SandboxScheduleMetrics | None:
     """Get Sandbox Scheduling Metrics
 
@@ -113,8 +114,8 @@ def sync(
     metrics collection is enabled and can lag recent firings briefly.
 
     Args:
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -134,8 +135,8 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> Response[SandboxScheduleMetrics]:
     """Get Sandbox Scheduling Metrics
 
@@ -145,8 +146,8 @@ async def asyncio_detailed(
     metrics collection is enabled and can lag recent firings briefly.
 
     Args:
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -169,8 +170,8 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    since: Union[Unset, datetime.datetime] = UNSET,
-    until: Union[Unset, datetime.datetime] = UNSET,
+    since: datetime.datetime | Unset = UNSET,
+    until: datetime.datetime | Unset = UNSET,
 ) -> SandboxScheduleMetrics | None:
     """Get Sandbox Scheduling Metrics
 
@@ -180,8 +181,8 @@ async def asyncio(
     metrics collection is enabled and can lag recent firings briefly.
 
     Args:
-        since (Union[Unset, datetime.datetime]):
-        until (Union[Unset, datetime.datetime]):
+        since (datetime.datetime | Unset):
+        until (datetime.datetime | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

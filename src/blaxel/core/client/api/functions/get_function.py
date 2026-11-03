@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,7 +14,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     function_name: str,
     *,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -23,38 +24,45 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/functions/{function_name}",
+        "url": "/functions/{function_name}".format(
+            function_name=quote(str(function_name), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Function] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | Function | None:
     if response.status_code == 200:
         response_200 = Function.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -63,9 +71,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Error, Function]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | Function]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -78,8 +84,8 @@ def sync_detailed(
     function_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Response[Union[Error, Function]]:
+    show_secrets: bool | Unset = UNSET,
+) -> Response[Error | Function]:
     """Get MCP server
 
      Returns detailed information about an MCP server function including its deployment status, available
@@ -87,14 +93,14 @@ def sync_detailed(
 
     Args:
         function_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Function]]
+        Response[Error | Function]
     """
 
     kwargs = _get_kwargs(
@@ -113,8 +119,8 @@ def sync(
     function_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Union[Error, Function] | None:
+    show_secrets: bool | Unset = UNSET,
+) -> Error | Function | None:
     """Get MCP server
 
      Returns detailed information about an MCP server function including its deployment status, available
@@ -122,14 +128,14 @@ def sync(
 
     Args:
         function_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Function]
+        Error | Function
     """
 
     return sync_detailed(
@@ -143,8 +149,8 @@ async def asyncio_detailed(
     function_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Response[Union[Error, Function]]:
+    show_secrets: bool | Unset = UNSET,
+) -> Response[Error | Function]:
     """Get MCP server
 
      Returns detailed information about an MCP server function including its deployment status, available
@@ -152,14 +158,14 @@ async def asyncio_detailed(
 
     Args:
         function_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Function]]
+        Response[Error | Function]
     """
 
     kwargs = _get_kwargs(
@@ -176,8 +182,8 @@ async def asyncio(
     function_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Union[Error, Function] | None:
+    show_secrets: bool | Unset = UNSET,
+) -> Error | Function | None:
     """Get MCP server
 
      Returns detailed information about an MCP server function including its deployment status, available
@@ -185,14 +191,14 @@ async def asyncio(
 
     Args:
         function_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Function]
+        Error | Function
     """
 
     return (

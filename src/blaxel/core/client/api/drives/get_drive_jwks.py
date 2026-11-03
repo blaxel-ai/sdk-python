@@ -5,7 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.get_drive_jwks_response_200 import GetDriveJWKSResponse200
+from ...models.get_drive_jwks_response_200 import GetDriveJwksResponse200
 from ...types import Response
 
 
@@ -18,11 +18,12 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> GetDriveJWKSResponse200 | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> GetDriveJwksResponse200 | None:
     if response.status_code == 200:
-        response_200 = GetDriveJWKSResponse200.from_dict(response.json())
+        response_200 = GetDriveJwksResponse200.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -33,7 +34,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> GetDriveJWKS
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[GetDriveJWKSResponse200]:
+) -> Response[GetDriveJwksResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -45,7 +46,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[GetDriveJWKSResponse200]:
+) -> Response[GetDriveJwksResponse200]:
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
@@ -56,7 +57,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[GetDriveJWKSResponse200]
+        Response[GetDriveJwksResponse200]
     """
 
     kwargs = _get_kwargs()
@@ -71,7 +72,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> GetDriveJWKSResponse200 | None:
+) -> GetDriveJwksResponse200 | None:
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
@@ -82,7 +83,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetDriveJWKSResponse200
+        GetDriveJwksResponse200
     """
 
     return sync_detailed(
@@ -93,7 +94,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[GetDriveJWKSResponse200]:
+) -> Response[GetDriveJwksResponse200]:
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
@@ -104,7 +105,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[GetDriveJWKSResponse200]
+        Response[GetDriveJwksResponse200]
     """
 
     kwargs = _get_kwargs()
@@ -117,7 +118,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> GetDriveJWKSResponse200 | None:
+) -> GetDriveJwksResponse200 | None:
     """Get drive token JWKS
 
      Returns the JSON Web Key Set containing the Ed25519 public key used to verify drive access tokens.
@@ -128,7 +129,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetDriveJWKSResponse200
+        GetDriveJwksResponse200
     """
 
     return (

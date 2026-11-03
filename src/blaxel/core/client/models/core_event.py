@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,20 +16,20 @@ class CoreEvent:
     """Core event
 
     Attributes:
-        canary_revision (Union[Unset, str]): Canary revisionID link to the event
-        message (Union[Unset, str]): Event message Example: Deployment successful.
-        revision (Union[Unset, str]): RevisionID link to the event Example: rev-abc123.
-        status (Union[Unset, str]): Event status Example: DEPLOYED.
-        time (Union[Unset, str]): Event time Example: 2025-01-15T10:30:00Z.
-        type_ (Union[Unset, str]): Event type Example: deployment.
+        canary_revision (str | Unset): Canary revisionID link to the event
+        message (str | Unset): Event message Example: Deployment successful.
+        revision (str | Unset): RevisionID link to the event Example: rev-abc123.
+        status (str | Unset): Event status Example: DEPLOYED.
+        time (str | Unset): Event time Example: 2025-01-15T10:30:00Z.
+        type_ (str | Unset): Event type Example: deployment.
     """
 
-    canary_revision: Union[Unset, str] = UNSET
-    message: Union[Unset, str] = UNSET
-    revision: Union[Unset, str] = UNSET
-    status: Union[Unset, str] = UNSET
-    time: Union[Unset, str] = UNSET
-    type_: Union[Unset, str] = UNSET
+    canary_revision: str | Unset = UNSET
+    message: str | Unset = UNSET
+    revision: str | Unset = UNSET
+    status: str | Unset = UNSET
+    time: str | Unset = UNSET
+    type_: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class CoreEvent:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         canary_revision = d.pop("canaryRevision", d.pop("canary_revision", UNSET))
 
         message = d.pop("message", UNSET)

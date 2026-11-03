@@ -10,29 +10,24 @@ UUID({{ source }})
 
 {% macro check_type_for_construct(property, source) %}isinstance({{ source }}, str){% endmacro %}
 
-{% macro transform(property, source, destination, declare_type=True) %}
+{% macro transform(property, source, destination, declare_type=True, skip_unset=False) %}
 {% set transformed = "str(" + source + ")" %}
 {% if property.required %}
 {{ destination }} = {{ transformed }}
 {%- else %}
-{% if declare_type %}
-{% set type_annotation = property.get_type_string(json=True) %}
+{% if not skip_unset %}
+    {% if declare_type %}
+    {% set type_annotation = property.get_type_string(json=True) | as_unembedded_code %}
 {{ destination }}: {{ type_annotation }} = UNSET
-{% else %}
+    {% else %}
 {{ destination }} = UNSET
+    {% endif %}
 {% endif %}
 if not isinstance({{ source }}, Unset):
     {{ destination }} = {{ transformed }}
 {%- endif %}
 {% endmacro %}
 
-{% macro transform_multipart(property, source, destination) %}
-{% if property.required %}
-{{ destination }} = str({{ source }})
-{%- else %}
-{% set type_annotation = property.get_type_string(json=True) | replace("str", "bytes") %}
-{{ destination }}: {{ type_annotation }} = UNSET
-if not isinstance({{ source }}, Unset):
-    {{ destination }} = str({{ source }})
-{%- endif %}
+{% macro multipart(property, source, name) %}
+files.append(({{ name }}, (None, str({{ source }}), "text/plain")))
 {% endmacro %}

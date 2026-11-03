@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,19 +19,18 @@ T = TypeVar("T", bound="DeleteVolumeTemplateVersionResponse200")
 class DeleteVolumeTemplateVersionResponse200:
     """
     Attributes:
-        message (Union[Unset, str]):
-        template (Union[Unset, VolumeTemplate]): Volume template for creating pre-configured volumes
+        message (str | Unset):
+        template (VolumeTemplate | Unset): Volume template for creating pre-configured volumes
     """
 
-    message: Union[Unset, str] = UNSET
-    template: Union[Unset, "VolumeTemplate"] = UNSET
+    message: str | Unset = UNSET
+    template: VolumeTemplate | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         message = self.message
 
-        template: Union[Unset, dict[str, Any]] = UNSET
+        template: dict[str, Any] | Unset = UNSET
         if (
             self.template
             and not isinstance(self.template, Unset)
@@ -49,16 +51,16 @@ class DeleteVolumeTemplateVersionResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.volume_template import VolumeTemplate
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.volume_template import VolumeTemplate  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         message = d.pop("message", UNSET)
 
         _template = d.pop("template", UNSET)
-        template: Union[Unset, VolumeTemplate]
+        template: VolumeTemplate | Unset
         if isinstance(_template, Unset):
             template = UNSET
         else:

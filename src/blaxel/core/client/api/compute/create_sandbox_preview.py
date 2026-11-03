@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,7 +14,7 @@ def _get_kwargs(
     sandbox_name: str,
     *,
     body: Preview,
-    force: Union[Unset, bool] = UNSET,
+    force: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -25,16 +26,17 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/sandboxes/{sandbox_name}/previews",
+        "url": "/sandboxes/{sandbox_name}/previews".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+        ),
         "params": params,
     }
 
     if type(body) is dict:
-        _body = body
+        _kwargs["json"] = body
     else:
-        _body = body.to_dict()
+        _kwargs["json"] = body.to_dict()
 
-    _kwargs["json"] = _body
     headers["Content-Type"] = "application/json"
 
     _kwargs["headers"] = headers
@@ -46,6 +48,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Preview | No
         response_200 = Preview.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -68,7 +71,7 @@ def sync_detailed(
     *,
     client: Client,
     body: Preview,
-    force: Union[Unset, bool] = UNSET,
+    force: bool | Unset = UNSET,
 ) -> Response[Preview]:
     """Create Sandbox Preview
 
@@ -76,7 +79,7 @@ def sync_detailed(
 
     Args:
         sandbox_name (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
         body (Preview): Preview of a Resource
 
     Raises:
@@ -105,7 +108,7 @@ def sync(
     *,
     client: Client,
     body: Preview,
-    force: Union[Unset, bool] = UNSET,
+    force: bool | Unset = UNSET,
 ) -> Preview | None:
     """Create Sandbox Preview
 
@@ -113,7 +116,7 @@ def sync(
 
     Args:
         sandbox_name (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
         body (Preview): Preview of a Resource
 
     Raises:
@@ -137,7 +140,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Preview,
-    force: Union[Unset, bool] = UNSET,
+    force: bool | Unset = UNSET,
 ) -> Response[Preview]:
     """Create Sandbox Preview
 
@@ -145,7 +148,7 @@ async def asyncio_detailed(
 
     Args:
         sandbox_name (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
         body (Preview): Preview of a Resource
 
     Raises:
@@ -172,7 +175,7 @@ async def asyncio(
     *,
     client: Client,
     body: Preview,
-    force: Union[Unset, bool] = UNSET,
+    force: bool | Unset = UNSET,
 ) -> Preview | None:
     """Create Sandbox Preview
 
@@ -180,7 +183,7 @@ async def asyncio(
 
     Args:
         sandbox_name (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
         body (Preview): Preview of a Resource
 
     Raises:

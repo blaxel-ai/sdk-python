@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,28 +18,28 @@ class ModelRuntime:
     """Configuration identifying which external LLM provider and model this gateway endpoint proxies to
 
     Attributes:
-        endpoint_name (Union[Unset, str]): Provider-specific endpoint name (e.g., HuggingFace Inference Endpoints name)
-        generation (Union[Unset, ModelRuntimeGeneration]): Infrastructure generation. Empty (default) uses the classic
+        endpoint_name (str | Unset): Provider-specific endpoint name (e.g., HuggingFace Inference Endpoints name)
+        generation (ModelRuntimeGeneration | Unset): Infrastructure generation. Empty (default) uses the classic
             deployment path. mk3 deploys through the model-gateway on microVM clusters.
-        model (Union[Unset, str]): Model identifier at the provider (e.g., gpt-4.1, claude-sonnet-4-20250514, mistral-
-            large-latest) Example: gpt-4.1.
-        organization (Union[Unset, str]): Organization or account identifier at the provider (required for some
-            providers like OpenAI) Example: org-abc123.
-        type_ (Union[Unset, ModelRuntimeType]): LLM provider type determining the API protocol and authentication method
+        model (str | Unset): Model identifier at the provider (e.g., gpt-4.1, claude-sonnet-4-20250514, mistral-large-
+            latest) Example: gpt-4.1.
+        organization (str | Unset): Organization or account identifier at the provider (required for some providers like
+            OpenAI) Example: org-abc123.
+        type_ (ModelRuntimeType | Unset): LLM provider type determining the API protocol and authentication method
             Example: openai.
     """
 
-    endpoint_name: Union[Unset, str] = UNSET
-    generation: Union[Unset, ModelRuntimeGeneration] = UNSET
-    model: Union[Unset, str] = UNSET
-    organization: Union[Unset, str] = UNSET
-    type_: Union[Unset, ModelRuntimeType] = UNSET
+    endpoint_name: str | Unset = UNSET
+    generation: ModelRuntimeGeneration | Unset = UNSET
+    model: str | Unset = UNSET
+    organization: str | Unset = UNSET
+    type_: ModelRuntimeType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         endpoint_name = self.endpoint_name
 
-        generation: Union[Unset, str] = UNSET
+        generation: str | Unset = UNSET
         if not isinstance(self.generation, Unset):
             generation = self.generation.value
 
@@ -44,7 +47,7 @@ class ModelRuntime:
 
         organization = self.organization
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -65,14 +68,14 @@ class ModelRuntime:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         endpoint_name = d.pop("endpointName", d.pop("endpoint_name", UNSET))
 
         _generation = d.pop("generation", UNSET)
-        generation: Union[Unset, ModelRuntimeGeneration]
+        generation: ModelRuntimeGeneration | Unset
         if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:
@@ -83,7 +86,7 @@ class ModelRuntime:
         organization = d.pop("organization", UNSET)
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, ModelRuntimeType]
+        type_: ModelRuntimeType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

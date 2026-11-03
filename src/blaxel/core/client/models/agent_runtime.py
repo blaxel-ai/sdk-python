@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,31 +21,29 @@ class AgentRuntime:
     """Runtime configuration defining how the AI agent is deployed and scaled globally
 
     Attributes:
-        envs (Union[Unset, list['Env']]): Environment variables injected into the agent. Supports Kubernetes EnvVar
-            format with valueFrom references.
-        generation (Union[Unset, AgentRuntimeGeneration]): Infrastructure generation: mk2 (containers, 2-10s cold
-            starts, 15+ global regions) or mk3 (microVMs, sub-25ms cold starts) Example: mk3.
-        image (Union[Unset, str]): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
+        envs (list[Env] | Unset): Environment variables injected into the agent. Supports Kubernetes EnvVar format with
+            valueFrom references.
+        generation (AgentRuntimeGeneration | Unset): Infrastructure generation: mk2 (containers, 2-10s cold starts, 15+
+            global regions) or mk3 (microVMs, sub-25ms cold starts) Example: mk3.
+        image (str | Unset): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
             populated during deployment.
-        max_scale (Union[Unset, int]): Maximum number of concurrent agent instances for auto-scaling under load Example:
-            10.
-        memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
-            in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 2048.
-        min_scale (Union[Unset, int]): Minimum instances to keep warm. Set to 1+ to eliminate cold starts, 0 for scale-
-            to-zero.
+        max_scale (int | Unset): Maximum number of concurrent agent instances for auto-scaling under load Example: 10.
+        memory (int | Unset): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory in MB /
+            2048, e.g., 4096MB = 2 CPUs). Example: 2048.
+        min_scale (int | Unset): Minimum instances to keep warm. Set to 1+ to eliminate cold starts, 0 for scale-to-
+            zero. Example: 0.
     """
 
-    envs: Union[Unset, list["Env"]] = UNSET
-    generation: Union[Unset, AgentRuntimeGeneration] = UNSET
-    image: Union[Unset, str] = UNSET
-    max_scale: Union[Unset, int] = UNSET
-    memory: Union[Unset, int] = UNSET
-    min_scale: Union[Unset, int] = UNSET
+    envs: list[Env] | Unset = UNSET
+    generation: AgentRuntimeGeneration | Unset = UNSET
+    image: str | Unset = UNSET
+    max_scale: int | Unset = UNSET
+    memory: int | Unset = UNSET
+    min_scale: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        envs: Union[Unset, list[dict[str, Any]]] = UNSET
+        envs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
             for envs_item_data in self.envs:
@@ -52,7 +53,7 @@ class AgentRuntime:
                     envs_item = envs_item_data.to_dict()
                 envs.append(envs_item)
 
-        generation: Union[Unset, str] = UNSET
+        generation: str | Unset = UNSET
         if not isinstance(self.generation, Unset):
             generation = self.generation.value
 
@@ -83,12 +84,12 @@ class AgentRuntime:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.env import Env
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.env import Env  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         envs = []
         _envs = d.pop("envs", UNSET)
         for envs_item_data in _envs or []:
@@ -97,7 +98,7 @@ class AgentRuntime:
             envs.append(envs_item)
 
         _generation = d.pop("generation", UNSET)
-        generation: Union[Unset, AgentRuntimeGeneration]
+        generation: AgentRuntimeGeneration | Unset
         if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:

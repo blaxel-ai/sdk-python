@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,12 +16,12 @@ class VolumeTemplateSpec:
     """Volume template specification
 
     Attributes:
-        default_size (Union[Unset, int]): Default size of the volume in MB
-        description (Union[Unset, str]): Description of the volume template
+        default_size (int | Unset): Default size of the volume in MB
+        description (str | Unset): Description of the volume template
     """
 
-    default_size: Union[Unset, int] = UNSET
-    description: Union[Unset, str] = UNSET
+    default_size: int | Unset = UNSET
+    description: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,10 +40,10 @@ class VolumeTemplateSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         default_size = d.pop("defaultSize", d.pop("default_size", UNSET))
 
         description = d.pop("description", UNSET)

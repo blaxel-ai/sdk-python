@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,14 +15,14 @@ T = TypeVar("T", bound="CreateDriveAccessTokenResponse200")
 class CreateDriveAccessTokenResponse200:
     """
     Attributes:
-        access_token (Union[Unset, str]):
-        expires_in (Union[Unset, float]):
-        token_type (Union[Unset, str]):  Example: Bearer.
+        access_token (str | Unset):
+        expires_in (float | Unset):
+        token_type (str | Unset):  Example: Bearer.
     """
 
-    access_token: Union[Unset, str] = UNSET
-    expires_in: Union[Unset, float] = UNSET
-    token_type: Union[Unset, str] = UNSET
+    access_token: str | Unset = UNSET
+    expires_in: float | Unset = UNSET
+    token_type: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,10 +45,10 @@ class CreateDriveAccessTokenResponse200:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         access_token = d.pop("access_token", UNSET)
 
         expires_in = d.pop("expires_in", UNSET)

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,11 +15,11 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     sandbox_name: str,
     *,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSandboxSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSandboxSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSandboxSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    type_: ListSandboxSchedulesType | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -26,7 +27,7 @@ def _get_kwargs(
 
     params["cursor"] = cursor
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -34,7 +35,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_type_: Union[Unset, str] = UNSET
+    json_type_: str | Unset = UNSET
     if not isinstance(type_, Unset):
         json_type_ = type_.value
 
@@ -44,7 +45,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/sandboxes/{sandbox_name}/schedules",
+        "url": "/sandboxes/{sandbox_name}/schedules".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+        ),
         "params": params,
     }
 
@@ -56,6 +59,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> SandboxSched
         response_200 = SandboxScheduleEntryList.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -79,11 +83,11 @@ def sync_detailed(
     sandbox_name: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSandboxSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSandboxSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSandboxSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    type_: ListSandboxSchedulesType | Unset = UNSET,
 ) -> Response[SandboxScheduleEntryList]:
     """List Sandbox Schedules
 
@@ -93,11 +97,11 @@ def sync_detailed(
 
     Args:
         sandbox_name (str):
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSandboxSchedulesSort]):
-        q (Union[Unset, str]):
-        type_ (Union[Unset, ListSandboxSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSandboxSchedulesSort | Unset):
+        q (str | Unset):
+        type_ (ListSandboxSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -127,11 +131,11 @@ def sync(
     sandbox_name: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSandboxSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSandboxSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSandboxSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    type_: ListSandboxSchedulesType | Unset = UNSET,
 ) -> SandboxScheduleEntryList | None:
     """List Sandbox Schedules
 
@@ -141,11 +145,11 @@ def sync(
 
     Args:
         sandbox_name (str):
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSandboxSchedulesSort]):
-        q (Union[Unset, str]):
-        type_ (Union[Unset, ListSandboxSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSandboxSchedulesSort | Unset):
+        q (str | Unset):
+        type_ (ListSandboxSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -170,11 +174,11 @@ async def asyncio_detailed(
     sandbox_name: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSandboxSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSandboxSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSandboxSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    type_: ListSandboxSchedulesType | Unset = UNSET,
 ) -> Response[SandboxScheduleEntryList]:
     """List Sandbox Schedules
 
@@ -184,11 +188,11 @@ async def asyncio_detailed(
 
     Args:
         sandbox_name (str):
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSandboxSchedulesSort]):
-        q (Union[Unset, str]):
-        type_ (Union[Unset, ListSandboxSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSandboxSchedulesSort | Unset):
+        q (str | Unset):
+        type_ (ListSandboxSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -216,11 +220,11 @@ async def asyncio(
     sandbox_name: str,
     *,
     client: Client,
-    limit: Union[Unset, int] = 20,
-    cursor: Union[Unset, str] = UNSET,
-    sort: Union[Unset, ListSandboxSchedulesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    type_: Union[Unset, ListSandboxSchedulesType] = UNSET,
+    limit: int | Unset = 20,
+    cursor: str | Unset = UNSET,
+    sort: ListSandboxSchedulesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    type_: ListSandboxSchedulesType | Unset = UNSET,
 ) -> SandboxScheduleEntryList | None:
     """List Sandbox Schedules
 
@@ -230,11 +234,11 @@ async def asyncio(
 
     Args:
         sandbox_name (str):
-        limit (Union[Unset, int]):  Default: 20.
-        cursor (Union[Unset, str]):
-        sort (Union[Unset, ListSandboxSchedulesSort]):
-        q (Union[Unset, str]):
-        type_ (Union[Unset, ListSandboxSchedulesType]):
+        limit (int | Unset):  Default: 20.
+        cursor (str | Unset):
+        sort (ListSandboxSchedulesSort | Unset):
+        q (str | Unset):
+        type_ (ListSandboxSchedulesType | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

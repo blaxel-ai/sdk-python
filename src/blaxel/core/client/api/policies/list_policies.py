@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 import httpx
 
@@ -13,12 +13,12 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListPoliciesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListPoliciesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListPoliciesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -26,7 +26,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -34,7 +34,7 @@ def _get_kwargs(
 
     params["q"] = q
 
-    json_anchor: Union[Unset, str] = UNSET
+    json_anchor: str | Unset = UNSET
     if not isinstance(anchor, Unset):
         json_anchor = anchor.value
 
@@ -58,6 +58,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> PolicyList |
         response_200 = PolicyList.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -78,12 +79,12 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Pol
 def sync_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListPoliciesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListPoliciesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListPoliciesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> Response[PolicyList]:
     """List governance policies
 
@@ -93,12 +94,12 @@ def sync_detailed(
     `limit` query parameters; older versions keep returning a bare array with all policies.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListPoliciesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListPoliciesAnchor]):
-        external_id (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListPoliciesSort | Unset):
+        q (str | Unset):
+        anchor (ListPoliciesAnchor | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -127,12 +128,12 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListPoliciesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListPoliciesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListPoliciesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> PolicyList | None:
     """List governance policies
 
@@ -142,12 +143,12 @@ def sync(
     `limit` query parameters; older versions keep returning a bare array with all policies.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListPoliciesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListPoliciesAnchor]):
-        external_id (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListPoliciesSort | Unset):
+        q (str | Unset):
+        anchor (ListPoliciesAnchor | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -171,12 +172,12 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListPoliciesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListPoliciesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListPoliciesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> Response[PolicyList]:
     """List governance policies
 
@@ -186,12 +187,12 @@ async def asyncio_detailed(
     `limit` query parameters; older versions keep returning a bare array with all policies.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListPoliciesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListPoliciesAnchor]):
-        external_id (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListPoliciesSort | Unset):
+        q (str | Unset):
+        anchor (ListPoliciesAnchor | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -218,12 +219,12 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListPoliciesSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-    anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-    external_id: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListPoliciesSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+    anchor: ListPoliciesAnchor | Unset = UNSET,
+    external_id: str | Unset = UNSET,
 ) -> PolicyList | None:
     """List governance policies
 
@@ -233,12 +234,12 @@ async def asyncio(
     `limit` query parameters; older versions keep returning a bare array with all policies.
 
     Args:
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListPoliciesSort]):
-        q (Union[Unset, str]):
-        anchor (Union[Unset, ListPoliciesAnchor]):
-        external_id (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListPoliciesSort | Unset):
+        q (str | Unset):
+        anchor (ListPoliciesAnchor | Unset):
+        external_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

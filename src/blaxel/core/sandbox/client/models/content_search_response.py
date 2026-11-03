@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -14,12 +17,12 @@ T = TypeVar("T", bound="ContentSearchResponse")
 class ContentSearchResponse:
     """
     Attributes:
-        matches (list['ContentSearchMatch']):
+        matches (list[ContentSearchMatch]):
         query (str):  Example: searchText.
         total (int):  Example: 5.
     """
 
-    matches: list["ContentSearchMatch"]
+    matches: list[ContentSearchMatch]
     query: str
     total: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -50,12 +53,12 @@ class ContentSearchResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.content_search_match import ContentSearchMatch
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.content_search_match import ContentSearchMatch  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         matches = []
         _matches = d.pop("matches")
         for matches_item_data in _matches:

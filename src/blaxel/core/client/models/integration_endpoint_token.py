@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,14 +16,14 @@ class IntegrationEndpointToken:
     """Integration endpoint token
 
     Attributes:
-        received (Union[Unset, str]): Integration endpoint token received
-        sent (Union[Unset, str]): Integration endpoint token sent
-        total (Union[Unset, str]): Integration endpoint token total
+        received (str | Unset): Integration endpoint token received
+        sent (str | Unset): Integration endpoint token sent
+        total (str | Unset): Integration endpoint token total
     """
 
-    received: Union[Unset, str] = UNSET
-    sent: Union[Unset, str] = UNSET
-    total: Union[Unset, str] = UNSET
+    received: str | Unset = UNSET
+    sent: str | Unset = UNSET
+    total: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,10 +46,10 @@ class IntegrationEndpointToken:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         received = d.pop("received", UNSET)
 
         sent = d.pop("sent", UNSET)

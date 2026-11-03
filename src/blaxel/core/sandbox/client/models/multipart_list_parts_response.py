@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,16 +19,16 @@ T = TypeVar("T", bound="MultipartListPartsResponse")
 class MultipartListPartsResponse:
     """
     Attributes:
-        parts (Union[Unset, list['FilesystemUploadedPart']]):
-        upload_id (Union[Unset, str]):  Example: 550e8400-e29b-41d4-a716-446655440000.
+        parts (list[FilesystemUploadedPart] | Unset):
+        upload_id (str | Unset):  Example: 550e8400-e29b-41d4-a716-446655440000.
     """
 
-    parts: Union[Unset, list["FilesystemUploadedPart"]] = UNSET
-    upload_id: Union[Unset, str] = UNSET
+    parts: list[FilesystemUploadedPart] | Unset = UNSET
+    upload_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        parts: Union[Unset, list[dict[str, Any]]] = UNSET
+        parts: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.parts, Unset):
             parts = []
             for parts_item_data in self.parts:
@@ -48,12 +51,12 @@ class MultipartListPartsResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.filesystem_uploaded_part import FilesystemUploadedPart
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.filesystem_uploaded_part import FilesystemUploadedPart  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         parts = []
         _parts = d.pop("parts", UNSET)
         for parts_item_data in _parts or []:

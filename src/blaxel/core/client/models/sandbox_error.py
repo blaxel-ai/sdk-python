@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import httpx
 from attrs import define as _attrs_define
@@ -22,35 +25,33 @@ class SandboxError:
             INVALID_IMAGE.
         message (str): Human-readable error message describing what went wrong Example: Sandbox image blaxel/dev-ts-
             app:latest is not supported.
-        details (Union[Unset, SandboxErrorDetails]): Additional error details. For INVALID_IMAGE errors, includes
+        details (SandboxErrorDetails | Unset): Additional error details. For INVALID_IMAGE errors, includes
             requested_image and supported_images array.
-        sandbox_name (Union[Unset, str]): Name of the sandbox that failed to create Example: mysandbox.
-        status_code (Union[Unset, int]): HTTP status code Example: 400.
-        step (Union[Unset, str]): Processing step where the error occurred Example: validate_and_prepare.
-        timestamp (Union[Unset, str]): ISO 8601 timestamp of when the error occurred Example:
-            2025-12-19T22:36:29.336304095Z.
-        workspace (Union[Unset, str]): Workspace name where the sandbox creation was attempted Example: main.
+        sandbox_name (str | Unset): Name of the sandbox that failed to create Example: mysandbox.
+        status_code (int | Unset): HTTP status code Example: 400.
+        step (str | Unset): Processing step where the error occurred Example: validate_and_prepare.
+        timestamp (str | Unset): ISO 8601 timestamp of when the error occurred Example: 2025-12-19T22:36:29.336304095Z.
+        workspace (str | Unset): Workspace name where the sandbox creation was attempted Example: main.
     """
 
     # Retain HTTP metadata without changing the serialized API body or constructor.
     _response: httpx.Response | None = _attrs_field(default=None, init=False, repr=False, eq=False)
     code: str
     message: str
-    details: Union[Unset, "SandboxErrorDetails"] = UNSET
-    sandbox_name: Union[Unset, str] = UNSET
-    status_code: Union[Unset, int] = UNSET
-    step: Union[Unset, str] = UNSET
-    timestamp: Union[Unset, str] = UNSET
-    workspace: Union[Unset, str] = UNSET
+    details: SandboxErrorDetails | Unset = UNSET
+    sandbox_name: str | Unset = UNSET
+    status_code: int | Unset = UNSET
+    step: str | Unset = UNSET
+    timestamp: str | Unset = UNSET
+    workspace: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         code = self.code
 
         message = self.message
 
-        details: Union[Unset, dict[str, Any]] = UNSET
+        details: dict[str, Any] | Unset = UNSET
         if (
             self.details
             and not isinstance(self.details, Unset)
@@ -94,18 +95,18 @@ class SandboxError:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.sandbox_error_details import SandboxErrorDetails
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.sandbox_error_details import SandboxErrorDetails  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         code = d.pop("code")
 
         message = d.pop("message")
 
         _details = d.pop("details", UNSET)
-        details: Union[Unset, SandboxErrorDetails]
+        details: SandboxErrorDetails | Unset
         if isinstance(_details, Unset):
             details = UNSET
         else:

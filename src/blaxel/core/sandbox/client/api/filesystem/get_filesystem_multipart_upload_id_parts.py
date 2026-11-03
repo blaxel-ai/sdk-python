@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -15,7 +16,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/filesystem-multipart/{upload_id}/parts",
+        "url": "/filesystem-multipart/{upload_id}/parts".format(
+            upload_id=quote(str(upload_id), safe=""),
+        ),
     }
 
     return _kwargs
@@ -23,26 +26,30 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[ErrorResponse, MultipartListPartsResponse] | None:
+) -> ErrorResponse | MultipartListPartsResponse | None:
     if response.status_code == 200:
         response_200 = MultipartListPartsResponse.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = ErrorResponse.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -53,7 +60,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[ErrorResponse, MultipartListPartsResponse]]:
+) -> Response[ErrorResponse | MultipartListPartsResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,7 +73,7 @@ def sync_detailed(
     upload_id: str,
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, MultipartListPartsResponse]]:
+) -> Response[ErrorResponse | MultipartListPartsResponse]:
     """List parts
 
      List all uploaded parts for a multipart upload
@@ -79,7 +86,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, MultipartListPartsResponse]]
+        Response[ErrorResponse | MultipartListPartsResponse]
     """
 
     kwargs = _get_kwargs(
@@ -97,7 +104,7 @@ def sync(
     upload_id: str,
     *,
     client: Client,
-) -> Union[ErrorResponse, MultipartListPartsResponse] | None:
+) -> ErrorResponse | MultipartListPartsResponse | None:
     """List parts
 
      List all uploaded parts for a multipart upload
@@ -110,7 +117,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, MultipartListPartsResponse]
+        ErrorResponse | MultipartListPartsResponse
     """
 
     return sync_detailed(
@@ -123,7 +130,7 @@ async def asyncio_detailed(
     upload_id: str,
     *,
     client: Client,
-) -> Response[Union[ErrorResponse, MultipartListPartsResponse]]:
+) -> Response[ErrorResponse | MultipartListPartsResponse]:
     """List parts
 
      List all uploaded parts for a multipart upload
@@ -136,7 +143,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorResponse, MultipartListPartsResponse]]
+        Response[ErrorResponse | MultipartListPartsResponse]
     """
 
     kwargs = _get_kwargs(
@@ -152,7 +159,7 @@ async def asyncio(
     upload_id: str,
     *,
     client: Client,
-) -> Union[ErrorResponse, MultipartListPartsResponse] | None:
+) -> ErrorResponse | MultipartListPartsResponse | None:
     """List parts
 
      List all uploaded parts for a multipart upload
@@ -165,7 +172,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorResponse, MultipartListPartsResponse]
+        ErrorResponse | MultipartListPartsResponse
     """
 
     return (

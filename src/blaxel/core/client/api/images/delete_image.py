@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -15,25 +16,31 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/images/{resource_type}/{image_name}",
+        "url": "/images/{resource_type}/{image_name}".format(
+            resource_type=quote(str(resource_type), safe=""),
+            image_name=quote(str(image_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Image] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | Image | None:
     if response.status_code == 200:
         response_200 = Image.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -42,7 +49,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, I
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Image]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | Image]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,7 +63,7 @@ def sync_detailed(
     image_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, Image]]:
+) -> Response[Any | Image]:
     """Delete container image
 
      Deletes a container image and all its tags from the workspace registry. Will fail if the image is
@@ -71,7 +78,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image]]
+        Response[Any | Image]
     """
 
     kwargs = _get_kwargs(
@@ -91,7 +98,7 @@ def sync(
     image_name: str,
     *,
     client: Client,
-) -> Union[Any, Image] | None:
+) -> Any | Image | None:
     """Delete container image
 
      Deletes a container image and all its tags from the workspace registry. Will fail if the image is
@@ -106,7 +113,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image]
+        Any | Image
     """
 
     return sync_detailed(
@@ -121,7 +128,7 @@ async def asyncio_detailed(
     image_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, Image]]:
+) -> Response[Any | Image]:
     """Delete container image
 
      Deletes a container image and all its tags from the workspace registry. Will fail if the image is
@@ -136,7 +143,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image]]
+        Response[Any | Image]
     """
 
     kwargs = _get_kwargs(
@@ -154,7 +161,7 @@ async def asyncio(
     image_name: str,
     *,
     client: Client,
-) -> Union[Any, Image] | None:
+) -> Any | Image | None:
     """Delete container image
 
      Deletes a container image and all its tags from the workspace registry. Will fail if the image is
@@ -169,7 +176,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image]
+        Any | Image
     """
 
     return (

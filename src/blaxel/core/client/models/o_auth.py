@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,17 +20,16 @@ class OAuth:
     """OAuth of the artifact
 
     Attributes:
-        scope (Union[Unset, list['OAuthScopeItem']]): Scope of the OAuth
-        type_ (Union[Unset, str]): Type of the OAuth
+        scope (list[OAuthScopeItem] | Unset): Scope of the OAuth
+        type_ (str | Unset): Type of the OAuth
     """
 
-    scope: Union[Unset, list["OAuthScopeItem"]] = UNSET
-    type_: Union[Unset, str] = UNSET
+    scope: list[OAuthScopeItem] | Unset = UNSET
+    type_: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
-        scope: Union[Unset, list[dict[str, Any]]] = UNSET
+        scope: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.scope, Unset):
             scope = []
             for scope_item_data in self.scope:
@@ -50,12 +52,12 @@ class OAuth:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.o_auth_scope_item import OAuthScopeItem
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.o_auth_scope_item import OAuthScopeItem  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         scope = []
         _scope = d.pop("scope", UNSET)
         for scope_item_data in _scope or []:

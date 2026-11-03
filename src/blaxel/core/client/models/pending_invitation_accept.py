@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,20 +20,19 @@ class PendingInvitationAccept:
     """Pending invitation accept
 
     Attributes:
-        email (Union[Unset, str]): User email
-        workspace (Union[Unset, Workspace]): Tenant container that groups all Blaxel resources (agents, functions,
-            models, etc.) with shared team access control and billing.
+        email (str | Unset): User email
+        workspace (Workspace | Unset): Tenant container that groups all Blaxel resources (agents, functions, models,
+            etc.) with shared team access control and billing.
     """
 
-    email: Union[Unset, str] = UNSET
-    workspace: Union[Unset, "Workspace"] = UNSET
+    email: str | Unset = UNSET
+    workspace: Workspace | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         email = self.email
 
-        workspace: Union[Unset, dict[str, Any]] = UNSET
+        workspace: dict[str, Any] | Unset = UNSET
         if (
             self.workspace
             and not isinstance(self.workspace, Unset)
@@ -51,16 +53,16 @@ class PendingInvitationAccept:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.workspace import Workspace
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.workspace import Workspace  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         email = d.pop("email", UNSET)
 
         _workspace = d.pop("workspace", UNSET)
-        workspace: Union[Unset, Workspace]
+        workspace: Workspace | Unset
         if isinstance(_workspace, Unset):
             workspace = UNSET
         else:

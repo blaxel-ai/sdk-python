@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,18 +16,18 @@ class AppRevisionConfiguration:
     """Routing configuration controlling which revision is active and canary traffic splitting
 
     Attributes:
-        active (Union[Unset, str]): Active revision id
-        canary (Union[Unset, str]): Canary revision id
-        canary_percent (Union[Unset, int]): Canary revision percent (0-100) Example: 10.
-        sticky_session_ttl (Union[Unset, int]): Sticky session TTL in seconds (0 = disabled)
-        traffic (Union[Unset, int]): Traffic percentage for deployment Example: 100.
+        active (str | Unset): Active revision id
+        canary (str | Unset): Canary revision id
+        canary_percent (int | Unset): Canary revision percent (0-100) Example: 10.
+        sticky_session_ttl (int | Unset): Sticky session TTL in seconds (0 = disabled) Example: 0.
+        traffic (int | Unset): Traffic percentage for deployment Example: 100.
     """
 
-    active: Union[Unset, str] = UNSET
-    canary: Union[Unset, str] = UNSET
-    canary_percent: Union[Unset, int] = UNSET
-    sticky_session_ttl: Union[Unset, int] = UNSET
-    traffic: Union[Unset, int] = UNSET
+    active: str | Unset = UNSET
+    canary: str | Unset = UNSET
+    canary_percent: int | Unset = UNSET
+    sticky_session_ttl: int | Unset = UNSET
+    traffic: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,10 +58,10 @@ class AppRevisionConfiguration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         active = d.pop("active", UNSET)
 
         canary = d.pop("canary", UNSET)

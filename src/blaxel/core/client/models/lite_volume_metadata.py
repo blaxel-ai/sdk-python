@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,18 +16,18 @@ class LiteVolumeMetadata:
     """Compact metadata for a Volume, returned in listing responses.
 
     Attributes:
-        created_at (Union[Unset, str]):
-        display_name (Union[Unset, str]):
-        external_id (Union[Unset, str]): Caller-owned identifier for external lookups.
-        name (Union[Unset, str]):
-        updated_at (Union[Unset, str]):
+        created_at (str | Unset):
+        display_name (str | Unset):
+        external_id (str | Unset): Caller-owned identifier for external lookups.
+        name (str | Unset):
+        updated_at (str | Unset):
     """
 
-    created_at: Union[Unset, str] = UNSET
-    display_name: Union[Unset, str] = UNSET
-    external_id: Union[Unset, str] = UNSET
-    name: Union[Unset, str] = UNSET
-    updated_at: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    display_name: str | Unset = UNSET
+    external_id: str | Unset = UNSET
+    name: str | Unset = UNSET
+    updated_at: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,10 +58,10 @@ class LiteVolumeMetadata:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         display_name = d.pop("displayName", d.pop("display_name", UNSET))

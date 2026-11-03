@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,18 +17,18 @@ class Flavor:
     """A type of hardware available for deployments
 
     Attributes:
-        name (Union[Unset, str]): Flavor name (e.g. t4) Example: t4.
-        type_ (Union[Unset, FlavorType]): Flavor type (e.g. cpu, gpu) Example: cpu.
+        name (str | Unset): Flavor name (e.g. t4) Example: t4.
+        type_ (FlavorType | Unset): Flavor type (e.g. cpu, gpu) Example: cpu.
     """
 
-    name: Union[Unset, str] = UNSET
-    type_: Union[Unset, FlavorType] = UNSET
+    name: str | Unset = UNSET
+    type_: FlavorType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -40,14 +43,14 @@ class Flavor:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name", UNSET)
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, FlavorType]
+        type_: FlavorType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

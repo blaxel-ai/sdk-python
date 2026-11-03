@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,11 +21,11 @@ class AppUrl:
             domain (str): Custom domain (must be a verified custom domain in the workspace). Can be a wildcard domain (e.g.
                 sandbox.vybe.build registered as *.sandbox.vybe.build) or a direct domain (e.g. app.vybe.build). Example:
                 app.example.com.
-            subdomain (Union[Unset, str]): Subdomain to use with a wildcard custom domain (optional) Example: www.
+            subdomain (str | Unset): Subdomain to use with a wildcard custom domain (optional) Example: www.
     """
 
     domain: str
-    subdomain: Union[Unset, str] = UNSET
+    subdomain: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,10 +46,10 @@ class AppUrl:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         domain = d.pop("domain")
 
         subdomain = d.pop("subdomain", UNSET)

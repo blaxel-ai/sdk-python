@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,14 +15,14 @@ T = TypeVar("T", bound="RankedFile")
 class RankedFile:
     """
     Attributes:
-        content (Union[Unset, str]):
-        path (Union[Unset, str]):
-        score (Union[Unset, float]):
+        content (str | Unset):
+        path (str | Unset):
+        score (float | Unset):
     """
 
-    content: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
-    score: Union[Unset, float] = UNSET
+    content: str | Unset = UNSET
+    path: str | Unset = UNSET
+    score: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,10 +45,10 @@ class RankedFile:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         content = d.pop("content", UNSET)
 
         path = d.pop("path", UNSET)

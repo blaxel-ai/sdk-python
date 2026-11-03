@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,21 +21,20 @@ class SandboxSnapshotRequest:
     the nested one.
 
         Attributes:
-            name (Union[Unset, str]): Display name of the snapshot, unique among the snapshots of the sandbox it is captured
-                from; the same name may be reused on another sandbox. Defaults to the snapshot identifier when absent. Example:
-                my-snapshot.
-            source (Union[Unset, SandboxSnapshotSource]): The object a snapshot was captured from.
+            name (str | Unset): Display name of the snapshot, unique among the snapshots of the sandbox it is captured from;
+                the same name may be reused on another sandbox. Defaults to the snapshot identifier when absent. Example: my-
+                snapshot.
+            source (SandboxSnapshotSource | Unset): The object a snapshot was captured from.
     """
 
-    name: Union[Unset, str] = UNSET
-    source: Union[Unset, "SandboxSnapshotSource"] = UNSET
+    name: str | Unset = UNSET
+    source: SandboxSnapshotSource | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         name = self.name
 
-        source: Union[Unset, dict[str, Any]] = UNSET
+        source: dict[str, Any] | Unset = UNSET
         if self.source and not isinstance(self.source, Unset) and not isinstance(self.source, dict):
             source = self.source.to_dict()
         elif self.source and isinstance(self.source, dict):
@@ -49,16 +51,16 @@ class SandboxSnapshotRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.sandbox_snapshot_source import SandboxSnapshotSource
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.sandbox_snapshot_source import SandboxSnapshotSource  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         name = d.pop("name", UNSET)
 
         _source = d.pop("source", UNSET)
-        source: Union[Unset, SandboxSnapshotSource]
+        source: SandboxSnapshotSource | Unset
         if isinstance(_source, Unset):
             source = UNSET
         else:

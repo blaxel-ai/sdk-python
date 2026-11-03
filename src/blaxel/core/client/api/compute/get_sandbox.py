@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -13,7 +14,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     sandbox_name: str,
     *,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -23,38 +24,45 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/sandboxes/{sandbox_name}",
+        "url": "/sandboxes/{sandbox_name}".format(
+            sandbox_name=quote(str(sandbox_name), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Sandbox] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | Sandbox | None:
     if response.status_code == 200:
         response_200 = Sandbox.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
 
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = Error.from_dict(response.json())
 
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = Error.from_dict(response.json())
 
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -63,7 +71,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Error, Sandbox]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | Sandbox]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -76,8 +84,8 @@ def sync_detailed(
     sandbox_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Response[Union[Error, Sandbox]]:
+    show_secrets: bool | Unset = UNSET,
+) -> Response[Error | Sandbox]:
     """Get sandbox
 
      Returns detailed information about a sandbox including its configuration, attached volumes,
@@ -85,14 +93,14 @@ def sync_detailed(
 
     Args:
         sandbox_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Sandbox]]
+        Response[Error | Sandbox]
     """
 
     kwargs = _get_kwargs(
@@ -111,8 +119,8 @@ def sync(
     sandbox_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Union[Error, Sandbox] | None:
+    show_secrets: bool | Unset = UNSET,
+) -> Error | Sandbox | None:
     """Get sandbox
 
      Returns detailed information about a sandbox including its configuration, attached volumes,
@@ -120,14 +128,14 @@ def sync(
 
     Args:
         sandbox_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Sandbox]
+        Error | Sandbox
     """
 
     return sync_detailed(
@@ -141,8 +149,8 @@ async def asyncio_detailed(
     sandbox_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Response[Union[Error, Sandbox]]:
+    show_secrets: bool | Unset = UNSET,
+) -> Response[Error | Sandbox]:
     """Get sandbox
 
      Returns detailed information about a sandbox including its configuration, attached volumes,
@@ -150,14 +158,14 @@ async def asyncio_detailed(
 
     Args:
         sandbox_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, Sandbox]]
+        Response[Error | Sandbox]
     """
 
     kwargs = _get_kwargs(
@@ -174,8 +182,8 @@ async def asyncio(
     sandbox_name: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
-) -> Union[Error, Sandbox] | None:
+    show_secrets: bool | Unset = UNSET,
+) -> Error | Sandbox | None:
     """Get sandbox
 
      Returns detailed information about a sandbox including its configuration, attached volumes,
@@ -183,14 +191,14 @@ async def asyncio(
 
     Args:
         sandbox_name (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, Sandbox]
+        Error | Sandbox
     """
 
     return (

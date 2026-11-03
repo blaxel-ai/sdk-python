@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,17 +19,17 @@ class ImageShareTarget:
         status (str): "active" when the share is applied in the target workspace, "pending" when it is awaiting accept
             on a cross-account share.
         workspace (str): The workspace the image is shared with.
-        account_owner_email (Union[Unset, str]): Email of the account owner for the target workspace (when available).
-        pending_share_id (Union[Unset, str]): ID of the pending share record when status is "pending".
-        workspace_display_name (Union[Unset, str]): Display name of the target workspace.
+        account_owner_email (str | Unset): Email of the account owner for the target workspace (when available).
+        pending_share_id (str | Unset): ID of the pending share record when status is "pending".
+        workspace_display_name (str | Unset): Display name of the target workspace.
     """
 
     account_id: str
     status: str
     workspace: str
-    account_owner_email: Union[Unset, str] = UNSET
-    pending_share_id: Union[Unset, str] = UNSET
-    workspace_display_name: Union[Unset, str] = UNSET
+    account_owner_email: str | Unset = UNSET
+    pending_share_id: str | Unset = UNSET
+    workspace_display_name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,10 +64,10 @@ class ImageShareTarget:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         account_id = d.pop("accountId") if "accountId" in d else d.pop("account_id")
 
         status = d.pop("status")

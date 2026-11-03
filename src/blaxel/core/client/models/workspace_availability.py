@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,15 +17,15 @@ class WorkspaceAvailability:
     """Result of a workspace-name availability check.
 
     Attributes:
-        available (Union[Unset, bool]): Whether the requested workspace name is available.
-        message (Union[Unset, str]): Human-readable explanation suitable for display in the UI. Empty when available.
-        reason (Union[Unset, WorkspaceAvailabilityReason]): Machine-readable reason explaining why the name is
-            unavailable. Empty when available.
+        available (bool | Unset): Whether the requested workspace name is available.
+        message (str | Unset): Human-readable explanation suitable for display in the UI. Empty when available.
+        reason (WorkspaceAvailabilityReason | Unset): Machine-readable reason explaining why the name is unavailable.
+            Empty when available.
     """
 
-    available: Union[Unset, bool] = UNSET
-    message: Union[Unset, str] = UNSET
-    reason: Union[Unset, WorkspaceAvailabilityReason] = UNSET
+    available: bool | Unset = UNSET
+    message: str | Unset = UNSET
+    reason: WorkspaceAvailabilityReason | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -30,7 +33,7 @@ class WorkspaceAvailability:
 
         message = self.message
 
-        reason: Union[Unset, str] = UNSET
+        reason: str | Unset = UNSET
         if not isinstance(self.reason, Unset):
             reason = self.reason.value
 
@@ -47,16 +50,16 @@ class WorkspaceAvailability:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         available = d.pop("available", UNSET)
 
         message = d.pop("message", UNSET)
 
         _reason = d.pop("reason", UNSET)
-        reason: Union[Unset, WorkspaceAvailabilityReason]
+        reason: WorkspaceAvailabilityReason | Unset
         if isinstance(_reason, Unset) or _reason == "":
             reason = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,14 +19,14 @@ T = TypeVar("T", bound="MultipartCompleteRequest")
 class MultipartCompleteRequest:
     """
     Attributes:
-        parts (Union[Unset, list['MultipartPartInfo']]):
+        parts (list[MultipartPartInfo] | Unset):
     """
 
-    parts: Union[Unset, list["MultipartPartInfo"]] = UNSET
+    parts: list[MultipartPartInfo] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        parts: Union[Unset, list[dict[str, Any]]] = UNSET
+        parts: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.parts, Unset):
             parts = []
             for parts_item_data in self.parts:
@@ -42,12 +45,12 @@ class MultipartCompleteRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.multipart_part_info import MultipartPartInfo
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.multipart_part_info import MultipartPartInfo  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         parts = []
         _parts = d.pop("parts", UNSET)
         for parts_item_data in _parts or []:

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,20 +15,19 @@ T = TypeVar("T", bound="MultipartUpload")
 class MultipartUpload:
     """
     Attributes:
-        abort_url (Union[Unset, str]): AbortURL is a presigned DELETE URL that discards the parts already
+        abort_url (str | Unset): AbortURL is a presigned DELETE URL that discards the parts already
             uploaded. Without it a failed export leaves them on the storage until a
             lifecycle rule removes them.
-        complete_url (Union[Unset, str]): CompleteURL is a presigned POST URL that assembles the parts.
-        part_size (Union[Unset, int]): PartSize is the number of bytes sent to every part but the last. Example:
-            536870912.
-        part_urls (Union[Unset, list[str]]): PartURLs are presigned PUT URLs, one per part, in order. Extra ones are
+        complete_url (str | Unset): CompleteURL is a presigned POST URL that assembles the parts.
+        part_size (int | Unset): PartSize is the number of bytes sent to every part but the last. Example: 536870912.
+        part_urls (list[str] | Unset): PartURLs are presigned PUT URLs, one per part, in order. Extra ones are
             left unused.
     """
 
-    abort_url: Union[Unset, str] = UNSET
-    complete_url: Union[Unset, str] = UNSET
-    part_size: Union[Unset, int] = UNSET
-    part_urls: Union[Unset, list[str]] = UNSET
+    abort_url: str | Unset = UNSET
+    complete_url: str | Unset = UNSET
+    part_size: int | Unset = UNSET
+    part_urls: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -35,7 +37,7 @@ class MultipartUpload:
 
         part_size = self.part_size
 
-        part_urls: Union[Unset, list[str]] = UNSET
+        part_urls: list[str] | Unset = UNSET
         if not isinstance(self.part_urls, Unset):
             part_urls = self.part_urls
 
@@ -54,10 +56,10 @@ class MultipartUpload:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         abort_url = d.pop("abortUrl", d.pop("abort_url", UNSET))
 
         complete_url = d.pop("completeUrl", d.pop("complete_url", UNSET))

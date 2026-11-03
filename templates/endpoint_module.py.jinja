@@ -1,10 +1,12 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
 from ...client import Client
-from ...types import Response, UNSET
+{# Blaxel: Unset too, an optional multi-body signature uses it (upstream 0.29.1 omits it); ruff drops it when unused #}
+from ...types import Response, UNSET, Unset
 from ... import errors
 
 {% for relative in endpoint.relative_imports | sort %}
@@ -15,7 +17,7 @@ from ... import errors
     arguments, client, kwargs, parse_response, docstring, body_to_kwarg %}
 
 {% set return_string = endpoint.response_type() %}
-{% set parsed_responses = (endpoint.responses | length > 0) and return_string != "Any" %}
+{% set parsed_responses = (endpoint.responses | length > 0) and return_string != PythonCode("Any") %}
 
 def _get_kwargs(
     {{ arguments(endpoint, include_client=False) | indent(4) }}
@@ -29,13 +31,13 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "{{ endpoint.method }}",
         {% if endpoint.path_parameters %}
-        "url": "{{ endpoint.path }}".format(
+        "url": "{{ endpoint.path | in_double_quote_literal }}".format(
         {%- for parameter in endpoint.path_parameters -%}
-        {{parameter.python_name}}={{parameter.python_name}},
+        {{parameter.python_name}}=quote(str({{parameter.python_name}}), safe=""),
         {%- endfor -%}
         ),
         {% else %}
-        "url": "{{ endpoint.path }}",
+        "url": "{{ endpoint.path | in_double_quote_literal }}",
         {% endif %}
         {% if endpoint.query_parameters %}
         "params": params,
@@ -47,21 +49,18 @@ def _get_kwargs(
 
 {% if endpoint.bodies | length > 1 %}
 {% for body in endpoint.bodies %}
-    {# Plain dicts are accepted as JSON bodies, like the single-body branch #}
-    if isinstance(body, {% if body.body_type.value == "json" %}{{ body.prop.get_type_string() }} | dict{% else %}{{ body.prop.get_type_string() }}{% endif %}):
-        {% set destination = "_" + body.body_type + "_body" %}
-        {{ body_to_kwarg(body, destination) | indent(8) }}
-        _kwargs["{{ body.body_type.value }}"] = {{ destination }}
-        {% if body.content_type != "multipart/form-data" %}{# Need httpx to set the boundary automatically #}
-        headers["Content-Type"] = "{{ body.content_type }}"
+    {# Blaxel: plain dicts are accepted as JSON bodies, like the single-body branch #}
+    if isinstance(body, {{body.prop.get_type_string(no_optional=True) | as_unembedded_code }}{% if body.body_type.value == "json" %} | dict{% endif %}):
+        {{ body_to_kwarg(body) | indent(8) }}
+        {%- if body.content_type != "multipart/form-data" %}{# Blaxel: let httpx set the multipart boundary #}
+        headers["Content-Type"] = "{{ body.content_type | in_double_quote_literal }}"
         {% endif %}
 {% endfor %}
 {% elif endpoint.bodies | length == 1 %}
 {% set body = endpoint.bodies[0] %}
-    {{ body_to_kwarg(body, "_body") | indent(4) }}
-    _kwargs["{{ body.body_type.value }}"] = _body
-    {% if body.content_type != "multipart/form-data" %}{# Need httpx to set the boundary automatically #}
-    headers["Content-Type"] = "{{ body.content_type }}"
+    {{ body_to_kwarg(body) | indent(4) }}
+    {%- if body.content_type != "multipart/form-data" %}{# Blaxel: let httpx set the multipart boundary #}
+    headers["Content-Type"] = "{{ body.content_type | in_double_quote_literal }}"
     {% endif %}
 {% endif %}
 
@@ -70,35 +69,37 @@ def _get_kwargs(
 {% endif %}
     return _kwargs
 
+{% if endpoint.responses.default %}
+    {% set return_type = return_string | as_unembedded_code %}
+{% else %}
+    {% set return_type = (return_string | as_unembedded_code) + " | None" %}
+{% endif %}
 
-def _parse_response(*, client: Client, response: httpx.Response) -> {{ return_string }} | None:
-    {% for response in endpoint.responses %}
-    if response.status_code == {{ response.status_code.value }}:
-        {% if parsed_responses %}{% import "property_templates/" + response.prop.template as prop_template %}
-        {% if prop_template.construct %}
-        {{ prop_template.construct(response.prop, response.source.attribute) | indent(8) }}
-        {% elif response.source.return_type == response.prop.get_type_string()  %}
-        {{ response.prop.python_name }} = {{ response.source.attribute }}
-        {% else %}
-        {{ response.prop.python_name }} = cast({{ response.prop.get_type_string() }}, {{ response.source.attribute }})
-        {% endif %}
-        {% if response.status_code.value >= 400 %}
-        errors.retain_response({{ response.prop.python_name }}, response)
-        {% endif %}
-        return {{ response.prop.python_name }}
-        {% else %}
-        return None
-        {% endif %}
+
+def _parse_response(*, client: Client, response: httpx.Response) -> {{return_type}}:
+    {% for response in endpoint.responses.patterns %}
+    {% set code_range = response.status_code.range %}
+    {% if code_range[0] == code_range[1] %}
+    if response.status_code == {{ code_range[0] }}:
+    {% else %}
+    if {{ code_range[0] }} <= response.status_code <= {{ code_range[1] }}:
+    {% endif %}
+        {{ parse_response(parsed_responses, response, code_range[0] >= 400) | indent(8) }}
     {% endfor %}
+    {% if endpoint.responses.default %}
+    {{ parse_response(parsed_responses, endpoint.responses.default, True) | indent(4) }}
+    {% else %}
     if client.raise_on_unexpected_status:
+        {# Blaxel: typed errors (ConflictError, RateLimitError) for undocumented statuses #}
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
         )
     else:
         return None
+    {% endif %}
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[{{ return_string }}]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[{{ return_string | as_unembedded_code }}]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -109,7 +110,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[{{ 
 
 def sync_detailed(
     {{ arguments(endpoint) | indent(4) }}
-) -> Response[{{ return_string }}]:
+) -> Response[{{ return_string | as_unembedded_code }}]:
     {{ docstring(endpoint, return_string, is_detailed=true) | indent(4) }}
 
     kwargs = _get_kwargs(
@@ -125,7 +126,7 @@ def sync_detailed(
 {% if parsed_responses %}
 def sync(
     {{ arguments(endpoint) | indent(4) }}
-) -> {{ return_string }} | None:
+) -> {{ return_string | as_unembedded_code }} | None:
     {{ docstring(endpoint, return_string, is_detailed=false) | indent(4) }}
 
     return sync_detailed(
@@ -135,7 +136,7 @@ def sync(
 
 async def asyncio_detailed(
     {{ arguments(endpoint) | indent(4) }}
-) -> Response[{{ return_string }}]:
+) -> Response[{{ return_string | as_unembedded_code }}]:
     {{ docstring(endpoint, return_string, is_detailed=true) | indent(4) }}
 
     kwargs = _get_kwargs(
@@ -151,7 +152,7 @@ async def asyncio_detailed(
 {% if parsed_responses %}
 async def asyncio(
     {{ arguments(endpoint) | indent(4) }}
-) -> {{ return_string }} | None:
+) -> {{ return_string | as_unembedded_code }} | None:
     {{ docstring(endpoint, return_string, is_detailed=false) | indent(4) }}
 
     return (await asyncio_detailed(

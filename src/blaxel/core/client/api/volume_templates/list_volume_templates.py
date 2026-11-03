@@ -18,7 +18,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["VolumeTemplate"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[VolumeTemplate] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -28,6 +28,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Volume
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -36,9 +37,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["Volume
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[list["VolumeTemplate"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list[VolumeTemplate]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -50,7 +49,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-) -> Response[list["VolumeTemplate"]]:
+) -> Response[list[VolumeTemplate]]:
     """List volume templates
 
      Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
@@ -61,7 +60,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['VolumeTemplate']]
+        Response[list[VolumeTemplate]]
     """
 
     kwargs = _get_kwargs()
@@ -76,7 +75,7 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> list["VolumeTemplate"] | None:
+) -> list[VolumeTemplate] | None:
     """List volume templates
 
      Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
@@ -87,7 +86,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['VolumeTemplate']
+        list[VolumeTemplate]
     """
 
     return sync_detailed(
@@ -98,7 +97,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[list["VolumeTemplate"]]:
+) -> Response[list[VolumeTemplate]]:
     """List volume templates
 
      Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
@@ -109,7 +108,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['VolumeTemplate']]
+        Response[list[VolumeTemplate]]
     """
 
     kwargs = _get_kwargs()
@@ -122,7 +121,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> list["VolumeTemplate"] | None:
+) -> list[VolumeTemplate] | None:
     """List volume templates
 
      Returns all volume templates in the workspace. Volume templates contain pre-configured filesystem
@@ -133,7 +132,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['VolumeTemplate']
+        list[VolumeTemplate]
     """
 
     return (

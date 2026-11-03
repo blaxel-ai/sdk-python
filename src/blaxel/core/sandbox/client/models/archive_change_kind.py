@@ -2,6 +2,9 @@ from enum import Enum
 
 
 class ArchiveChangeKind(str, Enum):
+    CHANGE_ADDED = "added"
+    CHANGE_DELETED = "deleted"
+    CHANGE_MODIFIED = "modified"
     ADDED = "added"
     DELETED = "deleted"
     MODIFIED = "modified"

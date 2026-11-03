@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -14,11 +17,11 @@ T = TypeVar("T", bound="FuzzySearchResponse")
 class FuzzySearchResponse:
     """
     Attributes:
-        matches (list['FuzzySearchMatch']):
+        matches (list[FuzzySearchMatch]):
         total (int):  Example: 5.
     """
 
-    matches: list["FuzzySearchMatch"]
+    matches: list[FuzzySearchMatch]
     total: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -45,12 +48,12 @@ class FuzzySearchResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.fuzzy_search_match import FuzzySearchMatch
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.fuzzy_search_match import FuzzySearchMatch  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         matches = []
         _matches = d.pop("matches")
         for matches_item_data in _matches:

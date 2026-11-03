@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,37 +22,36 @@ class JobRuntime:
     """Runtime configuration defining how batch job tasks are executed with parallelism and retry settings
 
     Attributes:
-        disk_percent (Union[Unset, int]): Percentage of VM RAM allocated for disk storage (tmpfs overlay). Valid range
-            10-95, default 50. Only applies to mk3.1 (microVM) generation. Example: 80.
-        envs (Union[Unset, list['Env']]): Environment variables injected into job tasks. Supports Kubernetes EnvVar
-            format with valueFrom references.
-        generation (Union[Unset, JobRuntimeGeneration]): Infrastructure generation. Jobs always run on mk3 (microVMs);
-            any value sent on input is ignored. Example: mk3.
-        image (Union[Unset, str]): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
+        disk_percent (int | Unset): Percentage of VM RAM allocated for disk storage (tmpfs overlay). Valid range 10-95,
+            default 50. Only applies to mk3.1 (microVM) generation. Example: 80.
+        envs (list[Env] | Unset): Environment variables injected into job tasks. Supports Kubernetes EnvVar format with
+            valueFrom references.
+        generation (JobRuntimeGeneration | Unset): Infrastructure generation. Jobs always run on mk3 (microVMs); any
+            value sent on input is ignored. Example: mk3.
+        image (str | Unset): Container image built by Blaxel when deploying with 'bl deploy'. This field is auto-
             populated during deployment.
-        max_retries (Union[Unset, int]): Number of automatic retry attempts for failed tasks before marking as failed
-            Example: 3.
-        memory (Union[Unset, int]): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory
-            in MB / 2048, e.g., 4096MB = 2 CPUs). Example: 2048.
-        ports (Union[Unset, list['Port']]): Set of ports for a resource
-        timeout (Union[Unset, int]): Maximum execution time in seconds before a task is terminated Example: 3600.
+        max_retries (int | Unset): Number of automatic retry attempts for failed tasks before marking as failed Example:
+            3.
+        memory (int | Unset): Memory allocation in megabytes. Also determines CPU allocation (CPU cores = memory in MB /
+            2048, e.g., 4096MB = 2 CPUs). Example: 2048.
+        ports (list[Port] | Unset): Set of ports for a resource
+        timeout (int | Unset): Maximum execution time in seconds before a task is terminated Example: 3600.
     """
 
-    disk_percent: Union[Unset, int] = UNSET
-    envs: Union[Unset, list["Env"]] = UNSET
-    generation: Union[Unset, JobRuntimeGeneration] = UNSET
-    image: Union[Unset, str] = UNSET
-    max_retries: Union[Unset, int] = UNSET
-    memory: Union[Unset, int] = UNSET
-    ports: Union[Unset, list["Port"]] = UNSET
-    timeout: Union[Unset, int] = UNSET
+    disk_percent: int | Unset = UNSET
+    envs: list[Env] | Unset = UNSET
+    generation: JobRuntimeGeneration | Unset = UNSET
+    image: str | Unset = UNSET
+    max_retries: int | Unset = UNSET
+    memory: int | Unset = UNSET
+    ports: list[Port] | Unset = UNSET
+    timeout: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         disk_percent = self.disk_percent
 
-        envs: Union[Unset, list[dict[str, Any]]] = UNSET
+        envs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
             for envs_item_data in self.envs:
@@ -59,7 +61,7 @@ class JobRuntime:
                     envs_item = envs_item_data.to_dict()
                 envs.append(envs_item)
 
-        generation: Union[Unset, str] = UNSET
+        generation: str | Unset = UNSET
         if not isinstance(self.generation, Unset):
             generation = self.generation.value
 
@@ -69,7 +71,7 @@ class JobRuntime:
 
         memory = self.memory
 
-        ports: Union[Unset, list[dict[str, Any]]] = UNSET
+        ports: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.ports, Unset):
             ports = []
             for componentsschemas_ports_item_data in self.ports:
@@ -104,13 +106,13 @@ class JobRuntime:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.env import Env
-        from ..models.port import Port
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.env import Env  # noqa: PLC0415
+        from ..models.port import Port  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         disk_percent = d.pop("diskPercent", d.pop("disk_percent", UNSET))
 
         envs = []
@@ -121,7 +123,7 @@ class JobRuntime:
             envs.append(envs_item)
 
         _generation = d.pop("generation", UNSET)
-        generation: Union[Unset, JobRuntimeGeneration]
+        generation: JobRuntimeGeneration | Unset
         if isinstance(_generation, Unset) or _generation == "":
             generation = UNSET
         else:

@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,16 +18,16 @@ class GithubRunnerConfig:
     specific runner.
 
         Attributes:
-            repositories (Union[Unset, list[str]]): Repositories in owner/repo format that this runner is associated with.
-                The runner will pick up workflow jobs from any of these repositories. If non-empty, the runner is considered
+            repositories (list[str] | Unset): Repositories in owner/repo format that this runner is associated with. The
+                runner will pick up workflow jobs from any of these repositories. If non-empty, the runner is considered
                 enabled. Example: ["my-org/repo-a", "my-org/repo-b"].
     """
 
-    repositories: Union[Unset, list[str]] = UNSET
+    repositories: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        repositories: Union[Unset, list[str]] = UNSET
+        repositories: list[str] | Unset = UNSET
         if not isinstance(self.repositories, Unset):
             repositories = self.repositories
 
@@ -37,10 +40,10 @@ class GithubRunnerConfig:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         repositories = cast(list[str], d.pop("repositories", UNSET))
 
         github_runner_config = cls(

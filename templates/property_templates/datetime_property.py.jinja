@@ -1,5 +1,5 @@
 {% macro construct_function(property, source) %}
-isoparse({{ source }})
+datetime.datetime.fromisoformat({{ source }})
 {% endmacro %}
 
 {% from "property_templates/property_macros.py.jinja" import construct_template %}
@@ -10,30 +10,24 @@ isoparse({{ source }})
 
 {% macro check_type_for_construct(property, source) %}isinstance({{ source }}, str){% endmacro %}
 
-{% macro transform(property, source, destination, declare_type=True) %}
+{% macro transform(property, source, destination, declare_type=True, skip_unset=False) %}
 {% set transformed = source + ".isoformat()" %}
 {% if property.required %}
 {{ destination }} = {{ transformed }}
 {%- else %}
-{% if declare_type %}
-{% set type_annotation = property.get_type_string(json=True) %}
+    {% if not skip_unset %}
+        {% if declare_type %}
+        {% set type_annotation = property.get_type_string(json=True) | as_unembedded_code %}
 {{ destination }}: {{ type_annotation }} = UNSET
-{% else %}
+        {% else %}
 {{ destination }} = UNSET
-{% endif %}
+        {% endif %}
+    {% endif %}
 if not isinstance({{ source }}, Unset):
     {{ destination }} = {{ transformed }}
 {%- endif %}
 {% endmacro %}
 
-{% macro transform_multipart(property, source, destination) %}
-{% set transformed = source + ".isoformat().encode()" %}
-{% if property.required %}
-{{ destination }} = {{ transformed }}
-{%- else %}
-{% set type_annotation = property.get_type_string(json=True) | replace("str", "bytes") %}
-{{ destination }}: {{ type_annotation }} = UNSET
-if not isinstance({{ source }}, Unset):
-    {{ destination }} = {{ transformed }}
-{%- endif %}
+{% macro multipart(property, source, name) %}
+files.append(({{ name }}, (None, {{ source }}.isoformat().encode(), "text/plain")))
 {% endmacro %}

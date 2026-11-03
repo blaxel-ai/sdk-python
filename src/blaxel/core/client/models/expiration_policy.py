@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,25 +18,24 @@ class ExpirationPolicy:
     """Expiration policy for automatic sandbox cleanup based on time conditions
 
     Attributes:
-        action (Union[Unset, ExpirationPolicyAction]): Action to take when the expiration condition is met Example:
-            delete.
-        type_ (Union[Unset, ExpirationPolicyType]): Type of expiration policy: ttl-idle (delete after inactivity), ttl-
-            max-age (delete after total lifetime), or date (delete at specific time) Example: ttl-idle.
-        value (Union[Unset, str]): Duration value for TTL policies (e.g., '30m', '24h', '7d'; minimum '60s' for ttl-
-            idle, '5m' for ttl-max-age) or ISO 8601 date for date policies Example: 24h.
+        action (ExpirationPolicyAction | Unset): Action to take when the expiration condition is met Example: delete.
+        type_ (ExpirationPolicyType | Unset): Type of expiration policy: ttl-idle (delete after inactivity), ttl-max-age
+            (delete after total lifetime), or date (delete at specific time) Example: ttl-idle.
+        value (str | Unset): Duration value for TTL policies (e.g., '30m', '24h', '7d'; minimum '60s' for ttl-idle, '5m'
+            for ttl-max-age) or ISO 8601 date for date policies Example: 24h.
     """
 
-    action: Union[Unset, ExpirationPolicyAction] = UNSET
-    type_: Union[Unset, ExpirationPolicyType] = UNSET
-    value: Union[Unset, str] = UNSET
+    action: ExpirationPolicyAction | Unset = UNSET
+    type_: ExpirationPolicyType | Unset = UNSET
+    value: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        action: Union[Unset, str] = UNSET
+        action: str | Unset = UNSET
         if not isinstance(self.action, Unset):
             action = self.action.value
 
-        type_: Union[Unset, str] = UNSET
+        type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
@@ -52,19 +54,19 @@ class ExpirationPolicy:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         _action = d.pop("action", UNSET)
-        action: Union[Unset, ExpirationPolicyAction]
+        action: ExpirationPolicyAction | Unset
         if isinstance(_action, Unset) or _action == "":
             action = UNSET
         else:
             action = ExpirationPolicyAction(_action)
 
         _type_ = d.pop("type", d.pop("type_", UNSET))
-        type_: Union[Unset, ExpirationPolicyType]
+        type_: ExpirationPolicyType | Unset
         if isinstance(_type_, Unset) or _type_ == "":
             type_ = UNSET
         else:

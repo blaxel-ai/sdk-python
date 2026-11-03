@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -14,21 +15,25 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/workspaces/{workspace_name}/leave",
+        "url": "/workspaces/{workspace_name}/leave".format(
+            workspace_name=quote(str(workspace_name), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Workspace] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | Workspace | None:
     if response.status_code == 200:
         response_200 = Workspace.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -37,7 +42,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, W
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Workspace]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | Workspace]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -50,7 +55,7 @@ def sync_detailed(
     workspace_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, Workspace]]:
+) -> Response[Any | Workspace]:
     """Leave workspace
 
      Leaves a workspace.
@@ -63,7 +68,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Workspace]]
+        Response[Any | Workspace]
     """
 
     kwargs = _get_kwargs(
@@ -81,7 +86,7 @@ def sync(
     workspace_name: str,
     *,
     client: Client,
-) -> Union[Any, Workspace] | None:
+) -> Any | Workspace | None:
     """Leave workspace
 
      Leaves a workspace.
@@ -94,7 +99,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Workspace]
+        Any | Workspace
     """
 
     return sync_detailed(
@@ -107,7 +112,7 @@ async def asyncio_detailed(
     workspace_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, Workspace]]:
+) -> Response[Any | Workspace]:
     """Leave workspace
 
      Leaves a workspace.
@@ -120,7 +125,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Workspace]]
+        Response[Any | Workspace]
     """
 
     kwargs = _get_kwargs(
@@ -136,7 +141,7 @@ async def asyncio(
     workspace_name: str,
     *,
     client: Client,
-) -> Union[Any, Workspace] | None:
+) -> Any | Workspace | None:
     """Leave workspace
 
      Leaves a workspace.
@@ -149,7 +154,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Workspace]
+        Any | Workspace
     """
 
     return (

@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -12,7 +13,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     job_id: str,
     *,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -22,7 +23,9 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/jobs/{job_id}",
+        "url": "/jobs/{job_id}".format(
+            job_id=quote(str(job_id), safe=""),
+        ),
         "params": params,
     }
 
@@ -34,6 +37,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Job | None:
         response_200 = Job.from_dict(response.json())
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -55,7 +59,7 @@ def sync_detailed(
     job_id: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> Response[Job]:
     """Get batch job
 
@@ -64,7 +68,7 @@ def sync_detailed(
 
     Args:
         job_id (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -90,7 +94,7 @@ def sync(
     job_id: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> Job | None:
     """Get batch job
 
@@ -99,7 +103,7 @@ def sync(
 
     Args:
         job_id (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,7 +124,7 @@ async def asyncio_detailed(
     job_id: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> Response[Job]:
     """Get batch job
 
@@ -129,7 +133,7 @@ async def asyncio_detailed(
 
     Args:
         job_id (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -153,7 +157,7 @@ async def asyncio(
     job_id: str,
     *,
     client: Client,
-    show_secrets: Union[Unset, bool] = UNSET,
+    show_secrets: bool | Unset = UNSET,
 ) -> Job | None:
     """Get batch job
 
@@ -162,7 +166,7 @@ async def asyncio(
 
     Args:
         job_id (str):
-        show_secrets (Union[Unset, bool]):
+        show_secrets (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

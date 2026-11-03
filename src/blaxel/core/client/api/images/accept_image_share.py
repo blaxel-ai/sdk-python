@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -12,7 +13,7 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     pending_share_id: str,
     *,
-    force: Union[Unset, bool] = UNSET,
+    force: bool | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -22,34 +23,41 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/pending-image-shares/{pending_share_id}/accept",
+        "url": "/pending-image-shares/{pending_share_id}/accept".format(
+            pending_share_id=quote(str(pending_share_id), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, Image] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | Image | None:
     if response.status_code == 200:
         response_200 = Image.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 403:
         response_403 = cast(Any, None)
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 409:
         response_409 = cast(Any, None)
         errors.retain_response(response_409, response)
         return response_409
+
     if response.status_code == 410:
         response_410 = cast(Any, None)
         errors.retain_response(response_410, response)
         return response_410
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -58,7 +66,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, I
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, Image]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | Image]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -71,8 +79,8 @@ def sync_detailed(
     pending_share_id: str,
     *,
     client: Client,
-    force: Union[Unset, bool] = UNSET,
-) -> Response[Union[Any, Image]]:
+    force: bool | Unset = UNSET,
+) -> Response[Any | Image]:
     """Accept a pending image share
 
      Accepts a pending cross-account image share and copies the image metadata to the target workspace.
@@ -80,14 +88,14 @@ def sync_detailed(
 
     Args:
         pending_share_id (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image]]
+        Response[Any | Image]
     """
 
     kwargs = _get_kwargs(
@@ -106,8 +114,8 @@ def sync(
     pending_share_id: str,
     *,
     client: Client,
-    force: Union[Unset, bool] = UNSET,
-) -> Union[Any, Image] | None:
+    force: bool | Unset = UNSET,
+) -> Any | Image | None:
     """Accept a pending image share
 
      Accepts a pending cross-account image share and copies the image metadata to the target workspace.
@@ -115,14 +123,14 @@ def sync(
 
     Args:
         pending_share_id (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image]
+        Any | Image
     """
 
     return sync_detailed(
@@ -136,8 +144,8 @@ async def asyncio_detailed(
     pending_share_id: str,
     *,
     client: Client,
-    force: Union[Unset, bool] = UNSET,
-) -> Response[Union[Any, Image]]:
+    force: bool | Unset = UNSET,
+) -> Response[Any | Image]:
     """Accept a pending image share
 
      Accepts a pending cross-account image share and copies the image metadata to the target workspace.
@@ -145,14 +153,14 @@ async def asyncio_detailed(
 
     Args:
         pending_share_id (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Image]]
+        Response[Any | Image]
     """
 
     kwargs = _get_kwargs(
@@ -169,8 +177,8 @@ async def asyncio(
     pending_share_id: str,
     *,
     client: Client,
-    force: Union[Unset, bool] = UNSET,
-) -> Union[Any, Image] | None:
+    force: bool | Unset = UNSET,
+) -> Any | Image | None:
     """Accept a pending image share
 
      Accepts a pending cross-account image share and copies the image metadata to the target workspace.
@@ -178,14 +186,14 @@ async def asyncio(
 
     Args:
         pending_share_id (str):
-        force (Union[Unset, bool]):
+        force (bool | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Image]
+        Any | Image
     """
 
     return (

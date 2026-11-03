@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -17,20 +20,20 @@ T = TypeVar("T", bound="Directory")
 class Directory:
     """
     Attributes:
-        files (list['File']):
+        files (list[File]):
         name (str):
         path (str):
-        subdirectories (list['Subdirectory']): @name Subdirectories
-        recursive (Union[Unset, bool]): Recursive is true when files and subdirectories hold every level below
+        subdirectories (list[Subdirectory]): @name Subdirectories
+        recursive (bool | Unset): Recursive is true when files and subdirectories hold every level below
             path (tree read with recursive=true). Older APIs ignore that parameter
             and omit this field, so clients can tell a one-level listing apart.
     """
 
-    files: list["File"]
+    files: list[File]
     name: str
     path: str
-    subdirectories: list["Subdirectory"]
-    recursive: Unset | bool = UNSET
+    subdirectories: list[Subdirectory]
+    recursive: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -72,13 +75,13 @@ class Directory:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.file import File
-        from ..models.subdirectory import Subdirectory
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.file import File  # noqa: PLC0415
+        from ..models.subdirectory import Subdirectory  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         files = []
         _files = d.pop("files")
         for files_item_data in _files:

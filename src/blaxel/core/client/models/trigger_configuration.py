@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,31 +20,29 @@ class TriggerConfiguration:
     """Trigger configuration
 
     Attributes:
-        authentication_type (Union[Unset, str]): The authentication type of the trigger Example: blaxel.
-        callback_secret (Union[Unset, str]): The callback secret for async triggers (auto-generated, encrypted)
-        callback_url (Union[Unset, str]): The callback URL for async triggers (optional) Example:
-            https://myapp.com/webhook.
-        path (Union[Unset, str]): The path of the trigger Example: /invoke.
-        retry (Union[Unset, int]): The retry of the trigger Example: 3.
-        schedule (Union[Unset, str]): The schedule of the trigger, cron expression * * * * * Example: 0 * * * *.
-        tasks (Union[Unset, list['TriggerConfigurationTask']]): The tasks configuration of the cronjob
-        tasks_ref (Union[Unset, str]): Where this trigger's task list is stored (server-managed)
-        timeout (Union[Unset, int]): The timeout in seconds for async triggers (max 900s, MK3 only) Example: 300.
+        authentication_type (str | Unset): The authentication type of the trigger Example: blaxel.
+        callback_secret (str | Unset): The callback secret for async triggers (auto-generated, encrypted)
+        callback_url (str | Unset): The callback URL for async triggers (optional) Example: https://myapp.com/webhook.
+        path (str | Unset): The path of the trigger Example: /invoke.
+        retry (int | Unset): The retry of the trigger Example: 3.
+        schedule (str | Unset): The schedule of the trigger, cron expression * * * * * Example: 0 * * * *.
+        tasks (list[TriggerConfigurationTask] | Unset): The tasks configuration of the cronjob
+        tasks_ref (str | Unset): Where this trigger's task list is stored (server-managed)
+        timeout (int | Unset): The timeout in seconds for async triggers (max 900s, MK3 only) Example: 300.
     """
 
-    authentication_type: Union[Unset, str] = UNSET
-    callback_secret: Union[Unset, str] = UNSET
-    callback_url: Union[Unset, str] = UNSET
-    path: Union[Unset, str] = UNSET
-    retry: Union[Unset, int] = UNSET
-    schedule: Union[Unset, str] = UNSET
-    tasks: Union[Unset, list["TriggerConfigurationTask"]] = UNSET
-    tasks_ref: Union[Unset, str] = UNSET
-    timeout: Union[Unset, int] = UNSET
+    authentication_type: str | Unset = UNSET
+    callback_secret: str | Unset = UNSET
+    callback_url: str | Unset = UNSET
+    path: str | Unset = UNSET
+    retry: int | Unset = UNSET
+    schedule: str | Unset = UNSET
+    tasks: list[TriggerConfigurationTask] | Unset = UNSET
+    tasks_ref: str | Unset = UNSET
+    timeout: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         authentication_type = self.authentication_type
 
         callback_secret = self.callback_secret
@@ -54,7 +55,7 @@ class TriggerConfiguration:
 
         schedule = self.schedule
 
-        tasks: Union[Unset, list[dict[str, Any]]] = UNSET
+        tasks: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.tasks, Unset):
             tasks = []
             for tasks_item_data in self.tasks:
@@ -93,12 +94,12 @@ class TriggerConfiguration:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.trigger_configuration_task import TriggerConfigurationTask
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.trigger_configuration_task import TriggerConfigurationTask  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         authentication_type = d.pop("authenticationType", d.pop("authentication_type", UNSET))
 
         callback_secret = d.pop("callbackSecret", d.pop("callback_secret", UNSET))

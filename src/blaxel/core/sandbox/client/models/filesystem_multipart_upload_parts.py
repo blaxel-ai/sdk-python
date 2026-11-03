@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
@@ -12,9 +15,7 @@ T = TypeVar("T", bound="FilesystemMultipartUploadParts")
 
 @_attrs_define
 class FilesystemMultipartUploadParts:
-    """ """
-
-    additional_properties: dict[str, "FilesystemUploadedPart"] = _attrs_field(
+    additional_properties: dict[str, FilesystemUploadedPart] = _attrs_field(
         init=False, factory=dict
     )
 
@@ -29,12 +30,12 @@ class FilesystemMultipartUploadParts:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.filesystem_uploaded_part import FilesystemUploadedPart
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.filesystem_uploaded_part import FilesystemUploadedPart  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         filesystem_multipart_upload_parts = cls()
 
         additional_properties = {}
@@ -50,10 +51,10 @@ class FilesystemMultipartUploadParts:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> "FilesystemUploadedPart":
+    def __getitem__(self, key: str) -> FilesystemUploadedPart:
         return self.additional_properties[key]
 
-    def __setitem__(self, key: str, value: "FilesystemUploadedPart") -> None:
+    def __setitem__(self, key: str, value: FilesystemUploadedPart) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:

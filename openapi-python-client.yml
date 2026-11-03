@@ -1,2 +1,5 @@
 project_name_override: blaxel
 package_name_override: blaxel
+# The Makefile formats with the repo's ruff config (Python 3.10 floor); the generator's
+# default hooks would run ruff against its own py3.11 project template instead.
+post_hooks: []

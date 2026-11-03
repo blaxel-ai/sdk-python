@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,11 +19,11 @@ class EgressIPSpec:
     Attributes:
         ip_family (EgressIPSpecIpFamily): IP address family, either IPv4 or IPv6 Default: EgressIPSpecIpFamily.IPV4.
             Example: IPv4.
-        public_ip (Union[Unset, str]): Public IP address assigned to this egress IP (read-only, set after provisioning)
+        public_ip (str | Unset): Public IP address assigned to this egress IP (read-only, set after provisioning)
     """
 
     ip_family: EgressIPSpecIpFamily = EgressIPSpecIpFamily.IPV4
-    public_ip: Union[Unset, str] = UNSET
+    public_ip: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -41,10 +44,10 @@ class EgressIPSpec:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         ip_family = EgressIPSpecIpFamily(
             d.pop("ipFamily") if "ipFamily" in d else d.pop("ip_family")
         )

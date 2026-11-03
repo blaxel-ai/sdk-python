@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -14,13 +15,15 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/service_accounts/{client_id}/api_keys",
+        "url": "/service_accounts/{client_id}/api_keys".format(
+            client_id=quote(str(client_id), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> list["ApiKey"] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> list[ApiKey] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -30,6 +33,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["ApiKey
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -38,7 +42,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> list["ApiKey
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[list["ApiKey"]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[list[ApiKey]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -51,7 +55,7 @@ def sync_detailed(
     client_id: str,
     *,
     client: Client,
-) -> Response[list["ApiKey"]]:
+) -> Response[list[ApiKey]]:
     """List service account API keys
 
      Returns all long-lived API keys created for a service account. API keys provide an alternative to
@@ -65,7 +69,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['ApiKey']]
+        Response[list[ApiKey]]
     """
 
     kwargs = _get_kwargs(
@@ -83,7 +87,7 @@ def sync(
     client_id: str,
     *,
     client: Client,
-) -> list["ApiKey"] | None:
+) -> list[ApiKey] | None:
     """List service account API keys
 
      Returns all long-lived API keys created for a service account. API keys provide an alternative to
@@ -97,7 +101,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['ApiKey']
+        list[ApiKey]
     """
 
     return sync_detailed(
@@ -110,7 +114,7 @@ async def asyncio_detailed(
     client_id: str,
     *,
     client: Client,
-) -> Response[list["ApiKey"]]:
+) -> Response[list[ApiKey]]:
     """List service account API keys
 
      Returns all long-lived API keys created for a service account. API keys provide an alternative to
@@ -124,7 +128,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[list['ApiKey']]
+        Response[list[ApiKey]]
     """
 
     kwargs = _get_kwargs(
@@ -140,7 +144,7 @@ async def asyncio(
     client_id: str,
     *,
     client: Client,
-) -> list["ApiKey"] | None:
+) -> list[ApiKey] | None:
     """List service account API keys
 
      Returns all long-lived API keys created for a service account. API keys provide an alternative to
@@ -154,7 +158,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list['ApiKey']
+        list[ApiKey]
     """
 
     return (

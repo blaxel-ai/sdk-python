@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -15,29 +16,36 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": f"/jobs/{job_id}/executions/{execution_id}",
+        "url": "/jobs/{job_id}/executions/{execution_id}".format(
+            job_id=quote(str(job_id), safe=""),
+            execution_id=quote(str(execution_id), safe=""),
+        ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, JobExecution] | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Any | JobExecution | None:
     if response.status_code == 200:
         response_200 = JobExecution.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = cast(Any, None)
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -46,9 +54,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, J
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[Any, JobExecution]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | JobExecution]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,7 +68,7 @@ def sync_detailed(
     execution_id: str,
     *,
     client: Client,
-) -> Response[Union[Any, JobExecution]]:
+) -> Response[Any | JobExecution]:
     """Cancel job execution
 
      Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
@@ -77,7 +83,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecution]]
+        Response[Any | JobExecution]
     """
 
     kwargs = _get_kwargs(
@@ -97,7 +103,7 @@ def sync(
     execution_id: str,
     *,
     client: Client,
-) -> Union[Any, JobExecution] | None:
+) -> Any | JobExecution | None:
     """Cancel job execution
 
      Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
@@ -112,7 +118,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecution]
+        Any | JobExecution
     """
 
     return sync_detailed(
@@ -127,7 +133,7 @@ async def asyncio_detailed(
     execution_id: str,
     *,
     client: Client,
-) -> Response[Union[Any, JobExecution]]:
+) -> Response[Any | JobExecution]:
     """Cancel job execution
 
      Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
@@ -142,7 +148,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecution]]
+        Response[Any | JobExecution]
     """
 
     kwargs = _get_kwargs(
@@ -160,7 +166,7 @@ async def asyncio(
     execution_id: str,
     *,
     client: Client,
-) -> Union[Any, JobExecution] | None:
+) -> Any | JobExecution | None:
     """Cancel job execution
 
      Cancels a running job execution. Tasks already in progress will complete, but no new tasks will be
@@ -175,7 +181,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecution]
+        Any | JobExecution
     """
 
     return (

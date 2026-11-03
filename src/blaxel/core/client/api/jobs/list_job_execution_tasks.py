@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -14,10 +15,10 @@ def _get_kwargs(
     job_id: str,
     execution_id: str,
     *,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListJobExecutionTasksSort | Unset = UNSET,
+    q: str | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -25,7 +26,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_sort: Union[Unset, str] = UNSET
+    json_sort: str | Unset = UNSET
     if not isinstance(sort, Unset):
         json_sort = sort.value
 
@@ -37,7 +38,10 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": f"/jobs/{job_id}/executions/{execution_id}/tasks",
+        "url": "/jobs/{job_id}/executions/{execution_id}/tasks".format(
+            job_id=quote(str(job_id), safe=""),
+            execution_id=quote(str(execution_id), safe=""),
+        ),
         "params": params,
     }
 
@@ -46,23 +50,27 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, JobExecutionTaskList] | None:
+) -> Any | JobExecutionTaskList | None:
     if response.status_code == 200:
         response_200 = JobExecutionTaskList.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 400:
         response_400 = cast(Any, None)
         errors.retain_response(response_400, response)
         return response_400
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if response.status_code == 500:
         response_500 = cast(Any, None)
         errors.retain_response(response_500, response)
         return response_500
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -73,7 +81,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, JobExecutionTaskList]]:
+) -> Response[Any | JobExecutionTaskList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -87,11 +95,11 @@ def sync_detailed(
     execution_id: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionTaskList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListJobExecutionTasksSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Response[Any | JobExecutionTaskList]:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -101,17 +109,17 @@ def sync_detailed(
     Args:
         job_id (str):
         execution_id (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListJobExecutionTasksSort]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListJobExecutionTasksSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionTaskList]]
+        Response[Any | JobExecutionTaskList]
     """
 
     kwargs = _get_kwargs(
@@ -135,11 +143,11 @@ def sync(
     execution_id: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionTaskList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListJobExecutionTasksSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Any | JobExecutionTaskList | None:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -149,17 +157,17 @@ def sync(
     Args:
         job_id (str):
         execution_id (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListJobExecutionTasksSort]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListJobExecutionTasksSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionTaskList]
+        Any | JobExecutionTaskList
     """
 
     return sync_detailed(
@@ -178,11 +186,11 @@ async def asyncio_detailed(
     execution_id: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionTaskList]]:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListJobExecutionTasksSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Response[Any | JobExecutionTaskList]:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -192,17 +200,17 @@ async def asyncio_detailed(
     Args:
         job_id (str):
         execution_id (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListJobExecutionTasksSort]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListJobExecutionTasksSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionTaskList]]
+        Response[Any | JobExecutionTaskList]
     """
 
     kwargs = _get_kwargs(
@@ -224,11 +232,11 @@ async def asyncio(
     execution_id: str,
     *,
     client: Client,
-    cursor: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
-    q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionTaskList] | None:
+    cursor: str | Unset = UNSET,
+    limit: int | Unset = 50,
+    sort: ListJobExecutionTasksSort | Unset = UNSET,
+    q: str | Unset = UNSET,
+) -> Any | JobExecutionTaskList | None:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -238,17 +246,17 @@ async def asyncio(
     Args:
         job_id (str):
         execution_id (str):
-        cursor (Union[Unset, str]):
-        limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListJobExecutionTasksSort]):
-        q (Union[Unset, str]):
+        cursor (str | Unset):
+        limit (int | Unset):  Default: 50.
+        sort (ListJobExecutionTasksSort | Unset):
+        q (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionTaskList]
+        Any | JobExecutionTaskList
     """
 
     return (

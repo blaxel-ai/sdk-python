@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,24 +20,23 @@ class EgressConfig:
     """Egress configuration for routing sandbox outbound traffic through a dedicated IP gateway
 
     Attributes:
-        gateway (Union[Unset, str]): Name of the egress gateway to route traffic through. The gateway must exist in the
+        gateway (str | Unset): Name of the egress gateway to route traffic through. The gateway must exist in the
             default VPC. Example: egress-ip-gw-1.
-        mode (Union[Unset, str]): Egress mode. Use 'dedicated' for a dedicated egress IP. Example: dedicated.
-        policies (Union[Unset, list['EgressPolicy']]): Per-destination egress policies (not yet supported)
+        mode (str | Unset): Egress mode. Use 'dedicated' for a dedicated egress IP. Example: dedicated.
+        policies (list[EgressPolicy] | Unset): Per-destination egress policies (not yet supported)
     """
 
-    gateway: Union[Unset, str] = UNSET
-    mode: Union[Unset, str] = UNSET
-    policies: Union[Unset, list["EgressPolicy"]] = UNSET
+    gateway: str | Unset = UNSET
+    mode: str | Unset = UNSET
+    policies: list[EgressPolicy] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         gateway = self.gateway
 
         mode = self.mode
 
-        policies: Union[Unset, list[dict[str, Any]]] = UNSET
+        policies: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.policies, Unset):
             policies = []
             for policies_item_data in self.policies:
@@ -57,12 +59,12 @@ class EgressConfig:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.egress_policy import EgressPolicy
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.egress_policy import EgressPolicy  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         gateway = d.pop("gateway", UNSET)
 
         mode = d.pop("mode", UNSET)

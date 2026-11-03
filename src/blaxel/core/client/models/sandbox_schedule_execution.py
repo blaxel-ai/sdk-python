@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,35 +19,34 @@ class SandboxScheduleExecution:
     scheduleexecutions table.
 
         Attributes:
-            created_at (Union[Unset, str]): Creation timestamp (read-only).
-            error (Union[Unset, str]): Reason the execution failed, naming the resource that could not be reached. Empty
-                when the command was accepted by the sandbox. Example: sandbox my-sandbox is not reachable at https://xxx.us-
-                pdx-1.bl.run (HTTP 404).
-            executed_at (Union[Unset, str]): RFC 3339 time at which the command was submitted. Example:
-                2026-07-01T09:00:00Z.
-            id (Union[Unset, str]): Unique id of this execution within the schedule. Example: 00000000000000000042.
-            process_name (Union[Unset, str]): Name of the process started in the sandbox for this execution, used to look up
-                its logs. Example: training-job.
-            sandbox (Union[Unset, str]): Name of the sandbox this execution belongs to.
-            schedule_id (Union[Unset, str]): Id of the schedule this execution belongs to. Example: schedule-0.
-            status (Union[Unset, SandboxScheduleExecutionStatus]): Whether submitting the process request was accepted. This
-                is not the process completion status.
-            status_code (Union[Unset, int]): HTTP status code returned when the scheduled command was submitted to the
-                sandbox (0 if the sandbox could not be reached). 2xx/3xx means the command was accepted. Example: 200.
-            timeout (Union[Unset, int]): Process timeout in seconds for this execution. The UI uses it to scope the log view
-                to [executedAt, executedAt+timeout]. 0 when the schedule set no timeout. Example: 600.
+            created_at (str | Unset): Creation timestamp (read-only).
+            error (str | Unset): Reason the execution failed, naming the resource that could not be reached. Empty when the
+                command was accepted by the sandbox. Example: sandbox my-sandbox is not reachable at https://xxx.us-pdx-1.bl.run
+                (HTTP 404).
+            executed_at (str | Unset): RFC 3339 time at which the command was submitted. Example: 2026-07-01T09:00:00Z.
+            id (str | Unset): Unique id of this execution within the schedule. Example: 00000000000000000042.
+            process_name (str | Unset): Name of the process started in the sandbox for this execution, used to look up its
+                logs. Example: training-job.
+            sandbox (str | Unset): Name of the sandbox this execution belongs to.
+            schedule_id (str | Unset): Id of the schedule this execution belongs to. Example: schedule-0.
+            status (SandboxScheduleExecutionStatus | Unset): Whether submitting the process request was accepted. This is
+                not the process completion status.
+            status_code (int | Unset): HTTP status code returned when the scheduled command was submitted to the sandbox (0
+                if the sandbox could not be reached). 2xx/3xx means the command was accepted. Example: 200.
+            timeout (int | Unset): Process timeout in seconds for this execution. The UI uses it to scope the log view to
+                [executedAt, executedAt+timeout]. 0 when the schedule set no timeout. Example: 600.
     """
 
-    created_at: Union[Unset, str] = UNSET
-    error: Union[Unset, str] = UNSET
-    executed_at: Union[Unset, str] = UNSET
-    id: Union[Unset, str] = UNSET
-    process_name: Union[Unset, str] = UNSET
-    sandbox: Union[Unset, str] = UNSET
-    schedule_id: Union[Unset, str] = UNSET
-    status: Union[Unset, SandboxScheduleExecutionStatus] = UNSET
-    status_code: Union[Unset, int] = UNSET
-    timeout: Union[Unset, int] = UNSET
+    created_at: str | Unset = UNSET
+    error: str | Unset = UNSET
+    executed_at: str | Unset = UNSET
+    id: str | Unset = UNSET
+    process_name: str | Unset = UNSET
+    sandbox: str | Unset = UNSET
+    schedule_id: str | Unset = UNSET
+    status: SandboxScheduleExecutionStatus | Unset = UNSET
+    status_code: int | Unset = UNSET
+    timeout: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,7 +64,7 @@ class SandboxScheduleExecution:
 
         schedule_id = self.schedule_id
 
-        status: Union[Unset, str] = UNSET
+        status: str | Unset = UNSET
         if not isinstance(self.status, Unset):
             status = self.status.value
 
@@ -97,10 +99,10 @@ class SandboxScheduleExecution:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         error = d.pop("error", UNSET)
@@ -116,7 +118,7 @@ class SandboxScheduleExecution:
         schedule_id = d.pop("scheduleId", d.pop("schedule_id", UNSET))
 
         _status = d.pop("status", UNSET)
-        status: Union[Unset, SandboxScheduleExecutionStatus]
+        status: SandboxScheduleExecutionStatus | Unset
         if isinstance(_status, Unset) or _status == "":
             status = UNSET
         else:

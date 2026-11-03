@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -14,7 +15,9 @@ def _get_kwargs(
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": f"/drives/{drive_name}/access-token",
+        "url": "/drives/{drive_name}/access-token".format(
+            drive_name=quote(str(drive_name), safe=""),
+        ),
     }
 
     return _kwargs
@@ -22,23 +25,27 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, CreateDriveAccessTokenResponse200] | None:
+) -> Any | CreateDriveAccessTokenResponse200 | None:
     if response.status_code == 200:
         response_200 = CreateDriveAccessTokenResponse200.from_dict(response.json())
 
         return response_200
+
     if response.status_code == 401:
         response_401 = cast(Any, None)
         errors.retain_response(response_401, response)
         return response_401
+
     if response.status_code == 403:
         response_403 = cast(Any, None)
         errors.retain_response(response_403, response)
         return response_403
+
     if response.status_code == 404:
         response_404 = cast(Any, None)
         errors.retain_response(response_404, response)
         return response_404
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response
@@ -49,7 +56,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, CreateDriveAccessTokenResponse200]]:
+) -> Response[Any | CreateDriveAccessTokenResponse200]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,7 +69,7 @@ def sync_detailed(
     drive_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, CreateDriveAccessTokenResponse200]]:
+) -> Response[Any | CreateDriveAccessTokenResponse200]:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -76,7 +83,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, CreateDriveAccessTokenResponse200]]
+        Response[Any | CreateDriveAccessTokenResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -94,7 +101,7 @@ def sync(
     drive_name: str,
     *,
     client: Client,
-) -> Union[Any, CreateDriveAccessTokenResponse200] | None:
+) -> Any | CreateDriveAccessTokenResponse200 | None:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -108,7 +115,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, CreateDriveAccessTokenResponse200]
+        Any | CreateDriveAccessTokenResponse200
     """
 
     return sync_detailed(
@@ -121,7 +128,7 @@ async def asyncio_detailed(
     drive_name: str,
     *,
     client: Client,
-) -> Response[Union[Any, CreateDriveAccessTokenResponse200]]:
+) -> Response[Any | CreateDriveAccessTokenResponse200]:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -135,7 +142,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, CreateDriveAccessTokenResponse200]]
+        Response[Any | CreateDriveAccessTokenResponse200]
     """
 
     kwargs = _get_kwargs(
@@ -151,7 +158,7 @@ async def asyncio(
     drive_name: str,
     *,
     client: Client,
-) -> Union[Any, CreateDriveAccessTokenResponse200] | None:
+) -> Any | CreateDriveAccessTokenResponse200 | None:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -165,7 +172,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, CreateDriveAccessTokenResponse200]
+        Any | CreateDriveAccessTokenResponse200
     """
 
     return (

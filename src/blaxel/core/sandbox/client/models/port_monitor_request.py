@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,10 +15,10 @@ T = TypeVar("T", bound="PortMonitorRequest")
 class PortMonitorRequest:
     """
     Attributes:
-        callback (Union[Unset, str]): URL to call when a new port is detected Example: http://localhost:3000/callback.
+        callback (str | Unset): URL to call when a new port is detected Example: http://localhost:3000/callback.
     """
 
-    callback: Union[Unset, str] = UNSET
+    callback: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -30,10 +33,10 @@ class PortMonitorRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         callback = d.pop("callback", UNSET)
 
         port_monitor_request = cls(

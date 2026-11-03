@@ -1,4 +1,7 @@
-from typing import Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,8 +19,8 @@ class ContentSearchMatch:
         line (int):  Example: 42.
         path (str):  Example: src/main.go.
         text (str):  Example: const searchText = 'example'.
-        context (Union[Unset, str]): The matching line with up to contextLines lines before and after it, newline-
-            separated; omitted when contextLines is 0 Example: previous line
+        context (str | Unset): The matching line with up to contextLines lines before and after it, newline-separated;
+            omitted when contextLines is 0 Example: previous line
             current line
             next line.
     """
@@ -26,7 +29,7 @@ class ContentSearchMatch:
     line: int
     path: str
     text: str
-    context: Union[Unset, str] = UNSET
+    context: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,10 +59,10 @@ class ContentSearchMatch:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         column = d.pop("column")
 
         line = d.pop("line")

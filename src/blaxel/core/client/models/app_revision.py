@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,37 +21,35 @@ class AppRevision:
 
     Attributes:
         image (str): Container image for this revision (mandatory)
-        created_at (Union[Unset, str]): When this revision was created
-        created_by (Union[Unset, str]): Who created this revision
-        envs (Union[Unset, list['Env']]): Environment variables for this revision
-        id (Union[Unset, str]): Unique revision identifier
-        memory (Union[Unset, int]): Memory allocation in megabytes. Determines CPU allocation (CPU = memory / 2048).
-            Example: 2048.
-        port (Union[Unset, int]): Port the application listens on for this revision (default uses spec-level port or
-            8080) Example: 8080.
-        snapshot (Union[Unset, str]): Snapshot ID this revision was forked from (optional, only set when created via
-            fork)
+        created_at (str | Unset): When this revision was created
+        created_by (str | Unset): Who created this revision
+        envs (list[Env] | Unset): Environment variables for this revision
+        id (str | Unset): Unique revision identifier
+        memory (int | Unset): Memory allocation in megabytes. Determines CPU allocation (CPU = memory / 2048). Example:
+            2048.
+        port (int | Unset): Port the application listens on for this revision (default uses spec-level port or 8080)
+            Example: 8080.
+        snapshot (str | Unset): Snapshot ID this revision was forked from (optional, only set when created via fork)
     """
 
     image: str
-    created_at: Union[Unset, str] = UNSET
-    created_by: Union[Unset, str] = UNSET
-    envs: Union[Unset, list["Env"]] = UNSET
-    id: Union[Unset, str] = UNSET
-    memory: Union[Unset, int] = UNSET
-    port: Union[Unset, int] = UNSET
-    snapshot: Union[Unset, str] = UNSET
+    created_at: str | Unset = UNSET
+    created_by: str | Unset = UNSET
+    envs: list[Env] | Unset = UNSET
+    id: str | Unset = UNSET
+    memory: int | Unset = UNSET
+    port: int | Unset = UNSET
+    snapshot: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         image = self.image
 
         created_at = self.created_at
 
         created_by = self.created_by
 
-        envs: Union[Unset, list[dict[str, Any]]] = UNSET
+        envs: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
             for envs_item_data in self.envs:
@@ -91,12 +92,12 @@ class AppRevision:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
-        from ..models.env import Env
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T | None:
+        from ..models.env import Env  # noqa: PLC0415
 
         if not src_dict:
             return None
-        d = src_dict.copy()
+        d = dict(src_dict)
         image = d.pop("image")
 
         created_at = d.pop("createdAt", d.pop("created_at", UNSET))
