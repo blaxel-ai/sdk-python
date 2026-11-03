@@ -148,7 +148,8 @@ dev = [
   "pdoc3>=0.11.5",
   "python-dotenv>=1.1.0",
   "ruff>=0.8.2",
-  "openapi-python-client==0.25.3",
+  # Code generator (make sdk), maintainers only; 0.29.1 needs Python 3.11+.
+  "openapi-python-client==0.29.1; python_version >= '3.11'",
 ]
 test = [
   "pytest>=8.0.0",

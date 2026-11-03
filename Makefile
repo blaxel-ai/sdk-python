@@ -4,6 +4,10 @@ ARGS:= $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 GIT_COMMIT_SHORT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
+# The generator needs Python 3.11+ while the SDK venv may be 3.10: run it with uvx,
+# at the version pinned in pyproject.toml.
+OPENAPI_PYTHON_CLIENT := uvx --python ">=3.11" --from "$(shell grep -o 'openapi-python-client==[0-9.]*' pyproject.toml)" openapi-python-client
+
 install:
 	uv sync --refresh --force-reinstall --group test --group dev
 
@@ -14,7 +18,7 @@ sdk-sandbox:
 		-o ./definition.yml \
 		https://api.github.com/repos/blaxel-ai/sandbox/contents/sandbox-api/docs/openapi.yml?ref=main
 	rm -rf src/blaxel/core/sandbox/client/api src/blaxel/core/sandbox/client/models
-	.venv/bin/openapi-python-client generate \
+	$(OPENAPI_PYTHON_CLIENT) generate \
 		--path=definition.yml \
 		--output-path=./tmp-sdk-sandbox \
 		--overwrite \
@@ -22,10 +26,10 @@ sdk-sandbox:
 		--config=./openapi-python-client.yml
 	cp -r ./tmp-sdk-sandbox/blaxel/* ./src/blaxel/core/sandbox/client
 	rm -rf ./tmp-sdk-sandbox
-	# openapi-python-client emits `_body = body.payload` for a raw (octet-stream) string
-	# body, which fails at call time on a str: send the string itself.
+	# openapi-python-client emits `_kwargs["content"] = body.payload` for a raw (octet-stream)
+	# string body, which fails at call time on a str: send the string itself.
 	find src/blaxel/core/sandbox/client/api -name '*.py' \
-		-exec sed -i.bak 's/_body = body\.payload$$/_body = body/' {} \; -exec rm -f {}.bak \;
+		-exec sed -i.bak 's/_kwargs\["content"\] = body\.payload$$/_kwargs["content"] = body/' {} \; -exec rm -f {}.bak \;
 	uv run ruff format
 	uv run ruff check --fix
 
@@ -36,7 +40,7 @@ sdk-controlplane:
 		-o ./definition.yml \
 		https://api.github.com/repos/blaxel-ai/controlplane/contents/api/api/definitions/controlplane.yml?ref=main
 	rm -rf src/blaxel/core/client/api src/blaxel/core/client/models
-	.venv/bin/openapi-python-client generate \
+	$(OPENAPI_PYTHON_CLIENT) generate \
 		--path=definition.yml \
 		--output-path=./tmp-sdk-python \
 		--overwrite \

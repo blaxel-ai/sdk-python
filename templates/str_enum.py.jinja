@@ -1,8 +1,19 @@
+{# Blaxel: str + Enum instead of StrEnum, which needs Python 3.11 (the SDK supports 3.10) #}
 from enum import Enum
 
 class {{ enum.class_info.name }}(str, Enum):
     {% for key, value in enum.values|dictsort(true) %}
     {{ key }} = "{{ value }}"
+    {% endfor %}
+    {# Blaxel: openapi-python-client 0.26+ names members from x-enum-varnames (EXPORT_FAILED);
+       keep the value-derived names earlier SDKs exposed (FAILED) as aliases. Only plain
+       [a-z0-9_] values qualify, so a spec string never becomes an identifier unchecked. #}
+    {% set keys = enum.values.keys() | list %}
+    {% for key, value in enum.values|dictsort(true) %}
+    {% set legacy = value | string | upper %}
+    {% if legacy != key and legacy not in keys and legacy[:1] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" and legacy | list | reject("in", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") | list | length == 0 %}
+    {{ legacy }} = "{{ value }}"
+    {% endif %}
     {% endfor %}
 
     def __str__(self) -> str:
