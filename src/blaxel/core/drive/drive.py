@@ -166,7 +166,8 @@ class DriveInstance:
     """A drive: shared file storage that sandboxes mount while they run.
 
     Unlike a volume, a drive is mounted into a running sandbox with
-    ``sandbox.drives.mount(...)``, and several sandboxes can mount the same
+    ``sandbox.drives.mount(...)`` (or at creation with ``mount_drives`` on
+    ``SandboxInstance.create``), and several sandboxes can mount the same
     drive at once, read-write. Create it in the region of the sandboxes that
     will mount it; the region cannot change later. ``permissions`` (at most
     3) limit which workloads can reach the drive, by labels, path and mode.
@@ -462,8 +463,8 @@ class SyncDriveInstance:
     """Synchronous drive instance for managing persistent storage.
 
     Same behavior as ``DriveInstance``, without ``await``. Sandboxes mount a
-    drive while they run, with ``sandbox.drives.mount(...)``, and several
-    can mount it at once. ``delete`` and ``update`` work on the class with a
+    drive while they run, with ``sandbox.drives.mount(...)`` or ``mount_drives``
+    on ``SyncSandboxInstance.create``, and several can mount it at once. ``delete`` and ``update`` work on the class with a
     name, ``SyncDriveInstance.delete("name")``, and on an instance,
     ``drive.delete()``.
 
