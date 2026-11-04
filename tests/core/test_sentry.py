@@ -470,6 +470,35 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_backend_error_response_is_not_captured(self, installed_sentry_hooks):
+        """A BlaxelError is a backend response surfaced to the caller, not an SDK bug."""
+        exc = _raise_in_sdk(
+            "core/sandbox/default/action.py",
+            "import httpx\n"
+            "from blaxel.core.sandbox.types import ResponseError\n"
+            "raise ResponseError(httpx.Response(404))",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_generated_client_status_error_is_not_captured(self, installed_sentry_hooks):
+        """Undocumented-status errors from the generated client are backend responses."""
+        exc = _raise_in_sdk(
+            "core/client/errors.py",
+            "from blaxel.core.client.errors import from_response\n"
+            'raise from_response(409, b\'{"error":"conflict"}\')',
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -551,6 +580,30 @@ class BrokenFinalizer:
             "is_exception_group": True,
         }
         assert all(value["mechanism"]["handled"] is False for value in values)
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_exception_group_drops_backend_error_leaf_and_keeps_sdk_defect(
+        self, installed_sentry_hooks
+    ):
+        sdk_exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+        backend_exc = _raise_in_sdk(
+            "core/sandbox/default/action.py",
+            "import httpx\n"
+            "from blaxel.core.sandbox.types import ResponseError\n"
+            "raise ResponseError(httpx.Response(404))",
+        )
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [backend_exc, sdk_exc])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert len(installed_sentry_hooks.captured) == 1
+        captured_group, _ = installed_sentry_hooks.captured[0]
+        assert _exception_group_leaves(captured_group) == [sdk_exc]
 
     @pytest.mark.skipif(
         not sentry._EXCEPTION_GROUP_TYPES,
