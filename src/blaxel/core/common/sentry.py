@@ -3,6 +3,7 @@ import atexit
 import builtins
 import json
 import logging
+import socket
 import sys
 import threading
 import time
@@ -18,6 +19,11 @@ from urllib.parse import urlparse
 import httpx
 
 from .settings import settings
+
+try:
+    import requests
+except Exception:  # pragma: no cover - requests is a mandatory core dependency
+    requests = None  # type: ignore[assignment]
 
 try:
     from exceptiongroup import BaseExceptionGroup as BackportBaseExceptionGroup
@@ -54,6 +60,28 @@ _IGNORED_EXCEPTIONS = (
     SystemExit,  # Program exit
     CancelledError,  # Async task cancellation
 )
+
+
+# Transient network connectivity failures are problems with the caller's host or
+# network (DNS resolution failures, refused/reset connections, HTTP client connect
+# and read timeouts) rather than SDK defects: the SDK issued a well-formed request to
+# a well-formed URL and could not reach the server. Like missing optional dependencies,
+# they are environment noise and must not be reported to Sentry. HTTP status errors
+# (e.g. ``httpx.HTTPStatusError``, requests ``HTTPError``) and malformed-URL errors are
+# intentionally NOT included here because they can indicate an SDK bug.
+def _transient_network_error_types() -> tuple[type[BaseException], ...]:
+    types: list[type[BaseException]] = [
+        socket.gaierror,  # DNS resolution failure (e.g. SDK-PYTHON-120: [Errno -5])
+        ConnectionError,  # builtin: refused / reset / aborted / broken-pipe sockets
+        httpx.TimeoutException,  # connect / read / write / pool timeouts
+        httpx.NetworkError,  # connect / read / write / close errors
+    ]
+    if requests is not None:
+        types.extend((requests.exceptions.ConnectionError, requests.exceptions.Timeout))
+    return tuple(dict.fromkeys(types))
+
+
+_TRANSIENT_NETWORK_ERROR_TYPES: tuple[type[BaseException], ...] = _transient_network_error_types()
 
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
@@ -405,11 +433,25 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_transient_network_error(exc_value: BaseException) -> bool:
+    """Return whether an exception is a transient network connectivity failure.
+
+    DNS resolution failures, refused or reset connections, and HTTP client
+    connect/read timeouts are problems with the caller's host or network, not SDK
+    defects, so -- like missing optional dependencies -- they are not reported to
+    Sentry. HTTP status errors and malformed-URL errors are deliberately excluded
+    because they can indicate an SDK bug and must still be captured.
+    """
+    return isinstance(exc_value, _TRANSIENT_NETWORK_ERROR_TYPES)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_transient_network_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
