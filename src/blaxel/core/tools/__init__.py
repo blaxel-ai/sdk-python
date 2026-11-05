@@ -103,47 +103,75 @@ class PersistentMcpClient:
         self.metas = metas
         return self
 
+    async def _dispatch_tool_call(
+        self, tool_name: str, arguments: dict[str, Any]
+    ) -> CallToolResult:
+        await self.initialize()
+        if self.timeout_enabled:
+            self._remove_timer()
+        logger.debug(f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}")
+
+        # Pass meta as a separate field instead of merging into arguments
+        # This matches the TypeScript SDK pattern and MCP protocol specification
+        return await self.session.send_request(
+            ClientRequest(
+                CallToolRequest(
+                    params=CallToolRequestParams(
+                        name=tool_name,
+                        arguments=arguments,
+                        meta=self.metas if self.metas else None,
+                    ),
+                )
+            ),
+            CallToolResult,
+        )
+
+    def _tool_error_result(self, tool_name: str, error: Exception) -> CallToolResult:
+        return CallToolResult(
+            content=[
+                {
+                    "type": "text",
+                    "text": f"Error calling tool {tool_name}: {error}\n{traceback.format_exc()}",
+                }
+            ],
+            isError=True,
+        )
+
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
+        # A persisted MCP session can be terminated server-side (idle timeout,
+        # redeploy, load-balancer drop). The stale session then fails every
+        # later call with the same error ("McpError: Session terminated") until
+        # the process restarts. Whatever the failure, drop the session so the
+        # next call reconnects; and when we were reusing a persisted session the
+        # request never reached a live server, so reconnect and retry once to
+        # recover transparently instead of surfacing the error.
+        reused_session = self.session is not None
         try:
-            await self.initialize()
-            if self.timeout_enabled:
-                self._remove_timer()
-            logger.debug(
-                f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}"
-            )
-
-            # Pass meta as a separate field instead of merging into arguments
-            # This matches the TypeScript SDK pattern and MCP protocol specification
-            call_tool_result = await self.session.send_request(
-                ClientRequest(
-                    CallToolRequest(
-                        params=CallToolRequestParams(
-                            name=tool_name,
-                            arguments=arguments,
-                            meta=self.metas if self.metas else None,
-                        ),
-                    )
-                ),
-                CallToolResult,
-            )
-
-            logger.debug(f"Tool {tool_name} returned {call_tool_result}")
-            if self.timeout_enabled:
-                self._reset_timer()
-            else:
-                await self._close()
-            return call_tool_result
+            call_tool_result = await self._dispatch_tool_call(tool_name, arguments)
         except Exception as e:
-            logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
-            return CallToolResult(
-                content=[
-                    {
-                        "type": "text",
-                        "text": f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}",
-                    }
-                ],
-                isError=True,
+            await self._close()
+            if not reused_session:
+                logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
+                return self._tool_error_result(tool_name, e)
+            logger.warning(
+                f"MCP session for {self.name} was terminated; reconnecting and "
+                f"retrying tool {tool_name} ({e})"
             )
+            try:
+                call_tool_result = await self._dispatch_tool_call(tool_name, arguments)
+            except Exception as retry_error:
+                logger.error(
+                    f"Error calling tool {tool_name}: {retry_error}\n{traceback.format_exc()}"
+                )
+                await self._close()
+                return self._tool_error_result(tool_name, retry_error)
+
+        logger.debug(f"Tool {tool_name} returned {call_tool_result}")
+        if self.timeout_enabled:
+            self._reset_timer()
+        else:
+            await self._close()
+        return call_tool_result
 
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
@@ -200,24 +228,26 @@ class PersistentMcpClient:
 
     async def _close(self):
         logger.debug(f"Closing client for {self.name}")
-        if self.session:
-            self.session = None
-            # Swap exit stacks to fresh ones BEFORE closing the old ones.
-            # This prevents a race where initialize() runs during the await
-            # and pushes new contexts onto stacks that are being closed.
-            old_session_stack = self.session_exit_stack
-            old_client_stack = self.client_exit_stack
-            self.session_exit_stack = AsyncExitStack()
-            self.client_exit_stack = AsyncExitStack()
-            try:
-                await old_session_stack.aclose()
-            except Exception as e:
-                logger.debug(f"Error closing session exit stack: {e}")
-            try:
-                await old_client_stack.aclose()
-            except Exception as e:
-                logger.debug(f"Error closing client exit stack: {e}")
-            logger.debug("WebSocket connection closed due to inactivity.")
+        # Always tear down, even when self.session is unset: a failed
+        # initialize() can leave a half-entered transport on client_exit_stack
+        # with no session, and that still needs to be released.
+        self.session = None
+        # Swap exit stacks to fresh ones BEFORE closing the old ones.
+        # This prevents a race where initialize() runs during the await
+        # and pushes new contexts onto stacks that are being closed.
+        old_session_stack = self.session_exit_stack
+        old_client_stack = self.client_exit_stack
+        self.session_exit_stack = AsyncExitStack()
+        self.client_exit_stack = AsyncExitStack()
+        try:
+            await old_session_stack.aclose()
+        except Exception as e:
+            logger.debug(f"Error closing session exit stack: {e}")
+        try:
+            await old_client_stack.aclose()
+        except Exception as e:
+            logger.debug(f"Error closing client exit stack: {e}")
+        logger.debug("WebSocket connection closed due to inactivity.")
 
 
 def convert_mcp_tool_to_blaxel_tool(
