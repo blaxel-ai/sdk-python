@@ -482,6 +482,51 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_application_callback_through_sdk_frame_is_not_captured(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-11T.
+
+        An exception raised by application code that the SDK merely calls into
+        (an httpx mock transport handler, a user callback, a job entrypoint)
+        must not be attributed to the SDK just because an SDK frame -- here the
+        generated ``create_sandbox.asyncio_detailed`` -- sits higher on the
+        stack. The failure originates in the caller, not the SDK.
+        """
+        sdk_namespace = _define_in_file(
+            _sdk_filename("core/client/api/compute/create_sandbox.py"),
+            "def asyncio_detailed(call_transport):\n    return call_transport()",
+        )
+        exc = _raise_in_file(
+            "/Users/dev/app/tests/test_code_execution_sandbox.py",
+            "def respond():\n    raise ValueError('application boom')\nasyncio_detailed(respond)",
+            {"asyncio_detailed": sdk_namespace["asyncio_detailed"]},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_sdk_failure_below_a_non_sdk_frame_is_still_captured(self, installed_sentry_hooks):
+        """A genuine SDK defect stays reportable even when a non-SDK caller
+        frame sits above its raise site: raise-site attribution keys on the
+        deepest frame, not on every frame being SDK-owned."""
+        sdk_namespace = _define_in_file(
+            _sdk_filename("core/broken.py"),
+            "def fail():\n    raise RuntimeError('sdk failure')",
+        )
+        exc = _raise_in_file(
+            "/Users/dev/app/main.py",
+            "fail()",
+            {"fail": sdk_namespace["fail"]},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_reporting_failures_are_swallowed_and_all_hooks_still_chain(
         self, installed_sentry_hooks, monkeypatch
     ):
@@ -630,6 +675,30 @@ class TestSentryPayloadPrivacy:
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/application.py",
             "raise RuntimeError('private application failure')",
+        )
+        sent_events = []
+        monkeypatch.setattr(sentry, "_sentry_initialized", True)
+        monkeypatch.setattr(sentry, "_sentry_config", {"public_key": "key"})
+        monkeypatch.setattr(sentry, "_send_to_sentry", sent_events.append)
+
+        sentry.capture_exception(exc)
+
+        assert sent_events == []
+
+    def test_public_capture_rejects_application_callback_through_sdk_frame(self, monkeypatch):
+        """SDK-PYTHON-11T: ``capture_exception`` must reject an application
+        error even when an SDK frame appears higher in the traceback, and must
+        never serialize the caller's exception message into an event."""
+        sdk_namespace = _define_in_file(
+            _sdk_filename("core/client/api/compute/create_sandbox.py"),
+            "def asyncio_detailed(call_transport):\n    return call_transport()",
+        )
+        exc = _raise_in_file(
+            "/tmp/customer/tests/test_code_execution_sandbox.py",
+            "def respond():\n"
+            "    raise ValueError('top-secret application detail')\n"
+            "asyncio_detailed(respond)",
+            {"asyncio_detailed": sdk_namespace["asyncio_detailed"]},
         )
         sent_events = []
         monkeypatch.setattr(sentry, "_sentry_initialized", True)
