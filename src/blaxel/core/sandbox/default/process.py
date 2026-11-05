@@ -428,10 +428,10 @@ class SandboxProcess(SandboxAction):
         last_error = None
         long_poll = True
 
-        async def read_once(seconds: int) -> ProcessResponse:
+        async def read_once(remaining: float) -> ProcessResponse:
             nonlocal long_poll
             if long_poll:
-                result = await self._wait_once(identifier, seconds)
+                result = await self._wait_once(identifier, remaining)
                 if result is not None:
                     return result
                 long_poll = False
@@ -446,7 +446,7 @@ class SandboxProcess(SandboxAction):
             try:
                 # wait_for on Python 3.10 can swallow cancellation when a read
                 # completes at the same instant. wait keeps caller cancellation intact.
-                read = asyncio.create_task(read_once(wait_seconds(remaining)))
+                read = asyncio.create_task(read_once(remaining))
                 try:
                     done, _ = await asyncio.wait(
                         {read}, timeout=None if max_wait == -1 else remaining
@@ -475,13 +475,14 @@ class SandboxProcess(SandboxAction):
                 max(0, min(interval / 1000, deadline - asyncio.get_running_loop().time()))
             )
 
-    async def _wait_once(self, identifier: str, seconds: int) -> ProcessResponse | None:
+    async def _wait_once(self, identifier: str, remaining: float) -> ProcessResponse | None:
         """One long-poll on GET /process/{identifier}/wait; None when the sandbox predates it."""
+        seconds = wait_seconds(remaining)
         # Not in the generated client yet (ENG-6233): raw call on the shared client.
         response = await self.get_client().get(
             f"/process/{quote(identifier, safe='')}/wait",
             params={"timeout": seconds},
-            timeout=wait_request_timeout(seconds),
+            timeout=wait_request_timeout(seconds, remaining),
         )
         if is_missing_route(response):
             return None

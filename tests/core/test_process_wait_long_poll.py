@@ -114,11 +114,22 @@ async def test_respects_max_wait(cls, monkeypatch):
 
 @pytest.mark.parametrize("cls", CLASSES)
 @pytest.mark.asyncio
-async def test_hold_is_capped_by_max_wait_and_client_timeout_outlasts_it(cls, monkeypatch):
+async def test_hold_is_capped_by_max_wait_and_client_timeout_ends_near_deadline(cls, monkeypatch):
     _, requests = await run_wait(cls, monkeypatch, {"wait": [process("completed")]}, max_wait=1500)
     # Hold is what is left of max_wait, rounded up to a whole second.
     assert requests[0].url.params["timeout"] == "2"
-    assert requests[0].extensions["timeout"]["read"] == 12
+    # The client gives up at most 1s past the deadline, not hold + 10s.
+    assert 2 < requests[0].extensions["timeout"]["read"] <= 2.5
+
+
+@pytest.mark.parametrize("cls", CLASSES)
+@pytest.mark.asyncio
+async def test_small_max_wait_bounds_request_timeout(cls, monkeypatch):
+    # A held request cannot be interrupted: its timeout must stop near the 100ms deadline.
+    _, requests = await run_wait(cls, monkeypatch, {"wait": [process("completed")]}, max_wait=100)
+    assert requests[0].url.params["timeout"] == "1"
+    timeout = requests[0].extensions["timeout"]
+    assert all(0 < timeout[phase] <= 1.1 for phase in ("connect", "read", "write", "pool"))
 
 
 @pytest.mark.parametrize("cls", CLASSES)

@@ -377,11 +377,13 @@ class SyncSandboxProcess(SyncSandboxAction):
                     f"Process did not finish in time ({identifier}); it may still be running"
                 ) from last_error
             try:
-                result = self._wait_once(identifier, wait_seconds(remaining)) if long_poll else None
+                result = self._wait_once(identifier, remaining) if long_poll else None
                 if result is None:
                     long_poll = False
+                    # The route probe used part of the budget: re-measure before the GET.
+                    left = max(0.001, deadline - time.monotonic())
                     result = self.get(
-                        identifier, retry=False, timeout=None if max_wait == -1 else remaining
+                        identifier, retry=False, timeout=None if max_wait == -1 else left
                     )
             except Exception as error:
                 if not is_retryable_read_error(error):
@@ -399,14 +401,15 @@ class SyncSandboxProcess(SyncSandboxAction):
                 last_error = None
             time.sleep(max(0, min(interval / 1000, deadline - time.monotonic())))
 
-    def _wait_once(self, identifier: str, seconds: int) -> ProcessResponse | None:
+    def _wait_once(self, identifier: str, remaining: float) -> ProcessResponse | None:
         """One long-poll on GET /process/{identifier}/wait; None when the sandbox predates it."""
+        seconds = wait_seconds(remaining)
         # Not in the generated client yet (ENG-6233): raw call on the shared client.
         with self.get_client() as client:
             response = client.get(
                 f"/process/{quote(identifier, safe='')}/wait",
                 params={"timeout": seconds},
-                timeout=wait_request_timeout(seconds),
+                timeout=wait_request_timeout(seconds, remaining),
             )
         if is_missing_route(response):
             return None

@@ -526,9 +526,13 @@ def wait_seconds(remaining: float) -> int:
     return max(1, math.ceil(min(PROCESS_WAIT_MAX_SECONDS, remaining)))
 
 
-def wait_request_timeout(seconds: int) -> httpx.Timeout:
-    """Client timeout for a long-poll: must outlast the server hold or the client aborts first."""
-    return httpx.Timeout(seconds + 10.0, connect=10.0)
+def wait_request_timeout(seconds: int, remaining: float) -> httpx.Timeout:
+    """Client timeout for a long-poll: outlast the server hold, but end near the caller's deadline.
+
+    A held request cannot be interrupted, so the remaining time also caps it.
+    """
+    total = min(seconds + 10.0, remaining + 1.0)
+    return httpx.Timeout(total, connect=min(10.0, total))
 
 
 def is_missing_route(response: httpx.Response) -> bool:
