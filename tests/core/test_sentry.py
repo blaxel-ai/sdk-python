@@ -25,8 +25,10 @@ from blaxel.core.client import Client, errors
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
+    _is_expected_api_error,
     _is_optional_dependency_error,
 )
+from blaxel.core.sandbox.default.sandbox import SandboxAPIError
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -236,6 +238,57 @@ except errors.UnexpectedStatus as exc:
         assert namespace["handled_status"] == 404
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == []
+
+    def test_unhandled_sandbox_api_status_error_is_not_captured(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-11Q: an unhandled control-plane HTTP status.
+
+        A ``SandboxAPIError`` carrying an HTTP status (here 400 from a rejected
+        ``create``) is the SDK surfacing a server-side rejection, not an SDK
+        defect. Even when the caller leaves it unhandled it must not be reported
+        as an "Unhandled SDK exception", but the original hook must still run.
+        """
+        exc = _raise_in_file(
+            _sdk_filename("core/sandbox/default/sandbox.py"),
+            "from blaxel.core.sandbox.default.sandbox import SandboxAPIError\n"
+            "raise SandboxAPIError('bad request', status_code=400, code=400)",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_unexpected_status_is_not_captured(self, installed_sentry_hooks):
+        """An undocumented HTTP status surfaced by the generated client is a
+        server response, not an SDK defect, so it is filtered too."""
+        exc = _raise_in_file(
+            _sdk_filename("core/sandbox/client/generated.py"),
+            "from blaxel.core.client import errors\nraise errors.UnexpectedStatus(400, b'')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_sandbox_api_error_without_status_is_still_captured(
+        self, installed_sentry_hooks
+    ):
+        """A SandboxAPIError with no HTTP status is not a plain server response
+        (e.g. an unexpected empty payload) and stays reportable."""
+        exc = _raise_in_file(
+            _sdk_filename("core/sandbox/default/sandbox.py"),
+            "from blaxel.core.sandbox.default.sandbox import SandboxAPIError\n"
+            "raise SandboxAPIError('Failed to create')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
     def test_unhandled_sdk_exception_is_captured_and_chained(self, installed_sentry_hooks):
         exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
@@ -777,3 +830,45 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestIsExpectedApiError:
+    """Cover the control-plane HTTP-status classification used to suppress noise."""
+
+    def test_sandbox_api_error_with_client_status_is_expected(self):
+        exc = SandboxAPIError("bad request", status_code=400, code=400)
+        assert _is_expected_api_error(exc) is True
+
+    def test_sandbox_api_error_with_server_status_is_expected(self):
+        exc = SandboxAPIError("upstream unavailable", status_code=503)
+        assert _is_expected_api_error(exc) is True
+
+    def test_sandbox_api_error_not_found_is_expected(self):
+        exc = SandboxAPIError("Sandbox 'x' not found", status_code=404)
+        assert _is_expected_api_error(exc) is True
+
+    def test_unexpected_status_is_expected(self):
+        assert _is_expected_api_error(errors.UnexpectedStatus(400, b"")) is True
+
+    def test_conflict_error_from_response_is_expected(self):
+        exc = errors.from_response(409, b'{"code":"SANDBOX_ALREADY_EXISTS"}')
+        assert _is_expected_api_error(exc) is True
+
+    def test_status_carried_on_response_attribute_is_expected(self):
+        exc = RuntimeError("http failure")
+        setattr(exc, "response", SimpleNamespace(status_code=400))
+        assert _is_expected_api_error(exc) is True
+
+    def test_sandbox_api_error_without_status_is_not_expected(self):
+        assert _is_expected_api_error(SandboxAPIError("Failed to create")) is False
+
+    def test_plain_runtime_error_is_not_expected(self):
+        assert _is_expected_api_error(RuntimeError("real sdk bug")) is False
+
+    def test_out_of_range_status_is_not_expected(self):
+        assert _is_expected_api_error(SandboxAPIError("weird", status_code=999)) is False
+
+    def test_bool_status_is_not_treated_as_http_status(self):
+        exc = RuntimeError("boom")
+        setattr(exc, "status_code", True)
+        assert _is_expected_api_error(exc) is False
