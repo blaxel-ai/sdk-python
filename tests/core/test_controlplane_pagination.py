@@ -183,6 +183,83 @@ def test_generated_list_models_accept_legacy_array_responses():
     assert [execution.metadata.id for execution in execution_page.data] == ["execution-a"]
 
 
+def test_generated_list_models_are_iterable_like_a_list():
+    """Regression for SDK-PYTHON-11R.
+
+    Iterating or index-accessing a raw ``*List`` model used to fall back to the
+    ``additional_properties`` mapping and raise ``KeyError(0)`` because the model
+    exposed ``__getitem__`` without ``__iter__``/``__len__``. It must now behave
+    like the list of items it represents.
+    """
+    drive_a = Drive(metadata=Metadata(name="drive-a"), spec=DriveSpec())
+    drive_b = Drive(metadata=Metadata(name="drive-b"), spec=DriveSpec())
+    drive_list = DriveList(
+        data=[drive_a, drive_b],
+        meta=PaginationMeta(has_more=False),
+    )
+
+    # Iteration (the exact operation that raised KeyError in production).
+    assert [drive.metadata.name for drive in drive_list] == ["drive-a", "drive-b"]
+    # list() and unpacking rely on the same protocol.
+    assert list(drive_list) == [drive_a, drive_b]
+    # Integer and slice indexing.
+    assert drive_list[0] is drive_a
+    assert drive_list[-1] is drive_b
+    assert drive_list[0:1] == [drive_a]
+    # Length / truthiness.
+    assert len(drive_list) == 2
+    assert bool(drive_list) is True
+
+    # String keys still address additional_properties (unchanged behaviour).
+    drive_list["extra"] = "value"
+    assert drive_list["extra"] == "value"
+    with pytest.raises(KeyError):
+        _ = drive_list["missing"]
+
+
+def test_generated_list_models_iterate_empty_when_data_unset():
+    """An unset/None ``data`` iterates as empty instead of raising."""
+    empty_drive_list = DriveList()
+    assert list(empty_drive_list) == []
+    assert len(empty_drive_list) == 0
+    assert bool(empty_drive_list) is False
+
+    sandbox_list = SandboxList(data=UNSET, meta=PaginationMeta(has_more=False))
+    assert list(sandbox_list) == []
+    assert len(sandbox_list) == 0
+
+
+def test_multiple_generated_list_models_share_iteration_fix():
+    """The template-driven fix applies to every paginated ``*List`` model."""
+    sandbox_list = SandboxList(
+        data=[Sandbox(metadata=Metadata(name="sandbox-a"), spec=SandboxSpec())],
+        meta=PaginationMeta(has_more=False),
+    )
+    volume_list = VolumeList(
+        data=[
+            LiteVolume(
+                metadata=LiteVolumeMetadata(name="volume-a"),
+                spec=LiteVolumeSpec(size=10),
+            )
+        ],
+        meta=PaginationMeta(has_more=False),
+    )
+    execution_list = JobExecutionList(
+        data=[
+            JobExecution(
+                metadata=JobExecutionMetadata(id="execution-a"),
+                spec=JobExecutionSpec(),
+            )
+        ],
+        meta=PaginationMeta(has_more=False),
+    )
+
+    assert [item.metadata.name for item in sandbox_list] == ["sandbox-a"]
+    assert [item.metadata.name for item in volume_list] == ["volume-a"]
+    assert [item.metadata.id for item in execution_list] == ["execution-a"]
+    assert len(sandbox_list) == len(volume_list) == len(execution_list) == 1
+
+
 def test_job_execution_list_supports_explicit_next_page(monkeypatch):
     first_execution = JobExecution(
         metadata=JobExecutionMetadata(id="execution-a"),
