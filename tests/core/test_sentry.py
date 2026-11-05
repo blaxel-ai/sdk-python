@@ -18,6 +18,7 @@ from typing import Any, cast
 
 import httpx
 import pytest
+import requests
 
 import blaxel
 import blaxel.core.common.sentry as sentry
@@ -470,6 +471,21 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_transient_connection_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-120: DNS/connection failures are environmental."""
+        exc = _raise_in_sdk(
+            "core/authentication/clientcredentials.py",
+            "import requests\n"
+            "raise requests.exceptions.ConnectionError("
+            "\"Failed to resolve 'api.blaxel.ai'\")",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -777,3 +793,43 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestIsTransientNetworkError:
+    """Cover the connectivity-error classification used to suppress Sentry noise."""
+
+    def test_requests_connection_error_is_transient(self):
+        # SDK-PYTHON-120: DNS resolution failure surfaced as a requests ConnectionError.
+        exc = requests.exceptions.ConnectionError("Failed to resolve 'api.blaxel.ai'")
+        assert sentry._is_transient_network_error(exc) is True
+
+    def test_requests_read_timeout_is_transient(self):
+        assert sentry._is_transient_network_error(requests.exceptions.ReadTimeout()) is True
+
+    def test_requests_connect_timeout_is_transient(self):
+        assert sentry._is_transient_network_error(requests.exceptions.ConnectTimeout()) is True
+
+    def test_httpx_connect_error_is_transient(self):
+        assert sentry._is_transient_network_error(httpx.ConnectError("no route")) is True
+
+    def test_httpx_read_error_is_transient(self):
+        assert sentry._is_transient_network_error(httpx.ReadError("connection reset")) is True
+
+    def test_httpx_read_timeout_is_transient(self):
+        assert sentry._is_transient_network_error(httpx.ReadTimeout("slow upstream")) is True
+
+    def test_httpx_remote_protocol_error_is_transient(self):
+        exc = httpx.RemoteProtocolError("peer closed connection")
+        assert sentry._is_transient_network_error(exc) is True
+
+    def test_http_error_response_is_not_transient(self):
+        # An HTTP error response is actionable and must still be reported.
+        exc = requests.exceptions.HTTPError("500 Server Error")
+        assert sentry._is_transient_network_error(exc) is False
+
+    def test_httpx_local_protocol_error_is_not_transient(self):
+        # A malformed request built by the SDK is a real defect, not environmental.
+        assert sentry._is_transient_network_error(httpx.LocalProtocolError("bad header")) is False
+
+    def test_generic_exception_is_not_transient(self):
+        assert sentry._is_transient_network_error(RuntimeError("boom")) is False
