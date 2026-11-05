@@ -129,11 +129,34 @@ def _sdk_relative_filename(filename: str) -> str | None:
     return (Path(_SDK_PACKAGE_ROOT.name) / relative_path).as_posix()
 
 
+# The job launcher runs a user-provided job function in-process (see
+# ``BlJobWrapper.start`` in ``core/jobs/__init__.py``). Any exception raised by
+# that user code travels back out through this launcher frame, which lives inside
+# the installed ``blaxel`` package. Treating the launcher frame as SDK-origin would
+# misattribute user application errors to the SDK. The launcher frame is therefore
+# excluded from origin detection; a genuine SDK failure reached from inside a job
+# still leaves a deeper SDK frame in the traceback and remains detected.
+_USER_CODE_LAUNCHER_FRAMES = frozenset(
+    {
+        (f"{_SDK_PACKAGE_ROOT.name}/core/jobs/__init__.py", "start"),
+    }
+)
+
+
+def _is_sdk_origin_frame(filename: str, function: str) -> bool:
+    """Return whether a frame is SDK-owned and is not a user-code launcher frame."""
+    relative_filename = _sdk_relative_filename(filename)
+    if relative_filename is None:
+        return False
+    return (relative_filename, function) not in _USER_CODE_LAUNCHER_FRAMES
+
+
 def _is_from_sdk(error: BaseException) -> bool:
     """Check whether an error has a frame inside this installed SDK package."""
     tb = error.__traceback__
     while tb is not None:
-        if _sdk_relative_filename(tb.tb_frame.f_code.co_filename) is not None:
+        code = tb.tb_frame.f_code
+        if _is_sdk_origin_frame(code.co_filename, code.co_name):
             return True
         tb = tb.tb_next
     return False
