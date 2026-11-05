@@ -24,6 +24,15 @@ try:
 except ImportError:  # The backport is optional and only needed on Python 3.10.
     BackportBaseExceptionGroup = None
 
+# ``UnexpectedStatus`` (and its subclasses ``APIStatusError``, ``ConflictError``,
+# ``RateLimitError``) is raised by the generated API client to surface the HTTP
+# status the server returned. It is imported defensively so telemetry setup can
+# never break ``import blaxel`` on an unusual partial install.
+try:
+    from ..client.errors import UnexpectedStatus as _ServerStatusError
+except Exception:  # pragma: no cover - the core client module is always present
+    _ServerStatusError = None
+
 logger = logging.getLogger(__name__)
 
 # Lightweight Sentry client using httpx - only captures SDK errors
@@ -108,6 +117,13 @@ _EXCEPTION_GROUP_TYPES = tuple(
         for group_type in (_builtin_exception_group, BackportBaseExceptionGroup)
         if group_type is not None
     )
+)
+
+# HTTP status errors surfaced by the generated API client. All typed variants
+# (``APIStatusError``, ``ConflictError``, ``RateLimitError``) subclass the base,
+# so a single isinstance check against it covers the whole family.
+_SERVER_STATUS_ERROR_TYPES = tuple(
+    error_type for error_type in (_ServerStatusError,) if error_type is not None
 )
 
 
@@ -405,11 +421,26 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_server_status_error(error: BaseException) -> bool:
+    """Check whether an error only reports the HTTP status the server returned.
+
+    The generated API client raises ``UnexpectedStatus`` (and its typed
+    subclasses, e.g. ``RateLimitError`` for HTTP 429 or ``ConflictError`` for
+    HTTP 409) when the server responds with a status the endpoint does not model.
+    These are server-side operational conditions the caller is expected to handle
+    -- retry, back off, or look up the existing resource -- not defects in SDK
+    code, so an unhandled one must not be reported as an SDK failure.
+    """
+    return bool(_SERVER_STATUS_ERROR_TYPES) and isinstance(error, _SERVER_STATUS_ERROR_TYPES)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_server_status_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
