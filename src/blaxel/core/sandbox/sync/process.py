@@ -31,6 +31,24 @@ from .action import SyncSandboxAction
 
 
 class SyncSandboxProcess(SyncSandboxAction):
+    """Run commands in a sandbox and read their status and output (synchronous).
+
+    Reach it as ``sandbox.process``. Methods that take an ``identifier``
+    accept the process name or its PID. A command that exits with a non-zero
+    code ends with status ``"failed"`` and its ``exit_code``; no exception is
+    raised for it. ``get`` and ``list`` return at most the last 64 KB of each
+    output stream; :meth:`logs` returns up to 4 MB. An error status from the
+    sandbox API raises ``ResponseError``.
+
+    Example:
+        ```python
+        result = sandbox.process.exec(
+            {"name": "build", "command": "npm run build", "wait_for_completion": True}
+        )
+        print(result.status, result.exit_code, result.stdout)
+        ```
+    """
+
     def __init__(self, sandbox_config: SandboxConfiguration):
         super().__init__(sandbox_config)
 
@@ -40,6 +58,16 @@ class SyncSandboxProcess(SyncSandboxAction):
         options: Dict[str, Callable[[str], None]] | None = None,
     ) -> StreamHandle:
         """Stream logs from a process with automatic reconnection and deduplication.
+
+        The stream starts with the output written so far, then follows live
+        output. It runs in daemon threads, reconnects every 30 seconds and
+        drops lines already delivered.
+
+        Args:
+            process_name: Process name or PID.
+            options: Optional dict of callbacks, each called with one line from
+                a background thread: ``on_log`` (stdout and stderr),
+                ``on_stdout`` and ``on_stderr``.
 
         Returns a StreamHandle that can be used as a context manager:
 
@@ -189,6 +217,64 @@ class SyncSandboxProcess(SyncSandboxAction):
         self,
         process: Union[ProcessRequest, ProcessRequestWithLog, Dict[str, Any]],
     ) -> Union[ProcessResponse, ProcessResponseWithLog]:
+        """Execute a process in the sandbox.
+
+        By default this starts the command and returns at once with status
+        ``"running"``; use :meth:`wait`, :meth:`get` or :meth:`logs` to follow
+        it. With ``wait_for_completion`` it returns when the command ends:
+
+        - Without log callbacks the request waits silently. The edge closes a
+          request that stays silent for about 60 seconds with HTTP 504
+          (``ResponseError``) while the command keeps running. For longer
+          commands, start without waiting and call :meth:`wait`, or pass a
+          log callback.
+        - With ``on_log``, ``on_stdout`` or ``on_stderr`` the output is
+          streamed to the callbacks and keepalives hold the request open, so
+          long commands are safe.
+
+        Log callbacks without ``wait_for_completion`` start a background log
+        stream and return a ``ProcessResponseWithLog``; call its ``close()``
+        when done.
+
+        Without ``timeout`` a command runs with no time limit, or 600 seconds
+        when ``keep_alive`` is set; ``0`` means no limit. Starting a process
+        with the name of a process that is still running fails with HTTP 400.
+
+        Args:
+            process: A ``ProcessRequest``, a ``ProcessRequestWithLog`` or a dict
+                with ``command`` and optional ``name``, ``working_dir``,
+                ``env``, ``wait_for_completion``, ``timeout`` (seconds),
+                ``keep_alive`` (keep the sandbox from scaling to zero while the
+                command runs), ``wait_for_ports`` (return once these ports
+                listen on a non-loopback address), ``restart_on_failure``,
+                ``max_restarts``, ``stdin`` (open a pipe for
+                :meth:`write_stdin`) and the ``on_log``, ``on_stdout`` and
+                ``on_stderr`` callbacks.
+
+        Returns:
+            ``ProcessResponse`` with ``pid``, ``name``, ``status``,
+            ``exit_code``, ``stdout``, ``stderr`` and ``logs``, or a
+            ``ProcessResponseWithLog`` when log callbacks were given.
+
+        Raises:
+            ResponseError: When the sandbox API rejects the request, such as
+                HTTP 400 for a name in use or HTTP 504 for a silent wait.
+            Exception: When a streamed execution fails.
+
+        Example:
+            ```python
+            result = sandbox.process.exec(
+                {
+                    "command": "pip install -r requirements.txt",
+                    "working_dir": "/app",
+                    "wait_for_completion": True,
+                    "on_log": print,
+                }
+            )
+            if result.status == "failed":
+                print(result.exit_code, result.stderr)
+            ```
+        """
         on_log = None
         on_stdout = None
         on_stderr = None
@@ -357,7 +443,33 @@ class SyncSandboxProcess(SyncSandboxAction):
                 return ProcessResponseWithLog(result, lambda: None)
 
     def wait(self, identifier: str, max_wait: int = 60000, interval: int = 1000) -> ProcessResponse:
-        """Wait for a terminal API state; max_wait=-1 waits indefinitely. Never stops the command."""
+        """Wait for a terminal API state; max_wait=-1 waits indefinitely. Never stops the command.
+
+        Polls :meth:`get` until the status is ``completed``, ``failed``,
+        ``killed`` or ``stopped``. Transient read errors are retried until the
+        deadline.
+
+        Args:
+            identifier: Process name or PID.
+            max_wait: Deadline in milliseconds, or -1 for no deadline.
+            interval: Delay between polls in milliseconds.
+
+        Returns:
+            The final ``ProcessResponse``. Check ``status`` and ``exit_code``.
+
+        Raises:
+            TimeoutError: When the deadline passes first. The command may
+                still be running.
+            ValueError: When ``max_wait`` or ``interval`` is out of range, or
+                the API reports an unknown status.
+            ResponseError: When the process does not exist.
+
+        Example:
+            ```python
+            sandbox.process.exec({"name": "train", "command": "python train.py"})
+            result = sandbox.process.wait("train", max_wait=-1, interval=5000)
+            ```
+        """
         if (
             not math.isfinite(max_wait)
             or (max_wait < 0 and max_wait != -1)
@@ -421,6 +533,24 @@ class SyncSandboxProcess(SyncSandboxAction):
     def get(
         self, identifier: str, *, retry: bool = True, timeout: float | None = None
     ) -> ProcessResponse:
+        """Read the current state of a process.
+
+        Output fields hold at most the last 64 KB of each stream; use
+        :meth:`logs` for more.
+
+        Args:
+            identifier: Process name or PID.
+            retry: Retry transient connection resets.
+            timeout: Optional HTTP timeout for this read, in seconds.
+
+        Returns:
+            ``ProcessResponse`` with ``status``, ``exit_code`` and output.
+
+        Raises:
+            ResponseError: When the process does not exist (``status`` 404) or
+                the sandbox API rejects the request.
+        """
+
         def read() -> ProcessResponse:
             with self.get_client() as transport:
                 if timeout is not None:
@@ -432,6 +562,17 @@ class SyncSandboxProcess(SyncSandboxAction):
         return retry_on_transient_reset(read) if retry else read()
 
     def list(self) -> list[ProcessResponse]:
+        """List running and finished processes.
+
+        Output fields hold at most the last 64 KB of each stream.
+
+        Returns:
+            A list of ``ProcessResponse``.
+
+        Raises:
+            ResponseError: When the sandbox API rejects the request.
+        """
+
         def list_once() -> list[ProcessResponse]:
             with self.get_client() as client_instance:
                 response = client_instance.get("/process")
@@ -446,12 +587,42 @@ class SyncSandboxProcess(SyncSandboxAction):
         return retry_on_transient_reset(list_once)
 
     def stop(self, identifier: str) -> SuccessResponse:
+        """Ask a process to terminate gracefully.
+
+        Returns once the request is accepted. Call :meth:`wait` to confirm the
+        process has exited, or :meth:`kill` to force it.
+
+        Args:
+            identifier: Process name or PID.
+
+        Returns:
+            ``SuccessResponse`` for the accepted request.
+
+        Raises:
+            ResponseError: With HTTP 404 when the process does not exist or is
+                not running.
+        """
         with self.get_client() as client_instance:
             response = client_instance.delete(f"/process/{identifier}")
             self.handle_response_error(response)
             return SuccessResponse.from_dict(response.json())
 
     def kill(self, identifier: str) -> SuccessResponse:
+        """Force a process to terminate.
+
+        Returns once the request is accepted. Call :meth:`wait` to confirm the
+        process has exited.
+
+        Args:
+            identifier: Process name or PID.
+
+        Returns:
+            ``SuccessResponse`` for the accepted request.
+
+        Raises:
+            ResponseError: With HTTP 404 when the process does not exist or is
+                not running.
+        """
         with self.get_client() as client_instance:
             response = client_instance.delete(f"/process/{identifier}/kill")
             self.handle_response_error(response)
@@ -462,6 +633,25 @@ class SyncSandboxProcess(SyncSandboxAction):
 
         Bytes are forwarded verbatim, so include the trailing newline your protocol
         expects. Not retried: a duplicate write would corrupt the stream.
+
+        Args:
+            identifier: Process name or PID.
+            data: Text or bytes to write.
+
+        Returns:
+            ``SuccessResponse`` once the data is written.
+
+        Raises:
+            ResponseError: With HTTP 409 when the process has no open stdin
+                pipe (not started with ``stdin=True``, closed, or lost in a
+                sandbox API restart), or 404 when it does not exist.
+
+        Example:
+            ```python
+            sandbox.process.exec({"name": "repl", "command": "python3 -i", "stdin": True})
+            sandbox.process.write_stdin("repl", "print(1 + 1)\\n")
+            sandbox.process.close_stdin("repl")
+            ```
         """
         with self.get_api_client() as client:
             # str or bytes, sent as-is with the octet-stream content type.
@@ -472,6 +662,16 @@ class SyncSandboxProcess(SyncSandboxAction):
         """Close the process's stdin (EOF). Idempotent.
 
         For stdio protocols such as MCP this is the clean shutdown path.
+
+        Args:
+            identifier: Process name or PID.
+
+        Returns:
+            ``SuccessResponse`` once stdin is closed.
+
+        Raises:
+            ResponseError: When the process does not exist or the sandbox API
+                rejects the request.
         """
         with self.get_api_client() as client:
             response = delete_process_stdin(identifier, client=client)
@@ -482,6 +682,21 @@ class SyncSandboxProcess(SyncSandboxAction):
         identifier: str,
         log_type: Literal["stdout", "stderr", "all"] = "all",
     ) -> str:
+        """Read the output of a process, up to 4 MB.
+
+        Args:
+            identifier: Process name or PID.
+            log_type: ``"stdout"``, ``"stderr"`` or ``"all"`` (both streams
+                combined).
+
+        Returns:
+            The output as text.
+
+        Raises:
+            ResponseError: When the process does not exist or the sandbox API
+                rejects the request.
+        """
+
         def logs_once() -> str:
             with self.get_client() as client_instance:
                 response = client_instance.get(f"/process/{identifier}/logs")

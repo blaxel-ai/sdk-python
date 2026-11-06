@@ -46,6 +46,7 @@ class _AsyncDeleteDescriptor:
         else:
             # Called on an instance: instance.delete()
             async def instance_delete() -> Volume:
+                """Delete this volume; see ``VolumeInstance.delete("name")`` for details."""
                 return await self._delete_func(instance.metadata.name or "")
 
             return instance_delete
@@ -64,6 +65,7 @@ class _SyncDeleteDescriptor:
         else:
             # Called on an instance: instance.delete()
             def instance_delete() -> Volume:
+                """Delete this volume; see ``SyncVolumeInstance.delete("name")`` for details."""
                 return self._delete_func(instance.metadata.name or "")
 
             return instance_delete
@@ -84,6 +86,7 @@ class _AsyncUpdateDescriptor:
             async def instance_update(
                 updates: Union["VolumeCreateConfiguration", Volume, Dict[str, any]],
             ) -> "VolumeInstance":
+                """Update this volume; see ``VolumeInstance.update("name", updates)``."""
                 return await self._update_func(instance.metadata.name or "", updates)
 
             return instance_update
@@ -104,13 +107,26 @@ class _SyncUpdateDescriptor:
             def instance_update(
                 updates: Union["VolumeCreateConfiguration", Volume, Dict[str, any]],
             ) -> "SyncVolumeInstance":
+                """Update this volume; see ``SyncVolumeInstance.update("name", updates)``."""
                 return self._update_func(instance.metadata.name or "", updates)
 
             return instance_update
 
 
 class VolumeCreateConfiguration:
-    """Simplified configuration for creating volumes with default values."""
+    """Simplified configuration for creating volumes with default values.
+
+    Args:
+        name: Volume name: lowercase letters, digits and hyphens, at most 49
+            characters. Defaults to ``volume-<8 hex characters>``.
+        display_name: Human-readable name. Defaults to the name.
+        labels: Key-value labels.
+        size: Size in MB. Defaults to 1024. It can grow later, never shrink.
+        region: Region such as ``us-pdx-1``. Defaults to ``BL_REGION``. It
+            cannot change after creation.
+        template: Optional volume template to start from. It cannot change
+            after creation.
+    """
 
     def __init__(
         self,
@@ -130,6 +146,7 @@ class VolumeCreateConfiguration:
 
     @classmethod
     def from_dict(cls, data: Dict[str, any]) -> "VolumeCreateConfiguration":
+        """Build a configuration from a dict with the same keys as the constructor."""
         return cls(
             name=data.get("name"),
             display_name=data.get("display_name"),
@@ -141,6 +158,31 @@ class VolumeCreateConfiguration:
 
 
 class VolumeInstance:
+    """A persistent volume: block storage that outlives the sandboxes using it.
+
+    A volume is attached to one sandbox at a time, through the sandbox's
+    ``volumes`` setting at creation (``{"name": ..., "mount_path": ...}``).
+    Creating a sandbox with a volume already attached elsewhere fails with
+    HTTP 409, and an attached volume cannot be deleted. Create it in the
+    region of the sandboxes that will use it. ``delete`` and ``update`` work
+    on the class with a name, ``await VolumeInstance.delete("name")``, and on
+    an instance, ``await volume.delete()``.
+
+    Example:
+        ```python
+        volume = await VolumeInstance.create_if_not_exists(
+            {"name": "agent-data", "size": 2048, "region": "us-pdx-1"}
+        )
+        sandbox = await SandboxInstance.create(
+            {
+                "name": "agent",
+                "region": "us-pdx-1",
+                "volumes": [{"name": "agent-data", "mount_path": "/data"}],
+            }
+        )
+        ```
+    """
+
     delete: "_AsyncDeleteDescriptor"
 
     def __init__(self, volume: Volume):
@@ -148,40 +190,75 @@ class VolumeInstance:
 
     @property
     def metadata(self):
+        """Volume metadata: ``name``, ``display_name``, ``labels``."""
         return self.volume.metadata
 
     @property
     def spec(self):
+        """Volume spec: ``size`` in MB, ``region`` and ``template``."""
         return self.volume.spec
 
     @property
     def status(self):
+        """Volume status as reported by the API."""
         return self.volume.status
 
     @property
     def name(self):
+        """Volume name, or None when the record has no metadata."""
         return self.volume.metadata.name if self.volume.metadata else None
 
     @property
     def display_name(self):
+        """Human-readable name, or None."""
         return self.volume.metadata.display_name if self.volume.metadata else None
 
     @property
     def size(self):
+        """Size in MB, or None."""
         return self.volume.spec.size if self.volume.spec else None
 
     @property
     def region(self):
+        """Region, or None."""
         return self.volume.spec.region if self.volume.spec else None
 
     @property
     def template(self):
+        """Template the volume was created from, or None."""
         return self.volume.spec.template if self.volume.spec else None
 
     @classmethod
     async def create(
         cls, config: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
     ) -> "VolumeInstance":
+        """Create a volume.
+
+        Missing settings get defaults: name ``volume-<8 hex characters>``,
+        size 1024 MB and the region from ``BL_REGION``. Without a region a
+        ``FutureWarning`` is shown and the platform picks one. Creating a name
+        that is already taken fails with HTTP 409; use
+        :meth:`create_if_not_exists` to reuse it instead.
+
+        Args:
+            config: A ``VolumeCreateConfiguration``, a dict with ``name``,
+                ``display_name``, ``labels``, ``size`` (MB), ``region`` and
+                ``template``, or a full ``Volume`` model.
+
+        Returns:
+            The new ``VolumeInstance``.
+
+        Raises:
+            ValueError: When ``config`` has an unsupported type.
+            VolumeAPIError: When the API rejects the creation, for example
+                HTTP 409 for a name in use. ``status_code`` and ``code`` carry
+                the details.
+
+        Example:
+            ```python
+            volume = await VolumeInstance.create({"name": "agent-data", "region": "us-pdx-1"})
+            ```
+        """
         # Generate default values
         default_name = f"volume-{uuid.uuid4().hex[:8]}"
         default_size = 1024  # 1GB in MB
@@ -251,6 +328,18 @@ class VolumeInstance:
 
     @classmethod
     async def get(cls, volume_name: str) -> "VolumeInstance":
+        """Get a volume by name.
+
+        Args:
+            volume_name: The volume name.
+
+        Returns:
+            A ``VolumeInstance`` with the current record.
+
+        Raises:
+            VolumeAPIError: When the volume does not exist (``status_code``
+                404) or the API rejects the request.
+        """
         response = await get_volume(volume_name=volume_name, client=client)
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
@@ -273,6 +362,9 @@ class VolumeInstance:
         Returns:
             AsyncPaginatedList[VolumeInstance]: A list-like page with `.data`, `.meta`,
             `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Raises:
+            VolumeAPIError: When the API rejects the request.
 
         Example:
             ```python
@@ -309,7 +401,23 @@ class VolumeInstance:
     async def create_if_not_exists(
         cls, config: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
     ) -> "VolumeInstance":
-        """Create a volume if it doesn't exist, otherwise return existing."""
+        """Create a volume if it doesn't exist, otherwise return existing.
+
+        Tries :meth:`create` and, when the name is taken (HTTP 409), returns
+        the existing volume as it is: the requested size, region and other
+        settings are not applied to it. Use :meth:`update` to grow it.
+
+        Args:
+            config: The volume to create, in any form :meth:`create` accepts.
+                It needs a name.
+
+        Returns:
+            The existing or new ``VolumeInstance``.
+
+        Raises:
+            ValueError: When the name is taken and ``config`` has no name.
+            VolumeAPIError: When the API rejects the request.
+        """
         try:
             return await cls.create(config)
         except VolumeAPIError as e:
@@ -334,50 +442,98 @@ class VolumeInstance:
 
 
 class SyncVolumeInstance:
-    delete: "_SyncDeleteDescriptor"
+    """Synchronous volume instance for managing persistent storage.
 
-    """Synchronous volume instance for managing persistent storage."""
+    Same behavior as ``VolumeInstance``, without ``await``. A volume is
+    attached to one sandbox at a time, through the sandbox's ``volumes``
+    setting at creation. ``delete`` and ``update`` work on the class with a
+    name, ``SyncVolumeInstance.delete("name")``, and on an instance,
+    ``volume.delete()``.
+
+    Example:
+        ```python
+        volume = SyncVolumeInstance.create_if_not_exists(
+            {"name": "agent-data", "size": 2048, "region": "us-pdx-1"}
+        )
+        ```
+    """
+
+    delete: "_SyncDeleteDescriptor"
 
     def __init__(self, volume: Volume):
         self.volume = volume
 
     @property
     def metadata(self):
+        """Volume metadata: ``name``, ``display_name``, ``labels``."""
         return self.volume.metadata
 
     @property
     def spec(self):
+        """Volume spec: ``size`` in MB, ``region`` and ``template``."""
         return self.volume.spec
 
     @property
     def status(self):
+        """Volume status as reported by the API."""
         return self.volume.status
 
     @property
     def name(self):
+        """Volume name, or None when the record has no metadata."""
         return self.volume.metadata.name if self.volume.metadata else None
 
     @property
     def display_name(self):
+        """Human-readable name, or None."""
         return self.volume.metadata.display_name if self.volume.metadata else None
 
     @property
     def size(self):
+        """Size in MB, or None."""
         return self.volume.spec.size if self.volume.spec else None
 
     @property
     def region(self):
+        """Region, or None."""
         return self.volume.spec.region if self.volume.spec else None
 
     @property
     def template(self):
+        """Template the volume was created from, or None."""
         return self.volume.spec.template if self.volume.spec else None
 
     @classmethod
     def create(
         cls, config: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
     ) -> "SyncVolumeInstance":
-        """Create a new volume synchronously."""
+        """Create a new volume synchronously.
+
+        Missing settings get defaults: name ``volume-<8 hex characters>``,
+        size 1024 MB and the region from ``BL_REGION``. Without a region a
+        ``FutureWarning`` is shown and the platform picks one. Creating a name
+        that is already taken fails with HTTP 409; use
+        :meth:`create_if_not_exists` to reuse it instead.
+
+        Args:
+            config: A ``VolumeCreateConfiguration``, a dict with ``name``,
+                ``display_name``, ``labels``, ``size`` (MB), ``region`` and
+                ``template``, or a full ``Volume`` model.
+
+        Returns:
+            The new ``SyncVolumeInstance``.
+
+        Raises:
+            ValueError: When ``config`` has an unsupported type.
+            VolumeAPIError: When the API rejects the creation, for example
+                HTTP 409 for a name in use. ``status_code`` and ``code`` carry
+                the details.
+
+        Example:
+            ```python
+            volume = SyncVolumeInstance.create({"name": "agent-data", "region": "us-pdx-1"})
+            ```
+        """
         # Generate default values
         default_name = f"volume-{uuid.uuid4().hex[:8]}"
         default_size = 1024  # 1GB in MB
@@ -447,7 +603,18 @@ class SyncVolumeInstance:
 
     @classmethod
     def get(cls, volume_name: str) -> "SyncVolumeInstance":
-        """Get a volume by name synchronously."""
+        """Get a volume by name synchronously.
+
+        Args:
+            volume_name: The volume name.
+
+        Returns:
+            A ``SyncVolumeInstance`` with the current record.
+
+        Raises:
+            VolumeAPIError: When the volume does not exist (``status_code``
+                404) or the API rejects the request.
+        """
         response = get_volume_sync(volume_name=volume_name, client=client)
         if isinstance(response, Error):
             status_code = int(response.code) if response.code is not UNSET else None
@@ -470,6 +637,9 @@ class SyncVolumeInstance:
         Returns:
             PaginatedList[SyncVolumeInstance]: A list-like page with `.data`, `.meta`,
             `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
+
+        Raises:
+            VolumeAPIError: When the API rejects the request.
 
         Example:
             ```python
@@ -506,7 +676,23 @@ class SyncVolumeInstance:
     def create_if_not_exists(
         cls, config: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
     ) -> "SyncVolumeInstance":
-        """Create a volume if it doesn't exist, otherwise return existing."""
+        """Create a volume if it doesn't exist, otherwise return existing.
+
+        Tries :meth:`create` and, when the name is taken (HTTP 409), returns
+        the existing volume as it is: the requested size, region and other
+        settings are not applied to it. Use :meth:`update` to grow it.
+
+        Args:
+            config: The volume to create, in any form :meth:`create` accepts.
+                It needs a name.
+
+        Returns:
+            The existing or new ``SyncVolumeInstance``.
+
+        Raises:
+            ValueError: When the name is taken and ``config`` has no name.
+            VolumeAPIError: When the API rejects the request.
+        """
         try:
             return cls.create(config)
         except VolumeAPIError as e:
@@ -531,7 +717,26 @@ class SyncVolumeInstance:
 
 
 async def _delete_volume_by_name(volume_name: str) -> Volume:
-    """Delete a volume by name (async)."""
+    """Delete a volume by name (async).
+
+    Exposed as ``await VolumeInstance.delete("name")`` and as ``await volume.delete()`` on
+    an instance. The data on the volume is lost. A volume attached to a
+    sandbox cannot be deleted: the API answers HTTP 400, raised as
+    ``blaxel.core.client.errors.UnexpectedStatus``; delete the sandbox first.
+
+    Args:
+        volume_name: The volume name.
+
+    Returns:
+        The deleted ``Volume`` record. Its status is ``DELETING`` until the
+        deletion finishes; after that, ``get`` raises a 404.
+
+    Raises:
+        VolumeAPIError: When the volume does not exist (``status_code`` 404)
+            or the API rejects the request.
+        blaxel.core.client.errors.UnexpectedStatus: HTTP 400 when the volume
+            is attached to a sandbox.
+    """
     response = await delete_volume(volume_name=volume_name, client=client)
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
@@ -543,7 +748,26 @@ async def _delete_volume_by_name(volume_name: str) -> Volume:
 
 
 def _delete_volume_by_name_sync(volume_name: str) -> Volume:
-    """Delete a volume by name (sync)."""
+    """Delete a volume by name (sync).
+
+    Exposed as ``SyncVolumeInstance.delete("name")`` and as ``volume.delete()`` on
+    an instance. The data on the volume is lost. A volume attached to a
+    sandbox cannot be deleted: the API answers HTTP 400, raised as
+    ``blaxel.core.client.errors.UnexpectedStatus``; delete the sandbox first.
+
+    Args:
+        volume_name: The volume name.
+
+    Returns:
+        The deleted ``Volume`` record. Its status is ``DELETING`` until the
+        deletion finishes; after that, ``get`` raises a 404.
+
+    Raises:
+        VolumeAPIError: When the volume does not exist (``status_code`` 404)
+            or the API rejects the request.
+        blaxel.core.client.errors.UnexpectedStatus: HTTP 400 when the volume
+            is attached to a sandbox.
+    """
     response = delete_volume_sync(volume_name=volume_name, client=client)
     if isinstance(response, Error):
         status_code = int(response.code) if response.code is not UNSET else None
@@ -557,7 +781,36 @@ def _delete_volume_by_name_sync(volume_name: str) -> Volume:
 async def _update_volume_by_name(
     volume_name: str, updates: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
 ) -> "VolumeInstance":
-    """Update a volume by name (async)."""
+    """Update a volume by name (async).
+
+    Exposed as ``await VolumeInstance.update("name", updates)`` and as
+    ``await volume.update(updates)`` on an instance. The volume is read first;
+    fields given in ``updates`` replace the current ones (``labels`` as a
+    whole) and the others are kept. Only ``size``, ``display_name`` and
+    ``labels`` can change: the size can grow but never shrink, and the region
+    and template are fixed at creation. The API rejects other changes with
+    HTTP 400, raised as ``blaxel.core.client.errors.UnexpectedStatus``. The
+    call waits 0.5 seconds after the update before returning.
+
+    Args:
+        volume_name: The volume name.
+        updates: A ``VolumeCreateConfiguration``, a dict with the same keys,
+            or a ``Volume`` model.
+
+    Returns:
+        The updated ``VolumeInstance``.
+
+    Raises:
+        ValueError: When ``updates`` has an unsupported type.
+        VolumeAPIError: When the volume does not exist.
+        blaxel.core.client.errors.UnexpectedStatus: When the API rejects the
+            update, such as a smaller size or a new region.
+
+    Example:
+        ```python
+        volume = await VolumeInstance.update("agent-data", {"size": 4096})
+        ```
+    """
     # Get the current volume
     volume_instance = await VolumeInstance.get(volume_name)
     current_volume = volume_instance.volume
@@ -635,7 +888,36 @@ async def _update_volume_by_name(
 def _update_volume_by_name_sync(
     volume_name: str, updates: Union[VolumeCreateConfiguration, Volume, Dict[str, any]]
 ) -> "SyncVolumeInstance":
-    """Update a volume by name (sync)."""
+    """Update a volume by name (sync).
+
+    Exposed as ``SyncVolumeInstance.update("name", updates)`` and as
+    ``volume.update(updates)`` on an instance. The volume is read first;
+    fields given in ``updates`` replace the current ones (``labels`` as a
+    whole) and the others are kept. Only ``size``, ``display_name`` and
+    ``labels`` can change: the size can grow but never shrink, and the region
+    and template are fixed at creation. The API rejects other changes with
+    HTTP 400, raised as ``blaxel.core.client.errors.UnexpectedStatus``. The
+    call waits 0.5 seconds after the update before returning.
+
+    Args:
+        volume_name: The volume name.
+        updates: A ``VolumeCreateConfiguration``, a dict with the same keys,
+            or a ``Volume`` model.
+
+    Returns:
+        The updated ``SyncVolumeInstance``.
+
+    Raises:
+        ValueError: When ``updates`` has an unsupported type.
+        VolumeAPIError: When the volume does not exist.
+        blaxel.core.client.errors.UnexpectedStatus: When the API rejects the
+            update, such as a smaller size or a new region.
+
+    Example:
+        ```python
+        volume = SyncVolumeInstance.update("agent-data", {"size": 4096})
+        ```
+    """
     # Get the current volume
     volume_instance = SyncVolumeInstance.get(volume_name)
     current_volume = volume_instance.volume
