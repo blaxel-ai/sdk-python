@@ -16,10 +16,10 @@ dependencies = [
   "websockets<18.0.0",
   "attrs>=21.3.0",
   "httpx>=0.27.0",
-  # mcp 2.0.0 removed mcp.server.fastmcp, which core/mcp/server.py subclasses.
-  # Cap until that surface is migrated; an unbounded range let a major bump
-  # break every fresh install (CI resolves outside uv.lock via `uv pip install`).
-  "mcp>=1.9.4,<2.0.0",
+  # core/mcp/compat.py supports mcp 1.x and 2.x. Keep the next major capped:
+  # an unbounded range let a major bump break every fresh install
+  # (CI resolves outside uv.lock via `uv pip install`).
+  "mcp>=1.9.4,<3.0.0",
   "dockerfile-parse>=2.0.0",
 ]
 
@@ -85,8 +85,8 @@ pydantic = ["pydantic-ai>=1.0.8"]
 
 # Google ADK module
 # litellm 1.106.0 imports mcp.types.CacheableResult (mcp 2.x only) on every
-# completion call that passes tools. Core caps mcp below 2.0.0 (see above), so
-# keep litellm below 1.106.0 until core moves to mcp 2.x; lift both together.
+# completion call that passes tools, so it breaks wherever mcp 1.x resolves.
+# Core still allows mcp 1.x (see above); keep litellm below 1.106.0 until then.
 googleadk = ["google-adk>=2.5.0", "litellm>=1.63.11,<1.106.0", "orjson>=3.11.6,<4.0"]
 
 # Development dependencies

@@ -10,11 +10,11 @@ from anyio.streams.memory import (
     MemoryObjectReceiveStream,
     MemoryObjectSendStream,
 )
-from mcp.server.fastmcp import FastMCP as FastMCPBase
 from mcp.shared.message import SessionMessage
 from websockets.asyncio.server import ServerConnection, serve
 
 from ..common.env import env
+from .compat import FastMCPBase, jsonrpc_inner, lowlevel_server, parse_jsonrpc_message
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +55,21 @@ class BlaxelMcpServerTransport:
             try:
                 async for message in websocket:
                     try:
-                        msg = types.JSONRPCMessage.model_validate_json(message)
-                        # Modify message ID to include client ID
-                        if hasattr(msg, "id") and msg.id is not None:
-                            original_id = msg.id
-                            msg.id = f"{client_id}:{original_id}"
+                        msg = parse_jsonrpc_message(message)
+                        # Prefix client requests' IDs with the client ID so the reply
+                        # routes back to that client. Responses to server-initiated
+                        # requests keep their ID: the server session matches on it.
+                        # A cancel names a request by ID, so it gets the same prefix.
+                        inner = jsonrpc_inner(msg)
+                        if isinstance(inner, types.JSONRPCRequest):
+                            inner.id = f"{client_id}:{inner.id}"
+                        elif (
+                            isinstance(inner, types.JSONRPCNotification)
+                            and inner.method == "notifications/cancelled"
+                            and isinstance(inner.params, dict)
+                            and inner.params.get("requestId") is not None
+                        ):
+                            inner.params["requestId"] = f"{client_id}:{inner.params['requestId']}"
                         await read_stream_writer.send(SessionMessage(message=msg))
                     except Exception as exc:
                         logger.error(f"Failed to parse message: {exc}\n{traceback.format_exc()}")
@@ -78,12 +88,13 @@ class BlaxelMcpServerTransport:
                     client_id = None
                     msg_id = None
                     message = session_message.message
-                    if hasattr(message, "id") and message.id is not None:
-                        parts = str(message.id).split(":", 1)
+                    inner = jsonrpc_inner(message)
+                    if getattr(inner, "id", None) is not None:
+                        parts = str(inner.id).split(":", 1)
                         if len(parts) == 2:
                             client_id, msg_id = parts
                             # Restore original message ID
-                            message.id = int(msg_id) if msg_id.isdigit() else msg_id
+                            inner.id = int(msg_id) if msg_id.isdigit() else msg_id
 
                     data = message.model_dump_json(by_alias=True, exclude_none=True)
 
@@ -141,8 +152,9 @@ class FastMCP(FastMCPBase):
             read_stream,
             write_stream,
         ):
-            await self._mcp_server.run(
+            server = lowlevel_server(self)
+            await server.run(
                 read_stream,
                 write_stream,
-                self._mcp_server.create_initialization_options(),
+                server.create_initialization_options(),
             )
