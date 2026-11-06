@@ -47,6 +47,19 @@ def setup_test_environment():
 
 
 @pytest.fixture
+def clear_coding_agent_env(monkeypatch, tmp_path):
+    """Unset the coding agent variables and tracking choice of the machine running the tests."""
+    from blaxel.core.common.coding_agent import CODING_AGENT_ENV_VARS
+
+    for name in (*CODING_AGENT_ENV_VARS, "DO_NOT_TRACK"):
+        monkeypatch.delenv(name, raising=False)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+
+
+@pytest.fixture
 def mock_client():
     """Mock the Blaxel client."""
     with patch("blaxel.core.client.client") as mock:
