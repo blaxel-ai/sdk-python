@@ -21,11 +21,13 @@ import pytest
 
 import blaxel
 import blaxel.core.common.sentry as sentry
+from blaxel.core.authentication.types import CredentialsError
 from blaxel.core.client import Client, errors
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
+    _should_capture_unhandled_exception,
 )
 
 
@@ -777,3 +779,44 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestCredentialsErrorFiltering:
+    """CredentialsError is a user configuration problem, not an SDK defect.
+
+    Regression for SDK-PYTHON-130: a client-credentials token request rejected
+    with HTTP 403/401 (invalid or revoked credentials) must not be reported as
+    an unhandled SDK exception.
+    """
+
+    def _raise_credentials_error(self, relative_path: str) -> BaseException:
+        return _raise_in_file(
+            _sdk_filename(relative_path),
+            "raise CredentialsError('credentials were rejected (HTTP 403)')",
+            {"CredentialsError": CredentialsError},
+        )
+
+    def test_credentials_error_from_sdk_is_not_captured(self):
+        exc = self._raise_credentials_error("core/authentication/clientcredentials.py")
+        assert _should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_credentials_error_from_auth_types_is_not_captured(self):
+        exc = self._raise_credentials_error("core/authentication/types.py")
+        assert _should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_unhandled_credentials_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = self._raise_credentials_error("core/authentication/clientcredentials.py")
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_other_auth_errors_are_still_captured(self):
+        """Anti-over-suppression: a genuine fault in the auth code still reports."""
+        exc = _raise_in_sdk(
+            "core/authentication/clientcredentials.py",
+            "raise RuntimeError('unexpected token parsing failure')",
+        )
+        assert _should_capture_unhandled_exception(type(exc), exc) is True
