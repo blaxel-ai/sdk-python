@@ -59,9 +59,17 @@ class BlaxelMcpServerTransport:
                         # Prefix client requests' IDs with the client ID so the reply
                         # routes back to that client. Responses to server-initiated
                         # requests keep their ID: the server session matches on it.
+                        # A cancel names a request by ID, so it gets the same prefix.
                         inner = jsonrpc_inner(msg)
                         if isinstance(inner, types.JSONRPCRequest):
                             inner.id = f"{client_id}:{inner.id}"
+                        elif (
+                            isinstance(inner, types.JSONRPCNotification)
+                            and inner.method == "notifications/cancelled"
+                            and isinstance(inner.params, dict)
+                            and inner.params.get("requestId") is not None
+                        ):
+                            inner.params["requestId"] = f"{client_id}:{inner.params['requestId']}"
                         await read_stream_writer.send(SessionMessage(message=msg))
                     except Exception as exc:
                         logger.error(f"Failed to parse message: {exc}\n{traceback.format_exc()}")
