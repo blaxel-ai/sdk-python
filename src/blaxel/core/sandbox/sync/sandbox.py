@@ -49,11 +49,17 @@ from ..default.sandbox import (
     ARCHIVE_MAX_WAIT_MS,
     ARCHIVE_WAIT_POLL_MS,
     ARCHIVING_STATUSES,
+    CREATE_AUTH_RETRIES,
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     SandboxAPIError,
+    _create_auth_retry_delay,
     _create_body,
+    _create_error_message,
     _creation_client,
+    _error_status,
+    _is_transient_create_auth_failure,
+    _notify_region_unset,
     _raise_if_creation_timeout,
     _sandbox_name,
     _status_of,
@@ -414,6 +420,15 @@ class SyncSandboxInstance:
         """Create a sandbox.
 
         Args:
+            sandbox: The sandbox to create. Its name must use lowercase letters,
+                digits and single hyphens, at most ``SANDBOX_NAME_MAX_LENGTH``
+                (49) characters, like ``my-sandbox-1``. The API rejects any other
+                name with a 400, and the SDK never renames it for you: to name a
+                sandbox after an external id such as ``sesn_01AbC``, pass the id
+                through ``sanitize_sandbox_name`` first (``is_valid_sandbox_name``
+                checks a name). Omit the name to let the platform assign one.
+                Without a region (here or in ``BL_REGION``) the platform picks
+                one.
             mount_drives: Drives to mount on the sandbox. Drives are looked up or created
                 while the sandbox is being created (a few at a time) and each is mounted
                 as soon as the sandbox and that drive are ready. New drives go in the region
@@ -430,6 +445,11 @@ class SyncSandboxInstance:
                 sandbox and ``SandboxCreationTimeoutError`` is raised. Omitted, the
                 platform default deadline applies; an explicit value can only
                 shorten it.
+
+        A creation rejected by a transient authentication failure (403
+        ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
+        before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
+        times with a short backoff.
         """
         mounts = _normalize_mount_drives(mount_drives, create_if_not_exist)
         timeout = _validate_creation_timeout(timeout)
@@ -493,12 +513,7 @@ class SyncSandboxInstance:
                 envs=config._normalize_envs(),
             )
             if not region:
-                warnings.warn(
-                    "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
-                    "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the sandbox configuration or set the BL_REGION environment variable.",
-                    FutureWarning,
-                    stacklevel=2,
-                )
+                _notify_region_unset("SyncSandboxInstance")
             lifecycle = config.lifecycle
             network = config.network
             snapshot_enabled = config.snapshot_enabled
@@ -576,28 +591,39 @@ class SyncSandboxInstance:
             drives.start()
         try:
             body = _create_body(sandbox)
-            try:
-                if timeout is None:
-                    response = create_sandbox(
-                        client=client, body=body, create_if_not_exist=create_if_not_exist
-                    )
-                else:
-                    with _creation_client(timeout) as creation_client:
+            attempts = 0
+            while True:
+                attempts += 1
+                try:
+                    if timeout is None:
                         response = create_sandbox(
-                            client=creation_client,
-                            body=body,
-                            create_if_not_exist=create_if_not_exist,
+                            client=client, body=body, create_if_not_exist=create_if_not_exist
                         )
-            except client_errors.UnexpectedStatus as e:
-                _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
-                raise
+                    else:
+                        with _creation_client(timeout) as creation_client:
+                            response = create_sandbox(
+                                client=creation_client,
+                                body=body,
+                                create_if_not_exist=create_if_not_exist,
+                            )
+                except client_errors.UnexpectedStatus as e:
+                    _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
+                    if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        raise
+                else:
+                    if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
+                        response
+                    ):
+                        break
+                logger.debug("Sandbox creation hit a transient authentication failure, retrying")
+                time.sleep(_create_auth_retry_delay(attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = response.status_code if response.status_code is not UNSET else None
+                status_code = _error_status(response)
                 code = response.code if response.code else None
-                message = response.message if response.message else str(response)
+                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
                 raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
             if create_if_not_exist:

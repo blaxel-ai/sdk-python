@@ -51,6 +51,8 @@ from ...common.settings import settings
 from ...errors import _APIError
 from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
 from ..drive_setup import _AsyncDriveSetup, _normalize_mount_drives, _requested_region
+from ..names import _invalid_name_hint
+from ..transient_retry import _backoff_delay_seconds
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -164,6 +166,82 @@ def _raise_if_creation_timeout(
         raise SandboxCreationTimeoutError(
             sandbox_name, timeout, error.to_dict(), response=error._response
         )
+
+
+# A creation the control plane rejects at its credential check, in a way a new
+# attempt can fix: a generic 403 "Authorization failed" (code UNAUTHORIZED) when
+# it could not resolve the credentials, or a 503 AUTHENTICATION_UNAVAILABLE when
+# its credential store is unreachable. Both are answered before anything is
+# created, so sending the same request again is safe. A revoked token (401
+# TOKEN_REVOKED) or a missing workspace permission (UNAUTHORIZED_WORKSPACE) is
+# final and is not retried. A key the API does not recognize gets the same
+# 403, so the retries stay few and the final message asks to check the key.
+CREATE_AUTH_RETRIES = 2
+CREATE_AUTH_RETRY_BASE_DELAY_SECONDS = 0.5
+CREATE_AUTH_RETRY_MAX_DELAY_SECONDS = 2.0
+
+
+def _error_status(error: SandboxError) -> int | None:
+    if isinstance(error.status_code, int):
+        return error.status_code
+    return error._response.status_code if error._response is not None else None
+
+
+def _is_transient_create_auth_failure(error: object) -> bool:
+    if isinstance(error, SandboxError):
+        return _error_status(error) == 403 and error.code == "UNAUTHORIZED"
+    if isinstance(error, client_errors.UnexpectedStatus):
+        return error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE"
+    return False
+
+
+def _create_auth_retry_delay(attempt: int) -> float:
+    return _backoff_delay_seconds(
+        attempt, CREATE_AUTH_RETRY_BASE_DELAY_SECONDS, CREATE_AUTH_RETRY_MAX_DELAY_SECONDS
+    )
+
+
+def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
+    """Message of the SandboxAPIError raised for a rejected creation."""
+    message = error.message if error.message else str(error)
+    if _is_transient_create_auth_failure(error):
+        try:
+            workspace = settings.workspace
+        except Exception:
+            workspace = None
+        current = f"; current workspace: '{workspace}'" if workspace else ""
+        return (
+            f"{message} (HTTP 403 {error.code}, after {attempts} attempts). The API answers"
+            " this way both for a key it does not recognize and when its credential check"
+            " fails for a moment. Check the credentials and workspace the SDK uses"
+            f" (BL_API_KEY and BL_WORKSPACE, or `bl login`{current}); if they are right,"
+            " retry in a few seconds."
+        )
+    if _error_status(error) == 400:
+        hint = _invalid_name_hint(sandbox_name)
+        if hint and message and not message.endswith((".", "!", "?")):
+            message += "."
+        return message + hint
+    return message
+
+
+_region_notice_shown = False
+
+
+def _notify_region_unset(class_name: str = "SandboxInstance") -> None:
+    """Say once per process that the platform picks the region when none is set."""
+    global _region_notice_shown
+    if _region_notice_shown:
+        return
+    _region_notice_shown = True
+    warnings.warn(
+        f"{class_name}.create: no region set, so the platform picks one for the sandbox."
+        " Set 'region' in the sandbox configuration or the BL_REGION environment variable"
+        " (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') to choose it; 'region' will become"
+        " required in a future version. This notice is shown once per process.",
+        FutureWarning,
+        stacklevel=3,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -581,6 +659,15 @@ class SandboxInstance:
         """Create a sandbox.
 
         Args:
+            sandbox: The sandbox to create. Its name must use lowercase letters,
+                digits and single hyphens, at most ``SANDBOX_NAME_MAX_LENGTH``
+                (49) characters, like ``my-sandbox-1``. The API rejects any other
+                name with a 400, and the SDK never renames it for you: to name a
+                sandbox after an external id such as ``sesn_01AbC``, pass the id
+                through ``sanitize_sandbox_name`` first (``is_valid_sandbox_name``
+                checks a name). Omit the name to let the platform assign one.
+                Without a region (here or in ``BL_REGION``) the platform picks
+                one.
             mount_drives: Drives to mount on the sandbox. Drives are looked up or created
                 while the sandbox is being created (a few at a time) and each is mounted
                 as soon as the sandbox and that drive are ready. New drives go in the region
@@ -597,6 +684,11 @@ class SandboxInstance:
                 sandbox and ``SandboxCreationTimeoutError`` is raised. Omitted, the
                 platform default deadline applies; an explicit value can only
                 shorten it.
+
+        A creation rejected by a transient authentication failure (403
+        ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
+        before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
+        times with a short backoff.
         """
         mounts = _normalize_mount_drives(mount_drives, create_if_not_exist)
         timeout = _validate_creation_timeout(timeout)
@@ -664,12 +756,7 @@ class SandboxInstance:
                 envs=config._normalize_envs(),
             )
             if not region:
-                warnings.warn(
-                    "SandboxInstance.create: 'region' is not set. In a future version, 'region' will be a required parameter. "
-                    "Please specify a region (e.g. 'us-pdx-1', 'eu-lon-1', 'us-was-1') in the sandbox configuration or set the BL_REGION environment variable.",
-                    FutureWarning,
-                    stacklevel=2,
-                )
+                _notify_region_unset()
             lifecycle = config.lifecycle
             network = config.network
             snapshot_enabled = config.snapshot_enabled
@@ -760,28 +847,39 @@ class SandboxInstance:
             drives.start()
         try:
             body = _create_body(sandbox)
-            try:
-                if timeout is None:
-                    response = await create_sandbox(
-                        client=client, body=body, create_if_not_exist=create_if_not_exist
-                    )
-                else:
-                    async with _creation_client(timeout) as creation_client:
+            attempts = 0
+            while True:
+                attempts += 1
+                try:
+                    if timeout is None:
                         response = await create_sandbox(
-                            client=creation_client,
-                            body=body,
-                            create_if_not_exist=create_if_not_exist,
+                            client=client, body=body, create_if_not_exist=create_if_not_exist
                         )
-            except client_errors.UnexpectedStatus as e:
-                _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
-                raise
+                    else:
+                        async with _creation_client(timeout) as creation_client:
+                            response = await create_sandbox(
+                                client=creation_client,
+                                body=body,
+                                create_if_not_exist=create_if_not_exist,
+                            )
+                except client_errors.UnexpectedStatus as e:
+                    _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
+                    if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        raise
+                else:
+                    if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
+                        response
+                    ):
+                        break
+                logger.debug("Sandbox creation hit a transient authentication failure, retrying")
+                await asyncio.sleep(_create_auth_retry_delay(attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = response.status_code if response.status_code is not UNSET else None
+                status_code = _error_status(response)
                 code = response.code if response.code else None
-                message = response.message if response.message else str(response)
+                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
                 raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
             assert response is not None

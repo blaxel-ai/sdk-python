@@ -50,6 +50,8 @@ from .sandbox import (
     SyncSandboxPreviews,
     SyncSandboxProcess,
     is_creation_timeout_error,
+    is_valid_sandbox_name,
+    sanitize_sandbox_name,
 )
 from .sandbox.types import Sandbox
 from .secret import SecretAPIError, SecretInstance, SyncSecretInstance
@@ -91,6 +93,8 @@ __all__ = [
     "SandboxDriveMountConfiguration",
     "SandboxDriveSetupError",
     "is_creation_timeout_error",
+    "is_valid_sandbox_name",
+    "sanitize_sandbox_name",
     "SandboxPreviewCreateConfiguration",
     "SandboxPreviews",
     "SandboxProcess",

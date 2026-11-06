@@ -35,6 +35,7 @@ from .default import (
     is_creation_timeout_error,
 )
 from .drive_setup import SandboxDriveSetupError
+from .names import SANDBOX_NAME_MAX_LENGTH, is_valid_sandbox_name, sanitize_sandbox_name
 from .sync import (
     SyncCodeInterpreter,
     SyncSandboxCodegen,
@@ -83,6 +84,9 @@ __all__ = [
     "SandboxCreationTimeoutError",
     "is_creation_timeout_error",
     "MAX_CREATION_TIMEOUT_SECONDS",
+    "SANDBOX_NAME_MAX_LENGTH",
+    "is_valid_sandbox_name",
+    "sanitize_sandbox_name",
     "SessionCreateOptions",
     "SessionWithToken",
     "SandboxConfiguration",
