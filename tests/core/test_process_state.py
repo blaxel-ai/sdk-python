@@ -14,9 +14,13 @@ from blaxel.core.sandbox.types import ResponseError, SandboxConfiguration
 
 
 def observer(cls, responses):
+    """Sandbox without the /wait route: every read goes through the polling fallback."""
     p = object.__new__(cls)
     p.get = (
         AsyncMock(side_effect=responses) if cls is SandboxProcess else Mock(side_effect=responses)
+    )
+    p._wait_once = (
+        AsyncMock(return_value=None) if cls is SandboxProcess else Mock(return_value=None)
     )
     return p
 
@@ -86,6 +90,7 @@ async def test_hung_read_is_bounded_and_cancelled():
 
     p = object.__new__(SandboxProcess)
     p.get = get
+    p._wait_once = AsyncMock(return_value=None)
     with pytest.raises(TimeoutError, match="original"):
         await p.wait("original", max_wait=10)
     assert cancelled.is_set()
@@ -105,6 +110,7 @@ async def test_cancellation_propagates_without_another_read(during_read, max_wai
 
     p = object.__new__(SandboxProcess)
     p.get = AsyncMock(side_effect=get)
+    p._wait_once = AsyncMock(return_value=None)
     task = asyncio.create_task(p.wait("original", max_wait=max_wait))
     await entered.wait()
     await asyncio.sleep(0)
@@ -187,7 +193,7 @@ async def test_late_terminal_result_is_rejected():
             time.sleep(0.02)
             return SimpleNamespace(status="completed")
 
-        p = object.__new__(cls)
+        p = observer(cls, [])
         p.get = AsyncMock(side_effect=late) if cls is SandboxProcess else Mock(side_effect=late)
         with pytest.raises(TimeoutError):
             await wait(p, max_wait=5)
@@ -200,6 +206,8 @@ def test_sync_get_receives_remaining_transport_timeout(monkeypatch):
     p = SyncSandboxProcess(config)
 
     def respond(request):
+        if request.url.path.endswith("/wait"):
+            return httpx.Response(404, text="404 page not found")
         assert 0 < request.extensions["timeout"]["read"] <= 0.1
         return httpx.Response(404, json={"error": "process not found"})
 

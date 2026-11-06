@@ -2,6 +2,7 @@ import math
 import threading
 import time
 from typing import Any, Callable, Dict, Literal, Union
+from urllib.parse import quote
 
 import httpx
 
@@ -22,6 +23,9 @@ from ..types import (
     SandboxConfiguration,
     StreamHandle,
     api_result,
+    is_missing_route,
+    wait_request_timeout,
+    wait_seconds,
 )
 from .action import SyncSandboxAction
 
@@ -365,6 +369,7 @@ class SyncSandboxProcess(SyncSandboxAction):
             )
         deadline = math.inf if max_wait == -1 else time.monotonic() + max_wait / 1000
         last_error = None
+        long_poll = True
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -372,9 +377,14 @@ class SyncSandboxProcess(SyncSandboxAction):
                     f"Process did not finish in time ({identifier}); it may still be running"
                 ) from last_error
             try:
-                result = self.get(
-                    identifier, retry=False, timeout=None if max_wait == -1 else remaining
-                )
+                result = self._wait_once(identifier, remaining) if long_poll else None
+                if result is None:
+                    long_poll = False
+                    # The route probe used part of the budget: re-measure before the GET.
+                    left = max(0.001, deadline - time.monotonic())
+                    result = self.get(
+                        identifier, retry=False, timeout=None if max_wait == -1 else left
+                    )
             except Exception as error:
                 if not is_retryable_read_error(error):
                     raise
@@ -390,6 +400,23 @@ class SyncSandboxProcess(SyncSandboxAction):
                     raise ValueError(f"Unknown process status: {result.status}")
                 last_error = None
             time.sleep(max(0, min(interval / 1000, deadline - time.monotonic())))
+
+    def _wait_once(self, identifier: str, remaining: float) -> ProcessResponse | None:
+        """One long-poll on GET /process/{identifier}/wait; None when the sandbox predates it."""
+        seconds = wait_seconds(remaining)
+        # Not in the generated client yet (ENG-6233): raw call on the shared client.
+        with self.get_client() as client:
+            response = client.get(
+                f"/process/{quote(identifier, safe='')}/wait",
+                params={"timeout": seconds},
+                timeout=wait_request_timeout(seconds, remaining),
+            )
+        if is_missing_route(response):
+            return None
+        self.handle_response_error(response)
+        result = ProcessResponse.from_dict(response.json())
+        assert result is not None
+        return result
 
     def get(
         self, identifier: str, *, retry: bool = True, timeout: float | None = None

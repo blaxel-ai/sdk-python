@@ -1,6 +1,7 @@
 import asyncio
 import math
 from typing import Any, Callable, Dict, Literal, Union
+from urllib.parse import quote
 
 import httpx
 
@@ -21,6 +22,9 @@ from ..types import (
     ProcessResponseWithLog,
     SandboxConfiguration,
     api_result,
+    is_missing_route,
+    wait_request_timeout,
+    wait_seconds,
 )
 from .action import SandboxAction
 
@@ -422,6 +426,17 @@ class SandboxProcess(SandboxAction):
             math.inf if max_wait == -1 else asyncio.get_running_loop().time() + max_wait / 1000
         )
         last_error = None
+        long_poll = True
+
+        async def read_once(remaining: float) -> ProcessResponse:
+            nonlocal long_poll
+            if long_poll:
+                result = await self._wait_once(identifier, remaining)
+                if result is not None:
+                    return result
+                long_poll = False
+            return await self.get(identifier, retry=False)
+
         while True:
             remaining = deadline - asyncio.get_running_loop().time()
             if remaining <= 0:
@@ -431,7 +446,7 @@ class SandboxProcess(SandboxAction):
             try:
                 # wait_for on Python 3.10 can swallow cancellation when a read
                 # completes at the same instant. wait keeps caller cancellation intact.
-                read = asyncio.create_task(self.get(identifier, retry=False))
+                read = asyncio.create_task(read_once(remaining))
                 try:
                     done, _ = await asyncio.wait(
                         {read}, timeout=None if max_wait == -1 else remaining
@@ -459,6 +474,22 @@ class SandboxProcess(SandboxAction):
             await asyncio.sleep(
                 max(0, min(interval / 1000, deadline - asyncio.get_running_loop().time()))
             )
+
+    async def _wait_once(self, identifier: str, remaining: float) -> ProcessResponse | None:
+        """One long-poll on GET /process/{identifier}/wait; None when the sandbox predates it."""
+        seconds = wait_seconds(remaining)
+        # Not in the generated client yet (ENG-6233): raw call on the shared client.
+        response = await self.get_client().get(
+            f"/process/{quote(identifier, safe='')}/wait",
+            params={"timeout": seconds},
+            timeout=wait_request_timeout(seconds, remaining),
+        )
+        if is_missing_route(response):
+            return None
+        self.handle_response_error(response)
+        result = ProcessResponse.from_dict(response.json())
+        assert result is not None
+        return result
 
     async def get(self, identifier: str, *, retry: bool = True) -> ProcessResponse:
         async def read() -> ProcessResponse:
