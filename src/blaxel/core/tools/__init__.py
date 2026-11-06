@@ -6,13 +6,7 @@ from logging import getLogger
 from typing import Any, cast
 
 from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
-from mcp.types import (
-    CallToolRequest,
-    CallToolRequestParams,
-    CallToolResult,
-    ClientRequest,
-)
+from mcp.types import CallToolRequestParams, CallToolResult
 from mcp.types import Tool as MCPTool
 
 from ..client.api.compute.get_sandbox import asyncio as get_sandbox
@@ -22,6 +16,7 @@ from ..client.models.error import Error
 from ..client.types import Unset
 from ..common.internal import get_forced_url
 from ..common.settings import settings
+from ..mcp.compat import call_tool_request, open_streamable_http, tool_input_schema
 from .types import Tool
 
 logger = getLogger(__name__)
@@ -115,13 +110,11 @@ class PersistentMcpClient:
             # Pass meta as a separate field instead of merging into arguments
             # This matches the TypeScript SDK pattern and MCP protocol specification
             call_tool_result = await self.session.send_request(
-                ClientRequest(
-                    CallToolRequest(
-                        params=CallToolRequestParams(
-                            name=tool_name,
-                            arguments=arguments,
-                            meta=self.metas if self.metas else None,
-                        ),
+                call_tool_request(
+                    CallToolRequestParams(
+                        name=tool_name,
+                        arguments=arguments,
+                        meta=self.metas if self.metas else None,
                     )
                 ),
                 CallToolResult,
@@ -168,10 +161,9 @@ class PersistentMcpClient:
         """Get the appropriate transport for the connection."""
         url = await self._resolve_url()
 
-        result = await self.client_exit_stack.enter_async_context(
-            streamablehttp_client(url + "/mcp", settings.headers)
+        return await self.client_exit_stack.enter_async_context(
+            open_streamable_http(url + "/mcp", settings.headers)
         )
-        return result[0], result[1]
 
     async def initialize(self):
         if not self.session:
@@ -261,7 +253,7 @@ def convert_mcp_tool_to_blaxel_tool(
     return Tool(
         name=tool.name,
         description=tool.description or "",
-        input_schema=tool.inputSchema,
+        input_schema=tool_input_schema(tool),
         coroutine=call_tool,
         sync_coroutine=sync_call_tool,
         response_format="content_and_artifact",

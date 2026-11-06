@@ -4,7 +4,6 @@ from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import anyio
-import mcp.types as types
 from anyio.abc import TaskStatus
 from anyio.streams.memory import (
     MemoryObjectReceiveStream,
@@ -13,6 +12,8 @@ from anyio.streams.memory import (
 from mcp.shared.message import SessionMessage
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.client import connect as ws_connect
+
+from .compat import parse_jsonrpc_message
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,7 @@ async def websocket_client(
                             async for message in websocket:
                                 logger.debug(f"Received WebSocket message: {message}")
                                 try:
-                                    parsed_message = types.JSONRPCMessage.model_validate_json(
-                                        message
-                                    )
+                                    parsed_message = parse_jsonrpc_message(message)
                                     logger.debug(f"Received server message: {parsed_message}")
                                     await read_stream_writer.send(
                                         SessionMessage(message=parsed_message)

@@ -40,6 +40,8 @@ def get_langchain_tool(tool: Tool) -> "StructuredTool":
     from langchain_core.tools import StructuredTool  # type: ignore[import-not-found]
     from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
 
+    from blaxel.core.mcp.compat import tool_result_is_error
+
     async def langchain_coroutine(
         **arguments: dict[str, Any],
     ) -> tuple[str | list[str], list[ImageContent | EmbeddedResource] | None]:
@@ -58,7 +60,7 @@ def get_langchain_tool(tool: Tool) -> "StructuredTool":
         if len(text_contents) == 1:
             tool_content = tool_content[0]
 
-        if result.isError:
+        if tool_result_is_error(result):
             raise ToolException(tool_content)
 
         return tool_content, non_text_contents or None
