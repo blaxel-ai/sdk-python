@@ -12,7 +12,7 @@ from typing import Generator
 import requests
 from httpx import Request, Response
 
-from .types import BlaxelAuth
+from .types import BlaxelAuth, CredentialsError
 
 
 @dataclass
@@ -66,6 +66,18 @@ class ClientCredentials(BlaxelAuth):
             }
             body = {"grant_type": "client_credentials"}
             response = requests.post(f"{self.base_url}/oauth/token", headers=headers, json=body)
+            # A 401/403 means the configured client credentials are missing,
+            # invalid, or revoked. That is a user configuration problem, not a
+            # transient failure: retrying cannot fix it (and only hammers the
+            # token endpoint), and the raw transport error is neither actionable
+            # for the caller nor an SDK fault worth reporting. Fail fast with a
+            # clear, actionable credentials error instead.
+            if response.status_code in (401, 403):
+                return CredentialsError(
+                    "Blaxel client credentials were rejected "
+                    f"(HTTP {response.status_code}). Check BL_CLIENT_CREDENTIALS, "
+                    "or run `bl login`, to re-authenticate, then try again."
+                )
             response.raise_for_status()
             creds = response.json()
             self.credentials.access_token = creds["access_token"]
