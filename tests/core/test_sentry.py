@@ -25,7 +25,10 @@ from blaxel.core.client import Client, errors
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
+    _http_status_code,
+    _is_http_redirect_error,
     _is_optional_dependency_error,
+    _should_capture_unhandled_exception,
 )
 
 
@@ -50,6 +53,17 @@ def _sdk_filename(relative_path: str) -> str:
 
 def _raise_in_sdk(relative_path: str, code: str) -> BaseException:
     return _raise_in_file(_sdk_filename(relative_path), code)
+
+
+def _raise_unexpected_status_in_sdk(status_code: int) -> errors.UnexpectedStatus:
+    """Build an ``UnexpectedStatus`` as if raised from the generated client."""
+    exc = _raise_in_file(
+        _sdk_filename("core/client/api/jobs/create_job_execution.py"),
+        f"raise errors.from_response({status_code}, b'', None)",
+        {"errors": errors},
+    )
+    assert isinstance(exc, errors.UnexpectedStatus)
+    return exc
 
 
 def _exception_group_leaves(error: BaseException) -> list[BaseException]:
@@ -569,6 +583,78 @@ class BrokenFinalizer:
 
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.thread_hook_calls == [args]
+
+
+class TestHttpStatusExtraction:
+    def test_reads_status_code_attribute(self):
+        assert _http_status_code(SimpleNamespace(status_code=301)) == 301
+
+    def test_reads_status_attribute(self):
+        assert _http_status_code(SimpleNamespace(status=308)) == 308
+
+    def test_reads_response_status_code(self):
+        error = SimpleNamespace(response=SimpleNamespace(status_code=302))
+        assert _http_status_code(error) == 302
+        assert _is_http_redirect_error(error) is True
+
+    def test_rejects_bool_and_out_of_range(self):
+        assert _http_status_code(SimpleNamespace(status_code=True)) is None
+        assert _http_status_code(SimpleNamespace(status_code=42)) is None
+        assert _http_status_code(SimpleNamespace(status_code=600)) is None
+
+    def test_no_status_returns_none(self):
+        assert _http_status_code(RuntimeError("no status")) is None
+        assert _is_http_redirect_error(RuntimeError("no status")) is False
+
+    @pytest.mark.parametrize(
+        "status_code,expected",
+        [(299, False), (300, True), (301, True), (399, True), (400, False)],
+    )
+    def test_redirect_boundaries(self, status_code, expected):
+        assert _is_http_redirect_error(SimpleNamespace(status_code=status_code)) is expected
+
+
+class TestHttpRedirectFiltering:
+    """Regression for SDK-PYTHON-131: a server redirect is not an SDK failure.
+
+    With redirects disabled, an undocumented 3xx response makes the generated
+    client raise ``UnexpectedStatus`` from inside ``blaxel/...`` frames. That is
+    a routing decision made by the server (or an intermediary), not a defect in
+    the SDK, so it must not be reported as an unhandled SDK exception.
+    """
+
+    @pytest.mark.parametrize("status_code", [301, 302, 303, 307, 308])
+    def test_redirect_status_is_not_captured(self, status_code):
+        exc = _raise_unexpected_status_in_sdk(status_code)
+
+        assert exc.status_code == status_code
+        assert _is_http_redirect_error(exc) is True
+        assert _should_capture_unhandled_exception(type(exc), exc) is False
+
+    @pytest.mark.parametrize("status_code", [400, 401, 404, 409, 429, 500, 502, 503])
+    def test_non_redirect_status_is_still_captured(self, status_code):
+        exc = _raise_unexpected_status_in_sdk(status_code)
+
+        assert _is_http_redirect_error(exc) is False
+        assert _should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_unhandled_redirect_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_unexpected_status_in_sdk(301)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_server_error_is_still_captured_and_chained(self, installed_sentry_hooks):
+        exc = _raise_unexpected_status_in_sdk(500)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
 
 class TestSentryDelivery:
