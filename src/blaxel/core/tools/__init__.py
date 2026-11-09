@@ -7,6 +7,7 @@ from typing import Any, cast
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
+from mcp.shared.exceptions import McpError
 from mcp.types import (
     CallToolRequest,
     CallToolRequestParams,
@@ -29,6 +30,29 @@ logger = getLogger(__name__)
 DEFAULT_TIMEOUT = 1
 if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
+
+# A persistent MCP session is sticky to one backend. That backend can be
+# recycled, scaled down, or hibernated at any time, and a follow-up request may
+# be routed to a replica that no longer knows the session. The MCP streamable
+# HTTP transport surfaces that as a 404 that becomes ``McpError("Session
+# terminated")``. One transparent reconnect heals that transient state; more
+# than one would mask a genuinely unavailable server.
+_MAX_SESSION_RECONNECTS = 1
+
+
+def _is_session_terminated_error(exc: BaseException) -> bool:
+    """Return whether an error is the server-terminated-session condition.
+
+    When the server has forgotten a session, the streamable HTTP transport maps
+    the resulting 404 to ``McpError("Session terminated")`` (``ErrorData`` code
+    32600). Reconnecting with a fresh session recovers from it.
+    """
+    if not isinstance(exc, McpError):
+        return False
+    error = getattr(exc, "error", None)
+    if error is not None and getattr(error, "message", "").strip().lower() == "session terminated":
+        return True
+    return "session terminated" in str(exc).strip().lower()
 
 
 class PersistentMcpClient:
@@ -103,28 +127,55 @@ class PersistentMcpClient:
         self.metas = metas
         return self
 
-    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
-        try:
+    async def _run_with_session_retry(self, operation, op_name: str):
+        """Initialize the session, run ``operation``, reconnecting once if the
+        server has terminated the session.
+
+        A persistent session can be dropped server-side between requests. Without
+        this, the resulting ``McpError("Session terminated")`` escapes unhandled
+        from ``list_tools`` and ``call_tool``'s send_request, which is both a
+        spurious failure for the caller and noise in error reporting.
+        """
+        attempts = 0
+        while True:
             await self.initialize()
             if self.timeout_enabled:
                 self._remove_timer()
+            try:
+                return await operation()
+            except McpError as e:
+                if _is_session_terminated_error(e) and attempts < _MAX_SESSION_RECONNECTS:
+                    attempts += 1
+                    logger.debug(
+                        f"MCP session for {self.name} was terminated by the server; "
+                        f"reconnecting and retrying {op_name}"
+                    )
+                    await self._discard_session()
+                    continue
+                raise
+
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
+        try:
             logger.debug(
                 f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}"
             )
 
             # Pass meta as a separate field instead of merging into arguments
             # This matches the TypeScript SDK pattern and MCP protocol specification
-            call_tool_result = await self.session.send_request(
-                ClientRequest(
-                    CallToolRequest(
-                        params=CallToolRequestParams(
-                            name=tool_name,
-                            arguments=arguments,
-                            meta=self.metas if self.metas else None,
-                        ),
-                    )
+            call_tool_result = await self._run_with_session_retry(
+                lambda: self.session.send_request(
+                    ClientRequest(
+                        CallToolRequest(
+                            params=CallToolRequestParams(
+                                name=tool_name,
+                                arguments=arguments,
+                                meta=self.metas if self.metas else None,
+                            ),
+                        )
+                    ),
+                    CallToolResult,
                 ),
-                CallToolResult,
+                op_name=f"call_tool {tool_name}",
             )
 
             logger.debug(f"Tool {tool_name} returned {call_tool_result}")
@@ -147,12 +198,9 @@ class PersistentMcpClient:
 
     async def list_tools(self):
         logger.debug(f"Listing tools for {self.name}")
-        await self.initialize()
-        logger.debug(f"Initialized websocket for {self.name}")
-        if self.timeout_enabled:
-            self._remove_timer()
-        logger.debug("Listing tools")
-        list_tools_result = await self.session.list_tools()
+        list_tools_result = await self._run_with_session_retry(
+            lambda: self.session.list_tools(), op_name="list_tools"
+        )
         self.tools_cache = list_tools_result.tools
         logger.debug(f"Tools listed: {list_tools_result}")
         if self.timeout_enabled:
@@ -202,22 +250,36 @@ class PersistentMcpClient:
         logger.debug(f"Closing client for {self.name}")
         if self.session:
             self.session = None
-            # Swap exit stacks to fresh ones BEFORE closing the old ones.
-            # This prevents a race where initialize() runs during the await
-            # and pushes new contexts onto stacks that are being closed.
-            old_session_stack = self.session_exit_stack
-            old_client_stack = self.client_exit_stack
-            self.session_exit_stack = AsyncExitStack()
-            self.client_exit_stack = AsyncExitStack()
-            try:
-                await old_session_stack.aclose()
-            except Exception as e:
-                logger.debug(f"Error closing session exit stack: {e}")
-            try:
-                await old_client_stack.aclose()
-            except Exception as e:
-                logger.debug(f"Error closing client exit stack: {e}")
+            await self._drop_session_stacks()
             logger.debug("WebSocket connection closed due to inactivity.")
+
+    async def _discard_session(self):
+        """Drop a dead session so the next initialize() reconnects cleanly.
+
+        Used when the server has terminated the session: the old transport is
+        unusable, so its exit stacks are swapped out for fresh ones and the stale
+        ones are closed best-effort (closing a dead/cross-task transport may
+        itself raise, which is expected and ignored here).
+        """
+        self.session = None
+        await self._drop_session_stacks()
+
+    async def _drop_session_stacks(self):
+        # Swap exit stacks to fresh ones BEFORE closing the old ones.
+        # This prevents a race where initialize() runs during the await
+        # and pushes new contexts onto stacks that are being closed.
+        old_session_stack = self.session_exit_stack
+        old_client_stack = self.client_exit_stack
+        self.session_exit_stack = AsyncExitStack()
+        self.client_exit_stack = AsyncExitStack()
+        try:
+            await old_session_stack.aclose()
+        except Exception as e:
+            logger.debug(f"Error closing session exit stack: {e}")
+        try:
+            await old_client_stack.aclose()
+        except Exception as e:
+            logger.debug(f"Error closing client exit stack: {e}")
 
 
 def convert_mcp_tool_to_blaxel_tool(
