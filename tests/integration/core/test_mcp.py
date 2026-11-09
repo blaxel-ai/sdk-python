@@ -7,9 +7,9 @@ The blTools wrapper in test_tools.py handles auth automatically.
 import pytest
 import pytest_asyncio
 from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
 
 from blaxel.core import settings
+from blaxel.core.mcp.compat import open_streamable_http
 from blaxel.core.sandbox import SandboxInstance
 from tests.helpers import default_image, default_labels, unique_name
 
@@ -48,10 +48,7 @@ class TestMCPClientIntegration:
             pytest.skip("Sandbox not found")
         base_url = f"{self.sandbox.metadata.url}/mcp"
 
-        async with streamablehttp_client(
-            base_url,
-            headers=settings.headers,
-        ) as (read_stream, write_stream, _):
+        async with open_streamable_http(base_url, settings.headers) as (read_stream, write_stream):
             async with ClientSession(read_stream, write_stream) as session:
                 await session.initialize()
 
