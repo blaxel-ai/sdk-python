@@ -30,6 +30,45 @@ DEFAULT_TIMEOUT = 1
 if os.getenv("BL_SERVER_PORT"):
     DEFAULT_TIMEOUT = 5
 
+# JSON-RPC error code the streamable-HTTP MCP client synthesizes when a request
+# carries a stale ``mcp-session-id`` and the server answers HTTP 404 — i.e. the
+# server dropped the session. The message is "Session terminated".
+MCP_SESSION_TERMINATED_CODE = 32600
+_MCP_SESSION_TERMINATED_MARKER = "Session terminated"
+
+
+def is_session_terminated_error(error: BaseException) -> bool:
+    """Whether a reused persistent MCP session was terminated by the server.
+
+    The streamable-HTTP transport answers a request that still carries a stale
+    ``mcp-session-id`` with HTTP 404 and surfaces it as an ``McpError`` carrying
+    JSON-RPC code 32600 ("Session terminated"): the server dropped the session
+    (idle expiry, pod recycle, scale-to-zero) and never ran the request. Because
+    the request never executed, re-establishing the session and retrying once is
+    safe. The cause/context chain and any exception groups are walked so a
+    wrapped or grouped error is still recognised.
+    """
+    seen: set[int] = set()
+    stack: list[BaseException] = [error]
+    while stack:
+        node = stack.pop()
+        if node is None or id(node) in seen:
+            continue
+        seen.add(id(node))
+        error_data = getattr(node, "error", None)
+        if getattr(error_data, "code", None) == MCP_SESSION_TERMINATED_CODE:
+            return True
+        if _MCP_SESSION_TERMINATED_MARKER in str(node):
+            return True
+        if node.__cause__ is not None:
+            stack.append(node.__cause__)
+        if node.__context__ is not None:
+            stack.append(node.__context__)
+        nested = getattr(node, "exceptions", None)
+        if nested:
+            stack.extend(nested)
+    return False
+
 
 class PersistentMcpClient:
     def __init__(
@@ -103,37 +142,51 @@ class PersistentMcpClient:
         self.metas = metas
         return self
 
+    async def _send_tool_request(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
+        await self.initialize()
+        if self.timeout_enabled:
+            self._remove_timer()
+        logger.debug(f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}")
+
+        # Pass meta as a separate field instead of merging into arguments
+        # This matches the TypeScript SDK pattern and MCP protocol specification
+        call_tool_result = await self.session.send_request(
+            ClientRequest(
+                CallToolRequest(
+                    params=CallToolRequestParams(
+                        name=tool_name,
+                        arguments=arguments,
+                        meta=self.metas if self.metas else None,
+                    ),
+                )
+            ),
+            CallToolResult,
+        )
+
+        logger.debug(f"Tool {tool_name} returned {call_tool_result}")
+        if self.timeout_enabled:
+            self._reset_timer()
+        else:
+            await self._close()
+        return call_tool_result
+
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
         try:
-            await self.initialize()
-            if self.timeout_enabled:
-                self._remove_timer()
-            logger.debug(
-                f"Calling tool {tool_name} with arguments {arguments} and meta {self.metas}"
-            )
-
-            # Pass meta as a separate field instead of merging into arguments
-            # This matches the TypeScript SDK pattern and MCP protocol specification
-            call_tool_result = await self.session.send_request(
-                ClientRequest(
-                    CallToolRequest(
-                        params=CallToolRequestParams(
-                            name=tool_name,
-                            arguments=arguments,
-                            meta=self.metas if self.metas else None,
-                        ),
-                    )
-                ),
-                CallToolResult,
-            )
-
-            logger.debug(f"Tool {tool_name} returned {call_tool_result}")
-            if self.timeout_enabled:
-                self._reset_timer()
-            else:
-                await self._close()
-            return call_tool_result
+            return await self._send_tool_request(tool_name, arguments)
         except Exception as e:
+            # A reused persistent session can be terminated by the server between
+            # calls (idle expiry, pod recycle, scale-to-zero). The request never
+            # ran, so transparently re-establish the session and retry once.
+            if is_session_terminated_error(e):
+                logger.warning(
+                    f"MCP session for {self.name} was terminated by the server; "
+                    f"reconnecting and retrying tool {tool_name}"
+                )
+                try:
+                    await self._reset_session()
+                    return await self._send_tool_request(tool_name, arguments)
+                except Exception as retry_error:
+                    e = retry_error
             logger.error(f"Error calling tool {tool_name}: {e}\n{traceback.format_exc()}")
             return CallToolResult(
                 content=[
@@ -145,7 +198,7 @@ class PersistentMcpClient:
                 isError=True,
             )
 
-    async def list_tools(self):
+    async def _send_list_tools_request(self):
         logger.debug(f"Listing tools for {self.name}")
         await self.initialize()
         logger.debug(f"Initialized websocket for {self.name}")
@@ -160,6 +213,21 @@ class PersistentMcpClient:
         else:
             await self._close()
         return list_tools_result
+
+    async def list_tools(self):
+        try:
+            return await self._send_list_tools_request()
+        except Exception as e:
+            # Same recovery as call_tool: a server-terminated session is safe to
+            # re-establish because the request was never processed.
+            if is_session_terminated_error(e):
+                logger.warning(
+                    f"MCP session for {self.name} was terminated by the server; "
+                    f"reconnecting and retrying list_tools"
+                )
+                await self._reset_session()
+                return await self._send_list_tools_request()
+            raise
 
     def get_tools(self):
         return self.tools_cache
@@ -195,6 +263,19 @@ class PersistentMcpClient:
 
     async def _close_after_timeout(self):
         await asyncio.sleep(self.timeout)
+        await self._close()
+        self.session = None
+
+    async def _reset_session(self):
+        """Tear down a dead/stale session so the next call re-establishes it.
+
+        Used after the server terminates a reused persistent session; `_close`
+        disposes of the transport and swaps in fresh exit stacks, and clearing
+        `self.session` forces `initialize()` to open a brand-new session (and
+        obtain a fresh `mcp-session-id`) on the next request.
+        """
+        if self.timeout_enabled:
+            self._remove_timer()
         await self._close()
         self.session = None
 
