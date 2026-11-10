@@ -59,6 +59,17 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# HTTP statuses that reflect a transient server-side or throttling condition
+# rather than an SDK code defect. The SDK built and sent a well-formed request;
+# the control plane / gateway answered with a temporary failure the SDK cannot
+# fix (e.g. a 502 Bad Gateway while an upstream restarts, a 503 during a rollout,
+# a 429 rate-limit). Surfacing these as "Unhandled SDK exception" drowns genuine
+# SDK bugs in server-availability noise. Mirrors ``is_retryable_read_error`` in
+# ``blaxel/core/sandbox/transient_retry.py`` so the "transient" definition stays
+# in one place. Client-side statuses (4xx other than 408/429) stay reportable:
+# they may reflect a request the SDK itself built incorrectly.
+_TRANSIENT_HTTP_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -415,11 +426,36 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status an error carries, if it exposes a valid one.
+
+    Covers the SDK's error shapes: ``UnexpectedStatus``/``APIError`` expose
+    ``status_code``, ``BlaxelError``/``ResponseError`` expose ``status``, and
+    ``httpx.HTTPStatusError`` only exposes ``response.status_code``.
+    """
+    for candidate in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        # ``type(x) is int`` rejects ``bool`` (a subclass of ``int``).
+        if type(candidate) is int and 100 <= candidate <= 599:
+            return candidate
+    return None
+
+
+def _is_transient_http_error(error: BaseException) -> bool:
+    """Check for a transient server/throttling HTTP response, not an SDK defect."""
+    return _http_status_code(error) in _TRANSIENT_HTTP_STATUS_CODES
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_transient_http_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
