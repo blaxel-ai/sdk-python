@@ -59,6 +59,11 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# HTTP 404 responses reaching a last-chance hook describe a missing resource (or a
+# not-yet-dispatched workload), which is a caller/config or transient condition rather
+# than an SDK defect, so they are never reported as unhandled SDK exceptions.
+_HTTP_NOT_FOUND = 404
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -415,11 +420,42 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _http_status_code(error: BaseException) -> int | None:
+    """Return a valid HTTP status carried by an error, if any.
+
+    Reads the attributes the SDK's HTTP error types expose: ``UnexpectedStatus``
+    sets ``status_code`` (and ``status``); the sandbox ``ResponseError`` exposes
+    ``status`` plus ``response.status_code``; ``httpx.HTTPStatusError`` only has
+    ``response.status_code``. ``type(x) is int`` rejects ``bool`` (a subclass).
+    """
+    for value in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        if type(value) is int and 100 <= value <= 599:
+            return value
+    return None
+
+
+def _is_resource_not_found_error(error: BaseException) -> bool:
+    """Check whether an error is an HTTP 404 'resource not found' response.
+
+    A 404 reaching a last-chance hook means a requested resource does not exist
+    (or a workload has not been dispatched yet) -- a caller/config condition or a
+    transient cold start, not an SDK defect -- so it must not be reported as an
+    unhandled SDK exception.
+    """
+    return _http_status_code(error) == _HTTP_NOT_FOUND
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_resource_not_found_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
