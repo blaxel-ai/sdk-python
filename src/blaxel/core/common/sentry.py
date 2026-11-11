@@ -415,11 +415,45 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status carried by a typed Blaxel API error, if any.
+
+    Reads the attributes set by the SDK's typed error classes -- ``status_code``
+    (``UnexpectedStatus``/``_APIError`` subclasses), ``status`` (``BlaxelError``
+    base, e.g. the sandbox ``ResponseError``), and the retained ``response``
+    snapshot (also covers ``httpx.HTTPStatusError``). ``type(x) is int`` rejects
+    booleans and keeps string/enum ``code`` values from being read as a status.
+    """
+    for candidate in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        if type(candidate) is int and 100 <= candidate <= 599:
+            return candidate
+    return None
+
+
+def _is_expected_api_error(error: BaseException) -> bool:
+    """Check whether an error is a typed API response rather than an SDK defect.
+
+    Any Blaxel error that carries an HTTP status is a backend response the SDK
+    surfaced to the caller (a missing resource, a conflict, a rate limit, a
+    server error). Leaving one unhandled is a caller-handling gap, not a bug in
+    the SDK's own code, so it is not reportable. A genuine SDK logic failure
+    raises an error with no HTTP status (e.g. ``RuntimeError``/``KeyError``, or a
+    typed error constructed without a response), which stays reportable.
+    """
+    return _http_status_code(error) is not None
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_expected_api_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 

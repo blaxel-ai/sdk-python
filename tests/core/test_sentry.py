@@ -27,6 +27,8 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.sandbox.types import ResponseError
+from blaxel.core.volume.volume import VolumeAPIError
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -688,6 +690,94 @@ _parse_response(
         assert "top-secret-customer-value" not in serialized_event
         assert "CUSTOMER_SECRET" not in serialized_event
         assert event["exception"]["values"][0]["value"] == ("Unhandled SDK exception (HTTP 404)")
+
+
+class TestExpectedApiErrorFiltering:
+    """A typed API error carrying an HTTP status is a backend response the SDK
+    surfaced to the caller -- a missing resource, a conflict, a rate limit, a
+    server error. Leaving one unhandled is a caller-handling gap, not a defect in
+    the SDK's own code, so it must not be reported as an SDK exception.
+
+    Regression for SDK-PYTHON-137 (an unhandled ``UnexpectedStatus: Unexpected
+    status code: 404`` captured as an SDK failure) and the recurring HTTP-status
+    capture-noise family.
+    """
+
+    def _raise_from_sdk(self, error: BaseException) -> BaseException:
+        """Raise a pre-built error from an SDK frame so ``_is_from_sdk`` is True."""
+        return _raise_in_file(
+            _sdk_filename("core/client/api/compute/get_sandbox.py"),
+            "raise error",
+            {"error": error},
+        )
+
+    def test_unhandled_unexpected_status_404_is_not_captured(self, installed_sentry_hooks):
+        """The exact SDK-PYTHON-137 signature: an unhandled 404 ``UnexpectedStatus``."""
+        exc = self._raise_from_sdk(errors.from_response(404, b'{"error":"sandbox not found"}'))
+        assert type(exc) is errors.UnexpectedStatus
+        assert exc.status_code == 404
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.parametrize("status_code", [400, 404, 409, 429, 500, 503])
+    def test_unhandled_typed_api_error_is_not_captured(self, installed_sentry_hooks, status_code):
+        exc = self._raise_from_sdk(errors.from_response(status_code, b"{}"))
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_sandbox_response_error_404_is_not_captured(self, installed_sentry_hooks):
+        """``ResponseError`` carries its status on ``.status`` (+ ``.response``), not ``.status_code``."""
+        exc = self._raise_from_sdk(ResponseError(httpx.Response(404, content=b'{"error":"gone"}')))
+        assert not hasattr(exc, "status_code")
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+
+    def test_status_less_sdk_error_is_still_captured(self, installed_sentry_hooks):
+        """A genuine SDK logic failure has no HTTP status and stays reportable."""
+        exc = self._raise_from_sdk(RuntimeError("sdk logic failure"))
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+
+    def test_status_less_api_error_is_still_captured(self, installed_sentry_hooks):
+        """A typed API error built without a response has no status, so it stays reportable."""
+        exc = self._raise_from_sdk(VolumeAPIError("Failed to delete volume example"))
+        assert sentry._http_status_code(exc) is None
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+
+    def test_http_status_code_reads_each_typed_shape(self):
+        assert sentry._http_status_code(errors.from_response(404, b"{}")) == 404
+        assert sentry._http_status_code(ResponseError(httpx.Response(503, content=b"{}"))) == 503
+        assert sentry._http_status_code(VolumeAPIError("no status")) is None
+        assert sentry._http_status_code(RuntimeError("no status")) is None
+
+    def test_http_status_code_rejects_non_status_values(self):
+        assert sentry._http_status_code(SimpleNamespace(status_code=True)) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=42)) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=600)) is None
+        assert sentry._http_status_code(SimpleNamespace(code="WORKLOAD_UNAVAILABLE")) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=404)) == 404
+
+    def test_is_expected_api_error_matches_http_status_presence(self):
+        assert sentry._is_expected_api_error(errors.from_response(409, b"{}")) is True
+        assert sentry._is_expected_api_error(RuntimeError("x")) is False
 
 
 class TestIsOptionalDependencyError:
