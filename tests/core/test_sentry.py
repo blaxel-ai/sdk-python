@@ -571,6 +571,117 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.thread_hook_calls == [args]
 
 
+class TestResourceNotFoundBoundary:
+    """SDK-PYTHON-12A: an unhandled HTTP 404 relays a missing resource, not a bug.
+
+    The generated client raises ``UnexpectedStatus`` for an undocumented 404 and
+    the sandbox wrapper raises ``ResponseError``; both faithfully relay the
+    backend's "not found" status to the caller. Reporting an unhandled 404 as an
+    "Unhandled SDK exception" is noise. Only 404 is filtered -- other statuses
+    may indicate a real request-shape or server bug and stay reportable.
+    """
+
+    def test_unhandled_unexpected_status_404_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/jobs/get_job.py",
+            "import httpx\n"
+            "from blaxel.core.client import errors\n"
+            'raise errors.UnexpectedStatus(404, b\'{"error":"Job not found"}\','
+            ' response=httpx.Response(404, content=b\'{"error":"Job not found"}\'))',
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_response_error_404_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/sandbox/default/action.py",
+            "import httpx\n"
+            "from blaxel.core.sandbox.types import ResponseError\n"
+            'raise ResponseError(httpx.Response(404, content=b\'{"error":"not found"}\'))',
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_unexpected_status_500_is_still_captured(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/jobs/get_job.py",
+            "import httpx\n"
+            "from blaxel.core.client import errors\n"
+            'raise errors.UnexpectedStatus(500, b\'{"error":"boom"}\','
+            ' response=httpx.Response(500, content=b\'{"error":"boom"}\'))',
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_conflict_error_409_is_still_captured(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/jobs/get_job.py",
+            "import httpx\n"
+            "from blaxel.core.client import errors\n"
+            'raise errors.from_response(409, b\'{"error":"conflict"}\','
+            ' response=httpx.Response(409, content=b\'{"error":"conflict"}\'))',
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_application_origin_404_is_not_captured(self, installed_sentry_hooks):
+        exc = _raise_in_file(
+            "/tmp/customer/main.py",
+            "from blaxel.core.client import errors\nraise errors.UnexpectedStatus(404, b'')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+
+class TestHttpStatusClassification:
+    def test_status_read_from_unexpected_status_status_code(self):
+        err = SimpleNamespace(status_code=404)
+        assert sentry._http_status_code(err) == 404
+        assert sentry._is_resource_not_found_error(err)
+
+    def test_status_read_from_response_error_without_status_code(self):
+        # ResponseError exposes .status and .response.status_code but no .status_code.
+        err = SimpleNamespace(status=404, response=SimpleNamespace(status_code=404))
+        assert sentry._http_status_code(err) == 404
+        assert sentry._is_resource_not_found_error(err)
+
+    def test_status_read_from_response_only(self):
+        err = SimpleNamespace(response=SimpleNamespace(status_code=404))
+        assert sentry._http_status_code(err) == 404
+
+    def test_no_http_status_returns_none(self):
+        assert sentry._http_status_code(RuntimeError("boom")) is None
+        assert not sentry._is_resource_not_found_error(RuntimeError("boom"))
+
+    def test_bool_status_is_rejected(self):
+        assert sentry._http_status_code(SimpleNamespace(status_code=True)) is None
+
+    def test_only_404_is_resource_not_found(self):
+        for status in (400, 401, 403, 409, 422, 429, 500, 502, 503):
+            assert not sentry._is_resource_not_found_error(SimpleNamespace(status_code=status))
+        assert sentry._is_resource_not_found_error(SimpleNamespace(status_code=404))
+
+
 class TestSentryDelivery:
     def test_successful_delivery_is_not_duplicated_by_flush(self, monkeypatch):
         exc = _raise_in_sdk("core/delivery.py", "raise RuntimeError('delivery failure')")
