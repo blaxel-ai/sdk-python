@@ -155,7 +155,7 @@ async def test_build_from_private_image_with_docker_config():
     try:
         built = await (
             ImageInstance.from_registry(PRIVATE_REGISTRY_IMAGE)
-            .copy(".", "/tmp/build-context")
+            .copy(".", "/opt/build-context")
             .build(name=image_name, timeout=900.0, docker_config=PRIVATE_REGISTRY_DOCKER_CONFIG)
         )
         assert built.status == "DEPLOYED"
@@ -163,8 +163,8 @@ async def test_build_from_private_image_with_docker_config():
         # The credentials pull the base image but never land in the image.
         result = await sandbox.process.exec(
             {
-                "command": "test -e /tmp/build-context/Dockerfile && "
-                "test ! -e /tmp/build-context/.docker && echo clean",
+                "command": "test -e /opt/build-context/Dockerfile && "
+                "test ! -e /opt/build-context/.docker && echo clean",
                 "wait_for_completion": True,
             }
         )
