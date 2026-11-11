@@ -42,6 +42,7 @@ from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import PaginatedList, make_paginated_list, normalize_cursor
 from ...client.types import UNSET, Unset
+from ...common.polling import poll_delay_seconds
 from ...common.settings import settings
 from ..default.sandbox import (
     ARCHIVE_ENTRY_MAX_WAIT_MS,
@@ -145,8 +146,11 @@ class _SyncSandboxCallDescriptor:
         deadline = time.monotonic() + max_wait / 1000
         entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
         started = False
+        attempt = 0
         while True:
-            time.sleep(interval / 1000)
+            attempt += 1
+            remaining = max(deadline - time.monotonic(), 0.0)
+            time.sleep(min(poll_delay_seconds(attempt, interval / 1000), remaining))
             response = get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
@@ -1230,6 +1234,10 @@ SyncSandboxInstance.archive = _SyncSandboxCallDescriptor(
     saved processes start again from their configuration when the sandbox is
     unarchived. The export runs in the background: this waits until the sandbox
     is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )
 SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
@@ -1245,5 +1253,9 @@ SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
     filesystem is written back over its image. This waits until the restore is
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )
