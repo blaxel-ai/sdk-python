@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.jobs import BlJobWrapper
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -569,6 +570,83 @@ class BrokenFinalizer:
 
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.thread_hook_calls == [args]
+
+
+class TestUserCodeLauncherBoundary:
+    """The jobs launcher runs customer code, so user job errors are not SDK defects.
+
+    Regression coverage for SDK-PYTHON-11N: a customer's job function raising through
+    ``BlJobWrapper.start`` used to be reported to the SDK's own Sentry project because
+    the launcher frame lives inside the installed ``blaxel`` package. Such an error is
+    application code and must not be attributed to the SDK.
+    """
+
+    def test_user_job_error_through_launcher_is_not_sdk_origin(self):
+        launcher = _define_in_file(
+            _sdk_filename("core/jobs/__init__.py"),
+            "def start(func):\n    func()",
+        )
+        user = _define_in_file(
+            "/tmp/customer/main.py",
+            "def list_dataset_tasks():\n"
+            "    raise RuntimeError('enumeration produced no task list')",
+        )
+        exc = _raise_in_file(
+            "/tmp/customer/runner.py",
+            "start(list_dataset_tasks)",
+            {"start": launcher["start"], "list_dataset_tasks": user["list_dataset_tasks"]},
+        )
+
+        assert sentry._is_from_sdk(exc) is False
+
+    def test_sdk_failure_reached_through_launcher_is_still_sdk_origin(self):
+        launcher = _define_in_file(
+            _sdk_filename("core/jobs/__init__.py"),
+            "def start(func):\n    func()",
+        )
+        sdk = _define_in_file(
+            _sdk_filename("core/client/broken.py"),
+            "def sdk_call():\n    raise RuntimeError('sdk failure')",
+        )
+        user = _define_in_file(
+            "/tmp/customer/main.py",
+            "def run_spec(sdk_call):\n    sdk_call()",
+        )
+        exc = _raise_in_file(
+            "/tmp/customer/runner.py",
+            "start(lambda: run_spec(sdk_call))",
+            {
+                "start": launcher["start"],
+                "run_spec": user["run_spec"],
+                "sdk_call": sdk["sdk_call"],
+            },
+        )
+
+        assert sentry._is_from_sdk(exc) is True
+
+    def test_real_job_launcher_user_error_is_not_captured(
+        self, installed_sentry_hooks, monkeypatch
+    ):
+        """A BaseException from user job code escapes ``start`` but is not reported."""
+
+        class JobAbort(BaseException):
+            pass
+
+        wrapper = BlJobWrapper()
+        monkeypatch.setattr(wrapper, "get_arguments", lambda: {})
+
+        def run_spec():
+            raise JobAbort("enumeration produced no task list")
+
+        try:
+            wrapper.start(run_spec)
+        except JobAbort as error:
+            # Simulate the interpreter invoking the last-chance hook for an
+            # unhandled main-thread exception that passed through the launcher.
+            sys.excepthook(type(error), error, error.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
 
 
 class TestSentryDelivery:
