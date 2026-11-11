@@ -510,9 +510,15 @@ class _AsyncSandboxCallDescriptor:
         started = False
         attempt = 0
         while True:
-            attempt += 1
+            # Until the operation is seen pending, read at the first interval:
+            # a backed-off sleep could pass the entry grace window or miss a
+            # short pending status.
+            if started:
+                attempt += 1
             remaining = max(deadline - time.monotonic(), 0.0)
-            await asyncio.sleep(min(poll_delay_seconds(attempt, interval / 1000), remaining))
+            await asyncio.sleep(
+                min(poll_delay_seconds(max(attempt, 1), interval / 1000), remaining)
+            )
             response = await get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
