@@ -415,11 +415,42 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+# HTTP responses that reflect the caller's identity, permissions, or whether a
+# resource exists -- never a defect in the SDK's own code. The SDK sends a
+# well-formed request and the server answers "who you are is not accepted"
+# (401), "who you are is not allowed" (403), or "this does not exist" (404);
+# surfacing that status to the caller is correct behavior, so an unhandled error
+# carrying one of these must not be reported as an unhandled SDK exception.
+# 400 (possible SDK request malformation), 409/429, and every 5xx stay
+# reportable so a genuine SDK defect is never masked.
+_CLIENT_REQUEST_STATUS_CODES = frozenset({401, 403, 404})
+
+
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status an error carries, across SDK and httpx error shapes."""
+    for candidate in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        # ``type(x) is int`` rejects ``bool`` (a subclass of ``int``).
+        if type(candidate) is int and 100 <= candidate <= 599:
+            return candidate
+    return None
+
+
+def _is_client_request_error(error: BaseException) -> bool:
+    """Check whether an error is an expected auth/permission/not-found API response."""
+    return _http_status_code(error) in _CLIENT_REQUEST_STATUS_CODES
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_client_request_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
