@@ -565,9 +565,13 @@ class SyncSandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
-            blaxel.core.client.errors.RateLimitError: HTTP 429, a quota or a
-                rate limit. ``code`` names which and ``retryable`` says whether
-                retrying can succeed (False for QUOTA_EXCEEDED).
+            blaxel.core.client.errors.QuotaExceededError: HTTP 429
+                QUOTA_EXCEEDED. Not retryable until usage drops or the quota is
+                raised; it is not a RateLimitError.
+            blaxel.core.client.errors.RateLimitError: HTTP 429 rate limit
+                (WORKSPACE_RATE_LIMIT_EXCEEDED or RATE_LIMIT_EXCEEDED).
+                ``retryable`` is True; ``retry_after_seconds`` says how long
+                to wait when the server says.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 

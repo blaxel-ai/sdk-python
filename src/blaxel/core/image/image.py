@@ -136,10 +136,40 @@ def _signed_build_metadata(
     return metadata, [name for name in requested if name not in metadata]
 
 
+QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
+
+
+def _limit_hint(status: int, content: bytes) -> str:
+    """Whether a rejected build request can be retried, for quota and rate-limit 429s.
+
+    Image storage is checked before each build: a full quota answers 429 with
+    code QUOTA_EXCEEDED, or on older control planes {"error": ..., "code": 429}
+    with a message that links the plan quotas page.
+    """
+    if status != 429:
+        return ""
+    try:
+        body = json.loads(content)
+    except (UnicodeDecodeError, ValueError):
+        return ""
+    if not isinstance(body, dict):
+        return ""
+    code, message = body.get("code"), body.get("error") or body.get("message")
+    if code == "QUOTA_EXCEEDED" or (
+        code == 429 and isinstance(message, str) and "/account/plan-quotas" in message
+    ):
+        return f" (not retryable until usage drops or the quota is raised: {QUOTAS_DOC_URL})"
+    if code in ("WORKSPACE_RATE_LIMIT_EXCEEDED", "RATE_LIMIT_EXCEEDED"):
+        return " (rate limited: retry with backoff)"
+    return ""
+
+
 def _check_upload_response(response: Response[Sandbox], upload_url: str | None) -> str:
     if response.status_code.value >= 400:
+        status = response.status_code.value
         raise RuntimeError(
-            f"Failed to create sandbox: {response.status_code.value} - {response.content.decode()}"
+            f"Failed to create sandbox: {status} - {response.content.decode()}"
+            + _limit_hint(status, response.content)
         )
     if not upload_url:
         raise RuntimeError("No upload URL returned from API")

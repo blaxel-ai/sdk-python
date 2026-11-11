@@ -176,7 +176,30 @@ class ConflictError(APIStatusError):
 
 
 class RateLimitError(APIStatusError):
-    """Raised for an undocumented HTTP 429 rate-limit response."""
+    """Raised for an undocumented HTTP 429 rate-limit response.
+
+    ``retryable`` and ``retry_after_seconds`` say whether and when to retry. An
+    HTTP 429 with code QUOTA_EXCEEDED raises QuotaExceededError instead.
+    """
+
+
+class QuotaExceededError(APIStatusError):
+    """Raised for an HTTP 429 with code QUOTA_EXCEEDED: a quota is used up.
+
+    Not a RateLimitError, because retrying does not help until usage drops or
+    the quota is raised. ``retryable`` is always False.
+    """
+
+    def __init__(
+        self,
+        status_code: int,
+        content: bytes,
+        headers: Mapping[str, str] | None = None,
+        *,
+        response: httpx.Response | None = None,
+    ):
+        super().__init__(status_code, content, headers, response=response)
+        self.retryable = False
 
 
 def from_response(
@@ -190,6 +213,8 @@ def from_response(
     if status_code == HTTPStatus.CONFLICT:
         return ConflictError(status_code, content, headers, response=response)
     if status_code == HTTPStatus.TOO_MANY_REQUESTS:
+        if _extract_error_metadata(content)[0] == "QUOTA_EXCEEDED":
+            return QuotaExceededError(status_code, content, headers, response=response)
         return RateLimitError(status_code, content, headers, response=response)
     return UnexpectedStatus(status_code, content, headers, response=response)
 
@@ -197,6 +222,7 @@ def from_response(
 __all__ = [
     "APIStatusError",
     "ConflictError",
+    "QuotaExceededError",
     "RateLimitError",
     "UnexpectedStatus",
     "from_response",

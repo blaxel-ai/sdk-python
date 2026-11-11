@@ -382,10 +382,11 @@ async def test_quota_exceeded_says_it_is_not_retryable(monkeypatch):
         {"Retry-After": "5"},
     )
 
-    with pytest.raises(client_errors.RateLimitError) as excinfo:
+    with pytest.raises(client_errors.QuotaExceededError) as excinfo:
         await SandboxInstance.create(CONFIG)
 
     error = excinfo.value
+    assert not isinstance(error, client_errors.RateLimitError)
     assert len(calls) == 1
     assert error.code == "QUOTA_EXCEEDED"
     assert error.retryable is False
@@ -450,7 +451,8 @@ async def test_403_without_json_says_it_was_likely_blocked_before_the_api(
     assert excinfo.value.status_code == 403
     assert str(excinfo.value) == (
         "HTTP 403 without a JSON error body: likely an edge rate limit or firewall block"
-        " in front of the API. Blaxel quota and permission errors carry a JSON error code"
+        " in front of the API. If you send many requests, slow down and retry after about"
+        " 60 s. Blaxel quota and permission errors carry a JSON error code"
     )
 
 
@@ -475,13 +477,13 @@ def _modeled(status: int, code: str, message: str, headers=None) -> SandboxError
 
 
 @pytest.mark.parametrize("sync", [False, True])
-async def test_modeled_429_quota_still_raises_rate_limit_error(sync):
+async def test_modeled_429_quota_raises_quota_exceeded_error(sync):
     error = _modeled(429, "QUOTA_EXCEEDED", "Sandbox quota exceeded")
     target = SYNC_CREATE if sync else ASYNC_CREATE
     with patch(target, **({} if sync else {"new_callable": AsyncMock})) as mock_create:
         mock_create.return_value = error
 
-        with pytest.raises(client_errors.RateLimitError) as excinfo:
+        with pytest.raises(client_errors.QuotaExceededError) as excinfo:
             if sync:
                 SyncSandboxInstance.create(CONFIG)
             else:
@@ -542,3 +544,26 @@ async def test_volume_over_per_volume_maximum_is_not_retryable(sync):
         f"{message} (HTTP 400 QUOTA_EXCEEDED: not retryable as is; request a smaller volume"
         " or raise the quota: https://docs.blaxel.ai/Security/Quotas)"
     )
+
+
+def test_image_build_quota_429_says_it_is_not_retryable():
+    from blaxel.core.image.image import _limit_hint
+
+    old_server = json.dumps(
+        {
+            "error": "Image storage quota reached: 10/10 MiB used by images across your"
+            " workspaces. Delete unused images before building again, or request additional"
+            " quota at https://app.blaxel.ai/account/plan-quotas?id=acc",
+            "code": 429,
+        }
+    ).encode()
+    new_server = _limit_body("QUOTA_EXCEEDED", "Image storage quota reached")
+    for content in (old_server, new_server):
+        assert _limit_hint(429, content).startswith(
+            " (not retryable until usage drops or the quota is raised"
+        )
+    assert _limit_hint(429, b'{"error": "slow down", "code": 429}') == ""
+    assert _limit_hint(429, _limit_body("RATE_LIMIT_EXCEEDED", "x")) == (
+        " (rate limited: retry with backoff)"
+    )
+    assert _limit_hint(400, new_server) == ""

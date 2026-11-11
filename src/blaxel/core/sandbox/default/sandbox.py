@@ -234,7 +234,8 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
 EDGE_BLOCKED_MESSAGE = (
     "HTTP 403 without a JSON error body: likely an edge rate limit or firewall block"
-    " in front of the API. Blaxel quota and permission errors carry a JSON error code"
+    " in front of the API. If you send many requests, slow down and retry after about"
+    " 60 s. Blaxel quota and permission errors carry a JSON error code"
 )
 _RATE_LIMIT_REASONS = {
     "WORKSPACE_RATE_LIMIT_EXCEEDED": "too many creations in flight in this workspace",
@@ -326,8 +327,9 @@ def _create_error(
 ) -> client_errors.UnexpectedStatus | SandboxAPIError:
     """Exception for a creation the API rejected with a modeled error body.
 
-    A 429 raises RateLimitError, as it did before CreateSandbox modeled 429,
-    so callers that catch it keep working; everything else is SandboxAPIError.
+    A 429 raises what it raised before CreateSandbox modeled 429:
+    QuotaExceededError for QUOTA_EXCEEDED, RateLimitError for the rate limits.
+    Everything else is SandboxAPIError.
     """
     status_code = _error_status(error)
     if status_code == 429:
@@ -931,9 +933,13 @@ class SandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
-            blaxel.core.client.errors.RateLimitError: HTTP 429, a quota or a
-                rate limit. ``code`` names which and ``retryable`` says whether
-                retrying can succeed (False for QUOTA_EXCEEDED).
+            blaxel.core.client.errors.QuotaExceededError: HTTP 429
+                QUOTA_EXCEEDED. Not retryable until usage drops or the quota is
+                raised; it is not a RateLimitError.
+            blaxel.core.client.errors.RateLimitError: HTTP 429 rate limit
+                (WORKSPACE_RATE_LIMIT_EXCEEDED or RATE_LIMIT_EXCEEDED).
+                ``retryable`` is True; ``retry_after_seconds`` says how long
+                to wait when the server says.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 
