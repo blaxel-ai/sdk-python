@@ -1390,8 +1390,11 @@ class ImageInstance:
             remaining = timeout - (time.time() - start_time)
             if remaining <= 0:
                 break
-            attempt += 1
-            time.sleep(min(poll_delay_seconds(attempt, poll_interval), remaining))
+            # Until the build is seen running, read at the first interval: a
+            # rebuild that starts and ends inside one long sleep would be missed.
+            if build_started:
+                attempt += 1
+            time.sleep(min(poll_delay_seconds(max(attempt, 1), poll_interval), remaining))
 
         raise TimeoutError(f"Deployment timed out after {timeout} seconds")
 
@@ -1450,8 +1453,11 @@ class ImageInstance:
             remaining = timeout - (time.time() - start_time)
             if remaining <= 0:
                 break
-            attempt += 1
-            await asyncio.sleep(min(poll_delay_seconds(attempt, poll_interval), remaining))
+            # Until the build is seen running, read at the first interval: a
+            # rebuild that starts and ends inside one long sleep would be missed.
+            if build_started:
+                attempt += 1
+            await asyncio.sleep(min(poll_delay_seconds(max(attempt, 1), poll_interval), remaining))
 
         raise TimeoutError(f"Deployment timed out after {timeout} seconds")
 

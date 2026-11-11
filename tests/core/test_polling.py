@@ -40,3 +40,19 @@ def test_build_wait_backs_off(monkeypatch: pytest.MonkeyPatch):
     assert sleeps[0] == 3.0
     assert sleeps == sorted(sleeps)
     assert sleeps[-1] == POLL_MAX_INTERVAL_SECONDS
+
+
+def test_build_wait_keeps_first_interval_until_the_build_starts(monkeypatch: pytest.MonkeyPatch):
+    statuses = iter(["DEPLOYED"] * 6 + ["BUILDING", "BUILDING", "DEPLOYED"])
+    sleeps: list[float] = []
+    monkeypatch.setattr(
+        ImageInstance, "_get_sandbox_status_sync", lambda self, name: next(statuses)
+    )
+    monkeypatch.setattr(image_module.time, "sleep", sleeps.append)
+    monkeypatch.setattr(polling.random, "uniform", lambda low, high: high)
+
+    image = ImageInstance.from_registry("python:3.12-slim")
+    assert image._wait_for_deployment_sync("build", timeout=900) == "DEPLOYED"
+
+    assert sleeps[:6] == [3.0] * 6
+    assert sleeps[6:] == [3.0, 4.5]
