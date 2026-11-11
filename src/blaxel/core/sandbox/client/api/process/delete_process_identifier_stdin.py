@@ -33,13 +33,13 @@ def _parse_response(
         return response_200
 
     if response.status_code == 404:
-        response_404 = ErrorResponse.from_dict(response.json())
+        response_404 = ErrorResponse.from_dict(errors.error_json(response))
 
         errors.retain_response(response_404, response)
         return response_404
 
     if response.status_code == 409:
-        response_409 = ErrorResponse.from_dict(response.json())
+        response_409 = ErrorResponse.from_dict(errors.error_json(response))
 
         errors.retain_response(response_409, response)
         return response_409

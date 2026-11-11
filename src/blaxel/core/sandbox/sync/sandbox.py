@@ -58,6 +58,7 @@ from ..default.sandbox import (
     _create_error_message,
     _creation_client,
     _error_status,
+    _explain_create_error,
     _is_transient_create_auth_failure,
     _notify_region_unset,
     _raise_if_creation_timeout,
@@ -743,6 +744,7 @@ class SyncSandboxInstance:
                 except client_errors.UnexpectedStatus as e:
                     _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        _explain_create_error(e)
                         raise
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(

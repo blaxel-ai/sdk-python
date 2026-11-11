@@ -1,8 +1,11 @@
 import asyncio
 import json
 import logging
+import math
 import time
 import warnings
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 from attrs import evolve
@@ -223,6 +226,69 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
             message += "."
         return message + hint
     return message
+
+
+QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
+EDGE_BLOCKED_MESSAGE = (
+    "HTTP 403 with no body: blocked before the API (edge rate limit or firewall), not a quota"
+)
+
+
+def _retry_after_seconds(error: client_errors.UnexpectedStatus) -> int | None:
+    seconds = getattr(error, "retry_after_seconds", None)
+    if seconds is not None:
+        return seconds
+    value = getattr(error, "retry_after", None)  # an HTTP date, already normalized
+    if not value:
+        return None
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    return max(0, math.ceil((retry_at - datetime.now(timezone.utc)).total_seconds()))
+
+
+def _server_message(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        message = source.get("message")
+        if isinstance(message, str) and message:
+            return message
+    return None
+
+
+def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
+    """Say in the message whether a rejected creation can be retried.
+
+    Both limit codes answer HTTP 429 but need opposite handling: QUOTA_EXCEEDED
+    stays until quota is freed or raised, WORKSPACE_RATE_LIMIT_EXCEEDED clears
+    once creations in flight finish. ``retryable`` says which; the SDK itself
+    retries neither. A 403 without a body never reached the API.
+    """
+    status, code = error.status_code, error.code
+    if status == 403 and not error.content.strip():
+        message = EDGE_BLOCKED_MESSAGE
+    elif status == 429 and code == "QUOTA_EXCEEDED":
+        message = (
+            f"{_server_message(error.body) or 'Quota exceeded'} (HTTP 429 QUOTA_EXCEEDED:"
+            f" not retryable; free quota or raise it: {QUOTAS_DOC_URL})"
+        )
+        error.retryable = False
+    elif status == 429 and code == "WORKSPACE_RATE_LIMIT_EXCEEDED":
+        wait = _retry_after_seconds(error)
+        advice = f"retry after {wait} s" if wait is not None else "retry with backoff"
+        message = (
+            f"{_server_message(error.body) or 'Workspace rate limit exceeded'} (HTTP 429"
+            f" WORKSPACE_RATE_LIMIT_EXCEEDED: too many creations in flight; {advice})"
+        )
+        error.retryable = True
+        error.retry_after_seconds = wait
+    else:
+        return
+    error.message = message
+    error.args = (message,)
 
 
 _region_notice_shown = False
@@ -999,6 +1065,7 @@ class SandboxInstance:
                 except client_errors.UnexpectedStatus as e:
                     _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        _explain_create_error(e)
                         raise
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(

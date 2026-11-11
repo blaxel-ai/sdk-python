@@ -100,6 +100,20 @@ def retain_response(parsed: Any, response: httpx.Response) -> None:
         parsed._response = _response_snapshot(response)
 
 
+def error_json(response: httpx.Response) -> Any:
+    """JSON body of a modeled error status.
+
+    An empty or non-JSON body (for example a 403 answered by the edge before
+    the API) raises the typed error for the status instead of JSONDecodeError.
+    """
+    if response.content:
+        try:
+            return response.json()
+        except (UnicodeDecodeError, ValueError):
+            pass
+    raise from_response(response.status_code, response.content, response.headers, response=response)
+
+
 class UnexpectedStatus(BlaxelError):
     """Raised when an API returns a status absent from its OpenAPI contract."""
 
