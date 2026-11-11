@@ -156,7 +156,15 @@ class Client:
 
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         """Exit a context manager for internal httpx.Client (see httpx docs)"""
-        self.get_httpx_client().__exit__(*args, **kwargs)
+        if self._client is not None:
+            try:
+                self._client.__exit__(*args, **kwargs)
+            finally:
+                # Drop the closed client so this Client stays reusable: a later
+                # call rebuilds a fresh httpx.Client instead of reusing a closed
+                # one, which would raise "Cannot send a request, as the client
+                # has been closed."
+                self._client = None
 
     def set_async_httpx_client(self, async_client: httpx.AsyncClient) -> "Client":
         """Manually the underlying httpx.AsyncClient
@@ -199,7 +207,16 @@ class Client:
 
     async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
         """Exit a context manager for underlying httpx.AsyncClient (see httpx docs)"""
-        await self.get_async_httpx_client().__aexit__(*args, **kwargs)
+        if self._async_client is not None:
+            try:
+                await self._async_client.__aexit__(*args, **kwargs)
+            finally:
+                # Drop the closed client so this Client stays reusable: a later
+                # call rebuilds a fresh httpx.AsyncClient instead of reusing a
+                # closed one, which would raise "Cannot send a request, as the
+                # client has been closed."
+                self._async_client = None
+                self._async_client_loop = None
 
 
 client = Client()
