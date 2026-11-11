@@ -39,6 +39,7 @@ from ..client.pagination import (
     normalize_cursor,
 )
 from ..client.types import Response
+from ..common.polling import poll_delay_seconds
 
 SANDBOX_API_IMAGE = "ghcr.io/blaxel-ai/sandbox"
 SANDBOX_API_PATH = "/usr/local/bin/sandbox-api"
@@ -1378,7 +1379,8 @@ class ImageInstance:
         Args:
             name: Sandbox name
             timeout: Maximum time to wait in seconds (default 15 minutes)
-            poll_interval: Time between status checks in seconds
+            poll_interval: Delay before the second status check in seconds;
+                later checks back off with jitter up to 30 seconds
             on_status_change: Optional callback for status changes
 
         Returns:
@@ -1393,7 +1395,8 @@ class ImageInstance:
         terminal_states = {"DEPLOYED", "FAILED", "TERMINATED"}
         build_started = False
 
-        while time.time() - start_time < timeout:
+        attempt = 0
+        while True:
             status = self._get_sandbox_status_sync(name)
 
             if status and status != last_status:
@@ -1415,7 +1418,14 @@ class ImageInstance:
                 if status == "DEPLOYED" and build_started:
                     return status
 
-            time.sleep(poll_interval)
+            remaining = timeout - (time.time() - start_time)
+            if remaining <= 0:
+                break
+            # Until the build is seen running, read at the first interval: a
+            # rebuild that starts and ends inside one long sleep would be missed.
+            if build_started:
+                attempt += 1
+            time.sleep(min(poll_delay_seconds(max(attempt, 1), poll_interval), remaining))
 
         raise TimeoutError(f"Deployment timed out after {timeout} seconds")
 
@@ -1432,7 +1442,8 @@ class ImageInstance:
         Args:
             name: Sandbox name
             timeout: Maximum time to wait in seconds (default 15 minutes)
-            poll_interval: Time between status checks in seconds
+            poll_interval: Delay before the second status check in seconds;
+                later checks back off with jitter up to 30 seconds
             on_status_change: Optional callback for status changes
 
         Returns:
@@ -1447,7 +1458,8 @@ class ImageInstance:
         terminal_states = {"DEPLOYED", "FAILED", "TERMINATED"}
         build_started = False
 
-        while time.time() - start_time < timeout:
+        attempt = 0
+        while True:
             status = await self._get_sandbox_status(name)
 
             if status and status != last_status:
@@ -1469,7 +1481,14 @@ class ImageInstance:
                 if status == "DEPLOYED" and build_started:
                     return status
 
-            await asyncio.sleep(poll_interval)
+            remaining = timeout - (time.time() - start_time)
+            if remaining <= 0:
+                break
+            # Until the build is seen running, read at the first interval: a
+            # rebuild that starts and ends inside one long sleep would be missed.
+            if build_started:
+                attempt += 1
+            await asyncio.sleep(min(poll_delay_seconds(max(attempt, 1), poll_interval), remaining))
 
         raise TimeoutError(f"Deployment timed out after {timeout} seconds")
 
@@ -1502,6 +1521,8 @@ class ImageInstance:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
+                The build status is read every few seconds at first, then less
+                often (with jitter, up to every 30 seconds) as the build runs.
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
             build_memory: Memory of the environment the image is built in, in MB
@@ -1615,6 +1636,8 @@ class ImageInstance:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
+                The build status is read every few seconds at first, then less
+                often (with jitter, up to every 30 seconds) as the build runs.
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
             build_memory: Memory of the environment the image is built in, in MB
