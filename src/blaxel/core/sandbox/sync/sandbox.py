@@ -55,9 +55,8 @@ from ..default.sandbox import (
     SandboxAPIError,
     _create_auth_retry_delay,
     _create_body,
-    _create_error_message,
+    _create_error,
     _creation_client,
-    _error_status,
     _explain_create_error,
     _is_transient_create_auth_failure,
     _notify_region_unset,
@@ -566,6 +565,9 @@ class SyncSandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
+            blaxel.core.client.errors.RateLimitError: HTTP 429, a quota or a
+                rate limit. ``code`` names which and ``retryable`` says whether
+                retrying can succeed (False for QUOTA_EXCEEDED).
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 
@@ -757,10 +759,7 @@ class SyncSandboxInstance:
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = _error_status(response)
-                code = response.code if response.code else None
-                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
-                raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+                raise _create_error(response, _sandbox_name(sandbox), attempts)
 
             if create_if_not_exist:
                 # The sandbox already holding the name comes back as is, whatever it was

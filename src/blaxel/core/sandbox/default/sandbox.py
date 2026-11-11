@@ -220,6 +220,9 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
             f" (BL_API_KEY and BL_WORKSPACE, or `bl login`{current}); if they are right,"
             " retry in a few seconds."
         )
+    explained = _limit_explanation(_error_status(error), error.code, error.message, None)
+    if explained is not None:
+        return explained[0]
     if _error_status(error) == 400:
         hint = _invalid_name_hint(sandbox_name)
         if hint and message and not message.endswith((".", "!", "?")):
@@ -230,11 +233,17 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
 
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
 EDGE_BLOCKED_MESSAGE = (
-    "HTTP 403 with no body: blocked before the API (edge rate limit or firewall), not a quota"
+    "HTTP 403 without a JSON error body: likely an edge rate limit or firewall block"
+    " in front of the API. Blaxel quota and permission errors carry a JSON error code"
 )
+_RATE_LIMIT_REASONS = {
+    "WORKSPACE_RATE_LIMIT_EXCEEDED": "too many creations in flight in this workspace",
+    "RATE_LIMIT_EXCEEDED": "the region's creation rate limit was reached",
+}
 
 
 def _retry_after_seconds(error: client_errors.UnexpectedStatus) -> int | None:
+    """Seconds to wait from the server's retry_after (Retry-After header or body)."""
     seconds = getattr(error, "retry_after_seconds", None)
     if seconds is not None:
         return seconds
@@ -259,36 +268,88 @@ def _server_message(body: Any) -> str | None:
     return None
 
 
+def _has_json_error_body(content: bytes) -> bool:
+    try:
+        return isinstance(json.loads(content), dict)
+    except (UnicodeDecodeError, ValueError, RecursionError):
+        return False
+
+
+def _limit_explanation(
+    status: int | None, code: Any, server_message: str | None, wait: int | None
+) -> tuple[str, bool] | None:
+    """Message and retryable flag for a creation rejected by a quota or rate limit.
+
+    QUOTA_EXCEEDED (HTTP 429 for a workspace quota, 400 for one ephemeral volume
+    over the per-volume maximum) stays until quota is freed or raised. The rate
+    limit codes clear on their own. The SDK itself retries none of them.
+    """
+    if code == "QUOTA_EXCEEDED" and status in (400, 429):
+        if status == 400:
+            advice = "not retryable as is; request a smaller volume or raise the quota"
+        else:
+            advice = "not retryable until quota is freed or raised"
+        message = server_message or "Quota exceeded"
+        return f"{message} (HTTP {status} QUOTA_EXCEEDED: {advice}: {QUOTAS_DOC_URL})", False
+    if status == 429 and code in _RATE_LIMIT_REASONS:
+        advice = f"retry after {wait} s" if wait is not None else "retry with backoff"
+        message = server_message or "Rate limit exceeded"
+        return f"{message} (HTTP 429 {code}: {_RATE_LIMIT_REASONS[code]}; {advice})", True
+    return None
+
+
 def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
     """Say in the message whether a rejected creation can be retried.
 
-    Both limit codes answer HTTP 429 but need opposite handling: QUOTA_EXCEEDED
-    stays until quota is freed or raised, WORKSPACE_RATE_LIMIT_EXCEEDED clears
-    once creations in flight finish. ``retryable`` says which; the SDK itself
-    retries neither. A 403 without a body never reached the API.
+    Quota and rate-limit errors share HTTP 429 but need opposite handling;
+    ``retryable`` says which. A 403 without a JSON error body did not come from
+    the API's own checks.
     """
-    status, code = error.status_code, error.code
-    if status == 403 and not error.content.strip():
+    if error.status_code == 403 and not _has_json_error_body(error.content):
         message = EDGE_BLOCKED_MESSAGE
-    elif status == 429 and code == "QUOTA_EXCEEDED":
-        message = (
-            f"{_server_message(error.body) or 'Quota exceeded'} (HTTP 429 QUOTA_EXCEEDED:"
-            f" not retryable; free quota or raise it: {QUOTAS_DOC_URL})"
-        )
-        error.retryable = False
-    elif status == 429 and code == "WORKSPACE_RATE_LIMIT_EXCEEDED":
-        wait = _retry_after_seconds(error)
-        advice = f"retry after {wait} s" if wait is not None else "retry with backoff"
-        message = (
-            f"{_server_message(error.body) or 'Workspace rate limit exceeded'} (HTTP 429"
-            f" WORKSPACE_RATE_LIMIT_EXCEEDED: too many creations in flight; {advice})"
-        )
-        error.retryable = True
-        error.retry_after_seconds = wait
     else:
-        return
+        wait = _retry_after_seconds(error)
+        explained = _limit_explanation(
+            error.status_code, error.code, _server_message(error.body), wait
+        )
+        if explained is None:
+            return
+        message, error.retryable = explained
+        if error.retryable:
+            error.retry_after_seconds = wait
     error.message = message
     error.args = (message,)
+
+
+def _create_error(
+    error: SandboxError, sandbox_name: str | None, attempts: int
+) -> client_errors.UnexpectedStatus | SandboxAPIError:
+    """Exception for a creation the API rejected with a modeled error body.
+
+    A 429 raises RateLimitError, as it did before CreateSandbox modeled 429,
+    so callers that catch it keep working; everything else is SandboxAPIError.
+    """
+    status_code = _error_status(error)
+    if status_code == 429:
+        response = error._response
+        if response is not None:
+            limit_error = client_errors.from_response(
+                429, response.content, response.headers, response=response
+            )
+        else:
+            limit_error = client_errors.from_response(429, json.dumps(error.to_dict()).encode())
+        _explain_create_error(limit_error)
+        return limit_error
+    code = error.code if error.code else None
+    api_error = SandboxAPIError(
+        _create_error_message(error, sandbox_name, attempts),
+        status_code=status_code,
+        code=code,
+        error=error,
+    )
+    if _limit_explanation(status_code, code, None, None) is not None:
+        api_error.retryable = False
+    return api_error
 
 
 _region_notice_shown = False
@@ -870,6 +931,9 @@ class SandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
+            blaxel.core.client.errors.RateLimitError: HTTP 429, a quota or a
+                rate limit. ``code`` names which and ``retryable`` says whether
+                retrying can succeed (False for QUOTA_EXCEEDED).
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 
@@ -1078,10 +1142,7 @@ class SandboxInstance:
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = _error_status(response)
-                code = response.code if response.code else None
-                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
-                raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+                raise _create_error(response, _sandbox_name(sandbox), attempts)
 
             assert response is not None
             if create_if_not_exist:
