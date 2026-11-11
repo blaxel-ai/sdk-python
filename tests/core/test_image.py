@@ -1401,6 +1401,41 @@ class TestImageBuildWorkerResources:
         _, upload = self._run(monkeypatch)
         assert not [name for name in upload.headers if name.startswith("x-amz-meta-")]
 
+    @staticmethod
+    def _zip_names(upload):
+        import io
+        import zipfile
+
+        return zipfile.ZipFile(io.BytesIO(upload.content))
+
+    @pytest.mark.parametrize("use_async", [False, True])
+    @pytest.mark.parametrize("as_text", [False, True])
+    def test_puts_docker_config_in_the_build_context(self, monkeypatch, use_async, as_text):
+        auths = {"auths": {"https://index.docker.io/v1/": {"auth": "dXNlcjp0b2tlbg=="}}}
+        docker_config = json.dumps(auths) if as_text else auths
+        create, upload = self._run(monkeypatch, use_async=use_async, docker_config=docker_config)
+        archive = self._zip_names(upload)
+        assert json.loads(archive.read(".docker/config.json")) == auths
+        assert "dXNlcjp0b2tlbg" not in json.dumps(create)
+        assert not [name for name in upload.headers if "docker" in name.lower()]
+
+    def test_no_docker_config_in_the_build_context_by_default(self, monkeypatch):
+        _, upload = self._run(monkeypatch)
+        names = self._zip_names(upload).namelist()
+        assert "Dockerfile" in names
+        assert not [name for name in names if name.startswith(".docker")]
+
+    @pytest.mark.parametrize(
+        "docker_config",
+        ["", "not json", '["auths"]', "{}", {"ghcr.io": {"auth": "c2VjcmV0"}}, 1],
+    )
+    def test_rejects_invalid_docker_config_before_any_request(self, docker_config):
+        with pytest.raises(ValueError, match="docker_config must") as error:
+            ImageInstance.from_registry("alpine:3.20").build_sync(
+                name="img", docker_config=docker_config
+            )
+        assert "c2VjcmV0" not in str(error.value)
+
     def test_mirrors_labels_already_stored(self, monkeypatch):
         stored = {"x-blaxel-auto-generated": "true", "x-blaxel-build-memory": "8192"}
         _, upload = self._run(monkeypatch, stored_labels=stored)
