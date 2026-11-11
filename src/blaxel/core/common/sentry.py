@@ -415,11 +415,45 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+_HTTP_REDIRECT_MIN = 300
+_HTTP_REDIRECT_MAX = 399
+
+
+def _http_status_code(error: BaseException) -> int | None:
+    """Return a valid HTTP status (100-599) carried by an error, else ``None``."""
+    for attribute in ("status_code", "status"):
+        value = getattr(error, attribute, None)
+        # ``type(x) is int`` rejects ``bool`` (a subclass of ``int``).
+        if type(value) is int and 100 <= value <= 599:
+            return value
+    response_status = getattr(getattr(error, "response", None), "status_code", None)
+    if type(response_status) is int and 100 <= response_status <= 599:
+        return response_status
+    return None
+
+
+def _is_http_redirect_error(error: BaseException) -> bool:
+    """Check whether an error represents an HTTP redirect (3xx) response.
+
+    The generated API client raises ``UnexpectedStatus`` for any status absent
+    from an endpoint's OpenAPI contract, and redirects are never documented.
+    Because the client does not follow redirects, a 3xx response surfaces as an
+    exception raised from inside ``blaxel/...`` frames. A redirect is a routing
+    decision made by the server (or an intermediary such as a proxy or CDN), not
+    a defect in the SDK's own logic, so it must not be reported as an unhandled
+    SDK exception. Non-redirect statuses are deliberately left untouched here.
+    """
+    status_code = _http_status_code(error)
+    return status_code is not None and _HTTP_REDIRECT_MIN <= status_code <= _HTTP_REDIRECT_MAX
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_http_redirect_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
