@@ -60,7 +60,8 @@ MAX_BUILD_UPLOAD_LABEL_VALUE = 64
 BUILD_REGION_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
 # Where `bl deploy` puts registry credentials in the build context. The builder
 # pulls FROM images with them. The sandbox builder leaves the file out of the
-# image; the Depot builder does not yet, so a COPY of the whole context copies it.
+# image. On a workspace still on the older builder, until builds that carry the
+# file are routed to the sandbox builder, a COPY of the whole context copies it.
 BUILD_DOCKER_CONFIG_PATH = Path(".docker") / "config.json"
 
 
@@ -1537,9 +1538,11 @@ class ImageInstance:
                 Docker config.json format (``{"auths": {"ghcr.io": {"auth": "<base64
                 user:token>"}}}``), as a dict or JSON text. Same as ``bl deploy
                 --registry-cred``; use it for private images or to avoid Docker Hub
-                pull rate limits. The sandbox builder keeps the file out of the
-                image; the Depot builder does not yet, so a Dockerfile step that
-                copies the whole build context also copies ``.docker/config.json``.
+                pull rate limits. The sandbox builder keeps the credentials out of
+                the image. Builds that carry them are being moved onto it; until
+                that reaches a workspace still on the older builder, a Dockerfile
+                step there that copies the whole build context also copies
+                ``.docker/config.json``.
 
         Returns:
             The deployed Sandbox object
@@ -1652,9 +1655,11 @@ class ImageInstance:
                 Docker config.json format (``{"auths": {"ghcr.io": {"auth": "<base64
                 user:token>"}}}``), as a dict or JSON text. Same as ``bl deploy
                 --registry-cred``; use it for private images or to avoid Docker Hub
-                pull rate limits. The sandbox builder keeps the file out of the
-                image; the Depot builder does not yet, so a Dockerfile step that
-                copies the whole build context also copies ``.docker/config.json``.
+                pull rate limits. The sandbox builder keeps the credentials out of
+                the image. Builds that carry them are being moved onto it; until
+                that reaches a workspace still on the older builder, a Dockerfile
+                step there that copies the whole build context also copies
+                ``.docker/config.json``.
 
         Returns:
             The deployed Sandbox object
