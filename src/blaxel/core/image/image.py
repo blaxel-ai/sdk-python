@@ -13,7 +13,7 @@ import zipfile
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Callable, List
+from typing import Any, Callable, List
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -57,6 +57,9 @@ BUILD_UPLOAD_LABELS = (
 MAX_BUILD_UPLOAD_LABEL_VALUE = 64
 # The builder ignores a region that is not a resource name, so reject it here.
 BUILD_REGION_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
+# Where `bl deploy` puts registry credentials in the build context. The builder
+# pulls FROM images with them and leaves the file out of the image.
+BUILD_DOCKER_CONFIG_PATH = Path(".docker") / "config.json"
 
 
 def _build_size_label(
@@ -140,6 +143,34 @@ def _check_upload_response(response: Response[Sandbox], upload_url: str | None) 
     if not upload_url:
         raise RuntimeError("No upload URL returned from API")
     return upload_url
+
+
+def _build_docker_config(docker_config: str | dict[str, Any] | None) -> bytes | None:
+    """Registry credentials for the build as Docker config.json bytes.
+
+    Errors never include the value: it holds credentials.
+    """
+    if docker_config is None:
+        return None
+    if isinstance(docker_config, str):
+        try:
+            docker_config = json.loads(docker_config)
+        except json.JSONDecodeError:
+            raise ValueError("docker_config must be Docker config.json text") from None
+    if not isinstance(docker_config, dict) or not isinstance(docker_config.get("auths"), dict):
+        raise ValueError(
+            'docker_config must be a Docker config.json object: {"auths": {"<registry>": '
+            '{"auth": "<base64 user:password>"}}}'
+        )
+    return json.dumps(docker_config).encode()
+
+
+def _write_build_docker_config(build_dir: Path, docker_config: bytes | None) -> None:
+    if docker_config is None:
+        return
+    path = build_dir / BUILD_DOCKER_CONFIG_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(docker_config)
 
 
 def _unsigned_build_settings_error(missing: list[str]) -> RuntimeError:
@@ -1423,6 +1454,7 @@ class ImageInstance:
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
         build_region: str | None = None,
+        docker_config: str | dict[str, Any] | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox.
@@ -1449,6 +1481,11 @@ class ImageInstance:
             build_volume_mb: Deprecated; use build_volume.
             build_region: Region the image is built in, such as "us-was-1". Same as
                 [build].region in blaxel.toml; defaults to the platform's build region.
+            docker_config: Registry credentials the build pulls FROM images with, in
+                Docker config.json format (``{"auths": {"ghcr.io": {"auth": "<base64
+                user:token>"}}}``), as a dict or JSON text. Same as ``bl deploy
+                --registry-cred``; use it for private images or to avoid Docker Hub
+                pull rate limits. The builder keeps it out of the image.
 
         Returns:
             The deployed Sandbox object
@@ -1460,6 +1497,7 @@ class ImageInstance:
         build_labels = _build_labels(
             build_memory, build_volume, build_memory_mb, build_volume_mb, build_region
         )
+        build_docker_config = _build_docker_config(docker_config)
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
@@ -1468,6 +1506,8 @@ class ImageInstance:
         build_dir = prepared_image.write_temp()
 
         try:
+            _write_build_docker_config(build_dir, build_docker_config)
+
             # Create zip
             zip_content = self._create_zip(build_dir)
 
@@ -1525,6 +1565,7 @@ class ImageInstance:
         build_memory_mb: int | None = None,
         build_volume_mb: int | None = None,
         build_region: str | None = None,
+        docker_config: str | dict[str, Any] | None = None,
     ) -> Sandbox:
         """
         Build and deploy the image as a sandbox (async).
@@ -1551,6 +1592,11 @@ class ImageInstance:
             build_volume_mb: Deprecated; use build_volume.
             build_region: Region the image is built in, such as "us-was-1". Same as
                 [build].region in blaxel.toml; defaults to the platform's build region.
+            docker_config: Registry credentials the build pulls FROM images with, in
+                Docker config.json format (``{"auths": {"ghcr.io": {"auth": "<base64
+                user:token>"}}}``), as a dict or JSON text. Same as ``bl deploy
+                --registry-cred``; use it for private images or to avoid Docker Hub
+                pull rate limits. The builder keeps it out of the image.
 
         Returns:
             The deployed Sandbox object
@@ -1562,6 +1608,7 @@ class ImageInstance:
         build_labels = _build_labels(
             build_memory, build_volume, build_memory_mb, build_volume_mb, build_region
         )
+        build_docker_config = _build_docker_config(docker_config)
 
         # Prepare image for sandbox deployment (add sandbox-api and entrypoint)
         prepared_image = self._prepare_for_sandbox(sandbox_version)
@@ -1570,6 +1617,8 @@ class ImageInstance:
         build_dir = prepared_image.write_temp()
 
         try:
+            _write_build_docker_config(build_dir, build_docker_config)
+
             # Create zip (sync, as it's file I/O)
             zip_content = self._create_zip(build_dir)
 

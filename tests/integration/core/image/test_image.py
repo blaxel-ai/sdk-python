@@ -134,3 +134,40 @@ async def test_build_with_worker_memory_and_volume():
         assert labels["x-blaxel-build-volume"] == "16384"
     finally:
         await SandboxInstance.delete(image_name)
+
+
+PRIVATE_REGISTRY_IMAGE = os.environ.get("PRIVATE_REGISTRY_IMAGE")
+PRIVATE_REGISTRY_DOCKER_CONFIG = os.environ.get("PRIVATE_REGISTRY_DOCKER_CONFIG")
+
+
+@pytest.mark.skipif(
+    not (IMAGE_BUILD and PRIVATE_REGISTRY_IMAGE and PRIVATE_REGISTRY_DOCKER_CONFIG),
+    reason="set IMAGE_BUILD=true, PRIVATE_REGISTRY_IMAGE and PRIVATE_REGISTRY_DOCKER_CONFIG",
+)
+@pytest.mark.asyncio
+async def test_build_from_private_image_with_docker_config():
+    """docker_config lets the build pull a private FROM image, like `bl deploy --registry-cred`.
+
+    PRIVATE_REGISTRY_IMAGE=ghcr.io/org/private:v1
+    PRIVATE_REGISTRY_DOCKER_CONFIG='{"auths":{"ghcr.io":{"auth":"<base64 user:token>"}}}'
+    """
+    image_name = f"image-private-{uuid.uuid4().hex[:8]}"
+    try:
+        built = await (
+            ImageInstance.from_registry(PRIVATE_REGISTRY_IMAGE)
+            .copy(".", "/opt/build-context")
+            .build(name=image_name, timeout=900.0, docker_config=PRIVATE_REGISTRY_DOCKER_CONFIG)
+        )
+        assert built.status == "DEPLOYED"
+        sandbox = await SandboxInstance.get(image_name)
+        # The credentials pull the base image but never land in the image.
+        result = await sandbox.process.exec(
+            {
+                "command": "test -e /opt/build-context/Dockerfile && "
+                "test ! -e /opt/build-context/.docker && echo clean",
+                "wait_for_completion": True,
+            }
+        )
+        assert (result.logs or "").strip() == "clean"
+    finally:
+        await SandboxInstance.delete(image_name)
