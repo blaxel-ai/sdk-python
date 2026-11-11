@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.jobs import bl_start_job
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -569,6 +570,134 @@ class BrokenFinalizer:
 
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.thread_hook_calls == [args]
+
+
+class TestUserCodeLauncherBoundary:
+    """The job launcher runs user-provided job code in-process; user job errors that
+    reach only the launcher SDK frame must not be attributed to the SDK.
+
+    Regression for SDK-PYTHON-11S (a user MCP ``ExceptionGroup`` surfaced through
+    ``BlJobWrapper.start``) and the related launcher misattribution class.
+    """
+
+    def _launcher_start(self):
+        namespace = _define_in_file(
+            _sdk_filename("core/jobs/__init__.py"),
+            "def start(fn):\n    fn()",
+        )
+        return namespace["start"]
+
+    def test_launcher_frame_is_not_an_sdk_origin_frame(self):
+        launcher = _sdk_filename("core/jobs/__init__.py")
+
+        assert sentry._is_sdk_origin_frame(launcher, "start") is False
+        # A different function in the same launcher file is still SDK-origin.
+        assert sentry._is_sdk_origin_frame(launcher, "get_arguments") is True
+        # Application code that merely shares the launcher function name is not SDK.
+        assert sentry._is_sdk_origin_frame("/blaxel/src/main.py", "start") is False
+
+    def test_user_job_error_through_launcher_is_not_sdk_origin(self):
+        start = self._launcher_start()
+
+        def user_job():
+            raise RuntimeError("user job failure")
+
+        error = None
+        try:
+            start(user_job)
+        except RuntimeError as exc:
+            error = exc
+
+        assert sentry._is_from_sdk(error) is False
+        assert sentry._should_capture_unhandled_exception(type(error), error) is False
+
+    def test_user_job_base_exception_through_launcher_is_not_captured(self, installed_sentry_hooks):
+        """A non-ignored ``BaseException`` from user job code escapes the launcher's
+        ``except Exception`` and reaches excepthook; it must not be reported."""
+        start = self._launcher_start()
+
+        class UserBaseError(BaseException):
+            pass
+
+        def user_job():
+            raise UserBaseError("user job base failure")
+
+        error = None
+        try:
+            start(user_job)
+        except UserBaseError as exc:
+            error = exc
+
+        sys.excepthook(type(error), error, error.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(error), error, error.__traceback__)]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_user_job_exception_group_through_launcher_is_filtered(self):
+        """SDK-PYTHON-11S: an MCP TaskGroup ``ExceptionGroup`` whose leaves are all
+        third-party, reaching only the launcher SDK frame, is not reportable."""
+        start = self._launcher_start()
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+
+        def user_job():
+            leaf = RuntimeError("MCP streamable_http connection failed")
+            raise group_type("unhandled errors in a TaskGroup (1 sub-exception)", [leaf])
+
+        error = None
+        try:
+            start(user_job)
+        except sentry._EXCEPTION_GROUP_TYPES as exc:
+            error = exc
+
+        assert sentry._is_from_sdk(error) is False
+        assert sentry._contains_sdk_exception(error) is False
+        assert sentry._filter_reportable_exception(error) is None
+
+    def test_genuine_sdk_failure_reached_through_launcher_is_still_captured(self):
+        """Anti-over-suppression: a real SDK frame below the launcher keeps origin."""
+        start = self._launcher_start()
+        sdk_namespace = _define_in_file(
+            _sdk_filename("core/sandbox/default/sandbox.py"),
+            "def create():\n    raise RuntimeError('genuine sdk failure')",
+        )
+
+        error = None
+        try:
+            start(sdk_namespace["create"])
+        except RuntimeError as exc:
+            error = exc
+
+        assert sentry._is_from_sdk(error) is True
+        assert sentry._should_capture_unhandled_exception(type(error), error) is True
+
+    def test_real_bl_job_wrapper_start_user_error_is_not_captured(
+        self, installed_sentry_hooks, monkeypatch
+    ):
+        """End-to-end through the real ``BlJobWrapper.start`` launcher."""
+        monkeypatch.setattr(bl_start_job, "get_arguments", lambda: {})
+
+        class UserBaseError(BaseException):
+            pass
+
+        def user_job():
+            raise UserBaseError("user job base failure")
+
+        error = None
+        try:
+            bl_start_job.start(user_job)
+        except BaseException as exc:
+            error = exc
+
+        assert type(error) is UserBaseError
+        sys.excepthook(type(error), error, error.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
 
 
 class TestSentryDelivery:
