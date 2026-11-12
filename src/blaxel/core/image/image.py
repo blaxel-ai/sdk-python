@@ -13,7 +13,7 @@ import zipfile
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Mapping
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -39,6 +39,7 @@ from ..client.pagination import (
     normalize_cursor,
 )
 from ..client.types import Response
+from ..common.polling import poll_delay_seconds
 
 SANDBOX_API_IMAGE = "ghcr.io/blaxel-ai/sandbox"
 SANDBOX_API_PATH = "/usr/local/bin/sandbox-api"
@@ -58,7 +59,9 @@ MAX_BUILD_UPLOAD_LABEL_VALUE = 64
 # The builder ignores a region that is not a resource name, so reject it here.
 BUILD_REGION_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
 # Where `bl deploy` puts registry credentials in the build context. The builder
-# pulls FROM images with them and leaves the file out of the image.
+# pulls FROM images with them. The sandbox builder leaves the file out of the
+# image. On a workspace still on the older builder, until builds that carry the
+# file are routed to the sandbox builder, a COPY of the whole context copies it.
 BUILD_DOCKER_CONFIG_PATH = Path(".docker") / "config.json"
 
 
@@ -135,10 +138,80 @@ def _signed_build_metadata(
     return metadata, [name for name in requested if name not in metadata]
 
 
+QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
+
+
+# Text of the build-backlog 429 from control planes that send it without a code.
+BUILD_BACKLOG_TEXT = "builds are waiting"
+_RETRYABLE_LIMIT_CODES = (
+    "WORKSPACE_RATE_LIMIT_EXCEEDED",
+    "RATE_LIMIT_EXCEEDED",
+    "BUILD_QUEUE_FULL",
+)
+
+
+def _header(headers: Mapping[str, str] | None, name: str) -> str | None:
+    for key, value in (headers or {}).items():
+        if isinstance(key, str) and key.lower() == name:
+            return str(value).strip()
+    return None
+
+
+def _limit_hint(status: int, content: bytes, headers: Mapping[str, str] | None = None) -> str:
+    """Whether a rejected build request can be retried, for quota and limit 429s.
+
+    The server's signal wins: the X-Should-Retry header, then the body's
+    ``retryable``, then its string ``code``. Only a body with the numeric code
+    429 and no signal (older control planes) falls back to the text: the
+    build-backlog refusal ("builds are waiting") clears once builds finish,
+    any other message linking the plan quotas page is a quota.
+    """
+    if status != 429:
+        return ""
+    try:
+        body = json.loads(content)
+    except (UnicodeDecodeError, ValueError):
+        body = None
+    if not isinstance(body, dict):
+        body = {}
+    code, message = body.get("code"), body.get("error") or body.get("message")
+    message = message if isinstance(message, str) else ""
+    backlog = code == "BUILD_QUEUE_FULL" or (code == 429 and BUILD_BACKLOG_TEXT in message)
+    quota = code == "QUOTA_EXCEEDED" or (
+        code == 429 and not backlog and "/account/plan-quotas" in message
+    )
+
+    should_retry = (_header(headers, "x-should-retry") or "").lower()
+    if should_retry in ("true", "false"):
+        retryable: bool | None = should_retry == "true"
+    elif isinstance(body.get("retryable"), bool):
+        retryable = body["retryable"]
+    elif quota:
+        retryable = False
+    elif backlog or code in _RETRYABLE_LIMIT_CODES:
+        retryable = True
+    else:
+        retryable = None
+
+    if retryable is False:
+        if quota:
+            return f" (not retryable until usage drops or the quota is raised: {QUOTAS_DOC_URL})"
+        return " (the server says not to retry)"
+    if retryable is None:
+        return ""
+    wait = _header(headers, "retry-after")
+    after = f"after {wait} s" if wait and wait.isdigit() else "with backoff"
+    if backlog:
+        return f" (the account's build queue is full: retry {after}, once some builds finish)"
+    return f" (rate limited: retry {after})"
+
+
 def _check_upload_response(response: Response[Sandbox], upload_url: str | None) -> str:
     if response.status_code.value >= 400:
+        status = response.status_code.value
         raise RuntimeError(
-            f"Failed to create sandbox: {response.status_code.value} - {response.content.decode()}"
+            f"Failed to create sandbox: {status} - {response.content.decode()}"
+            + _limit_hint(status, response.content, response.headers)
         )
     if not upload_url:
         raise RuntimeError("No upload URL returned from API")
@@ -1347,7 +1420,8 @@ class ImageInstance:
         Args:
             name: Sandbox name
             timeout: Maximum time to wait in seconds (default 15 minutes)
-            poll_interval: Time between status checks in seconds
+            poll_interval: Delay before the second status check in seconds;
+                later checks back off with jitter up to 30 seconds
             on_status_change: Optional callback for status changes
 
         Returns:
@@ -1362,7 +1436,8 @@ class ImageInstance:
         terminal_states = {"DEPLOYED", "FAILED", "TERMINATED"}
         build_started = False
 
-        while time.time() - start_time < timeout:
+        attempt = 0
+        while True:
             status = self._get_sandbox_status_sync(name)
 
             if status and status != last_status:
@@ -1384,7 +1459,14 @@ class ImageInstance:
                 if status == "DEPLOYED" and build_started:
                     return status
 
-            time.sleep(poll_interval)
+            remaining = timeout - (time.time() - start_time)
+            if remaining <= 0:
+                break
+            # Until the build is seen running, read at the first interval: a
+            # rebuild that starts and ends inside one long sleep would be missed.
+            if build_started:
+                attempt += 1
+            time.sleep(min(poll_delay_seconds(max(attempt, 1), poll_interval), remaining))
 
         raise TimeoutError(f"Deployment timed out after {timeout} seconds")
 
@@ -1401,7 +1483,8 @@ class ImageInstance:
         Args:
             name: Sandbox name
             timeout: Maximum time to wait in seconds (default 15 minutes)
-            poll_interval: Time between status checks in seconds
+            poll_interval: Delay before the second status check in seconds;
+                later checks back off with jitter up to 30 seconds
             on_status_change: Optional callback for status changes
 
         Returns:
@@ -1416,7 +1499,8 @@ class ImageInstance:
         terminal_states = {"DEPLOYED", "FAILED", "TERMINATED"}
         build_started = False
 
-        while time.time() - start_time < timeout:
+        attempt = 0
+        while True:
             status = await self._get_sandbox_status(name)
 
             if status and status != last_status:
@@ -1438,7 +1522,14 @@ class ImageInstance:
                 if status == "DEPLOYED" and build_started:
                     return status
 
-            await asyncio.sleep(poll_interval)
+            remaining = timeout - (time.time() - start_time)
+            if remaining <= 0:
+                break
+            # Until the build is seen running, read at the first interval: a
+            # rebuild that starts and ends inside one long sleep would be missed.
+            if build_started:
+                attempt += 1
+            await asyncio.sleep(min(poll_delay_seconds(max(attempt, 1), poll_interval), remaining))
 
         raise TimeoutError(f"Deployment timed out after {timeout} seconds")
 
@@ -1471,6 +1562,8 @@ class ImageInstance:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
+                The build status is read every few seconds at first, then less
+                often (with jitter, up to every 30 seconds) as the build runs.
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
             build_memory: Memory of the environment the image is built in, in MB
@@ -1485,7 +1578,11 @@ class ImageInstance:
                 Docker config.json format (``{"auths": {"ghcr.io": {"auth": "<base64
                 user:token>"}}}``), as a dict or JSON text. Same as ``bl deploy
                 --registry-cred``; use it for private images or to avoid Docker Hub
-                pull rate limits. The builder keeps it out of the image.
+                pull rate limits. The sandbox builder keeps the credentials out of
+                the image. Builds that carry them are being moved onto it; until
+                that reaches a workspace still on the older builder, a Dockerfile
+                step there that copies the whole build context also copies
+                ``.docker/config.json``.
 
         Returns:
             The deployed Sandbox object
@@ -1582,6 +1679,8 @@ class ImageInstance:
             name: Name for the sandbox
             memory: Memory in MB (default 4096)
             timeout: Maximum time to wait for deployment in seconds (default 15 minutes)
+                The build status is read every few seconds at first, then less
+                often (with jitter, up to every 30 seconds) as the build runs.
             on_status_change: Optional callback called when status changes
             sandbox_version: Version of sandbox-api to use (default "latest")
             build_memory: Memory of the environment the image is built in, in MB
@@ -1596,7 +1695,11 @@ class ImageInstance:
                 Docker config.json format (``{"auths": {"ghcr.io": {"auth": "<base64
                 user:token>"}}}``), as a dict or JSON text. Same as ``bl deploy
                 --registry-cred``; use it for private images or to avoid Docker Hub
-                pull rate limits. The builder keeps it out of the image.
+                pull rate limits. The sandbox builder keeps the credentials out of
+                the image. Builds that carry them are being moved onto it; until
+                that reaches a workspace still on the older builder, a Dockerfile
+                step there that copies the whole build context also copies
+                ``.docker/config.json``.
 
         Returns:
             The deployed Sandbox object

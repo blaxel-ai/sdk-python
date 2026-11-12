@@ -42,6 +42,7 @@ from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import PaginatedList, make_paginated_list, normalize_cursor
 from ...client.types import UNSET, Unset
+from ...common.polling import poll_delay_seconds
 from ...common.settings import settings
 from ..default.sandbox import (
     ARCHIVE_ENTRY_MAX_WAIT_MS,
@@ -53,11 +54,11 @@ from ..default.sandbox import (
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     SandboxAPIError,
-    _create_auth_retry_delay,
+    _create_auth_retry_wait,
     _create_body,
-    _create_error_message,
+    _create_error,
     _creation_client,
-    _error_status,
+    _explain_create_error,
     _is_transient_create_auth_failure,
     _notify_region_unset,
     _raise_if_creation_timeout,
@@ -145,8 +146,15 @@ class _SyncSandboxCallDescriptor:
         deadline = time.monotonic() + max_wait / 1000
         entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
         started = False
+        attempt = 0
         while True:
-            time.sleep(interval / 1000)
+            # Until the operation is seen pending, read at the first interval:
+            # a backed-off sleep could pass the entry grace window or miss a
+            # short pending status.
+            if started:
+                attempt += 1
+            remaining = max(deadline - time.monotonic(), 0.0)
+            time.sleep(min(poll_delay_seconds(max(attempt, 1), interval / 1000), remaining))
             response = get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
@@ -565,6 +573,13 @@ class SyncSandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
+            blaxel.core.client.errors.QuotaExceededError: HTTP 429
+                QUOTA_EXCEEDED. Not retryable until usage drops or the quota is
+                raised; it is not a RateLimitError.
+            blaxel.core.client.errors.RateLimitError: HTTP 429 rate limit
+                (WORKSPACE_RATE_LIMIT_EXCEEDED or RATE_LIMIT_EXCEEDED).
+                ``retryable`` is True; ``retry_after_seconds`` says how long
+                to wait when the server says.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 
@@ -743,22 +758,22 @@ class SyncSandboxInstance:
                 except client_errors.UnexpectedStatus as e:
                     _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        _explain_create_error(e)
                         raise
+                    failure: object = e
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
                         response
                     ):
                         break
+                    failure = response
                 logger.debug("Sandbox creation hit a transient authentication failure, retrying")
-                time.sleep(_create_auth_retry_delay(attempts))
+                time.sleep(_create_auth_retry_wait(failure, attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = _error_status(response)
-                code = response.code if response.code else None
-                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
-                raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+                raise _create_error(response, _sandbox_name(sandbox), attempts)
 
             if create_if_not_exist:
                 # The sandbox already holding the name comes back as is, whatever it was
@@ -1230,6 +1245,10 @@ SyncSandboxInstance.archive = _SyncSandboxCallDescriptor(
     saved processes start again from their configuration when the sandbox is
     unarchived. The export runs in the background: this waits until the sandbox
     is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )
 SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
@@ -1245,5 +1264,9 @@ SyncSandboxInstance.unarchive = _SyncSandboxCallDescriptor(
     filesystem is written back over its image. This waits until the restore is
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )

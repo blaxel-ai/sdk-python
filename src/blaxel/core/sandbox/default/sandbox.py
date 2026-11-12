@@ -1,8 +1,11 @@
 import asyncio
 import json
 import logging
+import math
 import time
 import warnings
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 from attrs import evolve
@@ -47,6 +50,7 @@ from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, normalize_cursor
 from ...client.types import UNSET, Unset
+from ...common.polling import poll_delay_seconds
 from ...common.settings import settings
 from ...errors import _APIError
 from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
@@ -191,7 +195,11 @@ def _is_transient_create_auth_failure(error: object) -> bool:
     if isinstance(error, SandboxError):
         return _error_status(error) == 403 and error.code == "UNAUTHORIZED"
     if isinstance(error, client_errors.UnexpectedStatus):
-        return error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE"
+        return (
+            error.status_code == 503
+            and error.code == "AUTHENTICATION_UNAVAILABLE"
+            and _auth_unavailable_signal(error)[0]
+        )
     return False
 
 
@@ -199,6 +207,15 @@ def _create_auth_retry_delay(attempt: int) -> float:
     return _backoff_delay_seconds(
         attempt, CREATE_AUTH_RETRY_BASE_DELAY_SECONDS, CREATE_AUTH_RETRY_MAX_DELAY_SECONDS
     )
+
+
+def _create_auth_retry_wait(error: object, attempt: int) -> float:
+    """Seconds before the next creation attempt: the server's Retry-After wins."""
+    if isinstance(error, client_errors.UnexpectedStatus):
+        wait = _auth_unavailable_signal(error)[1]
+        if wait is not None:
+            return float(wait)
+    return _create_auth_retry_delay(attempt)
 
 
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
@@ -217,12 +234,176 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
             f" (BL_API_KEY and BL_WORKSPACE, or `bl login`{current}); if they are right,"
             " retry in a few seconds."
         )
+    explained = _limit_explanation(_error_status(error), error.code, error.message, None)
+    if explained is not None:
+        return explained[0]
     if _error_status(error) == 400:
         hint = _invalid_name_hint(sandbox_name)
         if hint and message and not message.endswith((".", "!", "?")):
             message += "."
         return message + hint
     return message
+
+
+QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
+EDGE_BLOCKED_MESSAGE = (
+    "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
+    " throttled before the API could answer it, for example by an edge rate limit or"
+    " firewall block. Slow down and retry after about 60 s. Blaxel quota and"
+    " permission errors carry a JSON error code"
+)
+_RATE_LIMIT_REASONS = {
+    "WORKSPACE_RATE_LIMIT_EXCEEDED": "too many creations in flight in this workspace",
+    "RATE_LIMIT_EXCEEDED": "the region's creation rate limit was reached",
+}
+
+
+def _retry_after_seconds(error: client_errors.UnexpectedStatus) -> int | None:
+    """Seconds to wait from the server's retry_after (Retry-After header or body)."""
+    seconds = getattr(error, "retry_after_seconds", None)
+    if seconds is not None:
+        return seconds
+    value = getattr(error, "retry_after", None)  # an HTTP date, already normalized
+    if not value:
+        return None
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    return max(0, math.ceil((retry_at - datetime.now(timezone.utc)).total_seconds()))
+
+
+def _server_message(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        message = source.get("message")
+        if isinstance(message, str) and message:
+            return message
+    return None
+
+
+def _has_json_error_body(content: bytes) -> bool:
+    try:
+        return isinstance(json.loads(content), dict)
+    except (UnicodeDecodeError, ValueError, RecursionError):
+        return False
+
+
+def _limit_explanation(
+    status: int | None, code: Any, server_message: str | None, wait: int | None
+) -> tuple[str, bool] | None:
+    """Message and retryable flag for a creation rejected by a quota or rate limit.
+
+    QUOTA_EXCEEDED is HTTP 429 for an account quota, and for one ephemeral volume
+    over the per-volume maximum on PUT /sandboxes/{name} and jobs; create and fork
+    answer that one with 400. Retrying the same request does not help. The rate
+    limit codes clear on their own. The SDK itself retries none of them.
+    """
+    if code == "QUOTA_EXCEEDED" and status in (400, 429):
+        if status == 400:
+            advice = "not retryable as is; request a smaller volume or raise the quota"
+        else:
+            advice = (
+                "not retryable until usage drops, the request asks for less (such as a"
+                " smaller volume), or the quota is raised"
+            )
+        message = server_message or "Quota exceeded"
+        return f"{message} (HTTP {status} QUOTA_EXCEEDED: {advice}: {QUOTAS_DOC_URL})", False
+    if status == 429 and code in _RATE_LIMIT_REASONS:
+        advice = f"retry after {wait} s" if wait is not None else "retry with backoff"
+        message = server_message or "Rate limit exceeded"
+        return f"{message} (HTTP 429 {code}: {_RATE_LIMIT_REASONS[code]}; {advice})", True
+    return None
+
+
+def _auth_unavailable_signal(error: client_errors.UnexpectedStatus) -> tuple[bool, int | None]:
+    """Retryable flag and wait in seconds for a 503 AUTHENTICATION_UNAVAILABLE.
+
+    The server's signal wins: the X-Should-Retry header, then the body's
+    ``retryable``; Retry-After gives the wait. Without a signal it is retryable.
+    """
+    headers = error.response.headers if error.response is not None else None
+    retryable = client_errors._should_retry_header(headers)
+    if retryable is None:
+        retryable = error.retryable if isinstance(error.retryable, bool) else True
+    value = client_errors._retry_after_header(headers)
+    if value is None and isinstance(error.body, dict):
+        for key in ("retry_after", "retryAfter", "retry_after_seconds"):
+            value = client_errors._safe_retry_after_value(error.body.get(key))
+            if value is not None:
+                break
+    wait = int(value) if value is not None and value.isdigit() else None
+    return retryable, wait
+
+
+def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
+    """Say in the message whether a rejected creation can be retried.
+
+    Quota and rate-limit errors share HTTP 429 but need opposite handling;
+    ``retryable`` says which. A 403 without a JSON error body is not a quota: it
+    was blocked or throttled before the API could answer it. A 503
+    AUTHENTICATION_UNAVAILABLE is the API failing to check credentials for a
+    moment, not a credential or permission problem.
+    """
+    if error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE":
+        error.retryable, wait = _auth_unavailable_signal(error)
+        error.retry_after_seconds = wait
+        advice = f"retry after {wait} s" if wait is not None else "retry in a few seconds"
+        if not error.retryable:
+            advice = "the server says not to retry"
+        server = _server_message(error.body) or "Unable to verify credentials"
+        message = (
+            f"{server} (HTTP 503 AUTHENTICATION_UNAVAILABLE: the API could not check"
+            f" credentials for a moment; not a credential or permission error; {advice})"
+        )
+    elif error.status_code == 403 and not _has_json_error_body(error.content):
+        message = EDGE_BLOCKED_MESSAGE
+    else:
+        wait = _retry_after_seconds(error)
+        explained = _limit_explanation(
+            error.status_code, error.code, _server_message(error.body), wait
+        )
+        if explained is None:
+            return
+        message, error.retryable = explained
+        if error.retryable:
+            error.retry_after_seconds = wait
+    error.message = message
+    error.args = (message,)
+
+
+def _create_error(
+    error: SandboxError, sandbox_name: str | None, attempts: int
+) -> client_errors.UnexpectedStatus | SandboxAPIError:
+    """Exception for a creation the API rejected with a modeled error body.
+
+    A 429 raises what it raised before CreateSandbox modeled 429:
+    QuotaExceededError for QUOTA_EXCEEDED, RateLimitError for the rate limits.
+    Everything else is SandboxAPIError.
+    """
+    status_code = _error_status(error)
+    if status_code == 429:
+        response = error._response
+        if response is not None:
+            limit_error = client_errors.from_response(
+                429, response.content, response.headers, response=response
+            )
+        else:
+            limit_error = client_errors.from_response(429, json.dumps(error.to_dict()).encode())
+        _explain_create_error(limit_error)
+        return limit_error
+    code = error.code if error.code else None
+    api_error = SandboxAPIError(
+        _create_error_message(error, sandbox_name, attempts),
+        status_code=status_code,
+        code=code,
+        error=error,
+    )
+    if _limit_explanation(status_code, code, None, None) is not None:
+        api_error.retryable = False
+    return api_error
 
 
 _region_notice_shown = False
@@ -378,8 +559,17 @@ class _AsyncSandboxCallDescriptor:
         deadline = time.monotonic() + max_wait / 1000
         entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
         started = False
+        attempt = 0
         while True:
-            await asyncio.sleep(interval / 1000)
+            # Until the operation is seen pending, read at the first interval:
+            # a backed-off sleep could pass the entry grace window or miss a
+            # short pending status.
+            if started:
+                attempt += 1
+            remaining = max(deadline - time.monotonic(), 0.0)
+            await asyncio.sleep(
+                min(poll_delay_seconds(max(attempt, 1), interval / 1000), remaining)
+            )
             response = await get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
@@ -754,7 +944,7 @@ class SandboxInstance:
         A creation rejected by a transient authentication failure (403
         ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
         before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
-        times with a short backoff.
+        times with a short backoff, or after the server's Retry-After.
 
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
@@ -804,8 +994,18 @@ class SandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
+            blaxel.core.client.errors.QuotaExceededError: HTTP 429
+                QUOTA_EXCEEDED. Not retryable until usage drops or the quota is
+                raised; it is not a RateLimitError.
+            blaxel.core.client.errors.RateLimitError: HTTP 429 rate limit
+                (WORKSPACE_RATE_LIMIT_EXCEEDED or RATE_LIMIT_EXCEEDED).
+                ``retryable`` is True; ``retry_after_seconds`` says how long
+                to wait when the server says.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
-                does not document for this call.
+                does not document for this call. HTTP 503
+                AUTHENTICATION_UNAVAILABLE (the API could not check credentials
+                for a moment) is not a credential error: ``retryable`` is True
+                and ``retry_after_seconds`` holds the server's wait.
 
         Example:
             ```python
@@ -999,22 +1199,22 @@ class SandboxInstance:
                 except client_errors.UnexpectedStatus as e:
                     _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        _explain_create_error(e)
                         raise
+                    failure: object = e
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
                         response
                     ):
                         break
+                    failure = response
                 logger.debug("Sandbox creation hit a transient authentication failure, retrying")
-                await asyncio.sleep(_create_auth_retry_delay(attempts))
+                await asyncio.sleep(_create_auth_retry_wait(failure, attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = _error_status(response)
-                code = response.code if response.code else None
-                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
-                raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+                raise _create_error(response, _sandbox_name(sandbox), attempts)
 
             assert response is not None
             if create_if_not_exist:
@@ -1508,6 +1708,10 @@ SandboxInstance.archive = _AsyncSandboxCallDescriptor(
     saved processes start again from their configuration when the sandbox is
     unarchived. The export runs in the background: this waits until the sandbox
     is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )
 SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
@@ -1523,5 +1727,9 @@ SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
     filesystem is written back over its image. This waits until the restore is
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )

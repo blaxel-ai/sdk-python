@@ -36,7 +36,6 @@ CONFIG = {"name": "agent-errors", "region": "us-pdx-1"}
 @pytest.fixture(autouse=True)
 def no_retry_delay(monkeypatch):
     monkeypatch.setattr("blaxel.core.sandbox.default.sandbox._create_auth_retry_delay", lambda _: 0)
-    monkeypatch.setattr("blaxel.core.sandbox.sync.sandbox._create_auth_retry_delay", lambda _: 0)
 
 
 def _created(name: str = "agent-errors") -> Sandbox:
@@ -111,6 +110,58 @@ async def test_persistent_auth_unavailable_reraises_the_original_error():
 
         assert excinfo.value.status_code == 503
         assert mock_create.await_count == CREATE_AUTH_RETRIES + 1
+
+
+def _auth_unavailable_response(headers: dict[str, str]) -> client_errors.UnexpectedStatus:
+    body = {
+        "code": "AUTHENTICATION_UNAVAILABLE",
+        "message": "Unable to verify credentials, please retry",
+        "retryable": True,
+    }
+    content = json.dumps(body).encode()
+    response = httpx.Response(503, content=content, headers=headers)
+    return client_errors.from_response(503, content, response.headers, response=response)
+
+
+async def test_auth_unavailable_waits_retry_after_and_is_not_called_an_auth_error():
+    """503 AUTHENTICATION_UNAVAILABLE: the server's Retry-After sets the wait between
+    attempts and on the final error, which says it is not a credential problem."""
+    sleeps: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    with (
+        patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create,
+        patch.object(async_module.asyncio, "sleep", fake_sleep),
+    ):
+        mock_create.side_effect = lambda **_: (_ for _ in ()).throw(
+            _auth_unavailable_response({"Retry-After": "7"})
+        )
+
+        with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    assert sleeps == [7.0] * CREATE_AUTH_RETRIES
+    error = excinfo.value
+    assert error.retryable is True
+    assert error.retry_after_seconds == 7
+    message = str(error)
+    assert "HTTP 503 AUTHENTICATION_UNAVAILABLE" in message
+    assert "not a credential or permission error; retry after 7 s" in message
+    assert "BL_API_KEY" not in message
+
+
+async def test_auth_unavailable_is_not_retried_when_the_server_says_no():
+    with patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create:
+        mock_create.side_effect = _auth_unavailable_response({"X-Should-Retry": "false"})
+
+        with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    mock_create.assert_awaited_once()
+    assert excinfo.value.retryable is False
+    assert "the server says not to retry" in str(excinfo.value)
 
 
 @pytest.mark.parametrize(
@@ -348,3 +399,261 @@ def test_sync_list_on_empty_workspace_returns_empty_page(monkeypatch, body):
     assert list(page) == []
     assert page.data == []
     assert page.has_more is False
+
+
+# Limits and edge blocks: each answer goes through the real generated client.
+
+
+def _mock_create(monkeypatch, status, content=b"", headers=None):
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("/sandboxes")
+        calls.append(request)
+        return httpx.Response(status, content=content, headers=headers or {})
+
+    mock_client = Client(
+        base_url="https://api.test/v0",
+        httpx_args={"transport": httpx.MockTransport(handler)},
+    )
+    monkeypatch.setattr("blaxel.core.sandbox.default.sandbox.client", mock_client)
+    monkeypatch.setattr("blaxel.core.sandbox.sync.sandbox.client", mock_client)
+    return calls
+
+
+def _limit_body(code: str, message: str) -> bytes:
+    return json.dumps({"code": code, "message": message, "status_code": 429}).encode()
+
+
+async def test_quota_exceeded_says_it_is_not_retryable(monkeypatch):
+    calls = _mock_create(
+        monkeypatch,
+        429,
+        _limit_body("QUOTA_EXCEEDED", "Sandbox quota exceeded"),
+        {"Retry-After": "5"},
+    )
+
+    with pytest.raises(client_errors.QuotaExceededError) as excinfo:
+        await SandboxInstance.create(CONFIG)
+
+    error = excinfo.value
+    assert not isinstance(error, client_errors.RateLimitError)
+    assert len(calls) == 1
+    assert error.code == "QUOTA_EXCEEDED"
+    assert error.retryable is False
+    assert str(error) == (
+        "Sandbox quota exceeded (HTTP 429 QUOTA_EXCEEDED: not retryable until usage drops,"
+        " the request asks for less (such as a smaller volume), or the quota is raised:"
+        " https://docs.blaxel.ai/Security/Quotas)"
+    )
+    assert error.message == str(error)
+
+
+async def test_workspace_rate_limit_says_when_to_retry(monkeypatch):
+    calls = _mock_create(
+        monkeypatch,
+        429,
+        _limit_body("WORKSPACE_RATE_LIMIT_EXCEEDED", "Too many sandbox creations"),
+        {"Retry-After": "7"},
+    )
+
+    with pytest.raises(client_errors.RateLimitError) as excinfo:
+        await SandboxInstance.create(CONFIG)
+
+    error = excinfo.value
+    assert len(calls) == 1
+    assert error.retryable is True
+    assert error.retry_after_seconds == 7
+    assert str(error) == (
+        "Too many sandbox creations (HTTP 429 WORKSPACE_RATE_LIMIT_EXCEEDED: too many"
+        " creations in flight in this workspace; retry after 7 s)"
+    )
+
+
+def test_sync_workspace_rate_limit_without_retry_after_says_to_back_off(monkeypatch):
+    _mock_create(
+        monkeypatch, 429, _limit_body("WORKSPACE_RATE_LIMIT_EXCEEDED", "Too many sandbox creations")
+    )
+
+    with pytest.raises(client_errors.RateLimitError) as excinfo:
+        SyncSandboxInstance.create(CONFIG)
+
+    assert excinfo.value.retryable is True
+    assert excinfo.value.retry_after_seconds is None
+    assert str(excinfo.value).endswith("in flight in this workspace; retry with backoff)")
+
+
+EDGE_HTML = b"<!DOCTYPE HTML><HTML><BODY><H1>403 ERROR</H1>Generated by cloudfront</BODY></HTML>"
+
+
+@pytest.mark.parametrize("sync", [False, True])
+@pytest.mark.parametrize("content", [b"", b"403 Request blocked", EDGE_HTML])
+async def test_403_without_json_says_it_is_not_a_quota_and_was_blocked_before_the_api(
+    monkeypatch, sync, content
+):
+    calls = _mock_create(monkeypatch, 403, content, {"Content-Type": "text/html"})
+
+    with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+        if sync:
+            SyncSandboxInstance.create(CONFIG)
+        else:
+            await SandboxInstance.create(CONFIG)
+
+    assert len(calls) == 1
+    assert excinfo.value.status_code == 403
+    assert str(excinfo.value) == (
+        "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
+        " throttled before the API could answer it, for example by an edge rate limit or"
+        " firewall block. Slow down and retry after about 60 s. Blaxel quota and"
+        " permission errors carry a JSON error code"
+    )
+
+
+async def test_json_403_is_not_called_an_edge_block():
+    with patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create:
+        mock_create.return_value = SandboxError(
+            code="UNAUTHORIZED_WORKSPACE", message="no write access", status_code=403
+        )
+
+        with pytest.raises(SandboxAPIError) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    assert str(excinfo.value) == "no write access"
+
+
+def _modeled(status: int, code: str, message: str, headers=None) -> SandboxError:
+    """A limit error as the generated client returns it once the spec models the status."""
+    body = {"code": code, "message": message, "status_code": status}
+    error = SandboxError.from_dict(body)
+    client_errors.retain_response(error, httpx.Response(status, json=body, headers=headers or {}))
+    return error
+
+
+@pytest.mark.parametrize("sync", [False, True])
+async def test_modeled_429_quota_raises_quota_exceeded_error(sync):
+    error = _modeled(429, "QUOTA_EXCEEDED", "Sandbox quota exceeded")
+    target = SYNC_CREATE if sync else ASYNC_CREATE
+    with patch(target, **({} if sync else {"new_callable": AsyncMock})) as mock_create:
+        mock_create.return_value = error
+
+        with pytest.raises(client_errors.QuotaExceededError) as excinfo:
+            if sync:
+                SyncSandboxInstance.create(CONFIG)
+            else:
+                await SandboxInstance.create(CONFIG)
+
+    assert excinfo.value.status_code == 429
+    assert excinfo.value.code == "QUOTA_EXCEEDED"
+    assert excinfo.value.retryable is False
+    assert "not retryable until usage drops, the request asks for less" in str(excinfo.value)
+
+
+async def test_modeled_429_rate_limit_keeps_retry_after():
+    error = _modeled(
+        429, "WORKSPACE_RATE_LIMIT_EXCEEDED", "Too many sandbox creations", {"Retry-After": "3"}
+    )
+    with patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create:
+        mock_create.return_value = error
+
+        with pytest.raises(client_errors.RateLimitError) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    assert excinfo.value.retryable is True
+    assert excinfo.value.retry_after_seconds == 3
+    assert str(excinfo.value).endswith("retry after 3 s)")
+
+
+async def test_cluster_rate_limit_is_retryable(monkeypatch):
+    _mock_create(monkeypatch, 429, _limit_body("RATE_LIMIT_EXCEEDED", "rate limit exceeded"))
+
+    with pytest.raises(client_errors.RateLimitError) as excinfo:
+        await SandboxInstance.create(CONFIG)
+
+    assert excinfo.value.retryable is True
+    assert str(excinfo.value) == (
+        "rate limit exceeded (HTTP 429 RATE_LIMIT_EXCEEDED: the region's creation rate limit"
+        " was reached; retry with backoff)"
+    )
+
+
+@pytest.mark.parametrize("sync", [False, True])
+async def test_volume_over_per_volume_maximum_is_not_retryable(sync):
+    message = "Ephemeral volume 'scratch' size 900000 MB exceeds maximum allowed size"
+    error = _modeled(400, "QUOTA_EXCEEDED", message)
+    target = SYNC_CREATE if sync else ASYNC_CREATE
+    with patch(target, **({} if sync else {"new_callable": AsyncMock})) as mock_create:
+        mock_create.return_value = error
+
+        with pytest.raises(SandboxAPIError) as excinfo:
+            if sync:
+                SyncSandboxInstance.create(CONFIG)
+            else:
+                await SandboxInstance.create(CONFIG)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.code == "QUOTA_EXCEEDED"
+    assert excinfo.value.retryable is False
+    assert str(excinfo.value) == (
+        f"{message} (HTTP 400 QUOTA_EXCEEDED: not retryable as is; request a smaller volume"
+        " or raise the quota: https://docs.blaxel.ai/Security/Quotas)"
+    )
+
+
+def test_image_build_quota_429_says_it_is_not_retryable():
+    from blaxel.core.image.image import _limit_hint
+
+    old_server = json.dumps(
+        {
+            "error": "Image storage quota reached: 10/10 MiB used by images across your"
+            " workspaces. Delete unused images before building again, or request additional"
+            " quota at https://app.blaxel.ai/account/plan-quotas?id=acc",
+            "code": 429,
+        }
+    ).encode()
+    new_server = _limit_body("QUOTA_EXCEEDED", "Image storage quota reached")
+    for content in (old_server, new_server):
+        assert _limit_hint(429, content).startswith(
+            " (not retryable until usage drops or the quota is raised"
+        )
+    assert _limit_hint(429, b'{"error": "slow down", "code": 429}') == ""
+    assert _limit_hint(429, _limit_body("RATE_LIMIT_EXCEEDED", "x")) == (
+        " (rate limited: retry with backoff)"
+    )
+    assert _limit_hint(400, new_server) == ""
+
+
+def test_image_build_backlog_429_is_retryable_not_a_quota():
+    from blaxel.core.image.image import _limit_hint
+
+    backlog = (
+        "Too many image builds are waiting for this account: 40 queued builds reserve"
+        " 327680 MB of memory, 1310720 MB of scratch disk and 160 vCPUs, and the queue"
+        " holds at most five times your build quota. Retry once some builds finish, or"
+        " upgrade your tier at https://app.blaxel.ai/account/plan-quotas?id=acc"
+    )
+    old_server = json.dumps({"error": backlog, "code": 429}).encode()
+    assert _limit_hint(429, old_server) == (
+        " (the account's build queue is full: retry with backoff, once some builds finish)"
+    )
+    named = json.dumps(
+        {"error": backlog, "code": "BUILD_QUEUE_FULL", "message": backlog, "retryable": True}
+    ).encode()
+    assert _limit_hint(429, named, {"X-Should-Retry": "true", "Retry-After": "12"}) == (
+        " (the account's build queue is full: retry after 12 s, once some builds finish)"
+    )
+
+
+def test_image_build_limit_hint_follows_the_server_signal_over_the_link():
+    from blaxel.core.image.image import _limit_hint
+
+    linked = json.dumps(
+        {"error": "over quota, see https://app.blaxel.ai/account/plan-quotas?id=acc", "code": 429}
+    ).encode()
+    assert _limit_hint(429, linked, {"x-should-retry": "true"}) == (
+        " (rate limited: retry with backoff)"
+    )
+    assert _limit_hint(
+        429, _limit_body("RATE_LIMIT_EXCEEDED", "x"), {"X-Should-Retry": "false"}
+    ) == (" (the server says not to retry)")
+    retryable_body = json.dumps({"error": "busy", "code": 429, "retryable": True}).encode()
+    assert _limit_hint(429, retryable_body) == " (rate limited: retry with backoff)"

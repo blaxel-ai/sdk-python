@@ -94,10 +94,36 @@ def _retry_after_header(headers: Mapping[str, str] | None) -> str | None:
     return None
 
 
+def _should_retry_header(headers: Mapping[str, str] | None) -> bool | None:
+    """The server's X-Should-Retry decision, which wins over the body and the status."""
+    if headers is None:
+        return None
+    for key, value in headers.items():
+        if isinstance(key, str) and key.lower() == "x-should-retry":
+            normalized = str(value).strip().lower()
+            if normalized in ("true", "false"):
+                return normalized == "true"
+    return None
+
+
 def retain_response(parsed: Any, response: httpx.Response) -> None:
     """Keep modeled error return values unchanged, but retain their HTTP metadata."""
     if hasattr(parsed, "_response"):
         parsed._response = _response_snapshot(response)
+
+
+def error_json(response: httpx.Response) -> Any:
+    """JSON body of a modeled error status.
+
+    An empty or non-JSON body (for example a 403 sent before the API could
+    answer) raises the typed error for the status instead of JSONDecodeError.
+    """
+    if response.content:
+        try:
+            return response.json()
+        except (UnicodeDecodeError, ValueError):
+            pass
+    raise from_response(response.status_code, response.content, response.headers, response=response)
 
 
 class UnexpectedStatus(BlaxelError):
@@ -139,7 +165,8 @@ class APIStatusError(UnexpectedStatus):
         self.error_code, legacy_retryable, body_retry_after = _extract_error_metadata(content)
         if self.code is None:
             self.code = self.error_code
-        self.retryable = legacy_retryable
+        header_retry = _should_retry_header(headers)
+        self.retryable = header_retry if header_retry is not None else legacy_retryable
         self.retry_after = _retry_after_header(headers) or body_retry_after
         self.retry_after_seconds = (
             int(self.retry_after)
@@ -162,7 +189,30 @@ class ConflictError(APIStatusError):
 
 
 class RateLimitError(APIStatusError):
-    """Raised for an undocumented HTTP 429 rate-limit response."""
+    """Raised for an undocumented HTTP 429 rate-limit response.
+
+    ``retryable`` and ``retry_after_seconds`` say whether and when to retry. An
+    HTTP 429 with code QUOTA_EXCEEDED raises QuotaExceededError instead.
+    """
+
+
+class QuotaExceededError(APIStatusError):
+    """Raised for an HTTP 429 with code QUOTA_EXCEEDED: a quota is used up.
+
+    Not a RateLimitError, because retrying does not help until usage drops or
+    the quota is raised. ``retryable`` is always False.
+    """
+
+    def __init__(
+        self,
+        status_code: int,
+        content: bytes,
+        headers: Mapping[str, str] | None = None,
+        *,
+        response: httpx.Response | None = None,
+    ):
+        super().__init__(status_code, content, headers, response=response)
+        self.retryable = False
 
 
 def from_response(
@@ -176,6 +226,8 @@ def from_response(
     if status_code == HTTPStatus.CONFLICT:
         return ConflictError(status_code, content, headers, response=response)
     if status_code == HTTPStatus.TOO_MANY_REQUESTS:
+        if _extract_error_metadata(content)[0] == "QUOTA_EXCEEDED":
+            return QuotaExceededError(status_code, content, headers, response=response)
         return RateLimitError(status_code, content, headers, response=response)
     return UnexpectedStatus(status_code, content, headers, response=response)
 
@@ -183,6 +235,7 @@ def from_response(
 __all__ = [
     "APIStatusError",
     "ConflictError",
+    "QuotaExceededError",
     "RateLimitError",
     "UnexpectedStatus",
     "from_response",
