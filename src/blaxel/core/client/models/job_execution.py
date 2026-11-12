@@ -96,9 +96,9 @@ class JobExecution:
         if not src_dict:
             return None
         d = dict(src_dict)
-        metadata = JobExecutionMetadata.from_dict(d.pop("metadata"))
+        metadata = JobExecutionMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = JobExecutionSpec.from_dict(d.pop("spec"))
+        spec = JobExecutionSpec.from_dict(d.pop("spec", UNSET))
 
         _stats = d.pop("stats", UNSET)
         stats: JobExecutionStats | Unset
