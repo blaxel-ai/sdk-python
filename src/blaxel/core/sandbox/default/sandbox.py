@@ -195,7 +195,11 @@ def _is_transient_create_auth_failure(error: object) -> bool:
     if isinstance(error, SandboxError):
         return _error_status(error) == 403 and error.code == "UNAUTHORIZED"
     if isinstance(error, client_errors.UnexpectedStatus):
-        return error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE"
+        return (
+            error.status_code == 503
+            and error.code == "AUTHENTICATION_UNAVAILABLE"
+            and _auth_unavailable_signal(error)[0]
+        )
     return False
 
 
@@ -203,6 +207,15 @@ def _create_auth_retry_delay(attempt: int) -> float:
     return _backoff_delay_seconds(
         attempt, CREATE_AUTH_RETRY_BASE_DELAY_SECONDS, CREATE_AUTH_RETRY_MAX_DELAY_SECONDS
     )
+
+
+def _create_auth_retry_wait(error: object, attempt: int) -> float:
+    """Seconds before the next creation attempt: the server's Retry-After wins."""
+    if isinstance(error, client_errors.UnexpectedStatus):
+        wait = _auth_unavailable_signal(error)[1]
+        if wait is not None:
+            return float(wait)
+    return _create_auth_retry_delay(attempt)
 
 
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
@@ -235,9 +248,9 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
 EDGE_BLOCKED_MESSAGE = (
     "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
-    " throttled before the API could answer it (an auth check that failed while the"
-    " backend was throttled, or an edge rate limit or firewall block). Slow down and"
-    " retry after about 60 s. Blaxel quota and permission errors carry a JSON error code"
+    " throttled before the API could answer it, for example by an edge rate limit or"
+    " firewall block. Slow down and retry after about 60 s. Blaxel quota and"
+    " permission errors carry a JSON error code"
 )
 _RATE_LIMIT_REASONS = {
     "WORKSPACE_RATE_LIMIT_EXCEEDED": "too many creations in flight in this workspace",
@@ -305,14 +318,47 @@ def _limit_explanation(
     return None
 
 
+def _auth_unavailable_signal(error: client_errors.UnexpectedStatus) -> tuple[bool, int | None]:
+    """Retryable flag and wait in seconds for a 503 AUTHENTICATION_UNAVAILABLE.
+
+    The server's signal wins: the X-Should-Retry header, then the body's
+    ``retryable``; Retry-After gives the wait. Without a signal it is retryable.
+    """
+    headers = error.response.headers if error.response is not None else None
+    retryable = client_errors._should_retry_header(headers)
+    if retryable is None:
+        retryable = error.retryable if isinstance(error.retryable, bool) else True
+    value = client_errors._retry_after_header(headers)
+    if value is None and isinstance(error.body, dict):
+        for key in ("retry_after", "retryAfter", "retry_after_seconds"):
+            value = client_errors._safe_retry_after_value(error.body.get(key))
+            if value is not None:
+                break
+    wait = int(value) if value is not None and value.isdigit() else None
+    return retryable, wait
+
+
 def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
     """Say in the message whether a rejected creation can be retried.
 
     Quota and rate-limit errors share HTTP 429 but need opposite handling;
     ``retryable`` says which. A 403 without a JSON error body is not a quota: it
-    was blocked or throttled before the API could answer it.
+    was blocked or throttled before the API could answer it. A 503
+    AUTHENTICATION_UNAVAILABLE is the API failing to check credentials for a
+    moment, not a credential or permission problem.
     """
-    if error.status_code == 403 and not _has_json_error_body(error.content):
+    if error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE":
+        error.retryable, wait = _auth_unavailable_signal(error)
+        error.retry_after_seconds = wait
+        advice = f"retry after {wait} s" if wait is not None else "retry in a few seconds"
+        if not error.retryable:
+            advice = "the server says not to retry"
+        server = _server_message(error.body) or "Unable to verify credentials"
+        message = (
+            f"{server} (HTTP 503 AUTHENTICATION_UNAVAILABLE: the API could not check"
+            f" credentials for a moment; not a credential or permission error; {advice})"
+        )
+    elif error.status_code == 403 and not _has_json_error_body(error.content):
         message = EDGE_BLOCKED_MESSAGE
     else:
         wait = _retry_after_seconds(error)
@@ -898,7 +944,7 @@ class SandboxInstance:
         A creation rejected by a transient authentication failure (403
         ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
         before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
-        times with a short backoff.
+        times with a short backoff, or after the server's Retry-After.
 
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
@@ -956,7 +1002,10 @@ class SandboxInstance:
                 ``retryable`` is True; ``retry_after_seconds`` says how long
                 to wait when the server says.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
-                does not document for this call.
+                does not document for this call. HTTP 503
+                AUTHENTICATION_UNAVAILABLE (the API could not check credentials
+                for a moment) is not a credential error: ``retryable`` is True
+                and ``retry_after_seconds`` holds the server's wait.
 
         Example:
             ```python
@@ -1152,13 +1201,15 @@ class SandboxInstance:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
                         _explain_create_error(e)
                         raise
+                    failure: object = e
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
                         response
                     ):
                         break
+                    failure = response
                 logger.debug("Sandbox creation hit a transient authentication failure, retrying")
-                await asyncio.sleep(_create_auth_retry_delay(attempts))
+                await asyncio.sleep(_create_auth_retry_wait(failure, attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):

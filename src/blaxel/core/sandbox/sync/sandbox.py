@@ -54,7 +54,7 @@ from ..default.sandbox import (
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     SandboxAPIError,
-    _create_auth_retry_delay,
+    _create_auth_retry_wait,
     _create_body,
     _create_error,
     _creation_client,
@@ -760,13 +760,15 @@ class SyncSandboxInstance:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
                         _explain_create_error(e)
                         raise
+                    failure: object = e
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
                         response
                     ):
                         break
+                    failure = response
                 logger.debug("Sandbox creation hit a transient authentication failure, retrying")
-                time.sleep(_create_auth_retry_delay(attempts))
+                time.sleep(_create_auth_retry_wait(failure, attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):

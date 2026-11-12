@@ -36,7 +36,6 @@ CONFIG = {"name": "agent-errors", "region": "us-pdx-1"}
 @pytest.fixture(autouse=True)
 def no_retry_delay(monkeypatch):
     monkeypatch.setattr("blaxel.core.sandbox.default.sandbox._create_auth_retry_delay", lambda _: 0)
-    monkeypatch.setattr("blaxel.core.sandbox.sync.sandbox._create_auth_retry_delay", lambda _: 0)
 
 
 def _created(name: str = "agent-errors") -> Sandbox:
@@ -111,6 +110,58 @@ async def test_persistent_auth_unavailable_reraises_the_original_error():
 
         assert excinfo.value.status_code == 503
         assert mock_create.await_count == CREATE_AUTH_RETRIES + 1
+
+
+def _auth_unavailable_response(headers: dict[str, str]) -> client_errors.UnexpectedStatus:
+    body = {
+        "code": "AUTHENTICATION_UNAVAILABLE",
+        "message": "Unable to verify credentials, please retry",
+        "retryable": True,
+    }
+    content = json.dumps(body).encode()
+    response = httpx.Response(503, content=content, headers=headers)
+    return client_errors.from_response(503, content, response.headers, response=response)
+
+
+async def test_auth_unavailable_waits_retry_after_and_is_not_called_an_auth_error():
+    """503 AUTHENTICATION_UNAVAILABLE: the server's Retry-After sets the wait between
+    attempts and on the final error, which says it is not a credential problem."""
+    sleeps: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    with (
+        patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create,
+        patch.object(async_module.asyncio, "sleep", fake_sleep),
+    ):
+        mock_create.side_effect = lambda **_: (_ for _ in ()).throw(
+            _auth_unavailable_response({"Retry-After": "7"})
+        )
+
+        with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    assert sleeps == [7.0] * CREATE_AUTH_RETRIES
+    error = excinfo.value
+    assert error.retryable is True
+    assert error.retry_after_seconds == 7
+    message = str(error)
+    assert "HTTP 503 AUTHENTICATION_UNAVAILABLE" in message
+    assert "not a credential or permission error; retry after 7 s" in message
+    assert "BL_API_KEY" not in message
+
+
+async def test_auth_unavailable_is_not_retried_when_the_server_says_no():
+    with patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create:
+        mock_create.side_effect = _auth_unavailable_response({"X-Should-Retry": "false"})
+
+        with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    mock_create.assert_awaited_once()
+    assert excinfo.value.retryable is False
+    assert "the server says not to retry" in str(excinfo.value)
 
 
 @pytest.mark.parametrize(
@@ -452,9 +503,9 @@ async def test_403_without_json_says_it_is_not_a_quota_and_was_blocked_before_th
     assert excinfo.value.status_code == 403
     assert str(excinfo.value) == (
         "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
-        " throttled before the API could answer it (an auth check that failed while the"
-        " backend was throttled, or an edge rate limit or firewall block). Slow down and"
-        " retry after about 60 s. Blaxel quota and permission errors carry a JSON error code"
+        " throttled before the API could answer it, for example by an edge rate limit or"
+        " firewall block. Slow down and retry after about 60 s. Blaxel quota and"
+        " permission errors carry a JSON error code"
     )
 
 
