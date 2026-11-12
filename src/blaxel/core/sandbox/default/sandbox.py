@@ -234,9 +234,10 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
 
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
 EDGE_BLOCKED_MESSAGE = (
-    "HTTP 403 without a JSON error body: likely an edge rate limit or firewall block"
-    " in front of the API. If you send many requests, slow down and retry after about"
-    " 60 s. Blaxel quota and permission errors carry a JSON error code"
+    "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
+    " throttled before the API could answer it (an auth check that failed while the"
+    " backend was throttled, or an edge rate limit or firewall block). Slow down and"
+    " retry after about 60 s. Blaxel quota and permission errors carry a JSON error code"
 )
 _RATE_LIMIT_REASONS = {
     "WORKSPACE_RATE_LIMIT_EXCEEDED": "too many creations in flight in this workspace",
@@ -282,15 +283,19 @@ def _limit_explanation(
 ) -> tuple[str, bool] | None:
     """Message and retryable flag for a creation rejected by a quota or rate limit.
 
-    QUOTA_EXCEEDED (HTTP 429 for a workspace quota, 400 for one ephemeral volume
-    over the per-volume maximum) stays until quota is freed or raised. The rate
+    QUOTA_EXCEEDED is HTTP 429 for an account quota, and for one ephemeral volume
+    over the per-volume maximum on PUT /sandboxes/{name} and jobs; create and fork
+    answer that one with 400. Retrying the same request does not help. The rate
     limit codes clear on their own. The SDK itself retries none of them.
     """
     if code == "QUOTA_EXCEEDED" and status in (400, 429):
         if status == 400:
             advice = "not retryable as is; request a smaller volume or raise the quota"
         else:
-            advice = "not retryable until quota is freed or raised"
+            advice = (
+                "not retryable until usage drops, the request asks for less (such as a"
+                " smaller volume), or the quota is raised"
+            )
         message = server_message or "Quota exceeded"
         return f"{message} (HTTP {status} QUOTA_EXCEEDED: {advice}: {QUOTAS_DOC_URL})", False
     if status == 429 and code in _RATE_LIMIT_REASONS:
@@ -304,8 +309,8 @@ def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
     """Say in the message whether a rejected creation can be retried.
 
     Quota and rate-limit errors share HTTP 429 but need opposite handling;
-    ``retryable`` says which. A 403 without a JSON error body did not come from
-    the API's own checks.
+    ``retryable`` says which. A 403 without a JSON error body is not a quota: it
+    was blocked or throttled before the API could answer it.
     """
     if error.status_code == 403 and not _has_json_error_body(error.content):
         message = EDGE_BLOCKED_MESSAGE

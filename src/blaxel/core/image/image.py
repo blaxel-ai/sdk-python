@@ -13,7 +13,7 @@ import zipfile
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Mapping
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -141,29 +141,69 @@ def _signed_build_metadata(
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
 
 
-def _limit_hint(status: int, content: bytes) -> str:
-    """Whether a rejected build request can be retried, for quota and rate-limit 429s.
+# Text of the build-backlog 429 from control planes that send it without a code.
+BUILD_BACKLOG_TEXT = "builds are waiting"
+_RETRYABLE_LIMIT_CODES = (
+    "WORKSPACE_RATE_LIMIT_EXCEEDED",
+    "RATE_LIMIT_EXCEEDED",
+    "BUILD_QUEUE_FULL",
+)
 
-    Image storage is checked before each build: a full quota answers 429 with
-    code QUOTA_EXCEEDED, or on older control planes {"error": ..., "code": 429}
-    with a message that links the plan quotas page.
+
+def _header(headers: Mapping[str, str] | None, name: str) -> str | None:
+    for key, value in (headers or {}).items():
+        if isinstance(key, str) and key.lower() == name:
+            return str(value).strip()
+    return None
+
+
+def _limit_hint(status: int, content: bytes, headers: Mapping[str, str] | None = None) -> str:
+    """Whether a rejected build request can be retried, for quota and limit 429s.
+
+    The server's signal wins: the X-Should-Retry header, then the body's
+    ``retryable``, then its string ``code``. Only a body with the numeric code
+    429 and no signal (older control planes) falls back to the text: the
+    build-backlog refusal ("builds are waiting") clears once builds finish,
+    any other message linking the plan quotas page is a quota.
     """
     if status != 429:
         return ""
     try:
         body = json.loads(content)
     except (UnicodeDecodeError, ValueError):
-        return ""
+        body = None
     if not isinstance(body, dict):
-        return ""
+        body = {}
     code, message = body.get("code"), body.get("error") or body.get("message")
-    if code == "QUOTA_EXCEEDED" or (
-        code == 429 and isinstance(message, str) and "/account/plan-quotas" in message
-    ):
-        return f" (not retryable until usage drops or the quota is raised: {QUOTAS_DOC_URL})"
-    if code in ("WORKSPACE_RATE_LIMIT_EXCEEDED", "RATE_LIMIT_EXCEEDED"):
-        return " (rate limited: retry with backoff)"
-    return ""
+    message = message if isinstance(message, str) else ""
+    backlog = code == "BUILD_QUEUE_FULL" or (code == 429 and BUILD_BACKLOG_TEXT in message)
+    quota = code == "QUOTA_EXCEEDED" or (
+        code == 429 and not backlog and "/account/plan-quotas" in message
+    )
+
+    should_retry = (_header(headers, "x-should-retry") or "").lower()
+    if should_retry in ("true", "false"):
+        retryable: bool | None = should_retry == "true"
+    elif isinstance(body.get("retryable"), bool):
+        retryable = body["retryable"]
+    elif quota:
+        retryable = False
+    elif backlog or code in _RETRYABLE_LIMIT_CODES:
+        retryable = True
+    else:
+        retryable = None
+
+    if retryable is False:
+        if quota:
+            return f" (not retryable until usage drops or the quota is raised: {QUOTAS_DOC_URL})"
+        return " (the server says not to retry)"
+    if retryable is None:
+        return ""
+    wait = _header(headers, "retry-after")
+    after = f"after {wait} s" if wait and wait.isdigit() else "with backoff"
+    if backlog:
+        return f" (the account's build queue is full: retry {after}, once some builds finish)"
+    return f" (rate limited: retry {after})"
 
 
 def _check_upload_response(response: Response[Sandbox], upload_url: str | None) -> str:
@@ -171,7 +211,7 @@ def _check_upload_response(response: Response[Sandbox], upload_url: str | None) 
         status = response.status_code.value
         raise RuntimeError(
             f"Failed to create sandbox: {status} - {response.content.decode()}"
-            + _limit_hint(status, response.content)
+            + _limit_hint(status, response.content, response.headers)
         )
     if not upload_url:
         raise RuntimeError("No upload URL returned from API")

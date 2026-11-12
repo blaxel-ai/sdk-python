@@ -94,6 +94,18 @@ def _retry_after_header(headers: Mapping[str, str] | None) -> str | None:
     return None
 
 
+def _should_retry_header(headers: Mapping[str, str] | None) -> bool | None:
+    """The server's X-Should-Retry decision, which wins over the body and the status."""
+    if headers is None:
+        return None
+    for key, value in headers.items():
+        if isinstance(key, str) and key.lower() == "x-should-retry":
+            normalized = str(value).strip().lower()
+            if normalized in ("true", "false"):
+                return normalized == "true"
+    return None
+
+
 def retain_response(parsed: Any, response: httpx.Response) -> None:
     """Keep modeled error return values unchanged, but retain their HTTP metadata."""
     if hasattr(parsed, "_response"):
@@ -103,8 +115,8 @@ def retain_response(parsed: Any, response: httpx.Response) -> None:
 def error_json(response: httpx.Response) -> Any:
     """JSON body of a modeled error status.
 
-    An empty or non-JSON body (for example a 403 answered by the edge before
-    the API) raises the typed error for the status instead of JSONDecodeError.
+    An empty or non-JSON body (for example a 403 sent before the API could
+    answer) raises the typed error for the status instead of JSONDecodeError.
     """
     if response.content:
         try:
@@ -153,7 +165,8 @@ class APIStatusError(UnexpectedStatus):
         self.error_code, legacy_retryable, body_retry_after = _extract_error_metadata(content)
         if self.code is None:
             self.code = self.error_code
-        self.retryable = legacy_retryable
+        header_retry = _should_retry_header(headers)
+        self.retryable = header_retry if header_retry is not None else legacy_retryable
         self.retry_after = _retry_after_header(headers) or body_retry_after
         self.retry_after_seconds = (
             int(self.retry_after)
