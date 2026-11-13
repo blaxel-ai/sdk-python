@@ -96,7 +96,7 @@ def test_both_set_builds_clean_headers(no_config, clear_auth_env, monkeypatch):
     a = auth("prod", BASE_URL)
     headers = a.get_headers()
     assert headers["X-Blaxel-Workspace"] == "my-workspace"
-    assert headers["X-Blaxel-Authorization"] == "Bearer fake-key"
+    assert headers["Authorization"] == "Bearer fake-key"
     assert None not in headers.values()
     # and the real httpx encoding path no longer crashes
     encoded = dict(httpx.Headers(headers))

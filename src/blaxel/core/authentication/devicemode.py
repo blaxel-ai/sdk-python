@@ -97,7 +97,7 @@ class DeviceMode(BlaxelAuth):
         if err:
             raise err
         return {
-            "X-Blaxel-Authorization": f"Bearer {self.credentials.access_token}",
+            "Authorization": f"Bearer {self.credentials.access_token}",
             "X-Blaxel-Workspace": workspace,
         }
 
@@ -144,7 +144,7 @@ class DeviceMode(BlaxelAuth):
         if err:
             return err
 
-        request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.access_token}"
+        request.headers["Authorization"] = f"Bearer {self.credentials.access_token}"
         request.headers["X-Blaxel-Workspace"] = workspace
         yield request
 
