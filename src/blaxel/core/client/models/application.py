@@ -92,9 +92,9 @@ class Application:
         if not src_dict:
             return None
         d = dict(src_dict)
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = Metadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = ApplicationSpec.from_dict(d.pop("spec"))
+        spec = ApplicationSpec.from_dict(d.pop("spec", UNSET))
 
         events = []
         _events = d.pop("events", UNSET)

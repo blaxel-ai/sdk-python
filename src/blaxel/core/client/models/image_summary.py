@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 if TYPE_CHECKING:
     from ..models.image_metadata import ImageMetadata
     from ..models.image_summary_spec import ImageSummarySpec
@@ -56,9 +58,9 @@ class ImageSummary:
         if not src_dict:
             return None
         d = dict(src_dict)
-        metadata = ImageMetadata.from_dict(d.pop("metadata"))
+        metadata = ImageMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = ImageSummarySpec.from_dict(d.pop("spec"))
+        spec = ImageSummarySpec.from_dict(d.pop("spec", UNSET))
 
         image_summary = cls(
             metadata=metadata,

@@ -86,9 +86,9 @@ class EgressIP:
         if not src_dict:
             return None
         d = dict(src_dict)
-        metadata = EgressIPMetadata.from_dict(d.pop("metadata"))
+        metadata = EgressIPMetadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = EgressIPSpec.from_dict(d.pop("spec"))
+        spec = EgressIPSpec.from_dict(d.pop("spec", UNSET))
 
         events = []
         _events = d.pop("events", UNSET)

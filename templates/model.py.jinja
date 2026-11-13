@@ -230,11 +230,25 @@ return field_dict
     {% set wire_name = property.name | in_double_quote_literal %}
     {# Blaxel: also accept the snake_case python name as input key #}
     {% if property.required %}
+    {# Blaxel (SDK-PYTHON-11V / SDK-PYTHON-13B): a required NESTED OBJECT absent #}
+    {# from a non-empty response body must deserialize to None (mirroring the #}
+    {# empty-input guard above) instead of raising a raw KeyError deep in the SDK. #}
+    {# Only nested objects can safely take an UNSET default: X.from_dict(UNSET) #}
+    {# returns None. Required scalars/enums/datetimes keep the raising pop because #}
+    {# Enum(UNSET)/isoparse(UNSET) would break on the sentinel. #}
+    {% if property.template == "model_property.py.jinja" %}
+        {% if property.name != property.python_name %}
+            {% set property_source = 'd.pop("' + wire_name + '", d.pop("' + property.python_name + '", UNSET))' %}
+        {% else %}
+            {% set property_source = 'd.pop("' + wire_name + '", UNSET)' %}
+        {% endif %}
+    {% else %}
         {% if property.name != property.python_name %}
             {% set property_source = 'd.pop("' + wire_name + '") if "' + wire_name + '" in d else d.pop("' + property.python_name + '")' %}
         {% else %}
             {% set property_source = 'd.pop("' + wire_name + '")' %}
         {% endif %}
+    {% endif %}
     {% else %}
         {% if property.name != property.python_name %}
             {% set property_source = 'd.pop("' + wire_name + '", d.pop("' + property.python_name + '", UNSET))' %}
