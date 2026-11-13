@@ -17,6 +17,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+import requests
 
 from .settings import settings
 
@@ -57,6 +58,26 @@ _IGNORED_EXCEPTIONS = (
     KeyboardInterrupt,  # User interrupt (Ctrl+C)
     SystemExit,  # Program exit
     CancelledError,  # Async task cancellation
+)
+
+# Transport/connectivity failures that are environmental, not SDK defects. These
+# surface from inside SDK request frames (the generated httpx clients and the
+# ``requests``-based auth/control-plane callers), so an unhandled one reaching a
+# last-chance hook would otherwise be reported as an SDK bug. Base classes cover
+# their subclasses: ``requests`` ``Timeout`` covers read/connect timeouts and
+# ``ConnectionError`` covers connection refused/reset; httpx ``TimeoutException``
+# covers all httpx timeouts, ``NetworkError`` covers connect/read/write/close
+# socket errors, and ``RemoteProtocolError`` covers a server closing the
+# connection mid-response. HTTP-status errors (``requests`` ``HTTPError`` /
+# ``httpx`` ``HTTPStatusError``) and client-side protocol errors
+# (``httpx`` ``LocalProtocolError`` / ``UnsupportedProtocol``) are intentionally
+# excluded so a malformed request the SDK itself built stays reportable.
+_TRANSIENT_NETWORK_ERRORS = (
+    requests.exceptions.ConnectionError,
+    requests.exceptions.Timeout,
+    httpx.NetworkError,
+    httpx.TimeoutException,
+    httpx.RemoteProtocolError,
 )
 
 # Optional dependencies that may not be installed - import errors for these are expected
@@ -415,11 +436,18 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_transient_network_error(error: BaseException) -> bool:
+    """Check whether an error is an environmental transport/connectivity failure."""
+    return isinstance(error, _TRANSIENT_NETWORK_ERRORS)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_transient_network_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 

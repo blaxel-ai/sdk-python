@@ -18,6 +18,7 @@ from typing import Any, cast
 
 import httpx
 import pytest
+import requests
 
 import blaxel
 import blaxel.core.common.sentry as sentry
@@ -470,6 +471,65 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_read_timeout_is_filtered_and_chained(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/compute/create_sandbox.py",
+            "import httpx\nraise httpx.ReadTimeout('timeout')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_requests_connection_error_is_filtered_and_chained(
+        self, installed_sentry_hooks
+    ):
+        exc = _raise_in_sdk(
+            "core/authentication/clientcredentials.py",
+            "import requests\nraise requests.exceptions.ConnectionError('refused')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_local_protocol_error_is_still_captured(self, installed_sentry_hooks):
+        exc = _raise_in_sdk(
+            "core/client/api/compute/create_sandbox.py",
+            "import httpx\nraise httpx.LocalProtocolError('malformed request')",
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_exception_group_drops_network_leaf_but_keeps_sdk_bug(self, installed_sentry_hooks):
+        network_exc = _raise_in_sdk(
+            "core/client/api/compute/create_sandbox.py",
+            "import httpx\nraise httpx.ReadTimeout('timeout')",
+        )
+        sdk_bug_exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('real sdk bug')")
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [network_exc, sdk_bug_exc])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert len(installed_sentry_hooks.captured) == 1
+        captured_group, mechanism = installed_sentry_hooks.captured[0]
+        assert mechanism == "excepthook"
+        assert _exception_group_leaves(captured_group) == [sdk_bug_exc]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -777,6 +837,46 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestIsTransientNetworkError:
+    """Cover the transport/connectivity classification used to suppress noise."""
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            httpx.ReadTimeout("read timed out"),
+            httpx.ConnectTimeout("connect timed out"),
+            httpx.WriteTimeout("write timed out"),
+            httpx.PoolTimeout("pool timed out"),
+            httpx.ConnectError("connection failed"),
+            httpx.ReadError("connection reset"),
+            httpx.RemoteProtocolError("server disconnected"),
+            requests.exceptions.ReadTimeout("read timed out"),
+            requests.exceptions.ConnectTimeout("connect timed out"),
+            requests.exceptions.ConnectionError("connection refused"),
+        ],
+    )
+    def test_transport_failures_are_transient(self, error):
+        assert sentry._is_transient_network_error(error) is True
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            httpx.LocalProtocolError("malformed request"),
+            httpx.UnsupportedProtocol("unsupported scheme"),
+            httpx.HTTPStatusError(
+                "server error",
+                request=httpx.Request("GET", "https://api.blaxel.ai"),
+                response=httpx.Response(500),
+            ),
+            requests.exceptions.HTTPError("500 Server Error"),
+            RuntimeError("a genuine SDK bug"),
+            ValueError("not a network error"),
+        ],
+    )
+    def test_non_transport_failures_are_not_transient(self, error):
+        assert sentry._is_transient_network_error(error) is False
 
 
 @pytest.mark.parametrize(
