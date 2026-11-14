@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.volume.volume import VolumeAPIError
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -569,6 +570,85 @@ class BrokenFinalizer:
 
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.thread_hook_calls == [args]
+
+
+class TestExpectedApiErrorFiltering:
+    """Expected typed API errors (HTTP status) are not reported as SDK bugs.
+
+    Regression for SDK-PYTHON-136: an unhandled ``VolumeAPIError`` (HTTP 404 for
+    a missing volume) reached a last-chance boundary and was reported as an
+    "Unhandled SDK exception (HTTP 404)". It is the SDK's documented way to
+    surface a backend response, not an SDK defect, so it must be filtered.
+    """
+
+    def _raise_volume_error(self, status_code):
+        return _raise_in_file(
+            _sdk_filename("core/volume/volume.py"),
+            "raise VolumeAPIError('volume error', status_code=status_code)",
+            {"VolumeAPIError": VolumeAPIError, "status_code": status_code},
+        )
+
+    def test_unhandled_volume_404_is_not_captured(self, installed_sentry_hooks):
+        exc = self._raise_volume_error(404)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.parametrize("status_code", [400, 404, 409, 429, 500])
+    def test_typed_api_error_with_http_status_is_not_reportable(self, status_code):
+        exc = self._raise_volume_error(status_code)
+
+        assert sentry._http_status_code(exc) == status_code
+        assert sentry._is_expected_api_error(exc) is True
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_status_carried_on_response_is_detected(self):
+        exc = _raise_in_file(
+            _sdk_filename("core/request.py"),
+            """
+_parse_response(
+    client=Client(base_url="https://api.blaxel.ai"),
+    response=httpx.Response(404, content=b'{"code":404,"error":"not found"}'),
+)
+""",
+            {"Client": Client, "httpx": httpx, "_parse_response": _parse_response},
+        )
+
+        assert sentry._http_status_code(exc) == 404
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_sdk_error_without_http_status_stays_reportable(self, installed_sentry_hooks):
+        """A VolumeAPIError with no status is a genuinely unexpected SDK failure."""
+        exc = _raise_in_file(
+            _sdk_filename("core/volume/volume.py"),
+            "raise VolumeAPIError('Failed to delete volume my-volume')",
+            {"VolumeAPIError": VolumeAPIError},
+        )
+
+        assert sentry._http_status_code(exc) is None
+        assert sentry._is_expected_api_error(exc) is False
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+
+    def test_plain_sdk_runtime_error_stays_reportable(self):
+        exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+
+        assert sentry._http_status_code(exc) is None
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_http_status_rejects_bool_and_out_of_range_and_string_codes(self):
+        assert sentry._http_status_code(SimpleNamespace(status_code=True)) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=42)) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=600)) is None
+        assert sentry._http_status_code(SimpleNamespace(code="NOT_FOUND")) is None
+        assert sentry._http_status_code(SimpleNamespace(status=503)) == 503
 
 
 class TestSentryDelivery:

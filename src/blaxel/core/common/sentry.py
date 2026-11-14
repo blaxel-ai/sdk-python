@@ -415,11 +415,46 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status an API error carries, if any (100-599).
+
+    Typed API errors expose the backend status differently: ``_APIError``
+    subclasses (``VolumeAPIError``, ``DriveAPIError``, ``SandboxAPIError`` ...)
+    and the generated ``UnexpectedStatus`` set ``status_code``; ``BlaxelError``
+    and the sandbox ``ResponseError`` set ``status``; ``httpx.HTTPStatusError``
+    carries it on ``response``. ``type(x) is int`` rejects ``bool`` (an ``int``
+    subclass) and the string/enum error codes stored on ``code``.
+    """
+    for candidate in (
+        getattr(error, "status_code", None),
+        getattr(error, "status", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    ):
+        if type(candidate) is int and 100 <= candidate <= 599:
+            return candidate
+    return None
+
+
+def _is_expected_api_error(error: BaseException) -> bool:
+    """Check whether an error is a backend API response rather than an SDK defect.
+
+    The SDK's typed API exceptions carry the backend's HTTP status and are its
+    documented contract for surfacing a backend outcome (for example HTTP 404
+    for a missing volume). An unhandled one is a caller handling gap, not a bug
+    in SDK code, so it must not be reported as an unhandled SDK exception. An
+    SDK-raised error with no HTTP status stays reportable, since that is a
+    genuinely unexpected failure.
+    """
+    return _http_status_code(error) is not None
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_expected_api_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
