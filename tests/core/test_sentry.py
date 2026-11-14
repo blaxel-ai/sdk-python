@@ -779,6 +779,94 @@ class TestIsOptionalDependencyError:
         assert _is_optional_dependency_error(type(exc), exc) is False
 
 
+class TestClientRequestErrorFiltering:
+    """SDK-PYTHON-133: an auth/permission/not-found HTTP status is not an SDK bug.
+
+    The generated client raises ``UnexpectedStatus`` for an undocumented response,
+    so a server answering 401/403/404 (the caller's credentials, permissions, or a
+    missing resource) surfaced as ``Unhandled SDK exception (HTTP 403)`` is noise,
+    not a defect in the SDK's own code.
+    """
+
+    def _raise_unexpected_status(self, status_code: int) -> BaseException:
+        """Raise ``UnexpectedStatus`` from a generated-client frame (SDK-owned)."""
+        return _raise_in_file(
+            _sdk_filename("core/client/api/_reproduction.py"),
+            "raise from_response(status_code, b'{}')",
+            {"from_response": errors.from_response, "status_code": status_code},
+        )
+
+    def test_http_status_code_reads_every_error_shape(self):
+        assert sentry._http_status_code(SimpleNamespace(status_code=403)) == 403
+        assert sentry._http_status_code(SimpleNamespace(status=404)) == 404
+        assert (
+            sentry._http_status_code(SimpleNamespace(response=SimpleNamespace(status_code=401)))
+            == 401
+        )
+        assert sentry._http_status_code(errors.UnexpectedStatus(403, b"{}")) == 403
+
+    def test_http_status_code_rejects_non_status_values(self):
+        assert sentry._http_status_code(SimpleNamespace(status_code=True)) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=700)) is None
+        assert sentry._http_status_code(SimpleNamespace(status_code=42)) is None
+        assert sentry._http_status_code(RuntimeError("no status here")) is None
+
+    @pytest.mark.parametrize("status_code", [401, 403, 404])
+    def test_auth_and_not_found_statuses_are_client_request_errors(self, status_code):
+        assert sentry._is_client_request_error(errors.from_response(status_code, b"{}")) is True
+
+    @pytest.mark.parametrize("status_code", [400, 409, 429, 500, 502, 503])
+    def test_other_statuses_are_not_client_request_errors(self, status_code):
+        assert sentry._is_client_request_error(errors.from_response(status_code, b"{}")) is False
+
+    def test_plain_error_without_status_is_not_a_client_request_error(self):
+        assert sentry._is_client_request_error(RuntimeError("boom")) is False
+
+    @pytest.mark.parametrize("status_code", [401, 403, 404])
+    def test_unhandled_auth_or_not_found_status_is_not_captured(self, status_code):
+        exc = self._raise_unexpected_status(status_code)
+
+        assert sentry._is_from_sdk(exc) is True
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    @pytest.mark.parametrize("status_code", [400, 500, 502])
+    def test_unhandled_server_or_malformed_status_stays_captured(self, status_code):
+        """Anti-over-suppression: statuses that can hint at a real defect report."""
+        exc = self._raise_unexpected_status(status_code)
+
+        assert sentry._is_from_sdk(exc) is True
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_unhandled_forbidden_response_is_filtered_and_chained(self, installed_sentry_hooks):
+        """End-to-end: a 403 through the real generated path never reaches Sentry."""
+        exc = _raise_in_file(
+            "/tmp/customer/request.py",
+            """
+_parse_response(
+    client=Client(base_url="https://api.blaxel.ai"),
+    response=httpx.Response(403, content=b'{"error":"Forbidden"}'),
+)
+""",
+            {"Client": Client, "httpx": httpx, "_parse_response": _parse_response},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_server_error_is_still_captured_and_chained(self, installed_sentry_hooks):
+        """Anti-over-suppression end-to-end: a 500 still reaches Sentry."""
+        exc = self._raise_unexpected_status(500)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+
 @pytest.mark.parametrize(
     ("workspace", "user"),
     [
