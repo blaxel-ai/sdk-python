@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from ..errors import BlaxelError
 from .settings import settings
 
 try:
@@ -415,11 +416,43 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+# HTTP authentication and authorization failures. A 401 or 403 from the control
+# plane or edge gateway means the caller's credentials are missing, expired,
+# revoked, or lack permission for the resource -- an environment/configuration
+# issue outside the SDK's control, not an SDK defect. Like optional-integration
+# import errors, these must not be reported to Sentry as unhandled SDK bugs.
+_AUTHENTICATION_ERROR_STATUS_CODES = frozenset({401, 403})
+
+
+def _http_status_code(error: BaseException) -> int | None:
+    """Return the HTTP status an SDK API error carries.
+
+    Mirrors the status shown in ``_safe_exception_value`` so the errors that are
+    suppressed here are exactly those that would otherwise be reported with an
+    ``(HTTP <status>)`` suffix.
+    """
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        status_code = getattr(getattr(error, "response", None), "status_code", None)
+    if type(status_code) is int and 100 <= status_code <= 599:
+        return status_code
+    return None
+
+
+def _is_authentication_error(error: BaseException) -> bool:
+    """Check whether an SDK error is an HTTP authentication/authorization failure."""
+    if not isinstance(error, BlaxelError):
+        return False
+    return _http_status_code(error) in _AUTHENTICATION_ERROR_STATUS_CODES
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_authentication_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
