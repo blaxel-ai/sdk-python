@@ -25,7 +25,11 @@ from blaxel.core.client import Client, errors
 from blaxel.core.client.api.jobs.create_job_execution import _parse_response
 from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
+    _TRANSIENT_HTTP_STATUS_CODES,
+    _http_status_code,
     _is_optional_dependency_error,
+    _is_transient_http_error,
+    _should_capture_unhandled_exception,
 )
 
 
@@ -795,3 +799,129 @@ def test_event_user_is_the_workspace(monkeypatch, workspace, user):
     event = sentry._error_to_sentry_event(exc, "excepthook")
 
     assert event.get("user") == user
+
+
+def _raise_unexpected_status_in_sdk(status: int) -> BaseException:
+    """Return an SDK-origin ``UnexpectedStatus`` for an undocumented HTTP status."""
+    return _raise_in_file(
+        _sdk_filename("core/client/api/compute/list_sandboxes.py"),
+        "raise errors.from_response(status_code, b'{}')",
+        {"errors": errors, "status_code": status},
+    )
+
+
+class TestHttpStatusExtraction:
+    """``_http_status_code`` reads the status from each SDK error shape, safely."""
+
+    def test_reads_status_code_attribute(self):
+        assert _http_status_code(SimpleNamespace(status_code=502)) == 502
+
+    def test_reads_status_attribute(self):
+        # BlaxelError / ResponseError expose ``status`` rather than ``status_code``.
+        assert _http_status_code(SimpleNamespace(status=503)) == 503
+
+    def test_reads_nested_response_status_code(self):
+        error = httpx.HTTPStatusError(
+            "boom",
+            request=httpx.Request("GET", "https://api.blaxel.ai"),
+            response=httpx.Response(504),
+        )
+        assert _http_status_code(error) == 504
+
+    def test_rejects_boolean_status(self):
+        # ``bool`` is a subclass of ``int``; a truthy flag must not read as 1.
+        assert _http_status_code(SimpleNamespace(status_code=True)) is None
+
+    def test_rejects_out_of_range_status(self):
+        assert _http_status_code(SimpleNamespace(status_code=999)) is None
+
+    def test_returns_none_without_status(self):
+        assert _http_status_code(RuntimeError("no status here")) is None
+
+
+class TestTransientHttpErrorClassification:
+    """Only transient server/throttling statuses are treated as non-SDK noise."""
+
+    def test_transient_set_matches_sdk_retryable_definition(self):
+        # Keep the capture filter aligned with the SDK's own retryable set in
+        # ``sandbox/transient_retry.py::is_retryable_read_error``.
+        assert _TRANSIENT_HTTP_STATUS_CODES == frozenset({408, 429, 500, 502, 503, 504})
+
+    @pytest.mark.parametrize("status", [408, 429, 500, 502, 503, 504])
+    def test_transient_statuses_are_filtered(self, status):
+        assert _is_transient_http_error(_raise_unexpected_status_in_sdk(status)) is True
+
+    @pytest.mark.parametrize("status", [400, 401, 403, 404, 409, 422, 301])
+    def test_client_and_redirect_statuses_are_not_transient(self, status):
+        assert _is_transient_http_error(_raise_unexpected_status_in_sdk(status)) is False
+
+    def test_non_http_error_is_not_transient(self):
+        assert _is_transient_http_error(RuntimeError("real sdk bug")) is False
+
+
+class TestTransientHttpErrorCapture:
+    """End-to-end: transient server HTTP errors are not reported, but still chain.
+
+    Regression for SDK-PYTHON-134 (and its old-version sibling SDK-PYTHON-123):
+    a transient ``UnexpectedStatus`` (HTTP 502) raised from a generated client
+    frame was captured as "Unhandled SDK exception" even though a 502 Bad Gateway
+    is a server-availability condition the SDK cannot fix.
+    """
+
+    @pytest.mark.parametrize("status", [502, 503, 504, 500, 429, 408])
+    def test_unhandled_transient_status_is_filtered_and_chained(
+        self, status, installed_sentry_hooks
+    ):
+        exc = _raise_unexpected_status_in_sdk(status)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_issue_signature_value_is_the_scrubbed_502_title(self):
+        # The reported Sentry title for this issue; assert our fix targets it.
+        exc = _raise_unexpected_status_in_sdk(502)
+        assert sentry._safe_exception_value(exc) == "Unhandled SDK exception (HTTP 502)"
+        assert _should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_unhandled_client_error_is_still_captured_and_chained(self, installed_sentry_hooks):
+        # Anti over-suppression: a 404 may reflect a real request mistake.
+        exc = _raise_unexpected_status_in_sdk(404)
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_generic_sdk_error_is_still_captured(self, installed_sentry_hooks):
+        # A non-HTTP SDK failure is unaffected by the transient-status filter.
+        exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_exception_group_drops_transient_leaf_but_keeps_sdk_bug(self, installed_sentry_hooks):
+        transient = _raise_unexpected_status_in_sdk(502)
+        real_bug = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("mixed", [transient, real_bug])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert len(installed_sentry_hooks.captured) == 1
+        captured_group, _ = installed_sentry_hooks.captured[0]
+        leaves = _exception_group_leaves(captured_group)
+        assert transient not in leaves
+        assert real_bug in leaves
+        assert installed_sentry_hooks.main_hook_calls == [(type(group), group, group.__traceback__)]
