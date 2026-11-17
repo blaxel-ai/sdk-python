@@ -21,6 +21,7 @@ from .client.models import (
 from .default import (
     MAX_CREATION_TIMEOUT_SECONDS,
     CodeInterpreter,
+    EnvUpdate,
     SandboxAPIError,
     SandboxCodegen,
     SandboxCreationTimeoutError,
@@ -81,6 +82,7 @@ __all__ = [
     "ResponseError",
     "SandboxInstance",
     "SandboxAPIError",
+    "EnvUpdate",
     "SandboxCreationTimeoutError",
     "is_creation_timeout_error",
     "MAX_CREATION_TIMEOUT_SECONDS",

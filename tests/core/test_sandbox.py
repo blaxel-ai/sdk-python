@@ -835,8 +835,9 @@ async def test_update_envs_replace_drops_current():
 
 @pytest.mark.asyncio
 async def test_update_envs_rejects_unnamed_env():
-    with pytest.raises(ValueError, match="without a name"):
-        await sent_envs([{"value": "x"}])
+    with pytest.raises(ValueError, match="without a name") as excinfo:
+        await sent_envs([{"value": "s3cr3t", "secret": True}])
+    assert "s3cr3t" not in str(excinfo.value)
 
 
 def test_sync_update_envs_merges():

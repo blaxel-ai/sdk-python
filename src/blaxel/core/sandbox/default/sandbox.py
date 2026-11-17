@@ -308,7 +308,8 @@ EnvUpdate = Union[Mapping[str, Union[str, None]], Sequence[Union[Env, Dict[str, 
 def _env_to_dict(env: Union[Env, Dict[str, Any]]) -> Dict[str, Any]:
     entry = env.to_dict() if isinstance(env, Env) else dict(env)
     if not entry.get("name"):
-        raise ValueError(f"Environment variable without a name: {entry!r}")
+        # Name only the fields, never their values: an entry can hold a secret.
+        raise ValueError(f"Environment variable without a name (fields: {sorted(entry)})")
     return entry
 
 

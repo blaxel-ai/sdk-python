@@ -2,6 +2,7 @@ from .drive import SandboxDrive
 from .interpreter import CodeInterpreter
 from .sandbox import (
     MAX_CREATION_TIMEOUT_SECONDS,
+    EnvUpdate,
     SandboxAPIError,
     SandboxCodegen,
     SandboxCreationTimeoutError,
@@ -18,6 +19,7 @@ from .system import SandboxSystem
 __all__ = [
     "SandboxInstance",
     "SandboxAPIError",
+    "EnvUpdate",
     "SandboxCreationTimeoutError",
     "is_creation_timeout_error",
     "MAX_CREATION_TIMEOUT_SECONDS",
