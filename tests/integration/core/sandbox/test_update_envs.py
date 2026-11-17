@@ -68,3 +68,27 @@ class TestUpdateEnvs:
         logs = await self._echo(await SandboxInstance.get(name), ["ONLY", "KEEP"])
         assert "ONLY=one" in logs
         assert "KEEP=unset" in logs
+
+    async def test_list_form_keeps_secret_flag(self):
+        name = unique_name("update-envs-secret")
+        await SandboxInstance.create(
+            {
+                "name": name,
+                "image": default_image,
+                "labels": default_labels,
+                "envs": [{"name": "PLAIN", "value": "plain"}],
+            }
+        )
+        TestUpdateEnvs.created_sandboxes.append(name)
+
+        updated = await SandboxInstance.update_envs(
+            name, [{"name": "API_KEY", "value": "s3cr3t-value", "secret": True}]
+        )
+        secrets = {env.name: env.secret for env in updated.spec.runtime.envs}
+        assert secrets["API_KEY"] is True
+        assert "PLAIN" in secrets
+
+        assert await wait_for_sandbox_deployed(name)
+        logs = await self._echo(await SandboxInstance.get(name), ["API_KEY", "PLAIN"])
+        assert "API_KEY=s3cr3t-value" in logs
+        assert "PLAIN=plain" in logs
