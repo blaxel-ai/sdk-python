@@ -231,3 +231,69 @@ class TestDriveUpdateWithPermissions:
         assert result.permissions is new_perms
         assert result.permissions[0].mode == DrivePermissionMode("read")
         assert result.permissions[0].path == "/shared"
+
+
+class TestSyncDriveInstanceCreateNoSizeRegression:
+    """Regression coverage for ``create`` when no size is supplied (SDK-PYTHON-13M).
+
+    In v0.2.45 ``SyncDriveInstance.create`` raised
+    ``NameError: name 'default_size' is not defined``: PR #114 removed the
+    ``default_size`` definition but left ``drive.spec.size = default_size``
+    behind, so any create without an explicit size hit the undefined name.
+    The size concept was dropped from ``DriveSpec`` entirely; creating a drive
+    must build the body and never reference a removed default.
+    """
+
+    @patch("blaxel.core.drive.drive.create_drive_sync")
+    def test_sync_create_with_dict_no_size(self, mock_create):
+        mock_create.return_value = Drive(
+            metadata=Metadata(name="d1"),
+            spec=DriveSpec(region="us-pdx-1"),
+        )
+
+        result = SyncDriveInstance.create({"name": "d1", "region": "us-pdx-1"})
+
+        assert isinstance(result, SyncDriveInstance)
+        body = mock_create.call_args.kwargs["body"]
+        assert body.metadata.name == "d1"
+        assert "size" not in body.spec.additional_properties
+
+    @patch("blaxel.core.drive.drive.create_drive_sync")
+    def test_sync_create_with_config_object_no_size(self, mock_create):
+        mock_create.return_value = Drive(
+            metadata=Metadata(name="d1"),
+            spec=DriveSpec(region="us-pdx-1"),
+        )
+
+        config = DriveCreateConfiguration(name="d1", region="us-pdx-1")
+        result = SyncDriveInstance.create(config)
+
+        assert isinstance(result, SyncDriveInstance)
+        body = mock_create.call_args.kwargs["body"]
+        assert "size" not in body.spec.additional_properties
+
+    @patch("blaxel.core.drive.drive.create_drive_sync")
+    def test_sync_create_without_region_or_size_warns_but_builds(self, mock_create):
+        mock_create.return_value = Drive(metadata=Metadata(name="d1"), spec=DriveSpec())
+
+        with pytest.warns(FutureWarning):
+            result = SyncDriveInstance.create({"name": "d1"})
+
+        assert isinstance(result, SyncDriveInstance)
+        assert mock_create.called
+
+
+@pytest.mark.asyncio
+class TestDriveInstanceCreateNoSizeRegression:
+    """Mirror of the sync regression for the async create path (SDK-PYTHON-13M)."""
+
+    @patch("blaxel.core.drive.drive.create_drive", new_callable=AsyncMock)
+    async def test_async_create_without_region_or_size_warns_but_builds(self, mock_create):
+        mock_create.return_value = Drive(metadata=Metadata(name="d1"), spec=DriveSpec())
+
+        with pytest.warns(FutureWarning):
+            result = await DriveInstance.create({"name": "d1"})
+
+        assert isinstance(result, DriveInstance)
+        body = mock_create.call_args.kwargs["body"]
+        assert "size" not in body.spec.additional_properties
