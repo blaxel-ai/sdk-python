@@ -318,11 +318,13 @@ def _updated_envs(
 ) -> list[Dict[str, Any]]:
     """Merge ``envs`` into ``current`` by name and return the resulting list.
 
-    A mapping sets each name to its value, and a ``None`` value removes the
-    variable. A list sets each entry as given (``secret`` included). With
+    A mapping sets each name to its value and keeps the other fields of an
+    existing variable (its ``secret`` flag); a ``None`` value removes the
+    variable. A list sets each entry exactly as given (``secret`` included). With
     ``replace``, ``current`` is dropped first. Existing variables keep their
     position; new ones are appended in the given order.
     """
+    from_mapping = isinstance(envs, Mapping)
     if isinstance(envs, Mapping):
         changes: Dict[str, Dict[str, Any] | None] = {
             name: None if value is None else {"name": name, "value": value}
@@ -343,7 +345,8 @@ def _updated_envs(
             if name in changes:
                 change = changes.pop(name)
                 if change is not None:
-                    result.append(change)
+                    # A mapping changes only the value: a secret stays secret.
+                    result.append({**env, **change} if from_mapping else change)
             else:
                 result.append(env)
     result.extend(change for change in changes.values() if change is not None)
@@ -1315,7 +1318,8 @@ class SandboxInstance:
 
         By default the given variables are merged into the current ones: a
         variable with the same name takes the new value, other variables are
-        kept. In the mapping form, a ``None`` value removes the variable. With
+        kept. The mapping form changes only the value, so an existing
+        variable keeps its ``secret`` flag, and a ``None`` value removes it. With
         ``replace=True``, the given variables replace the whole list.
 
         The sandbox is redeployed to apply the change: its status goes from

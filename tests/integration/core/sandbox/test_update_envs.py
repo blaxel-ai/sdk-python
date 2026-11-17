@@ -103,3 +103,9 @@ class TestUpdateEnvs:
         logs = await self._echo(name, {"API_KEY": "s3cr3t-value", "PLAIN": "plain"})
         assert "API_KEY=s3cr3t-value" in logs
         assert "PLAIN=plain" in logs
+
+        # Rotating it with the mapping form changes the value and keeps it secret.
+        rotated = await SandboxInstance.update_envs(name, {"API_KEY": "rotated-value"})
+        assert {env.name: env.secret for env in rotated.spec.runtime.envs}["API_KEY"] is True
+        logs = await self._echo(name, {"API_KEY": "rotated-value", "PLAIN": "plain"})
+        assert "API_KEY=rotated-value" in logs

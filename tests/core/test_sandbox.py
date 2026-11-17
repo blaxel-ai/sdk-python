@@ -828,6 +828,14 @@ async def test_update_envs_list_keeps_secret_flag():
 
 
 @pytest.mark.asyncio
+async def test_update_envs_mapping_keeps_secret_flag():
+    envs = await sent_envs(
+        {"API_KEY": "rotated"}, [{"name": "API_KEY", "value": "****", "secret": True}]
+    )
+    assert envs == [{"name": "API_KEY", "value": "rotated", "secret": True}]
+
+
+@pytest.mark.asyncio
 async def test_update_envs_replace_drops_current():
     envs = await sent_envs({"ONLY": "1"}, [{"name": "OLD", "value": "1"}], replace=True)
     assert envs == [{"name": "ONLY", "value": "1"}]

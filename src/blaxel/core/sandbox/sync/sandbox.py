@@ -986,7 +986,8 @@ class SyncSandboxInstance:
 
         By default the given variables are merged into the current ones: a
         variable with the same name takes the new value, other variables are
-        kept. In the mapping form, a ``None`` value removes the variable. With
+        kept. The mapping form changes only the value, so an existing
+        variable keeps its ``secret`` flag, and a ``None`` value removes it. With
         ``replace=True``, the given variables replace the whole list.
 
         The sandbox is redeployed to apply the change: its status goes from
