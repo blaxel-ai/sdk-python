@@ -31,20 +31,25 @@ class TestUpdateEnvs:
         """Read ``expected``'s variables in a new process until they all match.
 
         The status can still read ``DEPLOYED`` from before the update when the
-        polling starts, so the values themselves are what is waited for.
+        polling starts, and on mk3.0 the sandbox reboots to apply the change,
+        so an exec can fail meanwhile: the values themselves are waited for.
         """
         command = " ".join(f'echo "{var}=${{{var}:-unset}}";' for var in expected)
         lines = [f"{var}={value}" for var, value in expected.items()]
         logs = ""
         for _ in range(30):
             if await wait_for_sandbox_deployed(name):
-                sandbox = await SandboxInstance.get(name)
-                result = await sandbox.process.exec(
-                    {"command": command, "wait_for_completion": True}
-                )
-                logs = result.logs or ""
-                if all(line in logs.splitlines() for line in lines):
-                    return logs
+                try:
+                    sandbox = await SandboxInstance.get(name)
+                    result = await sandbox.process.exec(
+                        {"command": command, "wait_for_completion": True}
+                    )
+                except Exception as error:  # the sandbox may be rebooting
+                    logs = f"exec failed while the update was applied: {error}"
+                else:
+                    logs = result.logs or ""
+                    if all(line in logs.splitlines() for line in lines):
+                        return logs
             await asyncio.sleep(1)
         return logs
 
