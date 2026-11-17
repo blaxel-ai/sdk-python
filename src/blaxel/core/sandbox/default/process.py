@@ -187,6 +187,7 @@ class SandboxProcess(SandboxAction):
             options = {}
 
         closed = False
+        errors: list[Exception] = []
 
         async def start_streaming():
             nonlocal closed
@@ -231,9 +232,17 @@ class SandboxProcess(SandboxAction):
             except Exception as e:
                 # Suppress AbortError when closing
                 if hasattr(e, "name") and getattr(e, "name") == "AbortError":
-                    pass
-                else:
-                    raise e
+                    return
+                # A failure after close() is our own teardown, not a dead stream.
+                if closed:
+                    return
+                # The stream broke on its own (e.g. the sandbox became
+                # unreachable). Keep the failure for wait() instead of raising it
+                # inside the background task: a fire-and-forget caller (callbacks
+                # plus close(), no wait()) never retrieves a task exception, so it
+                # would surface as an unhandled SDK error. This mirrors the sync
+                # streamer, which stores the error and re-raises it on wait().
+                errors.append(e)
 
         # Start streaming in the background
         task = asyncio.create_task(start_streaming())
@@ -249,6 +258,8 @@ class SandboxProcess(SandboxAction):
             except asyncio.CancelledError:
                 if not closed:
                     raise
+            if errors:
+                raise errors[0]
 
         return AsyncStreamHandle(close, wait_func)
 
