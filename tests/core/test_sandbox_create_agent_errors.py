@@ -3,6 +3,8 @@
 - A creation rejected by a transient authentication failure (403 UNAUTHORIZED,
   503 AUTHENTICATION_UNAVAILABLE) is retried a bounded number of times, and the
   final error does not claim the credentials are invalid.
+- A key the API does not recognize (AUTHENTICATION_FAILED) is not retried, and
+  the error says the API key is not valid.
 - A creation without a region says so once per process, not on every call.
 - A 400 for a name that breaks the naming rule says how to build a valid one.
 - Listing an empty workspace returns an empty page.
@@ -188,6 +190,47 @@ async def test_final_errors_are_not_retried(error):
         mock_create.assert_awaited_once()
         assert "after" not in str(excinfo.value)
         assert str(excinfo.value).startswith(error.message)
+
+
+def _invalid_api_key(status: int = 403) -> SandboxError:
+    return SandboxError(
+        code="AUTHENTICATION_FAILED", message="The API key is not valid", status_code=status
+    )
+
+
+def _assert_says_the_api_key_is_not_valid(error: SandboxAPIError, status: int) -> None:
+    assert error.code == "AUTHENTICATION_FAILED"
+    assert error.status_code == status
+    assert error.retryable is False
+    assert str(error) == (
+        f"The API key is not valid (HTTP {status} AUTHENTICATION_FAILED: this API key is not"
+        " valid; not retried, the same key is refused every time). Check the API key the SDK"
+        " sends (BL_API_KEY) for a typo or a missing part; if it was deleted, create a new one"
+        " in the Blaxel Console."
+    )
+
+
+@pytest.mark.parametrize("status", [403, 401])
+async def test_invalid_api_key_is_not_retried_and_says_so(status):
+    with patch(ASYNC_CREATE, new_callable=AsyncMock) as mock_create:
+        mock_create.return_value = _invalid_api_key(status)
+
+        with pytest.raises(SandboxAPIError) as excinfo:
+            await SandboxInstance.create(CONFIG)
+
+    mock_create.assert_awaited_once()
+    _assert_says_the_api_key_is_not_valid(excinfo.value, status)
+
+
+def test_sync_invalid_api_key_is_not_retried_and_says_so():
+    with patch(SYNC_CREATE) as mock_create:
+        mock_create.return_value = _invalid_api_key()
+
+        with pytest.raises(SandboxAPIError) as excinfo:
+            SyncSandboxInstance.create(CONFIG)
+
+    mock_create.assert_called_once()
+    _assert_says_the_api_key_is_not_valid(excinfo.value, 403)
 
 
 async def test_other_unexpected_statuses_are_not_retried():

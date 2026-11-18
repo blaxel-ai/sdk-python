@@ -178,8 +178,10 @@ def _raise_if_creation_timeout(
 # its credential store is unreachable. Both are answered before anything is
 # created, so sending the same request again is safe. A revoked token (401
 # TOKEN_REVOKED) or a missing workspace permission (UNAUTHORIZED_WORKSPACE) is
-# final and is not retried. A key the API does not recognize gets the same
-# 403, so the retries stay few and the final message asks to check the key.
+# final and is not retried, and so is a key the API does not recognize
+# (AUTHENTICATION_FAILED, 403 on create). An API older than that code answers
+# an unknown key with the same 403 UNAUTHORIZED, so the retries stay few and the
+# final message asks to check the key.
 CREATE_AUTH_RETRIES = 2
 CREATE_AUTH_RETRY_BASE_DELAY_SECONDS = 0.5
 CREATE_AUTH_RETRY_MAX_DELAY_SECONDS = 2.0
@@ -233,6 +235,13 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
             " fails for a moment. Check the credentials and workspace the SDK uses"
             f" (BL_API_KEY and BL_WORKSPACE, or `bl login`{current}); if they are right,"
             " retry in a few seconds."
+        )
+    if error.code == "AUTHENTICATION_FAILED":
+        return (
+            f"{error.message or 'This API key is not valid'} (HTTP {_error_status(error)}"
+            " AUTHENTICATION_FAILED: this API key is not valid; not retried, the same key is"
+            " refused every time). Check the API key the SDK sends (BL_API_KEY) for a typo or"
+            " a missing part; if it was deleted, create a new one in the Blaxel Console."
         )
     explained = _limit_explanation(_error_status(error), error.code, error.message, None)
     if explained is not None:
@@ -429,7 +438,10 @@ def _create_error(
     else:
         message = _create_error_message(error, sandbox_name, attempts)
     api_error = SandboxAPIError(message, status_code=status_code, code=code, error=error)
-    if code == REQUEST_BLOCKED_CODE or _limit_explanation(status_code, code, None, None) is not None:
+    if (
+        code in ("AUTHENTICATION_FAILED", REQUEST_BLOCKED_CODE)
+        or _limit_explanation(status_code, code, None, None) is not None
+    ):
         api_error.retryable = False
     return api_error
 
