@@ -50,14 +50,20 @@ class SyncSandboxAction:
         return None
 
     def get_client(self) -> httpx.Client:
+        # Mirror the async client's timeout: sandbox I/O (large file writes,
+        # long-running reads) routinely takes longer than httpx's 5s default,
+        # which otherwise surfaces as spurious WriteTimeout/ReadTimeout.
+        timeout = httpx.Timeout(300.0, connect=10.0)
         if self.sandbox_config.force_url:
             return httpx.Client(
                 base_url=self.sandbox_config.force_url,
                 headers=self.sandbox_config.headers,
+                timeout=timeout,
             )
         return httpx.Client(
             base_url=self.url,
             headers={**settings.headers, **self.sandbox_config.headers},
+            timeout=timeout,
         )
 
     def get_api_client(self) -> Client:
