@@ -88,7 +88,7 @@ class CreateImageBody:
         d = dict(src_dict)
         name = d.pop("name")
 
-        resource_type = d.pop("resourceType") if "resourceType" in d else d.pop("resource_type")
+        resource_type = d.pop("resourceType", d.pop("resource_type", UNSET))
 
         docker_config = d.pop("dockerConfig", d.pop("docker_config", UNSET))
 

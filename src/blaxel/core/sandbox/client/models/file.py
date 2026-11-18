@@ -77,7 +77,7 @@ class File:
         d = dict(src_dict)
         group = d.pop("group")
 
-        last_modified = d.pop("lastModified") if "lastModified" in d else d.pop("last_modified")
+        last_modified = d.pop("lastModified", d.pop("last_modified", UNSET))
 
         name = d.pop("name")
 

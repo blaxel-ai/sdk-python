@@ -124,9 +124,9 @@ class ProcessResponse:
         d = dict(src_dict)
         command = d.pop("command")
 
-        completed_at = d.pop("completedAt") if "completedAt" in d else d.pop("completed_at")
+        completed_at = d.pop("completedAt", d.pop("completed_at", UNSET))
 
-        exit_code = d.pop("exitCode") if "exitCode" in d else d.pop("exit_code")
+        exit_code = d.pop("exitCode", d.pop("exit_code", UNSET))
 
         logs = d.pop("logs")
 
@@ -134,7 +134,7 @@ class ProcessResponse:
 
         pid = d.pop("pid")
 
-        started_at = d.pop("startedAt") if "startedAt" in d else d.pop("started_at")
+        started_at = d.pop("startedAt", d.pop("started_at", UNSET))
 
         status = ProcessResponseStatus(d.pop("status"))
 
@@ -142,7 +142,7 @@ class ProcessResponse:
 
         stdout = d.pop("stdout")
 
-        working_dir = d.pop("workingDir") if "workingDir" in d else d.pop("working_dir")
+        working_dir = d.pop("workingDir", d.pop("working_dir", UNSET))
 
         keep_alive = d.pop("keepAlive", d.pop("keep_alive", UNSET))
 

@@ -48,7 +48,7 @@ class ApplyEditRequest:
         if not src_dict:
             return None
         d = dict(src_dict)
-        code_edit = d.pop("codeEdit") if "codeEdit" in d else d.pop("code_edit")
+        code_edit = d.pop("codeEdit", d.pop("code_edit", UNSET))
 
         model = d.pop("model", UNSET)
 

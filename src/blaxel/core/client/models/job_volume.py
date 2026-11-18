@@ -64,11 +64,11 @@ class JobVolume:
         if not src_dict:
             return None
         d = dict(src_dict)
-        mount_path = d.pop("mountPath") if "mountPath" in d else d.pop("mount_path")
+        mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
         name = d.pop("name")
 
-        size_mb = d.pop("sizeMb") if "sizeMb" in d else d.pop("size_mb")
+        size_mb = d.pop("sizeMb", d.pop("size_mb", UNSET))
 
         type_ = JobVolumeType(d.pop("type") if "type" in d else d.pop("type_"))
 

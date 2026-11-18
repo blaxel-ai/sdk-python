@@ -68,7 +68,7 @@ class ImageShareTarget:
         if not src_dict:
             return None
         d = dict(src_dict)
-        account_id = d.pop("accountId") if "accountId" in d else d.pop("account_id")
+        account_id = d.pop("accountId", d.pop("account_id", UNSET))
 
         status = d.pop("status")
 
