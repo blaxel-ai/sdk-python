@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 if TYPE_CHECKING:
     from ..models.upgrade_status import UpgradeStatus
 
@@ -104,27 +106,27 @@ class HealthResponse:
         d = dict(src_dict)
         arch = d.pop("arch")
 
-        build_time = d.pop("buildTime") if "buildTime" in d else d.pop("build_time")
+        build_time = d.pop("buildTime", d.pop("build_time", UNSET))
 
-        git_commit = d.pop("gitCommit") if "gitCommit" in d else d.pop("git_commit")
+        git_commit = d.pop("gitCommit", d.pop("git_commit", UNSET))
 
-        go_version = d.pop("goVersion") if "goVersion" in d else d.pop("go_version")
+        go_version = d.pop("goVersion", d.pop("go_version", UNSET))
 
         last_upgrade = UpgradeStatus.from_dict(
-            d.pop("lastUpgrade") if "lastUpgrade" in d else d.pop("last_upgrade")
+            d.pop("lastUpgrade", d.pop("last_upgrade", UNSET))
         )
 
         os = d.pop("os")
 
-        started_at = d.pop("startedAt") if "startedAt" in d else d.pop("started_at")
+        started_at = d.pop("startedAt", d.pop("started_at", UNSET))
 
         status = d.pop("status")
 
-        upgrade_count = d.pop("upgradeCount") if "upgradeCount" in d else d.pop("upgrade_count")
+        upgrade_count = d.pop("upgradeCount", d.pop("upgrade_count", UNSET))
 
         uptime = d.pop("uptime")
 
-        uptime_seconds = d.pop("uptimeSeconds") if "uptimeSeconds" in d else d.pop("uptime_seconds")
+        uptime_seconds = d.pop("uptimeSeconds", d.pop("uptime_seconds", UNSET))
 
         version = d.pop("version")
 

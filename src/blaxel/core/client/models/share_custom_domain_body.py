@@ -6,6 +6,8 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 T = TypeVar("T", bound="ShareCustomDomainBody")
 
 
@@ -39,7 +41,7 @@ class ShareCustomDomainBody:
             return None
         d = dict(src_dict)
         target_workspace = (
-            d.pop("targetWorkspace") if "targetWorkspace" in d else d.pop("target_workspace")
+            d.pop("targetWorkspace", d.pop("target_workspace", UNSET))
         )
 
         share_custom_domain_body = cls(

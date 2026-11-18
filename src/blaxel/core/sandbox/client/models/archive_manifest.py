@@ -103,7 +103,7 @@ class ArchiveManifest:
         if not src_dict:
             return None
         d = dict(src_dict)
-        created_at = d.pop("createdAt") if "createdAt" in d else d.pop("created_at")
+        created_at = d.pop("createdAt", d.pop("created_at", UNSET))
 
         root = d.pop("root")
 

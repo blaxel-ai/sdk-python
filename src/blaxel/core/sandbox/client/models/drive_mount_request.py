@@ -68,9 +68,9 @@ class DriveMountRequest:
         if not src_dict:
             return None
         d = dict(src_dict)
-        drive_name = d.pop("driveName") if "driveName" in d else d.pop("drive_name")
+        drive_name = d.pop("driveName", d.pop("drive_name", UNSET))
 
-        mount_path = d.pop("mountPath") if "mountPath" in d else d.pop("mount_path")
+        mount_path = d.pop("mountPath", d.pop("mount_path", UNSET))
 
         drive_path = d.pop("drivePath", d.pop("drive_path", UNSET))
 

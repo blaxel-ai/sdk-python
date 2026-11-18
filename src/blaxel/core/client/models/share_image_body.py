@@ -47,7 +47,7 @@ class ShareImageBody:
             return None
         d = dict(src_dict)
         target_workspace = (
-            d.pop("targetWorkspace") if "targetWorkspace" in d else d.pop("target_workspace")
+            d.pop("targetWorkspace", d.pop("target_workspace", UNSET))
         )
 
         target_account_id = d.pop("targetAccountId", d.pop("target_account_id", UNSET))

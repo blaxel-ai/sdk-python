@@ -6,6 +6,8 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 T = TypeVar("T", bound="FileWithContent")
 
 
@@ -76,7 +78,7 @@ class FileWithContent:
 
         group = d.pop("group")
 
-        last_modified = d.pop("lastModified") if "lastModified" in d else d.pop("last_modified")
+        last_modified = d.pop("lastModified", d.pop("last_modified", UNSET))
 
         name = d.pop("name")
 

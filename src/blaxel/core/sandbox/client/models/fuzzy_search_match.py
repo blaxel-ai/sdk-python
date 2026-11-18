@@ -6,6 +6,8 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 T = TypeVar("T", bound="FuzzySearchMatch")
 
 
@@ -51,7 +53,7 @@ class FuzzySearchMatch:
 
         score = d.pop("score")
 
-        type_ = d.pop("type") if "type" in d else d.pop("type_")
+        type_ = d.pop("type", d.pop("type_", UNSET))
 
         fuzzy_search_match = cls(
             path=path,

@@ -6,6 +6,8 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET
+
 T = TypeVar("T", bound="SandboxRestoreResponse")
 
 
@@ -46,7 +48,7 @@ class SandboxRestoreResponse:
         d = dict(src_dict)
         name = d.pop("name")
 
-        snapshot_id = d.pop("snapshotId") if "snapshotId" in d else d.pop("snapshot_id")
+        snapshot_id = d.pop("snapshotId", d.pop("snapshot_id", UNSET))
 
         sandbox_restore_response = cls(
             name=name,

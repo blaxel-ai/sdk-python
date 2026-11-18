@@ -119,9 +119,9 @@ class SandboxForkRequest:
         if not src_dict:
             return None
         d = dict(src_dict)
-        target_name = d.pop("targetName") if "targetName" in d else d.pop("target_name")
+        target_name = d.pop("targetName", d.pop("target_name", UNSET))
 
-        target_type = d.pop("targetType") if "targetType" in d else d.pop("target_type")
+        target_type = d.pop("targetType", d.pop("target_type", UNSET))
 
         custom_domain = d.pop("customDomain", d.pop("custom_domain", UNSET))
 

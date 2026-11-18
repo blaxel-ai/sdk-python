@@ -228,10 +228,20 @@ return field_dict
 {% endif %}
 {% for property in model.required_properties + model.optional_properties %}
     {% set wire_name = property.name | in_double_quote_literal %}
+    {% import "property_templates/" + property.template as prop_template %}
+    {# Blaxel: a required field whose construct accepts UNSET (a scalar read as-is, or a nested
+       model whose from_dict returns None for UNSET) must degrade to UNSET instead of raising a
+       raw KeyError when the server omits it (e.g. an omitempty field). Enums, datetimes and the
+       like keep raising because their construct cannot accept UNSET. #}
+    {% set unset_safe = (not prop_template.construct) or (property.template == "model_property.py.jinja") %}
     {# Blaxel: also accept the snake_case python name as input key #}
     {% if property.required %}
         {% if property.name != property.python_name %}
-            {% set property_source = 'd.pop("' + wire_name + '") if "' + wire_name + '" in d else d.pop("' + property.python_name + '")' %}
+            {% if unset_safe %}
+                {% set property_source = 'd.pop("' + wire_name + '", d.pop("' + property.python_name + '", UNSET))' %}
+            {% else %}
+                {% set property_source = 'd.pop("' + wire_name + '") if "' + wire_name + '" in d else d.pop("' + property.python_name + '")' %}
+            {% endif %}
         {% else %}
             {% set property_source = 'd.pop("' + wire_name + '")' %}
         {% endif %}
@@ -242,7 +252,6 @@ return field_dict
             {% set property_source = 'd.pop("' + wire_name + '", UNSET)' %}
         {% endif %}
     {% endif %}
-    {% import "property_templates/" + property.template as prop_template %}
     {% if paginated_list.value and property.python_name == "meta" and property.required %}
         meta = UNSET if isinstance(_meta, Unset) else PaginationMeta.from_dict(_meta)
     {% elif prop_template.construct %}
