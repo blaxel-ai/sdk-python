@@ -187,6 +187,7 @@ class SandboxProcess(SandboxAction):
             options = {}
 
         closed = False
+        errors: list[Exception] = []
 
         async def start_streaming():
             nonlocal closed
@@ -229,11 +230,16 @@ class SandboxProcess(SandboxAction):
                                     if options.get("on_log"):
                                         options["on_log"](line)
             except Exception as e:
-                # Suppress AbortError when closing
-                if hasattr(e, "name") and getattr(e, "name") == "AbortError":
-                    pass
-                else:
-                    raise e
+                # A dropped log stream must stay observable through wait(), but it
+                # must never surface as an unhandled task exception. This coroutine
+                # runs in a fire-and-forget task, so re-raising here reaches
+                # asyncio's "Task exception was never retrieved" handler and is
+                # reported as an SDK crash (SDK-PYTHON-13R: RemoteProtocolError,
+                # server disconnected on the long-lived stream). Capture it the way
+                # the sync client and fs.watch do; stream_logs' reconnect loop owns
+                # recovery.
+                if not closed:
+                    errors.append(e)
 
         # Start streaming in the background
         task = asyncio.create_task(start_streaming())
@@ -249,6 +255,8 @@ class SandboxProcess(SandboxAction):
             except asyncio.CancelledError:
                 if not closed:
                     raise
+            if errors and not closed:
+                raise errors[0]
 
         return AsyncStreamHandle(close, wait_func)
 

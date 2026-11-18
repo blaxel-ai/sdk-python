@@ -1,4 +1,5 @@
 import asyncio
+from types import SimpleNamespace
 from typing import Any, cast
 
 import httpx
@@ -274,3 +275,70 @@ async def test_process_exec_is_not_retried_on_transport_reset():
     with pytest.raises(httpx.ConnectError):
         await process.exec({"command": "echo nope"})
     assert client.calls == 1
+
+
+def _streaming_process(monkeypatch, server_url: str) -> Any:
+    # settings.auth is resolved once at import; a credential-free test env would
+    # raise CredentialsError from settings.headers before the stream even opens.
+    monkeypatch.setattr(type(settings), "headers", property(lambda _self: {}))
+    process = cast(Any, object.__new__(SandboxProcess))
+    process.sandbox_config = SimpleNamespace(force_url=server_url, headers={}, metadata=None)
+    return process
+
+
+def _task_capturing_create_task(monkeypatch) -> list:
+    created_tasks: list[asyncio.Task] = []
+    real_create_task = asyncio.create_task
+
+    def capture_task(coro, **kwargs):
+        task = real_create_task(coro, **kwargs)
+        created_tasks.append(task)
+        return task
+
+    monkeypatch.setattr("blaxel.core.sandbox.default.process.asyncio.create_task", capture_task)
+    return created_tasks
+
+
+@pytest.mark.asyncio
+async def test_async_stream_logs_drop_is_not_an_unhandled_task_exception(monkeypatch):
+    """SDK-PYTHON-13R: a dropped log stream must not leak as a fire-and-forget crash.
+
+    Re-raising the transport drop inside the background task reaches asyncio's
+    "Task exception was never retrieved" handler, which the SDK reports to Sentry.
+    The error must instead be captured so it only surfaces when wait() is awaited.
+    """
+    created_tasks = _task_capturing_create_task(monkeypatch)
+
+    async with LoopbackFaultServer(close_without_response) as server:
+        process = _streaming_process(monkeypatch, server.url)
+        handle = process._stream_logs("proc")
+        task = created_tasks[-1]
+
+        # Drain the task without retrieving its result, so an exception left on it
+        # would stay unretrieved exactly as it would in production.
+        await asyncio.wait({task}, timeout=2.0)
+        assert task.done()
+        # The fix routes the drop into wait() instead of leaving it on the task.
+        assert task.exception() is None
+
+        # The drop is still observable to a caller that awaits the stream.
+        with pytest.raises(httpx.TransportError):
+            await handle.wait()
+
+    assert server.requests == 1
+
+
+@pytest.mark.asyncio
+async def test_async_stream_logs_close_suppresses_drop_error(monkeypatch):
+    created_tasks = _task_capturing_create_task(monkeypatch)
+
+    async with LoopbackFaultServer(close_without_response) as server:
+        process = _streaming_process(monkeypatch, server.url)
+        handle = process._stream_logs("proc")
+        task = created_tasks[-1]
+
+        await asyncio.wait({task}, timeout=2.0)
+        handle.close()
+        # After an explicit close, wait() is teardown and must not raise the drop.
+        await handle.wait()
+        assert task.exception() is None
