@@ -1,8 +1,10 @@
 import asyncio
 import json
 import logging
+import re
 import time
 import warnings
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Sequence, Union
 
 from attrs import evolve
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 
 from ...client import errors as client_errors
 from ...client.api.compute.archive_sandbox import asyncio as archive_sandbox
-from ...client.api.compute.create_sandbox import asyncio as create_sandbox
+from ...client.api.compute.create_sandbox import asyncio_detailed as create_sandbox_detailed
 from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
 from ...client.api.compute.delete_sandbox_snapshot import asyncio as delete_sandbox_snapshot
@@ -52,7 +54,7 @@ from ...errors import _APIError
 from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
 from ..drive_setup import _AsyncDriveSetup, _normalize_mount_drives, _requested_region
 from ..names import _invalid_name_hint
-from ..transient_retry import _backoff_delay_seconds
+from ..transient_retry import _backoff_delay_seconds, is_retryable_read_error
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -199,6 +201,224 @@ def _create_auth_retry_delay(attempt: int) -> float:
     return _backoff_delay_seconds(
         attempt, CREATE_AUTH_RETRY_BASE_DELAY_SECONDS, CREATE_AUTH_RETRY_MAX_DELAY_SECONDS
     )
+
+
+# Some creations go on after the create call has answered: the control plane
+# answers 202 Accepted, with the sandbox still DEPLOYING, when it cannot finish
+# while the request is open, and an edge in front of it can cut a slow request
+# with a 504 while the creation keeps running. The sandbox then reaches DEPLOYED,
+# or FAILED once the platform gives up (about 3 minutes after the request). The
+# create call reads the sandbox until it settles, for a little longer than that.
+CREATION_WAIT_MAX_SECONDS = 240
+CREATION_WAIT_BASE_DELAY_SECONDS = 0.5
+CREATION_WAIT_MAX_DELAY_SECONDS = 3.0
+# After a 504 the creation may not have reached the control plane at all, so the
+# name alone does not tell it apart from another sandbox under that name. A
+# sandbox found is taken for this creation only when it was created after the
+# request was sent, give or take CREATION_CLOCK_SKEW_SECONDS of clock difference
+# with the control plane; an older one held the name already (with
+# create_if_not_exists, that one is the expected answer). Not found keeps the
+# wait going only for CREATION_WAIT_NOT_FOUND_SECONDS and only until the sandbox
+# has shown up, so a later sandbox under the same name is not taken for a
+# creation that went away.
+CREATION_CLOCK_SKEW_SECONDS = 30
+CREATION_WAIT_NOT_FOUND_SECONDS = 30
+# Statuses of a sandbox whose creation is still under way.
+CREATING_STATUSES = {"DEPLOYING", "BUILDING", "UPLOADING"}
+
+
+def _background_creation_name(
+    status_code: int, content: bytes, body: Union[Sandbox, Dict[str, Any]]
+) -> str | None:
+    """Name of the sandbox whose creation goes on after this answer, None if it does not.
+
+    A 202 body is the sandbox, named by the server. A 504 has no usable body, so
+    only a creation that sent a name can be found again.
+    """
+    if status_code == 202:
+        return _sandbox_name(_decode_error_content(content))
+    if status_code == 504:
+        return _sandbox_name(body)
+    return None
+
+
+def _creation_poll_delay(attempt: int) -> float:
+    return _backoff_delay_seconds(
+        attempt, CREATION_WAIT_BASE_DELAY_SECONDS, CREATION_WAIT_MAX_DELAY_SECONDS
+    )
+
+
+def _unix_time(timestamp: object) -> float | None:
+    """A control plane timestamp (RFC 3339, up to nanoseconds) as a Unix time.
+
+    None when it is missing or cannot be read.
+    """
+    if not isinstance(timestamp, str):
+        return None
+    # Python 3.10 reads neither a "Z" suffix nor more than 6 fraction digits.
+    text = timestamp.strip().replace("Z", "+00:00")
+    text = re.sub(r"\.(\d+)", lambda match: "." + (match.group(1) + "000000")[:6], text, count=1)
+    try:
+        moment = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.timestamp()
+
+
+def _created_since(sandbox: Sandbox, sent_at: float) -> bool:
+    """Whether the sandbox was created after a request sent at ``sent_at`` (Unix time)."""
+    metadata = sandbox.metadata if not isinstance(sandbox.metadata, Unset) else None
+    created_at = _unix_time(getattr(metadata, "created_at", None))
+    return created_at is not None and created_at >= sent_at - CREATION_CLOCK_SKEW_SECONDS
+
+
+def _failure_reason(sandbox: Sandbox) -> str | None:
+    """The reason the platform recorded for a sandbox that did not deploy, if any."""
+    events = sandbox.events if not isinstance(sandbox.events, Unset) else None
+    for event in reversed(events or []):
+        if event.status == "FAILED" and isinstance(event.message, str) and event.message:
+            return event.message
+    errors = sandbox.errors if not isinstance(sandbox.errors, Unset) else None
+    for error in reversed(errors or []):
+        if error.fatal is True and isinstance(error.message, str) and error.message:
+            return error.message
+    return None
+
+
+def _creation_done(sandbox_name: str, sandbox: Sandbox) -> bool:
+    """True once the creation is DEPLOYED, False while it is under way.
+
+    Raises SandboxAPIError when the sandbox ends in any other status (FAILED, or
+    deleted meanwhile), with the reason the platform recorded when there is one.
+    """
+    status = _status_of(sandbox)
+    if status == "DEPLOYED":
+        return True
+    if status is None or status in CREATING_STATUSES:
+        return False
+    message = f"Sandbox {sandbox_name} is {status} instead of DEPLOYED"
+    reason = _failure_reason(sandbox)
+    if reason:
+        message = f"{message}: {reason}"
+    code = "DEPLOYMENT_FAILED" if status == "FAILED" else None
+    raise SandboxAPIError(message, code=code)
+
+
+class _CreationWait:
+    """The wait for a creation that goes on after the create call has answered.
+
+    ``gateway_timeout`` is the 504 the call answered, None after a 202. After a
+    504, ``sent_at`` is when the request was sent (Unix time): a sandbox created
+    before it is not this creation. None takes any sandbox under the name.
+    """
+
+    def __init__(
+        self,
+        sandbox_name: str,
+        gateway_timeout: Exception | None = None,
+        sent_at: float | None = None,
+    ):
+        self.sandbox_name = sandbox_name
+        self.gateway_timeout = gateway_timeout
+        self.sent_at = sent_at
+        started = time.monotonic()
+        self.deadline = started + CREATION_WAIT_MAX_SECONDS
+        self.not_found_until = started + CREATION_WAIT_NOT_FOUND_SECONDS
+        self.seen = False
+        self.status: str | None = None
+
+    def going(self) -> bool:
+        return time.monotonic() < self.deadline
+
+    def read_failed(self, error: Exception) -> None:
+        """Return when the wait goes on after a failed read of the sandbox, else raise."""
+        if is_retryable_read_error(error):
+            return
+        if self.gateway_timeout is None or self.seen or getattr(error, "status", None) != 404:
+            raise error
+        # After a 504 the record can lag behind the creation for a short while; a
+        # sandbox that never shows up leaves the 504 as all there is to say.
+        if time.monotonic() < self.not_found_until:
+            return
+        raise self.gateway_timeout
+
+    def read(self, sandbox: Sandbox) -> bool:
+        """True once the creation is DEPLOYED, False while it is under way.
+
+        Raises the 504 for a sandbox created before the request (not this
+        creation), and SandboxAPIError when the creation ends in any other status.
+        """
+        if (
+            self.gateway_timeout is not None
+            and self.sent_at is not None
+            and not _created_since(sandbox, self.sent_at)
+        ):
+            raise self.gateway_timeout
+        self.seen = True
+        if _creation_done(self.sandbox_name, sandbox):
+            return True
+        self.status = _status_of(sandbox)
+        return False
+
+    def timed_out(self) -> Exception:
+        """The error of a wait that ran out of time."""
+        if self.gateway_timeout is not None and not self.seen:
+            return self.gateway_timeout
+        return SandboxAPIError(
+            f"Sandbox {self.sandbox_name} is still {self.status or 'DEPLOYING'} after waiting"
+            f" {CREATION_WAIT_MAX_SECONDS}s for its creation to finish; it may still"
+            " become ready, read it again later to check."
+        )
+
+
+async def _wait_for_creation(wait: _CreationWait) -> Sandbox:
+    """Read a sandbox whose creation goes on in the background until it is DEPLOYED."""
+    attempt = 0
+    while wait.going():
+        attempt += 1
+        await asyncio.sleep(_creation_poll_delay(attempt))
+        try:
+            response = await get_sandbox(wait.sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {wait.sandbox_name}")
+        except Exception as error:
+            wait.read_failed(error)
+            continue
+        if wait.read(sandbox):
+            return sandbox
+    raise wait.timed_out()
+
+
+async def create_sandbox(
+    *,
+    client: Client,
+    body: Union[Sandbox, Dict[str, Any]],
+    create_if_not_exist: bool = False,
+) -> Sandbox | SandboxError | None:
+    """Send the creation; when it goes on in the background, wait for the sandbox.
+
+    Answers like the generated call it wraps. A 202 is told by its status code,
+    whether the generated client raises it (it does not model 202 yet) or parses
+    it, so regenerating the client does not change this.
+    """
+    sent_at = time.time()
+    try:
+        response = await create_sandbox_detailed(
+            client=client, body=body, create_if_not_exist=create_if_not_exist
+        )
+    except client_errors.UnexpectedStatus as error:
+        name = _background_creation_name(error.status_code, error.content, body)
+        if name is None:
+            raise
+        gateway_timeout = error if error.status_code == 504 else None
+        wait = _CreationWait(name, gateway_timeout, None if create_if_not_exist else sent_at)
+    else:
+        name = _background_creation_name(response.status_code, response.content, body)
+        if name is None:
+            return response.parsed
+        wait = _CreationWait(name)
+    return await _wait_for_creation(wait)
 
 
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
@@ -816,6 +1036,13 @@ class SandboxInstance:
         before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
         times with a short backoff.
 
+        A creation that goes on after the call has answered (HTTP 202 with the
+        sandbox still ``DEPLOYING``, or a 504 cut at the edge for a named
+        sandbox) is waited for: this reads the sandbox until it is ``DEPLOYED``,
+        for up to ``CREATION_WAIT_MAX_SECONDS``. After a 504, a sandbox that
+        already held the name before the request is not taken for the new one:
+        the 504 is raised.
+
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
                 dict with the same keys (``name``, ``image``, ``memory`` in MB,
@@ -863,7 +1090,9 @@ class SandboxInstance:
             SandboxAPIError: When the API rejects the creation, for example
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
-                details.
+                details. Also when a creation waited for ends ``FAILED`` (code
+                ``DEPLOYMENT_FAILED``, with the recorded reason) or is still not
+                ready after ``CREATION_WAIT_MAX_SECONDS``.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 
