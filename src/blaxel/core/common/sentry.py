@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from ..errors import BlaxelError
 from .settings import settings
 
 try:
@@ -415,11 +416,27 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_api_response_error(exc_value: BaseException) -> bool:
+    """Check whether an exception merely relays a Blaxel API HTTP response.
+
+    ``BlaxelError`` (and its subclasses such as ``UnexpectedStatus``) describes a
+    status the backend returned -- e.g. a 401/403 authorization failure, a 404, a
+    409 conflict or a 429 rate limit -- surfaced to the caller as an exception. That
+    is the server's response contract, not a defect in SDK code, so an unhandled one
+    is a caller/environment problem (SDK-PYTHON-13Q: an unhandled 403) rather than an
+    SDK bug worth reporting to Sentry. The backend has its own observability for the
+    responses it emits.
+    """
+    return isinstance(exc_value, BlaxelError)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_api_response_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 

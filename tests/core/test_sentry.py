@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.sandbox.client import errors as sandbox_errors
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -236,6 +237,42 @@ except errors.UnexpectedStatus as exc:
         assert namespace["handled_status"] == 404
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == []
+
+    @pytest.mark.parametrize("status_code", [401, 403, 404, 409, 429, 500, 503])
+    def test_unhandled_api_status_error_is_not_captured_but_chained(
+        self, installed_sentry_hooks, status_code
+    ):
+        """Regression for SDK-PYTHON-13Q: an API HTTP status is a server response,
+        not an SDK bug, so an unhandled one must still crash the caller without
+        being reported to the SDK's Sentry."""
+        exc = _raise_in_file(
+            _sdk_filename("core/client/api/compute/get_sandbox.py"),
+            "raise from_response(status_code, b'')",
+            {"from_response": errors.from_response, "status_code": status_code},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert isinstance(exc, errors.UnexpectedStatus)
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_sandbox_api_status_error_is_not_captured_but_chained(
+        self, installed_sentry_hooks
+    ):
+        """The sandbox client raises its own UnexpectedStatus; it is filtered too."""
+        exc = _raise_in_file(
+            _sdk_filename("core/sandbox/client/api/process/post_process.py"),
+            "raise UnexpectedStatus(403, b'')",
+            {"UnexpectedStatus": sandbox_errors.UnexpectedStatus},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
     def test_unhandled_sdk_exception_is_captured_and_chained(self, installed_sentry_hooks):
         exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
