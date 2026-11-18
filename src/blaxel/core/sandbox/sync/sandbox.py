@@ -52,6 +52,7 @@ from ..default.sandbox import (
     CREATE_AUTH_RETRIES,
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
+    EnvUpdate,
     SandboxAPIError,
     _create_auth_retry_delay,
     _create_body,
@@ -65,6 +66,7 @@ from ..default.sandbox import (
     _status_of,
     _unwrap_response,
     _validate_creation_timeout,
+    _with_envs,
 )
 from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
 from ..drive_setup import _normalize_mount_drives, _requested_region, _SyncDriveSetup
@@ -975,6 +977,63 @@ class SyncSandboxInstance:
         )
 
         return cls(_unwrap_response(response, "update sandbox TTL"))
+
+    @classmethod
+    def update_envs(
+        cls, sandbox_name: str, envs: EnvUpdate, *, replace: bool = False
+    ) -> "SyncSandboxInstance":
+        """Set, change or remove environment variables of a sandbox without recreating it.
+
+        By default the given variables are merged into the current ones: a
+        variable with the same name takes the new value, other variables are
+        kept. The mapping form changes only the value, so an existing
+        variable keeps its ``secret`` flag, and a ``None`` value removes it. With
+        ``replace=True``, the given variables replace the whole list.
+
+        The sandbox is redeployed to apply the change: its status goes from
+        ``DEPLOYING`` back to ``DEPLOYED`` a few seconds after this call
+        returns, and processes started from then on read the new values. Files
+        and running processes of the sandbox are not kept across this
+        redeploy; keep data you need on a volume. Values are masked (``****``)
+        in API responses, including the returned instance; variables you do
+        not pass keep their real values.
+
+        Reads the sandbox, then writes it back with the change: two updates of
+        the same sandbox at the same time can overwrite each other.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            envs: ``{"NAME": "value"}`` (``None`` removes ``NAME``), or a list of
+                ``Env`` / ``{"name", "value", "secret"}`` entries.
+            replace: Replace every variable instead of merging into them.
+
+        Returns:
+            A new SyncSandboxInstance with the updated variables
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist or the API rejects
+                the update.
+
+        Example:
+            ```python
+            # Set NODE_ENV, change PORT and remove DEBUG; other variables stay.
+            SyncSandboxInstance.update_envs(
+                "my-sandbox", {"NODE_ENV": "staging", "PORT": "3000", "DEBUG": None}
+            )
+
+            # Keep a value secret.
+            SyncSandboxInstance.update_envs(
+                "my-sandbox", [{"name": "API_KEY", "value": key, "secret": True}]
+            )
+            ```
+        """
+        sandbox_instance = cls.get(sandbox_name)
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=_with_envs(sandbox_instance.sandbox, envs, replace),
+        )
+        return cls(_unwrap_response(response, "update sandbox envs"))
 
     @classmethod
     def update_lifecycle(

@@ -3,7 +3,7 @@ import json
 import logging
 import time
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Sequence, Union
 
 from attrs import evolve
 
@@ -298,6 +298,66 @@ def _create_body(sandbox: Sandbox) -> Union[Sandbox, Dict[str, Any]]:
     metadata = body.get("metadata")
     if isinstance(metadata, dict):
         metadata.pop("name", None)
+    return body
+
+
+EnvUpdate = Union[Mapping[str, Union[str, None]], Sequence[Union[Env, Dict[str, Any]]]]
+"""What :meth:`SandboxInstance.update_envs` accepts: ``{"NAME": "value"}`` or a list of envs."""
+
+
+def _env_to_dict(env: Union[Env, Dict[str, Any]]) -> Dict[str, Any]:
+    entry = env.to_dict() if isinstance(env, Env) else dict(env)
+    if not entry.get("name"):
+        # Name only the fields, never their values: an entry can hold a secret.
+        raise ValueError(f"Environment variable without a name (fields: {sorted(entry)})")
+    return entry
+
+
+def _updated_envs(
+    current: Sequence[Dict[str, Any]], envs: EnvUpdate, replace: bool
+) -> list[Dict[str, Any]]:
+    """Merge ``envs`` into ``current`` by name and return the resulting list.
+
+    A mapping sets each name to its value and keeps the other fields of an
+    existing variable (its ``secret`` flag); a ``None`` value removes the
+    variable. A list sets each entry exactly as given (``secret`` included). With
+    ``replace``, ``current`` is dropped first. Existing variables keep their
+    position; new ones are appended in the given order.
+    """
+    from_mapping = isinstance(envs, Mapping)
+    if isinstance(envs, Mapping):
+        changes: Dict[str, Dict[str, Any] | None] = {
+            name: None if value is None else {"name": name, "value": value}
+            for name, value in envs.items()
+        }
+    elif isinstance(envs, (str, bytes)):
+        raise TypeError("envs must be a mapping or a list of envs, not a string")
+    else:
+        changes = {}
+        for env in envs:
+            entry = _env_to_dict(env)
+            changes[entry["name"]] = entry
+
+    result: list[Dict[str, Any]] = []
+    if not replace:
+        for env in current:
+            name = env.get("name")
+            if name in changes:
+                change = changes.pop(name)
+                if change is not None:
+                    # A mapping changes only the value: a secret stays secret.
+                    result.append({**env, **change} if from_mapping else change)
+            else:
+                result.append(env)
+    result.extend(change for change in changes.values() if change is not None)
+    return result
+
+
+def _with_envs(sandbox: Sandbox, envs: EnvUpdate, replace: bool) -> Dict[str, Any]:
+    """The update body of ``sandbox`` with its ``spec.runtime.envs`` changed."""
+    body = sandbox.to_dict()
+    runtime = body.setdefault("spec", {}).setdefault("runtime", {})
+    runtime["envs"] = _updated_envs(runtime.get("envs") or [], envs, replace)
     return body
 
 
@@ -1249,6 +1309,63 @@ class SandboxInstance:
         )
 
         return cls(_unwrap_response(response, "update sandbox TTL"))
+
+    @classmethod
+    async def update_envs(
+        cls, sandbox_name: str, envs: EnvUpdate, *, replace: bool = False
+    ) -> "SandboxInstance":
+        """Set, change or remove environment variables of a sandbox without recreating it.
+
+        By default the given variables are merged into the current ones: a
+        variable with the same name takes the new value, other variables are
+        kept. The mapping form changes only the value, so an existing
+        variable keeps its ``secret`` flag, and a ``None`` value removes it. With
+        ``replace=True``, the given variables replace the whole list.
+
+        The sandbox is redeployed to apply the change: its status goes from
+        ``DEPLOYING`` back to ``DEPLOYED`` a few seconds after this call
+        returns, and processes started from then on read the new values. Files
+        and running processes of the sandbox are not kept across this
+        redeploy; keep data you need on a volume. Values are masked (``****``)
+        in API responses, including the returned instance; variables you do
+        not pass keep their real values.
+
+        Reads the sandbox, then writes it back with the change: two updates of
+        the same sandbox at the same time can overwrite each other.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            envs: ``{"NAME": "value"}`` (``None`` removes ``NAME``), or a list of
+                ``Env`` / ``{"name", "value", "secret"}`` entries.
+            replace: Replace every variable instead of merging into them.
+
+        Returns:
+            A new SandboxInstance with the updated variables
+
+        Raises:
+            SandboxAPIError: When the sandbox does not exist or the API rejects
+                the update.
+
+        Example:
+            ```python
+            # Set NODE_ENV, change PORT and remove DEBUG; other variables stay.
+            await SandboxInstance.update_envs(
+                "my-sandbox", {"NODE_ENV": "staging", "PORT": "3000", "DEBUG": None}
+            )
+
+            # Keep a value secret.
+            await SandboxInstance.update_envs(
+                "my-sandbox", [{"name": "API_KEY", "value": key, "secret": True}]
+            )
+            ```
+        """
+        sandbox_instance = await cls.get(sandbox_name)
+        response = await update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=_with_envs(sandbox_instance.sandbox, envs, replace),
+        )
+        return cls(_unwrap_response(response, "update sandbox envs"))
 
     @classmethod
     async def update_lifecycle(
