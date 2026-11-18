@@ -50,7 +50,6 @@ from ..default.sandbox import (
     ARCHIVE_WAIT_POLL_MS,
     ARCHIVING_STATUSES,
     CREATE_AUTH_RETRIES,
-    CREATION_WAIT_MAX_SECONDS,
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     EnvUpdate,
@@ -60,12 +59,10 @@ from ..default.sandbox import (
     _create_body,
     _create_error_message,
     _creation_client,
-    _creation_done,
     _creation_poll_delay,
-    _creation_wait_error,
+    _CreationWait,
     _error_status,
     _is_transient_create_auth_failure,
-    _keep_waiting,
     _notify_region_unset,
     _raise_if_creation_timeout,
     _sandbox_name,
@@ -117,25 +114,21 @@ class _SyncDeleteDescriptor:
             return instance_delete
 
 
-def _wait_for_creation(sandbox_name: str, gateway_timeout: Exception | None) -> Sandbox:
+def _wait_for_creation(wait: _CreationWait) -> Sandbox:
     """Read a sandbox whose creation goes on in the background until it is DEPLOYED."""
-    deadline = time.monotonic() + CREATION_WAIT_MAX_SECONDS
-    status = None
     attempt = 0
-    while time.monotonic() < deadline:
+    while wait.going():
         attempt += 1
         time.sleep(_creation_poll_delay(attempt))
         try:
-            response = get_sandbox(sandbox_name, client=client)
-            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            response = get_sandbox(wait.sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {wait.sandbox_name}")
         except Exception as error:
-            if _keep_waiting(error, gateway_timeout is not None):
-                continue
-            raise
-        if _creation_done(sandbox_name, sandbox):
+            wait.read_failed(error)
+            continue
+        if wait.read(sandbox):
             return sandbox
-        status = _status_of(sandbox)
-    raise _creation_wait_error(sandbox_name, status, gateway_timeout)
+    raise wait.timed_out()
 
 
 def create_sandbox(
@@ -148,7 +141,7 @@ def create_sandbox(
 
     Same as the async ``create_sandbox`` of ``blaxel.core.sandbox.default.sandbox``.
     """
-    gateway_timeout = None
+    sent_at = time.time()
     try:
         response = create_sandbox_detailed(
             client=client, body=body, create_if_not_exist=create_if_not_exist
@@ -158,11 +151,13 @@ def create_sandbox(
         if name is None:
             raise
         gateway_timeout = error if error.status_code == 504 else None
+        wait = _CreationWait(name, gateway_timeout, None if create_if_not_exist else sent_at)
     else:
         name = _background_creation_name(response.status_code, response.content, body)
         if name is None:
             return response.parsed
-    return _wait_for_creation(name, gateway_timeout)
+        wait = _CreationWait(name)
+    return _wait_for_creation(wait)
 
 
 class _SyncSandboxCallDescriptor:
@@ -576,7 +571,9 @@ class SyncSandboxInstance:
         A creation that goes on after the call has answered (HTTP 202 with the
         sandbox still ``DEPLOYING``, or a 504 cut at the edge for a named
         sandbox) is waited for: this reads the sandbox until it is ``DEPLOYED``,
-        for up to ``CREATION_WAIT_MAX_SECONDS``.
+        for up to ``CREATION_WAIT_MAX_SECONDS``. After a 504, a sandbox that
+        already held the name before the request is not taken for the new one:
+        the 504 is raised.
 
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a

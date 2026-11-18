@@ -9,6 +9,7 @@ the sandbox again.
 """
 
 import json
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from unittest.mock import AsyncMock
 
@@ -20,17 +21,24 @@ from blaxel.core.client import errors as client_errors
 from blaxel.core.client.client import Client
 from blaxel.core.client.models import Sandbox
 from blaxel.core.client.types import Response
+from blaxel.core.sandbox.default.sandbox import _unix_time
 
 ASYNC_MODULE = "blaxel.core.sandbox.default.sandbox"
 SYNC_MODULE = "blaxel.core.sandbox.sync.sandbox"
 REGION = "us-pdx-1"
 NAME = "sbx-accepted"
 NAMED = {"name": NAME, "region": REGION}
+LONG_AGO = "2020-01-01T00:00:00Z"
 
 
-def _sandbox(status: str, name: str = NAME, **extra) -> dict:
+def _timestamp(moment: datetime) -> str:
+    # As the control plane sends it: RFC 3339 in UTC, with nanoseconds.
+    return moment.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f") + "123Z"
+
+
+def _sandbox(status: str, name: str = NAME, created_at: str | None = None, **extra) -> dict:
     return {
-        "metadata": {"name": name},
+        "metadata": {"name": name, "createdAt": created_at or _timestamp(datetime.now())},
         "spec": {"runtime": {"image": "blaxel/base-image:latest"}, "region": REGION},
         "status": status,
         **extra,
@@ -98,8 +106,12 @@ def api(monkeypatch):
 
 @pytest.fixture
 def short_wait(monkeypatch):
-    for module in (ASYNC_MODULE, SYNC_MODULE):
-        monkeypatch.setattr(f"{module}.CREATION_WAIT_MAX_SECONDS", 0.05)
+    monkeypatch.setattr(f"{ASYNC_MODULE}.CREATION_WAIT_MAX_SECONDS", 0.05)
+
+
+@pytest.fixture
+def short_not_found(monkeypatch):
+    monkeypatch.setattr(f"{ASYNC_MODULE}.CREATION_WAIT_NOT_FOUND_SECONDS", 0.05)
 
 
 # 202 Accepted
@@ -247,7 +259,7 @@ async def test_504_for_an_unnamed_creation_raises_it(api):
     assert fake.reads_made == 0
 
 
-async def test_504_for_a_sandbox_that_never_shows_up_raises_the_504(api, short_wait):
+async def test_504_for_a_sandbox_that_never_shows_up_raises_the_504(api, short_not_found):
     fake = api(GATEWAY_TIMEOUT, [NOT_FOUND])
 
     with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
@@ -262,6 +274,71 @@ async def test_504_wait_is_bounded(api, short_wait):
 
     with pytest.raises(SandboxAPIError, match=f"^Sandbox {NAME} is still DEPLOYING after waiting"):
         await SandboxInstance.create(NAMED)
+
+
+async def test_504_does_not_take_a_sandbox_older_than_the_request(api):
+    # The name was held before the request, so the creation would have been
+    # refused: the sandbox found is not this creation, and the 504 stands.
+    fake = api(GATEWAY_TIMEOUT, [_ok("DEPLOYED", created_at=LONG_AGO)])
+
+    with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+        await SandboxInstance.create(NAMED)
+
+    assert excinfo.value.status_code == 504
+    assert fake.reads_made == 1
+
+
+async def test_504_allows_for_a_small_clock_difference(api):
+    # The control plane clock a little behind this one.
+    a_bit_before = _timestamp(datetime.now() - timedelta(seconds=10))
+    api(GATEWAY_TIMEOUT, [_ok("DEPLOYED", created_at=a_bit_before)])
+
+    instance = await SandboxInstance.create(NAMED)
+
+    assert str(instance.status) == "DEPLOYED"
+
+
+async def test_create_if_not_exists_504_returns_the_sandbox_holding_the_name(api):
+    # There a sandbox that already holds the name is the expected answer.
+    fake = api(GATEWAY_TIMEOUT, [_ok("DEPLOYED", created_at=LONG_AGO)])
+
+    instance = await SandboxInstance.create_if_not_exists(NAMED)
+
+    assert str(instance.status) == "DEPLOYED"
+    assert fake.reads_made == 1
+
+
+async def test_504_stops_when_the_sandbox_goes_away(api):
+    # Seen, then not found: the creation went away, and a sandbox created later
+    # under the same name would not be this one.
+    fake = api(GATEWAY_TIMEOUT, [_ok("DEPLOYING"), NOT_FOUND, _ok("DEPLOYED")])
+
+    with pytest.raises(SandboxAPIError) as excinfo:
+        await SandboxInstance.create(NAMED)
+
+    assert excinfo.value.status == 404
+    assert fake.reads_made == 2
+
+
+SECOND = datetime(2026, 11, 18, 22, 27, 16, tzinfo=timezone.utc).timestamp()
+
+
+@pytest.mark.parametrize(
+    ("timestamp", "expected"),
+    [
+        ("2026-11-18T22:27:16.569123456Z", SECOND + 0.569123),
+        ("2026-11-18T22:27:16Z", SECOND),
+        ("2026-11-18T23:27:16.5+01:00", SECOND + 0.5),
+        ("2026-11-18T22:27:16", SECOND),
+        ("yesterday", None),
+        (None, None),
+    ],
+)
+def test_control_plane_timestamps_are_read(timestamp, expected):
+    if expected is None:
+        assert _unix_time(timestamp) is None
+    else:
+        assert _unix_time(timestamp) == pytest.approx(expected)
 
 
 # Everything else is unchanged
@@ -344,13 +421,32 @@ def test_sync_504_for_a_named_creation_waits_until_deployed(api):
     assert fake.reads_made == 2
 
 
-def test_sync_504_for_a_sandbox_that_never_shows_up_raises_the_504(api, short_wait):
+def test_sync_504_for_a_sandbox_that_never_shows_up_raises_the_504(api, short_not_found):
     api(GATEWAY_TIMEOUT, [NOT_FOUND])
 
     with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
         SyncSandboxInstance.create(NAMED)
 
     assert excinfo.value.status_code == 504
+
+
+def test_sync_504_does_not_take_a_sandbox_older_than_the_request(api):
+    fake = api(GATEWAY_TIMEOUT, [_ok("DEPLOYED", created_at=LONG_AGO)])
+
+    with pytest.raises(client_errors.UnexpectedStatus) as excinfo:
+        SyncSandboxInstance.create(NAMED)
+
+    assert excinfo.value.status_code == 504
+    assert fake.reads_made == 1
+
+
+def test_sync_504_stops_when_the_sandbox_goes_away(api):
+    api(GATEWAY_TIMEOUT, [_ok("DEPLOYING"), NOT_FOUND, _ok("DEPLOYED")])
+
+    with pytest.raises(SandboxAPIError) as excinfo:
+        SyncSandboxInstance.create(NAMED)
+
+    assert excinfo.value.status == 404
 
 
 @pytest.mark.parametrize("status", ["DEPLOYING", "BUILDING"])

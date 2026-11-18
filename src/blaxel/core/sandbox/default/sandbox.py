@@ -1,8 +1,10 @@
 import asyncio
 import json
 import logging
+import re
 import time
 import warnings
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Sequence, Union
 
 from attrs import evolve
@@ -210,6 +212,17 @@ def _create_auth_retry_delay(attempt: int) -> float:
 CREATION_WAIT_MAX_SECONDS = 240
 CREATION_WAIT_BASE_DELAY_SECONDS = 0.5
 CREATION_WAIT_MAX_DELAY_SECONDS = 3.0
+# After a 504 the creation may not have reached the control plane at all, so the
+# name alone does not tell it apart from another sandbox under that name. A
+# sandbox found is taken for this creation only when it was created after the
+# request was sent, give or take CREATION_CLOCK_SKEW_SECONDS of clock difference
+# with the control plane; an older one held the name already (with
+# create_if_not_exists, that one is the expected answer). Not found keeps the
+# wait going only for CREATION_WAIT_NOT_FOUND_SECONDS and only until the sandbox
+# has shown up, so a later sandbox under the same name is not taken for a
+# creation that went away.
+CREATION_CLOCK_SKEW_SECONDS = 30
+CREATION_WAIT_NOT_FOUND_SECONDS = 30
 # Statuses of a sandbox whose creation is still under way.
 CREATING_STATUSES = {"DEPLOYING", "BUILDING", "UPLOADING"}
 
@@ -235,14 +248,30 @@ def _creation_poll_delay(attempt: int) -> float:
     )
 
 
-def _keep_waiting(error: Exception, after_gateway_timeout: bool) -> bool:
-    """Whether a failed read of the sandbox leaves the creation wait going.
+def _unix_time(timestamp: object) -> float | None:
+    """A control plane timestamp (RFC 3339, up to nanoseconds) as a Unix time.
 
-    After a 504 the record can lag behind the creation, so not found is not final.
+    None when it is missing or cannot be read.
     """
-    if after_gateway_timeout and getattr(error, "status", None) == 404:
-        return True
-    return is_retryable_read_error(error)
+    if not isinstance(timestamp, str):
+        return None
+    # Python 3.10 reads neither a "Z" suffix nor more than 6 fraction digits.
+    text = timestamp.strip().replace("Z", "+00:00")
+    text = re.sub(r"\.(\d+)", lambda match: "." + (match.group(1) + "000000")[:6], text, count=1)
+    try:
+        moment = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.timestamp()
+
+
+def _created_since(sandbox: Sandbox, sent_at: float) -> bool:
+    """Whether the sandbox was created after a request sent at ``sent_at`` (Unix time)."""
+    metadata = sandbox.metadata if not isinstance(sandbox.metadata, Unset) else None
+    created_at = _unix_time(getattr(metadata, "created_at", None))
+    return created_at is not None and created_at >= sent_at - CREATION_CLOCK_SKEW_SECONDS
 
 
 def _failure_reason(sandbox: Sandbox) -> str | None:
@@ -277,39 +306,88 @@ def _creation_done(sandbox_name: str, sandbox: Sandbox) -> bool:
     raise SandboxAPIError(message, code=code)
 
 
-def _creation_wait_error(
-    sandbox_name: str, status: str | None, gateway_timeout: Exception | None
-) -> Exception:
-    """The error of a creation wait that ran out of time."""
-    if gateway_timeout is not None and status is None:
-        # The sandbox never showed up: the 504 is all there is to say.
-        return gateway_timeout
-    return SandboxAPIError(
-        f"Sandbox {sandbox_name} is still {status or 'DEPLOYING'} after waiting"
-        f" {CREATION_WAIT_MAX_SECONDS}s for its creation to finish; it may still"
-        " become ready, read it again later to check."
-    )
+class _CreationWait:
+    """The wait for a creation that goes on after the create call has answered.
+
+    ``gateway_timeout`` is the 504 the call answered, None after a 202. After a
+    504, ``sent_at`` is when the request was sent (Unix time): a sandbox created
+    before it is not this creation. None takes any sandbox under the name.
+    """
+
+    def __init__(
+        self,
+        sandbox_name: str,
+        gateway_timeout: Exception | None = None,
+        sent_at: float | None = None,
+    ):
+        self.sandbox_name = sandbox_name
+        self.gateway_timeout = gateway_timeout
+        self.sent_at = sent_at
+        started = time.monotonic()
+        self.deadline = started + CREATION_WAIT_MAX_SECONDS
+        self.not_found_until = started + CREATION_WAIT_NOT_FOUND_SECONDS
+        self.seen = False
+        self.status: str | None = None
+
+    def going(self) -> bool:
+        return time.monotonic() < self.deadline
+
+    def read_failed(self, error: Exception) -> None:
+        """Return when the wait goes on after a failed read of the sandbox, else raise."""
+        if is_retryable_read_error(error):
+            return
+        if self.gateway_timeout is None or self.seen or getattr(error, "status", None) != 404:
+            raise error
+        # After a 504 the record can lag behind the creation for a short while; a
+        # sandbox that never shows up leaves the 504 as all there is to say.
+        if time.monotonic() < self.not_found_until:
+            return
+        raise self.gateway_timeout
+
+    def read(self, sandbox: Sandbox) -> bool:
+        """True once the creation is DEPLOYED, False while it is under way.
+
+        Raises the 504 for a sandbox created before the request (not this
+        creation), and SandboxAPIError when the creation ends in any other status.
+        """
+        if (
+            self.gateway_timeout is not None
+            and self.sent_at is not None
+            and not _created_since(sandbox, self.sent_at)
+        ):
+            raise self.gateway_timeout
+        self.seen = True
+        if _creation_done(self.sandbox_name, sandbox):
+            return True
+        self.status = _status_of(sandbox)
+        return False
+
+    def timed_out(self) -> Exception:
+        """The error of a wait that ran out of time."""
+        if self.gateway_timeout is not None and not self.seen:
+            return self.gateway_timeout
+        return SandboxAPIError(
+            f"Sandbox {self.sandbox_name} is still {self.status or 'DEPLOYING'} after waiting"
+            f" {CREATION_WAIT_MAX_SECONDS}s for its creation to finish; it may still"
+            " become ready, read it again later to check."
+        )
 
 
-async def _wait_for_creation(sandbox_name: str, gateway_timeout: Exception | None) -> Sandbox:
+async def _wait_for_creation(wait: _CreationWait) -> Sandbox:
     """Read a sandbox whose creation goes on in the background until it is DEPLOYED."""
-    deadline = time.monotonic() + CREATION_WAIT_MAX_SECONDS
-    status = None
     attempt = 0
-    while time.monotonic() < deadline:
+    while wait.going():
         attempt += 1
         await asyncio.sleep(_creation_poll_delay(attempt))
         try:
-            response = await get_sandbox(sandbox_name, client=client)
-            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+            response = await get_sandbox(wait.sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {wait.sandbox_name}")
         except Exception as error:
-            if _keep_waiting(error, gateway_timeout is not None):
-                continue
-            raise
-        if _creation_done(sandbox_name, sandbox):
+            wait.read_failed(error)
+            continue
+        if wait.read(sandbox):
             return sandbox
-        status = _status_of(sandbox)
-    raise _creation_wait_error(sandbox_name, status, gateway_timeout)
+    raise wait.timed_out()
 
 
 async def create_sandbox(
@@ -324,7 +402,7 @@ async def create_sandbox(
     whether the generated client raises it (it does not model 202 yet) or parses
     it, so regenerating the client does not change this.
     """
-    gateway_timeout = None
+    sent_at = time.time()
     try:
         response = await create_sandbox_detailed(
             client=client, body=body, create_if_not_exist=create_if_not_exist
@@ -334,11 +412,13 @@ async def create_sandbox(
         if name is None:
             raise
         gateway_timeout = error if error.status_code == 504 else None
+        wait = _CreationWait(name, gateway_timeout, None if create_if_not_exist else sent_at)
     else:
         name = _background_creation_name(response.status_code, response.content, body)
         if name is None:
             return response.parsed
-    return await _wait_for_creation(name, gateway_timeout)
+        wait = _CreationWait(name)
+    return await _wait_for_creation(wait)
 
 
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
@@ -959,7 +1039,9 @@ class SandboxInstance:
         A creation that goes on after the call has answered (HTTP 202 with the
         sandbox still ``DEPLOYING``, or a 504 cut at the edge for a named
         sandbox) is waited for: this reads the sandbox until it is ``DEPLOYED``,
-        for up to ``CREATION_WAIT_MAX_SECONDS``.
+        for up to ``CREATION_WAIT_MAX_SECONDS``. After a 504, a sandbox that
+        already held the name before the request is not taken for the new one:
+        the 504 is raised.
 
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
