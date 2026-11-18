@@ -7,9 +7,15 @@ from blaxel.core import (
     BlaxelError,
     SandboxAPIError,
     SandboxInstance,
+    Snapshot,
     SyncSandboxInstance,
     is_blaxel_error,
+    is_feature_not_enabled_error,
 )
+from blaxel.core.client.api.workspaces.get_workspace_features import (
+    asyncio as get_workspace_features,
+)
+from blaxel.core.client.client import client
 from tests.helpers import default_image, default_labels, default_region, unique_name
 
 
@@ -90,3 +96,12 @@ class TestTypedErrors:
                 await SandboxInstance.create(config, timeout=20)
         self.check_response(caught.value, 409)
         assert is_blaxel_error(caught.value, "SANDBOX_ALREADY_EXISTS")
+
+    async def test_feature_not_enabled(self):
+        features = await get_workspace_features(client=client)
+        if (features.to_dict().get("features") or {}).get("fork"):
+            pytest.skip("the workspace has the fork feature")
+        with pytest.raises(BlaxelError) as caught:
+            await Snapshot.list()
+        assert caught.value.status == 403
+        assert is_feature_not_enabled_error(caught.value, "fork")

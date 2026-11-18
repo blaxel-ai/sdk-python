@@ -20,6 +20,7 @@ from blaxel.core import (
     SyncSandboxInstance,
     VolumeAPIError,
     is_blaxel_error,
+    is_feature_not_enabled_error,
 )
 from blaxel.core.client import errors
 from blaxel.core.client.api.compute import create_sandbox, get_sandbox
@@ -593,6 +594,82 @@ def test_known_code_literal_matches_typescript_contract():
     VOLUME_LOOKUP_FAILED BUILD_TRIGGER_ERROR PRESIGNED_URL_ERROR UPLOAD_UNAVAILABLE
     DEPLOYMENT_FAILED CLUSTER_GATEWAY_ERROR LOCKDOWN_ERROR PROXY_CONFIG_ERROR
     VALIDATED_DATA_ERROR WORKSPACE_DATA_MISSING CALLBACK_SEND_FAILED FORK_FAILED
-    HANDLER_ERROR INTERNAL_ERROR UNKNOWN_ERROR
+    HANDLER_ERROR INTERNAL_ERROR UNKNOWN_ERROR FEATURE_NOT_ENABLED
     """.split()
     assert set(get_args(BlaxelErrorCode)) == set(expected)
+
+
+FEATURE_MESSAGE = "Sandbox snapshot/fork feature is not enabled for this workspace"
+# A generic /v0 endpoint keeps the HTTP status in "code".
+FEATURE_V0 = {
+    "error": FEATURE_MESSAGE,
+    "code": 403,
+    "error_code": "FEATURE_NOT_ENABLED",
+    "feature": "fork",
+    "message": FEATURE_MESSAGE,
+    "retryable": False,
+    "status": 403,
+    "origin": "platform",
+}
+# The sandbox fork endpoint sends the registered code in "code".
+FEATURE_FORK = {
+    "code": "FEATURE_NOT_ENABLED",
+    "feature": "fork",
+    "message": FEATURE_MESSAGE,
+    "status_code": 403,
+}
+
+
+@pytest.mark.parametrize("module", [errors, sandbox_errors])
+@pytest.mark.parametrize("body", [FEATURE_V0, FEATURE_FORK])
+def test_feature_not_enabled_from_a_generated_status_error(module, body):
+    response = httpx.Response(403, json=body)
+    error = module.from_response(403, response.content, response.headers, response=response)
+    assert is_feature_not_enabled_error(error)
+    assert is_feature_not_enabled_error(error, "fork")
+    assert not is_feature_not_enabled_error(error, "drives")
+    assert error.feature == "fork"
+    assert error.status == 403
+
+
+def test_feature_not_enabled_on_a_resource_wrapper_keeps_its_legacy_code():
+    response = httpx.Response(403, json=FEATURE_V0)
+    error = SnapshotAPIError(FEATURE_MESSAGE, 403, FEATURE_MESSAGE, response=response)
+    assert error.code == FEATURE_MESSAGE
+    assert is_feature_not_enabled_error(error, "fork")
+    assert error.feature == "fork"
+
+
+def test_feature_not_enabled_from_the_header_alone():
+    error = BlaxelError(
+        "denied",
+        response=httpx.Response(
+            403, json={"error": "denied"}, headers={"X-Blaxel-Error-Code": "FEATURE_NOT_ENABLED"}
+        ),
+    )
+    assert is_feature_not_enabled_error(error)
+    assert not is_feature_not_enabled_error(error, "fork")
+    assert error.feature is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        # Role and credential 403s.
+        {"error": "no role in workspace", "code": 403, "error_code": "WORKSPACE_ACCESS_DENIED"},
+        {"code": "UNAUTHORIZED", "message": "denied", "status_code": 403},
+        # The body before the code existed: the message alone is not matched.
+        {"code": 403, "error": FEATURE_MESSAGE},
+        # A feature field on another code.
+        {"code": "FORK_FAILED", "message": "boom", "status_code": 500, "feature": "fork"},
+    ],
+)
+def test_other_errors_are_not_feature_not_enabled(body):
+    error = BlaxelError("x", response=httpx.Response(403, json=body))
+    assert not is_feature_not_enabled_error(error)
+    assert not is_feature_not_enabled_error(error, "fork")
+
+
+def test_feature_not_enabled_needs_a_blaxel_error():
+    for other in (None, FEATURE_MESSAGE, ValueError(FEATURE_MESSAGE), FEATURE_FORK):
+        assert not is_feature_not_enabled_error(other)

@@ -94,6 +94,9 @@ BlaxelErrorCode = Literal[
     "HANDLER_ERROR",
     "INTERNAL_ERROR",
     "UNKNOWN_ERROR",
+    # Control plane: a generic body keeps the HTTP status in "code" and sends
+    # these in "error_code"; the fork body sends them in "code".
+    "FEATURE_NOT_ENABLED",
 ]
 BlaxelErrorCodeValue = Union[BlaxelErrorCode, str, int]
 
@@ -285,6 +288,7 @@ class BlaxelError(Exception):
     docs_url: str | None
     origin: str | None
     timestamp: str | None
+    feature: str | None
     body: Any
     response: httpx.Response | None
 
@@ -324,6 +328,7 @@ class BlaxelError(Exception):
         self.docs_url = _body_text(body, "docs_url")
         self.origin = _body_text(body, "origin")
         self.timestamp = _body_text(body, "timestamp")
+        self.feature = _body_text(body, "feature")
         self.body = body
         self.response = _response_snapshot(response) if response is not None else None
 
@@ -355,6 +360,38 @@ def is_blaxel_error(
     if code is None:
         return True
     return err.code == code if isinstance(code, str | int) else err.code in code
+
+
+FEATURE_NOT_ENABLED = "FEATURE_NOT_ENABLED"
+
+
+def is_feature_not_enabled_error(err: object, feature: str | None = None) -> TypeGuard[BlaxelError]:
+    """Check for a 403 FEATURE_NOT_ENABLED, optionally for one feature key.
+
+    The workspace does not have the feature, for example ``"fork"`` for
+    snapshots and forks; ``err.feature`` holds the key. This is not a role or
+    credential problem: a new API key, a higher role or a retry will not help.
+    Continue without the feature or ask support to enable it.
+
+    To check before calling, read the workspace's features (``GET /v0/features``,
+    ``get_workspace_features``): the response lists only the enabled ones, by the
+    same key.
+
+    Reads ``code``, the body's ``code`` and ``error_code``, then the
+    ``X-Blaxel-Error-Code`` header, since resource wrappers keep a legacy ``code``.
+    """
+    if not isinstance(err, BlaxelError):
+        return False
+    headers = err.response.headers if err.response is not None else None
+    codes = (
+        err.code,
+        _body_text(err.body, "code"),
+        _body_text(err.body, "error_code"),
+        _read_header(headers, "x-blaxel-error-code"),
+    )
+    if FEATURE_NOT_ENABLED not in codes:
+        return False
+    return feature is None or err.feature == feature
 
 
 class _APIError(BlaxelError):
@@ -390,4 +427,5 @@ __all__ = [
     "BlaxelPlatformErrorBody",
     "BlaxelSandboxApiErrorBody",
     "is_blaxel_error",
+    "is_feature_not_enabled_error",
 ]
