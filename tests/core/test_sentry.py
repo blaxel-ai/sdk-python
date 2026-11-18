@@ -470,6 +470,20 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_connect_timeout_is_filtered_and_chained(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-13J: a transient network timeout is not an SDK bug."""
+        exc = _raise_in_file(
+            _sdk_filename("core/common/sentry.py"),
+            "raise httpx.ConnectTimeout('connection timed out')",
+            {"httpx": httpx},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -777,6 +791,77 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestTransientNetworkFiltering:
+    """Transient connectivity failures are environmental, not SDK defects (SDK-PYTHON-13J)."""
+
+    @pytest.mark.parametrize(
+        "statement",
+        [
+            "raise httpx.ConnectTimeout('connect timed out')",
+            "raise httpx.ReadTimeout('read timed out')",
+            "raise httpx.WriteTimeout('write timed out')",
+            "raise httpx.PoolTimeout('pool timed out')",
+            "raise httpx.ConnectError('connection refused')",
+            "raise httpx.ReadError('connection reset')",
+            "raise httpx.WriteError('broken pipe')",
+            "raise httpx.CloseError('close failed')",
+        ],
+    )
+    def test_transient_network_error_from_sdk_is_not_captured(self, statement):
+        exc = _raise_in_file(
+            _sdk_filename("core/common/sentry.py"),
+            statement,
+            {"httpx": httpx},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_non_transient_sdk_error_is_still_captured(self):
+        exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_http_status_error_from_sdk_is_still_captured(self):
+        """An HTTP status error is a server/response outcome, not a transient dropout."""
+        exc = _raise_in_file(
+            _sdk_filename("core/common/sentry.py"),
+            """
+raise httpx.HTTPStatusError(
+    'server error',
+    request=httpx.Request('GET', 'https://api.blaxel.ai'),
+    response=httpx.Response(500),
+)
+""",
+            {"httpx": httpx},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_transient_network_error_from_application_is_not_captured(self):
+        exc = _raise_in_file(
+            "/tmp/customer/app.py",
+            "raise httpx.ConnectTimeout('connect timed out')",
+            {"httpx": httpx},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    @pytest.mark.skipif(
+        not sentry._EXCEPTION_GROUP_TYPES,
+        reason="Exception groups require Python 3.11 or the exceptiongroup backport",
+    )
+    def test_group_with_only_transient_network_error_is_filtered(self, installed_sentry_hooks):
+        timeout_exc = _raise_in_file(
+            _sdk_filename("core/common/sentry.py"),
+            "raise httpx.ConnectTimeout('connect timed out')",
+            {"httpx": httpx},
+        )
+        group_type = sentry._EXCEPTION_GROUP_TYPES[0]
+        group = group_type("task failures", [timeout_exc])
+
+        sys.excepthook(type(group), group, group.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(group), group, group.__traceback__)]
 
 
 @pytest.mark.parametrize(

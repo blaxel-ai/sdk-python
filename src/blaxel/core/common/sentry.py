@@ -59,6 +59,18 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# Transient connectivity failures raised by the HTTP client. A connection that
+# times out or drops reflects the network or the remote service being briefly
+# unreachable, not a defect in the SDK, so -- like the control-flow exceptions
+# above -- it must not be reported as an SDK bug. ``TimeoutException`` covers
+# connect/read/write/pool timeouts (including ``ConnectTimeout``) and
+# ``NetworkError`` covers connect/read/write/close failures such as refused
+# connections and DNS errors.
+_TRANSIENT_NETWORK_EXCEPTIONS = (
+    httpx.TimeoutException,
+    httpx.NetworkError,
+)
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -420,6 +432,8 @@ def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if issubclass(exc_type, _TRANSIENT_NETWORK_EXCEPTIONS):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
