@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 from ...client import errors as client_errors
 from ...client.api.compute.archive_sandbox import asyncio as archive_sandbox
-from ...client.api.compute.create_sandbox import asyncio as create_sandbox
+from ...client.api.compute.create_sandbox import asyncio_detailed as create_sandbox_detailed
 from ...client.api.compute.create_sandbox_snapshot import asyncio as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import asyncio as delete_sandbox
 from ...client.api.compute.delete_sandbox_snapshot import asyncio as delete_sandbox_snapshot
@@ -52,7 +52,7 @@ from ...errors import _APIError
 from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
 from ..drive_setup import _AsyncDriveSetup, _normalize_mount_drives, _requested_region
 from ..names import _invalid_name_hint
-from ..transient_retry import _backoff_delay_seconds
+from ..transient_retry import _backoff_delay_seconds, is_retryable_read_error
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -199,6 +199,146 @@ def _create_auth_retry_delay(attempt: int) -> float:
     return _backoff_delay_seconds(
         attempt, CREATE_AUTH_RETRY_BASE_DELAY_SECONDS, CREATE_AUTH_RETRY_MAX_DELAY_SECONDS
     )
+
+
+# Some creations go on after the create call has answered: the control plane
+# answers 202 Accepted, with the sandbox still DEPLOYING, when it cannot finish
+# while the request is open, and an edge in front of it can cut a slow request
+# with a 504 while the creation keeps running. The sandbox then reaches DEPLOYED,
+# or FAILED once the platform gives up (about 3 minutes after the request). The
+# create call reads the sandbox until it settles, for a little longer than that.
+CREATION_WAIT_MAX_SECONDS = 240
+CREATION_WAIT_BASE_DELAY_SECONDS = 0.5
+CREATION_WAIT_MAX_DELAY_SECONDS = 3.0
+# Statuses of a sandbox whose creation is still under way.
+CREATING_STATUSES = {"DEPLOYING", "BUILDING", "UPLOADING"}
+
+
+def _background_creation_name(
+    status_code: int, content: bytes, body: Union[Sandbox, Dict[str, Any]]
+) -> str | None:
+    """Name of the sandbox whose creation goes on after this answer, None if it does not.
+
+    A 202 body is the sandbox, named by the server. A 504 has no usable body, so
+    only a creation that sent a name can be found again.
+    """
+    if status_code == 202:
+        return _sandbox_name(_decode_error_content(content))
+    if status_code == 504:
+        return _sandbox_name(body)
+    return None
+
+
+def _creation_poll_delay(attempt: int) -> float:
+    return _backoff_delay_seconds(
+        attempt, CREATION_WAIT_BASE_DELAY_SECONDS, CREATION_WAIT_MAX_DELAY_SECONDS
+    )
+
+
+def _keep_waiting(error: Exception, after_gateway_timeout: bool) -> bool:
+    """Whether a failed read of the sandbox leaves the creation wait going.
+
+    After a 504 the record can lag behind the creation, so not found is not final.
+    """
+    if after_gateway_timeout and getattr(error, "status", None) == 404:
+        return True
+    return is_retryable_read_error(error)
+
+
+def _failure_reason(sandbox: Sandbox) -> str | None:
+    """The reason the platform recorded for a sandbox that did not deploy, if any."""
+    events = sandbox.events if not isinstance(sandbox.events, Unset) else None
+    for event in reversed(events or []):
+        if event.status == "FAILED" and isinstance(event.message, str) and event.message:
+            return event.message
+    errors = sandbox.errors if not isinstance(sandbox.errors, Unset) else None
+    for error in reversed(errors or []):
+        if error.fatal is True and isinstance(error.message, str) and error.message:
+            return error.message
+    return None
+
+
+def _creation_done(sandbox_name: str, sandbox: Sandbox) -> bool:
+    """True once the creation is DEPLOYED, False while it is under way.
+
+    Raises SandboxAPIError when the sandbox ends in any other status (FAILED, or
+    deleted meanwhile), with the reason the platform recorded when there is one.
+    """
+    status = _status_of(sandbox)
+    if status == "DEPLOYED":
+        return True
+    if status is None or status in CREATING_STATUSES:
+        return False
+    message = f"Sandbox {sandbox_name} is {status} instead of DEPLOYED"
+    reason = _failure_reason(sandbox)
+    if reason:
+        message = f"{message}: {reason}"
+    code = "DEPLOYMENT_FAILED" if status == "FAILED" else None
+    raise SandboxAPIError(message, code=code)
+
+
+def _creation_wait_error(
+    sandbox_name: str, status: str | None, gateway_timeout: Exception | None
+) -> Exception:
+    """The error of a creation wait that ran out of time."""
+    if gateway_timeout is not None and status is None:
+        # The sandbox never showed up: the 504 is all there is to say.
+        return gateway_timeout
+    return SandboxAPIError(
+        f"Sandbox {sandbox_name} is still {status or 'DEPLOYING'} after waiting"
+        f" {CREATION_WAIT_MAX_SECONDS}s for its creation to finish; it may still"
+        " become ready, read it again later to check."
+    )
+
+
+async def _wait_for_creation(sandbox_name: str, gateway_timeout: Exception | None) -> Sandbox:
+    """Read a sandbox whose creation goes on in the background until it is DEPLOYED."""
+    deadline = time.monotonic() + CREATION_WAIT_MAX_SECONDS
+    status = None
+    attempt = 0
+    while time.monotonic() < deadline:
+        attempt += 1
+        await asyncio.sleep(_creation_poll_delay(attempt))
+        try:
+            response = await get_sandbox(sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+        except Exception as error:
+            if _keep_waiting(error, gateway_timeout is not None):
+                continue
+            raise
+        if _creation_done(sandbox_name, sandbox):
+            return sandbox
+        status = _status_of(sandbox)
+    raise _creation_wait_error(sandbox_name, status, gateway_timeout)
+
+
+async def create_sandbox(
+    *,
+    client: Client,
+    body: Union[Sandbox, Dict[str, Any]],
+    create_if_not_exist: bool = False,
+) -> Sandbox | SandboxError | None:
+    """Send the creation; when it goes on in the background, wait for the sandbox.
+
+    Answers like the generated call it wraps. A 202 is told by its status code,
+    whether the generated client raises it (it does not model 202 yet) or parses
+    it, so regenerating the client does not change this.
+    """
+    gateway_timeout = None
+    try:
+        response = await create_sandbox_detailed(
+            client=client, body=body, create_if_not_exist=create_if_not_exist
+        )
+    except client_errors.UnexpectedStatus as error:
+        name = _background_creation_name(error.status_code, error.content, body)
+        if name is None:
+            raise
+        gateway_timeout = error if error.status_code == 504 else None
+    else:
+        name = _background_creation_name(response.status_code, response.content, body)
+        if name is None:
+            return response.parsed
+    return await _wait_for_creation(name, gateway_timeout)
 
 
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
@@ -816,6 +956,11 @@ class SandboxInstance:
         before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
         times with a short backoff.
 
+        A creation that goes on after the call has answered (HTTP 202 with the
+        sandbox still ``DEPLOYING``, or a 504 cut at the edge for a named
+        sandbox) is waited for: this reads the sandbox until it is ``DEPLOYED``,
+        for up to ``CREATION_WAIT_MAX_SECONDS``.
+
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
                 dict with the same keys (``name``, ``image``, ``memory`` in MB,
@@ -863,7 +1008,9 @@ class SandboxInstance:
             SandboxAPIError: When the API rejects the creation, for example
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
-                details.
+                details. Also when a creation waited for ends ``FAILED`` (code
+                ``DEPLOYMENT_FAILED``, with the recorded reason) or is still not
+                ready after ``CREATION_WAIT_MAX_SECONDS``.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 

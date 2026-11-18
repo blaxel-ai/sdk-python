@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 from ...client import errors as client_errors
 from ...client.api.compute.archive_sandbox import sync as archive_sandbox
-from ...client.api.compute.create_sandbox import sync as create_sandbox
+from ...client.api.compute.create_sandbox import sync_detailed as create_sandbox_detailed
 from ...client.api.compute.create_sandbox_snapshot import sync as create_sandbox_snapshot
 from ...client.api.compute.delete_sandbox import sync as delete_sandbox
 from ...client.api.compute.delete_sandbox_snapshot import sync as delete_sandbox_snapshot
@@ -19,7 +19,7 @@ from ...client.api.compute.list_sandboxes import sync as list_sandboxes
 from ...client.api.compute.restore_sandbox_snapshot import sync as restore_sandbox_snapshot
 from ...client.api.compute.unarchive_sandbox import sync as unarchive_sandbox
 from ...client.api.compute.update_sandbox import sync as update_sandbox
-from ...client.client import client
+from ...client.client import Client, client
 from ...client.models import (
     Env,
     Metadata,
@@ -50,16 +50,22 @@ from ..default.sandbox import (
     ARCHIVE_WAIT_POLL_MS,
     ARCHIVING_STATUSES,
     CREATE_AUTH_RETRIES,
+    CREATION_WAIT_MAX_SECONDS,
     UNARCHIVE_ENTRY_STATUS,
     UNARCHIVING_STATUSES,
     EnvUpdate,
     SandboxAPIError,
+    _background_creation_name,
     _create_auth_retry_delay,
     _create_body,
     _create_error_message,
     _creation_client,
+    _creation_done,
+    _creation_poll_delay,
+    _creation_wait_error,
     _error_status,
     _is_transient_create_auth_failure,
+    _keep_waiting,
     _notify_region_unset,
     _raise_if_creation_timeout,
     _sandbox_name,
@@ -109,6 +115,54 @@ class _SyncDeleteDescriptor:
                 return self._delete_func(instance.metadata.name)
 
             return instance_delete
+
+
+def _wait_for_creation(sandbox_name: str, gateway_timeout: Exception | None) -> Sandbox:
+    """Read a sandbox whose creation goes on in the background until it is DEPLOYED."""
+    deadline = time.monotonic() + CREATION_WAIT_MAX_SECONDS
+    status = None
+    attempt = 0
+    while time.monotonic() < deadline:
+        attempt += 1
+        time.sleep(_creation_poll_delay(attempt))
+        try:
+            response = get_sandbox(sandbox_name, client=client)
+            sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
+        except Exception as error:
+            if _keep_waiting(error, gateway_timeout is not None):
+                continue
+            raise
+        if _creation_done(sandbox_name, sandbox):
+            return sandbox
+        status = _status_of(sandbox)
+    raise _creation_wait_error(sandbox_name, status, gateway_timeout)
+
+
+def create_sandbox(
+    *,
+    client: Client,
+    body: Union[Sandbox, Dict[str, Any]],
+    create_if_not_exist: bool = False,
+) -> Sandbox | SandboxError | None:
+    """Send the creation; when it goes on in the background, wait for the sandbox.
+
+    Same as the async ``create_sandbox`` of ``blaxel.core.sandbox.default.sandbox``.
+    """
+    gateway_timeout = None
+    try:
+        response = create_sandbox_detailed(
+            client=client, body=body, create_if_not_exist=create_if_not_exist
+        )
+    except client_errors.UnexpectedStatus as error:
+        name = _background_creation_name(error.status_code, error.content, body)
+        if name is None:
+            raise
+        gateway_timeout = error if error.status_code == 504 else None
+    else:
+        name = _background_creation_name(response.status_code, response.content, body)
+        if name is None:
+            return response.parsed
+    return _wait_for_creation(name, gateway_timeout)
 
 
 class _SyncSandboxCallDescriptor:
@@ -519,6 +573,11 @@ class SyncSandboxInstance:
         before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
         times with a short backoff.
 
+        A creation that goes on after the call has answered (HTTP 202 with the
+        sandbox still ``DEPLOYING``, or a 504 cut at the edge for a named
+        sandbox) is waited for: this reads the sandbox until it is ``DEPLOYED``,
+        for up to ``CREATION_WAIT_MAX_SECONDS``.
+
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
                 dict with the same keys (``name``, ``image``, ``memory`` in MB,
@@ -566,7 +625,9 @@ class SyncSandboxInstance:
             SandboxAPIError: When the API rejects the creation, for example
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
-                details.
+                details. Also when a creation waited for ends ``FAILED`` (code
+                ``DEPLOYMENT_FAILED``, with the recorded reason) or is still not
+                ready after ``CREATION_WAIT_MAX_SECONDS``.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
                 does not document for this call.
 
