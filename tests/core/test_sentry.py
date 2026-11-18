@@ -237,6 +237,20 @@ except errors.UnexpectedStatus as exc:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == []
 
+    def test_unhandled_transient_network_timeout_is_not_captured(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-13V: a transient read timeout is not an SDK bug."""
+        exc = _raise_in_file(
+            _sdk_filename("core/net.py"),
+            "raise httpx.ReadTimeout('The read operation timed out')",
+            {"httpx": httpx},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_unhandled_sdk_exception_is_captured_and_chained(self, installed_sentry_hooks):
         exc = _raise_in_sdk("core/broken.py", "raise RuntimeError('sdk failure')")
 
@@ -688,6 +702,61 @@ _parse_response(
         assert "top-secret-customer-value" not in serialized_event
         assert "CUSTOMER_SECRET" not in serialized_event
         assert event["exception"]["values"][0]["value"] == ("Unhandled SDK exception (HTTP 404)")
+
+
+class TestTransientNetworkFiltering:
+    """Transport-level failures are network conditions, not SDK defects (SDK-PYTHON-13V)."""
+
+    @pytest.mark.parametrize(
+        "code",
+        [
+            "raise httpx.ReadTimeout('The read operation timed out')",
+            "raise httpx.ConnectTimeout('timed out')",
+            "raise httpx.PoolTimeout('pool exhausted')",
+            "raise httpx.ConnectError('connection refused')",
+            "raise httpx.ReadError('connection reset by peer')",
+            "raise httpx.RemoteProtocolError('server disconnected without a response')",
+            "raise httpx.ProxyError('proxy unavailable')",
+            "raise TimeoutError('timed out')",
+            "raise asyncio.TimeoutError()",
+        ],
+    )
+    def test_transient_network_errors_are_not_captured(self, code):
+        exc = _raise_in_file(
+            _sdk_filename("core/net.py"),
+            code,
+            {"httpx": httpx, "asyncio": asyncio},
+        )
+
+        assert sentry._is_transient_network_error(exc) is True
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_timeout_wrapped_as_cause_is_not_captured(self):
+        exc = _raise_in_file(
+            _sdk_filename("core/net.py"),
+            "raise RuntimeError('request failed') from httpx.ReadTimeout('timed out')",
+            {"httpx": httpx},
+        )
+
+        assert sentry._is_transient_network_error(exc) is True
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_local_protocol_error_is_still_captured(self):
+        """A client-side protocol error can be a genuine SDK defect, so keep reporting it."""
+        exc = _raise_in_file(
+            _sdk_filename("core/net.py"),
+            "raise httpx.LocalProtocolError('illegal header value')",
+            {"httpx": httpx},
+        )
+
+        assert sentry._is_transient_network_error(exc) is False
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
+
+    def test_non_network_sdk_error_is_still_captured(self):
+        exc = _raise_in_sdk("core/net.py", "raise RuntimeError('real sdk bug')")
+
+        assert sentry._is_transient_network_error(exc) is False
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
 
 
 class TestIsOptionalDependencyError:

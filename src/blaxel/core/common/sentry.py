@@ -59,6 +59,23 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# Transport-level failures -- timeouts, connection resets, dropped sessions, proxy
+# errors -- are transient network or server conditions outside the SDK's control,
+# not SDK defects. The SDK already retries them on idempotent operations (see
+# ``sandbox/transient_retry.py``); when one still reaches a last-chance boundary it
+# is infrastructure noise, like the optional-import and control-flow exceptions, and
+# must not be reported as an SDK bug. Client-side protocol/usage errors
+# (``httpx.LocalProtocolError``, ``httpx.UnsupportedProtocol``) are deliberately
+# excluded here because they can indicate a genuine SDK defect.
+_TRANSIENT_NETWORK_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    httpx.TimeoutException,
+    httpx.NetworkError,
+    httpx.RemoteProtocolError,
+    httpx.ProxyError,
+    TimeoutError,
+    asyncio.TimeoutError,
+)
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -415,11 +432,33 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_transient_network_error(exc_value: BaseException) -> bool:
+    """Check whether an exception (or its cause chain) is a transient transport failure.
+
+    Read/connect timeouts and dropped connections are network conditions the SDK
+    cannot fix in code, so reporting them as SDK bugs is noise. The cause chain is
+    walked (bounded) so a timeout re-raised behind another SDK exception is still
+    recognized.
+    """
+    seen: set[int] = set()
+    current: BaseException | None = exc_value
+    for _ in range(5):
+        if current is None or id(current) in seen:
+            break
+        seen.add(id(current))
+        if isinstance(current, _TRANSIENT_NETWORK_EXCEPTIONS):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_transient_network_error(exc_value):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
