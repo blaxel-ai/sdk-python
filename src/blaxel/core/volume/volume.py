@@ -319,11 +319,7 @@ class VolumeInstance:
 
         response = await create_volume(client=client, body=volume)
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise VolumeAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise VolumeAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -342,11 +338,7 @@ class VolumeInstance:
         """
         response = await get_volume(volume_name=volume_name, client=client)
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise VolumeAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise VolumeAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -388,11 +380,7 @@ class VolumeInstance:
                 limit=limit,
             )
             if isinstance(response, Error):
-                status_code = int(response.code) if response.code is not UNSET else None
-                message = response.message if response.message is not UNSET else response.error
-                raise VolumeAPIError(
-                    message, status_code=status_code, code=response.error, error=response
-                )
+                raise VolumeAPIError._from_error(response)
             return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return await fetch_page(cursor)
@@ -594,11 +582,7 @@ class SyncVolumeInstance:
 
         response = create_volume_sync(client=client, body=volume)
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise VolumeAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise VolumeAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -617,11 +601,7 @@ class SyncVolumeInstance:
         """
         response = get_volume_sync(volume_name=volume_name, client=client)
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise VolumeAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise VolumeAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -663,11 +643,7 @@ class SyncVolumeInstance:
                 limit=limit,
             )
             if isinstance(response, Error):
-                status_code = int(response.code) if response.code is not UNSET else None
-                message = response.message if response.message is not UNSET else response.error
-                raise VolumeAPIError(
-                    message, status_code=status_code, code=response.error, error=response
-                )
+                raise VolumeAPIError._from_error(response)
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)
@@ -722,7 +698,7 @@ async def _delete_volume_by_name(volume_name: str) -> Volume:
     Exposed as ``await VolumeInstance.delete("name")`` and as ``await volume.delete()`` on
     an instance. The data on the volume is lost. A volume attached to a
     sandbox cannot be deleted: the API answers HTTP 400, raised as
-    ``blaxel.core.client.errors.UnexpectedStatus``; delete the sandbox first.
+    ``VolumeAPIError``; delete the sandbox first.
 
     Args:
         volume_name: The volume name.
@@ -732,16 +708,14 @@ async def _delete_volume_by_name(volume_name: str) -> Volume:
         deletion finishes; after that, ``get`` raises a 404.
 
     Raises:
-        VolumeAPIError: When the volume does not exist (``status_code`` 404)
-            or the API rejects the request.
-        blaxel.core.client.errors.UnexpectedStatus: HTTP 400 when the volume
-            is attached to a sandbox.
+        VolumeAPIError: When the volume does not exist (``status_code`` 404),
+            is attached to a sandbox (``status_code`` 400), or the API
+            rejects the request.
     """
-    response = await delete_volume(volume_name=volume_name, client=client)
+    with VolumeAPIError._raised_for_status():
+        response = await delete_volume(volume_name=volume_name, client=client)
     if isinstance(response, Error):
-        status_code = int(response.code) if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise VolumeAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise VolumeAPIError._from_error(response)
     if response is None:
         raise VolumeAPIError(f"Failed to delete volume {volume_name}")
     return response
@@ -753,7 +727,7 @@ def _delete_volume_by_name_sync(volume_name: str) -> Volume:
     Exposed as ``SyncVolumeInstance.delete("name")`` and as ``volume.delete()`` on
     an instance. The data on the volume is lost. A volume attached to a
     sandbox cannot be deleted: the API answers HTTP 400, raised as
-    ``blaxel.core.client.errors.UnexpectedStatus``; delete the sandbox first.
+    ``VolumeAPIError``; delete the sandbox first.
 
     Args:
         volume_name: The volume name.
@@ -763,16 +737,14 @@ def _delete_volume_by_name_sync(volume_name: str) -> Volume:
         deletion finishes; after that, ``get`` raises a 404.
 
     Raises:
-        VolumeAPIError: When the volume does not exist (``status_code`` 404)
-            or the API rejects the request.
-        blaxel.core.client.errors.UnexpectedStatus: HTTP 400 when the volume
-            is attached to a sandbox.
+        VolumeAPIError: When the volume does not exist (``status_code`` 404),
+            is attached to a sandbox (``status_code`` 400), or the API
+            rejects the request.
     """
-    response = delete_volume_sync(volume_name=volume_name, client=client)
+    with VolumeAPIError._raised_for_status():
+        response = delete_volume_sync(volume_name=volume_name, client=client)
     if isinstance(response, Error):
-        status_code = int(response.code) if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise VolumeAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise VolumeAPIError._from_error(response)
     if response is None:
         raise VolumeAPIError(f"Failed to delete volume {volume_name}")
     return response
@@ -789,7 +761,7 @@ async def _update_volume_by_name(
     whole) and the others are kept. Only ``size``, ``display_name`` and
     ``labels`` can change: the size can grow but never shrink, and the region
     and template are fixed at creation. The API rejects other changes with
-    HTTP 400, raised as ``blaxel.core.client.errors.UnexpectedStatus``. The
+    HTTP 400, raised as ``VolumeAPIError``. The
     call waits 0.5 seconds after the update before returning.
 
     Args:
@@ -802,9 +774,9 @@ async def _update_volume_by_name(
 
     Raises:
         ValueError: When ``updates`` has an unsupported type.
-        VolumeAPIError: When the volume does not exist.
-        blaxel.core.client.errors.UnexpectedStatus: When the API rejects the
-            update, such as a smaller size or a new region.
+        VolumeAPIError: When the volume does not exist (``status_code`` 404)
+            or the API rejects the update (``status_code`` 400), such as a
+            smaller size or a new region or template.
 
     Example:
         ```python
@@ -875,11 +847,10 @@ async def _update_volume_by_name(
         spec=merged_spec,
     )
 
-    response = await update_volume(volume_name=volume_name, client=client, body=body)
+    with VolumeAPIError._raised_for_status():
+        response = await update_volume(volume_name=volume_name, client=client, body=body)
     if isinstance(response, Error):
-        status_code = int(response.code) if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise VolumeAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise VolumeAPIError._from_error(response)
     # This is for safe update
     await asyncio.sleep(0.5)
     return VolumeInstance(response)
@@ -896,7 +867,7 @@ def _update_volume_by_name_sync(
     whole) and the others are kept. Only ``size``, ``display_name`` and
     ``labels`` can change: the size can grow but never shrink, and the region
     and template are fixed at creation. The API rejects other changes with
-    HTTP 400, raised as ``blaxel.core.client.errors.UnexpectedStatus``. The
+    HTTP 400, raised as ``VolumeAPIError``. The
     call waits 0.5 seconds after the update before returning.
 
     Args:
@@ -909,9 +880,9 @@ def _update_volume_by_name_sync(
 
     Raises:
         ValueError: When ``updates`` has an unsupported type.
-        VolumeAPIError: When the volume does not exist.
-        blaxel.core.client.errors.UnexpectedStatus: When the API rejects the
-            update, such as a smaller size or a new region.
+        VolumeAPIError: When the volume does not exist (``status_code`` 404)
+            or the API rejects the update (``status_code`` 400), such as a
+            smaller size or a new region or template.
 
     Example:
         ```python
@@ -982,11 +953,10 @@ def _update_volume_by_name_sync(
         spec=merged_spec,
     )
 
-    response = update_volume_sync(volume_name=volume_name, client=client, body=body)
+    with VolumeAPIError._raised_for_status():
+        response = update_volume_sync(volume_name=volume_name, client=client, body=body)
     if isinstance(response, Error):
-        status_code = int(response.code) if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise VolumeAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise VolumeAPIError._from_error(response)
     # This is for safe update
     time.sleep(0.5)
     return SyncVolumeInstance(response)

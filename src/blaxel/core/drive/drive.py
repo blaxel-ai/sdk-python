@@ -15,8 +15,7 @@ from ..client.api.drives.list_drives import sync as list_drives_sync
 from ..client.api.drives.update_drive import asyncio as update_drive
 from ..client.api.drives.update_drive import sync as update_drive_sync
 from ..client.client import client
-from ..client.errors import UnexpectedStatus
-from ..client.models import Drive, DriveSpec, Metadata
+from ..client.models import DeleteDriveResponse200, Drive, DriveSpec, Metadata
 from ..client.models.error import Error
 from ..client.pagination import (
     AsyncPaginatedList,
@@ -46,7 +45,7 @@ class _AsyncDeleteDescriptor:
             return self._delete_func
         else:
             # Called on an instance: instance.delete()
-            async def instance_delete() -> Drive:
+            async def instance_delete() -> DeleteDriveResponse200:
                 """Delete this drive; see ``DriveInstance.delete("name")`` for details."""
                 return await self._delete_func(instance.metadata.name or "")
 
@@ -65,7 +64,7 @@ class _SyncDeleteDescriptor:
             return self._delete_func
         else:
             # Called on an instance: instance.delete()
-            def instance_delete() -> Drive:
+            def instance_delete() -> DeleteDriveResponse200:
                 """Delete this drive; see ``SyncDriveInstance.delete("name")`` for details."""
                 return self._delete_func(instance.metadata.name or "")
 
@@ -255,13 +254,10 @@ class DriveInstance:
 
         Raises:
             ValueError: When ``config`` has an unsupported type.
-            blaxel.core.client.errors.UnexpectedStatus: When the API rejects
-                the drive: ``ConflictError`` (HTTP 409) for a name in use,
-                HTTP 400 for invalid permissions or region, HTTP 403 when
-                drives are not enabled for the workspace. The exception
-                message shows only the status; the response body in
-                ``e.content`` names the cause, such as "Drives feature is not
-                enabled for this workspace".
+            DriveAPIError: When the API rejects the drive, with its status
+                code and message: HTTP 409 for a name in use, HTTP 400 for
+                invalid permissions or region, HTTP 401 for an invalid API
+                key, HTTP 403 when drives are not enabled for the workspace.
 
         Example:
             ```python
@@ -323,13 +319,10 @@ class DriveInstance:
                 stacklevel=2,
             )
 
-        response = await create_drive(client=client, body=drive)
+        with DriveAPIError._raised_for_status():
+            response = await create_drive(client=client, body=drive)
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise DriveAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -343,22 +336,18 @@ class DriveInstance:
             A ``DriveInstance`` with the current record.
 
         Raises:
-            DriveAPIError: With the server's status code and message, such as
-                404 when the drive does not exist or 401 for an invalid API key.
-            blaxel.core.client.errors.UnexpectedStatus: For other error
-                statuses, such as HTTP 403 when drives are not enabled.
+            DriveAPIError: With the API's status code and message, such as
+                404 when the drive does not exist, 401 for an invalid API key
+                or 403 when drives are not enabled.
         """
-        response = await get_drive(drive_name=drive_name, client=client)
+        with DriveAPIError._raised_for_status():
+            response = await get_drive(drive_name=drive_name, client=client)
         if response is None:
             raise DriveAPIError(
                 f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND"
             )
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise DriveAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -376,8 +365,8 @@ class DriveInstance:
             `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
 
         Raises:
-            blaxel.core.client.errors.UnexpectedStatus: When the API rejects
-                the request, such as HTTP 403 when drives are not enabled.
+            DriveAPIError: When the API rejects the request, with its status
+                code and message, such as HTTP 403 when drives are not enabled.
 
         Example:
             ```python
@@ -395,17 +384,14 @@ class DriveInstance:
         """
 
         async def fetch_page(page_cursor: str | None):
-            response = await list_drives(
-                client=client,
-                cursor=normalize_cursor(page_cursor),
-                limit=limit,
-            )
-            if isinstance(response, Error):
-                status_code = int(response.code) if response.code is not UNSET else None
-                message = response.message if response.message is not UNSET else response.error
-                raise DriveAPIError(
-                    message, status_code=status_code, code=response.error, error=response
+            with DriveAPIError._raised_for_status():
+                response = await list_drives(
+                    client=client,
+                    cursor=normalize_cursor(page_cursor),
+                    limit=limit,
                 )
+            if isinstance(response, Error):
+                raise DriveAPIError._from_error(response)
             return make_async_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return await fetch_page(cursor)
@@ -430,19 +416,13 @@ class DriveInstance:
 
         Raises:
             ValueError: When the name is taken and ``config`` has no name.
-            blaxel.core.client.errors.UnexpectedStatus: When the API rejects
-                the request for another reason.
+            DriveAPIError: When the API rejects the request for another
+                reason.
         """
         try:
             return await cls.create(config)
-        except (DriveAPIError, UnexpectedStatus) as e:
-            is_conflict = False
-            if isinstance(e, DriveAPIError):
-                is_conflict = e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]
-            elif isinstance(e, UnexpectedStatus):
-                is_conflict = e.status_code == 409
-
-            if is_conflict:
+        except DriveAPIError as e:
+            if e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]:
                 if isinstance(config, DriveCreateConfiguration):
                     name = config.name
                 elif isinstance(config, dict):
@@ -545,13 +525,10 @@ class SyncDriveInstance:
 
         Raises:
             ValueError: When ``config`` has an unsupported type.
-            blaxel.core.client.errors.UnexpectedStatus: When the API rejects
-                the drive: ``ConflictError`` (HTTP 409) for a name in use,
-                HTTP 400 for invalid permissions or region, HTTP 403 when
-                drives are not enabled for the workspace. The exception
-                message shows only the status; the response body in
-                ``e.content`` names the cause, such as "Drives feature is not
-                enabled for this workspace".
+            DriveAPIError: When the API rejects the drive, with its status
+                code and message: HTTP 409 for a name in use, HTTP 400 for
+                invalid permissions or region, HTTP 401 for an invalid API
+                key, HTTP 403 when drives are not enabled for the workspace.
 
         Example:
             ```python
@@ -613,13 +590,10 @@ class SyncDriveInstance:
                 stacklevel=2,
             )
 
-        response = create_drive_sync(client=client, body=drive)
+        with DriveAPIError._raised_for_status():
+            response = create_drive_sync(client=client, body=drive)
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise DriveAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -633,22 +607,18 @@ class SyncDriveInstance:
             A ``SyncDriveInstance`` with the current record.
 
         Raises:
-            DriveAPIError: With the server's status code and message, such as
-                404 when the drive does not exist or 401 for an invalid API key.
-            blaxel.core.client.errors.UnexpectedStatus: For other error
-                statuses, such as HTTP 403 when drives are not enabled.
+            DriveAPIError: With the API's status code and message, such as
+                404 when the drive does not exist, 401 for an invalid API key
+                or 403 when drives are not enabled.
         """
-        response = get_drive_sync(drive_name=drive_name, client=client)
+        with DriveAPIError._raised_for_status():
+            response = get_drive_sync(drive_name=drive_name, client=client)
         if response is None:
             raise DriveAPIError(
                 f"Drive '{drive_name}' not found", status_code=404, code="NOT_FOUND"
             )
         if isinstance(response, Error):
-            status_code = int(response.code) if response.code is not UNSET else None
-            message = response.message if response.message is not UNSET else response.error
-            raise DriveAPIError(
-                message, status_code=status_code, code=response.error, error=response
-            )
+            raise DriveAPIError._from_error(response)
         return cls(response)
 
     @classmethod
@@ -664,8 +634,8 @@ class SyncDriveInstance:
             `.has_more`, `.next_cursor`, `.next_page()`, and `.auto_paging_iter()`.
 
         Raises:
-            blaxel.core.client.errors.UnexpectedStatus: When the API rejects
-                the request, such as HTTP 403 when drives are not enabled.
+            DriveAPIError: When the API rejects the request, with its status
+                code and message, such as HTTP 403 when drives are not enabled.
 
         Example:
             ```python
@@ -683,17 +653,14 @@ class SyncDriveInstance:
         """
 
         def fetch_page(page_cursor: str | None):
-            response = list_drives_sync(
-                client=client,
-                cursor=normalize_cursor(page_cursor),
-                limit=limit,
-            )
-            if isinstance(response, Error):
-                status_code = int(response.code) if response.code is not UNSET else None
-                message = response.message if response.message is not UNSET else response.error
-                raise DriveAPIError(
-                    message, status_code=status_code, code=response.error, error=response
+            with DriveAPIError._raised_for_status():
+                response = list_drives_sync(
+                    client=client,
+                    cursor=normalize_cursor(page_cursor),
+                    limit=limit,
                 )
+            if isinstance(response, Error):
+                raise DriveAPIError._from_error(response)
             return make_paginated_list(response, mapper=cls, fetch_next=fetch_page)
 
         return fetch_page(cursor)
@@ -718,19 +685,13 @@ class SyncDriveInstance:
 
         Raises:
             ValueError: When the name is taken and ``config`` has no name.
-            blaxel.core.client.errors.UnexpectedStatus: When the API rejects
-                the request for another reason.
+            DriveAPIError: When the API rejects the request for another
+                reason.
         """
         try:
             return cls.create(config)
-        except (DriveAPIError, UnexpectedStatus) as e:
-            is_conflict = False
-            if isinstance(e, DriveAPIError):
-                is_conflict = e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]
-            elif isinstance(e, UnexpectedStatus):
-                is_conflict = e.status_code == 409
-
-            if is_conflict:
+        except DriveAPIError as e:
+            if e.status_code == 409 or e.code in ["409", "DRIVE_ALREADY_EXISTS"]:
                 if isinstance(config, DriveCreateConfiguration):
                     name = config.name
                 elif isinstance(config, dict):
@@ -747,7 +708,7 @@ class SyncDriveInstance:
             raise
 
 
-async def _delete_drive_by_name(drive_name: str) -> Drive:
+async def _delete_drive_by_name(drive_name: str) -> DeleteDriveResponse200:
     """Delete a drive by name (async).
 
     Exposed as ``await DriveInstance.delete("name")`` and as ``await drive.delete()`` on
@@ -760,19 +721,23 @@ async def _delete_drive_by_name(drive_name: str) -> Drive:
 
     Returns:
         The API answer, a ``DeleteDriveResponse200`` with ``message``,
-        ``name`` and ``status`` (``"DELETING"``), despite the ``Drive``
-        annotation. None, without an error, when the drive does not exist
-        (HTTP 404) or the API key is invalid (HTTP 401).
+        ``name`` and ``status`` (``"DELETING"``).
 
     Raises:
-        blaxel.core.client.errors.UnexpectedStatus: For other error statuses,
-            such as HTTP 403 when drives are not enabled.
+        DriveAPIError: When the API rejects the request, with its status code
+            and message: HTTP 404 when the drive does not exist, 401 for an
+            invalid API key, 403 when drives are not enabled.
     """
-    response = await delete_drive(drive_name=drive_name, client=client)
+    with DriveAPIError._raised_for_status():
+        response = await delete_drive(drive_name=drive_name, client=client)
+    if isinstance(response, Error):
+        raise DriveAPIError._from_error(response)
+    if response is None:
+        raise DriveAPIError(f"Failed to delete drive {drive_name}")
     return response
 
 
-def _delete_drive_by_name_sync(drive_name: str) -> Drive:
+def _delete_drive_by_name_sync(drive_name: str) -> DeleteDriveResponse200:
     """Delete a drive by name (sync).
 
     Exposed as ``SyncDriveInstance.delete("name")`` and as ``drive.delete()`` on
@@ -785,15 +750,19 @@ def _delete_drive_by_name_sync(drive_name: str) -> Drive:
 
     Returns:
         The API answer, a ``DeleteDriveResponse200`` with ``message``,
-        ``name`` and ``status`` (``"DELETING"``), despite the ``Drive``
-        annotation. None, without an error, when the drive does not exist
-        (HTTP 404) or the API key is invalid (HTTP 401).
+        ``name`` and ``status`` (``"DELETING"``).
 
     Raises:
-        blaxel.core.client.errors.UnexpectedStatus: For other error statuses,
-            such as HTTP 403 when drives are not enabled.
+        DriveAPIError: When the API rejects the request, with its status code
+            and message: HTTP 404 when the drive does not exist, 401 for an
+            invalid API key, 403 when drives are not enabled.
     """
-    response = delete_drive_sync(drive_name=drive_name, client=client)
+    with DriveAPIError._raised_for_status():
+        response = delete_drive_sync(drive_name=drive_name, client=client)
+    if isinstance(response, Error):
+        raise DriveAPIError._from_error(response)
+    if response is None:
+        raise DriveAPIError(f"Failed to delete drive {drive_name}")
     return response
 
 
@@ -809,9 +778,8 @@ async def _update_drive_by_name(
     ``labels`` dict keeps the current labels, while ``permissions=[]``
     removes every access rule. Only ``display_name``, ``labels`` and
     ``permissions`` can change: the region is fixed at creation, and the
-    API rejects a new one with HTTP 400, raised as
-    ``blaxel.core.client.errors.UnexpectedStatus``. The call waits 0.5
-    seconds after the update before returning.
+    API rejects a new one with HTTP 400, raised as ``DriveAPIError``. The
+    call waits 0.5 seconds after the update before returning.
 
     Args:
         drive_name: The drive name.
@@ -823,9 +791,9 @@ async def _update_drive_by_name(
 
     Raises:
         ValueError: When ``updates`` has an unsupported type.
-        DriveAPIError: When the drive does not exist.
-        blaxel.core.client.errors.UnexpectedStatus: When the API rejects the
-            update, such as a new region or more than 3 permissions.
+        DriveAPIError: When the drive does not exist or the API rejects the
+            update, such as a new region or more than 3 permissions, with the
+            API's status code and message.
 
     Example:
         ```python
@@ -896,11 +864,10 @@ async def _update_drive_by_name(
         spec=merged_spec,
     )
 
-    response = await update_drive(drive_name=drive_name, client=client, body=body)
+    with DriveAPIError._raised_for_status():
+        response = await update_drive(drive_name=drive_name, client=client, body=body)
     if isinstance(response, Error):
-        status_code = int(response.code) if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise DriveAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise DriveAPIError._from_error(response)
     # This is for safe update
     await asyncio.sleep(0.5)
     return DriveInstance(response)
@@ -918,9 +885,8 @@ def _update_drive_by_name_sync(
     ``labels`` dict keeps the current labels, while ``permissions=[]``
     removes every access rule. Only ``display_name``, ``labels`` and
     ``permissions`` can change: the region is fixed at creation, and the
-    API rejects a new one with HTTP 400, raised as
-    ``blaxel.core.client.errors.UnexpectedStatus``. The call waits 0.5
-    seconds after the update before returning.
+    API rejects a new one with HTTP 400, raised as ``DriveAPIError``. The
+    call waits 0.5 seconds after the update before returning.
 
     Args:
         drive_name: The drive name.
@@ -932,9 +898,9 @@ def _update_drive_by_name_sync(
 
     Raises:
         ValueError: When ``updates`` has an unsupported type.
-        DriveAPIError: When the drive does not exist.
-        blaxel.core.client.errors.UnexpectedStatus: When the API rejects the
-            update, such as a new region or more than 3 permissions.
+        DriveAPIError: When the drive does not exist or the API rejects the
+            update, such as a new region or more than 3 permissions, with the
+            API's status code and message.
 
     Example:
         ```python
@@ -1005,11 +971,10 @@ def _update_drive_by_name_sync(
         spec=merged_spec,
     )
 
-    response = update_drive_sync(drive_name=drive_name, client=client, body=body)
+    with DriveAPIError._raised_for_status():
+        response = update_drive_sync(drive_name=drive_name, client=client, body=body)
     if isinstance(response, Error):
-        status_code = int(response.code) if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise DriveAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise DriveAPIError._from_error(response)
     # This is for safe update
     time.sleep(0.5)
     return SyncDriveInstance(response)
