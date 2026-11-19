@@ -157,9 +157,10 @@ class SyncSandboxPreviewToken:
     def expires_at(self) -> datetime:
         """Expiry, parsed from the ISO 8601 value the API returns."""
         return (
-            datetime.fromisoformat(self.preview_token.spec.expires_at)
+            # Python 3.10's fromisoformat does not read a trailing Z.
+            datetime.fromisoformat(self.preview_token.spec.expires_at.replace("Z", "+00:00"))
             if self.preview_token.spec and self.preview_token.spec.expires_at
-            else datetime.now()
+            else datetime.now(timezone.utc)
         )
 
 
