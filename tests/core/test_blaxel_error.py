@@ -356,7 +356,8 @@ async def test_high_level_creation_metadata_sync_and_async(sync):
     assert error.body == ACTION
     assert error.request_id == "creation-id"
     assert_response_snapshot(error.response, response)
-    assert error.message == ACTION["message"]
+    # Create names the status and code in the message; the body keeps the API's own.
+    assert error.message == f"{ACTION['message']} (HTTP 409 SANDBOX_ALREADY_EXISTS)"
     if sync:
         client.get_httpx_client().close()
     else:

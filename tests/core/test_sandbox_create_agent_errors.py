@@ -361,7 +361,7 @@ async def test_invalid_name_400_says_how_to_fix_it():
             await SandboxInstance.create({"name": "sesn_01AbC", "region": "us-pdx-1"})
 
         message = str(excinfo.value)
-        assert message.startswith("invalid sandbox name. Sandbox names use")
+        assert message.startswith("invalid sandbox name (HTTP 400 BAD_REQUEST). Sandbox names use")
         assert "lowercase letters, digits and single hyphens" in message
         assert "sanitize_sandbox_name('sesn_01AbC') gives 'sesn-01abc'" in message
         assert excinfo.value.status_code == 400
@@ -561,7 +561,7 @@ async def test_json_403_is_not_called_an_edge_block():
         with pytest.raises(SandboxAPIError) as excinfo:
             await SandboxInstance.create(CONFIG)
 
-    assert str(excinfo.value) == "no write access"
+    assert str(excinfo.value) == "no write access (HTTP 403 UNAUTHORIZED_WORKSPACE)"
 
 
 def _modeled(status: int, code: str, message: str, headers=None) -> SandboxError:

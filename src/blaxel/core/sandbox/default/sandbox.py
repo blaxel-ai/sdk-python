@@ -246,12 +246,23 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
     explained = _limit_explanation(_error_status(error), error.code, error.message, None)
     if explained is not None:
         return explained[0]
+    message = _with_status_and_code(message, _error_status(error), error.code)
     if _error_status(error) == 400:
         hint = _invalid_name_hint(sandbox_name)
         if hint and message and not message.endswith((".", "!", "?")):
             message += "."
         return message + hint
     return message
+
+
+def _with_status_and_code(message: str, status: int | None, code: object) -> str:
+    """'<message> (HTTP <status> <CODE>)', so the message alone names what the API
+    answered; left as is when it already does."""
+    if status is None or f"HTTP {status}" in message:
+        return message
+    # A numeric code is the HTTP status again (older /v0 bodies): leave it out.
+    tag = f"HTTP {status} {code}" if isinstance(code, str) and code else f"HTTP {status}"
+    return f"{message} ({tag})" if message else tag
 
 
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
