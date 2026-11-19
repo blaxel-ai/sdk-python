@@ -23,7 +23,7 @@ class ApiKey(BlaxelAuth):
         """
         workspace = self._ensure_workspace()
         return {
-            "X-Blaxel-Authorization": f"Bearer {self.credentials.api_key}",
+            "Authorization": f"Bearer {self.credentials.api_key}",
             "X-Blaxel-Workspace": workspace,
         }
 
@@ -38,7 +38,7 @@ class ApiKey(BlaxelAuth):
             Request: The authenticated request.
         """
         workspace = self._ensure_workspace()
-        request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.api_key}"
+        request.headers["Authorization"] = f"Bearer {self.credentials.api_key}"
         request.headers["X-Blaxel-Workspace"] = workspace
         yield request
 

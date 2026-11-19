@@ -659,6 +659,7 @@ def updatable_sandbox(name="my-sandbox", cls=SandboxInstance):
 UPDATE_CALLS = [
     ("update_metadata", lambda: SandboxUpdateMetadata(labels={"team": "core"})),
     ("update_ttl", lambda: "10m"),
+    ("update_envs", lambda: {"PORT": "3000"}),
     ("update_lifecycle", lambda: None),
     ("update_network", lambda: SandboxUpdateNetwork(network=None)),
 ]
@@ -769,3 +770,97 @@ def test_sync_delete_raises_on_error_response():
 
         with pytest.raises(SandboxAPIError, match="control plane exploded"):
             SyncSandboxInstance.delete("my-sandbox")
+
+
+def sandbox_with_envs(*envs, cls=SandboxInstance):
+    return cls(
+        Sandbox.from_dict(
+            {
+                "metadata": {"name": "my-sandbox"},
+                "spec": {"runtime": {"image": "blaxel/base-image:latest", "envs": list(envs)}},
+            }
+        )
+    )
+
+
+async def sent_envs(envs, current=(), **kwargs):
+    with (
+        patch.object(SandboxInstance, "get", new_callable=AsyncMock) as mock_get,
+        patch(
+            "blaxel.core.sandbox.default.sandbox.update_sandbox", new_callable=AsyncMock
+        ) as mock_update,
+    ):
+        mock_get.return_value = sandbox_with_envs(*current)
+        mock_update.return_value = Sandbox(metadata=Metadata(name="my-sandbox"), spec=SandboxSpec())
+        await SandboxInstance.update_envs("my-sandbox", envs, **kwargs)
+    body = mock_update.call_args.kwargs["body"]
+    assert body["spec"]["runtime"]["image"] == "blaxel/base-image:latest"
+    return body["spec"]["runtime"]["envs"]
+
+
+@pytest.mark.asyncio
+async def test_update_envs_merges_mapping_and_removes_none():
+    current = [
+        {"name": "KEEP", "value": "1"},
+        {"name": "PORT", "value": "80"},
+        {"name": "DEBUG", "value": "true"},
+    ]
+    envs = await sent_envs({"PORT": "3000", "DEBUG": None, "NEW": "x"}, current)
+    assert envs == [
+        {"name": "KEEP", "value": "1"},
+        {"name": "PORT", "value": "3000"},
+        {"name": "NEW", "value": "x"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_update_envs_list_keeps_secret_flag():
+    from blaxel.core.client.models import Env
+
+    envs = await sent_envs(
+        [Env(name="API_KEY", value="k", secret=True), {"name": "PORT", "value": "1"}],
+        [{"name": "API_KEY", "value": "old"}],
+    )
+    assert envs == [
+        {"name": "API_KEY", "value": "k", "secret": True},
+        {"name": "PORT", "value": "1"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_update_envs_mapping_keeps_secret_flag():
+    envs = await sent_envs(
+        {"API_KEY": "rotated"}, [{"name": "API_KEY", "value": "****", "secret": True}]
+    )
+    assert envs == [{"name": "API_KEY", "value": "rotated", "secret": True}]
+
+
+@pytest.mark.asyncio
+async def test_update_envs_replace_drops_current():
+    envs = await sent_envs({"ONLY": "1"}, [{"name": "OLD", "value": "1"}], replace=True)
+    assert envs == [{"name": "ONLY", "value": "1"}]
+
+
+@pytest.mark.asyncio
+async def test_update_envs_rejects_unnamed_env():
+    with pytest.raises(ValueError, match="without a name") as excinfo:
+        await sent_envs([{"value": "s3cr3t", "secret": True}])
+    assert "s3cr3t" not in str(excinfo.value)
+
+
+def test_sync_update_envs_merges():
+    with (
+        patch.object(SyncSandboxInstance, "get") as mock_get,
+        patch("blaxel.core.sandbox.sync.sandbox.update_sandbox") as mock_update,
+    ):
+        mock_get.return_value = sandbox_with_envs(
+            {"name": "A", "value": "1"}, cls=SyncSandboxInstance
+        )
+        mock_update.return_value = Sandbox(metadata=Metadata(name="my-sandbox"), spec=SandboxSpec())
+        result = SyncSandboxInstance.update_envs("my-sandbox", {"B": "2"})
+
+    assert isinstance(result, SyncSandboxInstance)
+    assert mock_update.call_args.kwargs["body"]["spec"]["runtime"]["envs"] == [
+        {"name": "A", "value": "1"},
+        {"name": "B", "value": "2"},
+    ]

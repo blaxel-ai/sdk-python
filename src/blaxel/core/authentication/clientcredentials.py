@@ -45,7 +45,7 @@ class ClientCredentials(BlaxelAuth):
         if err:
             raise err
         return {
-            "X-Blaxel-Authorization": f"Bearer {self.credentials.access_token}",
+            "Authorization": f"Bearer {self.credentials.access_token}",
             "X-Blaxel-Workspace": workspace,
         }
 
@@ -111,7 +111,7 @@ class ClientCredentials(BlaxelAuth):
         """
         workspace = self._ensure_workspace()
         self.get_token()
-        request.headers["X-Blaxel-Authorization"] = f"Bearer {self.credentials.access_token}"
+        request.headers["Authorization"] = f"Bearer {self.credentials.access_token}"
         request.headers["X-Blaxel-Workspace"] = workspace
         yield request
 
