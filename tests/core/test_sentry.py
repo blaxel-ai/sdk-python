@@ -27,6 +27,7 @@ from blaxel.core.common.sentry import (
     _OPTIONAL_INTEGRATION_ENTRYPOINT_MODULES,
     _is_optional_dependency_error,
 )
+from blaxel.core.volume import VolumeAPIError
 
 
 def _raise_in_file(filename: str, code: str, namespace=None) -> BaseException:
@@ -245,6 +246,42 @@ except errors.UnexpectedStatus as exc:
 
         assert installed_sentry_hooks.captured == [(exc, "excepthook")]
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_authentication_error_is_not_captured(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-13H: a 401/403 is a credential/permission
+        problem on the caller's side, not an SDK defect, so it must not be
+        reported to the SDK's own Sentry as an unhandled SDK exception."""
+        for status in (401, 403):
+            exc = _raise_in_file(
+                _sdk_filename("core/volume/volume.py"),
+                f"raise VolumeAPIError('forbidden', status_code={status})",
+                {"VolumeAPIError": VolumeAPIError},
+            )
+
+            sys.excepthook(type(exc), exc, exc.__traceback__)
+            _wait_for_background_capture()
+
+            assert installed_sentry_hooks.captured == []
+            # The host's original excepthook is still always invoked.
+            assert installed_sentry_hooks.main_hook_calls[-1] == (
+                type(exc),
+                exc,
+                exc.__traceback__,
+            )
+
+    def test_unhandled_non_auth_api_error_is_still_captured(self, installed_sentry_hooks):
+        """Only authn/authz failures are suppressed; a 404 can still signal an SDK
+        defect (e.g. a wrong path) and is reported as before."""
+        exc = _raise_in_file(
+            _sdk_filename("core/volume/volume.py"),
+            "raise VolumeAPIError('missing', status_code=404)",
+            {"VolumeAPIError": VolumeAPIError},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
 
     def test_actual_worker_thread_failure_is_captured_and_chained(self, installed_sentry_hooks):
         namespace = _define_in_file(
@@ -777,6 +814,51 @@ class TestIsOptionalDependencyError:
         exc.__cause__ = exc
 
         assert _is_optional_dependency_error(type(exc), exc) is False
+
+
+class TestAuthenticationErrorFiltering:
+    """Authn/authz failures (HTTP 401/403) are environment issues, not SDK bugs."""
+
+    @pytest.mark.parametrize("status", [401, 403])
+    def test_blaxel_error_auth_status_is_authentication_error(self, status):
+        exc = VolumeAPIError("forbidden", status_code=status)
+        assert sentry._is_authentication_error(exc) is True
+
+    @pytest.mark.parametrize("status", [400, 404, 409, 429, 500, 503])
+    def test_blaxel_error_non_auth_status_is_not_authentication_error(self, status):
+        exc = VolumeAPIError("other", status_code=status)
+        assert sentry._is_authentication_error(exc) is False
+
+    def test_generated_client_auth_error_is_authentication_error(self):
+        exc = errors.UnexpectedStatus(403, b'{"error":"forbidden"}')
+        assert sentry._is_authentication_error(exc) is True
+
+    def test_auth_status_from_response_snapshot_is_detected(self):
+        exc = VolumeAPIError("forbidden")
+        exc.status_code = None
+        exc.response = httpx.Response(401)
+        assert sentry._is_authentication_error(exc) is True
+
+    def test_non_blaxel_error_with_status_code_is_not_suppressed(self):
+        exc = RuntimeError("boom")
+        exc.status_code = 403
+        assert sentry._is_authentication_error(exc) is False
+
+    def test_auth_error_from_sdk_is_not_captured(self):
+        exc = _raise_in_file(
+            _sdk_filename("core/volume/volume.py"),
+            "raise VolumeAPIError('forbidden', status_code=403)",
+            {"VolumeAPIError": VolumeAPIError},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    def test_server_error_from_sdk_is_still_captured(self):
+        exc = _raise_in_file(
+            _sdk_filename("core/volume/volume.py"),
+            "raise VolumeAPIError('boom', status_code=500)",
+            {"VolumeAPIError": VolumeAPIError},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
 
 
 @pytest.mark.parametrize(
