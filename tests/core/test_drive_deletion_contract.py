@@ -18,6 +18,9 @@ async def test_drive_deletion_requires_http_not_found(monkeypatch, statuses):
     def respond(request):
         status = statuses[len(observed)]
         observed.append(status)
+        if status != 200:
+            # Error statuses carry the control plane's error body.
+            return httpx.Response(status, json={"error": "drive request failed", "code": status})
         return httpx.Response(
             status, json={"metadata": {"name": "deleting-drive"}, "spec": {}, "status": "DELETING"}
         )
