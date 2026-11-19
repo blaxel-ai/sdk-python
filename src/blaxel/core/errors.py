@@ -1,7 +1,8 @@
 """Shared exceptions and the error shapes returned by Blaxel backends."""
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from typing import Any, Literal, TypedDict, TypeGuard, TypeVar, Union, overload
 
 import httpx
@@ -212,6 +213,32 @@ def _body_text(body: Any, field: str) -> str | None:
     return None
 
 
+def _body_bool(body: Any, field: str) -> bool | None:
+    if isinstance(body, dict):
+        for source in (body.get("error"), body):
+            if isinstance(source, dict) and isinstance(source.get(field), bool):
+                return source[field]
+    return None
+
+
+def _body_error_code(body: Any) -> str | None:
+    """The stable string code: ``error_code`` of a control-plane body, or the
+    string ``code`` of a gateway envelope or sandbox action error."""
+    if isinstance(body, dict):
+        nested = body.get("error")
+        for source, field in (
+            (body, "error_code"),
+            (nested, "error_code"),
+            (nested, "code"),
+            (body, "code"),
+        ):
+            if isinstance(source, dict):
+                value = source.get(field)
+                if isinstance(value, str) and value:
+                    return value
+    return None
+
+
 class BlaxelError(Exception):
     """Common base for Blaxel API errors, without wrapping network/validation failures.
 
@@ -222,9 +249,12 @@ class BlaxelError(Exception):
 
     status: int | None
     code: BlaxelErrorCodeValue | None
+    error_code: str | None
     message: str
     request_id: str | None
     retryable: bool | None
+    safe_to_retry_request: bool | None
+    dispatch_state: str | None
     action: str | None
     do_not: str | None
     docs_url: str | None
@@ -255,12 +285,17 @@ class BlaxelError(Exception):
         self.code = code if code is not None else parsed_code
         if self.code is None:
             self.code = _read_header(headers, "x-blaxel-error-code")
+        self.error_code = _body_error_code(body) or _read_header(headers, "x-blaxel-error-code")
         self.message = str(message)
         self.request_id = next(
             (value for name in _REQUEST_ID_HEADERS if (value := _read_header(headers, name))),
             None,
-        )
+        ) or _body_text(body, "request_id")
         self.retryable = retryable
+        self.safe_to_retry_request = _body_bool(body, "safe_to_retry_request")
+        self.dispatch_state = _body_text(body, "dispatch_state") or _read_header(
+            headers, "x-blaxel-dispatch-state"
+        )
         self.action = _body_text(body, "action")
         self.do_not = _body_text(body, "do_not")
         self.docs_url = _body_text(body, "docs_url")
@@ -321,6 +356,44 @@ class _APIError(BlaxelError):
         # This field already existed on resource wrappers, including None.
         # Wire metadata must not replace the caller's legacy value.
         self.code = code
+
+    @classmethod
+    def _from_error(cls: type["APIErrorT"], error: Any) -> "APIErrorT":
+        """Build the error from a generated ``Error`` model returned by the client."""
+        status_code = error.code if isinstance(error.code, int) else None
+        response = getattr(error, "_response", None)
+        if status_code is None and response is not None:
+            status_code = response.status_code
+        message = error.message if isinstance(error.message, str) else error.error
+        return cls(message, status_code=status_code, code=error.error, error=error)
+
+    @classmethod
+    def _from_status(cls: type["APIErrorT"], exc: BlaxelError) -> "APIErrorT":
+        """Build the error from the client's ``UnexpectedStatus``, keeping the API's message."""
+        body = exc.body
+        legacy = body.get("error") if isinstance(body, dict) else None
+        message = _body_text(body, "message") or _body_text(body, "error") or str(exc)
+        return cls(
+            message,
+            status_code=exc.status,
+            code=legacy if isinstance(legacy, str) else exc.error_code,
+            body=body,
+            response=exc.response,
+        )
+
+    @classmethod
+    @contextmanager
+    def _raised_for_status(cls) -> Iterator[None]:
+        """Re-raise the client's ``UnexpectedStatus`` as this error, chained to it."""
+        from .client.errors import UnexpectedStatus
+
+        try:
+            yield
+        except UnexpectedStatus as exc:
+            raise cls._from_status(exc) from exc
+
+
+APIErrorT = TypeVar("APIErrorT", bound=_APIError)
 
 
 __all__ = [
