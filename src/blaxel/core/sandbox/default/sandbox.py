@@ -193,9 +193,18 @@ def _error_status(error: SandboxError) -> int | None:
     return error._response.status_code if error._response is not None else None
 
 
+def _registered_code(error: SandboxError) -> Any:
+    """The registered code: `error_code` when the API sends one next to `code`,
+    else `code`. A 403 WORKSPACE_ACCESS_DENIED may still carry code UNAUTHORIZED."""
+    error_code = error.additional_properties.get("error_code")
+    if isinstance(error_code, str) and error_code:
+        return error_code
+    return error.code
+
+
 def _is_transient_create_auth_failure(error: object) -> bool:
     if isinstance(error, SandboxError):
-        return _error_status(error) == 403 and error.code == "UNAUTHORIZED"
+        return _error_status(error) == 403 and _registered_code(error) == "UNAUTHORIZED"
     if isinstance(error, client_errors.UnexpectedStatus):
         return (
             error.status_code == 503
@@ -223,6 +232,7 @@ def _create_auth_retry_wait(error: object, attempt: int) -> float:
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
     """Message of the SandboxAPIError raised for a rejected creation."""
     message = error.message if error.message else str(error)
+    code = _registered_code(error)
     if _is_transient_create_auth_failure(error):
         try:
             workspace = settings.workspace
@@ -230,23 +240,26 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
             workspace = None
         current = f"; current workspace: '{workspace}'" if workspace else ""
         return (
-            f"{message} (HTTP 403 {error.code}, after {attempts} attempts). The API answers"
+            f"{message} (HTTP 403 {code}, after {attempts} attempts). The API answers"
             " this way both for a key it does not recognize and when its credential check"
             " fails for a moment. Check the credentials and workspace the SDK uses"
             f" (BL_API_KEY and BL_WORKSPACE, or `bl login`{current}); if they are right,"
             " retry in a few seconds."
         )
-    if error.code == "AUTHENTICATION_FAILED":
+    if code == "AUTHENTICATION_FAILED":
         return (
             f"{error.message or 'This API key is not valid'} (HTTP {_error_status(error)}"
             " AUTHENTICATION_FAILED: this API key is not valid; not retried, the same key is"
             " refused every time). Check the API key the SDK sends (BL_API_KEY) for a typo or"
             " a missing part; if it was deleted, create a new one in the Blaxel Console."
         )
-    explained = _limit_explanation(_error_status(error), error.code, error.message, None)
+    explained = _limit_explanation(_error_status(error), code, error.message, None)
     if explained is not None:
         return explained[0]
-    message = _with_status_and_code(message, _error_status(error), error.code)
+    body = error.to_dict()
+    message = _with_status_and_code(
+        message, _error_status(error), code, _server_action(body), _server_docs_url(body)
+    )
     if _error_status(error) == 400:
         hint = _invalid_name_hint(sandbox_name)
         if hint and message and not message.endswith((".", "!", "?")):
@@ -255,14 +268,32 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
     return message
 
 
-def _with_status_and_code(message: str, status: int | None, code: object) -> str:
-    """'<message> (HTTP <status> <CODE>)', so the message alone names what the API
-    answered; left as is when it already does."""
+def _with_status_and_code(
+    message: str,
+    status: int | None,
+    code: object,
+    action: str | None = None,
+    docs_url: str | None = None,
+) -> str:
+    """'<message> (HTTP <status> <CODE>: <action>: <docs_url>)', so the message alone
+    names what the API answered and the next step it gives; left as is when it
+    already names the status."""
     if status is None or f"HTTP {status}" in message:
         return message
     # A numeric code is the HTTP status again (older /v0 bodies): leave it out.
     tag = f"HTTP {status} {code}" if isinstance(code, str) and code else f"HTTP {status}"
+    next_step = _next_step(action, docs_url)
+    if next_step:
+        tag += f": {next_step}"
     return f"{message} ({tag})" if message else tag
+
+
+def _next_step(action: str | None, docs_url: str | None) -> str:
+    """The API's action for a code the SDK has no advice of its own for, and its docs link."""
+    step = action.strip().rstrip(".") if action else ""
+    if docs_url and docs_url not in step:
+        return f"{step}: {docs_url}" if step else docs_url
+    return step
 
 
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
@@ -319,6 +350,17 @@ def _server_action(body: Any) -> str | None:
     return None
 
 
+def _server_docs_url(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        url = source.get("docs_url")
+        if isinstance(url, str) and url:
+            return url
+    return None
+
+
 def _request_blocked_message(server_message: str | None, action: str | None) -> str:
     """A 403 REQUEST_BLOCKED: the edge firewall refused the request before the
     API read it. Not a quota and not a credential problem, and not retried."""
@@ -334,6 +376,12 @@ def _has_json_error_body(content: bytes) -> bool:
         return isinstance(json.loads(content), dict)
     except (UnicodeDecodeError, ValueError, RecursionError):
         return False
+
+
+def _is_edge_block_page(content: bytes) -> bool:
+    """The edge firewall's text or HTML "Request blocked." page, sent until it
+    answers with a REQUEST_BLOCKED JSON body."""
+    return b"request blocked" in content.lower() and not _has_json_error_body(content)
 
 
 def _limit_explanation(
@@ -406,14 +454,27 @@ def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
     elif error.status_code == 403 and error.code == REQUEST_BLOCKED_CODE:
         error.retryable = False
         message = _request_blocked_message(_server_message(error.body), _server_action(error.body))
+    elif error.status_code == 403 and _is_edge_block_page(error.content):
+        error.code = REQUEST_BLOCKED_CODE
+        error.retryable = False
+        message = _request_blocked_message(None, None)
     elif error.status_code == 403 and not _has_json_error_body(error.content):
         message = EDGE_BLOCKED_MESSAGE
     else:
         wait = _retry_after_seconds(error)
-        explained = _limit_explanation(
-            error.status_code, error.code, _server_message(error.body), wait
-        )
+        server = _server_message(error.body)
+        explained = _limit_explanation(error.status_code, error.code, server, wait)
         if explained is None:
+            # No advice of the SDK's own: name the code and pass on the API's action.
+            action, docs_url = _server_action(error.body), _server_docs_url(error.body)
+            has_code = isinstance(error.code, str) and bool(error.code)
+            if not (server or has_code or action):
+                return
+            message = _with_status_and_code(
+                server or "", error.status_code, error.code, action, docs_url
+            )
+            error.message = message
+            error.args = (message,)
             return
         message, error.retryable = explained
         if error.retryable:
@@ -442,7 +503,7 @@ def _create_error(
             limit_error = client_errors.from_response(429, json.dumps(error.to_dict()).encode())
         _explain_create_error(limit_error)
         return limit_error
-    code = error.code if error.code else None
+    code = _registered_code(error) or None
     if status_code == 403 and code == REQUEST_BLOCKED_CODE:
         body = error.to_dict()
         message = _request_blocked_message(_server_message(body), _server_action(body))
@@ -510,16 +571,42 @@ def _unwrap_response(response, action: str, *, allow_none: bool = False):
     ``None`` — pass ``allow_none=True`` for those.
     """
     if isinstance(response, Error):
-        status_code = response.code if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        # The registered code when the API sends one (error_code, since code holds
-        # the HTTP status); older bodies only have the message, kept as the code.
-        error_code = response.additional_properties.get("error_code")
-        code = error_code if isinstance(error_code, str) and error_code else response.error
-        raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+        raise _api_error(response)
     if response is None and not allow_none:
         raise SandboxAPIError(f"Failed to {action}")
     return response
+
+
+def _api_error(response: Error) -> SandboxAPIError:
+    """SandboxAPIError for an error body.
+
+    `code` holds the HTTP status on most /v0 bodies, so the registered code is
+    `error_code` when the API sends one. An edge block (REQUEST_BLOCKED) puts its
+    code at the top level and its details in an `error` object; older bodies only
+    have the message in `error`, kept as the code.
+    """
+    nested = response.error if isinstance(response.error, dict) else {}
+    legacy = response.error if isinstance(response.error, str) else None
+    status_code = response.code if isinstance(response.code, int) else None
+    if status_code is None and isinstance(nested.get("status"), int):
+        status_code = nested["status"]
+    message = response.message if response.message is not UNSET else None
+    if not isinstance(message, str) or not message:
+        message = nested.get("message") if isinstance(nested.get("message"), str) else legacy
+    code = next(
+        (
+            value
+            for value in (
+                response.additional_properties.get("error_code"),
+                response.code,
+                nested.get("code"),
+                legacy,
+            )
+            if isinstance(value, str) and value
+        ),
+        None,
+    )
+    return SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
 
 def _create_body(sandbox: Sandbox) -> Union[Sandbox, Dict[str, Any]]:
