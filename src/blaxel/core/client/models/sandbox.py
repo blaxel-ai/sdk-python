@@ -154,9 +154,9 @@ class Sandbox:
         if not src_dict:
             return None
         d = dict(src_dict)
-        metadata = Metadata.from_dict(d.pop("metadata"))
+        metadata = Metadata.from_dict(d.pop("metadata", UNSET))
 
-        spec = SandboxSpec.from_dict(d.pop("spec"))
+        spec = SandboxSpec.from_dict(d.pop("spec", UNSET))
 
         _archive = d.pop("archive", UNSET)
         archive: SandboxArchive | Unset
