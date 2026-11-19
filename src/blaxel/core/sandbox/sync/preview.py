@@ -157,9 +157,10 @@ class SyncSandboxPreviewToken:
     def expires_at(self) -> datetime:
         """Expiry, parsed from the ISO 8601 value the API returns."""
         return (
-            datetime.fromisoformat(self.preview_token.spec.expires_at)
+            # Python 3.10's fromisoformat does not read a trailing Z.
+            datetime.fromisoformat(self.preview_token.spec.expires_at.replace("Z", "+00:00"))
             if self.preview_token.spec and self.preview_token.spec.expires_at
-            else datetime.now()
+            else datetime.now(timezone.utc)
         )
 
 
@@ -271,21 +272,14 @@ class SyncSandboxPreviewTokens:
             return SyncSandboxPreviewToken(selected)
         return self.create(expiry)
 
-    def list(self):
-        """List all preview tokens, including expired ones.
-
-        Raises:
-            blaxel.core.client.errors.UnexpectedStatus: Also when the preview
-                has no tokens, with status 400.
-        """
-        response = list_sandbox_preview_tokens(
+    def list(self) -> List[SyncSandboxPreviewToken]:
+        """List all preview tokens, including expired ones."""
+        response: List[PreviewToken] = list_sandbox_preview_tokens(
             self.resource_name,
             self.preview_name,
             client=client,
         )
-        if response:
-            return [SyncSandboxPreviewToken(token) for token in response]
-        raise errors.UnexpectedStatus(400, b"Failed to list preview tokens")
+        return [SyncSandboxPreviewToken(token) for token in response]
 
     def delete(self, token_name: str):
         """Delete a preview token.
@@ -374,19 +368,12 @@ class SyncSandboxPreviews:
         )
 
     def list(self) -> List[SyncSandboxPreview]:
-        """List all previews for the sandbox.
-
-        Raises:
-            blaxel.core.client.errors.UnexpectedStatus: Also when the sandbox
-                has no previews, with status 400.
-        """
-        response = list_sandbox_previews(
+        """List all previews for the sandbox."""
+        response: List[Preview] = list_sandbox_previews(
             self.sandbox_name,
             client=client,
         )
-        if response:
-            return [SyncSandboxPreview(preview) for preview in response]
-        raise errors.UnexpectedStatus(400, b"Failed to list previews")
+        return [SyncSandboxPreview(preview) for preview in response]
 
     def create(
         self,
@@ -542,10 +529,10 @@ class SyncSandboxPreviews:
 
 
 def to_utc_z(dt: datetime) -> str:
-    """Convert datetime to UTC Z format string."""
-    iso_string = dt.isoformat()
-    if iso_string.endswith("+00:00"):
-        return iso_string.replace("+00:00", "Z")
-    elif "T" in iso_string and not iso_string.endswith("Z"):
-        return iso_string + "Z"
-    return iso_string
+    """Format a datetime as an ISO 8601 UTC timestamp ending in ``Z``.
+
+    An aware datetime is converted to UTC; a naive one is taken as UTC already.
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return f"{dt.isoformat()}Z"

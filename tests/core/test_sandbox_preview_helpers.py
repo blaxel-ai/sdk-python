@@ -322,14 +322,10 @@ async def test_nonlist_success_is_not_empty_list(lane, response):
     lane.mocks["create_sandbox_preview_token"].assert_not_called()
 
 
-async def test_sync_create_metadata_prerequisite_and_list_bug_untouched(lane):
+async def test_create_metadata_prerequisite_and_empty_token_list(lane):
     await call(lane.tokens.create, NOW + timedelta(hours=2))
     assert lane.mocks["create_sandbox_preview_token"].call_args.kwargs["body"].metadata.name == ""
-    if lane.module is sync_module:
-        with pytest.raises(errors.UnexpectedStatus) as caught:
-            lane.tokens.list()
-        assert caught.value.status_code == 400
-        assert caught.value.content == b"Failed to list preview tokens"
+    assert await call(lane.tokens.list) == []
 
 
 @pytest.mark.parametrize("status", [401, 200])
