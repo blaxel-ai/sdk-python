@@ -22,6 +22,8 @@ BlaxelErrorCode = Literal[
     "FORBIDDEN",
     "BAD_REQUEST",
     "USAGE_LIMIT_EXCEEDED",
+    # Edge firewall block, answered before the API reads the credential.
+    "REQUEST_BLOCKED",
     # Reserved: defined by the gateway but not currently returned.
     "POLICY_VIOLATION",
     "UPSTREAM_CONNECT_FAILED",
@@ -34,6 +36,17 @@ BlaxelErrorCode = Literal[
     "UNAUTHORIZED_WORKSPACE",
     "AUTHENTICATION_UNAVAILABLE",
     "WORKSPACE_REQUIRED",
+    "WORKSPACE_ACCESS_DENIED",
+    # Limits: QUOTA_EXCEEDED and the plan, usage, fork and one-only limits are
+    # not retryable; the rate limits, JOB_CAPACITY_EXCEEDED and
+    # BUILD_QUEUE_FULL are.
+    "REQUEST_EXCEEDS_LIMIT",
+    "PLAN_LIMIT_REACHED",
+    "ACCOUNT_SUSPENDED",
+    "FORK_LIMIT_REACHED",
+    "ONLY_ONE_ALLOWED",
+    "JOB_CAPACITY_EXCEEDED",
+    "BUILD_QUEUE_FULL",
     # Sandbox creation and fork
     "READ_FAILED",
     "PARSE_FAILED",
@@ -180,12 +193,31 @@ def _response_snapshot(response: httpx.Response) -> httpx.Response:
     return snapshot
 
 
+def _body_sources(body: Any) -> tuple[dict[str, Any], ...]:
+    """The body, its ``error`` envelope and its v1 ``details``, when they are objects."""
+    if not isinstance(body, dict):
+        return ()
+    return tuple(
+        source
+        for source in (body, body.get("error"), body.get("details"))
+        if isinstance(source, dict)
+    )
+
+
 def _body_metadata(body: Any) -> tuple[BlaxelErrorCodeValue | None, bool | None]:
     code = None
     retryable = None
     if isinstance(body, dict):
         nested = body.get("error")
-        # Top-level code wins, just as it does in the TypeScript SDK.
+        # The registered string code comes first: v0 bodies keep the HTTP status
+        # in ``code`` and send it as ``error_code``; v1 bodies keep their generic
+        # name in ``code`` and send it as ``details.error_code``.
+        for source in _body_sources(body):
+            candidate = source.get("error_code")
+            if isinstance(candidate, str) and candidate:
+                code = candidate
+                break
+        # Otherwise the top-level code wins, just as it does in the TypeScript SDK.
         for source in (body, nested):
             if not isinstance(source, dict):
                 continue
@@ -204,7 +236,7 @@ def _body_metadata(body: Any) -> tuple[BlaxelErrorCodeValue | None, bool | None]
 
 def _body_text(body: Any, field: str) -> str | None:
     if isinstance(body, dict):
-        for source in (body.get("error"), body):
+        for source in (body.get("error"), body, body.get("details")):
             if isinstance(source, dict):
                 value = source.get(field)
                 if isinstance(value, str):
@@ -212,12 +244,33 @@ def _body_text(body: Any, field: str) -> str | None:
     return None
 
 
+def _body_bool(body: Any, field: str) -> bool | None:
+    for source in _body_sources(body):
+        value = source.get(field)
+        if isinstance(value, bool):
+            return value
+    return None
+
+
+def _should_retry(headers: Mapping[str, str] | None) -> bool | None:
+    """The server's X-Should-Retry decision, which wins over the body."""
+    value = _read_header(headers, "x-should-retry")
+    normalized = value.strip().lower() if value else ""
+    return normalized == "true" if normalized in ("true", "false") else None
+
+
 class BlaxelError(Exception):
     """Common base for Blaxel API errors, without wrapping network/validation failures.
 
     Existing subclasses keep their exception messages and legacy attributes.
-    ``code`` may be a known code, a newer string, or a numeric HTTP status. A
+    ``code`` may be a known code, a newer string, or a numeric HTTP status; a
+    registered string code (``error_code``) wins over a numeric ``code``. A
     missing status/code/request ID/retry hint is represented by ``None``.
+    ``retryable`` follows the server's ``X-Should-Retry`` header, then the
+    body. ``request_id`` is the body's ``request_id`` (the ID the platform
+    logs under) when sent, else the edge request ID header.
+    ``safe_to_retry_request`` and ``dispatch_state`` (``not_dispatched`` or
+    ``dispatched_unknown``) say whether the same request can be sent again.
     """
 
     status: int | None
@@ -225,6 +278,8 @@ class BlaxelError(Exception):
     message: str
     request_id: str | None
     retryable: bool | None
+    safe_to_retry_request: bool | None
+    dispatch_state: str | None
     action: str | None
     do_not: str | None
     docs_url: str | None
@@ -256,11 +311,14 @@ class BlaxelError(Exception):
         if self.code is None:
             self.code = _read_header(headers, "x-blaxel-error-code")
         self.message = str(message)
-        self.request_id = next(
+        self.request_id = _body_text(body, "request_id") or next(
             (value for name in _REQUEST_ID_HEADERS if (value := _read_header(headers, name))),
             None,
         )
-        self.retryable = retryable
+        should_retry = _should_retry(headers)
+        self.retryable = should_retry if should_retry is not None else retryable
+        self.safe_to_retry_request = _body_bool(body, "safe_to_retry_request")
+        self.dispatch_state = _body_text(body, "dispatch_state")
         self.action = _body_text(body, "action")
         self.do_not = _body_text(body, "do_not")
         self.docs_url = _body_text(body, "docs_url")

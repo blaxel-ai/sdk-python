@@ -60,19 +60,27 @@ def _extract_error_metadata(
 
     nested_error = parsed.get("error")
     sources = [nested_error, parsed] if isinstance(nested_error, dict) else [parsed]
+    details = parsed.get("details")
+    if isinstance(details, dict):
+        # v1 bodies carry the registered code and retry fields in details.
+        sources.append(details)
 
     error_code: str | None = None
     retryable: bool | None = None
     retry_after: str | None = None
+    # error_code first, in any source: v0 bodies keep the HTTP status in code,
+    # v1 bodies a generic name.
+    for key in ("error_code", "code", "type"):
+        for source in sources:
+            candidate = source.get(key) if isinstance(source, dict) else None
+            if isinstance(candidate, str) and _STABLE_CODE_PATTERN.fullmatch(candidate):
+                error_code = candidate
+                break
+        if error_code is not None:
+            break
     for source in sources:
         if not isinstance(source, dict):
             continue
-        if error_code is None:
-            for key in ("code", "error_code", "type"):
-                candidate = source.get(key)
-                if isinstance(candidate, str) and _STABLE_CODE_PATTERN.fullmatch(candidate):
-                    error_code = candidate
-                    break
         candidate_retryable = source.get("retryable")
         if retryable is None and isinstance(candidate_retryable, bool):
             retryable = candidate_retryable

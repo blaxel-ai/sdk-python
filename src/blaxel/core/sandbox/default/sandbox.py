@@ -246,6 +246,10 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
 
 
 QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
+REQUEST_BLOCKED_CODE = "REQUEST_BLOCKED"
+_REQUEST_BLOCKED_DEFAULT_ACTION = (
+    "send a User-Agent header and slow down; do not rotate the API key, it was never checked"
+)
 EDGE_BLOCKED_MESSAGE = (
     "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
     " throttled before the API could answer it, for example by an edge rate limit or"
@@ -282,6 +286,27 @@ def _server_message(body: Any) -> str | None:
         if isinstance(message, str) and message:
             return message
     return None
+
+
+def _server_action(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        action = source.get("action")
+        if isinstance(action, str) and action:
+            return action
+    return None
+
+
+def _request_blocked_message(server_message: str | None, action: str | None) -> str:
+    """A 403 REQUEST_BLOCKED: the edge firewall refused the request before the
+    API read it. Not a quota and not a credential problem, and not retried."""
+    return (
+        f"{server_message or 'Request blocked'} (HTTP 403 {REQUEST_BLOCKED_CODE}: blocked at the"
+        " edge before the API read the request; not a quota and not an API key problem;"
+        f" {action or _REQUEST_BLOCKED_DEFAULT_ACTION})"
+    )
 
 
 def _has_json_error_body(content: bytes) -> bool:
@@ -358,6 +383,9 @@ def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
             f"{server} (HTTP 503 AUTHENTICATION_UNAVAILABLE: the API could not check"
             f" credentials for a moment; not a credential or permission error; {advice})"
         )
+    elif error.status_code == 403 and error.code == REQUEST_BLOCKED_CODE:
+        error.retryable = False
+        message = _request_blocked_message(_server_message(error.body), _server_action(error.body))
     elif error.status_code == 403 and not _has_json_error_body(error.content):
         message = EDGE_BLOCKED_MESSAGE
     else:
@@ -395,13 +423,13 @@ def _create_error(
         _explain_create_error(limit_error)
         return limit_error
     code = error.code if error.code else None
-    api_error = SandboxAPIError(
-        _create_error_message(error, sandbox_name, attempts),
-        status_code=status_code,
-        code=code,
-        error=error,
-    )
-    if _limit_explanation(status_code, code, None, None) is not None:
+    if status_code == 403 and code == REQUEST_BLOCKED_CODE:
+        body = error.to_dict()
+        message = _request_blocked_message(_server_message(body), _server_action(body))
+    else:
+        message = _create_error_message(error, sandbox_name, attempts)
+    api_error = SandboxAPIError(message, status_code=status_code, code=code, error=error)
+    if code == REQUEST_BLOCKED_CODE or _limit_explanation(status_code, code, None, None) is not None:
         api_error.retryable = False
     return api_error
 
@@ -461,7 +489,11 @@ def _unwrap_response(response, action: str, *, allow_none: bool = False):
     if isinstance(response, Error):
         status_code = response.code if response.code is not UNSET else None
         message = response.message if response.message is not UNSET else response.error
-        raise SandboxAPIError(message, status_code=status_code, code=response.error, error=response)
+        # The registered code when the API sends one (error_code, since code holds
+        # the HTTP status); older bodies only have the message, kept as the code.
+        error_code = response.additional_properties.get("error_code")
+        code = error_code if isinstance(error_code, str) and error_code else response.error
+        raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
     if response is None and not allow_none:
         raise SandboxAPIError(f"Failed to {action}")
     return response
