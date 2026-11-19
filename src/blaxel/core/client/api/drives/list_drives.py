@@ -1,11 +1,12 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 
 import httpx
 
 from ... import errors
 from ...client import Client
 from ...models.drive_list import DriveList
+from ...models.error import Error
 from ...models.list_drives_anchor import ListDrivesAnchor
 from ...models.list_drives_sort import ListDrivesSort
 from ...types import UNSET, Response, Unset
@@ -56,16 +57,23 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Any | DriveList | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> DriveList | Error | None:
     if response.status_code == 200:
         response_200 = DriveList.from_dict(response.json())
 
         return response_200
 
     if response.status_code == 401:
-        response_401 = cast(Any, None)
+        response_401 = Error.from_dict(response.json())
+
         errors.retain_response(response_401, response)
         return response_401
+
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        errors.retain_response(response_403, response)
+        return response_403
 
     if client.raise_on_unexpected_status:
         raise errors.from_response(
@@ -75,7 +83,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Any | DriveL
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | DriveList]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[DriveList | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -94,7 +102,7 @@ def sync_detailed(
     anchor: ListDrivesAnchor | Unset = UNSET,
     external_id: str | Unset = UNSET,
     status: str | Unset = UNSET,
-) -> Response[Any | DriveList]:
+) -> Response[DriveList | Error]:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -116,7 +124,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | DriveList]
+        Response[DriveList | Error]
     """
 
     kwargs = _get_kwargs(
@@ -146,7 +154,7 @@ def sync(
     anchor: ListDrivesAnchor | Unset = UNSET,
     external_id: str | Unset = UNSET,
     status: str | Unset = UNSET,
-) -> Any | DriveList | None:
+) -> DriveList | Error | None:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -168,7 +176,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | DriveList
+        DriveList | Error
     """
 
     return sync_detailed(
@@ -193,7 +201,7 @@ async def asyncio_detailed(
     anchor: ListDrivesAnchor | Unset = UNSET,
     external_id: str | Unset = UNSET,
     status: str | Unset = UNSET,
-) -> Response[Any | DriveList]:
+) -> Response[DriveList | Error]:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -215,7 +223,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | DriveList]
+        Response[DriveList | Error]
     """
 
     kwargs = _get_kwargs(
@@ -243,7 +251,7 @@ async def asyncio(
     anchor: ListDrivesAnchor | Unset = UNSET,
     external_id: str | Unset = UNSET,
     status: str | Unset = UNSET,
-) -> Any | DriveList | None:
+) -> DriveList | Error | None:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -265,7 +273,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | DriveList
+        DriveList | Error
     """
 
     return (

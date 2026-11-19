@@ -6,6 +6,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.error import Error
 from ...models.volume import Volume
 from ...types import Response
 
@@ -35,11 +36,47 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Volume | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Error | Volume | None:
     if response.status_code == 200:
         response_200 = Volume.from_dict(response.json())
 
         return response_200
+
+    if response.status_code == 400:
+        response_400 = Error.from_dict(response.json())
+
+        errors.retain_response(response_400, response)
+        return response_400
+
+    if response.status_code == 401:
+        response_401 = Error.from_dict(response.json())
+
+        errors.retain_response(response_401, response)
+        return response_401
+
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        errors.retain_response(response_403, response)
+        return response_403
+
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        errors.retain_response(response_404, response)
+        return response_404
+
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        errors.retain_response(response_409, response)
+        return response_409
+
+    if response.status_code == 500:
+        response_500 = Error.from_dict(response.json())
+
+        errors.retain_response(response_500, response)
+        return response_500
 
     if client.raise_on_unexpected_status:
         raise errors.from_response(
@@ -49,7 +86,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Volume | Non
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Volume]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Error | Volume]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,7 +100,7 @@ def sync_detailed(
     *,
     client: Client,
     body: Volume,
-) -> Response[Volume]:
+) -> Response[Error | Volume]:
     """Update volume
 
      Updates a volume.
@@ -79,7 +116,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Volume]
+        Response[Error | Volume]
     """
 
     kwargs = _get_kwargs(
@@ -99,7 +136,7 @@ def sync(
     *,
     client: Client,
     body: Volume,
-) -> Volume | None:
+) -> Error | Volume | None:
     """Update volume
 
      Updates a volume.
@@ -115,7 +152,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Volume
+        Error | Volume
     """
 
     return sync_detailed(
@@ -130,7 +167,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Volume,
-) -> Response[Volume]:
+) -> Response[Error | Volume]:
     """Update volume
 
      Updates a volume.
@@ -146,7 +183,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Volume]
+        Response[Error | Volume]
     """
 
     kwargs = _get_kwargs(
@@ -164,7 +201,7 @@ async def asyncio(
     *,
     client: Client,
     body: Volume,
-) -> Volume | None:
+) -> Error | Volume | None:
     """Update volume
 
      Updates a volume.
@@ -180,7 +217,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Volume
+        Error | Volume
     """
 
     return (
