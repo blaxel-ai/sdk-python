@@ -69,6 +69,12 @@ def _parse_response(*, client: Client, response: httpx.Response) -> DriveList | 
         errors.retain_response(response_401, response)
         return response_401
 
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        errors.retain_response(response_403, response)
+        return response_403
+
     if client.raise_on_unexpected_status:
         raise errors.from_response(
             response.status_code, response.content, response.headers, response=response

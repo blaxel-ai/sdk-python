@@ -38,6 +38,12 @@ def _parse_response(
         errors.retain_response(response_401, response)
         return response_401
 
+    if response.status_code == 403:
+        response_403 = Error.from_dict(response.json())
+
+        errors.retain_response(response_403, response)
+        return response_403
+
     if response.status_code == 404:
         response_404 = Error.from_dict(response.json())
 
