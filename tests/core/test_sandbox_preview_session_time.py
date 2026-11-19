@@ -111,9 +111,12 @@ def sent_expiries(requests: list[httpx.Request]) -> list[str]:
 
 
 def assert_one_day_from_now_utc(expiries: list[str]) -> None:
+    # The preview keeps its expiry to the second and the token may not outlive it.
+    preview_expiry, token_expiry = (parse_utc(value) for value in expiries)
+    assert token_expiry == preview_expiry
+    assert preview_expiry.microsecond == 0
     expected = datetime.now(timezone.utc) + timedelta(days=1)
-    for value in expiries:
-        assert abs(parse_utc(value) - expected) < timedelta(minutes=1), value
+    assert abs(preview_expiry - expected) < timedelta(minutes=1)
 
 
 @pytest.mark.parametrize("zone", ["America/Los_Angeles", "Asia/Tokyo"])
@@ -137,6 +140,17 @@ async def test_async_session_default_expiry_is_one_day_from_now_in_utc(
     await SandboxSessions(SimpleNamespace(metadata=SimpleNamespace(name="sbx"))).create()
 
     assert_one_day_from_now_utc(sent_expiries(requests))
+
+
+def test_sync_session_explicit_expiry_is_sent_to_the_second(serve):
+    requests = serve(session_server)
+    expires_at = datetime(2026, 11, 18, 14, 30, 5, 987654, tzinfo=timezone(timedelta(hours=2)))
+
+    SyncSandboxSessions(SimpleNamespace(metadata=SimpleNamespace(name="sbx"))).create(
+        {"expires_at": expires_at}
+    )
+
+    assert sent_expiries(requests) == ["2026-11-18T12:30:05Z", "2026-11-18T12:30:05Z"]
 
 
 def existing_session(expires_in: timedelta) -> SessionWithToken:

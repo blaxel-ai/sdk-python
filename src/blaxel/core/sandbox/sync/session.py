@@ -78,7 +78,11 @@ class SyncSandboxSessions:
             options = SessionCreateOptions()
         elif isinstance(options, dict):
             options = SessionCreateOptions.from_dict(options)
-        expires_at = options.expires_at or datetime.now(timezone.utc) + timedelta(days=1)
+        # The API keeps a preview's expiry to the second, and a token may not
+        # outlive its preview, so both get the same whole-second expiry.
+        expires_at = (options.expires_at or datetime.now(timezone.utc) + timedelta(days=1)).replace(
+            microsecond=0
+        )
         preview_body = Preview(
             metadata=Metadata(name=f"session-{int(datetime.now().timestamp() * 1000)}"),
             spec=PreviewSpec(
