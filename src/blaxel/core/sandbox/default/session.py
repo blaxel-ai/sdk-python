@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Union
 
 from ...client.api.compute import (
@@ -11,7 +11,16 @@ from ...client.api.compute import (
 from ...client.client import client
 from ...client.models import Metadata, Preview, PreviewSpec
 from ..types import SandboxConfiguration, SessionCreateOptions, SessionWithToken
-from .preview import SandboxPreview
+from .preview import SandboxPreview, to_utc_z
+
+
+def _utc(value: datetime | str) -> datetime:
+    """An aware UTC datetime; a naive one is taken as UTC, as the API means it."""
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 class SandboxSessions:
@@ -49,9 +58,8 @@ class SandboxSessions:
             options: ``SessionCreateOptions`` or a dict with ``expires_at``,
                 ``request_headers`` and ``response_headers`` (headers the
                 preview adds to requests and responses). ``expires_at``
-                defaults to 24 hours from now on the local clock. A naive
-                datetime, including that default, is sent as if it were UTC,
-                so pass an aware UTC datetime for an exact expiry.
+                defaults to 24 hours from now. An aware datetime is sent in
+                UTC; a naive one is taken as UTC already.
 
         Returns:
             ``SessionWithToken`` with ``name``, ``url``, ``token`` and
@@ -71,14 +79,14 @@ class SandboxSessions:
         elif isinstance(options, dict):
             options = SessionCreateOptions.from_dict(options)
 
-        expires_at = options.expires_at or datetime.now() + timedelta(days=1)
+        expires_at = options.expires_at or datetime.now(timezone.utc) + timedelta(days=1)
 
         preview_body = Preview(
             metadata=Metadata(name=f"session-{int(datetime.now().timestamp() * 1000)}"),
             spec=PreviewSpec(
                 port=443,
                 public=False,
-                expires=expires_at.isoformat(),
+                expires=to_utc_z(expires_at),
                 request_headers=options.request_headers,
                 response_headers=options.response_headers,
             ),
@@ -123,27 +131,12 @@ class SandboxSessions:
             options = SessionCreateOptions.from_dict(options)
 
         all_sessions = await self.list()
-        now = datetime.now()
-        threshold = now + timedelta(seconds=delta_seconds)
+        threshold = datetime.now(timezone.utc) + timedelta(seconds=delta_seconds)
 
         if all_sessions:
-            all_sessions.sort(
-                key=lambda s: datetime.fromisoformat(s.expires_at)
-                if isinstance(s.expires_at, str)
-                else s.expires_at
-            )
+            all_sessions.sort(key=lambda s: _utc(s.expires_at))
             session_data = all_sessions[0]
-            expires_at = datetime.fromisoformat(session_data.expires_at)
-
-            # Make both datetimes timezone-aware or timezone-naive for comparison
-            if expires_at.tzinfo is not None and threshold.tzinfo is None:
-                # expires_at is timezone-aware, make threshold timezone-aware too
-                threshold = threshold.replace(tzinfo=expires_at.tzinfo)
-            elif expires_at.tzinfo is None and threshold.tzinfo is not None:
-                # threshold is timezone-aware, make expires_at timezone-aware too
-                expires_at = expires_at.replace(tzinfo=threshold.tzinfo)
-
-            if expires_at < threshold:
+            if _utc(session_data.expires_at) < threshold:
                 await self.delete(session_data.name)
                 session_data = await self.create(options)
         else:
@@ -173,7 +166,7 @@ class SandboxSessions:
                             name=preview.metadata.name,
                             url=preview.spec.url or "",
                             token=token.spec.token or "",
-                            expires_at=token.spec.expires_at or datetime.now(),
+                            expires_at=token.spec.expires_at or datetime.now(timezone.utc),
                         )
                     )
 
@@ -201,7 +194,7 @@ class SandboxSessions:
             name=name,
             url=preview_response.spec.url or "",
             token=token.spec.token or "" if token else "",
-            expires_at=token.spec.expires_at or datetime.now() if token else datetime.now(),
+            expires_at=(token.spec.expires_at if token else None) or datetime.now(timezone.utc),
         )
 
     async def delete(self, name: str):
