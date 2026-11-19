@@ -20,6 +20,7 @@ from blaxel.core import (
     SyncSandboxInstance,
     VolumeAPIError,
     is_blaxel_error,
+    is_feature_not_enabled_error,
 )
 from blaxel.core.client import errors
 from blaxel.core.client.api.compute import create_sandbox, get_sandbox
@@ -355,7 +356,8 @@ async def test_high_level_creation_metadata_sync_and_async(sync):
     assert error.body == ACTION
     assert error.request_id == "creation-id"
     assert_response_snapshot(error.response, response)
-    assert error.message == ACTION["message"]
+    # Create names the status and code in the message; the body keeps the API's own.
+    assert error.message == f"{ACTION['message']} (HTTP 409 SANDBOX_ALREADY_EXISTS)"
     if sync:
         client.get_httpx_client().close()
     else:
@@ -593,6 +595,130 @@ def test_known_code_literal_matches_typescript_contract():
     VOLUME_LOOKUP_FAILED BUILD_TRIGGER_ERROR PRESIGNED_URL_ERROR UPLOAD_UNAVAILABLE
     DEPLOYMENT_FAILED CLUSTER_GATEWAY_ERROR LOCKDOWN_ERROR PROXY_CONFIG_ERROR
     VALIDATED_DATA_ERROR WORKSPACE_DATA_MISSING CALLBACK_SEND_FAILED FORK_FAILED
-    HANDLER_ERROR INTERNAL_ERROR UNKNOWN_ERROR
+    HANDLER_ERROR INTERNAL_ERROR UNKNOWN_ERROR FEATURE_NOT_ENABLED REQUEST_BLOCKED
+    WORKSPACE_ACCESS_DENIED REQUEST_EXCEEDS_LIMIT PLAN_LIMIT_REACHED ACCOUNT_SUSPENDED
+    FORK_LIMIT_REACHED ONLY_ONE_ALLOWED JOB_CAPACITY_EXCEEDED BUILD_QUEUE_FULL
     """.split()
     assert set(get_args(BlaxelErrorCode)) == set(expected)
+
+
+FEATURE_MESSAGE = "Sandbox snapshot/fork feature is not enabled for this workspace"
+# A generic /v0 endpoint keeps the HTTP status in "code".
+FEATURE_V0 = {
+    "error": FEATURE_MESSAGE,
+    "code": 403,
+    "error_code": "FEATURE_NOT_ENABLED",
+    "feature": "fork",
+    "message": FEATURE_MESSAGE,
+    "retryable": False,
+    "status": 403,
+    "origin": "platform",
+}
+# The sandbox fork endpoint sends the registered code in "code".
+FEATURE_FORK = {
+    "code": "FEATURE_NOT_ENABLED",
+    "feature": "fork",
+    "message": FEATURE_MESSAGE,
+    "status_code": 403,
+}
+
+
+@pytest.mark.parametrize("module", [errors, sandbox_errors])
+@pytest.mark.parametrize("body", [FEATURE_V0, FEATURE_FORK])
+def test_feature_not_enabled_from_a_generated_status_error(module, body):
+    response = httpx.Response(403, json=body)
+    error = module.from_response(403, response.content, response.headers, response=response)
+    assert is_feature_not_enabled_error(error)
+    assert is_feature_not_enabled_error(error, "fork")
+    assert not is_feature_not_enabled_error(error, "drives")
+    assert error.feature == "fork"
+    assert error.status == 403
+
+
+def test_feature_not_enabled_on_a_resource_wrapper_keeps_its_legacy_code():
+    response = httpx.Response(403, json=FEATURE_V0)
+    error = SnapshotAPIError(FEATURE_MESSAGE, 403, FEATURE_MESSAGE, response=response)
+    assert error.code == FEATURE_MESSAGE
+    assert is_feature_not_enabled_error(error, "fork")
+    assert error.feature == "fork"
+
+
+def test_feature_not_enabled_from_the_header_alone():
+    error = BlaxelError(
+        "denied",
+        response=httpx.Response(
+            403, json={"error": "denied"}, headers={"X-Blaxel-Error-Code": "FEATURE_NOT_ENABLED"}
+        ),
+    )
+    assert is_feature_not_enabled_error(error)
+    assert not is_feature_not_enabled_error(error, "fork")
+    assert error.feature is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        # Role and credential 403s.
+        {"error": "no role in workspace", "code": 403, "error_code": "WORKSPACE_ACCESS_DENIED"},
+        {"code": "UNAUTHORIZED", "message": "denied", "status_code": 403},
+        # The body before the code existed: the message alone is not matched.
+        {"code": 403, "error": FEATURE_MESSAGE},
+        # A feature field on another code.
+        {"code": "FORK_FAILED", "message": "boom", "status_code": 500, "feature": "fork"},
+    ],
+)
+def test_other_errors_are_not_feature_not_enabled(body):
+    error = BlaxelError("x", response=httpx.Response(403, json=body))
+    assert not is_feature_not_enabled_error(error)
+    assert not is_feature_not_enabled_error(error, "fork")
+
+
+def test_feature_not_enabled_needs_a_blaxel_error():
+    for other in (None, FEATURE_MESSAGE, ValueError(FEATURE_MESSAGE), FEATURE_FORK):
+        assert not is_feature_not_enabled_error(other)
+
+
+def test_registered_error_code_wins_over_the_numeric_status_code():
+    body = {"error": "quota", "code": 429, "error_code": "QUOTA_EXCEEDED", "request_id": "trace-1"}
+    error = BlaxelError("quota", status=429, body=body, headers={"CF-Ray": "ray"})
+    assert error.code == "QUOTA_EXCEEDED"
+    assert is_blaxel_error(error, "QUOTA_EXCEEDED")
+    assert error.request_id == "trace-1"
+
+
+def test_v1_details_error_code_wins_over_the_generic_v1_code():
+    body = {
+        "code": "FORBIDDEN",
+        "message": "This API key does not have permission to perform this operation.",
+        "details": {
+            "error_code": "WORKSPACE_ACCESS_DENIED",
+            "retryable": False,
+            "safe_to_retry_request": False,
+            "dispatch_state": "not_dispatched",
+        },
+    }
+    error = BlaxelError("forbidden", status=403, body=body)
+    assert error.code == "WORKSPACE_ACCESS_DENIED"
+    assert error.retryable is False
+    assert error.safe_to_retry_request is False
+    assert error.dispatch_state == "not_dispatched"
+
+
+def test_x_should_retry_wins_over_the_body():
+    body = {"code": "SOMETHING", "retryable": True}
+    error = BlaxelError("x", status=429, body=body, headers={"X-Should-Retry": "false"})
+    assert error.retryable is False
+    error = BlaxelError(
+        "x", status=503, body={"retryable": False}, headers={"x-should-retry": "true"}
+    )
+    assert error.retryable is True
+
+
+@pytest.mark.parametrize("module", [errors, sandbox_errors])
+def test_typed_status_reads_error_code_before_the_numeric_code(module):
+    error = module.from_response(
+        429, b'{"error":"Image storage quota reached","code":429,"error_code":"QUOTA_EXCEEDED"}'
+    )
+    assert isinstance(error, module.QuotaExceededError)
+    assert error.error_code == "QUOTA_EXCEEDED"
+    assert error.retryable is False

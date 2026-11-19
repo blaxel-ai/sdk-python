@@ -231,3 +231,12 @@ def test_sandbox_generated_client_uses_the_same_typed_safe_errors() -> None:
 
     assert isinstance(exc_info.value, sandbox_errors.UnexpectedStatus)
     assert "/mnt/customer" not in str(exc_info.value)
+
+
+def test_x_should_retry_header_wins_over_the_body() -> None:
+    body = b'{"code":"BUILD_QUEUE_FULL","retryable":false}'
+    assert errors.from_response(429, body, {"X-Should-Retry": "true"}).retryable is True
+    body = b'{"code":"RATE_LIMIT_EXCEEDED","retryable":true}'
+    error = errors.from_response(429, body, {"x-should-retry": "false", "Retry-After": "5"})
+    assert error.retryable is False
+    assert errors.from_response(429, body, {"X-Should-Retry": "maybe"}).retryable is True

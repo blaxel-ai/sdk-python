@@ -33,19 +33,19 @@ def _parse_response(
         return response_200
 
     if response.status_code == 404:
-        response_404 = ErrorResponse.from_dict(response.json())
+        response_404 = ErrorResponse.from_dict(errors.error_json(response))
 
         errors.retain_response(response_404, response)
         return response_404
 
     if response.status_code == 422:
-        response_422 = ErrorResponse.from_dict(response.json())
+        response_422 = ErrorResponse.from_dict(errors.error_json(response))
 
         errors.retain_response(response_422, response)
         return response_422
 
     if response.status_code == 500:
-        response_500 = ErrorResponse.from_dict(response.json())
+        response_500 = ErrorResponse.from_dict(errors.error_json(response))
 
         errors.retain_response(response_500, response)
         return response_500

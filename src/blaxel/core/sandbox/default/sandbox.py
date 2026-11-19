@@ -1,8 +1,11 @@
 import asyncio
 import json
 import logging
+import math
 import time
 import warnings
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Sequence, Union
 
 from attrs import evolve
@@ -47,6 +50,7 @@ from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import AsyncPaginatedList, make_async_paginated_list, normalize_cursor
 from ...client.types import UNSET, Unset
+from ...common.polling import poll_delay_seconds
 from ...common.settings import settings
 from ...errors import _APIError
 from ..drift import RequestedSandbox, caller_stacklevel, drift_message, requested_from_model
@@ -174,8 +178,10 @@ def _raise_if_creation_timeout(
 # its credential store is unreachable. Both are answered before anything is
 # created, so sending the same request again is safe. A revoked token (401
 # TOKEN_REVOKED) or a missing workspace permission (UNAUTHORIZED_WORKSPACE) is
-# final and is not retried. A key the API does not recognize gets the same
-# 403, so the retries stay few and the final message asks to check the key.
+# final and is not retried, and so is a key the API does not recognize
+# (AUTHENTICATION_FAILED, 403 on create). An API older than that code answers
+# an unknown key with the same 403 UNAUTHORIZED, so the retries stay few and the
+# final message asks to check the key.
 CREATE_AUTH_RETRIES = 2
 CREATE_AUTH_RETRY_BASE_DELAY_SECONDS = 0.5
 CREATE_AUTH_RETRY_MAX_DELAY_SECONDS = 2.0
@@ -187,11 +193,24 @@ def _error_status(error: SandboxError) -> int | None:
     return error._response.status_code if error._response is not None else None
 
 
+def _registered_code(error: SandboxError) -> Any:
+    """The registered code: `error_code` when the API sends one next to `code`,
+    else `code`. A 403 WORKSPACE_ACCESS_DENIED may still carry code UNAUTHORIZED."""
+    error_code = error.additional_properties.get("error_code")
+    if isinstance(error_code, str) and error_code:
+        return error_code
+    return error.code
+
+
 def _is_transient_create_auth_failure(error: object) -> bool:
     if isinstance(error, SandboxError):
-        return _error_status(error) == 403 and error.code == "UNAUTHORIZED"
+        return _error_status(error) == 403 and _registered_code(error) == "UNAUTHORIZED"
     if isinstance(error, client_errors.UnexpectedStatus):
-        return error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE"
+        return (
+            error.status_code == 503
+            and error.code == "AUTHENTICATION_UNAVAILABLE"
+            and _auth_unavailable_signal(error)[0]
+        )
     return False
 
 
@@ -201,9 +220,19 @@ def _create_auth_retry_delay(attempt: int) -> float:
     )
 
 
+def _create_auth_retry_wait(error: object, attempt: int) -> float:
+    """Seconds before the next creation attempt: the server's Retry-After wins."""
+    if isinstance(error, client_errors.UnexpectedStatus):
+        wait = _auth_unavailable_signal(error)[1]
+        if wait is not None:
+            return float(wait)
+    return _create_auth_retry_delay(attempt)
+
+
 def _create_error_message(error: SandboxError, sandbox_name: str | None, attempts: int) -> str:
     """Message of the SandboxAPIError raised for a rejected creation."""
     message = error.message if error.message else str(error)
+    code = _registered_code(error)
     if _is_transient_create_auth_failure(error):
         try:
             workspace = settings.workspace
@@ -211,18 +240,282 @@ def _create_error_message(error: SandboxError, sandbox_name: str | None, attempt
             workspace = None
         current = f"; current workspace: '{workspace}'" if workspace else ""
         return (
-            f"{message} (HTTP 403 {error.code}, after {attempts} attempts). The API answers"
+            f"{message} (HTTP 403 {code}, after {attempts} attempts). The API answers"
             " this way both for a key it does not recognize and when its credential check"
             " fails for a moment. Check the credentials and workspace the SDK uses"
             f" (BL_API_KEY and BL_WORKSPACE, or `bl login`{current}); if they are right,"
             " retry in a few seconds."
         )
+    if code == "AUTHENTICATION_FAILED":
+        return (
+            f"{error.message or 'This API key is not valid'} (HTTP {_error_status(error)}"
+            " AUTHENTICATION_FAILED: this API key is not valid; not retried, the same key is"
+            " refused every time). Check the API key the SDK sends (BL_API_KEY) for a typo or"
+            " a missing part; if it was deleted, create a new one in the Blaxel Console."
+        )
+    explained = _limit_explanation(_error_status(error), code, error.message, None)
+    if explained is not None:
+        return explained[0]
+    body = error.to_dict()
+    message = _with_status_and_code(
+        message, _error_status(error), code, _server_action(body), _server_docs_url(body)
+    )
     if _error_status(error) == 400:
         hint = _invalid_name_hint(sandbox_name)
         if hint and message and not message.endswith((".", "!", "?")):
             message += "."
         return message + hint
     return message
+
+
+def _with_status_and_code(
+    message: str,
+    status: int | None,
+    code: object,
+    action: str | None = None,
+    docs_url: str | None = None,
+) -> str:
+    """'<message> (HTTP <status> <CODE>: <action>: <docs_url>)', so the message alone
+    names what the API answered and the next step it gives; left as is when it
+    already names the status."""
+    if status is None or f"HTTP {status}" in message:
+        return message
+    # A numeric code is the HTTP status again (older /v0 bodies): leave it out.
+    tag = f"HTTP {status} {code}" if isinstance(code, str) and code else f"HTTP {status}"
+    next_step = _next_step(action, docs_url)
+    if next_step:
+        tag += f": {next_step}"
+    return f"{message} ({tag})" if message else tag
+
+
+def _next_step(action: str | None, docs_url: str | None) -> str:
+    """The API's action for a code the SDK has no advice of its own for, and its docs link."""
+    step = action.strip().rstrip(".") if action else ""
+    if docs_url and docs_url not in step:
+        return f"{step}: {docs_url}" if step else docs_url
+    return step
+
+
+QUOTAS_DOC_URL = "https://docs.blaxel.ai/Security/Quotas"
+REQUEST_BLOCKED_CODE = "REQUEST_BLOCKED"
+_REQUEST_BLOCKED_DEFAULT_ACTION = (
+    "send a User-Agent header and slow down; do not rotate the API key, it was never checked"
+)
+EDGE_BLOCKED_MESSAGE = (
+    "HTTP 403 without a JSON error body: not a quota. The request was blocked or"
+    " throttled before the API could answer it, for example by an edge rate limit or"
+    " firewall block. Slow down and retry after about 60 s. Blaxel quota and"
+    " permission errors carry a JSON error code"
+)
+_RATE_LIMIT_REASONS = {
+    "WORKSPACE_RATE_LIMIT_EXCEEDED": "too many creations in flight in this workspace",
+    "RATE_LIMIT_EXCEEDED": "the region's creation rate limit was reached",
+}
+
+
+def _retry_after_seconds(error: client_errors.UnexpectedStatus) -> int | None:
+    """Seconds to wait from the server's retry_after (Retry-After header or body)."""
+    seconds = getattr(error, "retry_after_seconds", None)
+    if seconds is not None:
+        return seconds
+    value = getattr(error, "retry_after", None)  # an HTTP date, already normalized
+    if not value:
+        return None
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    return max(0, math.ceil((retry_at - datetime.now(timezone.utc)).total_seconds()))
+
+
+def _server_message(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        message = source.get("message")
+        if isinstance(message, str) and message:
+            return message
+    return None
+
+
+def _server_action(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        action = source.get("action")
+        if isinstance(action, str) and action:
+            return action
+    return None
+
+
+def _server_docs_url(body: Any) -> str | None:
+    if not isinstance(body, dict):
+        return None
+    nested = body.get("error")
+    for source in (nested, body) if isinstance(nested, dict) else (body,):
+        url = source.get("docs_url")
+        if isinstance(url, str) and url:
+            return url
+    return None
+
+
+def _request_blocked_message(server_message: str | None, action: str | None) -> str:
+    """A 403 REQUEST_BLOCKED: the edge firewall refused the request before the
+    API read it. Not a quota and not a credential problem, and not retried."""
+    return (
+        f"{server_message or 'Request blocked'} (HTTP 403 {REQUEST_BLOCKED_CODE}: blocked at the"
+        " edge before the API read the request; not a quota and not an API key problem;"
+        f" {action or _REQUEST_BLOCKED_DEFAULT_ACTION})"
+    )
+
+
+def _has_json_error_body(content: bytes) -> bool:
+    try:
+        return isinstance(json.loads(content), dict)
+    except (UnicodeDecodeError, ValueError, RecursionError):
+        return False
+
+
+def _is_edge_block_page(content: bytes) -> bool:
+    """The edge firewall's text or HTML "Request blocked." page, sent until it
+    answers with a REQUEST_BLOCKED JSON body."""
+    return b"request blocked" in content.lower() and not _has_json_error_body(content)
+
+
+def _limit_explanation(
+    status: int | None, code: Any, server_message: str | None, wait: int | None
+) -> tuple[str, bool] | None:
+    """Message and retryable flag for a creation rejected by a quota or rate limit.
+
+    QUOTA_EXCEEDED is HTTP 429 for an account quota, and for one ephemeral volume
+    over the per-volume maximum on PUT /sandboxes/{name} and jobs; create and fork
+    answer that one with 400. Retrying the same request does not help. The rate
+    limit codes clear on their own. The SDK itself retries none of them.
+    """
+    if code == "QUOTA_EXCEEDED" and status in (400, 429):
+        if status == 400:
+            advice = "not retryable as is; request a smaller volume or raise the quota"
+        else:
+            advice = (
+                "not retryable until usage drops, the request asks for less (such as a"
+                " smaller volume), or the quota is raised"
+            )
+        message = server_message or "Quota exceeded"
+        return f"{message} (HTTP {status} QUOTA_EXCEEDED: {advice}: {QUOTAS_DOC_URL})", False
+    if status == 429 and code in _RATE_LIMIT_REASONS:
+        advice = f"retry after {wait} s" if wait is not None else "retry with backoff"
+        message = server_message or "Rate limit exceeded"
+        return f"{message} (HTTP 429 {code}: {_RATE_LIMIT_REASONS[code]}; {advice})", True
+    return None
+
+
+def _auth_unavailable_signal(error: client_errors.UnexpectedStatus) -> tuple[bool, int | None]:
+    """Retryable flag and wait in seconds for a 503 AUTHENTICATION_UNAVAILABLE.
+
+    The server's signal wins: the X-Should-Retry header, then the body's
+    ``retryable``; Retry-After gives the wait. Without a signal it is retryable.
+    """
+    headers = error.response.headers if error.response is not None else None
+    retryable = client_errors._should_retry_header(headers)
+    if retryable is None:
+        retryable = error.retryable if isinstance(error.retryable, bool) else True
+    value = client_errors._retry_after_header(headers)
+    if value is None and isinstance(error.body, dict):
+        for key in ("retry_after", "retryAfter", "retry_after_seconds"):
+            value = client_errors._safe_retry_after_value(error.body.get(key))
+            if value is not None:
+                break
+    wait = int(value) if value is not None and value.isdigit() else None
+    return retryable, wait
+
+
+def _explain_create_error(error: client_errors.UnexpectedStatus) -> None:
+    """Say in the message whether a rejected creation can be retried.
+
+    Quota and rate-limit errors share HTTP 429 but need opposite handling;
+    ``retryable`` says which. A 403 without a JSON error body is not a quota: it
+    was blocked or throttled before the API could answer it. A 503
+    AUTHENTICATION_UNAVAILABLE is the API failing to check credentials for a
+    moment, not a credential or permission problem.
+    """
+    if error.status_code == 503 and error.code == "AUTHENTICATION_UNAVAILABLE":
+        error.retryable, wait = _auth_unavailable_signal(error)
+        error.retry_after_seconds = wait
+        advice = f"retry after {wait} s" if wait is not None else "retry in a few seconds"
+        if not error.retryable:
+            advice = "the server says not to retry"
+        server = _server_message(error.body) or "Unable to verify credentials"
+        message = (
+            f"{server} (HTTP 503 AUTHENTICATION_UNAVAILABLE: the API could not check"
+            f" credentials for a moment; not a credential or permission error; {advice})"
+        )
+    elif error.status_code == 403 and error.code == REQUEST_BLOCKED_CODE:
+        error.retryable = False
+        message = _request_blocked_message(_server_message(error.body), _server_action(error.body))
+    elif error.status_code == 403 and _is_edge_block_page(error.content):
+        error.code = REQUEST_BLOCKED_CODE
+        error.retryable = False
+        message = _request_blocked_message(None, None)
+    elif error.status_code == 403 and not _has_json_error_body(error.content):
+        message = EDGE_BLOCKED_MESSAGE
+    else:
+        wait = _retry_after_seconds(error)
+        server = _server_message(error.body)
+        explained = _limit_explanation(error.status_code, error.code, server, wait)
+        if explained is None:
+            # No advice of the SDK's own: name the code and pass on the API's action.
+            action, docs_url = _server_action(error.body), _server_docs_url(error.body)
+            has_code = isinstance(error.code, str) and bool(error.code)
+            if not (server or has_code or action):
+                return
+            message = _with_status_and_code(
+                server or "", error.status_code, error.code, action, docs_url
+            )
+            error.message = message
+            error.args = (message,)
+            return
+        message, error.retryable = explained
+        if error.retryable:
+            error.retry_after_seconds = wait
+    error.message = message
+    error.args = (message,)
+
+
+def _create_error(
+    error: SandboxError, sandbox_name: str | None, attempts: int
+) -> client_errors.UnexpectedStatus | SandboxAPIError:
+    """Exception for a creation the API rejected with a modeled error body.
+
+    A 429 raises what it raised before CreateSandbox modeled 429:
+    QuotaExceededError for QUOTA_EXCEEDED, RateLimitError for the rate limits.
+    Everything else is SandboxAPIError.
+    """
+    status_code = _error_status(error)
+    if status_code == 429:
+        response = error._response
+        if response is not None:
+            limit_error = client_errors.from_response(
+                429, response.content, response.headers, response=response
+            )
+        else:
+            limit_error = client_errors.from_response(429, json.dumps(error.to_dict()).encode())
+        _explain_create_error(limit_error)
+        return limit_error
+    code = _registered_code(error) or None
+    if status_code == 403 and code == REQUEST_BLOCKED_CODE:
+        body = error.to_dict()
+        message = _request_blocked_message(_server_message(body), _server_action(body))
+    else:
+        message = _create_error_message(error, sandbox_name, attempts)
+    api_error = SandboxAPIError(message, status_code=status_code, code=code, error=error)
+    if (
+        code in ("AUTHENTICATION_FAILED", REQUEST_BLOCKED_CODE)
+        or _limit_explanation(status_code, code, None, None) is not None
+    ):
+        api_error.retryable = False
+    return api_error
 
 
 _region_notice_shown = False
@@ -278,12 +571,42 @@ def _unwrap_response(response, action: str, *, allow_none: bool = False):
     ``None`` — pass ``allow_none=True`` for those.
     """
     if isinstance(response, Error):
-        status_code = response.code if response.code is not UNSET else None
-        message = response.message if response.message is not UNSET else response.error
-        raise SandboxAPIError(message, status_code=status_code, code=response.error, error=response)
+        raise _api_error(response)
     if response is None and not allow_none:
         raise SandboxAPIError(f"Failed to {action}")
     return response
+
+
+def _api_error(response: Error) -> SandboxAPIError:
+    """SandboxAPIError for an error body.
+
+    `code` holds the HTTP status on most /v0 bodies, so the registered code is
+    `error_code` when the API sends one. An edge block (REQUEST_BLOCKED) puts its
+    code at the top level and its details in an `error` object; older bodies only
+    have the message in `error`, kept as the code.
+    """
+    nested = response.error if isinstance(response.error, dict) else {}
+    legacy = response.error if isinstance(response.error, str) else None
+    status_code = response.code if isinstance(response.code, int) else None
+    if status_code is None and isinstance(nested.get("status"), int):
+        status_code = nested["status"]
+    message = response.message if response.message is not UNSET else None
+    if not isinstance(message, str) or not message:
+        message = nested.get("message") if isinstance(nested.get("message"), str) else legacy
+    code = next(
+        (
+            value
+            for value in (
+                response.additional_properties.get("error_code"),
+                response.code,
+                nested.get("code"),
+                legacy,
+            )
+            if isinstance(value, str) and value
+        ),
+        None,
+    )
+    return SandboxAPIError(message, status_code=status_code, code=code, error=response)
 
 
 def _create_body(sandbox: Sandbox) -> Union[Sandbox, Dict[str, Any]]:
@@ -438,8 +761,17 @@ class _AsyncSandboxCallDescriptor:
         deadline = time.monotonic() + max_wait / 1000
         entry_deadline = time.monotonic() + min(ARCHIVE_ENTRY_MAX_WAIT_MS, max_wait) / 1000
         started = False
+        attempt = 0
         while True:
-            await asyncio.sleep(interval / 1000)
+            # Until the operation is seen pending, read at the first interval:
+            # a backed-off sleep could pass the entry grace window or miss a
+            # short pending status.
+            if started:
+                attempt += 1
+            remaining = max(deadline - time.monotonic(), 0.0)
+            await asyncio.sleep(
+                min(poll_delay_seconds(max(attempt, 1), interval / 1000), remaining)
+            )
             response = await get_sandbox(sandbox_name, client=client)
             sandbox = _unwrap_response(response, f"read sandbox {sandbox_name}")
             status = _status_of(sandbox)
@@ -814,7 +1146,7 @@ class SandboxInstance:
         A creation rejected by a transient authentication failure (403
         ``UNAUTHORIZED`` or 503 ``AUTHENTICATION_UNAVAILABLE``, both answered
         before anything is created) is sent again up to ``CREATE_AUTH_RETRIES``
-        times with a short backoff.
+        times with a short backoff, or after the server's Retry-After.
 
         Args:
             sandbox: The sandbox to create: a ``SandboxCreateConfiguration``, a
@@ -864,8 +1196,18 @@ class SandboxInstance:
                 HTTP 400 for an invalid name or lifecycle value, or HTTP 409 for
                 a name already in use. ``status_code`` and ``code`` carry the
                 details.
+            blaxel.core.client.errors.QuotaExceededError: HTTP 429
+                QUOTA_EXCEEDED. Not retryable until usage drops or the quota is
+                raised; it is not a RateLimitError.
+            blaxel.core.client.errors.RateLimitError: HTTP 429 rate limit
+                (WORKSPACE_RATE_LIMIT_EXCEEDED or RATE_LIMIT_EXCEEDED).
+                ``retryable`` is True; ``retry_after_seconds`` says how long
+                to wait when the server says.
             blaxel.core.client.errors.UnexpectedStatus: For a status the API
-                does not document for this call.
+                does not document for this call. HTTP 503
+                AUTHENTICATION_UNAVAILABLE (the API could not check credentials
+                for a moment) is not a credential error: ``retryable`` is True
+                and ``retry_after_seconds`` holds the server's wait.
 
         Example:
             ```python
@@ -1059,22 +1401,22 @@ class SandboxInstance:
                 except client_errors.UnexpectedStatus as e:
                     _raise_if_creation_timeout(e, _sandbox_name(sandbox), timeout)
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(e):
+                        _explain_create_error(e)
                         raise
+                    failure: object = e
                 else:
                     if attempts > CREATE_AUTH_RETRIES or not _is_transient_create_auth_failure(
                         response
                     ):
                         break
+                    failure = response
                 logger.debug("Sandbox creation hit a transient authentication failure, retrying")
-                await asyncio.sleep(_create_auth_retry_delay(attempts))
+                await asyncio.sleep(_create_auth_retry_wait(failure, attempts))
 
             # Check if response is an error
             if isinstance(response, SandboxError):
                 _raise_if_creation_timeout(response, _sandbox_name(sandbox), timeout)
-                status_code = _error_status(response)
-                code = response.code if response.code else None
-                message = _create_error_message(response, _sandbox_name(sandbox), attempts)
-                raise SandboxAPIError(message, status_code=status_code, code=code, error=response)
+                raise _create_error(response, _sandbox_name(sandbox), attempts)
 
             assert response is not None
             if create_if_not_exist:
@@ -1625,6 +1967,10 @@ SandboxInstance.archive = _AsyncSandboxCallDescriptor(
     saved processes start again from their configuration when the sandbox is
     unarchived. The export runs in the background: this waits until the sandbox
     is ARCHIVED, pass ``wait=False`` to return as soon as it is launched.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )
 SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
@@ -1640,5 +1986,9 @@ SandboxInstance.unarchive = _AsyncSandboxCallDescriptor(
     filesystem is written back over its image. This waits until the restore is
     done and the saved processes are running again; pass ``wait=False`` to return
     while the sandbox is still UNARCHIVING.
+
+    ``max_wait`` (ms, default 30 minutes) bounds the wait. ``interval`` (ms,
+    default 2 seconds) is the first delay between status reads; later reads
+    back off with jitter up to 30 seconds (or ``interval`` if larger).
     """,
 )
