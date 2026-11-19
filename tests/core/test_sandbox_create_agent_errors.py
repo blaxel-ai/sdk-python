@@ -700,3 +700,147 @@ def test_image_build_limit_hint_follows_the_server_signal_over_the_link():
     ) == (" (the server says not to retry)")
     retryable_body = json.dumps({"error": "busy", "code": 429, "retryable": True}).encode()
     assert _limit_hint(429, retryable_body) == " (rate limited: retry with backoff)"
+
+
+# The registered error contract (control plane error stack): the dispatcher sends
+# error_code next to code, the platform fields, X-Should-Retry and request_id.
+
+REGISTERED_QUOTA = {
+    "code": "QUOTA_EXCEEDED",
+    "error_code": "QUOTA_EXCEEDED",
+    "message": "You have reached the maximum memory (32768) for your account. Requested: 49152",
+    "status_code": 429,
+    "action": "Bring usage under the limit named in the message, or raise the quota.",
+    "do_not": "Do not retry with backoff: this is a quota, not a rate limit.",
+    "docs_url": "https://docs.blaxel.ai/troubleshooting/error-codes#quota-exceeded",
+    "retryable": False,
+    "safe_to_retry_request": False,
+    "dispatch_state": "not_dispatched",
+    "status": 429,
+    "origin": "platform",
+    "request_id": "trace-123",
+}
+
+
+@pytest.mark.parametrize("sync", [False, True])
+async def test_registered_quota_body_carries_code_status_and_request_id(monkeypatch, sync):
+    calls = _mock_create(
+        monkeypatch,
+        429,
+        json.dumps(REGISTERED_QUOTA).encode(),
+        {"X-Should-Retry": "false", "X-Blaxel-Error-Code": "QUOTA_EXCEEDED", "X-Amz-Cf-Id": "edge"},
+    )
+
+    with pytest.raises(client_errors.QuotaExceededError) as excinfo:
+        if sync:
+            SyncSandboxInstance.create(CONFIG)
+        else:
+            await SandboxInstance.create(CONFIG)
+
+    error = excinfo.value
+    assert len(calls) == 1
+    assert error.status_code == 429
+    assert error.code == "QUOTA_EXCEEDED"
+    assert error.retryable is False
+    assert error.safe_to_retry_request is False
+    assert error.dispatch_state == "not_dispatched"
+    assert error.request_id == "trace-123"
+    assert error.action == REGISTERED_QUOTA["action"]
+    assert str(error).startswith(
+        "You have reached the maximum memory (32768) for your account. Requested: 49152"
+        " (HTTP 429 QUOTA_EXCEEDED: not retryable"
+    )
+
+
+async def test_rate_limit_follows_the_server_retry_headers(monkeypatch):
+    body = {
+        "code": "WORKSPACE_RATE_LIMIT_EXCEEDED",
+        "error_code": "WORKSPACE_RATE_LIMIT_EXCEEDED",
+        "message": "Too many sandbox creations",
+        "status_code": 429,
+        "retryable": True,
+        "safe_to_retry_request": True,
+        "dispatch_state": "not_dispatched",
+    }
+    _mock_create(
+        monkeypatch, 429, json.dumps(body).encode(), {"X-Should-Retry": "true", "Retry-After": "1"}
+    )
+
+    with pytest.raises(client_errors.RateLimitError) as excinfo:
+        await SandboxInstance.create(CONFIG)
+
+    assert excinfo.value.retryable is True
+    assert excinfo.value.safe_to_retry_request is True
+    assert excinfo.value.retry_after_seconds == 1
+    assert str(excinfo.value).endswith("retry after 1 s)")
+
+
+REQUEST_BLOCKED_BODY = {
+    "code": "REQUEST_BLOCKED",
+    "message": "The request was blocked before it reached the API.",
+    "error": {
+        "code": "REQUEST_BLOCKED",
+        "message": "The request was blocked before it reached the API.",
+        "action": "Send a User-Agent header and retry later.",
+        "do_not": "Do not rotate the API key: it was never checked.",
+        "retryable": False,
+        "safe_to_retry_request": False,
+        "dispatch_state": "not_dispatched",
+        "origin": "platform",
+        "status": 403,
+    },
+}
+
+
+@pytest.mark.parametrize("sync", [False, True])
+async def test_request_blocked_is_not_an_auth_error_or_retried(monkeypatch, sync):
+    calls = _mock_create(
+        monkeypatch,
+        403,
+        json.dumps(REQUEST_BLOCKED_BODY).encode(),
+        {"Content-Type": "application/json", "X-Should-Retry": "false"},
+    )
+
+    with pytest.raises((SandboxAPIError, client_errors.UnexpectedStatus)) as excinfo:
+        if sync:
+            SyncSandboxInstance.create(CONFIG)
+        else:
+            await SandboxInstance.create(CONFIG)
+
+    error = excinfo.value
+    assert len(calls) == 1
+    assert error.code == "REQUEST_BLOCKED"
+    assert error.retryable is False
+    message = str(error)
+    assert (
+        "(HTTP 403 REQUEST_BLOCKED: blocked at the edge before the API read the request" in message
+    )
+    assert "not a quota and not an API key problem" in message
+    assert "Send a User-Agent header and retry later." in message
+    assert "BL_API_KEY" not in message
+
+
+def test_unwrap_reads_the_registered_code_over_the_status():
+    from blaxel.core.client.models.error import Error
+
+    body = {
+        "error": "Network proxy settings need the network proxy",
+        "code": 400,
+        "error_code": "NETWORK_PROXY_NOT_ENABLED",
+        "retryable": False,
+    }
+    with pytest.raises(SandboxAPIError) as excinfo:
+        async_module._unwrap_response(Error.from_dict(body), "update sandbox")
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.code == "NETWORK_PROXY_NOT_ENABLED"
+    assert str(excinfo.value) == "Network proxy settings need the network proxy"
+
+
+def test_unwrap_keeps_the_legacy_code_without_error_code():
+    from blaxel.core.client.models.error import Error
+
+    with pytest.raises(SandboxAPIError) as excinfo:
+        async_module._unwrap_response(Error.from_dict({"error": "not found", "code": 404}), "get")
+
+    assert excinfo.value.code == "not found"

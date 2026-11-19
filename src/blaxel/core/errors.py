@@ -230,7 +230,7 @@ def _body_metadata(body: Any) -> tuple[BlaxelErrorCodeValue | None, bool | None]
                 or (isinstance(candidate, int) and not isinstance(candidate, bool))
             ):
                 code = candidate
-        for source in (nested, body):
+        for source in (nested, body, body.get("details")):
             if isinstance(source, dict) and isinstance(source.get("retryable"), bool):
                 retryable = source["retryable"]
                 break
