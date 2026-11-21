@@ -39,9 +39,9 @@ async def headers_seen_by_upstream(
 
 
 async def wait_for_header(sandbox: SandboxInstance, header: str, expected: str | None) -> None:
-    """A secret write reaches the proxy synchronously, but a running sandbox only
-    observes it on its next proxied request, so poll briefly. ``expected=None``
-    means the proxy must stop injecting the header altogether."""
+    """A secret write reaches every region's proxy asynchronously (usually within a
+    second or two), so poll briefly. ``expected=None`` means the proxy must stop
+    injecting the header altogether."""
     seen = None
     for _ in range(15):
         seen = (await headers_seen_by_upstream(sandbox)).get(header)
@@ -58,6 +58,8 @@ class TestWorkspaceSecretsResolvedByProxy:
     ws_secret: str
     shared_name: str
     missing_name: str
+    elsewhere_name: str
+    echo_hostname: str
 
     @pytest_asyncio.fixture(autouse=True, scope="class", loop_scope="class")
     async def setup(self, request):
@@ -65,10 +67,14 @@ class TestWorkspaceSecretsResolvedByProxy:
         cls.ws_secret = unique_name("ws-token")
         cls.shared_name = unique_name("ws-shared")
         cls.missing_name = unique_name("ws-missing")
-        await SecretInstance.set(cls.ws_secret, "ws-value-1")
-        await SecretInstance.set(cls.shared_name, "workspace-level")
-
+        cls.elsewhere_name = unique_name("ws-elsewhere")
         echo_hostname = await echo_host()
+        cls.echo_hostname = echo_hostname
+        await SecretInstance.set(cls.ws_secret, "ws-value-1", [echo_hostname])
+        await SecretInstance.set(cls.shared_name, "workspace-level", [echo_hostname])
+        # scoped to another host: must never be substituted toward the echo server
+        await SecretInstance.set(cls.elsewhere_name, "elsewhere-value", ["api.stripe.com"])
+
         cls.sandbox_name = unique_name("proxy-ws-sec")
         cls.sandbox = await SandboxInstance.create(
             {
@@ -85,6 +91,7 @@ class TestWorkspaceSecretsResolvedByProxy:
                                     "X-Ws-Token": f"Bearer {{{{SECRET:{cls.ws_secret}}}}}",
                                     "X-Shared": f"{{{{SECRET:{cls.shared_name}}}}}",
                                     "X-Missing": f"{{{{SECRET:{cls.missing_name}}}}}",
+                                    "X-Elsewhere": f"{{{{SECRET:{cls.elsewhere_name}}}}}",
                                 },
                                 "body": {"ws_key": f"{{{{SECRET:{cls.ws_secret}}}}}"},
                                 # same name as a workspace secret: the rule-level value must win
@@ -98,7 +105,7 @@ class TestWorkspaceSecretsResolvedByProxy:
         await cls.sandbox.fs.write("/tmp/proxy-test.js", PROXY_HELPER_SCRIPT)
         await write_echo_url(cls.sandbox)
         yield
-        for name in (cls.ws_secret, cls.shared_name):
+        for name in (cls.ws_secret, cls.shared_name, cls.elsewhere_name):
             try:
                 await SecretInstance.delete(name)
             except Exception:
@@ -109,8 +116,7 @@ class TestWorkspaceSecretsResolvedByProxy:
             pass
 
     async def test_resolves_workspace_secret_the_rule_does_not_declare(self):
-        headers = await headers_seen_by_upstream(self.sandbox)
-        assert headers["x-ws-token"] == "Bearer ws-value-1"
+        await wait_for_header(self.sandbox, "x-ws-token", "Bearer ws-value-1")
 
     async def test_resolves_workspace_secret_in_post_body(self):
         result = await self.sandbox.process.exec(
@@ -138,8 +144,12 @@ class TestWorkspaceSecretsResolvedByProxy:
         headers = await headers_seen_by_upstream(self.sandbox)
         assert "x-missing" not in headers
 
+    async def test_does_not_send_secret_outside_its_destinations(self):
+        headers = await headers_seen_by_upstream(self.sandbox)
+        assert "elsewhere-value" not in headers.get("x-elsewhere", "")
+
     async def test_serves_latest_value_after_rotation(self):
-        await SecretInstance.set(self.ws_secret, "ws-value-2")
+        await SecretInstance.set(self.ws_secret, "ws-value-2", [self.echo_hostname])
         await wait_for_header(self.sandbox, "x-ws-token", "Bearer ws-value-2")
 
     async def test_stops_injecting_header_once_workspace_secret_is_deleted(self):
