@@ -40,6 +40,12 @@ class TestFilesystemOperations:
 class TestWriteAndRead(TestFilesystemOperations):
     """Test write and read operations."""
 
+    @pytest.mark.parametrize("name", ["report#1.txt", "report?draft.txt", "literal%2F.txt"])
+    async def test_writes_and_reads_literal_url_characters(self, name):
+        path = f"/tmp/{name}"
+        await self.sandbox.fs.write(path, "literal filename")
+        assert await self.sandbox.fs.read(path) == "literal filename"
+
     async def test_writes_and_reads_text_file(self):
         """Test writing and reading a text file."""
         content = "Hello, World!"
