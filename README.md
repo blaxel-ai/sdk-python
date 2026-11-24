@@ -460,6 +460,7 @@ The SDK's typed API exceptions share a `BlaxelError` base, in both async and syn
 | `retryable` | Backend retry hint, or `None` when absent; generated status errors also retain their existing `Retry-After` behavior |
 | `action` / `do_not` / `docs_url` | Backend guidance and related documentation, or `None` when absent |
 | `origin` / `timestamp` | Backend error origin and ISO-8601 timestamp, or `None` when absent |
+| `feature` | Key of the workspace feature a `FEATURE_NOT_ENABLED` error names (for example `"fork"`), or `None` |
 | `body` / `response` | Parsed response body (or non-JSON text) and response diagnostics, when available; `ResponseError` keeps its original `httpx.Response`, while other classes use request-free snapshots |
 
 ```python
@@ -477,6 +478,25 @@ except BlaxelError as err:
     else:
         print(err.status, err.code, err.message, err.request_id)
     raise
+```
+
+Some features are enabled per workspace, such as snapshots and forks. Calling one the workspace doesn't have fails with HTTP 403 and code `FEATURE_NOT_ENABLED`, which is not a role or credential problem: `is_feature_not_enabled_error(err, "fork")` recognizes it, and `err.feature` holds the key. To check first, read the workspace's features: the response lists only the enabled ones, by the same key.
+
+```python
+from blaxel.core import BlaxelError, is_feature_not_enabled_error
+from blaxel.core.client.api.workspaces.get_workspace_features import asyncio as get_workspace_features
+from blaxel.core.client.client import client
+
+features = await get_workspace_features(client=client)
+if (features.to_dict().get("features") or {}).get("fork"):
+    await sandbox.snapshots.create()
+
+try:
+    await sandbox.snapshots.create()
+except BlaxelError as err:
+    if not is_feature_not_enabled_error(err, "fork"):
+        raise
+    # continue without snapshots, or ask support to enable them
 ```
 
 `BlaxelErrorCode` is a `Literal` listing the same known backend codes as the TypeScript SDK. A newer backend can send a code this SDK does not list yet, so keep a fallback branch. The body shapes are exported as `BlaxelApiErrorBody`, `BlaxelActionErrorBody`, `BlaxelPlatformErrorBody`, and `BlaxelSandboxApiErrorBody` (`TypedDict` types). Network failures, cancellation, client-side validation, and missing credentials keep their original exception types.

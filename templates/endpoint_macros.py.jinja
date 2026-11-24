@@ -196,12 +196,14 @@ Returns:
 
 {% macro parse_response(parsed_responses, response, is_error=False) %}
 {% if parsed_responses %}{% import "property_templates/" + response.prop.template as prop_template %}
+{# Blaxel: an error status with an empty or non-JSON body raises errors.from_response, not JSONDecodeError #}
+{% set source = "errors.error_json(response)" if is_error and response.source.attribute == "response.json()" else response.source.attribute %}
 {% if prop_template.construct %}
-{{ prop_template.construct(response.prop, response.source.attribute) }}
+{{ prop_template.construct(response.prop, source) }}
 {% elif response.source.return_type == response.prop.get_type_string() | as_unembedded_code  %}
-{{ response.prop.python_name }} = {{ response.source.attribute }}
+{{ response.prop.python_name }} = {{ source }}
 {% else %}
-{{ response.prop.python_name }} = cast({{ response.prop.get_type_string() | as_unembedded_code }}, {{ response.source.attribute }})
+{{ response.prop.python_name }} = cast({{ response.prop.get_type_string() | as_unembedded_code }}, {{ source }})
 {% endif %}
 {% if is_error %}
 {# Blaxel: keep HTTP metadata on modeled error bodies #}

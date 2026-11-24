@@ -7,6 +7,7 @@ from ..errors import (
     BlaxelPlatformErrorBody,
     BlaxelSandboxApiErrorBody,
     is_blaxel_error,
+    is_feature_not_enabled_error,
 )
 from .autoload import autoload
 from .env import env
@@ -29,6 +30,7 @@ __all__ = [
     "BlaxelPlatformErrorBody",
     "BlaxelSandboxApiErrorBody",
     "is_blaxel_error",
+    "is_feature_not_enabled_error",
     "autoload",
     "capture_exception",
     "flush_sentry",
