@@ -343,8 +343,8 @@ class DriveInstance:
             A ``DriveInstance`` with the current record.
 
         Raises:
-            DriveAPIError: With ``status_code`` 404 when the drive does not
-                exist. An invalid API key (HTTP 401) is reported the same way.
+            DriveAPIError: With the server's status code and message, such as
+                404 when the drive does not exist or 401 for an invalid API key.
             blaxel.core.client.errors.UnexpectedStatus: For other error
                 statuses, such as HTTP 403 when drives are not enabled.
         """
@@ -633,8 +633,8 @@ class SyncDriveInstance:
             A ``SyncDriveInstance`` with the current record.
 
         Raises:
-            DriveAPIError: With ``status_code`` 404 when the drive does not
-                exist. An invalid API key (HTTP 401) is reported the same way.
+            DriveAPIError: With the server's status code and message, such as
+                404 when the drive does not exist or 401 for an invalid API key.
             blaxel.core.client.errors.UnexpectedStatus: For other error
                 statuses, such as HTTP 403 when drives are not enabled.
         """

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -7,6 +7,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.create_drive_access_token_response_200 import CreateDriveAccessTokenResponse200
+from ...models.error import Error
 from ...types import Response
 
 
@@ -25,24 +26,27 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Any | CreateDriveAccessTokenResponse200 | None:
+) -> CreateDriveAccessTokenResponse200 | Error | None:
     if response.status_code == 200:
         response_200 = CreateDriveAccessTokenResponse200.from_dict(response.json())
 
         return response_200
 
     if response.status_code == 401:
-        response_401 = cast(Any, None)
+        response_401 = Error.from_dict(response.json())
+
         errors.retain_response(response_401, response)
         return response_401
 
     if response.status_code == 403:
-        response_403 = cast(Any, None)
+        response_403 = Error.from_dict(response.json())
+
         errors.retain_response(response_403, response)
         return response_403
 
     if response.status_code == 404:
-        response_404 = cast(Any, None)
+        response_404 = Error.from_dict(response.json())
+
         errors.retain_response(response_404, response)
         return response_404
 
@@ -56,7 +60,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Any | CreateDriveAccessTokenResponse200]:
+) -> Response[CreateDriveAccessTokenResponse200 | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -69,7 +73,7 @@ def sync_detailed(
     drive_name: str,
     *,
     client: Client,
-) -> Response[Any | CreateDriveAccessTokenResponse200]:
+) -> Response[CreateDriveAccessTokenResponse200 | Error]:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -83,7 +87,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | CreateDriveAccessTokenResponse200]
+        Response[CreateDriveAccessTokenResponse200 | Error]
     """
 
     kwargs = _get_kwargs(
@@ -101,7 +105,7 @@ def sync(
     drive_name: str,
     *,
     client: Client,
-) -> Any | CreateDriveAccessTokenResponse200 | None:
+) -> CreateDriveAccessTokenResponse200 | Error | None:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -115,7 +119,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | CreateDriveAccessTokenResponse200
+        CreateDriveAccessTokenResponse200 | Error
     """
 
     return sync_detailed(
@@ -128,7 +132,7 @@ async def asyncio_detailed(
     drive_name: str,
     *,
     client: Client,
-) -> Response[Any | CreateDriveAccessTokenResponse200]:
+) -> Response[CreateDriveAccessTokenResponse200 | Error]:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -142,7 +146,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | CreateDriveAccessTokenResponse200]
+        Response[CreateDriveAccessTokenResponse200 | Error]
     """
 
     kwargs = _get_kwargs(
@@ -158,7 +162,7 @@ async def asyncio(
     drive_name: str,
     *,
     client: Client,
-) -> Any | CreateDriveAccessTokenResponse200 | None:
+) -> CreateDriveAccessTokenResponse200 | Error | None:
     """Create drive access token
 
      Issues a short-lived JWT access token scoped to a specific drive. The token can be used as Bearer
@@ -172,7 +176,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | CreateDriveAccessTokenResponse200
+        CreateDriveAccessTokenResponse200 | Error
     """
 
     return (

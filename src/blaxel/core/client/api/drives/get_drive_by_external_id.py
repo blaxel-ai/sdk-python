@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -7,6 +7,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.drive import Drive
+from ...models.error import Error
 from ...types import Response
 
 
@@ -23,29 +24,33 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Any | Drive | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> Drive | Error | None:
     if response.status_code == 200:
         response_200 = Drive.from_dict(response.json())
 
         return response_200
 
     if response.status_code == 401:
-        response_401 = cast(Any, None)
+        response_401 = Error.from_dict(response.json())
+
         errors.retain_response(response_401, response)
         return response_401
 
     if response.status_code == 403:
-        response_403 = cast(Any, None)
+        response_403 = Error.from_dict(response.json())
+
         errors.retain_response(response_403, response)
         return response_403
 
     if response.status_code == 404:
-        response_404 = cast(Any, None)
+        response_404 = Error.from_dict(response.json())
+
         errors.retain_response(response_404, response)
         return response_404
 
     if response.status_code == 500:
-        response_500 = cast(Any, None)
+        response_500 = Error.from_dict(response.json())
+
         errors.retain_response(response_500, response)
         return response_500
 
@@ -57,7 +62,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Any | Drive 
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Any | Drive]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Drive | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,7 +75,7 @@ def sync_detailed(
     external_id: str,
     *,
     client: Client,
-) -> Response[Any | Drive]:
+) -> Response[Drive | Error]:
     """Get drive by external ID
 
      Returns a drive matching the given external ID. If no drive is found, returns 404.
@@ -83,7 +88,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Drive]
+        Response[Drive | Error]
     """
 
     kwargs = _get_kwargs(
@@ -101,7 +106,7 @@ def sync(
     external_id: str,
     *,
     client: Client,
-) -> Any | Drive | None:
+) -> Drive | Error | None:
     """Get drive by external ID
 
      Returns a drive matching the given external ID. If no drive is found, returns 404.
@@ -114,7 +119,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Drive
+        Drive | Error
     """
 
     return sync_detailed(
@@ -127,7 +132,7 @@ async def asyncio_detailed(
     external_id: str,
     *,
     client: Client,
-) -> Response[Any | Drive]:
+) -> Response[Drive | Error]:
     """Get drive by external ID
 
      Returns a drive matching the given external ID. If no drive is found, returns 404.
@@ -140,7 +145,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Drive]
+        Response[Drive | Error]
     """
 
     kwargs = _get_kwargs(
@@ -156,7 +161,7 @@ async def asyncio(
     external_id: str,
     *,
     client: Client,
-) -> Any | Drive | None:
+) -> Drive | Error | None:
     """Get drive by external ID
 
      Returns a drive matching the given external ID. If no drive is found, returns 404.
@@ -169,7 +174,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Drive
+        Drive | Error
     """
 
     return (
