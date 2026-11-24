@@ -53,6 +53,28 @@ class TestPreviewOperations:
 class TestPreviewCreate(TestPreviewOperations):
     """Test preview creation operations."""
 
+    async def test_updates_an_existing_preview(self):
+        """Test replacing the settings of an existing preview."""
+        headers = {"X-Blaxel-Embed-Origins": "https://app.example.com"}
+        created = await self.sandbox.previews.create(
+            {"metadata": {"name": "update-preview"}, "spec": {"port": 3000, "public": False}}
+        )
+
+        spec = created.spec.to_dict()
+        spec["responseHeaders"] = headers
+        updated = await self.sandbox.previews.update(
+            {"metadata": {"name": "update-preview"}, "spec": spec}
+        )
+        assert updated.name == "update-preview"
+        assert updated.url == created.url
+        assert updated.spec.to_dict()["responseHeaders"] == headers
+
+        fetched = await self.sandbox.previews.get("update-preview")
+        assert fetched.spec.to_dict()["responseHeaders"] == headers
+        assert fetched.spec.public is False
+
+        await self.sandbox.previews.delete("update-preview")
+
     async def test_creates_public_preview(self):
         """Test creating a public preview."""
         preview = await self.sandbox.previews.create(

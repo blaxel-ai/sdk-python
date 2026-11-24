@@ -214,6 +214,17 @@ custom_preview = await sandbox.previews.create_if_not_exists({
 })
 ```
 
+`create_if_not_exists()` returns an existing preview unchanged. To change it, call
+`update()` with a full preview. The `spec` you pass replaces the stored one, so
+start from the current spec:
+
+```python
+current = await sandbox.previews.get("custom-app-preview")
+spec = current.spec.to_dict()
+spec["responseHeaders"] = {"Access-Control-Allow-Origin": "https://app.example.com"}
+await sandbox.previews.update({"metadata": {"name": "custom-app-preview"}, "spec": spec})
+```
+
 #### Process execution
 
 Execute and manage processes in your sandbox:
