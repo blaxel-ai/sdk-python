@@ -567,11 +567,10 @@ class SandboxPreviews:
 
 
 def to_utc_z(dt: datetime) -> str:
-    """Convert datetime to UTC Z format string."""
-    # Simple approach: format as ISO string and add Z
-    iso_string = dt.isoformat()
-    if iso_string.endswith("+00:00"):
-        return iso_string.replace("+00:00", "Z")
-    elif "T" in iso_string and not iso_string.endswith("Z"):
-        return iso_string + "Z"
-    return iso_string
+    """Format a datetime as an ISO 8601 UTC timestamp ending in ``Z``.
+
+    An aware datetime is converted to UTC; a naive one is taken as UTC already.
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return f"{dt.isoformat()}Z"
