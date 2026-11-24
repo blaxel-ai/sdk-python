@@ -77,6 +77,7 @@ def lane(request, monkeypatch):
     for name in [
         "create_sandbox_preview",
         "get_sandbox_preview",
+        "update_sandbox_preview",
         "list_sandbox_preview_tokens",
         "create_sandbox_preview_token",
         "delete_sandbox_preview_token",
@@ -133,6 +134,50 @@ async def test_shorthand_validation_before_io(lane, config, message):
     for method in [lane.previews.create, lane.previews.create_if_not_exists]:
         with pytest.raises(ValueError, match=message):
             await call(method, config)
+    assert all(not mock.called for mock in lane.mocks.values())
+
+
+async def test_update_sends_full_preview_to_named_preview(lane):
+    headers = {"X-Blaxel-Embed-Origins": "https://app.example.com"}
+    body = {
+        "metadata": {"name": "app"},
+        "spec": {"port": 3000, "public": False, "responseHeaders": headers},
+    }
+    lane.mocks["update_sandbox_preview"].return_value = Preview.from_dict(
+        {**body, "spec": {**body["spec"], "url": "https://preview.example"}}
+    )
+    for preview in [body, Preview.from_dict(body)]:
+        result = await call(lane.previews.update, preview)
+        sent = lane.mocks["update_sandbox_preview"].call_args
+        assert sent.args == ("sandbox", "app")
+        sent_body = sent.kwargs["body"].to_dict()
+        assert {key: sent_body[key] for key in body} == body
+        assert type(result).__name__ == lane.prefix + "SandboxPreview"
+        assert result.url == "https://preview.example"
+        assert result.spec.to_dict()["responseHeaders"] == headers
+    assert not lane.mocks["create_sandbox_preview"].called
+    assert not lane.mocks["get_sandbox_preview"].called
+
+
+@pytest.mark.parametrize(
+    "preview,message",
+    [
+        ({"port": 3000}, "update\\(\\) needs a full preview with metadata and spec"),
+        (SandboxPreviewCreateConfiguration(3000), "update\\(\\) needs a full preview"),
+        ({"spec": {"port": 3000}}, "update\\(\\) needs metadata.name"),
+        ({"metadata": {"name": ""}, "spec": {"port": 3000}}, "update\\(\\) needs metadata.name"),
+        ({"metadata": {"labels": {}}, "spec": {"port": 3000}}, "update\\(\\) needs metadata.name"),
+        ({"metadata": {"name": "app"}}, "update\\(\\) needs a spec"),
+        ({"metadata": {"name": "app"}, "spec": {}}, "update\\(\\) needs a spec"),
+        (
+            Preview(metadata=PreviewMetadata(name=""), spec=PreviewSpec(port=3000)),
+            "needs metadata.name",
+        ),
+    ],
+)
+async def test_update_validation_before_io(lane, preview, message):
+    with pytest.raises(ValueError, match=message):
+        await call(lane.previews.update, preview)
     assert all(not mock.called for mock in lane.mocks.values())
 
 
