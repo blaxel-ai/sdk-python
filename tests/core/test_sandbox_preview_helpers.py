@@ -166,6 +166,13 @@ async def test_update_sends_full_preview_to_named_preview(lane):
         (SandboxPreviewCreateConfiguration(3000), "update\\(\\) needs a full preview"),
         ({"spec": {"port": 3000}}, "update\\(\\) needs metadata.name"),
         ({"metadata": {"name": ""}, "spec": {"port": 3000}}, "update\\(\\) needs metadata.name"),
+        ({"metadata": {"labels": {}}, "spec": {"port": 3000}}, "update\\(\\) needs metadata.name"),
+        ({"metadata": {"name": "app"}}, "update\\(\\) needs a spec"),
+        ({"metadata": {"name": "app"}, "spec": {}}, "update\\(\\) needs a spec"),
+        (
+            Preview(metadata=PreviewMetadata(name=""), spec=PreviewSpec(port=3000)),
+            "needs metadata.name",
+        ),
     ],
 )
 async def test_update_validation_before_io(lane, preview, message):

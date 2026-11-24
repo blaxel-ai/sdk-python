@@ -448,8 +448,8 @@ class SandboxPreviews:
             The updated ``SandboxPreview``.
 
         Raises:
-            ValueError: When the preview has no ``metadata.name`` or is the
-                ``{"port": ...}`` shorthand.
+            ValueError: When the preview has no ``metadata.name``, has no
+                ``spec``, or is the ``{"port": ...}`` shorthand.
             blaxel.core.client.errors.UnexpectedStatus: With status 404 when the
                 preview does not exist.
 
@@ -457,18 +457,29 @@ class SandboxPreviews:
             ```python
             current = await sandbox.previews.get("app")
             spec = current.spec.to_dict()
-            spec["responseHeaders"] = {"X-Blaxel-Embed-Origins": "https://app.example.com"}
+            spec["responseHeaders"] = {
+                **spec.get("responseHeaders", {}),
+                "X-Blaxel-Embed-Origins": "https://app.example.com",
+            }
             preview = await sandbox.previews.update({"metadata": {"name": "app"}, "spec": spec})
             ```
         """
         if _is_shorthand(preview):
             raise ValueError("update() needs a full preview with metadata and spec")
-        if isinstance(preview, dict) and not isinstance(preview.get("metadata"), dict):
-            raise ValueError("update() needs metadata.name")
+        if isinstance(preview, dict):
+            # Checked here: the generated parser raises KeyError on a missing key.
+            metadata, spec = preview.get("metadata"), preview.get("spec")
+            name = metadata.get("name") if isinstance(metadata, dict) else None
+            if not isinstance(name, str) or not name:
+                raise ValueError("update() needs metadata.name")
+            if not isinstance(spec, dict) or not spec:
+                raise ValueError("update() needs a spec")
         preview = _normalize_preview(preview)
         preview_name = preview.metadata.name if preview.metadata else ""
         if not isinstance(preview_name, str) or not preview_name:
             raise ValueError("update() needs metadata.name")
+        if not preview.spec:
+            raise ValueError("update() needs a spec")
 
         response: Preview = await update_sandbox_preview(
             self.sandbox_name,

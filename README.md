@@ -221,7 +221,10 @@ start from the current spec:
 ```python
 current = await sandbox.previews.get("custom-app-preview")
 spec = current.spec.to_dict()
-spec["responseHeaders"] = {"Access-Control-Allow-Origin": "https://app.example.com"}
+spec["responseHeaders"] = {
+    **spec.get("responseHeaders", {}),
+    "Access-Control-Allow-Origin": "https://app.example.com",
+}
 await sandbox.previews.update({"metadata": {"name": "custom-app-preview"}, "spec": spec})
 ```
 
