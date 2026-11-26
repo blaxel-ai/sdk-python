@@ -470,6 +470,34 @@ class BrokenFinalizer:
         assert installed_sentry_hooks.captured == []
         assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
 
+    def test_unhandled_network_error_is_filtered_and_chained(self, installed_sentry_hooks):
+        """Regression for SDK-PYTHON-13Z: transport drops are environmental, not SDK bugs."""
+        exc = _raise_in_file(
+            _sdk_filename("core/sandbox/default/process.py"),
+            "raise httpx.ConnectError('All connection attempts failed')",
+            {"httpx": httpx},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == []
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
+    def test_unhandled_local_protocol_error_is_still_captured(self, installed_sentry_hooks):
+        """A client-side protocol fault is a genuine SDK bug, unlike a transport drop."""
+        exc = _raise_in_file(
+            _sdk_filename("core/broken.py"),
+            "raise httpx.LocalProtocolError('malformed request built by the SDK')",
+            {"httpx": httpx},
+        )
+
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+        _wait_for_background_capture()
+
+        assert installed_sentry_hooks.captured == [(exc, "excepthook")]
+        assert installed_sentry_hooks.main_hook_calls == [(type(exc), exc, exc.__traceback__)]
+
     def test_similar_application_path_is_not_treated_as_sdk(self, installed_sentry_hooks):
         exc = _raise_in_file(
             "/tmp/customer/blaxel/core/broken.py",
@@ -688,6 +716,46 @@ _parse_response(
         assert "top-secret-customer-value" not in serialized_event
         assert "CUSTOMER_SECRET" not in serialized_event
         assert event["exception"]["values"][0]["value"] == ("Unhandled SDK exception (HTTP 404)")
+
+
+class TestNetworkErrorFiltering:
+    """Transport/network failures are environmental noise, not SDK defects."""
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            httpx.ConnectError("All connection attempts failed"),
+            httpx.ConnectTimeout("timed out"),
+            httpx.ReadTimeout("timed out"),
+            httpx.PoolTimeout("timed out"),
+            httpx.ReadError("connection reset by peer"),
+            httpx.WriteError("broken pipe"),
+            httpx.RemoteProtocolError("GOAWAY received"),
+            httpx.ProxyError("proxy refused"),
+        ],
+    )
+    def test_transport_failures_are_not_sdk_failures(self, error):
+        exc = _raise_in_file(
+            _sdk_filename("core/sandbox/default/network.py"),
+            "raise error",
+            {"error": error},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is False
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            httpx.LocalProtocolError("malformed request built by the SDK"),
+            httpx.UnsupportedProtocol("unsupported scheme built by the SDK"),
+        ],
+    )
+    def test_client_side_protocol_faults_are_still_sdk_failures(self, error):
+        exc = _raise_in_file(
+            _sdk_filename("core/broken.py"),
+            "raise error",
+            {"error": error},
+        )
+        assert sentry._should_capture_unhandled_exception(type(exc), exc) is True
 
 
 class TestIsOptionalDependencyError:

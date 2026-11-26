@@ -59,6 +59,23 @@ _IGNORED_EXCEPTIONS = (
     CancelledError,  # Async task cancellation
 )
 
+# httpx transport failures that reflect the network or the remote peer rather than
+# an SDK defect: a DNS/connection failure or drop (``NetworkError`` -> ``ConnectError``,
+# ``ReadError`` ...), a timeout (``TimeoutException`` -> ``ConnectTimeout`` ...), the
+# server breaking the protocol (``RemoteProtocolError``), or a proxy failure
+# (``ProxyError``). The SDK already treats these as transient and retryable
+# (``sandbox/transient_retry.py``); reporting the ones that still escape as
+# "Unhandled SDK exception" only produces environmental noise (SDK-PYTHON-13Z).
+# Client-side protocol faults (``LocalProtocolError``, ``UnsupportedProtocol``) are
+# deliberately excluded here so genuine SDK request-construction bugs are still
+# captured.
+_NETWORK_ERROR_TYPES = (
+    httpx.TimeoutException,
+    httpx.NetworkError,
+    httpx.RemoteProtocolError,
+    httpx.ProxyError,
+)
+
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 _SAFE_ERROR_CODES = {
@@ -415,11 +432,18 @@ def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = N
     return False
 
 
+def _is_network_error(exc_type) -> bool:
+    """Whether the exception is a transport/network failure, not an SDK defect."""
+    return issubclass(exc_type, _NETWORK_ERROR_TYPES)
+
+
 def _should_capture_unhandled_exception(exc_type, exc_value) -> bool:
     """Return whether an unhandled exception represents an SDK failure."""
     if not exc_type or exc_value is None or not _is_from_sdk(exc_value):
         return False
     if issubclass(exc_type, _IGNORED_EXCEPTIONS):
+        return False
+    if _is_network_error(exc_type):
         return False
     return not _is_optional_dependency_error(exc_type, exc_value)
 
