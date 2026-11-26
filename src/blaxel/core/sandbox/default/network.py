@@ -1,5 +1,6 @@
 import httpx
 
+from .._network import build_port_fetch_url
 from ..types import SandboxConfiguration
 from .action import SandboxAction
 
@@ -37,8 +38,11 @@ class SandboxNetwork(SandboxAction):
         Returns:
             The ``httpx.Response``. HTTP error statuses are returned, not
             raised.
+
+        Raises:
+            ValueError: If ``port`` is 8080, which is reserved by
+                ``sandbox-api`` and would self-proxy.
         """
-        normalized_path = path if path.startswith("/") else f"/{path}"
-        url = f"/port/{port}{normalized_path}"
+        url = build_port_fetch_url(port, path)
         client = self.get_client()
         return await client.request(method, url, **kwargs)

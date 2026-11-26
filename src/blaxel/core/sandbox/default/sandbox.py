@@ -629,6 +629,10 @@ class SandboxInstance:
         Returns:
             The ``httpx.Response`` from the service listening on the port.
 
+        Raises:
+            ValueError: If ``port`` is 8080, which is reserved by
+                ``sandbox-api`` and would self-proxy.
+
         Example:
             ```python
             response = await sandbox.fetch(3000, "/health")
